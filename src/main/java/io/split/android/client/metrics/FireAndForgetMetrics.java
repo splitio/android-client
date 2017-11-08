@@ -1,9 +1,10 @@
 package io.split.android.client.metrics;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import io.split.android.engine.metrics.Metrics;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.io.Closeable;
 import java.util.List;
@@ -17,8 +18,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class FireAndForgetMetrics implements Metrics, Closeable {
 
-    private static final Logger _log = LoggerFactory.getLogger(FireAndForgetMetrics.class);
-
     private final ExecutorService _executorService;
     private final Metrics _delegate;
 
@@ -29,7 +28,7 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         threadFactoryBuilder.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread t, Throwable e) {
-                _log.error("Error in thread: " + t.getName(), e);
+                Timber.e(e, "Error in thread: %s", t.getName());
             }
         });
 
@@ -56,7 +55,7 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         try {
             _executorService.submit(new CountRunnable(_delegate, counter, delta));
         } catch (Throwable t) {
-            _log.warn("CountRunnable failed", t);
+            Timber.w(t, "CountRunnable failed");
         }
     }
 
@@ -65,7 +64,7 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         try {
             _executorService.submit(new TimeRunnable(_delegate, operation, timeInMs));
         } catch (Throwable t) {
-            _log.warn("TimeRunnable failed", t);
+            Timber.w(t, "TimeRunnable failed");
         }
     }
 
@@ -73,9 +72,9 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         _executorService.shutdown();
         try {
             if (!_executorService.awaitTermination(10L, TimeUnit.SECONDS)) { //optional *
-                _log.info("Executor did not terminate in the specified time.");
+                Timber.w("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = _executorService.shutdownNow(); //optional **
-                _log.info("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.w("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.

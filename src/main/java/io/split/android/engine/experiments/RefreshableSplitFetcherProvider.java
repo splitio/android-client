@@ -1,9 +1,10 @@
 package io.split.android.engine.experiments;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import io.split.android.engine.SDKReadinessGates;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.io.Closeable;
 import java.util.List;
@@ -22,7 +23,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @author adil
  */
 public class RefreshableSplitFetcherProvider implements Closeable {
-    private static final Logger _log = LoggerFactory.getLogger(RefreshableSplitFetcherProvider.class);
 
     private final SplitParser _splitParser;
     private final SplitChangeFetcher _splitChangeFetcher;
@@ -94,13 +94,13 @@ public class RefreshableSplitFetcherProvider implements Closeable {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(2L, TimeUnit.SECONDS)) { //optional *
-                _log.warn("Executor did not terminate in the specified time.");
+                Timber.w("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow(); //optional **
-                _log.warn("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.w("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
-            _log.warn("Shutdown hook for split fetchers has been interrupted");
+            Timber.w("Shutdown hook for split fetchers has been interrupted");
             Thread.currentThread().interrupt();
         }
     }

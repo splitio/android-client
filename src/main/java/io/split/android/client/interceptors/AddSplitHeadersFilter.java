@@ -5,8 +5,7 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.protocol.HttpContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -17,7 +16,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Created by adilaijaz on 5/22/15.
  */
 public class AddSplitHeadersFilter implements HttpRequestInterceptor {
-    private static final Logger _log = LoggerFactory.getLogger(AddSplitHeadersFilter.class);
 
     private static final String CLIENT_MACHINE_NAME_HEADER = "SplitSDKMachineName";
     private static final String CLIENT_MACHINE_IP_HEADER = "SplitSDKMachineIP";
@@ -38,7 +36,7 @@ public class AddSplitHeadersFilter implements HttpRequestInterceptor {
             hostname = localHost.getHostName();
             ip = localHost.getHostAddress();
         } catch (Exception e) {
-            _log.error("Could not resolve InetAddress", e);
+            Timber.e(e,"Could not resolve InetAddress");
         }
 
         return new AddSplitHeadersFilter(apiToken, hostname, ip);

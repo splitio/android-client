@@ -3,10 +3,12 @@ package io.split.android.engine.segments;
 import io.split.android.engine.segments.RefreshableSegment;
 import io.split.android.engine.segments.RefreshableSegmentFetcher;
 import io.split.android.engine.SDKReadinessGates;
+
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import timber.log.Timber;
+
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -22,9 +24,8 @@ import static org.junit.Assert.assertThat;
  *
  * @author adil
  */
-public class RefreshableSegmentFetcherTest {
-    private static final Logger _log = LoggerFactory.getLogger(RefreshableSegmentFetcherTest.class);
 
+public class RefreshableSegmentFetcherTest {
     private AtomicReference<RefreshableSegment> fetcher1 = null;
     private AtomicReference<RefreshableSegment> fetcher2 = null;
 
@@ -62,9 +63,9 @@ public class RefreshableSegmentFetcherTest {
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                _log.info("Executor did not terminate in the specified time.");
+                Timber.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = executorService.shutdownNow();
-                _log.info("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.

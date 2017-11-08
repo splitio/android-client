@@ -2,8 +2,9 @@ package io.split.android.client;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import timber.log.Timber;
+
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LocalhostSplitFile extends Thread {
-    private static final Logger _log = LoggerFactory.getLogger(LocalhostSplitFile.class);
 
     private final LocalhostSplitFactory _splitFactory;
     private final File _file;
@@ -81,7 +81,7 @@ public class LocalhostSplitFile extends Thread {
                             && filename.toString().equals(_file.getName())) {
                         Map<String, String> featureToSplitMap = readOnSplits();
                         _splitFactory.updateFeatureToTreatmentMap(featureToSplitMap);
-                        _log.info("Detected change in Local Splits file - Splits Reloaded! file={}", _file.getPath());
+                        Timber.i("Detected change in Local Splits file - Splits Reloaded! file=%s", _file.getPath());
                     }
                     boolean valid = key.reset();
                     if (!valid) {
@@ -91,7 +91,7 @@ public class LocalhostSplitFile extends Thread {
                 Thread.yield();
             }
         } catch (IOException e) {
-            _log.error("Error reading file: path={}", _file.getPath(), e);
+            Timber.e(e, "Error reading file: path=%s", _file.getPath());
             stopThread();
         }
     }
@@ -109,19 +109,21 @@ public class LocalhostSplitFile extends Thread {
                 String[] feature_treatment = line.split("\\s+");
 
                 if (feature_treatment.length != 2) {
-                    _log.info("Ignoring line since it does not have exactly two columns: " + line);
+                    Timber.i("Ignoring line since it does not have exactly two columns: %s", line);
                     continue;
                 }
 
                 onSplits.put(feature_treatment[0], feature_treatment[1]);
-                _log.info("100% of keys will see " + feature_treatment[1] + " for " + feature_treatment[0]);
+                Timber.i("100%% of keys will see %s for %s", feature_treatment[1], feature_treatment[0]);
             }
         } catch (FileNotFoundException e) {
-            _log.warn("There was no file named " + _file.getPath() + " found. " +
-                    "We created a split client that returns default treatments for all features for all of your users. " +
-                    "If you wish to return a specific treatment for a feature, enter the name of that feature name and " +
-                    "treatment name separated by whitespace in " + _file.getPath() +
-                    "; one pair per line. Empty lines or lines starting with '#' are considered comments", e);
+            Timber.w(e, "There was no file named %s found. " +
+                    "We created a split client that returns default " +
+                    "treatments for all features for all of your users. " +
+                    "If you wish to return a specific treatment for a feature, " +
+                    "enter the name of that feature name and treatment name separated " +
+                    "by whitespace in %s; one pair per line. Empty lines or lines " +
+                    "starting with '#' are considered comments", _file.getPath(), _file.getPath());
         }
 
         return onSplits;

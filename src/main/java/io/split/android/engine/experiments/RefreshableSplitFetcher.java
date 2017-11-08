@@ -10,8 +10,8 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
 import io.split.android.engine.SDKReadinessGates;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.util.Collection;
 import java.util.List;
@@ -27,8 +27,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @author adil
  */
 public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
-
-    private static final Logger _log = LoggerFactory.getLogger(RefreshableSplitFetcher.class);
 
     private final SplitParser _parser;
     private final SplitChangeFetcher _splitChangeFetcher;
@@ -100,17 +98,13 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             runWithoutExceptionHandling();
             _gates.splitsAreReady();
         } catch (InterruptedException e) {
-            _log.warn("Interrupting split fetcher task");
+            Timber.w("Interrupting split fetcher task");
             Thread.currentThread().interrupt();
         } catch (Throwable t) {
-            _log.error("RefreshableSplitFetcher failed: " + t.getMessage());
-            if (_log.isDebugEnabled()) {
-                _log.debug("Reason:", t);
-            }
+            Timber.e("RefreshableSplitFetcher failed: %s" , t.getMessage());
+            Timber.d(t);
         } finally {
-            if (_log.isDebugEnabled()) {
-                _log.debug("split fetch before: " + start + ", after: " + _changeNumber.get());
-            }
+            Timber.d("split fetch before: %s, after: %l", start, _changeNumber.get());
         }
     }
 
@@ -165,7 +159,7 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 
                 ParsedSplit parsedSplit = _parser.parse(split);
                 if (parsedSplit == null) {
-                    _log.info("We could not parse the experiment definition for: " + split.name + " so we are removing it completely to be careful");
+                    Timber.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
                     toRemove.add(split.name);
                     continue;
                 }
@@ -180,11 +174,11 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             }
 
             if (!toAdd.isEmpty()) {
-                _log.debug("Updated features: " + toAdd.keySet());
+                Timber.d("Updated features: %s", toAdd.keySet());
             }
 
             if (!toRemove.isEmpty()) {
-                _log.debug("Deleted features: " + toRemove);
+                Timber.d("Deleted features: %s", toRemove);
             }
 
             _changeNumber.set(change.till);

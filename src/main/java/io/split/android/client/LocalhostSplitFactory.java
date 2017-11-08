@@ -2,8 +2,8 @@ package io.split.android.client;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.io.IOException;
 import java.util.Map;
@@ -17,7 +17,6 @@ import java.util.Map;
  * @author adil
  */
 public final class LocalhostSplitFactory implements SplitFactory {
-    private static final Logger _log = LoggerFactory.getLogger(LocalhostSplitFactory.class);
 
     static final String FILENAME = ".split";
     static final String LOCALHOST = "localhost";
@@ -35,7 +34,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
     public LocalhostSplitFactory(String directory) throws IOException {
         Preconditions.checkNotNull(directory, "directory must not be null");
 
-        _log.info("home = " + directory);
+        Timber.i("home = %s",directory);
 
         _splitFile = new LocalhostSplitFile(this, directory, FILENAME);
 

@@ -3,11 +3,12 @@ package io.split.android.engine.segments;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
-import io.split.android.engine.segments.RefreshableSegment;
 import io.split.android.engine.SDKReadinessGates;
+
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import timber.log.Timber;
+
 
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,6 @@ import static org.junit.Assert.fail;
  * @author adil
  */
 public class RefreshableSegmentTest {
-    private static final Logger _log = LoggerFactory.getLogger(RefreshableSegmentTest.class);
 
     @Test
     public void works_when_we_start_without_state() throws InterruptedException {
@@ -58,9 +58,9 @@ public class RefreshableSegmentTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(1L, TimeUnit.SECONDS)) {
-                _log.info("Executor did not terminate in the specified time.");
+                Timber.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                _log.info("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -100,9 +100,9 @@ public class RefreshableSegmentTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(1L, TimeUnit.SECONDS)) {
-                _log.info("Executor did not terminate in the specified time.");
+                Timber.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                _log.info("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.

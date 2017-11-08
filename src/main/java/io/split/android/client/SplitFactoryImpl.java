@@ -15,6 +15,7 @@ import io.split.android.engine.experiments.SplitChangeFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.segments.RefreshableSegmentFetcher;
 import io.split.android.engine.segments.SegmentChangeFetcher;
+
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -32,10 +33,12 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import timber.log.Timber;
+
 
 import javax.net.ssl.SSLContext;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,7 +51,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class SplitFactoryImpl implements SplitFactory {
-    private static final Logger _log = LoggerFactory.getLogger(SplitFactory.class);
 
     private static Random RANDOM = new Random();
 
@@ -97,12 +99,12 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Set up proxy is it exists
         if (config.proxy() != null) {
-            _log.info("Initializing Split SDK with proxy settings");
+            Timber.i("Initializing Split SDK with proxy settings");
             DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(config.proxy());
             httpClientbuilder.setRoutePlanner(routePlanner);
 
-            if (config.proxyUsername() != null && config.proxyPassword() != null){
-                _log.debug("Proxy setup using credentials");
+            if (config.proxyUsername() != null && config.proxyPassword() != null) {
+                Timber.d("Proxy setup using credentials");
                 CredentialsProvider credsProvider = new BasicCredentialsProvider();
                 AuthScope siteScope = new AuthScope(config.proxy().getHostName(), config.proxy().getPort());
                 Credentials siteCreds = new UsernamePasswordCredentials(config.proxyUsername(), config.proxyPassword());
@@ -157,22 +159,22 @@ public class SplitFactoryImpl implements SplitFactory {
 
         destroyer = new Runnable() {
             public void run() {
-                _log.warn("Shutdown called for split");
+                Timber.w("Shutdown called for split");
                 try {
                     segmentFetcher.close();
-                    _log.warn("Successful shutdown of segment fetchers");
+                    Timber.w("Successful shutdown of segment fetchers");
                     splitFetcherProvider.close();
-                    _log.warn("Successful shutdown of splits");
+                    Timber.w("Successful shutdown of splits");
                     uncachedFireAndForget.close();
-                    _log.warn("Successful shutdown of metrics 1");
+                    Timber.w("Successful shutdown of metrics 1");
                     cachedFireAndForgetMetrics.close();
-                    _log.warn("Successful shutdown of metrics 2");
+                    Timber.w("Successful shutdown of metrics 2");
                     impressionListener.close();
-                    _log.warn("Successful shutdown of ImpressionListener");
+                    Timber.w("Successful shutdown of ImpressionListener");
                     httpclient.close();
-                    _log.warn("Successful shutdown of httpclient");
+                    Timber.w("Successful shutdown of httpclient");
                 } catch (IOException e) {
-                    _log.error("We could not shutdown split", e);
+                    Timber.e(e, "We could not shutdown split");
                 }
             }
         };

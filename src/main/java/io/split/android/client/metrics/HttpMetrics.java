@@ -1,17 +1,20 @@
 package io.split.android.client.metrics;
 
 import com.google.common.collect.Lists;
+
 import io.split.android.client.dtos.Counter;
 import io.split.android.client.dtos.Latency;
 import io.split.android.client.utils.Utils;
 import io.split.android.engine.metrics.Metrics;
+
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import timber.log.Timber;
+
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,7 +25,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Created by adilaijaz on 9/4/15.
  */
 public class HttpMetrics implements Metrics, DTOMetrics {
-    private static final Logger _log = LoggerFactory.getLogger(HttpMetrics.class);
 
     private final CloseableHttpClient _client;
     private final URI _target;
@@ -51,9 +53,8 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         try {
             post(new URIBuilder(_target).setPath("/api/metrics/time").build(), dto);
         } catch (Throwable t) {
-            _log.warn("Exception when posting metric" + dto, t);
+            Timber.w(t, "Exception when posting metric %s", dto.toString());
         }
-        ;
 
     }
 
@@ -63,7 +64,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         try {
             post(new URIBuilder(_target).setPath("/api/metrics/counter").build(), dto);
         } catch (Throwable t) {
-            _log.warn("Exception when posting metric" + dto, t);
+            Timber.w(t, "Exception when posting metric %s", dto.toString());
         }
 
     }
@@ -83,14 +84,12 @@ public class HttpMetrics implements Metrics, DTOMetrics {
             int status = response.getStatusLine().getStatusCode();
 
             if (status < 200 || status >= 300) {
-                _log.warn("Response status was: " + status);
+                Timber.w("Response status was: %i", status);
             }
 
         } catch (Throwable t) {
-            _log.warn("Exception when posting metrics:" + t.getMessage());
-            if (_log.isDebugEnabled()) {
-                _log.debug("Reason:", t);
-            }
+            Timber.w("Exception when posting metrics: %s", t.getMessage());
+            Timber.d(t);
         } finally {
             Utils.forceClose(response);
         }
@@ -106,7 +105,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
 
             count(dto);
         } catch (Throwable t) {
-            _log.info("Could not count metric " + counter, t);
+            Timber.i(t, "Could not count metric %s", counter);
         }
 
     }
@@ -120,7 +119,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
 
             time(dto);
         } catch (Throwable t) {
-            _log.info("Could not time metric " + operation, t);
+            Timber.i(t, "Could not time metric %s", operation);
         }
     }
 

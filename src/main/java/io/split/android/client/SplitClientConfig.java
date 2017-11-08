@@ -1,11 +1,16 @@
 package io.split.android.client;
 
 
+import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import org.apache.http.HttpHost;
 
 import java.io.IOException;
 import java.util.Properties;
+
+import timber.log.Timber;
+
+import static timber.log.Timber.DebugTree;
 
 /**
  * Configurations for the SplitClient.
@@ -95,6 +100,21 @@ public class SplitClientConfig {
         if (props.getProperty("sdk.version") != null) {
             splitSdkVersion = "java-" + props.getProperty("sdk.version");
         }
+
+        if (BuildConfig.DEBUG && !isTestMode()) {
+            Timber.plant(new DebugTree());
+        }
+    }
+
+    private static boolean isTestMode() {
+        boolean result;
+        try {
+            Class.forName("io.split.android.client.SplitClientConfigTest");
+            result = true;
+        } catch (final Exception e) {
+            result = false;
+        }
+        return result;
     }
 
     public String endpoint() {
