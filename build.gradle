@@ -4,16 +4,11 @@ android {
     compileSdkVersion 26
     buildToolsVersion '26.0.2'
     useLibrary 'org.apache.http.legacy'
-
     targetCompatibility = '1.7'
     sourceCompatibility = '1.7'
 
-//    testOptions {
-//        unitTests.returnDefaultValues = true
-//    }
-
     defaultConfig {
-        minSdkVersion 26
+        minSdkVersion 23
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
@@ -27,6 +22,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    productFlavors {
+    }
 }
 
 dependencies {
@@ -37,10 +34,8 @@ dependencies {
     compile 'com.android.support:appcompat-v7:26.+'
     testCompile 'junit:junit:4.12'
     implementation 'com.jakewharton.timber:timber:4.6.0'
-
     compile 'com.google.code.gson:gson:2.7'
     compile 'com.google.guava:guava:18.0'
-    //    compile group: 'org.apache.httpcomponents' , name: 'httpclient-android' , version: '4.3.5.1'
     compile 'org.apache.httpcomponents:httpclient-android:4.3.5'
     testCompile 'org.mockito:mockito-core:1.10.9'
     testCompile 'org.hamcrest:hamcrest-all:1.3'
