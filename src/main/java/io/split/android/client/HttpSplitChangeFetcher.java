@@ -1,20 +1,23 @@
 package io.split.android.client;
 
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Utils;
-import io.split.android.engine.experiments.SplitChangeFetcher;
-import io.split.android.engine.metrics.Metrics;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import timber.log.Timber;
-
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import io.split.android.client.cache.ISplitChangeCache;
+import io.split.android.client.cache.SplitChangeCache;
+import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.storage.IStorage;
+import io.split.android.client.utils.Json;
+import io.split.android.client.utils.Utils;
+import io.split.android.engine.experiments.SplitChangeFetcher;
+import io.split.android.engine.metrics.Metrics;
+import timber.log.Timber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -29,19 +32,21 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
     private final CloseableHttpClient _client;
     private final URI _target;
     private final Metrics _metrics;
+    private final ISplitChangeCache _splitChangeCache;
 
-    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root) throws URISyntaxException {
-        return create(client, root, new Metrics.NoopMetrics());
+    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, IStorage storage) throws URISyntaxException {
+        return create(client, root, new Metrics.NoopMetrics(), storage);
     }
 
-    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, Metrics metrics) throws URISyntaxException {
-        return new HttpSplitChangeFetcher(client, new URIBuilder(root).setPath("/api/splitChanges").build(), metrics);
+    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, Metrics metrics, IStorage storage) throws URISyntaxException {
+        return new HttpSplitChangeFetcher(client, new URIBuilder(root).setPath("/api/splitChanges").build(), metrics, storage);
     }
 
-    private HttpSplitChangeFetcher(CloseableHttpClient client, URI uri, Metrics metrics) {
+    private HttpSplitChangeFetcher(CloseableHttpClient client, URI uri, Metrics metrics, IStorage storage) {
         _client = client;
         _target = uri;
         _metrics = metrics;
+        _splitChangeCache = new SplitChangeCache(storage);
         checkNotNull(_target);
     }
 
@@ -49,6 +54,11 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
     public SplitChange fetch(long since) {
 
         long start = System.currentTimeMillis();
+
+        if (!Utils.isReachable(_target)) {
+            Timber.d("%s is NOT REACHABLE... USING PERSISTED", _target.getHost());
+            return _splitChangeCache.getChanges(since);
+        }
 
         CloseableHttpResponse response = null;
 
@@ -69,7 +79,11 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
             String json = EntityUtils.toString(response.getEntity());
             Timber.d("Received json: %s", json);
 
-            return Json.fromJson(json, SplitChange.class);
+            SplitChange splitChange = Json.fromJson(json, SplitChange.class);
+
+            _splitChangeCache.addChange(splitChange);
+
+            return splitChange;
         } catch (Throwable t) {
             _metrics.count(PREFIX + ".exception", 1);
             throw new IllegalStateException("Problem fetching splitChanges: " + t.getMessage(), t);

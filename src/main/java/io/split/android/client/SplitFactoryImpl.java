@@ -1,20 +1,6 @@
 package io.split.android.client;
 
-import io.split.android.client.impressions.AsynchronousImpressionListener;
-import io.split.android.client.impressions.ImpressionListener;
-import io.split.android.client.impressions.ImpressionsManager;
-import io.split.android.client.interceptors.AddSplitHeadersFilter;
-import io.split.android.client.interceptors.GzipDecoderResponseInterceptor;
-import io.split.android.client.interceptors.GzipEncoderRequestInterceptor;
-import io.split.android.client.metrics.CachedMetrics;
-import io.split.android.client.metrics.FireAndForgetMetrics;
-import io.split.android.client.metrics.HttpMetrics;
-import io.split.android.engine.SDKReadinessGates;
-import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
-import io.split.android.engine.experiments.SplitChangeFetcher;
-import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.segments.RefreshableSegmentFetcher;
-import io.split.android.engine.segments.SegmentChangeFetcher;
+import android.content.Context;
 
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
@@ -34,11 +20,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
-import timber.log.Timber;
-
-
-import javax.net.ssl.SSLContext;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -50,6 +31,27 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import javax.net.ssl.SSLContext;
+
+import io.split.android.client.impressions.AsynchronousImpressionListener;
+import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.impressions.ImpressionsManager;
+import io.split.android.client.interceptors.AddSplitHeadersFilter;
+import io.split.android.client.interceptors.GzipDecoderResponseInterceptor;
+import io.split.android.client.interceptors.GzipEncoderRequestInterceptor;
+import io.split.android.client.metrics.CachedMetrics;
+import io.split.android.client.metrics.FireAndForgetMetrics;
+import io.split.android.client.metrics.HttpMetrics;
+import io.split.android.client.storage.IStorage;
+import io.split.android.client.storage.MemoryAndFileStorage;
+import io.split.android.engine.SDKReadinessGates;
+import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
+import io.split.android.engine.experiments.SplitChangeFetcher;
+import io.split.android.engine.experiments.SplitParser;
+import io.split.android.engine.segments.RefreshableSegmentFetcher;
+import io.split.android.engine.segments.SegmentChangeFetcher;
+import timber.log.Timber;
+
 public class SplitFactoryImpl implements SplitFactory {
 
     private static Random RANDOM = new Random();
@@ -59,7 +61,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final Runnable destroyer;
     private boolean isTerminated = false;
 
-    public SplitFactoryImpl(String apiToken, SplitClientConfig config) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+    public SplitFactoryImpl(String apiToken, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         SSLContext sslContext = null;
         try {
             sslContext = SSLContexts.custom()
@@ -119,12 +121,14 @@ public class SplitFactoryImpl implements SplitFactory {
         URI rootTarget = URI.create(config.endpoint());
         URI eventsRootTarget = URI.create(config.eventsEndpoint());
 
+        // TODO: 11/23/17  Add MetricsCache
         // Metrics
         HttpMetrics httpMetrics = HttpMetrics.create(httpclient, eventsRootTarget);
         final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
 
         SDKReadinessGates gates = new SDKReadinessGates();
 
+        // TODO: 11/23/17  Add SegmentsCache
         // Segments
         SegmentChangeFetcher segmentChangeFetcher = HttpSegmentChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget);
         final RefreshableSegmentFetcher segmentFetcher = new RefreshableSegmentFetcher(segmentChangeFetcher,
@@ -135,8 +139,10 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
+        IStorage splitChangeStorage = new MemoryAndFileStorage(context);
+
         // Feature Changes
-        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget);
+        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage);
 
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), gates);
 

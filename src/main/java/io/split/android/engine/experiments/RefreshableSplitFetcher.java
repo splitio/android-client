@@ -104,7 +104,11 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             Timber.e("RefreshableSplitFetcher failed: %s" , t.getMessage());
             Timber.d(t);
         } finally {
-            Timber.d("split fetch before: %s, after: %l", start, _changeNumber.get());
+            try {
+                Timber.d("split fetch before: %d, after: %d", start, _changeNumber.get());
+            } catch (Exception e) {
+                Timber.e(e);
+            }
         }
     }
 

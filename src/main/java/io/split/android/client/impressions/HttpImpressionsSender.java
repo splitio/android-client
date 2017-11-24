@@ -45,11 +45,11 @@ public class HttpImpressionsSender implements ImpressionsSender {
             int status = response.getStatusLine().getStatusCode();
 
             if (status < 200 || status >= 300) {
-                Timber.w("Response status was: %s", status);
+                Timber.w("Response status was: %i", status);
             }
 
         } catch (Throwable t) {
-            Timber.w(t, "Exception when posting impressions %s", impressions.toString());
+            Timber.w(t, "Exception when posting impressions %s", impressions);
         } finally {
             Utils.forceClose(response);
         }

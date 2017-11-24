@@ -1,14 +1,15 @@
 package io.split.android.client;
 
-import io.split.android.grammar.Treatments;
-import timber.log.Timber;
-
+import android.content.Context;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.concurrent.TimeoutException;
+
+import io.split.android.grammar.Treatments;
+import timber.log.Timber;
 
 /**
  * Builds an instance of SplitClient.
@@ -27,8 +28,8 @@ public class SplitFactoryBuilder {
      * @throws java.util.concurrent.TimeoutException if you asked to block until the sdk was
      *                                               ready and the timeout specified via config#ready() passed.
      */
-    public static SplitFactory build(String apiToken) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
-        return build(apiToken, SplitClientConfig.builder().build());
+    public static SplitFactory build(String apiToken, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+        return build(apiToken, SplitClientConfig.builder().build(), context);
     }
 
     /**
@@ -42,11 +43,11 @@ public class SplitFactoryBuilder {
      * @throws java.util.concurrent.TimeoutException if you asked to block until the sdk was
      *                                               ready and the timeout specified via config#ready() passed.
      */
-    public static synchronized SplitFactory build(String apiToken, SplitClientConfig config) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+    public static synchronized SplitFactory build(String apiToken, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         if (LocalhostSplitFactory.LOCALHOST.equals(apiToken)) {
             return LocalhostSplitFactory.createLocalhostSplitFactory();
         } else {
-            return new SplitFactoryImpl(apiToken, config);
+            return new SplitFactoryImpl(apiToken, config, context);
 
         }
     }
@@ -80,7 +81,7 @@ public class SplitFactoryBuilder {
         }
 
         SplitClientConfig config = SplitClientConfig.builder().build();
-        SplitClient client = SplitFactoryBuilder.build("API_KEY", config).client();
+        SplitClient client = SplitFactoryBuilder.build("API_KEY", config, null).client();
 
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
