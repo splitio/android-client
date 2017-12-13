@@ -1,6 +1,7 @@
 package io.split.android.client.cache;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -80,7 +81,7 @@ public class SplitCache implements ISplitCache {
     @Override
     public List<String> getSplitNames() {
         String[] array = _storage.getAllIds();
-        List<String> storedIds = Arrays.asList(array);
+        List<String> storedIds = new ArrayList<>(Arrays.asList(array));
         for (String id :
                 array) {
             if (id.startsWith(CHANGE_NUMBER_FILE_PREFIX)) {
