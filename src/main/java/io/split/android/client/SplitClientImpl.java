@@ -37,16 +37,19 @@ public final class SplitClientImpl implements SplitClient {
     private final ImpressionListener _impressionListener;
     private final Metrics _metrics;
     private final SplitClientConfig _config;
+    private final String _matchingKey;
 
-    public SplitClientImpl(SplitFactory container, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config) {
+    public SplitClientImpl(SplitFactory container, String matchingKey, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config) {
         _container = container;
         _splitFetcher = splitFetcher;
         _impressionListener = impressionListener;
         _metrics = metrics;
         _config = config;
+        _matchingKey = matchingKey;
 
         checkNotNull(_splitFetcher);
         checkNotNull(_impressionListener);
+        checkNotNull(_matchingKey);
     }
 
     @Override
@@ -55,29 +58,29 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
-    public String getTreatment(String key, String split) {
-        return getTreatment(key, split, Collections.<String, Object>emptyMap());
+    public String getTreatment(String split) {
+        return getTreatment(split, Collections.<String, Object>emptyMap());
     }
 
     @Override
-    public String getTreatment(String key, String split, Map<String, Object> attributes) {
-        return getTreatment(key, null, split, attributes);
+    public String getTreatment(String split, Map<String, Object> attributes) {
+        return getTreatment(_matchingKey, null, split, attributes);
     }
 
-    @Override
-    public String getTreatment(Key key, String split, Map<String, Object> attributes) {
-        if (key == null) {
-            Timber.w("key object was null for feature: %s", split);
-            return Treatments.CONTROL;
-        }
-
-        if (key.matchingKey() == null || key.bucketingKey() == null) {
-            Timber.w("key object had null matching or bucketing key: %s", split);
-            return Treatments.CONTROL;
-        }
-
-        return getTreatment(key.matchingKey(), key.bucketingKey(), split, attributes);
-    }
+//    @Override
+//    public String getTreatment(Key key, String split, Map<String, Object> attributes) {
+//        if (key == null) {
+//            Timber.w("key object was null for feature: %s", split);
+//            return Treatments.CONTROL;
+//        }
+//
+//        if (key.matchingKey() == null || key.bucketingKey() == null) {
+//            Timber.w("key object had null matching or bucketing key: %s", split);
+//            return Treatments.CONTROL;
+//        }
+//
+//        return getTreatment(key.matchingKey(), key.bucketingKey(), split, attributes);
+//    }
 
     private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
         try {

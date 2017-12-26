@@ -1,7 +1,5 @@
 package io.split.android.client;
 
-import io.split.android.client.api.Key;
-
 import java.util.Map;
 
 /**
@@ -35,11 +33,10 @@ public interface SplitClient {
      * <p/>
      * This method does not throw any exceptions. It also never returns null.
      *
-     * @param key      a unique key of your customer (e.g. user_id, user_email, account_id, etc.) MUST not be null.
      * @param split the feature we want to evaluate. MUST NOT be null.
      * @return the evaluated treatment, the default treatment of this feature, or 'control'.
      */
-    String getTreatment(String key, String split);
+    String getTreatment(String split);
 
     /**
      * This method is useful when you want to determine the treatment to show
@@ -51,12 +48,11 @@ public interface SplitClient {
      * vs. premium plan. Another example is to show a different treatment
      * to users created after a certain date.
      *
-     * @param key         a unique key of your customer (e.g. user_id, user_email, account_id, etc.) MUST not be null.
      * @param split    the feature we want to evaluate. MUST NOT be null.
      * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatment, the default treatment of this feature, or 'control'.
      */
-    String getTreatment(String key, String split, Map<String, Object> attributes);
+    String getTreatment(String split, Map<String, Object> attributes);
 
     /**
      * To understand why this method is useful, consider the following simple Split as an example:
@@ -89,7 +85,7 @@ public interface SplitClient {
      *
      * @return the evaluated treatment, the default treatment of this feature, or 'control'.
      */
-    String getTreatment(Key key, String split, Map<String, Object> attributes);
+//    String getTreatment(Key key, String split, Map<String, Object> attributes);
 
 
     /**

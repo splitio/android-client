@@ -48,8 +48,8 @@ import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
 import io.split.android.engine.experiments.SplitChangeFetcher;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.segments.RefreshableSegmentFetcher;
-import io.split.android.engine.segments.SegmentChangeFetcher;
+import io.split.android.engine.segments.MySegmentsFetcher;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import timber.log.Timber;
 
 public class SplitFactoryImpl implements SplitFactory {
@@ -61,7 +61,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final Runnable destroyer;
     private boolean isTerminated = false;
 
-    public SplitFactoryImpl(String apiToken, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+    public SplitFactoryImpl(String apiToken, String matchingKey, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         SSLContext sslContext = null;
         try {
             sslContext = SSLContexts.custom()
@@ -129,19 +129,15 @@ public class SplitFactoryImpl implements SplitFactory {
         SDKReadinessGates gates = new SDKReadinessGates();
 
         // TODO: 11/23/17  Add SegmentsCache
-        // Segments
-        SegmentChangeFetcher segmentChangeFetcher = HttpSegmentChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget);
-        final RefreshableSegmentFetcher segmentFetcher = new RefreshableSegmentFetcher(segmentChangeFetcher,
-                findPollingPeriod(RANDOM, config.segmentsRefreshRate()),
-                config.numThreadsForSegmentFetch(),
-                gates);
 
+        // Segments
+        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget);
+        final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), matchingKey);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
-        IStorage splitChangeStorage = new MemoryAndFileStorage(context);
-
         // Feature Changes
+        IStorage splitChangeStorage = new MemoryAndFileStorage(context);
         SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage);
 
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), gates);
@@ -193,7 +189,7 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-        _client = new SplitClientImpl(this, splitFetcherProvider.getFetcher(), impressionListener, cachedFireAndForgetMetrics, config);
+        _client = new SplitClientImpl(this, matchingKey, splitFetcherProvider.getFetcher(), impressionListener, cachedFireAndForgetMetrics, config);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         if (config.blockUntilReady() > 0) {

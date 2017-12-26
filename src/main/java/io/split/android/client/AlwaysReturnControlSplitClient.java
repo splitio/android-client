@@ -14,17 +14,12 @@ import java.util.Map;
 public class AlwaysReturnControlSplitClient implements io.split.android.client.SplitClient {
 
     @Override
-    public String getTreatment(String key, String split) {
+    public String getTreatment(String split) {
         return Treatments.CONTROL;
     }
 
     @Override
-    public String getTreatment(String key, String split, Map<String, Object> attributes) {
-        return Treatments.CONTROL;
-    }
-
-    @Override
-    public String getTreatment(Key key, String split, Map<String, Object> attributes) {
+    public String getTreatment(String split, Map<String, Object> attributes) {
         return Treatments.CONTROL;
     }
 

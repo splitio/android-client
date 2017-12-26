@@ -2,11 +2,11 @@ package io.split.android.client;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import timber.log.Timber;
-
 
 import java.io.IOException;
 import java.util.Map;
+
+import timber.log.Timber;
 
 /**
  * An implementation of SplitClient that considers all partitions
@@ -25,13 +25,13 @@ public final class LocalhostSplitFactory implements SplitFactory {
     private final LocalhostSplitManager _manager;
     private final LocalhostSplitFile _splitFile;
 
-    public static LocalhostSplitFactory createLocalhostSplitFactory() throws IOException {
+    public static LocalhostSplitFactory createLocalhostSplitFactory(String key) throws IOException {
         String directory = System.getProperty("user.home");
         Preconditions.checkNotNull(directory, "Property user.home should be set when using environment: " + LOCALHOST);
-        return new LocalhostSplitFactory(directory);
+        return new LocalhostSplitFactory(directory, key);
     }
 
-    public LocalhostSplitFactory(String directory) throws IOException {
+    public LocalhostSplitFactory(String directory, String key) throws IOException {
         Preconditions.checkNotNull(directory, "directory must not be null");
 
         Timber.i("home = %s",directory);
@@ -39,7 +39,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
         _splitFile = new LocalhostSplitFile(this, directory, FILENAME);
 
         Map<String, String> _featureToTreatmentMap = _splitFile.readOnSplits();
-        _client = new LocalhostSplitClient(this, _featureToTreatmentMap);
+        _client = new LocalhostSplitClient(this, key, _featureToTreatmentMap);
         _manager = new LocalhostSplitManager(_featureToTreatmentMap);
 
         _splitFile.registerWatcher();

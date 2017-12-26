@@ -28,8 +28,8 @@ public class SplitFactoryBuilder {
      * @throws java.util.concurrent.TimeoutException if you asked to block until the sdk was
      *                                               ready and the timeout specified via config#ready() passed.
      */
-    public static SplitFactory build(String apiToken, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
-        return build(apiToken, SplitClientConfig.builder().build(), context);
+    public static SplitFactory build(String apiToken, String matchingKey, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+        return build(apiToken, matchingKey, SplitClientConfig.builder().build(), context);
     }
 
     /**
@@ -43,11 +43,11 @@ public class SplitFactoryBuilder {
      * @throws java.util.concurrent.TimeoutException if you asked to block until the sdk was
      *                                               ready and the timeout specified via config#ready() passed.
      */
-    public static synchronized SplitFactory build(String apiToken, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+    public static synchronized SplitFactory build(String apiToken, String matchingKey, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         if (LocalhostSplitFactory.LOCALHOST.equals(apiToken)) {
-            return LocalhostSplitFactory.createLocalhostSplitFactory();
+            return LocalhostSplitFactory.createLocalhostSplitFactory(matchingKey);
         } else {
-            return new SplitFactoryImpl(apiToken, config, context);
+            return new SplitFactoryImpl(apiToken, matchingKey, config, context);
 
         }
     }
@@ -58,8 +58,8 @@ public class SplitFactoryBuilder {
      * @return a SplitFactory
      * @throws IOException if there were problems reading the override file from disk.
      */
-    public static SplitFactory local() throws IOException {
-        return LocalhostSplitFactory.createLocalhostSplitFactory();
+    public static SplitFactory local(String key) throws IOException {
+        return LocalhostSplitFactory.createLocalhostSplitFactory(key);
     }
 
     /**
@@ -69,8 +69,8 @@ public class SplitFactoryBuilder {
      * @return a SplitFactory
      * @throws IOException if there were problems reading the override file from disk.
      */
-    public static SplitFactory local(String home) throws IOException {
-        return new LocalhostSplitFactory(home);
+    public static SplitFactory local(String home, String key) throws IOException {
+        return new LocalhostSplitFactory(home, key);
     }
 
     public static void main(String... args) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
@@ -81,7 +81,6 @@ public class SplitFactoryBuilder {
         }
 
         SplitClientConfig config = SplitClientConfig.builder().build();
-        SplitClient client = SplitFactoryBuilder.build("API_KEY", config, null).client();
 
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -96,8 +95,9 @@ public class SplitFactoryBuilder {
                     System.out.println("Could not understand command");
                     continue;
                 }
+                SplitClient client = SplitFactoryBuilder.build("API_KEY", userIdAndSplit[0], config, null).client();
 
-                boolean isOn = client.getTreatment(userIdAndSplit[0], userIdAndSplit[1]).equals("on");
+                boolean isOn = client.getTreatment(userIdAndSplit[1]).equals("on");
 
                 System.out.println(isOn ? Treatments.ON : Treatments.OFF);
             }
