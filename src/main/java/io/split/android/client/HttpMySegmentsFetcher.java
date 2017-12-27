@@ -1,15 +1,19 @@
 package io.split.android.client;
 
+import com.google.gson.reflect.TypeToken;
+
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.utils.Json;
@@ -51,7 +55,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
         CloseableHttpResponse response = null;
 
         try {
-            String path = _target.getPath() + "/mySegments/" + matchingKey;
+            String path = String.format("%s/%s", _target.getPath(), matchingKey);
             URI uri = new URIBuilder(_target).setPath(path).build();
             HttpGet request = new HttpGet(uri);
             response = _client.execute(request);
@@ -67,7 +71,9 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
             String json = EntityUtils.toString(response.getEntity());
 
             Timber.d("Received json: %s", json);
-            MySegment[] mySegmentsArray = Json.fromJson(json, MySegment[].class);
+            Type mapType = new TypeToken<Map<String,MySegment[]>>(){}.getType();
+            Map<String,MySegment[]> mySegmentsMap = Json.fromJson(json, mapType);
+            MySegment[] mySegmentsArray = mySegmentsMap.get("mySegments");
             return Arrays.asList(mySegmentsArray);
         } catch (Throwable t) {
             _metrics.count(PREFIX + ".exception", 1);

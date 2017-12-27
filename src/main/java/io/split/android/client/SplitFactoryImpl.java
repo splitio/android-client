@@ -132,7 +132,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Segments
         MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget);
-        final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), matchingKey);
+        final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), matchingKey, gates);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
 

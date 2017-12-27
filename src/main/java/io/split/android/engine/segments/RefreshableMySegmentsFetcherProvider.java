@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.split.android.engine.SDKReadinessGates;
 import timber.log.Timber;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -25,16 +26,21 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
     private final AtomicLong _refreshEveryNSeconds;
 
     private final Object _lock = new Object();
-    private RefreshableMySegments _mySegments;
     private final ScheduledExecutorService _scheduledExecutorService;
+    private final SDKReadinessGates _gates;
+    private RefreshableMySegments _mySegments;
     private String _matchingKey;
 
 
-    public RefreshableMySegmentsFetcherProvider(MySegmentsFetcher mySegmentsFetcher, long refreshEveryNSeconds, String matchingKey) {
+    public RefreshableMySegmentsFetcherProvider(MySegmentsFetcher mySegmentsFetcher, long refreshEveryNSeconds, String matchingKey, SDKReadinessGates sdkBuildBlocker) {
         _mySegmentsFetcher = mySegmentsFetcher;
-        _matchingKey = matchingKey;
         checkNotNull(_mySegmentsFetcher);
+
+        _matchingKey = matchingKey;
         checkNotNull(_matchingKey);
+
+        _gates = sdkBuildBlocker;
+        checkNotNull(_gates);
 
         checkArgument(refreshEveryNSeconds >= 0L);
         _refreshEveryNSeconds = new AtomicLong(refreshEveryNSeconds);
@@ -46,13 +52,13 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
 
     }
 
-        public RefreshableMySegments mySegments() {
+    public RefreshableMySegments mySegments() {
         synchronized (_lock) {
             if (_mySegments != null) {
                 return _mySegments;
             }
 
-            _mySegments = RefreshableMySegments.create(_matchingKey, _mySegmentsFetcher);
+            _mySegments = RefreshableMySegments.create(_matchingKey, _mySegmentsFetcher, _gates);
 
             _scheduledExecutorService.scheduleWithFixedDelay(_mySegments, 0L, _refreshEveryNSeconds.get(), TimeUnit.SECONDS);
 

@@ -47,8 +47,8 @@ public final class SplitParser {
 
     private RefreshableMySegmentsFetcherProvider _mySegmentsFetcherProvider;
 
-    public SplitParser(RefreshableMySegmentsFetcherProvider _mySegmentsFetcherProvider) {
-        _mySegmentsFetcherProvider = _mySegmentsFetcherProvider;
+    public SplitParser(RefreshableMySegmentsFetcherProvider mySegmentsFetcherProvider) {
+        _mySegmentsFetcherProvider = mySegmentsFetcherProvider;
         checkNotNull(_mySegmentsFetcherProvider);
     }
 
