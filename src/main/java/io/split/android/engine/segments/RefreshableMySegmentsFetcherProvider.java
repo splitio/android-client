@@ -44,6 +44,7 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
 
         checkArgument(refreshEveryNSeconds >= 0L);
         _refreshEveryNSeconds = new AtomicLong(refreshEveryNSeconds);
+        Timber.d("RefreshableMySegmentsFetcherProvider: refreshEveryNSeconds %d", refreshEveryNSeconds);
 
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);

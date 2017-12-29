@@ -128,10 +128,9 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SDKReadinessGates gates = new SDKReadinessGates();
 
-        // TODO: 11/23/17  Add SegmentsCache
-
         // Segments
-        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget);
+        IStorage mySegmentsStorage = new MemoryAndFileStorage(context);
+        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget, mySegmentsStorage);
         final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), matchingKey, gates);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);

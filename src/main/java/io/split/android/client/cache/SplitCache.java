@@ -23,6 +23,10 @@ public class SplitCache implements ISplitCache {
     }
 
     private String getSplitId(String splitName) {
+        if (splitName.startsWith(SPLIT_FILE_PREFIX)) {
+            return splitName;
+        }
+
         return String.format("%s%s", SPLIT_FILE_PREFIX, splitName);
     }
 
@@ -84,7 +88,7 @@ public class SplitCache implements ISplitCache {
         List<String> storedIds = new ArrayList<>(Arrays.asList(array));
         for (String id :
                 array) {
-            if (id.startsWith(CHANGE_NUMBER_FILE_PREFIX)) {
+            if (!id.startsWith(SPLIT_FILE_PREFIX)) {
                 storedIds.remove(id);
             }
         }
