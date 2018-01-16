@@ -2,6 +2,8 @@ package io.split.android.engine.experiments;
 
 import com.google.common.collect.Lists;
 
+import java.util.List;
+
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherGroup;
@@ -17,7 +19,7 @@ import io.split.android.engine.matchers.DependencyMatcher;
 import io.split.android.engine.matchers.EqualToMatcher;
 import io.split.android.engine.matchers.GreaterThanOrEqualToMatcher;
 import io.split.android.engine.matchers.LessThanOrEqualToMatcher;
-import io.split.android.engine.matchers.UserDefinedSegmentMatcher;
+import io.split.android.engine.matchers.MySegmentsMatcher;
 import io.split.android.engine.matchers.collections.ContainsAllOfSetMatcher;
 import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
 import io.split.android.engine.matchers.collections.EqualToSetMatcher;
@@ -27,12 +29,9 @@ import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.RegularExpressionMatcher;
 import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
-import io.split.android.engine.segments.Segment;
-import io.split.android.engine.segments.SegmentFetcher;
+import io.split.android.engine.segments.MySegments;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import timber.log.Timber;
-
-
-import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -46,11 +45,11 @@ public final class SplitParser {
 
     public static final int CONDITIONS_UPPER_LIMIT = 50;
 
-    private SegmentFetcher _segmentFetcher;
+    private RefreshableMySegmentsFetcherProvider _mySegmentsFetcherProvider;
 
-    public SplitParser(SegmentFetcher segmentFetcher) {
-        _segmentFetcher = segmentFetcher;
-        checkNotNull(_segmentFetcher);
+    public SplitParser(RefreshableMySegmentsFetcherProvider mySegmentsFetcherProvider) {
+        _mySegmentsFetcherProvider = mySegmentsFetcherProvider;
+        checkNotNull(_mySegmentsFetcherProvider);
     }
 
     public ParsedSplit parse(Split split) {
@@ -106,8 +105,8 @@ public final class SplitParser {
                 break;
             case IN_SEGMENT:
                 checkNotNull(matcher.userDefinedSegmentMatcherData);
-                Segment segment = _segmentFetcher.segment(matcher.userDefinedSegmentMatcherData.segmentName);
-                delegate = new UserDefinedSegmentMatcher(segment);
+                MySegments mySegments = _mySegmentsFetcherProvider.mySegments();
+                delegate = new MySegmentsMatcher(mySegments, matcher.userDefinedSegmentMatcherData.segmentName);
                 break;
             case WHITELIST:
                 checkNotNull(matcher.whitelistMatcherData);

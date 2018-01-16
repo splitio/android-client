@@ -104,7 +104,11 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             Timber.e("RefreshableSplitFetcher failed: %s" , t.getMessage());
             Timber.d(t);
         } finally {
-            Timber.d("split fetch before: %s, after: %l", start, _changeNumber.get());
+            try {
+                Timber.d("split fetch before: %d, after: %d", start, _changeNumber.get());
+            } catch (Exception e) {
+                Timber.e(e);
+            }
         }
     }
 
@@ -131,9 +135,6 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             _changeNumber.set(change.till);
             return;
         }
-
-        Set<String> segmentsInUse = Sets.newHashSet();
-
 
         synchronized (_lock) {
             // check state one more time.
@@ -164,7 +165,6 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
                     continue;
                 }
 
-                segmentsInUse.addAll(collectSegmentsInUse(split));
                 toAdd.put(split.name, parsedSplit);
             }
 
@@ -184,20 +184,5 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             _changeNumber.set(change.till);
         }
 
-        _gates.registerSegments(segmentsInUse);
-    }
-
-    private List<String> collectSegmentsInUse(Split split) {
-        List<String> result = Lists.newArrayList();
-        for (Condition condition : split.conditions) {
-            for (Matcher matcher : condition.matcherGroup.matchers) {
-                if (matcher.matcherType == MatcherType.IN_SEGMENT) {
-                    if (matcher.userDefinedSegmentMatcherData != null && matcher.userDefinedSegmentMatcherData.segmentName != null) {
-                        result.add(matcher.userDefinedSegmentMatcherData.segmentName);
-                    }
-                }
-            }
-        }
-        return result;
     }
 }

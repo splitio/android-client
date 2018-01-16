@@ -53,7 +53,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         try {
             post(new URIBuilder(_target).setPath("/api/metrics/time").build(), dto);
         } catch (Throwable t) {
-            Timber.w(t, "Exception when posting metric %s", dto.toString());
+            Timber.w(t, "Exception when posting metric %s", dto);
         }
 
     }
@@ -64,7 +64,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         try {
             post(new URIBuilder(_target).setPath("/api/metrics/counter").build(), dto);
         } catch (Throwable t) {
-            Timber.w(t, "Exception when posting metric %s", dto.toString());
+            Timber.w(t, "Exception when posting metric %s", dto);
         }
 
     }

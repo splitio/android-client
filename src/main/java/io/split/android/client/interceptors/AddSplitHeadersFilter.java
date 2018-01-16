@@ -31,13 +31,13 @@ public class AddSplitHeadersFilter implements HttpRequestInterceptor {
         String hostname = null;
         String ip = null;
 
-        try {
-            InetAddress localHost = InetAddress.getLocalHost();
-            hostname = localHost.getHostName();
-            ip = localHost.getHostAddress();
-        } catch (Exception e) {
-            Timber.e(e,"Could not resolve InetAddress");
-        }
+//        try {
+//            InetAddress localHost = InetAddress.getLocalHost();
+//            hostname = localHost.getHostName();
+//            ip = localHost.getHostAddress();
+//        } catch (Exception e) {
+//            Timber.e(e,"Could not resolve InetAddress");
+//        }
 
         return new AddSplitHeadersFilter(apiToken, hostname, ip);
     }
