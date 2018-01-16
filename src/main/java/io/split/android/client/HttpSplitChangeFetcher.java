@@ -10,8 +10,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Created by adilaijaz on 5/30/15.
  */
 public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
-    private static final Logger _log = LoggerFactory.getLogger(HttpSplitChangeFetcher.class);
 
     private static final String SINCE = "since";
     private static final String PREFIX = "splitChangeFetcher";
@@ -68,9 +67,7 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
 
 
             String json = EntityUtils.toString(response.getEntity());
-            if (_log.isDebugEnabled()) {
-                _log.debug("Received json: " + json);
-            }
+            Timber.d("Received json: %s", json);
 
             return Json.fromJson(json, SplitChange.class);
         } catch (Throwable t) {

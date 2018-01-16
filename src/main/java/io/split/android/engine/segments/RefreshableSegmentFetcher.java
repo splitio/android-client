@@ -2,9 +2,10 @@ package io.split.android.engine.segments;
 
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import io.split.android.engine.SDKReadinessGates;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.io.Closeable;
 import java.util.List;
@@ -23,7 +24,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @author adil
  */
 public class RefreshableSegmentFetcher implements Closeable, SegmentFetcher {
-    private static final Logger _log = LoggerFactory.getLogger(RefreshableSegmentFetcher.class);
 
     private final SegmentChangeFetcher _segmentChangeFetcher;
     private final AtomicLong _refreshEveryNSeconds;
@@ -83,13 +83,13 @@ public class RefreshableSegmentFetcher implements Closeable, SegmentFetcher {
         _scheduledExecutorService.shutdown();
         try {
             if (!_scheduledExecutorService.awaitTermination(2L, TimeUnit.SECONDS)) { //optional *
-                _log.info("Executor did not terminate in the specified time.");
+                Timber.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = _scheduledExecutorService.shutdownNow(); //optional **
-                _log.info("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
-            _log.error("Shutdown of SegmentFetchers was interrupted");
+            Timber.e("Shutdown of SegmentFetchers was interrupted");
             Thread.currentThread().interrupt();
         }
 

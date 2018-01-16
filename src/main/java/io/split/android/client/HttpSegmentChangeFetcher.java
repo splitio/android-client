@@ -5,13 +5,14 @@ import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Utils;
 import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.segments.SegmentChangeFetcher;
+
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import timber.log.Timber;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,7 +23,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Created by adilaijaz on 5/22/15.
  */
 public final class HttpSegmentChangeFetcher implements SegmentChangeFetcher {
-    private static final Logger _log = LoggerFactory.getLogger(HttpSegmentChangeFetcher.class);
 
     private static final String SINCE = "since";
     private static final String PREFIX = "segmentChangeFetcher";
@@ -61,17 +61,15 @@ public final class HttpSegmentChangeFetcher implements SegmentChangeFetcher {
             int statusCode = response.getStatusLine().getStatusCode();
 
             if (statusCode < 200 || statusCode >= 300) {
-                _log.error("Response status was: " + statusCode);
+                Timber.e("Response status was: %i", statusCode);
                 _metrics.count(PREFIX + ".status." + statusCode, 1);
                 throw new IllegalStateException("Could not retrieve segment changes for " + segmentName + "; http return code " + statusCode);
             }
 
 
             String json = EntityUtils.toString(response.getEntity());
-            if (_log.isDebugEnabled()) {
-                _log.debug("Received json: " + json);
-            }
 
+            Timber.d("Received json: %s", json);
             return Json.fromJson(json, SegmentChange.class);
         } catch (Throwable t) {
             _metrics.count(PREFIX + ".exception", 1);

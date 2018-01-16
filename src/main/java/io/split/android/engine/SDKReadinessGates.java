@@ -1,7 +1,7 @@
 package io.split.android.engine;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.util.Collection;
 import java.util.Map;
@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
  * Created by adilaijaz on 4/27/16.
  */
 public class SDKReadinessGates {
-    private static final Logger _log = LoggerFactory.getLogger(SDKReadinessGates.class);
 
     private final CountDownLatch _splitsAreReady = new CountDownLatch(1);
     private final ConcurrentMap<String, CountDownLatch> _segmentsAreReady = new ConcurrentHashMap<>();
@@ -60,7 +59,7 @@ public class SDKReadinessGates {
         long originalCount = _splitsAreReady.getCount();
         _splitsAreReady.countDown();
         if (originalCount > 0L) {
-            _log.info("splits are ready");
+            Timber.i("splits are ready");
         }
     }
 
@@ -88,7 +87,7 @@ public class SDKReadinessGates {
 
         Set<String> segments = _segmentsAreReady.keySet();
 
-        _log.info("Registered segments: " + segments);
+        Timber.i("Registered segments: %s", segments);
 
         return true;
     }
@@ -109,7 +108,7 @@ public class SDKReadinessGates {
         cdl.countDown();
 
         if (originalCount > 0L) {
-            _log.info(segmentName + " segment is ready");
+            Timber.i("%s segment is ready", segmentName);
         }
     }
 
@@ -140,7 +139,7 @@ public class SDKReadinessGates {
             CountDownLatch cdl = entry.getValue();
 
             if (!cdl.await(timeLeft, TimeUnit.MILLISECONDS)) {
-                _log.error(segmentName + " is not ready yet");
+                Timber.e("%s is not ready yet", segmentName);
                 return false;
             }
 

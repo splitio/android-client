@@ -1,4 +1,4 @@
-package io.split.android.android_client;
+package io.split.android;
 
 import org.junit.Test;
 

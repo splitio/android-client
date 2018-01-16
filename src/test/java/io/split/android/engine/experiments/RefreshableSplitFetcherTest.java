@@ -1,6 +1,7 @@
 package io.split.android.engine.experiments;
 
 import com.google.common.collect.Lists;
+
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherGroup;
@@ -18,9 +19,11 @@ import io.split.android.engine.segments.SegmentFetcher;
 import io.split.android.engine.segments.StaticSegment;
 import io.split.android.engine.segments.StaticSegmentFetcher;
 import io.split.android.grammar.Treatments;
+
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import timber.log.Timber;
+
 
 import java.util.Collections;
 import java.util.List;
@@ -42,8 +45,6 @@ import static org.mockito.Mockito.when;
  * Created by adilaijaz on 5/11/15.
  */
 public class RefreshableSplitFetcherTest {
-    private static final Logger _log = LoggerFactory.getLogger(RefreshableSplitFetcherTest.class);
-
     @Test
     public void works_when_we_start_without_any_state() throws InterruptedException {
         works(0);
@@ -70,9 +71,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                _log.info("Executor did not terminate in the specified time.");
+                Timber.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                _log.info("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -157,9 +158,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                _log.info("Executor did not terminate in the specified time.");
+                Timber.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                _log.info("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -192,9 +193,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                _log.info("Executor did not terminate in the specified time.");
+                Timber.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                _log.info("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -231,9 +232,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                _log.info("Executor did not terminate in the specified time.");
+                Timber.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                _log.info("Executor was abruptly shut down. These tasks will not be executed: " + droppedTasks);
+                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.

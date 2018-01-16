@@ -1,8 +1,8 @@
 package io.split.android.client;
 
 import io.split.android.grammar.Treatments;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,7 +14,6 @@ import java.util.concurrent.TimeoutException;
  * Builds an instance of SplitClient.
  */
 public class SplitFactoryBuilder {
-    private static final Logger _log = LoggerFactory.getLogger(SplitFactoryBuilder.class);
 
     /**
      * Instantiates a SplitFactory with default configurations
@@ -102,7 +101,7 @@ public class SplitFactoryBuilder {
                 System.out.println(isOn ? Treatments.ON : Treatments.OFF);
             }
         } catch (IOException io) {
-            _log.error(io.getMessage(), io);
+            Timber.e(io);
         }
     }
 }

@@ -11,8 +11,8 @@ import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.splitter.Splitter;
 import io.split.android.grammar.Treatments;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.util.Collections;
 import java.util.Map;
@@ -25,8 +25,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @author adil
  */
 public final class SplitClientImpl implements SplitClient {
-
-    private static final Logger _log = LoggerFactory.getLogger(SplitClientImpl.class);
 
     private static final String NOT_IN_SPLIT = "not in split";
     private static final String NO_RULE_MATCHED = "no rule matched";
@@ -69,12 +67,12 @@ public final class SplitClientImpl implements SplitClient {
     @Override
     public String getTreatment(Key key, String split, Map<String, Object> attributes) {
         if (key == null) {
-            _log.warn("key object was null for feature: " + split);
+            Timber.w("key object was null for feature: %s", split);
             return Treatments.CONTROL;
         }
 
         if (key.matchingKey() == null || key.bucketingKey() == null) {
-            _log.warn("key object had null matching or bucketing key: " + split);
+            Timber.w("key object had null matching or bucketing key: %s", split);
             return Treatments.CONTROL;
         }
 
@@ -84,12 +82,12 @@ public final class SplitClientImpl implements SplitClient {
     private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
         try {
             if (matchingKey == null) {
-                _log.warn("matchingKey was null for split: " + split);
+                Timber.w("matchingKey was null for split: %s", split);
                 return Treatments.CONTROL;
             }
 
             if (split == null) {
-                _log.warn("split was null for key: " + matchingKey);
+                Timber.w("split was null for key: %s", matchingKey);
                 return Treatments.CONTROL;
             }
 
@@ -112,7 +110,7 @@ public final class SplitClientImpl implements SplitClient {
             return result._treatment;
         } catch (Exception e) {
             try {
-                _log.error("CatchAll Exception", e);
+                Timber.e(e, "CatchAll Exception");
             } catch (Exception e1) {
                 // ignore
             }
@@ -126,7 +124,7 @@ public final class SplitClientImpl implements SplitClient {
             _impressionListener.log(new Impression(matchingKey, bucketingKey, split, result, System.currentTimeMillis(), label, changeNumber, attributes));
             _metrics.time(operation, System.currentTimeMillis() - start);
         } catch (Throwable t) {
-            _log.error("Exception", t);
+            Timber.e(t);
         }
     }
 
@@ -140,10 +138,10 @@ public final class SplitClientImpl implements SplitClient {
             result = getTreatmentWithoutExceptionHandling(matchingKey, bucketingKey, split, attributes);
         } catch (ChangeNumberExceptionWrapper e) {
             result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION, e.changeNumber());
-            _log.error("Exception", e.wrappedException());
+            Timber.e(e.wrappedException());
         } catch (Exception e) {
             result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION);
-            _log.error("Exception", e);
+            Timber.e(e);
         }
 
         return result;
@@ -153,9 +151,7 @@ public final class SplitClientImpl implements SplitClient {
         ParsedSplit parsedSplit = _splitFetcher.fetch(split);
 
         if (parsedSplit == null) {
-            if (_log.isDebugEnabled()) {
-                _log.debug("Returning control because no split was found for: " + split);
-            }
+            Timber.d("Returning control because no split was found for: %s", split);
             return new TreatmentLabelAndChangeNumber(Treatments.CONTROL, RULES_NOT_FOUND);
         }
 

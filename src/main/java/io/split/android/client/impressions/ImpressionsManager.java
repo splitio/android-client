@@ -2,12 +2,15 @@ package io.split.android.client.impressions;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
+
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import timber.log.Timber;
+
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -25,8 +28,6 @@ import java.util.concurrent.TimeUnit;
  * Created by patricioe on 6/17/16.
  */
 public class ImpressionsManager implements ImpressionListener, Runnable {
-
-    private static final Logger _log = LoggerFactory.getLogger(ImpressionsManager.class);
 
     private final SplitClientConfig _config;
     private final CloseableHttpClient _client;
@@ -71,7 +72,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
             KeyImpression keyImpression = keyImpression(impression);
             _queue.offer(keyImpression);
         } catch (Exception e) {
-            _log.warn("Unable to send impression to ImpressionsManager", e);
+            Timber.w(e, "Unable to send impression to ImpressionsManager");
         }
 
     }
@@ -83,7 +84,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
             sendImpressions();
             _scheduler.awaitTermination(_config.waitBeforeShutdown(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            _log.warn("Unable to close ImpressionsManager", e);
+            Timber.w(e, "Unable to close ImpressionsManager");
         }
 
     }
@@ -108,7 +109,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
     private void sendImpressions() {
 
         if (_queue.remainingCapacity() == 0) {
-            _log.warn("Split SDK impressions queue is full. Impressions may have been dropped. Consider increasing capacity.");
+            Timber.w("Split SDK impressions queue is full. Impressions may have been dropped. Consider increasing capacity.");
         }
 
         long start = System.currentTimeMillis();
@@ -146,9 +147,9 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
         _impressionsSender.post(toShip);
 
-        if(_config.debugEnabled()) {
-            _log.info(String.format("Posting %d Split impressions took %d millis",
-                    impressions.size(), (System.currentTimeMillis() - start)));
+        if (_config.debugEnabled()) {
+            Timber.i("Posting %d Split impressions took %d millis",
+                    impressions.size(), (System.currentTimeMillis() - start));
         }
     }
 

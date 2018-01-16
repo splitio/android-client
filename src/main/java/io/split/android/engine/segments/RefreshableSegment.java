@@ -2,8 +2,7 @@ package io.split.android.engine.segments;
 
 import io.split.android.client.dtos.SegmentChange;
 import io.split.android.engine.SDKReadinessGates;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @author adil
  */
 public class RefreshableSegment implements Runnable, Segment {
-    private static final Logger _log = LoggerFactory.getLogger(RefreshableSegment.class);
 
     private final String _segmentName;
     private final SegmentChangeFetcher _segmentChangeFetcher;
@@ -75,9 +73,7 @@ public class RefreshableSegment implements Runnable, Segment {
                 long start = _changeNumber.get();
                 runWithoutExceptionHandling();
                 long end = _changeNumber.get();
-                if (_log.isDebugEnabled()) {
-                    _log.debug(_segmentName + " segment fetch before: " + start + ", after: " + _changeNumber.get() + " size: " + _concurrentKeySet.size());
-                }
+                Timber.d("%s segment fetch before: %s after: %s size: %s", _segmentName, start, _changeNumber.get(), _concurrentKeySet.size());
                 if (start >= end) {
                     break;
                 }
@@ -86,11 +82,10 @@ public class RefreshableSegment implements Runnable, Segment {
             _gates.segmentIsReady(_segmentName);
 
         } catch (Throwable t) {
-            _log.error("RefreshableSegmentFetcher failed: " + t.getMessage());
-            if (_log.isDebugEnabled()) {
-                _log.debug("Reason:", t);
-            }
+            Timber.e("RefreshableSegmentFetcher failed: %s", t.getMessage());
+            Timber.d(t);
         }
+
     }
 
     private void runWithoutExceptionHandling() {
@@ -131,7 +126,7 @@ public class RefreshableSegment implements Runnable, Segment {
             }
 
             if (!change.added.isEmpty()) {
-                _log.info(_segmentName + " added keys: " + summarize(change.added));
+                Timber.i("%s added keys: %s", _segmentName, summarize(change.added));
             }
 
             for (String removed : change.removed) {
@@ -139,7 +134,7 @@ public class RefreshableSegment implements Runnable, Segment {
             }
 
             if (!change.removed.isEmpty()) {
-                _log.info(_segmentName + " removed keys: " + summarize(change.removed));
+                Timber.i("%s removed keys: %s", _segmentName, summarize(change.removed));
             }
 
             _changeNumber.set(change.till);

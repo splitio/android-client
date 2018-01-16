@@ -1,8 +1,8 @@
 package io.split.android.client.impressions;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import timber.log.Timber;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -18,8 +18,6 @@ import java.util.concurrent.TimeUnit;
  * @author adil
  */
 public class AsynchronousImpressionListener implements ImpressionListener {
-
-    private static final Logger _log = LoggerFactory.getLogger(AsynchronousImpressionListener.class);
 
     private final ImpressionListener _delegate;
     private final ExecutorService _executor;
@@ -50,9 +48,8 @@ public class AsynchronousImpressionListener implements ImpressionListener {
                     _delegate.log(impression);
                 }
             });
-        }
-        catch (Exception e) {
-            _log.warn("Unable to send impression to impression listener", e);
+        } catch (Exception e) {
+            Timber.w(e, "Unable to send impression to impression listener");
         }
     }
 
@@ -62,7 +59,7 @@ public class AsynchronousImpressionListener implements ImpressionListener {
             _executor.shutdown();
             _delegate.close();
         } catch (Exception e) {
-            _log.warn("Unable to close AsynchronousImpressionListener", e);
+            Timber.w(e, "Unable to close AsynchronousImpressionListener");
         }
     }
 }

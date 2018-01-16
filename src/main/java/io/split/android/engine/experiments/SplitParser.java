@@ -1,6 +1,7 @@
 package io.split.android.engine.experiments;
 
 import com.google.common.collect.Lists;
+
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherGroup;
@@ -28,8 +29,8 @@ import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
 import io.split.android.engine.segments.Segment;
 import io.split.android.engine.segments.SegmentFetcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import timber.log.Timber;
+
 
 import java.util.List;
 
@@ -44,7 +45,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public final class SplitParser {
 
     public static final int CONDITIONS_UPPER_LIMIT = 50;
-    private static final Logger _log = LoggerFactory.getLogger(SplitParser.class);
 
     private SegmentFetcher _segmentFetcher;
 
@@ -57,7 +57,7 @@ public final class SplitParser {
         try {
             return parseWithoutExceptionHandling(split);
         } catch (Throwable t) {
-            _log.error("Could not parse split: " + split, t);
+            Timber.e(t, "Could not parse split: %s", split);
             return null;
         }
     }
@@ -68,8 +68,8 @@ public final class SplitParser {
         }
 
         if (split.conditions.size() > CONDITIONS_UPPER_LIMIT) {
-            _log.warn(String.format("Dropping Split name=%s due to large number of conditions(%d)",
-                    split.name, split.conditions.size()));
+            Timber.w("Dropping Split name=%s due to large number of conditions(%d)",
+                    split.name, split.conditions.size());
             return null;
         }
 
