@@ -199,10 +199,8 @@ public class SplitClientConfig {
 
     public static final class Builder {
 
-        //private String _endpoint = "https://sdk-aws-staging.split.io/api“;
         private String _endpoint = "https://sdk.split.io/api";
         private boolean _endpointSet = false;
-        //private String _eventsEndpoint = "https://events-aws-staging.split.io/api”;
         private String _eventsEndpoint = "https://events.split.io/api";
         private boolean _eventsEndpointSet = false;
 
