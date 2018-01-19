@@ -119,7 +119,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
         sendImpressions();
     }
 
-    private void flushImpressions() {
+    private synchronized void flushImpressions() {
         if (_queue.remainingCapacity() == 0) {
             Timber.w("Split SDK impressions queue is full. Impressions may have been dropped. Consider increasing capacity.");
         }
@@ -128,6 +128,8 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
         List<KeyImpression> impressions = new ArrayList<>(_queue.size());
         _queue.drainTo(impressions);
+
+        _currentChunkSize = 0;
 
         _storageManager.writeChunk(impressions);
 

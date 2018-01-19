@@ -14,12 +14,15 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
+import timber.log.Timber;
 
 /**
  * Created by guillermo on 1/18/18.
  */
 
 public class ImpressionsStorageManager {
+
+    private static final String IMPRESSIONS_CHUNK_FILE_PREFIX = "impressions";
 
     private IStorage _storage;
 
@@ -58,9 +61,11 @@ public class ImpressionsStorageManager {
             toShip.add(testImpressionsDTO);
         }
 
-        String entity = Json.toJson(impressions);
+        String entity = Json.toJson(toShip);
 
-        String chunkId = String.format("impressions_%d_0.json", System.currentTimeMillis());
+        Timber.d("Entity to store: %s", entity);
+
+        String chunkId = String.format("%s_%d_0.json", IMPRESSIONS_CHUNK_FILE_PREFIX, System.currentTimeMillis());
 
         try {
             _storage.write(chunkId, entity);
@@ -82,9 +87,20 @@ public class ImpressionsStorageManager {
     }
 
     public String[] getAllChunkNames() {
-        String[] names = _storage.getAllIds();
-        for (String chunkId :
+        List<String> names = Lists.newArrayList(_storage.getAllIds());
+        List<String> chunkIds = Lists.newArrayList();
+
+        for (String name :
                 names) {
+            if (name.startsWith(IMPRESSIONS_CHUNK_FILE_PREFIX)) {
+                chunkIds.add(name);
+            }
+        }
+
+        List<String> resultChunkIds = Lists.newArrayList(chunkIds);
+
+        for (String chunkId :
+                chunkIds) {
             int idxStart = chunkId.indexOf("_");
             int idxEnd = chunkId.lastIndexOf("_");
 
@@ -94,11 +110,12 @@ public class ImpressionsStorageManager {
 
             long oneDayMillis = 3600 * 1000;
             if (diff > oneDayMillis) {
+                resultChunkIds.remove(chunkId);
                 _storage.delete(chunkId);
             }
         }
 
-        return _storage.getAllIds();
+        return resultChunkIds.toArray(new String[0]);
     }
 
     public void chunkSucceeded(String chunkId) {

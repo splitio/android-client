@@ -33,6 +33,11 @@ public class HttpImpressionsSender implements ImpressionsSender {
     @Override
     public void post(List<TestImpressions> impressions) {
 
+        if (!Utils.isReachable(_eventsEndpoint)) {
+            Timber.d("%s is NOT REACHABLE. Avoid trying to send impressions this time.", _eventsEndpoint.getHost());
+            return;
+        }
+
         synchronized (this) {
             String[] chunkNames = _storageManager.getAllChunkNames();
 
@@ -70,11 +75,12 @@ public class HttpImpressionsSender implements ImpressionsSender {
             response = _client.execute(request);
 
             int status = response.getStatusLine().getStatusCode();
-
+            String reason = response.getStatusLine().getReasonPhrase();
             if (status < 200 || status >= 300) {
-                Timber.w("Response status was: %i", status);
+                Timber.w("Response status was: %d. Reason: %s", status, reason);
                 return false;
             }
+            Timber.i("Entity sent: %s", entity);
 
             return true;
         } catch (Throwable t) {
