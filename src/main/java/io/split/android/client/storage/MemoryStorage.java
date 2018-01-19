@@ -33,4 +33,14 @@ public class MemoryStorage implements IStorage {
         Collection<String> ids = _storage.values();
         return ids.toArray(new String[ids.size()]);
     }
+
+    @Override
+    public boolean rename(String currentId, String newId) {
+        if (_storage.containsKey(currentId)) {
+            _storage.put(newId, _storage.get(currentId));
+            _storage.remove(currentId);
+            return true;
+        }
+        return false;
+    }
 }

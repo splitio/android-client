@@ -36,6 +36,7 @@ public class SplitClientConfig {
     private final ImpressionListener _impressionListener;
     private final int _impressionListenerCapacity;
     private final int _waitBeforeShutdown;
+    private long _impressionsChunkSize;
 
     // Proxy configs
     private final HttpHost _proxy;
@@ -56,7 +57,7 @@ public class SplitClientConfig {
                               int segmentsRefreshRate,
                               int impressionsRefreshRate,
                               int impressionsQueueSize,
-                              int metricsRefreshRate,
+                              long impressionsChunkSize, int metricsRefreshRate,
                               int connectionTimeout,
                               int readTimeout,
                               int numThreadsForSegmentFetch,
@@ -85,6 +86,7 @@ public class SplitClientConfig {
         _impressionListener = impressionListener;
         _impressionListenerCapacity = impressionListenerCapacity;
         _waitBeforeShutdown = waitBeforeShutdown;
+        _impressionsChunkSize = impressionsChunkSize;
         _proxy = proxy;
         _proxyUsername = proxyUsername;
         _proxyPassword = proxyPassword;
@@ -145,6 +147,10 @@ public class SplitClientConfig {
         return _impressionsQueueSize;
     }
 
+    public long impressionsChunkSize() {
+        return _impressionsChunkSize;
+    }
+
     public int metricsRefreshRate() {
         return _metricsRefreshRate;
     }
@@ -193,10 +199,11 @@ public class SplitClientConfig {
 
     public static final class Builder {
 
-        private String _endpoint = "https://sdk-aws-staging.split.io/api";
+        private String _endpoint = "https://sdk.split.io/api";
         private boolean _endpointSet = false;
-        private String _eventsEndpoint = "https://events-aws-staging.split.io/api";
+        private String _eventsEndpoint = "https://events.split.io/api";
         private boolean _eventsEndpointSet = false;
+
         private int _featuresRefreshRate = 60;
         private int _segmentsRefreshRate = 60;
         private int _impressionsRefreshRate = 30;
@@ -215,6 +222,7 @@ public class SplitClientConfig {
         private int _proxyPort = -1;
         private String _proxyUsername;
         private String _proxyPassword;
+        private long _impressionsChunkSize = 2 * 1024; //2KB default size
 
         public Builder() {
         }
@@ -422,6 +430,17 @@ public class SplitClientConfig {
         }
 
         /**
+         * Maximum size for impressions chunk to dump to storage and post.
+         *
+         * @param size MUST be > 0.
+         * @return this builder
+         */
+        public Builder impressionsChunkSize(long size) {
+            _impressionsChunkSize = size;
+            return this;
+        }
+
+        /**
          * The host location of the proxy. Default is localhost.
          *
          * @param proxyHost location of the proxy
@@ -495,6 +514,10 @@ public class SplitClientConfig {
                 throw new IllegalArgumentException("impressionsQueueSize must be > 0: " + _impressionsQueueSize);
             }
 
+            if (_impressionsChunkSize <=0 ) {
+                throw new IllegalArgumentException("impressionsChunkSize must be > 0: " + _impressionsChunkSize);
+            }
+
             if (_connectionTimeout <= 0) {
                 throw new IllegalArgumentException("connectionTimeOutInMs must be > 0: " + _connectionTimeout);
             }
@@ -533,7 +556,7 @@ public class SplitClientConfig {
                     _segmentsRefreshRate,
                     _impressionsRefreshRate,
                     _impressionsQueueSize,
-                    _metricsRefreshRate,
+                    _impressionsChunkSize, _metricsRefreshRate,
                     _connectionTimeout,
                     _readTimeout,
                     _numThreadsForSegmentFetch,
@@ -548,6 +571,9 @@ public class SplitClientConfig {
                     _proxyPassword);
         }
 
+        public void set_impressionsChunkSize(long _impressionsChunkSize) {
+            this._impressionsChunkSize = _impressionsChunkSize;
+        }
     }
 
 
