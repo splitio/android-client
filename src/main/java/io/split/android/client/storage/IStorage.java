@@ -37,4 +37,12 @@ public interface IStorage {
      * @return Array of element Ids
      */
     String[] getAllIds();
+
+    /**
+     * Changes the Id for an element in the storage
+     * @param currentId Current Id
+     * @param newId New Id for the element
+     * @return Whether the rename was successful or not
+     */
+    boolean rename(String currentId, String newId);
 }

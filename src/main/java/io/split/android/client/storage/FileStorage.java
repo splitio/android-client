@@ -2,6 +2,7 @@ package io.split.android.client.storage;
 
 import android.content.Context;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -73,5 +74,12 @@ public class FileStorage implements IStorage {
     @Override
     public String[] getAllIds() {
         return _context.fileList();
+    }
+
+    @Override
+    public boolean rename(String currentId, String newId) {
+        File oldFile = _context.getFileStreamPath(currentId);
+        File newFile = _context.getFileStreamPath(newId);
+        return oldFile.renameTo(newFile);
     }
 }

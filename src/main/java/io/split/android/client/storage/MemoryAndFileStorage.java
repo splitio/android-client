@@ -50,4 +50,13 @@ _fileStorage.delete(elementId);
     public String[] getAllIds() {
         return _fileStorage.getAllIds();
     }
+
+    @Override
+    public boolean rename(String currentId, String newId) {
+        if (_fileStorage.rename(currentId, newId)) {
+            _memoryStorage.rename(currentId,newId);
+            return true;
+        }
+        return false;
+    }
 }
