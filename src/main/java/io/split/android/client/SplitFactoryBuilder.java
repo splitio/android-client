@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.concurrent.TimeoutException;
 
+import io.split.android.client.api.Key;
 import io.split.android.grammar.Treatments;
 import timber.log.Timber;
 
@@ -15,6 +16,22 @@ import timber.log.Timber;
  * Builds an instance of SplitClient.
  */
 public class SplitFactoryBuilder {
+
+    /**
+     *
+     * @param apiToken
+     * @param matchingkey
+     * @param context
+     * @return
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws TimeoutException
+     * @throws URISyntaxException
+     */
+    public static SplitFactory build(String apiToken, String matchingkey, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+        Key key = new Key(matchingkey, null);
+        return build(apiToken, key, context);
+    }
 
     /**
      * Instantiates a SplitFactory with default configurations
@@ -28,8 +45,8 @@ public class SplitFactoryBuilder {
      * @throws java.util.concurrent.TimeoutException if you asked to block until the sdk was
      *                                               ready and the timeout specified via config#ready() passed.
      */
-    public static SplitFactory build(String apiToken, String matchingKey, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
-        return build(apiToken, matchingKey, SplitClientConfig.builder().build(), context);
+    public static SplitFactory build(String apiToken, Key key, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+        return build(apiToken, key, SplitClientConfig.builder().build(), context);
     }
 
     /**
@@ -43,11 +60,11 @@ public class SplitFactoryBuilder {
      * @throws java.util.concurrent.TimeoutException if you asked to block until the sdk was
      *                                               ready and the timeout specified via config#ready() passed.
      */
-    public static synchronized SplitFactory build(String apiToken, String matchingKey, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+    public static synchronized SplitFactory build(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         if (LocalhostSplitFactory.LOCALHOST.equals(apiToken)) {
-            return LocalhostSplitFactory.createLocalhostSplitFactory(matchingKey);
+            return LocalhostSplitFactory.createLocalhostSplitFactory(key.matchingKey());
         } else {
-            return new SplitFactoryImpl(apiToken, matchingKey, config, context);
+            return new SplitFactoryImpl(apiToken, key, config, context);
 
         }
     }
@@ -95,7 +112,8 @@ public class SplitFactoryBuilder {
                     System.out.println("Could not understand command");
                     continue;
                 }
-                SplitClient client = SplitFactoryBuilder.build("API_KEY", userIdAndSplit[0], config, null).client();
+                Key k = new Key(userIdAndSplit[0], null);
+                SplitClient client = SplitFactoryBuilder.build("API_KEY", k, config, null).client();
 
                 boolean isOn = client.getTreatment(userIdAndSplit[1]).equals("on");
 

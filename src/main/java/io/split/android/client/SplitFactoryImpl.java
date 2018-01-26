@@ -33,6 +33,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.net.ssl.SSLContext;
 
+import io.split.android.client.api.Key;
 import io.split.android.client.impressions.AsynchronousImpressionListener;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
@@ -63,7 +64,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final Runnable destroyer;
     private boolean isTerminated = false;
 
-    public SplitFactoryImpl(String apiToken, String matchingKey, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+    public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         SSLContext sslContext = null;
         try {
             sslContext = SSLContexts.custom()
@@ -133,7 +134,7 @@ public class SplitFactoryImpl implements SplitFactory {
         // Segments
         IStorage mySegmentsStorage = new MemoryAndFileStorage(context);
         MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget, mySegmentsStorage);
-        final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), matchingKey, gates);
+        final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), gates);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
@@ -192,7 +193,7 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-        _client = new SplitClientImpl(this, matchingKey, splitFetcherProvider.getFetcher(), impressionListener, cachedFireAndForgetMetrics, config);
+        _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(), impressionListener, cachedFireAndForgetMetrics, config);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         if (config.blockUntilReady() > 0) {
