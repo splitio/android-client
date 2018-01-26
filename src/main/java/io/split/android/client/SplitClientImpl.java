@@ -38,14 +38,16 @@ public final class SplitClientImpl implements SplitClient {
     private final Metrics _metrics;
     private final SplitClientConfig _config;
     private final String _matchingKey;
+    private final String _bucketingKey;
 
-    public SplitClientImpl(SplitFactory container, String matchingKey, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config) {
+    public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config) {
         _container = container;
         _splitFetcher = splitFetcher;
         _impressionListener = impressionListener;
         _metrics = metrics;
         _config = config;
-        _matchingKey = matchingKey;
+        _matchingKey = key.matchingKey();
+        _bucketingKey = key.bucketingKey();
 
         checkNotNull(_splitFetcher);
         checkNotNull(_impressionListener);
@@ -64,7 +66,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes) {
-        return getTreatment(_matchingKey, null, split, attributes);
+        return getTreatment(_matchingKey, _bucketingKey, split, attributes);
     }
 
 //    @Override
