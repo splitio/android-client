@@ -15,9 +15,9 @@ public final class Key {
             throw new IllegalArgumentException("Matching key cannot be null");
         }
 
-        if (_bucketingKey == null) {
+        /*if (_bucketingKey == null) {
             throw new IllegalArgumentException("Bucketing key cannot be null");
-        }
+        }*/
     }
 
     public String matchingKey() {
