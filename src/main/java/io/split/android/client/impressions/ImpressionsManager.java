@@ -116,32 +116,37 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
     @Override
     public void run() {
+        flushImpressions();
         sendImpressions();
     }
 
-    private synchronized void flushImpressions() {
-        if (_queue.remainingCapacity() == 0) {
-            Timber.w("Split SDK impressions queue is full. Impressions may have been dropped. Consider increasing capacity.");
-        }
+    public void flushImpressions() {
+        synchronized (this) {
+            if (_queue.remainingCapacity() == 0) {
+                Timber.w("Split SDK impressions queue is full. Impressions may have been dropped. Consider increasing capacity.");
+            }
 
-        long start = System.currentTimeMillis();
+            long start = System.currentTimeMillis();
 
-        List<KeyImpression> impressions = new ArrayList<>(_queue.size());
-        _queue.drainTo(impressions);
+            List<KeyImpression> impressions = new ArrayList<>(_queue.size());
+            _queue.drainTo(impressions);
 
-        _currentChunkSize = 0;
+            _currentChunkSize = 0;
 
-        _storageManager.writeChunk(impressions);
+            _storageManager.writeChunk(impressions);
 
-        if (_config.debugEnabled()) {
-            Timber.i("Posting %d Split impressions took %d millis",
-                    impressions.size(), (System.currentTimeMillis() - start));
+            if (_config.debugEnabled()) {
+                Timber.i("Flushing %d Split impressions took %d millis",
+                        impressions.size(), (System.currentTimeMillis() - start));
+            }
         }
     }
 
     private void sendImpressions() {
-        List<TestImpressions> toShip = Lists.newArrayList();
-        _impressionsSender.post(toShip);
+        long start = System.currentTimeMillis();
+        _impressionsSender.post(null);
+        Timber.i("Posting Split impressions took %d millis", (System.currentTimeMillis() - start));
+
     }
 
     private void accumulateChunkSize(KeyImpression keyImpression) {

@@ -62,6 +62,11 @@ public final class LocalhostSplitFactory implements SplitFactory {
         _splitFile.stopThread();
     }
 
+    @Override
+    public void flush() {
+        _client.flush();
+    }
+
     public void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {
         _client.updateFeatureToTreatmentMap(featureToTreatmentMap);
         _manager.updateFeatureToTreatmentMap(featureToTreatmentMap);

@@ -100,7 +100,7 @@ public class SplitClientConfig {
         splitSdkVersion = "undefined";
 
         if (props.getProperty("sdk.version") != null) {
-            splitSdkVersion = "java-" + props.getProperty("sdk.version");
+            splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
         }
 
         if (BuildConfig.DEBUG && !isTestMode()) {

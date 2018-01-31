@@ -60,6 +60,11 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
+    public void flush() {
+        _container.flush();
+    }
+
+    @Override
     public String getTreatment(String split) {
         return getTreatment(split, Collections.<String, Object>emptyMap());
     }
