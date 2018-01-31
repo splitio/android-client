@@ -40,6 +40,7 @@ public class HttpImpressionsSender implements ImpressionsSender {
 
         synchronized (this) {
             String[] chunkNames = _storageManager.getAllChunkNames();
+            Timber.i("Posting %d Split impressions", chunkNames.length);
 
             for (String chunkId :
                     chunkNames) {

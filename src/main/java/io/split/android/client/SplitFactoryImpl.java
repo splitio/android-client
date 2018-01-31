@@ -62,6 +62,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitClient _client;
     private final SplitManager _manager;
     private final Runnable destroyer;
+    private final Runnable flusher;
     private boolean isTerminated = false;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
@@ -181,6 +182,21 @@ public class SplitFactoryImpl implements SplitFactory {
                     Timber.w("Successful shutdown of httpclient");
                 } catch (IOException e) {
                     Timber.e(e, "We could not shutdown split");
+                } finally {
+                    isTerminated = true;
+                }
+            }
+        };
+
+        flusher = new Runnable() {
+            @Override
+            public void run() {
+                Timber.w("Flush called for split");
+                try {
+                    splitImpressionListener.flushImpressions();
+                    Timber.w("Successful flush of impressions");
+                } catch (Exception e) {
+                    Timber.e(e, "We could not flush split");
                 }
             }
         };
@@ -220,9 +236,17 @@ public class SplitFactoryImpl implements SplitFactory {
     public void destroy() {
         synchronized (SplitFactoryImpl.class) {
             if (!isTerminated) {
-                destroyer.run();
-                isTerminated = true;
+                new Thread(destroyer).start();
             }
         }
     }
+
+    @Override
+    public void flush() {
+        if (!isTerminated) {
+            new Thread(flusher).start();
+        }
+    }
+
+
 }
