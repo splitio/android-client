@@ -52,16 +52,16 @@ public class FileStorage implements IStorage {
             fos.write(content.getBytes());
 
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            Timber.e(e);
             throw e;
         } catch (IOException e) {
-            e.printStackTrace();
+            Timber.e(e);
             throw e;
         } finally {
             try {
                 fos.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                Timber.e(e);
             }
         }
     }

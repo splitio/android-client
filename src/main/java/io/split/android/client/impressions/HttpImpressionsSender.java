@@ -57,7 +57,7 @@ public class HttpImpressionsSender implements ImpressionsSender {
                     }
 
                 } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
+                    Timber.e(e);
                     _storageManager.chunkFailed(chunkId);
                 }
             }

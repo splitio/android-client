@@ -71,7 +71,7 @@ public class ImpressionsStorageManager {
             _storage.write(chunkId, entity);
             return chunkId;
         } catch (IOException e) {
-            e.printStackTrace();
+            Timber.e(e);
         }
 
         return null;
@@ -81,7 +81,7 @@ public class ImpressionsStorageManager {
         try {
             return _storage.read(chunkId);
         } catch (IOException e) {
-            e.printStackTrace();
+            Timber.e(e);
         }
         return null;
     }

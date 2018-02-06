@@ -6,11 +6,12 @@ import org.apache.http.entity.StringEntity;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URI;
-import java.net.URL;
+
+
+import timber.log.Timber;
 
 public class Utils {
 
@@ -20,7 +21,7 @@ public class Utils {
         try {
             entity = new StringEntity(json, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            Timber.e(e);
         }
         entity.setContentType("application/json");
         return entity;
