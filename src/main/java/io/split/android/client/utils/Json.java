@@ -4,9 +4,6 @@ import com.google.gson.Gson;
 
 import java.lang.reflect.Type;
 
-/**
- * Created by adilaijaz on 6/10/16.
- */
 public class Json {
 
     private static final Gson _json = new Gson();

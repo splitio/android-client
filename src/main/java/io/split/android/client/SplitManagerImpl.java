@@ -11,9 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by adilaijaz on 7/15/16.
- */
 public class SplitManagerImpl implements SplitManager {
 
     private final SplitFetcher _splitFetcher;

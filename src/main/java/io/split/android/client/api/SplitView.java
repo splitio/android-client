@@ -5,7 +5,6 @@ import java.util.List;
 /**
  * A view of a Split meant for consumption through SplitManager interface.
  *
- * @author adil
  */
 public class SplitView {
     public String name;

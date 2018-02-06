@@ -21,9 +21,6 @@ import java.net.URISyntaxException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Created by adilaijaz on 9/4/15.
- */
 public class HttpMetrics implements Metrics, DTOMetrics {
 
     private final CloseableHttpClient _client;

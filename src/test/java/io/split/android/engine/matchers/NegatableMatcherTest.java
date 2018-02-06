@@ -16,7 +16,6 @@ import static org.junit.Assert.assertThat;
 /**
  * Tests for NegatableMatcher.
  *
- * @author adil
  */
 public class NegatableMatcherTest {
 

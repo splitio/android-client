@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Activates one new name, and archives one previous name per call.
  *
- * @author adil
  */
 public class AChangePerCallSplitChangeFetcher implements SplitChangeFetcher {
 

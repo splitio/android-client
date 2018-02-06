@@ -5,7 +5,6 @@ import java.util.List;
 /**
  * A listener for Impressions generated each time getTreatment is called.
  *
- * @author adil
  */
 public interface ImpressionListener {
 

@@ -10,9 +10,6 @@ import java.util.Set;
 
 import static io.split.android.engine.matchers.Transformers.toSetOfStrings;
 
-/**
- * Created by adilaijaz on 3/7/16.
- */
 public class ContainsAnyOfSetMatcher implements Matcher {
 
     private final Set<String> _compareTo = new HashSet<>();

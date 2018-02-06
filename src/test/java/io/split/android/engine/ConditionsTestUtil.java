@@ -8,7 +8,6 @@ import java.util.List;
 /**
  * Utility methods for creating conditions for testing purposes.
  *
- * @author adil
  */
 public class ConditionsTestUtil {
 

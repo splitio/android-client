@@ -1,8 +1,5 @@
 package io.split.android.client.exceptions;
 
-/**
- * Created by adilaijaz on 1/5/17.
- */
 public class ChangeNumberExceptionWrapper extends Exception {
     private final Exception _delegate;
     private final long _changeNumber;

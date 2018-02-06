@@ -5,9 +5,6 @@ import io.split.android.client.utils.MurmurHash3;
 
 import java.nio.charset.Charset;
 
-/**
- * Created by adilaijaz on 1/18/16.
- */
 public interface MyHash {
 
     long hash(int seed, String key);

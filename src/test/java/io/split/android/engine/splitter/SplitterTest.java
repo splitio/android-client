@@ -25,7 +25,6 @@ import static org.junit.Assert.assertThat;
 /**
  * Test for Splitter.
  *
- * @author adil
  */
 public class SplitterTest {
 

@@ -8,9 +8,6 @@ import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
 
-/**
- * Created by adilaijaz on 5/22/15.
- */
 public class GzipEncoderRequestInterceptor implements HttpRequestInterceptor {
     @Override
     public void process(HttpRequest request, HttpContext httpContext) throws HttpException, IOException {

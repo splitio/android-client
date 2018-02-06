@@ -41,9 +41,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-/**
- * Created by adilaijaz on 5/11/15.
- */
 public class RefreshableSplitFetcherTest {
     @Test
     public void works_when_we_start_without_any_state() throws InterruptedException {

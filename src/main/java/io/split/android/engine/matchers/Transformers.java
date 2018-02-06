@@ -8,9 +8,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TimeZone;
 
-/**
- * Created by adilaijaz on 3/7/16.
- */
 public class Transformers {
     private static Set<String> VALID_BOOLEAN_STRINGS = Sets.newHashSet("true", "false");
     private static TimeZone UTC = TimeZone.getTimeZone("UTC");

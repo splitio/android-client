@@ -3,7 +3,6 @@ package io.split.android.client.dtos;
 /**
  * A leaf class representing a matcher.
  *
- * @author adil
  */
 public class Matcher {
     public KeySelector keySelector;

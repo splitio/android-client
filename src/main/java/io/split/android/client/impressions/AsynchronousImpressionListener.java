@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
  * of the wrapper is to protect the SplitClient from any slow down happening due
  * to the client's ImpressionListener.
  *
- * @author adil
  */
 public class AsynchronousImpressionListener implements ImpressionListener {
 

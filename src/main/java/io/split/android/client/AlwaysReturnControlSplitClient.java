@@ -9,7 +9,6 @@ import java.util.Map;
  * A SplitClient that ensures that all features are turned off for all users.
  * Useful for testing
  *
- * @author adil
  */
 public class AlwaysReturnControlSplitClient implements io.split.android.client.SplitClient {
 

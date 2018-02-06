@@ -15,7 +15,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A SegmentFetcher implementation that can periodically refresh itself.
  *
- * @author adil
  */
 public class RefreshableSegment implements Runnable, Segment {
 

@@ -5,10 +5,6 @@ import io.split.android.client.SplitClientImpl;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Created by adilaijaz on 3/4/16.
- */
-
 public final class AttributeMatcher {
 
     private final String _attribute;

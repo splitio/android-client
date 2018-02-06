@@ -19,9 +19,7 @@ import java.net.URISyntaxException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Created by adilaijaz on 5/22/15.
- */
+
 public final class HttpSegmentChangeFetcher implements SegmentChangeFetcher {
 
     private static final String SINCE = "since";

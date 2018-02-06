@@ -10,7 +10,6 @@ import java.util.List;
  * has the matchers that also encapsulate the logic of matching. We
  * can easily cache this object.
  *
- * @author adil
  */
 public class ParsedSplit {
 

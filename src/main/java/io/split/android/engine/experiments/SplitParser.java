@@ -39,7 +39,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Converts io.codigo.dtos.Experiment to io.codigo.engine.splits.ParsedExperiment.
  *
- * @author adil
  */
 public final class SplitParser {
 

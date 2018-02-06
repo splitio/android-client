@@ -12,7 +12,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * assumes that the logic for refreshing what keys are part of a segment is delegated
  * to SegmentFetcher.
  *
- * @author adil
  */
 public class UserDefinedSegmentMatcher implements Matcher {
     private final String _segmentName;

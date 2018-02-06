@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * First call returns a change, all subsequent calls return no change.
  *
- * @author adil
  */
 public class TheseManyChangesSegmentChangeFetcher implements SegmentChangeFetcher {
 

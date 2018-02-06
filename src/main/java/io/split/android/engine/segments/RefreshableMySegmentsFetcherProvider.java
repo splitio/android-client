@@ -18,7 +18,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A SegmentFetchers implementation that creates RefreshableSegmentFetcher instances.
  *
- * @author adil
  */
 public class RefreshableMySegmentsFetcherProvider implements Closeable {
 

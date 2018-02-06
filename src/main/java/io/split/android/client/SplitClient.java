@@ -2,9 +2,6 @@ package io.split.android.client;
 
 import java.util.Map;
 
-/**
- * Created by adilaijaz on 5/8/15.
- */
 public interface SplitClient {
 
     /**

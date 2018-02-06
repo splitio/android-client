@@ -5,9 +5,6 @@ import io.split.android.client.dtos.DataType;
 
 import java.util.Map;
 
-/**
- * Created by adilaijaz on 3/7/16.
- */
 public class EqualToMatcher implements Matcher {
 
     private final long _compareTo;

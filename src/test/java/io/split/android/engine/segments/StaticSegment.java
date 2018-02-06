@@ -9,7 +9,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A wrapper around a set of keys. There is no periodic refreshing happening here.
  *
- * @author adil
  */
 public final class StaticSegment implements Segment {
 

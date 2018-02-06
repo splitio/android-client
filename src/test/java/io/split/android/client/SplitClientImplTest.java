@@ -43,7 +43,6 @@ import static org.mockito.Mockito.when;
 /**
  * Tests for SplitClientImpl
  *
- * @author adil
  */
 public class SplitClientImplTest {
 
@@ -481,7 +480,6 @@ public class SplitClientImplTest {
      * If the underlying hashing algorithm changes, say to murmur, then we will
      * have to update this test.
      *
-     * @author adil
      */
     @Test
     public void not_in_split_if_10_percent_allocation() {

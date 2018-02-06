@@ -11,9 +11,6 @@ import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
 
-/**
- * Created by adilaijaz on 5/22/15.
- */
 public class GzipDecoderResponseInterceptor implements HttpResponseInterceptor {
 
     @Override

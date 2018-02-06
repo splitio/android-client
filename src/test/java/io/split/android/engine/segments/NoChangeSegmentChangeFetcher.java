@@ -8,7 +8,6 @@ import java.util.Collections;
 /**
  * First call returns a change, all subsequent calls return no change.
  *
- * @author adil
  */
 public class NoChangeSegmentChangeFetcher implements SegmentChangeFetcher {
 

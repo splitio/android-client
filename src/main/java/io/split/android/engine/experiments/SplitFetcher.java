@@ -2,9 +2,6 @@ package io.split.android.engine.experiments;
 
 import java.util.List;
 
-/**
- * Created by adilaijaz on 5/8/15.
- */
 public interface SplitFetcher {
     ParsedSplit fetch(String splitName);
 

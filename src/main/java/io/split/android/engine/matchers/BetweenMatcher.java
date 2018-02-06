@@ -8,7 +8,6 @@ import java.util.Map;
 /**
  * Supports the logic: if user.age is between x and y
  *
- * @author adil
  */
 public class BetweenMatcher implements Matcher {
     private final long _start;

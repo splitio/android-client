@@ -11,7 +11,6 @@ import io.split.android.engine.segments.SegmentFetcher;
 /**
  * Provides fetchers of type StaticSegmentFetcher.
  *
- * @author adil
  */
 public class StaticSegmentFetcher implements SegmentFetcher {
 

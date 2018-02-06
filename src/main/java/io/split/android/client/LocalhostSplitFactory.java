@@ -14,7 +14,6 @@ import timber.log.Timber;
  * any other split to be 100% off for all users. This implementation
  * is useful for using Codigo in localhost environment.
  *
- * @author adil
  */
 public final class LocalhostSplitFactory implements SplitFactory {
 

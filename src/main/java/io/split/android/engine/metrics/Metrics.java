@@ -3,7 +3,6 @@ package io.split.android.engine.metrics;
 /**
  * This interface is a briefer version of StatsD interface
  *
- * @author adil
  */
 public interface Metrics {
     /**

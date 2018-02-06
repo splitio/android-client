@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Provides an instance of RefreshableExperimentFetcher that is guaranteed to be a singleton.
  *
- * @author adil
  */
 public class RefreshableSplitFetcherProvider implements Closeable {
 

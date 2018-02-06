@@ -46,7 +46,6 @@ import static org.junit.Assert.assertThat;
 /**
  * Tests for ExperimentParser
  *
- * @author adil
  */
 public class SplitParserTest {
 

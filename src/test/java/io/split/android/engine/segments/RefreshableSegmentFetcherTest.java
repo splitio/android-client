@@ -22,7 +22,6 @@ import static org.junit.Assert.assertThat;
 /**
  * Tests for RefreshableSegmentFetchers
  *
- * @author adil
  */
 
 public class RefreshableSegmentFetcherTest {

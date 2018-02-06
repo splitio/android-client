@@ -15,7 +15,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * A wrapper around a set of keys. We return the entire set of keys, everytime
  * we are requested to fetch the latest set of changes.
  *
- * @author adil
  */
 public class StaticSegmentChangeFetcher implements SegmentChangeFetcher {
 

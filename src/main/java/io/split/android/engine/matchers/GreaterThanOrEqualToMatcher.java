@@ -8,9 +8,6 @@ import java.util.Map;
 import static io.split.android.engine.matchers.Transformers.asDateHourMinute;
 import static io.split.android.engine.matchers.Transformers.asLong;
 
-/**
- * Created by adilaijaz on 3/7/16.
- */
 public class GreaterThanOrEqualToMatcher implements Matcher {
 
     private final long _compareTo;

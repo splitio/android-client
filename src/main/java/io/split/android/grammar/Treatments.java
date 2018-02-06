@@ -3,7 +3,6 @@ package io.split.android.grammar;
 /**
  * Utility methods for dealing with special treatments
  *
- * @author adil
  */
 public class Treatments {
 

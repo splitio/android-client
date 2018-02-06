@@ -9,9 +9,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by adilaijaz on 4/27/16.
- */
 public class SDKReadinessGates {
 
     private final CountDownLatch _splitsAreReady = new CountDownLatch(1);

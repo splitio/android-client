@@ -13,9 +13,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by adilaijaz on 9/4/15.
- */
 public class FireAndForgetMetrics implements Metrics, Closeable {
 
     private final ExecutorService _executorService;

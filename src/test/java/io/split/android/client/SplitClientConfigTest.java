@@ -3,9 +3,6 @@ package io.split.android.client;
 import io.split.android.client.impressions.ImpressionListener;
 import org.junit.Test;
 
-/**
- * Created by adilaijaz on 3/23/17.
- */
 public class SplitClientConfigTest {
 
     @Test(expected = IllegalArgumentException.class)

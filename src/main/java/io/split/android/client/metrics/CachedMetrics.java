@@ -13,10 +13,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-
-/**
- * Created by adilaijaz on 9/4/15.
- */
 public class CachedMetrics implements Metrics {
 
     private final DTOMetrics _metrics;

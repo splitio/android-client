@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * A basic implementation of SplitClient.
  *
- * @author adil
  */
 public final class SplitClientImpl implements SplitClient {
 

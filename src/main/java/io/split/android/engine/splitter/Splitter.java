@@ -9,7 +9,6 @@ import java.util.List;
 /**
  * These set of functions figure out which treatment a key should see.
  *
- * @author adil
  */
 public class Splitter {
     private static final int ALGO_LEGACY = 1;

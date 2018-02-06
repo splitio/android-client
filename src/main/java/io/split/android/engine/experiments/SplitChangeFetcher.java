@@ -2,9 +2,6 @@ package io.split.android.engine.experiments;
 
 import io.split.android.client.dtos.SplitChange;
 
-/**
- * Created by adilaijaz on 5/11/15.
- */
 public interface SplitChangeFetcher {
     /**
      * The returned list should contain AT MOST one split

@@ -16,7 +16,6 @@ import static org.junit.Assert.assertThat;
 /**
  * Tests CombiningMatcher
  *
- * @author adil
  */
 public class CombiningMatcherTest {
 

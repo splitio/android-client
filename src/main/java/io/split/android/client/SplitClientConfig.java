@@ -15,7 +15,6 @@ import static timber.log.Timber.DebugTree;
 /**
  * Configurations for the SplitClient.
  *
- * @author adil
  */
 public class SplitClientConfig {
 

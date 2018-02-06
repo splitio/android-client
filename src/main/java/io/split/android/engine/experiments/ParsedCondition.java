@@ -9,7 +9,6 @@ import java.util.List;
 /**
  * A pair of matcher and partitions.
  *
- * @author adil
  */
 public final class ParsedCondition {
 

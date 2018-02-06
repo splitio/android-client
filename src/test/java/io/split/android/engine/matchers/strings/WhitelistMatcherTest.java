@@ -14,7 +14,6 @@ import static org.junit.Assert.assertThat;
 /**
  * Tests for WhitelistMatcher
  *
- * @author adil
  */
 public class WhitelistMatcherTest {
 

@@ -12,9 +12,6 @@ import java.net.InetAddress;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Created by adilaijaz on 5/22/15.
- */
 public class AddSplitHeadersFilter implements HttpRequestInterceptor {
 
     private static final String CLIENT_MACHINE_NAME_HEADER = "SplitSDKMachineName";

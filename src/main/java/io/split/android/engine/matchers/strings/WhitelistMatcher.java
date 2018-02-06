@@ -8,9 +8,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by adilaijaz on 5/4/15.
- */
 public class WhitelistMatcher implements Matcher {
     private final Set<String> _whitelist = new HashSet<>();
 

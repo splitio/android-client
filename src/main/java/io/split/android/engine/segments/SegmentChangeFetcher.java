@@ -5,7 +5,6 @@ import io.split.android.client.dtos.SegmentChange;
 /**
  * Fetches changes in the segment since a reference point.
  *
- * @author adil
  */
 public interface SegmentChangeFetcher {
     /**

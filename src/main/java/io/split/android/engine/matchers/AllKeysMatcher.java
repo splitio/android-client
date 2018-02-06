@@ -7,7 +7,6 @@ import java.util.Map;
 /**
  * A matcher that matches all keys. It returns true for everything.
  *
- * @author adil
  */
 public final class AllKeysMatcher implements Matcher {
 

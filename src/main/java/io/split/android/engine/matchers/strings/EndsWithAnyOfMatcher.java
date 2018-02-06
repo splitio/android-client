@@ -8,9 +8,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by adilaijaz on 3/7/16.
- */
 public class EndsWithAnyOfMatcher implements Matcher {
 
     private final Set<String> _compareTo = new HashSet<>();

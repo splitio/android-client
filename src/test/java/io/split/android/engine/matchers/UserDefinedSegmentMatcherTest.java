@@ -15,7 +15,6 @@ import static org.junit.Assert.assertThat;
 /**
  * Tests for UserDefinedSegmentMatcher
  *
- * @author adil
  */
 public class UserDefinedSegmentMatcherTest {
     @Test

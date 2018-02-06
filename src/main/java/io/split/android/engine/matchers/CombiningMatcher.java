@@ -14,7 +14,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Combines the results of multiple matchers using the logical OR or AND.
  *
- * @author adil
  */
 public class CombiningMatcher {
 

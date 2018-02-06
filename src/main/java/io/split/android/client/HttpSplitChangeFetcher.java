@@ -21,9 +21,6 @@ import timber.log.Timber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Created by adilaijaz on 5/30/15.
- */
 public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
 
     private static final String SINCE = "since";

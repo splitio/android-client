@@ -12,9 +12,6 @@ import io.split.android.engine.matchers.strings.ContainsAnyOfMatcher;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-/**
- * Created by adilaijaz on 4/18/17.
- */
 public class ContainsAnyOfMatcherTest {
     @Test
     public void works_for_sets() {

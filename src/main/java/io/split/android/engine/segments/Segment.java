@@ -4,7 +4,6 @@ package io.split.android.engine.segments;
  * Fetches the keys in a segment. Implementing classes are responsible for keeping
  * the segment up-to-date with the remote server.
  *
- * @author adil
  */
 public interface Segment {
     String segmentName();

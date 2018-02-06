@@ -12,9 +12,6 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URL;
 
-/**
- * Created by adilaijaz on 6/10/16.
- */
 public class Utils {
 
     public static StringEntity toJsonEntity(Object obj) {

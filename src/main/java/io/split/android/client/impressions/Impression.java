@@ -2,9 +2,6 @@ package io.split.android.client.impressions;
 
 import java.util.Map;
 
-/**
- * Created by adilaijaz on 3/23/17.
- */
 public class Impression {
     
     private final String _key;

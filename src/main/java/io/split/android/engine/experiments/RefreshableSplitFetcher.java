@@ -24,7 +24,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * An ExperimentFetcher that refreshes experiment definitions periodically.
  *
- * @author adil
  */
 public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 

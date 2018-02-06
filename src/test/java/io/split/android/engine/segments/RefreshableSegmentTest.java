@@ -26,7 +26,6 @@ import static org.junit.Assert.fail;
 /**
  * Tests for RefreshableSegmentFetcher.
  *
- * @author adil
  */
 public class RefreshableSegmentTest {
 

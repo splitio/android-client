@@ -12,9 +12,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-/**
- * Created by adilaijaz on 4/11/16.
- */
 public class TransformersTest {
 
     @Test

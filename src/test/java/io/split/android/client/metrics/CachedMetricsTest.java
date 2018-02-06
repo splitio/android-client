@@ -11,9 +11,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-/**
- * Created by adilaijaz on 9/23/15.
- */
 public class CachedMetricsTest {
 
     private static final class MyDTOMetrics implements DTOMetrics {

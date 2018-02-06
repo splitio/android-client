@@ -7,9 +7,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 
-/**
- * Created by adilaijaz on 6/13/16.
- */
 public class JsonTest {
     @Test
     public void unknownFieldsDontCauseProblems() {
