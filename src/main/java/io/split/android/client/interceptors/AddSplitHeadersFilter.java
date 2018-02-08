@@ -24,18 +24,7 @@ public class AddSplitHeadersFilter implements HttpRequestInterceptor {
     private final String _hostname;
     private final String _ip;
 
-    public static AddSplitHeadersFilter instance(String apiToken) {
-        String hostname = null;
-        String ip = null;
-
-//        try {
-//            InetAddress localHost = InetAddress.getLocalHost();
-//            hostname = localHost.getHostName();
-//            ip = localHost.getHostAddress();
-//        } catch (Exception e) {
-//            Timber.e(e,"Could not resolve InetAddress");
-//        }
-
+    public static AddSplitHeadersFilter instance(String apiToken, String hostname, String ip) {
         return new AddSplitHeadersFilter(apiToken, hostname, ip);
     }
 
