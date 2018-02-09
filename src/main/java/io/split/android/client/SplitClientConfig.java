@@ -20,6 +20,8 @@ public class SplitClientConfig {
 
     private final String _endpoint;
     private final String _eventsEndpoint;
+    private static String _hostname;
+    private static String _ip;
 
     private final int _featuresRefreshRate;
     private final int _segmentsRefreshRate;
@@ -45,7 +47,6 @@ public class SplitClientConfig {
     // To be set during startup
     public static String splitSdkVersion;
 
-
     public static Builder builder() {
         return new Builder();
     }
@@ -68,7 +69,9 @@ public class SplitClientConfig {
                               int waitBeforeShutdown,
                               HttpHost proxy,
                               String proxyUsername,
-                              String proxyPassword) {
+                              String proxyPassword,
+                              String hostname,
+                              String ip) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -89,6 +92,8 @@ public class SplitClientConfig {
         _proxy = proxy;
         _proxyUsername = proxyUsername;
         _proxyPassword = proxyPassword;
+        _hostname = hostname;
+        _ip = ip;
 
         Properties props = new Properties();
         try {
@@ -196,6 +201,14 @@ public class SplitClientConfig {
         return _proxyPassword;
     }
 
+    public String hostname() {
+        return _hostname;
+    }
+
+    public String ip() {
+        return _ip;
+    }
+
     public static final class Builder {
 
         private String _endpoint = "https://sdk.split.io/api";
@@ -222,6 +235,9 @@ public class SplitClientConfig {
         private String _proxyUsername;
         private String _proxyPassword;
         private long _impressionsChunkSize = 2 * 1024; //2KB default size
+
+        private String _hostname = "unknown";
+        private String _ip = "unknown";
 
         public Builder() {
         }
@@ -483,6 +499,28 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * The host name for the current device.
+         *
+         * @param hostname
+         * @return this builder
+         */
+        public Builder hostname(String hostname) {
+            _hostname = hostname;
+            return this;
+        }
+
+        /**
+         * The current device IP adress.
+         *
+         * @param ip
+         * @return this builder
+         */
+        public Builder ip(String ip) {
+            _ip = ip;
+            return this;
+        }
+
         HttpHost proxy() {
             if (_proxyPort != -1) {
                 return new HttpHost(_proxyHost, _proxyPort);
@@ -567,7 +605,9 @@ public class SplitClientConfig {
                     _waitBeforeShutdown,
                     proxy(),
                     _proxyUsername,
-                    _proxyPassword);
+                    _proxyPassword,
+                    _hostname,
+                    _ip);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
