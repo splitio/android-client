@@ -48,10 +48,6 @@ public final class LocalhostSplitClient implements SplitClient {
         return getTreatment(split);
     }
 
-//    @Override
-//    public String getTreatment(Key key, String split, Map<String, Object> attributes) {
-//        return getTreatment(key.matchingKey(), split, attributes);
-//    }
 
     @Override
     public void destroy() {

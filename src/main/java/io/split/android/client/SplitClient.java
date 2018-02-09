@@ -51,39 +51,6 @@ public interface SplitClient {
      */
     String getTreatment(String split, Map<String, Object> attributes);
 
-    /**
-     * To understand why this method is useful, consider the following simple Split as an example:
-     *
-     * if user is in segment employees then split 100%:on
-     * else if user is in segment all then split 20%:on,80%:off
-     *
-     * There are two concepts here: matching and bucketing. Matching
-     * refers to ‘user is in segment employees’ or ‘user is in segment
-     * all’ whereas bucketing refers to ‘100%:on’ or ‘20%:on,80%:off’.
-     *
-     * By default, the same customer key is used for both matching and
-     * bucketing. However, for some advanced use cases, you may want
-     * to use different keys. For such cases, use this method.
-     *
-     * As an example, suppose you want to rollout to percentages of
-     * users in specific accounts. You can achieve that by matching
-     * via account id, but bucketing by user id.
-     *
-     * Another example is when you want to ensure that a user continues to get
-     * the same treatment after they sign up for your product that they used
-     * to get when they were simply a visitor to your site. In that case,
-     * before they sign up, you can use their visitor id for both matching and bucketing, but
-     * post log-in you can use their user id for matching and visitor id for bucketing.
-     *
-     *
-     * @param key the matching and bucketing keys. MUST NOT be null.
-     * @param split the feature we want to evaluate. MUST NOT be null.
-     * @param attributes of the entity (user, account etc.) to use in evaluation. Can be null or empty.
-     *
-     * @return the evaluated treatment, the default treatment of this feature, or 'control'.
-     */
-//    String getTreatment(Key key, String split, Map<String, Object> attributes);
-
 
     /**
      * Destroys the background processes and clears the cache, releasing the resources used by

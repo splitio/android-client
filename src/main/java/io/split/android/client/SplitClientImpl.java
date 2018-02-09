@@ -73,21 +73,6 @@ public final class SplitClientImpl implements SplitClient {
         return getTreatment(_matchingKey, _bucketingKey, split, attributes);
     }
 
-//    @Override
-//    public String getTreatment(Key key, String split, Map<String, Object> attributes) {
-//        if (key == null) {
-//            Timber.w("key object was null for feature: %s", split);
-//            return Treatments.CONTROL;
-//        }
-//
-//        if (key.matchingKey() == null || key.bucketingKey() == null) {
-//            Timber.w("key object had null matching or bucketing key: %s", split);
-//            return Treatments.CONTROL;
-//        }
-//
-//        return getTreatment(key.matchingKey(), key.bucketingKey(), split, attributes);
-//    }
-
     private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
         try {
             if (matchingKey == null) {
