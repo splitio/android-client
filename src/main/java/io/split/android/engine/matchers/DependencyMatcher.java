@@ -34,10 +34,6 @@ public class DependencyMatcher implements Matcher {
                 attributes
         );
 
-//        if(Treatments.isControl(result)) {
-//            throw new ParentIsControlException();
-//        }
-
         return _treatments.contains(result);
     }
 
