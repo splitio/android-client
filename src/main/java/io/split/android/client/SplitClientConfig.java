@@ -236,7 +236,7 @@ public class SplitClientConfig {
         private String _proxyPassword;
         private long _impressionsChunkSize = 2 * 1024; //2KB default size
 
-        private String _hostname;
+        private String _hostname = "unknown";
         private String _ip = "unknown";
 
         public Builder() {
