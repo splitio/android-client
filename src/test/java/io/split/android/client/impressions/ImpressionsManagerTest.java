@@ -19,9 +19,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-/**
- * Created by patricioe on 6/20/16.
- */
 @RunWith(MockitoJUnitRunner.class)
 public class ImpressionsManagerTest {
 

@@ -15,9 +15,6 @@ import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.utils.Utils;
 import timber.log.Timber;
 
-/**
- * Created by patricioe on 6/20/16.
- */
 public class HttpImpressionsSender implements ImpressionsSender {
 
     private CloseableHttpClient _client;

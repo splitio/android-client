@@ -21,9 +21,6 @@ import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.utils.Utils;
 import timber.log.Timber;
 
-/**
- * Created by patricioe on 6/17/16.
- */
 public class ImpressionsManager implements ImpressionListener, Runnable {
 
     private final SplitClientConfig _config;
