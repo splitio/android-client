@@ -1,0 +1,73 @@
+package io.split.android.client;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+
+import java.io.IOException;
+import java.util.Map;
+
+import timber.log.Timber;
+
+/**
+ * An implementation of SplitClient that considers all partitions
+ * passed in the constructor to be 100% on for all users, and
+ * any other split to be 100% off for all users. This implementation
+ * is useful for using Codigo in localhost environment.
+ *
+ */
+public final class LocalhostSplitFactory implements SplitFactory {
+
+    static final String FILENAME = ".split";
+    static final String LOCALHOST = "localhost";
+
+    private final LocalhostSplitClient _client;
+    private final LocalhostSplitManager _manager;
+    private final LocalhostSplitFile _splitFile;
+
+    public static LocalhostSplitFactory createLocalhostSplitFactory(String key) throws IOException {
+        String directory = System.getProperty("user.home");
+        Preconditions.checkNotNull(directory, "Property user.home should be set when using environment: " + LOCALHOST);
+        return new LocalhostSplitFactory(directory, key);
+    }
+
+    public LocalhostSplitFactory(String directory, String key) throws IOException {
+        Preconditions.checkNotNull(directory, "directory must not be null");
+
+        Timber.i("home = %s",directory);
+
+        _splitFile = new LocalhostSplitFile(this, directory, FILENAME);
+
+        Map<String, String> _featureToTreatmentMap = _splitFile.readOnSplits();
+        _client = new LocalhostSplitClient(this, key, _featureToTreatmentMap);
+        _manager = new LocalhostSplitManager(_featureToTreatmentMap);
+
+        _splitFile.registerWatcher();
+        _splitFile.start();
+    }
+
+    @Override
+    public SplitClient client() {
+        return _client;
+    }
+
+    @Override
+    public SplitManager manager() {
+        return _manager;
+    }
+
+    @Override
+    public void destroy() {
+        _client.updateFeatureToTreatmentMap(ImmutableMap.<String, String>of());
+        _splitFile.stopThread();
+    }
+
+    @Override
+    public void flush() {
+        _client.flush();
+    }
+
+    public void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {
+        _client.updateFeatureToTreatmentMap(featureToTreatmentMap);
+        _manager.updateFeatureToTreatmentMap(featureToTreatmentMap);
+    }
+}
