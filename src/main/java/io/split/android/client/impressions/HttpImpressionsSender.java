@@ -44,6 +44,11 @@ public class HttpImpressionsSender implements ImpressionsSender {
                 try {
                     String json = _storageManager.readStringChunk(chunkId);
 
+                    if(json == null){
+                        _storageManager.chunkFailed(chunkId);
+                        continue;
+                    }
+
                     StringEntity entity = new StringEntity(json, "UTF-8");
                     entity.setContentType("application/json");
 
