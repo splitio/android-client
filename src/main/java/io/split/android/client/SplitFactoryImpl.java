@@ -213,8 +213,12 @@ public class SplitFactoryImpl implements SplitFactory {
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         if (config.blockUntilReady() > 0) {
-            if (!gates.isSDKReady(config.blockUntilReady())) {
-                throw new TimeoutException("SDK was not ready in " + config.blockUntilReady() + " milliseconds");
+            try {
+                if (!gates.isSDKReady(config.blockUntilReady())) {
+                    Timber.w("SDK was not ready in " + config.blockUntilReady() + " milliseconds");
+                }
+            } catch (InterruptedException e){
+                Timber.e(e.getMessage());
             }
         }
 
