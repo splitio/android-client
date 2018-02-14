@@ -112,8 +112,14 @@ public class SDKReadinessGates {
         return true;
     }
 
+    /**
+     * Set segment as ready.
+     * @param segmentName
+     *
+     * @implNote Android uses mySegment instead
+     */
     public void segmentIsReady(String segmentName) {
-
+        //keeping empty to maintain segments compatibility
     }
 
     public boolean isSegmentRegistered(String segmentName) {
