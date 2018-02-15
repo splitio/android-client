@@ -111,8 +111,8 @@ uploadArchives {
                 }
 
                 scm {
-                    connection 'scm:git:git@github.com:splitio/java-client.git'
-                    developerConnection 'scm:git@github.com:splitio/java-client.git'
+                    connection 'scm:git:git@github.com:splitio/android-client.git'
+                    developerConnection 'scm:git@github.com:splitio/android-client.git'
                     url 'https://github.com/splitio/android-client'
                 }
             }
