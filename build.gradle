@@ -109,3 +109,13 @@ uploadArchives {
         }
     }
 }
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId 'io.split.client'
+            artifactId 'android-client'
+            version '0.8'
+        }
+    }
+}
