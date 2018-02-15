@@ -5,7 +5,8 @@ import io.split.android.client.SplitClientImpl;
 import java.util.Map;
 import java.util.Objects;
 
-public final class AttributeMatcher {
+public final class
+AttributeMatcher {
 
     private final String _attribute;
     private final Matcher _matcher;
@@ -42,8 +43,22 @@ public final class AttributeMatcher {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AttributeMatcher that = (AttributeMatcher) o;
+
+        if (_attribute != null ? !_attribute.equals(that._attribute) : that._attribute != null)
+            return false;
+        return _matcher.equals(that._matcher);
+    }
+
+    @Override
     public int hashCode() {
-        return Objects.hash(_attribute, _matcher);
+        int result = _attribute != null ? _attribute.hashCode() : 0;
+        result = 31 * result + _matcher.hashCode();
+        return result;
     }
 
     public String attribute() {
@@ -52,18 +67,6 @@ public final class AttributeMatcher {
 
     public Matcher matcher() {
         return _matcher;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) return false;
-        if (this == obj) return true;
-        if (!(obj instanceof AttributeMatcher)) return false;
-
-        AttributeMatcher other = (AttributeMatcher) obj;
-
-        return Objects.equals(_attribute, other._attribute)
-                && _matcher.equals(other._matcher);
     }
 
     @Override
@@ -97,23 +100,6 @@ public final class AttributeMatcher {
         }
 
         @Override
-        public int hashCode() {
-            return Objects.hash(_negate, _delegate);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) return false;
-            if (this == obj) return true;
-            if (!(obj instanceof NegatableMatcher)) return false;
-
-            NegatableMatcher other = (NegatableMatcher) obj;
-
-            return _negate == other._negate
-                    && _delegate.equals(other._delegate);
-        }
-
-        @Override
         public String toString() {
             StringBuilder bldr = new StringBuilder();
             if (_negate) {
@@ -126,6 +112,24 @@ public final class AttributeMatcher {
 
         public Matcher delegate() {
             return _delegate;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            NegatableMatcher that = (NegatableMatcher) o;
+
+            if (_negate != that._negate) return false;
+            return _delegate.equals(that._delegate);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = (_negate ? 1 : 0);
+            result = 31 * result + _delegate.hashCode();
+            return result;
         }
     }
 
