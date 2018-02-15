@@ -5,6 +5,7 @@ import com.google.common.collect.Sets;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -67,7 +68,7 @@ public class Transformers {
         }
 
         if (obj instanceof String) {
-            if (VALID_BOOLEAN_STRINGS.contains(((String) obj).toLowerCase())) {
+            if (VALID_BOOLEAN_STRINGS.contains(((String) obj).toLowerCase(Locale.ROOT))) {
                 return Boolean.parseBoolean((String) obj);
             }
         }

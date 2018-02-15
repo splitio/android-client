@@ -1,10 +1,14 @@
 package io.split.android.client;
 
+import android.content.Context;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import timber.log.Timber;
 
@@ -17,32 +21,34 @@ import timber.log.Timber;
  */
 public final class LocalhostSplitFactory implements SplitFactory {
 
-    static final String FILENAME = ".split";
+    static final String FILENAME = "split.properties";
     static final String LOCALHOST = "localhost";
 
     private final LocalhostSplitClient _client;
     private final LocalhostSplitManager _manager;
-    private final LocalhostSplitFile _splitFile;
 
-    public static LocalhostSplitFactory createLocalhostSplitFactory(String key) throws IOException {
+    public static LocalhostSplitFactory createLocalhostSplitFactory(String key, Context context) throws IOException {
         String directory = System.getProperty("user.home");
         Preconditions.checkNotNull(directory, "Property user.home should be set when using environment: " + LOCALHOST);
-        return new LocalhostSplitFactory(directory, key);
+        return new LocalhostSplitFactory(directory, key, context);
     }
 
-    public LocalhostSplitFactory(String directory, String key) throws IOException {
+    public LocalhostSplitFactory(String directory, String key, Context context) throws IOException {
         Preconditions.checkNotNull(directory, "directory must not be null");
 
         Timber.i("home = %s",directory);
 
-        _splitFile = new LocalhostSplitFile(this, directory, FILENAME);
+        Map<String, String> _featureToTreatmentMap = new HashMap<>();
 
-        Map<String, String> _featureToTreatmentMap = _splitFile.readOnSplits();
+        Properties _properties = new Properties();
+        _properties.load(context.getAssets().open(FILENAME));
+        for (Object k: _properties.keySet()) {
+            _featureToTreatmentMap.put((String) k,_properties.getProperty((String) k));
+        }
+
         _client = new LocalhostSplitClient(this, key, _featureToTreatmentMap);
         _manager = new LocalhostSplitManager(_featureToTreatmentMap);
 
-        _splitFile.registerWatcher();
-        _splitFile.start();
     }
 
     @Override
@@ -58,7 +64,6 @@ public final class LocalhostSplitFactory implements SplitFactory {
     @Override
     public void destroy() {
         _client.updateFeatureToTreatmentMap(ImmutableMap.<String, String>of());
-        _splitFile.stopThread();
     }
 
     @Override
