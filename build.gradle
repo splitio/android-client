@@ -116,6 +116,8 @@ publishing {
             groupId 'io.split.client'
             artifactId 'android-client'
             version '0.8'
+
+            from components.java
         }
     }
 }
