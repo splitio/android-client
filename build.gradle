@@ -47,3 +47,54 @@ dependencies {
     testCompile 'junit:junit:4.12'
     implementation 'com.jakewharton.timber:timber:4.6.0'
 }
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+
+            repository(url: "https://oss.sonatype.org/content/repositories/releases"){}
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {}
+
+            pom.project {
+                name 'Split Android SDK'
+                packaging 'jar'
+                description 'Official Split Android SDK'
+                url 'https://github.com/splitio/android-client'
+
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'adilaijaz'
+                        name 'Adil Aijaz'
+                        email 'adil@split.io'
+                    }
+
+                    developer {
+                        id 'patricioechague'
+                        name 'Patricio Echague'
+                        email 'pato@split.io'
+                    }
+
+                    developer {
+                        id 'henryjewkes'
+                        name 'Henry Jewkes'
+                        email 'henry@split.io'
+                    }
+                }
+
+                scm {
+                    connection 'scm:git:git@github.com:splitio/java-client.git'
+                    developerConnection 'scm:git@github.com:splitio/java-client.git'
+                    url 'https://github.com/splitio/android-client'
+                }
+            }
+        }
+    }
+}
