@@ -1,4 +1,6 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'signing'
 
 android {
     compileSdkVersion 26
@@ -48,13 +50,34 @@ dependencies {
     implementation 'com.jakewharton.timber:timber:4.6.0'
 }
 
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+    }
+    dependencies {
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
+    }
+}
+
+signing {
+    sign configurations.archives
+}
+
 uploadArchives {
     repositories {
         mavenDeployer {
 
-            repository(url: "https://oss.sonatype.org/content/repositories/releases"){}
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {}
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
 
             pom.project {
                 name 'Split Android SDK'
@@ -71,21 +94,9 @@ uploadArchives {
 
                 developers {
                     developer {
-                        id 'adilaijaz'
-                        name 'Adil Aijaz'
-                        email 'adil@split.io'
-                    }
-
-                    developer {
-                        id 'patricioechague'
-                        name 'Patricio Echague'
-                        email 'pato@split.io'
-                    }
-
-                    developer {
-                        id 'henryjewkes'
-                        name 'Henry Jewkes'
-                        email 'henry@split.io'
+                        id 'sarrubia'
+                        name 'Sebastian Arrubia'
+                        email 'sebastian@split.io'
                     }
                 }
 
