@@ -56,7 +56,7 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public void flush() {
-        _container.flush();
+        return;
     }
 
     void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {

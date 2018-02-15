@@ -41,8 +41,6 @@ public final class LocalhostSplitFactory implements SplitFactory {
         _client = new LocalhostSplitClient(this, key, _featureToTreatmentMap);
         _manager = new LocalhostSplitManager(_featureToTreatmentMap);
 
-        _splitFile.registerWatcher();
-        _splitFile.start();
     }
 
     @Override
@@ -58,7 +56,6 @@ public final class LocalhostSplitFactory implements SplitFactory {
     @Override
     public void destroy() {
         _client.updateFeatureToTreatmentMap(ImmutableMap.<String, String>of());
-        _splitFile.stopThread();
     }
 
     @Override
