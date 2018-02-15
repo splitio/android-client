@@ -5,8 +5,7 @@ import io.split.android.client.SplitClientImpl;
 import java.util.Map;
 import java.util.Objects;
 
-public final class
-AttributeMatcher {
+public final class AttributeMatcher {
 
     private final String _attribute;
     private final Matcher _matcher;
