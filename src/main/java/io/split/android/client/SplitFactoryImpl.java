@@ -256,12 +256,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
     @Override
     public boolean isReady(){
-        try {
-            return gates.isSDKReady(5);
-        } catch (InterruptedException e) {
-            Timber.e(e.getMessage());
-        }
-        return false;
+        return gates.isSDKReadyNow();
     }
 
 
