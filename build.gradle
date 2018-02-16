@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 allprojects {
-    group = 'io.split.client'
+    group = 'io.split'
     version = '0.8'
 }
 
@@ -30,6 +30,10 @@ android {
 
     }
     
+    configurations {
+        javadocDeps
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -123,4 +127,26 @@ uploadArchives {
             }
         }
     }
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    failOnError false
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    classpath += configurations.javadocDeps
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
 }
