@@ -3,6 +3,11 @@ apply plugin: 'signing'
 apply plugin: 'maven'
 apply plugin: "maven-publish"
 
+allprojects {
+    group = 'io.split.client'
+    version = '0.8'
+}
+
 android {
     compileSdkVersion 26
     buildToolsVersion '26.0.2'
@@ -116,17 +121,6 @@ uploadArchives {
                     url 'https://github.com/splitio/android-client'
                 }
             }
-        }
-    }
-}
-
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId 'io.split.client'
-            artifactId 'android-client'
-            version '0.8'
-
         }
     }
 }
