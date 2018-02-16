@@ -65,7 +65,7 @@ public interface SplitClient {
 
     /**
      * Checks if cached data is ready to perform treatment evaluations
-     * @return true if getTreatment is ready to call
+     * @return true if the sdk is ready, if false, calls to getTreatment will return control
      */
     boolean isReady();
 }
