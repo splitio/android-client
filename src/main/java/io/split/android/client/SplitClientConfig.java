@@ -347,11 +347,11 @@ public class SplitClientConfig {
          *                 slow, the queue will fill up and any subsequent impressions will be dropped.
          * @return this builder
          */
-        public Builder impressionListener(ImpressionListener impressionListener, int queueSize) {
+        /*public Builder impressionListener(ImpressionListener impressionListener, int queueSize) {
             _impressionListener = impressionListener;
             _impressionListenerCapacity = queueSize;
             return this;
-        }
+        }*/
 
         /**
          * The diagnostic metrics collected by the SDK are pushed back to split endpoint

@@ -64,6 +64,11 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
+    public boolean isReady() {
+        return _container.isReady();
+    }
+
+    @Override
     public String getTreatment(String split) {
         return getTreatment(split, Collections.<String, Object>emptyMap());
     }
@@ -221,6 +226,7 @@ public final class SplitClientImpl implements SplitClient {
             _changeNumber = changeNumber;
         }
     }
+
 
 
 }
