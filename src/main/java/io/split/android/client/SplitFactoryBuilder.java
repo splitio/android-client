@@ -79,17 +79,6 @@ public class SplitFactoryBuilder {
         return LocalhostSplitFactory.createLocalhostSplitFactory(key, context);
     }
 
-    /**
-     * Instantiates a local Off-The-Grid SplitFactory
-     *
-     * @param home A directory containing the .split file from which to build treatments. MUST NOT be null
-     * @return a SplitFactory
-     * @throws IOException if there were problems reading the override file from disk.
-     */
-    public static SplitFactory local(String home, String key, Context context) throws IOException {
-        return new LocalhostSplitFactory(home, key, context);
-    }
-
     public static void main(String... args) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         if (args.length != 1) {
             System.out.println("Usage: <api_token>");

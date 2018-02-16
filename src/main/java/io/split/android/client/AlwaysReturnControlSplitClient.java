@@ -32,4 +32,9 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
 
     }
 
+    @Override
+    public boolean isReady() {
+        return true;
+    }
+
 }

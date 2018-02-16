@@ -65,6 +65,8 @@ public class SplitFactoryImpl implements SplitFactory {
     private final Runnable flusher;
     private boolean isTerminated = false;
 
+    private SDKReadinessGates gates;
+
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         SSLContext sslContext = null;
         try {
@@ -130,7 +132,7 @@ public class SplitFactoryImpl implements SplitFactory {
         HttpMetrics httpMetrics = HttpMetrics.create(httpclient, eventsRootTarget);
         final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
 
-        SDKReadinessGates gates = new SDKReadinessGates();
+        gates = new SDKReadinessGates();
 
         // Segments
         IStorage mySegmentsStorage = new MemoryAndFileStorage(context);
@@ -250,6 +252,11 @@ public class SplitFactoryImpl implements SplitFactory {
         if (!isTerminated) {
             new Thread(flusher).start();
         }
+    }
+
+    @Override
+    public boolean isReady(){
+        return gates.isSDKReadyNow();
     }
 
 

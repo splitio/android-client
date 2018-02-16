@@ -5,6 +5,7 @@ import android.content.Context;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,23 +28,29 @@ public final class LocalhostSplitFactory implements SplitFactory {
     private final LocalhostSplitClient _client;
     private final LocalhostSplitManager _manager;
 
+    private boolean _ready;
+
     public static LocalhostSplitFactory createLocalhostSplitFactory(String key, Context context) throws IOException {
-        String directory = System.getProperty("user.home");
-        Preconditions.checkNotNull(directory, "Property user.home should be set when using environment: " + LOCALHOST);
-        return new LocalhostSplitFactory(directory, key, context);
+        return new LocalhostSplitFactory(key, context);
     }
 
-    public LocalhostSplitFactory(String directory, String key, Context context) throws IOException {
-        Preconditions.checkNotNull(directory, "directory must not be null");
-
-        Timber.i("home = %s",directory);
+    public LocalhostSplitFactory(String key, Context context) throws IOException {
 
         Map<String, String> _featureToTreatmentMap = new HashMap<>();
 
-        Properties _properties = new Properties();
-        _properties.load(context.getAssets().open(FILENAME));
-        for (Object k: _properties.keySet()) {
-            _featureToTreatmentMap.put((String) k,_properties.getProperty((String) k));
+        try {
+            _ready = true;
+            Properties _properties = new Properties();
+            _properties.load(context.getAssets().open(FILENAME));
+            for (Object k: _properties.keySet()) {
+                _featureToTreatmentMap.put((String) k,_properties.getProperty((String) k));
+            }
+        } catch (FileNotFoundException e) {
+            _ready = false;
+            Timber.e("File not found. Add split.properties in your application assets");
+        } catch (Exception e){
+            _ready = false;
+            Timber.e(e.getMessage());
         }
 
         _client = new LocalhostSplitClient(this, key, _featureToTreatmentMap);
@@ -56,8 +63,8 @@ public final class LocalhostSplitFactory implements SplitFactory {
         return _client;
     }
 
-    @Override
-    public SplitManager manager() {
+
+    private SplitManager manager() {
         return _manager;
     }
 
@@ -69,6 +76,11 @@ public final class LocalhostSplitFactory implements SplitFactory {
     @Override
     public void flush() {
         _client.flush();
+    }
+
+    @Override
+    public boolean isReady() {
+        return _ready;
     }
 
     public void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {

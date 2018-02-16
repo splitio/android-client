@@ -347,7 +347,7 @@ public class SplitClientConfig {
          *                 slow, the queue will fill up and any subsequent impressions will be dropped.
          * @return this builder
          */
-        public Builder impressionListener(ImpressionListener impressionListener, int queueSize) {
+        private Builder impressionListener(ImpressionListener impressionListener, int queueSize) {
             _impressionListener = impressionListener;
             _impressionListenerCapacity = queueSize;
             return this;
