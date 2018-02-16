@@ -235,7 +235,7 @@ public class SplitFactoryImpl implements SplitFactory {
         return _client;
     }
 
-    private SplitManager manager() {
+    public SplitManager manager() {
         return _manager;
     }
 
