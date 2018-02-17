@@ -1,44 +1,5 @@
 package io.split.android.engine.experiments;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-
-import io.split.android.client.dtos.Condition;
-import io.split.android.client.dtos.DataType;
-import io.split.android.client.dtos.Matcher;
-import io.split.android.client.dtos.MatcherCombiner;
-import io.split.android.client.dtos.MatcherType;
-import io.split.android.client.dtos.Partition;
-import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.Status;
-import io.split.android.engine.ConditionsTestUtil;
-import io.split.android.engine.matchers.AttributeMatcher;
-import io.split.android.engine.matchers.BetweenMatcher;
-import io.split.android.engine.matchers.CombiningMatcher;
-import io.split.android.engine.matchers.EqualToMatcher;
-import io.split.android.engine.matchers.GreaterThanOrEqualToMatcher;
-import io.split.android.engine.matchers.LessThanOrEqualToMatcher;
-import io.split.android.engine.matchers.UserDefinedSegmentMatcher;
-import io.split.android.engine.matchers.collections.ContainsAllOfSetMatcher;
-import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
-import io.split.android.engine.matchers.collections.EqualToSetMatcher;
-import io.split.android.engine.matchers.collections.PartOfSetMatcher;
-import io.split.android.engine.matchers.strings.ContainsAnyOfMatcher;
-import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
-import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
-import io.split.android.engine.segments.SegmentFetcher;
-import io.split.android.engine.segments.StaticSegment;
-import io.split.android.engine.segments.StaticSegmentFetcher;
-import io.split.android.grammar.Treatments;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;

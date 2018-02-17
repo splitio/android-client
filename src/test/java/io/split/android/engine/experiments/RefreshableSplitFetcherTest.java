@@ -2,22 +2,11 @@ package io.split.android.engine.experiments;
 
 import com.google.common.collect.Lists;
 
-import io.split.android.client.dtos.Condition;
-import io.split.android.client.dtos.Matcher;
-import io.split.android.client.dtos.MatcherGroup;
-import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.dtos.Status;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.CombiningMatcher;
-import io.split.android.engine.segments.NoChangeSegmentChangeFetcher;
-import io.split.android.engine.segments.RefreshableSegmentFetcher;
-import io.split.android.engine.segments.SegmentChangeFetcher;
-import io.split.android.engine.segments.SegmentFetcher;
 import io.split.android.engine.segments.StaticSegment;
-import io.split.android.engine.segments.StaticSegmentFetcher;
 import io.split.android.grammar.Treatments;
 
 import org.junit.Test;
@@ -39,7 +28,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class RefreshableSplitFetcherTest {
     @Test
@@ -96,7 +84,7 @@ public class RefreshableSplitFetcherTest {
 //        assertThat(actual, is(equalTo(expected)));
 //
 //        assertThat(gates.areSplitsReady(0), is(equalTo(true)));
-
+//
     }
 
     @Test
