@@ -26,5 +26,6 @@ public class StaticMySegmentsFetcher implements MySegmentsFetcher {
             return mySegments.mySegments();
         } else {
             return Lists.newArrayList();
+        }
     }
 }
