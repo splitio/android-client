@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by guillermo on 11/23/17.
@@ -30,8 +31,8 @@ public class MemoryStorage implements IStorage {
 
     @Override
     public String[] getAllIds() {
-        Collection<String> ids = _storage.values();
-        return ids.toArray(new String[ids.size()]);
+        Set<String> allIds = _storage.keySet();
+        return allIds.toArray(new String[allIds.size()]);
     }
 
     @Override

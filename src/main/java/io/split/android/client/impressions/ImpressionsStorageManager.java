@@ -2,6 +2,8 @@ package io.split.android.client.impressions;
 
 import android.annotation.SuppressLint;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -32,9 +34,9 @@ public class ImpressionsStorageManager {
     }
 
     @SuppressLint("DefaultLocale")
-    public String writeChunk(List<KeyImpression> impressions) {
+    public void storeImpressions(List<KeyImpression> impressions) throws IOException {
         if (impressions == null || impressions.isEmpty()) {
-            return null; // Nothing to write
+            return; // Nothing to write
         }
 
         Map<String, List<KeyImpression>> tests = new HashMap<>();
@@ -67,17 +69,32 @@ public class ImpressionsStorageManager {
 
         String chunkId = String.format("%s_%d_0.json", IMPRESSIONS_CHUNK_FILE_PREFIX, System.currentTimeMillis());
 
-        try {
-            _storage.write(chunkId, entity);
-            return chunkId;
-        } catch (IOException e) {
-            Timber.e(e);
-        }
-
-        return null;
+        _storage.write(chunkId, entity);
     }
 
-    public String readStringChunk(String chunkId) {
+    public List<StoredImpressions> getStoredImpressions() {
+        List<String> ids = getAllChunkIds();
+        List<StoredImpressions> result = Lists.newArrayList();
+        for(String id: ids) {
+            String stored = readStringChunk(id);
+            List<TestImpressions> testImpressions = Json.fromJsonList(stored, TestImpressions.class);
+            result.add(StoredImpressions.from(id, testImpressions));
+        }
+        return result;
+    }
+
+    public void failedStoredImpression(StoredImpressions storedImpression) {
+        Preconditions.checkNotNull(storedImpression);
+        chunkFailed(storedImpression.id());
+    }
+
+    public void succeededStoredImpression(StoredImpressions storedImpression) {
+        Preconditions.checkNotNull(storedImpression);
+        chunkSucceeded(storedImpression.id());
+    }
+
+
+    private String readStringChunk(String chunkId) {
         try {
             return _storage.read(chunkId);
         } catch (IOException e) {
@@ -86,7 +103,7 @@ public class ImpressionsStorageManager {
         return null;
     }
 
-    public String[] getAllChunkNames() {
+    private List<String> getAllChunkIds() {
         List<String> names = Lists.newArrayList(_storage.getAllIds());
         List<String> chunkIds = Lists.newArrayList();
 
@@ -115,15 +132,18 @@ public class ImpressionsStorageManager {
             }
         }
 
-        return resultChunkIds.toArray(new String[0]);
+        return resultChunkIds;
     }
 
-    public void chunkSucceeded(String chunkId) {
+    private void chunkSucceeded(String chunkId) {
         _storage.delete(chunkId);
     }
 
     @SuppressLint("DefaultLocale")
-    public void chunkFailed(String chunkId) {
+    private void chunkFailed(String chunkId) {
+        if (Strings.isNullOrEmpty(chunkId)) {
+            return;
+        }
         int idxStart = chunkId.lastIndexOf("_");
         int idxEnd = chunkId.lastIndexOf(".json");
         String attemptsStr = chunkId.substring(idxStart + 1, idxEnd);

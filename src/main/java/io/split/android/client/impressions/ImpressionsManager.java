@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,7 +131,13 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
             _currentChunkSize = 0;
 
-            _storageManager.writeChunk(impressions);
+                if (impressions != null && !impressions.isEmpty()) {
+                    try {
+                        _storageManager.storeImpressions(impressions);
+                    } catch (IOException e) {
+                        Timber.e(e, "Failed to write chunk of impressions %d", impressions.size());
+                    }
+                }
 
             if (_config.debugEnabled()) {
                 Timber.i("Flushing %d Split impressions took %d millis",
@@ -141,9 +148,16 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
     private void sendImpressions() {
         long start = System.currentTimeMillis();
-        _impressionsSender.post(null);
+        List<StoredImpressions> storedImpressions = _storageManager.getStoredImpressions();
+        for(StoredImpressions storedImpression : storedImpressions) {
+            boolean succeeded = _impressionsSender.post(storedImpression.impressions());
+            if (succeeded) {
+                _storageManager.succeededStoredImpression(storedImpression);
+            } else {
+                _storageManager.failedStoredImpression(storedImpression);
+            }
+        }
         Timber.i("Posting Split impressions took %d millis", (System.currentTimeMillis() - start));
-
     }
 
     private void accumulateChunkSize(KeyImpression keyImpression) {

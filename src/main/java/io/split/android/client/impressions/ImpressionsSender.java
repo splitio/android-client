@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface ImpressionsSender {
 
-    void post(List<TestImpressions> impressions);
+    boolean post(List<TestImpressions> impressions);
 }

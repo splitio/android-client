@@ -9,9 +9,11 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Utils;
 import timber.log.Timber;
 
@@ -28,40 +30,31 @@ public class HttpImpressionsSender implements ImpressionsSender {
     }
 
     @Override
-    public void post(List<TestImpressions> impressions) {
+    public boolean post(List<TestImpressions> impressions) {
+        if (impressions == null || impressions.isEmpty()) {
+            return true;
+        }
 
         if (!Utils.isReachable(_eventsEndpoint)) {
             Timber.d("%s is NOT REACHABLE. Avoid trying to send impressions this time.", _eventsEndpoint.getHost());
-            return;
+            return false;
         }
 
         synchronized (this) {
-            String[] chunkNames = _storageManager.getAllChunkNames();
-            Timber.i("Posting %d Split impressions", chunkNames.length);
+            Timber.i("Posting %d Split impressions", impressions.size());
 
-            for (String chunkId :
-                    chunkNames) {
-                try {
-                    String json = _storageManager.readStringChunk(chunkId);
-
-                    if(json == null){
-                        _storageManager.chunkFailed(chunkId);
-                        continue;
-                    }
-
-                    StringEntity entity = new StringEntity(json, "UTF-8");
-                    entity.setContentType("application/json");
-
-                    if (post(entity)) {
-                        _storageManager.chunkSucceeded(chunkId);
-                    } else {
-                        _storageManager.chunkFailed(chunkId);
-                    }
-
-                } catch (UnsupportedEncodingException e) {
-                    Timber.e(e);
-                    _storageManager.chunkFailed(chunkId);
+            String json = Json.toJson(impressions);
+            try {
+                StringEntity entity = new StringEntity(json, "UTF-8");
+                entity.setContentType("application/json");
+                if (post(entity)) {
+                    return true;
+                } else {
+                    return false;
                 }
+            } catch (UnsupportedEncodingException e) {
+                Timber.e(e);
+                return false;
             }
         }
     }

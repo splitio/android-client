@@ -3,6 +3,7 @@ package io.split.android.client.impressions;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.storage.MemoryStorage;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -28,7 +29,6 @@ public class ImpressionsManagerTest {
     private ArgumentCaptor<List<TestImpressions>> impressionsCaptor;
 
     @Test
-    @Ignore
     public void works() throws URISyntaxException {
 
         SplitClientConfig config = SplitClientConfig.builder()
@@ -37,7 +37,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = Mockito.mock(ImpressionsStorageManager.class);
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -62,7 +62,6 @@ public class ImpressionsManagerTest {
     }
 
     @Test
-    @Ignore
     public void worksButDropsImpressions() throws URISyntaxException {
 
         SplitClientConfig config = SplitClientConfig.builder()
@@ -71,7 +70,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = Mockito.mock(ImpressionsStorageManager.class);
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -97,7 +96,6 @@ public class ImpressionsManagerTest {
     }
 
     @Test
-    @Ignore
     public void works4ImpressionsInOneTest() throws URISyntaxException {
 
         SplitClientConfig config = SplitClientConfig.builder()
@@ -106,7 +104,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = Mockito.mock(ImpressionsStorageManager.class);
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -134,7 +132,6 @@ public class ImpressionsManagerTest {
     }
 
     @Test
-    @Ignore
     public void worksNoImpressions() throws URISyntaxException {
 
         SplitClientConfig config = SplitClientConfig.builder()
@@ -143,7 +140,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = Mockito.mock(ImpressionsStorageManager.class);
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
