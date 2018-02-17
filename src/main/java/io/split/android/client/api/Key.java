@@ -1,7 +1,5 @@
 package io.split.android.client.api;
 
-import java.security.PublicKey;
-
 public final class Key {
     private final String _matchingKey;
     private final String _bucketingKey;
