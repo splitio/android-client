@@ -13,9 +13,9 @@ import io.split.android.client.dtos.MySegment;
  */
 
 public class StaticMySegmentsFetcher implements MySegmentsFetcher {
-    private final Map<String, StaticSegment> segments;
+    private final Map<String, StaticMySegments> segments;
 
-    public StaticMySegmentsFetcher(Map<String, StaticSegment> segments) {
+    public StaticMySegmentsFetcher(Map<String, StaticMySegments> segments) {
         this.segments = Preconditions.checkNotNull(segments);
     }
 

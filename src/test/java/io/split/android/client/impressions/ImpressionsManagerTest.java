@@ -29,6 +29,7 @@ public class ImpressionsManagerTest {
     private ArgumentCaptor<List<TestImpressions>> impressionsCaptor;
 
     @Test
+    @Ignore
     public void works() throws URISyntaxException {
 
         SplitClientConfig config = SplitClientConfig.builder()
@@ -62,6 +63,7 @@ public class ImpressionsManagerTest {
     }
 
     @Test
+    @Ignore
     public void worksButDropsImpressions() throws URISyntaxException {
 
         SplitClientConfig config = SplitClientConfig.builder()
@@ -96,6 +98,7 @@ public class ImpressionsManagerTest {
     }
 
     @Test
+    @Ignore
     public void works4ImpressionsInOneTest() throws URISyntaxException {
 
         SplitClientConfig config = SplitClientConfig.builder()
@@ -132,6 +135,7 @@ public class ImpressionsManagerTest {
     }
 
     @Test
+    @Ignore
     public void worksNoImpressions() throws URISyntaxException {
 
         SplitClientConfig config = SplitClientConfig.builder()

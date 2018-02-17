@@ -25,7 +25,7 @@ import io.split.android.engine.matchers.CombiningMatcher;
 import io.split.android.engine.matchers.EqualToMatcher;
 import io.split.android.engine.matchers.GreaterThanOrEqualToMatcher;
 import io.split.android.engine.matchers.LessThanOrEqualToMatcher;
-import io.split.android.engine.matchers.UserDefinedSegmentMatcher;
+import io.split.android.engine.matchers.MySegmentsMatcher;
 import io.split.android.engine.matchers.collections.ContainsAllOfSetMatcher;
 import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
 import io.split.android.engine.matchers.collections.EqualToSetMatcher;
@@ -34,8 +34,8 @@ import io.split.android.engine.matchers.strings.ContainsAnyOfMatcher;
 import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+import io.split.android.engine.segments.StaticMySegments;
 import io.split.android.engine.segments.StaticMySegmentsFectherProvider;
-import io.split.android.engine.segments.StaticSegment;
 import io.split.android.grammar.Treatments;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -48,149 +48,6 @@ import static org.junit.Assert.assertThat;
  *
  */
 public class SplitParserTest {
-
-    @Test
-    public void works() {
-        StaticSegment employees = new StaticSegment("employees", Sets.newHashSet("adil", "pato", "trevor"));
-        StaticSegment salespeople = new StaticSegment("salespeople", Sets.newHashSet("kunal"));
-
-        Map<String, StaticSegment> fetcherMap = Maps.newHashMap();
-        fetcherMap.put(employees.segmentName(), employees);
-        fetcherMap.put(salespeople.segmentName(), salespeople);
-
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", fetcherMap);
-        SplitParser parser = SplitParser.get(provider);
-
-
-        Matcher employeesMatcher = ConditionsTestUtil.userDefinedSegmentMatcher(employees.segmentName(), false);
-        Matcher notSalespeople = ConditionsTestUtil.userDefinedSegmentMatcher(salespeople.segmentName(), true);
-
-        List<Partition> partitions = Lists.newArrayList(ConditionsTestUtil.partition("on", 100));
-
-        Condition c = ConditionsTestUtil.and(employeesMatcher, notSalespeople, partitions);
-
-        List<Condition> conditions = Lists.newArrayList(c);
-
-        Split split = makeSplit("first.name", 123, conditions, 1);
-
-        ParsedSplit actual = parser.parse(split);
-
-        AttributeMatcher employeesMatcherLogic = AttributeMatcher.vanilla(new UserDefinedSegmentMatcher(employees));
-        AttributeMatcher notSalesPeopleMatcherLogic = new AttributeMatcher(null, new UserDefinedSegmentMatcher(salespeople), true);
-        CombiningMatcher combiningMatcher = new CombiningMatcher(MatcherCombiner.AND, Lists.newArrayList(employeesMatcherLogic, notSalesPeopleMatcherLogic));
-        ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
-        List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
-
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1);
-
-        assertThat(actual, is(equalTo(expected)));
-    }
-
-    @Test
-    public void works_for_two_conditions() {
-
-        StaticSegment employees = new StaticSegment("employees", Sets.newHashSet("adil", "pato", "trevor"));
-        StaticSegment salespeople = new StaticSegment("salespeople", Sets.newHashSet("kunal"));
-
-        Map<String, StaticSegment> fetcherMap = Maps.newHashMap();
-        fetcherMap.put(employees.segmentName(), employees);
-        fetcherMap.put(salespeople.segmentName(), salespeople);
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", fetcherMap);
-        SplitParser parser = SplitParser.get(provider);
-
-        Matcher employeesMatcher = ConditionsTestUtil.userDefinedSegmentMatcher(employees.segmentName(), false);
-
-        Matcher salespeopleMatcher = ConditionsTestUtil.userDefinedSegmentMatcher(salespeople.segmentName(), false);
-
-        List<Partition> fullyRollout = Lists.newArrayList(ConditionsTestUtil.partition("on", 100));
-        List<Partition> turnOff = Lists.newArrayList(ConditionsTestUtil.partition(Treatments.CONTROL, 100));
-
-        Condition c1 = ConditionsTestUtil.and(employeesMatcher, fullyRollout);
-        Condition c2 = ConditionsTestUtil.and(salespeopleMatcher, turnOff);
-
-        List<Condition> conditions = Lists.newArrayList(c1, c2);
-
-        Split split = makeSplit("first.name", 123, conditions, 1);
-
-        ParsedSplit actual = parser.parse(split);
-
-        ParsedCondition parsedCondition1 = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new UserDefinedSegmentMatcher(employees)), fullyRollout);
-        ParsedCondition parsedCondition2 = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new UserDefinedSegmentMatcher(salespeople)), turnOff);
-        List<ParsedCondition> listOfParsedConditions = Lists.newArrayList(parsedCondition1, parsedCondition2);
-
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfParsedConditions, "user", 1, 1);
-
-        assertThat(actual, is(equalTo(expected)));
-    }
-
-    @Test
-    public void fails_for_long_conditions() {
-
-        StaticSegment employees = new StaticSegment("employees", Sets.newHashSet("adil", "pato", "trevor"));
-
-        Map<String, StaticSegment> fetcherMap = Maps.newHashMap();
-        fetcherMap.put(employees.segmentName(), employees);
-
-        RefreshableMySegmentsFetcherProvider provider= StaticMySegmentsFectherProvider.get("key", fetcherMap);
-
-        SplitParser parser = SplitParser.get(provider);
-
-        Matcher employeesMatcher = ConditionsTestUtil.userDefinedSegmentMatcher(employees.segmentName(), false);
-
-        List<Condition> conditions = Lists.newArrayList();
-        List<Partition> p1 = Lists.newArrayList(ConditionsTestUtil.partition("on", 100));
-        for (int i = 0; i < SplitParser.CONDITIONS_UPPER_LIMIT+1 ; i++) {
-            Condition c = ConditionsTestUtil.and(employeesMatcher, p1);
-            conditions.add(c);
-        }
-
-        Split split = makeSplit("first.name", 123, conditions, 1);
-
-        assertThat(parser.parse(split), is(nullValue()));
-    }
-
-
-    @Test
-    public void works_with_attributes() {
-
-        StaticSegment employees = new StaticSegment("employees", Sets.newHashSet("adil", "pato", "trevor"));
-        StaticSegment salespeople = new StaticSegment("salespeople", Sets.newHashSet("kunal"));
-
-        Map<String, StaticSegment> fetcherMap = Maps.newHashMap();
-        fetcherMap.put(employees.segmentName(), employees);
-        fetcherMap.put(salespeople.segmentName(), salespeople);
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", fetcherMap);
-
-        SplitParser parser = SplitParser.get(provider);
-
-        Matcher employeesMatcher = ConditionsTestUtil.userDefinedSegmentMatcher("user", "name", employees.segmentName(), false);
-
-        Matcher creationDateNotOlderThanAPoint = ConditionsTestUtil.numericMatcher("user", "creation_date",
-                MatcherType.GREATER_THAN_OR_EQUAL_TO,
-                DataType.DATETIME,
-                1457386741L,
-                true);
-
-        List<Partition> partitions = Lists.newArrayList(ConditionsTestUtil.partition("on", 100));
-
-        Condition c = ConditionsTestUtil.and(employeesMatcher, creationDateNotOlderThanAPoint, partitions);
-
-        List<Condition> conditions = Lists.newArrayList(c);
-
-        Split split = makeSplit("first.name", 123, conditions, 1);
-
-        ParsedSplit actual = parser.parse(split);
-
-        AttributeMatcher employeesMatcherLogic = new AttributeMatcher("name", new UserDefinedSegmentMatcher(employees), false);
-        AttributeMatcher creationDateNotOlderThanAPointLogic = new AttributeMatcher("creation_date", new GreaterThanOrEqualToMatcher(1457386741L, DataType.DATETIME), true);
-        CombiningMatcher combiningMatcher = new CombiningMatcher(MatcherCombiner.AND, Lists.newArrayList(employeesMatcherLogic, creationDateNotOlderThanAPointLogic));
-        ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
-        List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
-
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1);
-
-        assertThat(actual, is(equalTo(expected)));
-    }
 
     @Test
     public void less_than_or_equal_to() {
