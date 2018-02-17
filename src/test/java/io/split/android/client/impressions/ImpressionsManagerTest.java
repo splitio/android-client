@@ -1,10 +1,5 @@
 package io.split.android.client.impressions;
 
-import io.split.android.client.SplitClientConfig;
-import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.TestImpressions;
-import io.split.android.client.storage.MemoryStorage;
-
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +10,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.URISyntaxException;
 import java.util.List;
+
+import io.split.android.client.SplitClientConfig;
+import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.storage.MemoryStorage;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;

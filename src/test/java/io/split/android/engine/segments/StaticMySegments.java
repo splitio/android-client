@@ -38,6 +38,10 @@ public class StaticMySegments implements MySegments {
         return false;
     }
 
+    public List<MySegment> mySegments() {
+        return mySegments;
+    }
+
     @Override
     public void forceRefresh() {
 

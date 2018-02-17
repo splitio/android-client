@@ -21,6 +21,10 @@ public class StaticMySegmentsFetcher implements MySegmentsFetcher {
 
     @Override
     public List<MySegment> fetch(String matchingKey) {
-        return Lists.newArrayList();
+        StaticMySegments mySegments = segments.get(matchingKey);
+        if (mySegments != null) {
+            return mySegments.mySegments();
+        } else {
+            return Lists.newArrayList();
     }
 }

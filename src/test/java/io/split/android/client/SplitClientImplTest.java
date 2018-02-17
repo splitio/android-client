@@ -2,14 +2,22 @@ package io.split.android.client;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.DataType;
-import io.split.android.client.dtos.Partition;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.SplitClientImplFactory;
-import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -20,17 +28,7 @@ import io.split.android.engine.matchers.EqualToMatcher;
 import io.split.android.engine.matchers.GreaterThanOrEqualToMatcher;
 import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
-import io.split.android.engine.metrics.Metrics;
 import io.split.android.grammar.Treatments;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static io.split.android.engine.ConditionsTestUtil.partition;
 import static org.hamcrest.Matchers.equalTo;

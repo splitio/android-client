@@ -9,7 +9,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 
 import io.split.android.client.dtos.TestImpressions;

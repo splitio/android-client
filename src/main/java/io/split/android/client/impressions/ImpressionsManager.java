@@ -1,6 +1,5 @@
 package io.split.android.client.impressions;
 
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -18,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.utils.Utils;
 import timber.log.Timber;
 
