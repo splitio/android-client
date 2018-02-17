@@ -117,6 +117,12 @@ uploadArchives {
                         name 'Sebastian Arrubia'
                         email 'sebastian@split.io'
                     }
+
+                    developer {
+                        id 'fernando'
+                        name 'Fernando Martin'
+                        email 'fernando@split.io'
+                    }
                 }
 
                 scm {
