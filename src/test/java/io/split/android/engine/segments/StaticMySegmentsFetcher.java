@@ -1,6 +1,7 @@
 package io.split.android.engine.segments;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,6 @@ public class StaticMySegmentsFetcher implements MySegmentsFetcher {
 
     @Override
     public List<MySegment> fetch(String matchingKey) {
-        return null;
+        return Lists.newArrayList();
     }
 }
