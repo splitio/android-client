@@ -77,8 +77,12 @@ public class ImpressionsStorageManager {
         List<StoredImpressions> result = Lists.newArrayList();
         for(String id: ids) {
             String stored = readStringChunk(id);
-            List<TestImpressions> testImpressions = Json.fromJsonList(stored, TestImpressions.class);
-            result.add(StoredImpressions.from(id, testImpressions));
+            if (stored != null) {
+                List<TestImpressions> testImpressions = Json.fromJsonList(stored, TestImpressions.class);
+                result.add(StoredImpressions.from(id, testImpressions));
+            } else {
+                Timber.w("Could not read chunk %s", id);
+            }
         }
         return result;
     }
