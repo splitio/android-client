@@ -84,13 +84,28 @@ public class ImpressionsStorageManager {
     }
 
     public void failedStoredImpression(StoredImpressions storedImpression) {
-        Preconditions.checkNotNull(storedImpression);
-        chunkFailed(storedImpression.id());
+        if (chunkCanBeStored(storedImpression)) {
+            chunkFailed(storedImpression.id());
+        }
     }
 
     public void succeededStoredImpression(StoredImpressions storedImpression) {
-        Preconditions.checkNotNull(storedImpression);
-        chunkSucceeded(storedImpression.id());
+        if (chunkCanBeStored(storedImpression)) {
+            chunkSucceeded(storedImpression.id());
+        }
+    }
+
+    private boolean chunkCanBeStored(StoredImpressions storedImpressions) {
+        if (storedImpressions == null) {
+            return false;
+        }
+        if (storedImpressions.id() == null || storedImpressions.id().isEmpty()) {
+            return false;
+        }
+        if (storedImpressions.impressions() == null || storedImpressions.impressions().isEmpty()) {
+            return false;
+        }
+        return true;
     }
 
 

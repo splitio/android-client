@@ -31,7 +31,7 @@ public class HttpImpressionsSender implements ImpressionsSender {
     @Override
     public boolean post(List<TestImpressions> impressions) {
         if (impressions == null || impressions.isEmpty()) {
-            return true;
+            return false;
         }
 
         if (!Utils.isReachable(_eventsEndpoint)) {
@@ -40,17 +40,13 @@ public class HttpImpressionsSender implements ImpressionsSender {
         }
 
         synchronized (this) {
-            Timber.i("Posting %d Split impressions", impressions.size());
+            Timber.d("Posting %d Split impressions", impressions.size());
 
             String json = Json.toJson(impressions);
             try {
                 StringEntity entity = new StringEntity(json, "UTF-8");
                 entity.setContentType("application/json");
-                if (post(entity)) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return post(entity);
             } catch (UnsupportedEncodingException e) {
                 Timber.e(e);
                 return false;
