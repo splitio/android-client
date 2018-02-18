@@ -113,7 +113,7 @@ public class ImpressionsStorageManager {
         try {
             return _storage.read(chunkId);
         } catch (IOException e) {
-            Timber.e(e);
+            Timber.e(e, "Could not read chunk %s", chunkId);
         }
         return null;
     }

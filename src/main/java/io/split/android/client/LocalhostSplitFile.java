@@ -38,12 +38,12 @@ public class LocalhostSplitFile {
                 String[] feature_treatment = line.split("\\s+");
 
                 if (feature_treatment.length != 2) {
-                    Timber.i("Ignoring line since it does not have exactly two columns: %s", line);
+                    Timber.d("Ignoring line since it does not have exactly two columns: %s", line);
                     continue;
                 }
 
                 onSplits.put(feature_treatment[0], feature_treatment[1]);
-                Timber.i("100%% of keys will see %s for %s", feature_treatment[1], feature_treatment[0]);
+                Timber.d("100%% of keys will see %s for %s", feature_treatment[1], feature_treatment[0]);
             }
         } catch (FileNotFoundException e) {
             Timber.w(e, "There was no file named %s found. " +

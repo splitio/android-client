@@ -71,11 +71,11 @@ public class HttpImpressionsSender implements ImpressionsSender {
                 Timber.w("Response status was: %d. Reason: %s", status, reason);
                 return false;
             }
-            Timber.i("Entity sent: %s", entity);
+            Timber.d("Entity sent: %s", entity);
 
             return true;
         } catch (Throwable t) {
-            Timber.w(t, "Exception when posting impressions %s", entity);
+            Timber.e(t, "Exception when posting impressions %s", entity);
             return false;
         } finally {
             Utils.forceClose(response);

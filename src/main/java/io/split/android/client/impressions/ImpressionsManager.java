@@ -80,7 +80,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
                 }
             }
         } catch (Exception e) {
-            Timber.w(e, "Unable to send impression to ImpressionsManager");
+            Timber.e(e, "Unable to send impression to ImpressionsManager");
         }
 
     }
@@ -93,7 +93,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
             sendImpressions();
             _scheduler.awaitTermination(_config.waitBeforeShutdown(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            Timber.w(e, "Unable to close ImpressionsManager");
+            Timber.e(e, "Unable to close ImpressionsManager");
         }
 
     }
@@ -155,7 +155,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
                 _storageManager.failedStoredImpression(storedImpression);
             }
         }
-        Timber.i("Posting Split impressions took %d millis", (System.currentTimeMillis() - start));
+        Timber.d("Posting Split impressions took %d millis", (System.currentTimeMillis() - start));
     }
 
     private void accumulateChunkSize(KeyImpression keyImpression) {

@@ -51,8 +51,7 @@ public class RefreshableMySegments implements Runnable, MySegments {
 
             _gates.mySegmentsAreReady();
         } catch (Throwable t) {
-            Timber.e("RefreshableMySegments failed: %s", t.getMessage());
-            Timber.d(t);
+            Timber.e(t,"RefreshableMySegments failed: %s", t.getMessage());
         }
 
     }

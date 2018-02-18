@@ -74,13 +74,13 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
         _scheduledExecutorService.shutdown();
         try {
             if (!_scheduledExecutorService.awaitTermination(2L, TimeUnit.SECONDS)) { //optional *
-                Timber.i("Executor did not terminate in the specified time.");
+                Timber.w("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = _scheduledExecutorService.shutdownNow(); //optional **
-                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Timber.w("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
-            Timber.e("Shutdown of SegmentFetchers was interrupted");
+            Timber.e(e,"Shutdown of SegmentFetchers was interrupted");
             Thread.currentThread().interrupt();
         }
 

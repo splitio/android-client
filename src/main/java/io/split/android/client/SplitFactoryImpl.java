@@ -112,7 +112,7 @@ public class SplitFactoryImpl implements SplitFactory {
             httpClientbuilder.setRoutePlanner(routePlanner);
 
             if (config.proxyUsername() != null && config.proxyPassword() != null) {
-                Timber.d("Proxy setup using credentials");
+                Timber.i("Proxy setup using credentials");
                 CredentialsProvider credsProvider = new BasicCredentialsProvider();
                 AuthScope siteScope = new AuthScope(config.proxy().getHostName(), config.proxy().getPort());
                 Credentials siteCreds = new UsernamePasswordCredentials(config.proxyUsername(), config.proxyPassword());
@@ -171,17 +171,17 @@ public class SplitFactoryImpl implements SplitFactory {
                 Timber.w("Shutdown called for split");
                 try {
                     segmentFetcher.close();
-                    Timber.w("Successful shutdown of segment fetchers");
+                    Timber.i("Successful shutdown of segment fetchers");
                     splitFetcherProvider.close();
-                    Timber.w("Successful shutdown of splits");
+                    Timber.i("Successful shutdown of splits");
                     uncachedFireAndForget.close();
-                    Timber.w("Successful shutdown of metrics 1");
+                    Timber.i("Successful shutdown of metrics 1");
                     cachedFireAndForgetMetrics.close();
-                    Timber.w("Successful shutdown of metrics 2");
+                    Timber.i("Successful shutdown of metrics 2");
                     impressionListener.close();
-                    Timber.w("Successful shutdown of ImpressionListener");
+                    Timber.i("Successful shutdown of ImpressionListener");
                     httpclient.close();
-                    Timber.w("Successful shutdown of httpclient");
+                    Timber.i("Successful shutdown of httpclient");
                 } catch (IOException e) {
                     Timber.e(e, "We could not shutdown split");
                 } finally {
@@ -196,7 +196,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 Timber.w("Flush called for split");
                 try {
                     splitImpressionListener.flushImpressions();
-                    Timber.w("Successful flush of impressions");
+                    Timber.i("Successful flush of impressions");
                 } catch (Exception e) {
                     Timber.e(e, "We could not flush split");
                 }
@@ -220,7 +220,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     Timber.w("SDK was not ready in " + config.blockUntilReady() + " milliseconds");
                 }
             } catch (InterruptedException e){
-                Timber.e(e.getMessage());
+                Timber.e(e, "Interrupted while waiting for sdk to be ready");
             }
         }
 
