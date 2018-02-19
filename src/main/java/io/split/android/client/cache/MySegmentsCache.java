@@ -35,9 +35,9 @@ public class MySegmentsCache implements IMySegmentsCache {
             _storage.write(getMySegmentsId(), Json.toJson(mySegments));
             return true;
         } catch (IOException e) {
-            Timber.e(e);
+            Timber.e(e, "Could not save my segments");
+            return false;
         }
-        return false;
     }
 
     @Override
@@ -49,7 +49,7 @@ public class MySegmentsCache implements IMySegmentsCache {
 
             return Json.fromJson(storedMySegments, listType);
         } catch (IOException e) {
-            Timber.e(e);
+            Timber.e(e, "Unable to get my segments");
         }
         return null;
     }

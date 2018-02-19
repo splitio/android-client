@@ -50,7 +50,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         try {
             post(new URIBuilder(_target).setPath("/api/metrics/time").build(), dto);
         } catch (Throwable t) {
-            Timber.w(t, "Exception when posting metric %s", dto);
+            Timber.e(t, "Exception when posting metric %s", dto);
         }
 
     }
@@ -61,7 +61,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         try {
             post(new URIBuilder(_target).setPath("/api/metrics/counter").build(), dto);
         } catch (Throwable t) {
-            Timber.w(t, "Exception when posting metric %s", dto);
+            Timber.e(t, "Exception when posting metric %s", dto);
         }
 
     }
@@ -85,8 +85,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
             }
 
         } catch (Throwable t) {
-            Timber.w("Exception when posting metrics: %s", t.getMessage());
-            Timber.d(t);
+            Timber.e(t,"Exception when posting metrics");
         } finally {
             Utils.forceClose(response);
         }
@@ -102,7 +101,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
 
             count(dto);
         } catch (Throwable t) {
-            Timber.i(t, "Could not count metric %s", counter);
+            Timber.e(t, "Could not count metric %s", counter);
         }
 
     }
@@ -116,7 +115,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
 
             time(dto);
         } catch (Throwable t) {
-            Timber.i(t, "Could not time metric %s", operation);
+            Timber.e(t, "Could not time metric %s", operation);
         }
     }
 

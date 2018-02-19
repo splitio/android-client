@@ -1,10 +1,10 @@
 package io.split.android.client.impressions;
 
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.http.impl.client.CloseableHttpClient;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.utils.Utils;
 import timber.log.Timber;
 
@@ -81,7 +80,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
                 }
             }
         } catch (Exception e) {
-            Timber.w(e, "Unable to send impression to ImpressionsManager");
+            Timber.e(e, "Unable to send impression to ImpressionsManager");
         }
 
     }
@@ -94,7 +93,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
             sendImpressions();
             _scheduler.awaitTermination(_config.waitBeforeShutdown(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            Timber.w(e, "Unable to close ImpressionsManager");
+            Timber.e(e, "Unable to close ImpressionsManager");
         }
 
     }
@@ -130,7 +129,13 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
             _currentChunkSize = 0;
 
-            _storageManager.writeChunk(impressions);
+                if (impressions != null && !impressions.isEmpty()) {
+                    try {
+                        _storageManager.storeImpressions(impressions);
+                    } catch (IOException e) {
+                        Timber.e(e, "Failed to write chunk of impressions %d", impressions.size());
+                    }
+                }
 
             if (_config.debugEnabled()) {
                 Timber.i("Flushing %d Split impressions took %d millis",
@@ -141,9 +146,16 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
     private void sendImpressions() {
         long start = System.currentTimeMillis();
-        _impressionsSender.post(null);
-        Timber.i("Posting Split impressions took %d millis", (System.currentTimeMillis() - start));
-
+        List<StoredImpressions> storedImpressions = _storageManager.getStoredImpressions();
+        for(StoredImpressions storedImpression : storedImpressions) {
+            boolean succeeded = _impressionsSender.post(storedImpression.impressions());
+            if (succeeded) {
+                _storageManager.succeededStoredImpression(storedImpression);
+            } else {
+                _storageManager.failedStoredImpression(storedImpression);
+            }
+        }
+        Timber.d("Posting Split impressions took %d millis", (System.currentTimeMillis() - start));
     }
 
     private void accumulateChunkSize(KeyImpression keyImpression) {

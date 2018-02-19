@@ -58,7 +58,7 @@ public class SDKReadinessGates {
         long originalCount = _splitsAreReady.getCount();
         _splitsAreReady.countDown();
         if (originalCount > 0L) {
-            Timber.i("splits are ready");
+            Timber.d("splits are ready");
         }
     }
 
@@ -71,7 +71,7 @@ public class SDKReadinessGates {
         long originalCount = _mySegmentsAreReady.getCount();
         _mySegmentsAreReady.countDown();
         if (originalCount > 0L) {
-            Timber.i("mySegments are ready");
+            Timber.d("mySegments are ready");
         }
     }
 

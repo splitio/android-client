@@ -97,11 +97,10 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             runWithoutExceptionHandling();
             _gates.splitsAreReady();
         } catch (InterruptedException e) {
-            Timber.w("Interrupting split fetcher task");
+            Timber.w(e,"Interrupting split fetcher task");
             Thread.currentThread().interrupt();
         } catch (Throwable t) {
-            Timber.e("RefreshableSplitFetcher failed: %s" , t.getMessage());
-            Timber.d(t);
+            Timber.e(t,"RefreshableSplitFetcher failed: %s" , t.getMessage());
         } finally {
             try {
                 Timber.d("split fetch before: %d, after: %d", start, _changeNumber.get());

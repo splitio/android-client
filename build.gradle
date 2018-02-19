@@ -4,8 +4,8 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 allprojects {
-    group = 'io.split'
-    version = '0.8'
+    group = 'io.split.client'
+    version = '0.9.0'
 }
 
 android {
@@ -24,7 +24,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 26
         versionCode 0
-        versionName "0.8"
+        versionName "0.9.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -48,11 +48,11 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'junit:junit:4.12'
     implementation 'com.google.code.gson:gson:2.8.2'
     implementation 'com.google.guava:guava:18.0'
     implementation 'org.apache.httpcomponents:httpclient-android:4.3.5'
+
     implementation 'com.jakewharton.timber:timber:4.6.0'
 
     // Test
@@ -116,6 +116,12 @@ uploadArchives {
                         id 'sarrubia'
                         name 'Sebastian Arrubia'
                         email 'sebastian@split.io'
+                    }
+
+                    developer {
+                        id 'fernando'
+                        name 'Fernando Martin'
+                        email 'fernando@split.io'
                     }
                 }
 

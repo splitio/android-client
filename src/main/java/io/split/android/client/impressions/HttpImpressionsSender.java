@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Utils;
 import timber.log.Timber;
 
@@ -28,40 +29,27 @@ public class HttpImpressionsSender implements ImpressionsSender {
     }
 
     @Override
-    public void post(List<TestImpressions> impressions) {
+    public boolean post(List<TestImpressions> impressions) {
+        if (impressions == null || impressions.isEmpty()) {
+            return false;
+        }
 
         if (!Utils.isReachable(_eventsEndpoint)) {
             Timber.d("%s is NOT REACHABLE. Avoid trying to send impressions this time.", _eventsEndpoint.getHost());
-            return;
+            return false;
         }
 
         synchronized (this) {
-            String[] chunkNames = _storageManager.getAllChunkNames();
-            Timber.i("Posting %d Split impressions", chunkNames.length);
+            Timber.d("Posting %d Split impressions", impressions.size());
 
-            for (String chunkId :
-                    chunkNames) {
-                try {
-                    String json = _storageManager.readStringChunk(chunkId);
-
-                    if(json == null){
-                        _storageManager.chunkFailed(chunkId);
-                        continue;
-                    }
-
-                    StringEntity entity = new StringEntity(json, "UTF-8");
-                    entity.setContentType("application/json");
-
-                    if (post(entity)) {
-                        _storageManager.chunkSucceeded(chunkId);
-                    } else {
-                        _storageManager.chunkFailed(chunkId);
-                    }
-
-                } catch (UnsupportedEncodingException e) {
-                    Timber.e(e);
-                    _storageManager.chunkFailed(chunkId);
-                }
+            String json = Json.toJson(impressions);
+            try {
+                StringEntity entity = new StringEntity(json, "UTF-8");
+                entity.setContentType("application/json");
+                return post(entity);
+            } catch (UnsupportedEncodingException e) {
+                Timber.e(e);
+                return false;
             }
         }
     }
@@ -83,11 +71,11 @@ public class HttpImpressionsSender implements ImpressionsSender {
                 Timber.w("Response status was: %d. Reason: %s", status, reason);
                 return false;
             }
-            Timber.i("Entity sent: %s", entity);
+            Timber.d("Entity sent: %s", entity);
 
             return true;
         } catch (Throwable t) {
-            Timber.w(t, "Exception when posting impressions %s", entity);
+            Timber.e(t, "Exception when posting impressions %s", entity);
             return false;
         } finally {
             Utils.forceClose(response);

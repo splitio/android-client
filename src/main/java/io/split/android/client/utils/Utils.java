@@ -10,7 +10,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URI;
 
-
 import timber.log.Timber;
 
 public class Utils {

@@ -46,6 +46,10 @@ public final class SplitParser {
 
     private RefreshableMySegmentsFetcherProvider _mySegmentsFetcherProvider;
 
+    public static SplitParser get(RefreshableMySegmentsFetcherProvider provider) {
+        return new SplitParser(provider);
+    }
+
     public SplitParser(RefreshableMySegmentsFetcherProvider mySegmentsFetcherProvider) {
         _mySegmentsFetcherProvider = mySegmentsFetcherProvider;
         checkNotNull(_mySegmentsFetcherProvider);
@@ -187,6 +191,4 @@ public final class SplitParser {
 
         return new AttributeMatcher(attribute, delegate, negate);
     }
-
-
 }

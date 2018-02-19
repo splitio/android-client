@@ -1,5 +1,8 @@
 package io.split.android.client.cache;
 
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,6 +10,7 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
+import timber.log.Timber;
 
 /**
  * Created by guillermo on 11/23/17.
@@ -53,8 +57,17 @@ public class SplitChangeCache implements ISplitChangeCache {
     private void addAllSplits(List<Split> splits) {
         for (String splitName :
                 _splitCache.getSplitNames()) {
-            Split split = Json.fromJson(_splitCache.getSplit(splitName), Split.class);
-            splits.add(split);
+            String cachedSplit = _splitCache.getSplit(splitName);
+            if (cachedSplit != null) {
+                try {
+                    Split split = Json.fromJson(cachedSplit, Split.class);
+                    splits.add(split);
+                } catch (JsonSyntaxException e) {
+                    Timber.e(e, "Failed to parse split %s, cache: %s", splitName, cachedSplit);
+                }
+            } else {
+                Timber.w("split %s was not cached", splitName);
+            }
         }
     }
 }
