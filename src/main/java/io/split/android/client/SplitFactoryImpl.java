@@ -47,13 +47,13 @@ import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.storage.MemoryAndFileStorage;
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
 import io.split.android.engine.experiments.SplitChangeFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.segments.MySegmentsFetcher;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
-import timber.log.Timber;
 
 public class SplitFactoryImpl implements SplitFactory {
 
@@ -107,12 +107,12 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Set up proxy is it exists
         if (config.proxy() != null) {
-            Timber.i("Initializing Split SDK with proxy settings");
+            Logger.i("Initializing Split SDK with proxy settings");
             DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(config.proxy());
             httpClientbuilder.setRoutePlanner(routePlanner);
 
             if (config.proxyUsername() != null && config.proxyPassword() != null) {
-                Timber.i("Proxy setup using credentials");
+                Logger.i("Proxy setup using credentials");
                 CredentialsProvider credsProvider = new BasicCredentialsProvider();
                 AuthScope siteScope = new AuthScope(config.proxy().getHostName(), config.proxy().getPort());
                 Credentials siteCreds = new UsernamePasswordCredentials(config.proxyUsername(), config.proxyPassword());
@@ -168,22 +168,22 @@ public class SplitFactoryImpl implements SplitFactory {
 
         destroyer = new Runnable() {
             public void run() {
-                Timber.w("Shutdown called for split");
+                Logger.w("Shutdown called for split");
                 try {
                     segmentFetcher.close();
-                    Timber.i("Successful shutdown of segment fetchers");
+                    Logger.i("Successful shutdown of segment fetchers");
                     splitFetcherProvider.close();
-                    Timber.i("Successful shutdown of splits");
+                    Logger.i("Successful shutdown of splits");
                     uncachedFireAndForget.close();
-                    Timber.i("Successful shutdown of metrics 1");
+                    Logger.i("Successful shutdown of metrics 1");
                     cachedFireAndForgetMetrics.close();
-                    Timber.i("Successful shutdown of metrics 2");
+                    Logger.i("Successful shutdown of metrics 2");
                     impressionListener.close();
-                    Timber.i("Successful shutdown of ImpressionListener");
+                    Logger.i("Successful shutdown of ImpressionListener");
                     httpclient.close();
-                    Timber.i("Successful shutdown of httpclient");
+                    Logger.i("Successful shutdown of httpclient");
                 } catch (IOException e) {
-                    Timber.e(e, "We could not shutdown split");
+                    Logger.e(e, "We could not shutdown split");
                 } finally {
                     isTerminated = true;
                 }
@@ -193,12 +193,12 @@ public class SplitFactoryImpl implements SplitFactory {
         flusher = new Runnable() {
             @Override
             public void run() {
-                Timber.w("Flush called for split");
+                Logger.w("Flush called for split");
                 try {
                     splitImpressionListener.flushImpressions();
-                    Timber.i("Successful flush of impressions");
+                    Logger.i("Successful flush of impressions");
                 } catch (Exception e) {
-                    Timber.e(e, "We could not flush split");
+                    Logger.e(e, "We could not flush split");
                 }
             }
         };
@@ -219,18 +219,18 @@ public class SplitFactoryImpl implements SplitFactory {
             try {
                 if (!gates.isSDKReady(config.blockUntilReady())) {
                     dataReady = false;
-                    Timber.w("SDK was not ready in " + config.blockUntilReady() + " milliseconds");
+                    Logger.w("SDK was not ready in " + config.blockUntilReady() + " milliseconds");
                 }
             } catch (InterruptedException e){
                 dataReady = false;
-                Timber.e(e, "Interrupted while waiting for sdk to be ready");
+                Logger.e(e, "Interrupted while waiting for sdk to be ready");
             }
         }
 
         if(dataReady) {
-            Timber.i("Android SDK initialized!");
+            Logger.i("Android SDK initialized!");
         } else {
-            Timber.i("Android SDK initialized, cached data is not ready yet.");
+            Logger.i("Android SDK initialized, cached data is not ready yet.");
         }
 
 

@@ -9,8 +9,8 @@ import io.split.android.client.dtos.MatcherType;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
-import timber.log.Timber;
 
 
 import java.util.Collection;
@@ -97,15 +97,15 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             runWithoutExceptionHandling();
             _gates.splitsAreReady();
         } catch (InterruptedException e) {
-            Timber.w(e,"Interrupting split fetcher task");
+            Logger.w(e,"Interrupting split fetcher task");
             Thread.currentThread().interrupt();
         } catch (Throwable t) {
-            Timber.e(t,"RefreshableSplitFetcher failed: %s" , t.getMessage());
+            Logger.e(t,"RefreshableSplitFetcher failed: %s" , t.getMessage());
         } finally {
             try {
-                Timber.d("split fetch before: %d, after: %d", start, _changeNumber.get());
+                Logger.d("split fetch before: %d, after: %d", start, _changeNumber.get());
             } catch (Exception e) {
-                Timber.e(e);
+                Logger.e(e);
             }
         }
     }
@@ -158,7 +158,7 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 
                 ParsedSplit parsedSplit = _parser.parse(split);
                 if (parsedSplit == null) {
-                    Timber.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
+                    Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
                     toRemove.add(split.name);
                     continue;
                 }
@@ -172,11 +172,11 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             }
 
             if (!toAdd.isEmpty()) {
-                Timber.d("Updated features: %s", toAdd.keySet());
+                Logger.d("Updated features: %s", toAdd.keySet());
             }
 
             if (!toRemove.isEmpty()) {
-                Timber.d("Deleted features: %s", toRemove);
+                Logger.d("Deleted features: %s", toRemove);
             }
 
             _changeNumber.set(change.till);

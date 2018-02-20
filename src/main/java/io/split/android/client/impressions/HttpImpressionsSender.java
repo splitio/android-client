@@ -13,8 +13,8 @@ import java.util.List;
 
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
-import timber.log.Timber;
 
 public class HttpImpressionsSender implements ImpressionsSender {
 
@@ -35,12 +35,12 @@ public class HttpImpressionsSender implements ImpressionsSender {
         }
 
         if (!Utils.isReachable(_eventsEndpoint)) {
-            Timber.i("%s is NOT REACHABLE. Sending impressions will be delayed until host is reachable", _eventsEndpoint.getHost());
+            Logger.i("%s is NOT REACHABLE. Sending impressions will be delayed until host is reachable", _eventsEndpoint.getHost());
             return false;
         }
 
         synchronized (this) {
-            Timber.d("Posting %d Split impressions", impressions.size());
+            Logger.d("Posting %d Split impressions", impressions.size());
 
             String json = Json.toJson(impressions);
             try {
@@ -48,7 +48,7 @@ public class HttpImpressionsSender implements ImpressionsSender {
                 entity.setContentType("application/json");
                 return post(entity);
             } catch (UnsupportedEncodingException e) {
-                Timber.e(e);
+                Logger.e(e);
                 return false;
             }
         }
@@ -68,14 +68,14 @@ public class HttpImpressionsSender implements ImpressionsSender {
             int status = response.getStatusLine().getStatusCode();
             String reason = response.getStatusLine().getReasonPhrase();
             if (status < 200 || status >= 300) {
-                Timber.w("Response status was: %d. Reason: %s", status, reason);
+                Logger.w("Response status was: %d. Reason: %s", status, reason);
                 return false;
             }
-            Timber.d("Entity sent: %s", entity);
+            Logger.d("Entity sent: %s", entity);
 
             return true;
         } catch (Throwable t) {
-            Timber.e(t, "Exception when posting impressions %s", entity);
+            Logger.e(t, "Exception when posting impressions %s", entity);
             return false;
         } finally {
             Utils.forceClose(response);

@@ -19,10 +19,10 @@ import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.segments.MySegmentsFetcher;
-import timber.log.Timber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -57,7 +57,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
         long start = System.currentTimeMillis();
 
         if (!Utils.isReachable(_target)) {
-            Timber.d("%s is NOT REACHABLE... USING PERSISTED", _target.getHost());
+            Logger.d(String.format("%s is NOT REACHABLE... USING PERSISTED", _target.getHost()));
             return _mySegmentsCache.getMySegments();
         }
 
@@ -72,14 +72,14 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
             int statusCode = response.getStatusLine().getStatusCode();
 
             if (statusCode < 200 || statusCode >= 300) {
-                Timber.e("Response status was: %i", statusCode);
+                Logger.e(String.format("Response status was: %i", statusCode));
                 _metrics.count(PREFIX + ".status." + statusCode, 1);
                 throw new IllegalStateException("Could not retrieve mySegments for " + matchingKey + "; http return code " + statusCode);
             }
 
             String json = EntityUtils.toString(response.getEntity());
 
-            Timber.d("Received json: %s", json);
+            Logger.d("Received json: %s", json);
             Type mapType = new TypeToken<Map<String, List<MySegment>>>() {
             }.getType();
 

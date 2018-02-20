@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import timber.log.Timber;
+import io.split.android.client.utils.Logger;
 
 /**
  * Created by guillermo on 11/22/17.
@@ -39,7 +39,7 @@ public class FileStorage implements IStorage {
             }
             return fileContent.toString();
         } catch (IOException e) {
-            Timber.e(e, "Can't read file");
+            Logger.e(e, "Can't read file");
             throw e;
         }
     }
@@ -52,16 +52,16 @@ public class FileStorage implements IStorage {
             fos.write(content.getBytes());
 
         } catch (FileNotFoundException e) {
-            Timber.e(e, "Failed to write content");
+            Logger.e(e, "Failed to write content");
             throw e;
         } catch (IOException e) {
-            Timber.e(e, "Failed to write content");
+            Logger.e(e, "Failed to write content");
             throw e;
         } finally {
             try {
                 fos.close();
             } catch (IOException e) {
-                Timber.e(e, "Failed to close file");
+                Logger.e(e, "Failed to close file");
             }
         }
     }

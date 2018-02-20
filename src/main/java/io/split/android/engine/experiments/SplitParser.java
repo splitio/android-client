@@ -10,6 +10,7 @@ import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.AttributeMatcher;
 import io.split.android.engine.matchers.BetweenMatcher;
@@ -31,7 +32,6 @@ import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
 import io.split.android.engine.segments.MySegments;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
-import timber.log.Timber;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -59,7 +59,7 @@ public final class SplitParser {
         try {
             return parseWithoutExceptionHandling(split);
         } catch (Throwable t) {
-            Timber.e(t, "Could not parse split: %s", split);
+            Logger.e(t, "Could not parse split: %s", split);
             return null;
         }
     }
@@ -70,7 +70,7 @@ public final class SplitParser {
         }
 
         if (split.conditions.size() > CONDITIONS_UPPER_LIMIT) {
-            Timber.w("Dropping Split name=%s due to large number of conditions(%d)",
+            Logger.w("Dropping Split name=%s due to large number of conditions(%d)",
                     split.name, split.conditions.size());
             return null;
         }

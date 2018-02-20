@@ -3,8 +3,8 @@ package io.split.android.engine.segments;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
-import timber.log.Timber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -51,7 +51,7 @@ public class RefreshableMySegments implements Runnable, MySegments {
 
             _gates.mySegmentsAreReady();
         } catch (Throwable t) {
-            Timber.e(t,"RefreshableMySegments failed: %s", t.getMessage());
+            Logger.e(t,"RefreshableMySegments failed: %s", t.getMessage());
         }
 
     }

@@ -1,11 +1,9 @@
 package io.split.android.engine;
 
-import timber.log.Timber;
+import io.split.android.client.utils.Logger;
 
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -58,7 +56,7 @@ public class SDKReadinessGates {
         long originalCount = _splitsAreReady.getCount();
         _splitsAreReady.countDown();
         if (originalCount > 0L) {
-            Timber.d("splits are ready");
+            Logger.d("splits are ready");
         }
     }
 
@@ -71,7 +69,7 @@ public class SDKReadinessGates {
         long originalCount = _mySegmentsAreReady.getCount();
         _mySegmentsAreReady.countDown();
         if (originalCount > 0L) {
-            Timber.d("mySegments are ready");
+            Logger.d("mySegments are ready");
         }
     }
 

@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import timber.log.Timber;
+import io.split.android.client.utils.Logger;
 
 /**
  * An implementation of SplitClient that considers all partitions
@@ -47,16 +47,16 @@ public final class LocalhostSplitFactory implements SplitFactory {
             }
         } catch (FileNotFoundException e) {
             _ready = false;
-            Timber.e("File not found. Add split.properties in your application assets");
+            Logger.e("File not found. Add split.properties in your application assets");
         } catch (Exception e){
             _ready = false;
-            Timber.e(e.getMessage());
+            Logger.e(e.getMessage());
         }
 
         _client = new LocalhostSplitClient(this, key, _featureToTreatmentMap);
         _manager = new LocalhostSplitManager(_featureToTreatmentMap);
 
-        Timber.i("Android SDK initialized!");
+        Logger.i("Android SDK initialized!");
     }
 
     @Override
