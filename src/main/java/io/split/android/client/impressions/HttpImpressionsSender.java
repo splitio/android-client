@@ -35,7 +35,7 @@ public class HttpImpressionsSender implements ImpressionsSender {
         }
 
         if (!Utils.isReachable(_eventsEndpoint)) {
-            Timber.d("%s is NOT REACHABLE. Avoid trying to send impressions this time.", _eventsEndpoint.getHost());
+            Timber.i("%s is NOT REACHABLE. Sending impressions will be delayed until host is reachable", _eventsEndpoint.getHost());
             return false;
         }
 

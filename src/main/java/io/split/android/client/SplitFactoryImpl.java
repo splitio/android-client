@@ -214,15 +214,25 @@ public class SplitFactoryImpl implements SplitFactory {
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(), impressionListener, cachedFireAndForgetMetrics, config);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
+        boolean dataReady = true;
         if (config.blockUntilReady() > 0) {
             try {
                 if (!gates.isSDKReady(config.blockUntilReady())) {
+                    dataReady = false;
                     Timber.w("SDK was not ready in " + config.blockUntilReady() + " milliseconds");
                 }
             } catch (InterruptedException e){
+                dataReady = false;
                 Timber.e(e, "Interrupted while waiting for sdk to be ready");
             }
         }
+
+        if(dataReady) {
+            Timber.i("Android SDK initialized!");
+        } else {
+            Timber.i("Android SDK initialized, cached data is not ready yet.");
+        }
+
 
     }
 
