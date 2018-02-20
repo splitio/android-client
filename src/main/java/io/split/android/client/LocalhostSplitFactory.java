@@ -56,6 +56,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
         _client = new LocalhostSplitClient(this, key, _featureToTreatmentMap);
         _manager = new LocalhostSplitManager(_featureToTreatmentMap);
 
+        Timber.i("Android SDK initialized!");
     }
 
     @Override
