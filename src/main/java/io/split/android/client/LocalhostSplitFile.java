@@ -3,7 +3,7 @@ package io.split.android.client;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
-import timber.log.Timber;
+import io.split.android.client.utils.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -38,15 +38,15 @@ public class LocalhostSplitFile {
                 String[] feature_treatment = line.split("\\s+");
 
                 if (feature_treatment.length != 2) {
-                    Timber.d("Ignoring line since it does not have exactly two columns: %s", line);
+                    Logger.d("Ignoring line since it does not have exactly two columns: %s", line);
                     continue;
                 }
 
                 onSplits.put(feature_treatment[0], feature_treatment[1]);
-                Timber.d("100%% of keys will see %s for %s", feature_treatment[1], feature_treatment[0]);
+                Logger.d("100%% of keys will see %s for %s", feature_treatment[1], feature_treatment[0]);
             }
         } catch (FileNotFoundException e) {
-            Timber.w(e, "There was no file named %s found. " +
+            Logger.w(e, "There was no file named %s found. " +
                     "We created a split client that returns default " +
                     "treatments for all features for all of your users. " +
                     "If you wish to return a specific treatment for a feature, " +

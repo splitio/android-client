@@ -14,10 +14,10 @@ import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.engine.experiments.SplitChangeFetcher;
 import io.split.android.engine.metrics.Metrics;
-import timber.log.Timber;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -53,7 +53,7 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
         long start = System.currentTimeMillis();
 
         if (!Utils.isReachable(_target)) {
-            Timber.d("%s is NOT REACHABLE... USING PERSISTED", _target.getHost());
+            Logger.d("%s is NOT REACHABLE... USING PERSISTED", _target.getHost());
             return _splitChangeCache.getChanges(since);
         }
 
@@ -74,7 +74,7 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
 
 
             String json = EntityUtils.toString(response.getEntity());
-            Timber.d("Received json: %s", json);
+            Logger.d("Received json: %s", json);
 
             SplitChange splitChange = Json.fromJson(json, SplitChange.class);
 

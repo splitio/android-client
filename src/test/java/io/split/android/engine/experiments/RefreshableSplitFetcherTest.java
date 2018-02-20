@@ -17,6 +17,7 @@ import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.matchers.AllKeysMatcher;
@@ -24,7 +25,6 @@ import io.split.android.engine.matchers.CombiningMatcher;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import io.split.android.engine.segments.StaticMySegmentsFectherProvider;
 import io.split.android.grammar.Treatments;
-import timber.log.Timber;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -60,9 +60,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                Timber.i("Executor did not terminate in the specified time.");
+                Logger.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -147,9 +147,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                Timber.i("Executor did not terminate in the specified time.");
+                Logger.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -181,9 +181,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                Timber.i("Executor did not terminate in the specified time.");
+                Logger.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -214,9 +214,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                Timber.i("Executor did not terminate in the specified time.");
+                Logger.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.

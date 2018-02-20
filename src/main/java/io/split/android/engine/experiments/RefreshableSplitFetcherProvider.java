@@ -2,8 +2,8 @@ package io.split.android.engine.experiments;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
-import timber.log.Timber;
 
 
 import java.io.Closeable;
@@ -93,13 +93,13 @@ public class RefreshableSplitFetcherProvider implements Closeable {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(2L, TimeUnit.SECONDS)) { //optional *
-                Timber.w("Executor did not terminate in the specified time.");
+                Logger.w("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow(); //optional **
-                Timber.w("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.w("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
-            Timber.w("Shutdown hook for split fetchers has been interrupted");
+            Logger.w("Shutdown hook for split fetchers has been interrupted");
             Thread.currentThread().interrupt();
         }
     }

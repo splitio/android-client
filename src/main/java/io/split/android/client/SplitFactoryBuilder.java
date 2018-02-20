@@ -9,8 +9,8 @@ import java.net.URISyntaxException;
 import java.util.concurrent.TimeoutException;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.utils.Logger;
 import io.split.android.grammar.Treatments;
-import timber.log.Timber;
 
 /**
  * Builds an instance of SplitClient.
@@ -109,7 +109,7 @@ public class SplitFactoryBuilder {
                 System.out.println(isOn ? Treatments.ON : Treatments.OFF);
             }
         } catch (IOException io) {
-            Timber.e(io);
+            Logger.e(io);
         }
     }
 }

@@ -10,7 +10,7 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
-import timber.log.Timber;
+import io.split.android.client.utils.Logger;
 
 /**
  * Created by guillermo on 11/23/17.
@@ -63,10 +63,10 @@ public class SplitChangeCache implements ISplitChangeCache {
                     Split split = Json.fromJson(cachedSplit, Split.class);
                     splits.add(split);
                 } catch (JsonSyntaxException e) {
-                    Timber.e(e, "Failed to parse split %s, cache: %s", splitName, cachedSplit);
+                    Logger.e(e, "Failed to parse split %s, cache: %s", splitName, cachedSplit);
                 }
             } else {
-                Timber.w("split %s was not cached", splitName);
+                Logger.w("split %s was not cached", splitName);
             }
         }
     }

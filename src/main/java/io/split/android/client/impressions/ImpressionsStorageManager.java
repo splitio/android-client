@@ -16,7 +16,7 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
-import timber.log.Timber;
+import io.split.android.client.utils.Logger;
 
 /**
  * Created by guillermo on 1/18/18.
@@ -65,7 +65,7 @@ public class ImpressionsStorageManager {
 
         String entity = Json.toJson(toShip);
 
-        Timber.d("Entity to store: %s", entity);
+        Logger.d("Entity to store: %s", entity);
 
         String chunkId = String.format("%s_%d_0.json", IMPRESSIONS_CHUNK_FILE_PREFIX, System.currentTimeMillis());
 
@@ -81,7 +81,7 @@ public class ImpressionsStorageManager {
                 List<TestImpressions> testImpressions = Json.fromJsonList(stored, TestImpressions.class);
                 result.add(StoredImpressions.from(id, testImpressions));
             } else {
-                Timber.w("Could not read chunk %s", id);
+                Logger.w("Could not read chunk %s", id);
             }
         }
         return result;
@@ -117,7 +117,7 @@ public class ImpressionsStorageManager {
         try {
             return _storage.read(chunkId);
         } catch (IOException e) {
-            Timber.e(e, "Could not read chunk %s", chunkId);
+            Logger.e(e, "Could not read chunk %s", chunkId);
         }
         return null;
     }

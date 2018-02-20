@@ -10,7 +10,6 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URI;
 
-import timber.log.Timber;
 
 public class Utils {
 
@@ -20,7 +19,7 @@ public class Utils {
         try {
             entity = new StringEntity(json, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            Timber.e(e);
+            Logger.e(e);
         }
         entity.setContentType("application/json");
         return entity;

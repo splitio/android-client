@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 
 import io.split.android.client.dtos.Counter;
 import io.split.android.client.dtos.Latency;
+import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.engine.metrics.Metrics;
 
@@ -13,7 +14,6 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 
-import timber.log.Timber;
 
 
 import java.net.URI;
@@ -50,7 +50,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         try {
             post(new URIBuilder(_target).setPath("/api/metrics/time").build(), dto);
         } catch (Throwable t) {
-            Timber.e(t, "Exception when posting metric %s", dto);
+            Logger.e(t, "Exception when posting metric %s", dto);
         }
 
     }
@@ -61,7 +61,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         try {
             post(new URIBuilder(_target).setPath("/api/metrics/counter").build(), dto);
         } catch (Throwable t) {
-            Timber.e(t, "Exception when posting metric %s", dto);
+            Logger.e(t, "Exception when posting metric %s", dto);
         }
 
     }
@@ -81,11 +81,11 @@ public class HttpMetrics implements Metrics, DTOMetrics {
             int status = response.getStatusLine().getStatusCode();
 
             if (status < 200 || status >= 300) {
-                Timber.w("Response status was: %i", status);
+                Logger.w("Response status was: %i", status);
             }
 
         } catch (Throwable t) {
-            Timber.e(t,"Exception when posting metrics");
+            Logger.e(t,"Exception when posting metrics");
         } finally {
             Utils.forceClose(response);
         }
@@ -101,7 +101,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
 
             count(dto);
         } catch (Throwable t) {
-            Timber.e(t, "Could not count metric %s", counter);
+            Logger.e(t, "Could not count metric %s", counter);
         }
 
     }
@@ -115,7 +115,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
 
             time(dto);
         } catch (Throwable t) {
-            Timber.e(t, "Could not time metric %s", operation);
+            Logger.e(t, "Could not time metric %s", operation);
         }
     }
 

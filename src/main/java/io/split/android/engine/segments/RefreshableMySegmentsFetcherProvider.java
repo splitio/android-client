@@ -9,8 +9,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
-import timber.log.Timber;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -43,7 +43,7 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
 
         checkArgument(refreshEveryNSeconds >= 0L);
         _refreshEveryNSeconds = new AtomicLong(refreshEveryNSeconds);
-        Timber.d("RefreshableMySegmentsFetcherProvider: refreshEveryNSeconds %d", refreshEveryNSeconds);
+        Logger.d("RefreshableMySegmentsFetcherProvider: refreshEveryNSeconds %d", refreshEveryNSeconds);
 
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
@@ -74,13 +74,13 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
         _scheduledExecutorService.shutdown();
         try {
             if (!_scheduledExecutorService.awaitTermination(2L, TimeUnit.SECONDS)) { //optional *
-                Timber.w("Executor did not terminate in the specified time.");
+                Logger.w("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = _scheduledExecutorService.shutdownNow(); //optional **
-                Timber.w("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.w("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
-            Timber.e(e,"Shutdown of SegmentFetchers was interrupted");
+            Logger.e(e,"Shutdown of SegmentFetchers was interrupted");
             Thread.currentThread().interrupt();
         }
 

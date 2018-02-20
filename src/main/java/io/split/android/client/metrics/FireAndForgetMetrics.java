@@ -2,8 +2,8 @@ package io.split.android.client.metrics;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.metrics.Metrics;
-import timber.log.Timber;
 
 
 import java.io.Closeable;
@@ -25,7 +25,7 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         threadFactoryBuilder.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread t, Throwable e) {
-                Timber.e(e, "Error in thread: %s", t.getName());
+                Logger.e(e, "Error in thread: %s", t.getName());
             }
         });
 
@@ -52,7 +52,7 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         try {
             _executorService.submit(new CountRunnable(_delegate, counter, delta));
         } catch (Throwable t) {
-            Timber.w(t, "CountRunnable failed");
+            Logger.w(t, "CountRunnable failed");
         }
     }
 
@@ -61,7 +61,7 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         try {
             _executorService.submit(new TimeRunnable(_delegate, operation, timeInMs));
         } catch (Throwable t) {
-            Timber.w(t, "TimeRunnable failed");
+            Logger.w(t, "TimeRunnable failed");
         }
     }
 
@@ -69,9 +69,9 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         _executorService.shutdown();
         try {
             if (!_executorService.awaitTermination(10L, TimeUnit.SECONDS)) { //optional *
-                Timber.w("Executor did not terminate in the specified time.");
+                Logger.w("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = _executorService.shutdownNow(); //optional **
-                Timber.w("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.w("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
