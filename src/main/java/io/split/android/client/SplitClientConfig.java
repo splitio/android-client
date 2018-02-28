@@ -8,9 +8,7 @@ import org.apache.http.HttpHost;
 import java.io.IOException;
 import java.util.Properties;
 
-import timber.log.Timber;
-
-import static timber.log.Timber.DebugTree;
+import io.split.android.client.utils.Logger;
 
 /**
  * Configurations for the SplitClient.
@@ -107,8 +105,8 @@ public class SplitClientConfig {
             splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
         }
 
-        if (BuildConfig.DEBUG && !isTestMode()) {
-            Timber.plant(new DebugTree());
+        if (_debugEnabled){
+            Logger.instance().debugLevel(true);
         }
     }
 
@@ -347,7 +345,7 @@ public class SplitClientConfig {
          *                 slow, the queue will fill up and any subsequent impressions will be dropped.
          * @return this builder
          */
-        public Builder impressionListener(ImpressionListener impressionListener, int queueSize) {
+        private Builder impressionListener(ImpressionListener impressionListener, int queueSize) {
             _impressionListener = impressionListener;
             _impressionListenerCapacity = queueSize;
             return this;

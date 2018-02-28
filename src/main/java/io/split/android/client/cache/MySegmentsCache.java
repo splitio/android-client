@@ -9,7 +9,7 @@ import java.util.List;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
-import timber.log.Timber;
+import io.split.android.client.utils.Logger;
 
 /**
  * Created by guillermo on 12/28/17.
@@ -35,9 +35,9 @@ public class MySegmentsCache implements IMySegmentsCache {
             _storage.write(getMySegmentsId(), Json.toJson(mySegments));
             return true;
         } catch (IOException e) {
-            Timber.e(e);
+            Logger.e(e, "Could not save my segments");
+            return false;
         }
-        return false;
     }
 
     @Override
@@ -49,7 +49,7 @@ public class MySegmentsCache implements IMySegmentsCache {
 
             return Json.fromJson(storedMySegments, listType);
         } catch (IOException e) {
-            Timber.e(e);
+            Logger.e(e, "Unable to get my segments");
         }
         return null;
     }

@@ -1,11 +1,9 @@
 package io.split.android.engine;
 
-import timber.log.Timber;
+import io.split.android.client.utils.Logger;
 
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -45,6 +43,10 @@ public class SDKReadinessGates {
 
     }
 
+    public boolean isSDKReadyNow() {
+        return _splitsAreReady.getCount() == 0 && _mySegmentsAreReady.getCount() == 0;
+    }
+
     /**
      * Records that the SDK split initialization is done.
      * This operation is atomic and idempotent. Repeated invocations
@@ -54,7 +56,7 @@ public class SDKReadinessGates {
         long originalCount = _splitsAreReady.getCount();
         _splitsAreReady.countDown();
         if (originalCount > 0L) {
-            Timber.i("splits are ready");
+            Logger.d("splits are ready");
         }
     }
 
@@ -67,7 +69,7 @@ public class SDKReadinessGates {
         long originalCount = _mySegmentsAreReady.getCount();
         _mySegmentsAreReady.countDown();
         if (originalCount > 0L) {
-            Timber.i("mySegments are ready");
+            Logger.d("mySegments are ready");
         }
     }
 

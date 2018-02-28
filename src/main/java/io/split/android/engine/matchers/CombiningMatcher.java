@@ -64,6 +64,13 @@ public class CombiningMatcher {
     }
 
     @Override
+    public int hashCode() {
+        int result = _delegates.hashCode();
+        result = 31 * result + _combiner.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         StringBuilder bldr = new StringBuilder();
         bldr.append("if");
@@ -79,10 +86,6 @@ public class CombiningMatcher {
         return bldr.toString();
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(_combiner, _delegates);
-    }
 
     @Override
     public boolean equals(Object obj) {

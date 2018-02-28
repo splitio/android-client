@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.split.android.client.storage.IStorage;
-import timber.log.Timber;
+import io.split.android.client.utils.Logger;
 
 /**
  * Created by guillermo on 11/23/17.
@@ -41,7 +41,7 @@ public class SplitCache implements ISplitCache {
             _storage.write(getSplitId(splitName), split);
             return true;
         } catch (IOException e) {
-            Timber.e(e);
+            Logger.e(e,"Failed to add split %s", splitName);
         }
         return false;
     }
@@ -58,9 +58,9 @@ public class SplitCache implements ISplitCache {
             _storage.write(getChangeNumberId(),String.valueOf(changeNumber));
             return true;
         } catch (IOException e) {
-            Timber.e(e);
+            Logger.e(e, "Failed to set changeNumber");
+            return false;
         }
-        return false;
     }
 
     @Override
@@ -68,9 +68,9 @@ public class SplitCache implements ISplitCache {
         try {
             return Long.parseLong(_storage.read(getChangeNumberId()));
         } catch (IOException e) {
-            Timber.e(e);
+            Logger.e(e, "Failed to get changeNumber");
+            return -1;
         }
-        return -1;
     }
 
     @Override
@@ -78,7 +78,7 @@ public class SplitCache implements ISplitCache {
         try {
             return _storage.read(getSplitId(splitName));
         } catch (IOException e) {
-            Timber.e(e);
+            Logger.e(e, "Failed to get split %s", splitName);
         }
         return null;
     }

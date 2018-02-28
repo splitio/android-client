@@ -2,12 +2,22 @@ package io.split.android.client;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.DataType;
-import io.split.android.client.dtos.Partition;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.utils.SplitClientImplFactory;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -18,18 +28,9 @@ import io.split.android.engine.matchers.EqualToMatcher;
 import io.split.android.engine.matchers.GreaterThanOrEqualToMatcher;
 import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
-import io.split.android.engine.metrics.Metrics;
 import io.split.android.grammar.Treatments;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import static io.split.android.engine.ConditionsTestUtil.partition;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
@@ -46,7 +47,6 @@ import static org.mockito.Mockito.when;
  */
 public class SplitClientImplTest {
 
-    private SplitClientConfig config = SplitClientConfig.builder().build();
 
     @Test
     public void null_key_results_in_control() {
@@ -58,15 +58,9 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("test1"), splitFetcher);
 
-        assertThat(client.getTreatment(null, "test1"), is(equalTo(Treatments.CONTROL)));
+        assertThat(client.getTreatment(null), is(equalTo(Treatments.CONTROL)));
 
         verifyZeroInteractions(splitFetcher);
     }
@@ -74,22 +68,17 @@ public class SplitClientImplTest {
     @Test
     public void null_test_results_in_control() {
         String test = "test1";
-        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition("on", 100)));
+        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()),
+                Lists.newArrayList(partition("on", 100)));
         List<ParsedCondition> conditions = Lists.newArrayList(rollOutToEveryone);
         ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1);
 
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment("adil@relateiq.com", null), is(equalTo(Treatments.CONTROL)));
+        assertThat(client.getTreatment(null, null), is(equalTo(Treatments.CONTROL)));
 
         verifyZeroInteractions(splitFetcher);
     }
@@ -99,15 +88,9 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(anyString())).thenThrow(RuntimeException.class);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
-        assertThat(client.getTreatment("adil@relateiq.com", "test1"), is(equalTo(Treatments.CONTROL)));
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@relateiq.com"), splitFetcher);
 
+        assertThat(client.getTreatment("test1"), is(equalTo(Treatments.CONTROL)));
         verify(splitFetcher).fetch("test1");
     }
 
@@ -115,26 +98,18 @@ public class SplitClientImplTest {
     public void works() {
         String test = "test1";
 
-        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition("on", 100)));
+        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()),
+                Lists.newArrayList(partition("on", 100)));
         List<ParsedCondition> conditions = Lists.newArrayList(rollOutToEveryone);
         ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1);
 
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        int numKeys = 5;
-        for (int i = 0; i < numKeys; i++) {
-            String randomKey = RandomStringUtils.random(10);
-            assertThat(client.getTreatment(randomKey, test), is(equalTo("on")));
-        }
+        int numKeys = 1;
+        assertThat(client.getTreatment(test), is(equalTo("on")));
 
         verify(splitFetcher, times(numKeys)).fetch(test);
     }
@@ -144,22 +119,18 @@ public class SplitClientImplTest {
     public void last_condition_is_always_default() {
         String test = "test1";
 
-        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition("on", 100)));
+        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(
+                CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))),
+                Lists.newArrayList(partition("on", 100)));
         List<ParsedCondition> conditions = Lists.newArrayList(rollOutToEveryone);
         ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, "user", 1, 1);
 
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment("pato@codigo.com", test), is(equalTo(Treatments.OFF)));
+        assertThat(client.getTreatment(test), is(equalTo(Treatments.OFF)));
 
         verify(splitFetcher).fetch(test);
     }
@@ -178,17 +149,16 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment("adil@codigo.com", test), is(equalTo("on")));
-        assertThat(client.getTreatment("pato@codigo.com", test), is(equalTo("off")));
-        assertThat(client.getTreatment("trevor@codigo.com", test), is(equalTo("on")));
+        assertThat(client.getTreatment(test), is(equalTo("on")));
+
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+
+        assertThat(client.getTreatment(test), is(equalTo("off")));
+
+        client = SplitClientImplFactory.get(Key.withMatchingKey("trevor@codigo.com"), splitFetcher);
+        assertThat(client.getTreatment(test), is(equalTo("on")));
 
         verify(splitFetcher, times(3)).fetch(test);
     }
@@ -205,15 +175,8 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
-
-        assertThat(client.getTreatment("adil@codigo.com", test), is(equalTo(Treatments.OFF)));
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        assertThat(client.getTreatment(test), is(equalTo(Treatments.OFF)));
 
         verify(splitFetcher).fetch(test);
     }
@@ -235,16 +198,10 @@ public class SplitClientImplTest {
         when(splitFetcher.fetch(parent)).thenReturn(parentSplit);
         when(splitFetcher.fetch(dependent)).thenReturn(dependentSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitFetcher);
 
-        assertThat(client.getTreatment("key", parent), is(equalTo(Treatments.ON)));
-        assertThat(client.getTreatment("key", dependent), is(equalTo(Treatments.ON)));
+        assertThat(client.getTreatment(parent), is(equalTo(Treatments.ON)));
+        assertThat(client.getTreatment(dependent), is(equalTo(Treatments.ON)));
     }
 
     @Test
@@ -264,16 +221,10 @@ public class SplitClientImplTest {
         when(splitFetcher.fetch(parent)).thenReturn(parentSplit);
         when(splitFetcher.fetch(dependent)).thenReturn(dependentSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitFetcher);
 
-        assertThat(client.getTreatment("key", parent), is(equalTo(Treatments.ON)));
-        assertThat(client.getTreatment("key", dependent), is(equalTo(Treatments.OFF)));
+        assertThat(client.getTreatment(parent), is(equalTo(Treatments.ON)));
+        assertThat(client.getTreatment(dependent), is(equalTo(Treatments.OFF)));
     }
 
     @Test
@@ -287,16 +238,9 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(dependent)).thenReturn(dependentSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitFetcher);
 
-//        assertThat(client.getTreatment("key", dependent), is(equalTo(Treatments.CONTROL)));
-        assertThat(client.getTreatment("key", dependent), is(equalTo(Treatments.ON)));
+        assertThat(client.getTreatment(dependent), is(equalTo(Treatments.ON)));
 
     }
 
@@ -313,20 +257,16 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment("adil@codigo.com", test), is(equalTo("on")));
-        assertThat(client.getTreatment("adil@codigo.com", test, null), is(equalTo("on")));
-        assertThat(client.getTreatment("adil@codigo.com", test, ImmutableMap.<String, Object>of()), is(equalTo("on")));
+        assertThat(client.getTreatment(test), is(equalTo("on")));
+        assertThat(client.getTreatment(test, null), is(equalTo("on")));
+        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of()), is(equalTo("on")));
 
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("on")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("age", 9)), is(equalTo("off")));
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+
+        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("on")));
+        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 9)), is(equalTo("off")));
 
         verify(splitFetcher, times(5)).fetch(test);
     }
@@ -343,20 +283,17 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment("adil@codigo.com", test), is(equalTo("off")));
-        assertThat(client.getTreatment("adil@codigo.com", test, null), is(equalTo("off")));
-        assertThat(client.getTreatment("adil@codigo.com", test, ImmutableMap.<String, Object>of()), is(equalTo("off")));
+        assertThat(client.getTreatment(test), is(equalTo("off")));
+        assertThat(client.getTreatment(test, null), is(equalTo("off")));
+        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of()), is(equalTo("off")));
 
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("off")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("age", 0)), is(equalTo("on")));
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+
+
+        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("off")));
+        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 0)), is(equalTo("on")));
 
         verify(splitFetcher, times(5)).fetch(test);
     }
@@ -373,22 +310,18 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment("adil@codigo.com", test), is(equalTo("off")));
-        assertThat(client.getTreatment("adil@codigo.com", test, null), is(equalTo("off")));
-        assertThat(client.getTreatment("adil@codigo.com", test, ImmutableMap.<String, Object>of()), is(equalTo("off")));
+        assertThat(client.getTreatment(test), is(equalTo("off")));
+        assertThat(client.getTreatment(test, null), is(equalTo("off")));
+        assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
 
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("off")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("age", -20)), is(equalTo("on")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("age", 20)), is(equalTo("off")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("age", -21)), is(equalTo("off")));
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+
+        assertThat(client.getTreatment(test, ImmutableMap.of("age", 10)), is(equalTo("off")));
+        assertThat(client.getTreatment(test, ImmutableMap.of("age", -20)), is(equalTo("on")));
+        assertThat(client.getTreatment(test, ImmutableMap.of("age", 20)), is(equalTo("off")));
+        assertThat(client.getTreatment(test, ImmutableMap.of("age", -21)), is(equalTo("off")));
 
         verify(splitFetcher, times(7)).fetch(test);
     }
@@ -406,24 +339,19 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        assertThat(client.getTreatment(test), is(equalTo("off")));
+        assertThat(client.getTreatment(test, null), is(equalTo("off")));
+        assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
 
-        assertThat(client.getTreatment("adil@codigo.com", test), is(equalTo("off")));
-        assertThat(client.getTreatment("adil@codigo.com", test, null), is(equalTo("off")));
-        assertThat(client.getTreatment("adil@codigo.com", test, ImmutableMap.<String, Object>of()), is(equalTo("off")));
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("products", Lists.newArrayList())), is(equalTo("off")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("products", Lists.newArrayList(""))), is(equalTo("off")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("products", Lists.newArrayList("talk"))), is(equalTo("off")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("products", Lists.newArrayList("sms"))), is(equalTo("on")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("products", Lists.newArrayList("sms", "video"))), is(equalTo("on")));
-        assertThat(client.getTreatment("pato@codigo.com", test, ImmutableMap.<String, Object>of("products", Lists.newArrayList("video"))), is(equalTo("on")));
+        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList())), is(equalTo("off")));
+        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList(""))), is(equalTo("off")));
+        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("talk"))), is(equalTo("off")));
+        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms"))), is(equalTo("on")));
+        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms", "video"))), is(equalTo("on")));
+        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("video"))), is(equalTo("on")));
 
         verify(splitFetcher, times(9)).fetch(test);
     }
@@ -447,16 +375,10 @@ public class SplitClientImplTest {
         ImpressionListener impressionListener = mock(ImpressionListener.class);
 
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                impressionListener,
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher, impressionListener);
 
         Map<String, Object> attributes = ImmutableMap.<String, Object>of("age", -20, "acv", "1000000");
-        assertThat(client.getTreatment("pato@codigo.com", test, attributes), is(equalTo("on")));
+        assertThat(client.getTreatment(test, attributes), is(equalTo("on")));
 
         ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
 
@@ -469,7 +391,7 @@ public class SplitClientImplTest {
 
     @Test
     public void not_in_split_if_no_allocation() {
-        traffic_allocation("pato@split.io", 0, 123, "off", "not in split");
+        traffic_allocation(Key.withMatchingKey("pato@split.io"), 0, 123, "off", "not in split");
     }
 
     /**
@@ -483,8 +405,7 @@ public class SplitClientImplTest {
      */
     @Test
     public void not_in_split_if_10_percent_allocation() {
-
-        String key = "pato@split.io";
+        Key key = Key.withMatchingKey("pato@split.io");
         int i = 0;
         for (; i <= 10; i++) {
             traffic_allocation(key, i, 123, "off", "not in split");
@@ -497,16 +418,16 @@ public class SplitClientImplTest {
 
     @Test
     public void in_split_if_100_percent_allocation() {
-        traffic_allocation("pato@split.io", 100, 123, "on", "in segment all");
+        traffic_allocation(Key.withMatchingKey("pato@split.io"), 100, 123, "on", "in segment all");
     }
 
     @Test
     public void whitelist_overrides_traffic_allocation() {
-        traffic_allocation("adil@split.io", 0, 123, "on", "whitelisted user");
+        traffic_allocation(Key.withMatchingKey("adil@split.io"), 0, 123, "on", "whitelisted user");
     }
 
 
-    private void traffic_allocation(String key, int trafficAllocation, int trafficAllocationSeed, String expected_treatment_on_or_off, String label) {
+    private void traffic_allocation(Key key, int trafficAllocation, int trafficAllocationSeed, String expected_treatment_on_or_off, String label) {
 
         String test = "test1";
 
@@ -522,16 +443,8 @@ public class SplitClientImplTest {
 
         ImpressionListener impressionListener = mock(ImpressionListener.class);
 
-
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                impressionListener,
-                new Metrics.NoopMetrics(),
-                config
-        );
-
-        assertThat(client.getTreatment(key, test), is(equalTo(expected_treatment_on_or_off)));
+        SplitClientImpl client = SplitClientImplFactory.get(key, splitFetcher, impressionListener);
+        assertThat(client.getTreatment(test), is(equalTo(expected_treatment_on_or_off)));
 
         ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
 
@@ -556,18 +469,14 @@ public class SplitClientImplTest {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(), config
-        );
 
         Key bad_key = new Key("adil", "aijaz");
-        Key good_key = new Key("aijaz", "adil");
+        SplitClientImpl client = SplitClientImplFactory.get(bad_key, splitFetcher);
+        assertThat(client.getTreatment(test, Collections.<String, Object>emptyMap()), is(equalTo("off")));
 
-        assertThat(client.getTreatment(bad_key, test, Collections.<String, Object>emptyMap()), is(equalTo("off")));
-        assertThat(client.getTreatment(good_key, test, Collections.<String, Object>emptyMap()), is(equalTo("on")));
+        Key good_key = new Key("aijaz", "adil");
+        client = SplitClientImplFactory.get(good_key, splitFetcher);
+        assertThat(client.getTreatment(test, Collections.<String, Object>emptyMap()), is(equalTo("on")));
 
         verify(splitFetcher, times(2)).fetch(test);
     }
@@ -591,17 +500,11 @@ public class SplitClientImplTest {
         ImpressionListener impressionListener = mock(ImpressionListener.class);
 
 
-        SplitClientImpl client = new SplitClientImpl(
-                mock(SplitFactory.class),
-                splitFetcher,
-                impressionListener,
-                new Metrics.NoopMetrics(),
-                config
-        );
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher, impressionListener);
 
         Map<String, Object> attributes = ImmutableMap.<String, Object>of("age", -20, "acv", "1000000");
 
-        assertThat(client.getTreatment("pato@codigo.com", test, attributes), is(equalTo("on")));
+        assertThat(client.getTreatment(test, attributes), is(equalTo("on")));
 
         ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
 
@@ -610,13 +513,4 @@ public class SplitClientImplTest {
         assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo("foolabel")));
         assertThat(impressionCaptor.getValue().attributes(), is(equalTo(attributes)));
     }
-
-    private Partition partition(String treatment, int size) {
-        Partition p = new Partition();
-        p.treatment = treatment;
-        p.size = size;
-        return p;
-    }
-
-
 }

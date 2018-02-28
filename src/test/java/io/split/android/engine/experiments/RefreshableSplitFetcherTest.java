@@ -2,35 +2,29 @@ package io.split.android.engine.experiments;
 
 import com.google.common.collect.Lists;
 
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.CombiningMatcher;
-import io.split.android.engine.segments.NoChangeSegmentChangeFetcher;
-import io.split.android.engine.segments.RefreshableSegmentFetcher;
-import io.split.android.engine.segments.SegmentChangeFetcher;
-import io.split.android.engine.segments.SegmentFetcher;
-import io.split.android.engine.segments.StaticSegment;
-import io.split.android.engine.segments.StaticSegmentFetcher;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+import io.split.android.engine.segments.StaticMySegmentsFectherProvider;
 import io.split.android.grammar.Treatments;
-
-import org.junit.Test;
-
-import timber.log.Timber;
-
-
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -39,7 +33,6 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class RefreshableSplitFetcherTest {
     @Test
@@ -54,11 +47,10 @@ public class RefreshableSplitFetcherTest {
 
     private void works(long startingChangeNumber) throws InterruptedException {
         AChangePerCallSplitChangeFetcher splitChangeFetcher = new AChangePerCallSplitChangeFetcher();
-        SegmentFetcher segmentFetcher = new StaticSegmentFetcher(Collections.<String, StaticSegment>emptyMap());
-
         SDKReadinessGates gates = new SDKReadinessGates();
+        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", gates);
 
-        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, new SplitParser(segmentFetcher), gates, startingChangeNumber);
+        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, SplitParser.get(provider), gates, startingChangeNumber);
 
         // execute the fetcher for a little bit.
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -68,9 +60,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                Timber.i("Executor did not terminate in the specified time.");
+                Logger.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -101,8 +93,8 @@ public class RefreshableSplitFetcherTest {
 
     @Test
     public void when_parser_fails_we_remove_the_experiment() throws InterruptedException {
-        SegmentFetcher segmentFetcher = new StaticSegmentFetcher(Collections.<String, StaticSegment>emptyMap());
-
+        SDKReadinessGates gates = new SDKReadinessGates();
+        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", gates);
         Split validSplit = new Split();
         validSplit.status = Status.ACTIVE;
         validSplit.seed = (int) -1;
@@ -140,12 +132,12 @@ public class RefreshableSplitFetcherTest {
         noReturn.till = 1L;
 
         SplitChangeFetcher splitChangeFetcher = mock(SplitChangeFetcher.class);
-        when(splitChangeFetcher.fetch(-1L)).thenReturn(validReturn);
-        when(splitChangeFetcher.fetch(0L)).thenReturn(invalidReturn);
-        when(splitChangeFetcher.fetch(1L)).thenReturn(noReturn);
+        Mockito.when(splitChangeFetcher.fetch(-1L)).thenReturn(validReturn);
+        Mockito.when(splitChangeFetcher.fetch(0L)).thenReturn(invalidReturn);
+        Mockito.when(splitChangeFetcher.fetch(1L)).thenReturn(noReturn);
 
 
-        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, new SplitParser(segmentFetcher), new SDKReadinessGates(), -1L);
+        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, SplitParser.get(provider), gates, -1L);
 
         // execute the fetcher for a little bit.
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -155,9 +147,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                Timber.i("Executor did not terminate in the specified time.");
+                Logger.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -173,14 +165,13 @@ public class RefreshableSplitFetcherTest {
 
     @Test
     public void if_there_is_a_problem_talking_to_split_change_count_down_latch_is_not_decremented() throws InterruptedException {
-        SegmentFetcher segmentFetcher = new StaticSegmentFetcher(Collections.<String, StaticSegment>emptyMap());
+        String key = "key";
         SDKReadinessGates gates = new SDKReadinessGates();
-
         SplitChangeFetcher splitChangeFetcher = mock(SplitChangeFetcher.class);
-        when(splitChangeFetcher.fetch(-1L)).thenThrow(new RuntimeException());
+        Mockito.when(splitChangeFetcher.fetch(-1L)).thenThrow(new RuntimeException());
 
-
-        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, new SplitParser(segmentFetcher), gates, -1L);
+        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher,
+                SplitParser.get(StaticMySegmentsFectherProvider.get("key", gates)), gates, -1L);
 
         // execute the fetcher for a little bit.
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -190,9 +181,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                Timber.i("Executor did not terminate in the specified time.");
+                Logger.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -210,16 +201,10 @@ public class RefreshableSplitFetcherTest {
         String segmentName = "foosegment";
         AChangePerCallSplitChangeFetcher experimentChangeFetcher = new AChangePerCallSplitChangeFetcher(segmentName);
         SDKReadinessGates gates = new SDKReadinessGates();
+        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", gates);
 
-        SegmentChangeFetcher segmentChangeFetcher = new NoChangeSegmentChangeFetcher();
-
-        SegmentFetcher segmentFetcher = new RefreshableSegmentFetcher(segmentChangeFetcher,
-                1,
-                10,
-                gates);
-
-
-        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(experimentChangeFetcher, new SplitParser(segmentFetcher), gates, startingChangeNumber);
+        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(experimentChangeFetcher,
+                SplitParser.get(provider), gates, startingChangeNumber);
 
         // execute the fetcher for a little bit.
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -229,9 +214,9 @@ public class RefreshableSplitFetcherTest {
         scheduledExecutorService.shutdown();
         try {
             if (!scheduledExecutorService.awaitTermination(10L, TimeUnit.SECONDS)) {
-                Timber.i("Executor did not terminate in the specified time.");
+                Logger.i("Executor did not terminate in the specified time.");
                 List<Runnable> droppedTasks = scheduledExecutorService.shutdownNow();
-                Timber.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
+                Logger.i("Executor was abruptly shut down. These tasks will not be executed: %s", droppedTasks);
             }
         } catch (InterruptedException e) {
             // reset the interrupt.
@@ -250,7 +235,7 @@ public class RefreshableSplitFetcherTest {
 
         assertThat(gates.areSplitsReady(0), is(equalTo(true)));
         assertThat(gates.isSegmentRegistered(segmentName), is(equalTo(true)));
-        assertThat(gates.areSegmentsReady(100), is(equalTo(true)));
+        assertThat(gates.areMySegmentsReady(100), is(equalTo(true)));
         assertThat(gates.isSDKReady(0), is(equalTo(true)));
 
     }

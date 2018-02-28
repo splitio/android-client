@@ -62,4 +62,10 @@ public interface SplitClient {
      * Flushes all memory allocated queues which should be stored on disk or sent to server.
      */
     void flush();
+
+    /**
+     * Checks if cached data is ready to perform treatment evaluations
+     * @return true if the sdk is ready, if false, calls to getTreatment will return control
+     */
+    boolean isReady();
 }

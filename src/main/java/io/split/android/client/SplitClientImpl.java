@@ -5,13 +5,13 @@ import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.splitter.Splitter;
 import io.split.android.grammar.Treatments;
-import timber.log.Timber;
 
 
 import java.util.Collections;
@@ -64,6 +64,11 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
+    public boolean isReady() {
+        return _container.isReady();
+    }
+
+    @Override
     public String getTreatment(String split) {
         return getTreatment(split, Collections.<String, Object>emptyMap());
     }
@@ -76,12 +81,12 @@ public final class SplitClientImpl implements SplitClient {
     private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
         try {
             if (matchingKey == null) {
-                Timber.w("matchingKey was null for split: %s", split);
+                Logger.w("matchingKey was null for split: %s", split);
                 return Treatments.CONTROL;
             }
 
             if (split == null) {
-                Timber.w("split was null for key: %s", matchingKey);
+                Logger.w("split was null for key: %s", matchingKey);
                 return Treatments.CONTROL;
             }
 
@@ -104,7 +109,7 @@ public final class SplitClientImpl implements SplitClient {
             return result._treatment;
         } catch (Exception e) {
             try {
-                Timber.e(e, "CatchAll Exception");
+                Logger.e(e, "CatchAll Exception");
             } catch (Exception e1) {
                 // ignore
             }
@@ -118,7 +123,7 @@ public final class SplitClientImpl implements SplitClient {
             _impressionListener.log(new Impression(matchingKey, bucketingKey, split, result, System.currentTimeMillis(), label, changeNumber, attributes));
             _metrics.time(operation, System.currentTimeMillis() - start);
         } catch (Throwable t) {
-            Timber.e(t);
+            Logger.e(t);
         }
     }
 
@@ -132,10 +137,10 @@ public final class SplitClientImpl implements SplitClient {
             result = getTreatmentWithoutExceptionHandling(matchingKey, bucketingKey, split, attributes);
         } catch (ChangeNumberExceptionWrapper e) {
             result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION, e.changeNumber());
-            Timber.e(e.wrappedException());
+            Logger.e(e.wrappedException());
         } catch (Exception e) {
             result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION);
-            Timber.e(e);
+            Logger.e(e);
         }
 
         return result;
@@ -145,7 +150,7 @@ public final class SplitClientImpl implements SplitClient {
         ParsedSplit parsedSplit = _splitFetcher.fetch(split);
 
         if (parsedSplit == null) {
-            Timber.d("Returning control because no split was found for: %s", split);
+            Logger.d("Returning control because no split was found for: %s", split);
             return new TreatmentLabelAndChangeNumber(Treatments.CONTROL, DEFINITION_NOT_FOUND);
         }
 
@@ -221,6 +226,7 @@ public final class SplitClientImpl implements SplitClient {
             _changeNumber = changeNumber;
         }
     }
+
 
 
 }

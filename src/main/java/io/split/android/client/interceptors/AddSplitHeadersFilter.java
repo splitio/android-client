@@ -5,10 +5,8 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.protocol.HttpContext;
-import timber.log.Timber;
 
 import java.io.IOException;
-import java.net.InetAddress;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
