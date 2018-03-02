@@ -50,7 +50,7 @@ public class MySegmentsCache implements IMySegmentsCache {
     public List<MySegment> getMySegments(String key) {
         try {
             String savedKey = _storage.read(getMySegmentsKeyId());
-            if (savedKey.equals(key)) {
+            if (savedKey != null && savedKey.equals(key)) {
                 String storedMySegments = _storage.read(getMySegmentsId());
                 Type listType = new TypeToken<List<MySegment>>() {
                 }.getType();
