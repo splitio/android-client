@@ -20,8 +20,9 @@ public class MemoryStorage implements IStorage {
     }
 
     @Override
-    public void write(String elementId, String content) throws IOException {
+    public boolean write(String elementId, String content) throws IOException {
         _storage.put(elementId, content);
+        return true;
     }
 
     @Override

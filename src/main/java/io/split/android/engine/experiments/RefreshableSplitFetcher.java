@@ -61,6 +61,8 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 
         checkNotNull(_parser);
         checkNotNull(_splitChangeFetcher);
+
+        splitChangeFetcher.fetch(-1, FetcherPolicy.CacheOnly);
     }
 
     @Override

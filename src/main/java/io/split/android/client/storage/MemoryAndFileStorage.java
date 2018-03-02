@@ -26,7 +26,7 @@ public class MemoryAndFileStorage implements IStorage {
         }
 
         result = _fileStorage.read(elementId);
-        if(result != null) {
+        if (result != null) {
             _memoryStorage.write(elementId, result);
             return result;
         }
@@ -35,15 +35,16 @@ public class MemoryAndFileStorage implements IStorage {
     }
 
     @Override
-    public void write(String elementId, String content) throws IOException {
+    public boolean write(String elementId, String content) throws IOException {
         _memoryStorage.write(elementId, content);
-        _fileStorage.write(elementId,content);
+        _fileStorage.write(elementId, content);
+        return true;
     }
 
     @Override
     public void delete(String elementId) {
         _memoryStorage.delete(elementId);
-_fileStorage.delete(elementId);
+        _fileStorage.delete(elementId);
     }
 
     @Override
@@ -54,7 +55,7 @@ _fileStorage.delete(elementId);
     @Override
     public boolean rename(String currentId, String newId) {
         if (_fileStorage.rename(currentId, newId)) {
-            _memoryStorage.rename(currentId,newId);
+            _memoryStorage.rename(currentId, newId);
             return true;
         }
         return false;

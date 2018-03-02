@@ -16,6 +16,7 @@ import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
+import io.split.android.engine.experiments.FetcherPolicy;
 import io.split.android.engine.experiments.SplitChangeFetcher;
 import io.split.android.engine.metrics.Metrics;
 
@@ -49,11 +50,19 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
 
     @Override
     public SplitChange fetch(long since) {
+        return fetch(since, FetcherPolicy.NetworkAndCache);
+    }
+
+    @Override
+    public SplitChange fetch(long since, FetcherPolicy fetcherPolicy) {
 
         long start = System.currentTimeMillis();
 
-        if (!Utils.isReachable(_target)) {
+        if (fetcherPolicy == FetcherPolicy.NetworkAndCache && !Utils.isReachable(_target)) {
             Logger.d("%s is NOT REACHABLE... USING PERSISTED", _target.getHost());
+            return _splitChangeCache.getChanges(since);
+        } else if (fetcherPolicy == FetcherPolicy.CacheOnly) {
+            Logger.d("First load... USING PERSISTED");
             return _splitChangeCache.getChanges(since);
         }
 

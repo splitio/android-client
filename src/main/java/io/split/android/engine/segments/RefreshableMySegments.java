@@ -5,6 +5,7 @@ import java.util.List;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
+import io.split.android.engine.experiments.FetcherPolicy;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -24,6 +25,8 @@ public class RefreshableMySegments implements Runnable, MySegments {
         checkNotNull(_mySegmentsFetcher);
         checkNotNull(_matchingKey);
         checkNotNull(_gates);
+
+        _mySegmentsFetcher.fetch(matchingKey, FetcherPolicy.CacheOnly);
     }
 
     public static RefreshableMySegments create(String matchingKey, MySegmentsFetcher mySegmentsFetcher, SDKReadinessGates gates) {

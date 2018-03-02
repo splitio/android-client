@@ -21,6 +21,7 @@ import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
+import io.split.android.engine.experiments.FetcherPolicy;
 import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.segments.MySegmentsFetcher;
 
@@ -54,11 +55,19 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
 
     @Override
     public List<MySegment> fetch(String matchingKey) {
+        return fetch(matchingKey, FetcherPolicy.NetworkAndCache);
+    }
+
+    @Override
+    public List<MySegment> fetch(String matchingKey, FetcherPolicy fetcherPolicy) {
         long start = System.currentTimeMillis();
 
-        if (!Utils.isReachable(_target)) {
+        if (fetcherPolicy == FetcherPolicy.NetworkAndCache && !Utils.isReachable(_target)) {
             Logger.d(String.format("%s is NOT REACHABLE... USING PERSISTED", _target.getHost()));
-            return _mySegmentsCache.getMySegments();
+            return _mySegmentsCache.getMySegments(matchingKey);
+        } else if (fetcherPolicy == FetcherPolicy.CacheOnly) {
+            Logger.d("First load... USING PERSISTED");
+            return _mySegmentsCache.getMySegments(matchingKey);
         }
 
         CloseableHttpResponse response = null;
@@ -72,7 +81,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
             int statusCode = response.getStatusLine().getStatusCode();
 
             if (statusCode < 200 || statusCode >= 300) {
-                Logger.e(String.format("Response status was: %i", statusCode));
+                Logger.e(String.format("Response status was: %d", statusCode));
                 _metrics.count(PREFIX + ".status." + statusCode, 1);
                 throw new IllegalStateException("Could not retrieve mySegments for " + matchingKey + "; http return code " + statusCode);
             }
@@ -87,7 +96,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
 
             List<MySegment> mySegmentList = mySegmentsMap.get("mySegments");
 
-            _mySegmentsCache.saveMySegments(mySegmentList);
+            _mySegmentsCache.saveMySegments(matchingKey, mySegmentList);
 
             return mySegmentList;
         } catch (Throwable t) {
