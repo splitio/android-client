@@ -215,25 +215,7 @@ public class SplitFactoryImpl implements SplitFactory {
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         boolean dataReady = true;
-        if (config.blockUntilReady() > 0) {
-            try {
-                if (!gates.isSDKReady(config.blockUntilReady())) {
-                    dataReady = false;
-                    Logger.w("SDK was not ready in " + config.blockUntilReady() + " milliseconds");
-                }
-            } catch (InterruptedException e){
-                dataReady = false;
-                Logger.e(e, "Interrupted while waiting for sdk to be ready");
-            }
-        }
-
-        if(dataReady) {
-            Logger.i("Android SDK initialized!");
-        } else {
-            Logger.i("Android SDK initialized, cached data is not ready yet.");
-        }
-
-
+        Logger.i("Android SDK initialized!");
     }
 
     private static int findPollingPeriod(Random rand, int max) {
