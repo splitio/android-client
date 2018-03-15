@@ -26,7 +26,11 @@ public class RefreshableMySegments implements Runnable, MySegments {
         checkNotNull(_matchingKey);
         checkNotNull(_gates);
 
-        _mySegmentsFetcher.fetch(matchingKey, FetcherPolicy.CacheOnly);
+        initializaFromCache();
+    }
+
+    private void initializaFromCache(){
+        _mySegments = _mySegmentsFetcher.fetch(_matchingKey, FetcherPolicy.CacheOnly);
     }
 
     public static RefreshableMySegments create(String matchingKey, MySegmentsFetcher mySegmentsFetcher, SDKReadinessGates gates) {
