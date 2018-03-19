@@ -3,9 +3,7 @@ package io.split.android.engine.experiments;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import io.split.android.client.dtos.Condition;
-import io.split.android.client.dtos.Matcher;
-import io.split.android.client.dtos.MatcherType;
+
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
@@ -36,7 +34,6 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 
     private final Object _lock = new Object();
 
-
     public RefreshableSplitFetcher(SplitChangeFetcher splitChangeFetcher, SplitParser parser, SDKReadinessGates gates) {
         this(splitChangeFetcher, parser, gates, -1);
     }
@@ -61,6 +58,28 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 
         checkNotNull(_parser);
         checkNotNull(_splitChangeFetcher);
+
+        initializeFromCache();
+    }
+
+    private void initializeFromCache(){
+        SplitChange change = _splitChangeFetcher.fetch(-1, FetcherPolicy.CacheOnly);
+
+        Map<String, ParsedSplit> toAdd = Maps.newHashMap();
+
+        for (Split split : change.splits) {
+
+            if (split.status == Status.ACTIVE) {
+                ParsedSplit parsedSplit = _parser.parse(split);
+                if (parsedSplit == null) {
+                    Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
+                    continue;
+                }
+                toAdd.put(split.name, parsedSplit);
+            }
+        }
+
+        _concurrentMap.putAll(toAdd);
     }
 
     @Override

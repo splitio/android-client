@@ -29,4 +29,7 @@ public interface SplitChangeFetcher {
      * @throws java.lang.RuntimeException if there was a problem computing split changes
      */
     SplitChange fetch(long since);
+
+    SplitChange fetch(long since, FetcherPolicy fetcherPolicy);
+
 }
