@@ -17,7 +17,7 @@ import io.split.android.engine.SDKReadinessGates;
  * Created by sarrubia on 4/3/18.
  */
 
-public class SplitEventsManager {
+public class SplitEventsManager implements Runnable {
 
     //https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ArrayBlockingQueue.html
 
@@ -29,7 +29,23 @@ public class SplitEventsManager {
 
     private Map<SplitEvent, List<SplitEventTask>> _suscriptions;
 
-    public SplitEventsManager(SplitClient client, SplitClientConfig config, SDKReadinessGates gates){
+    private static SplitEventsManager instance;
+
+    private SplitEventsManager(){}
+
+    public static synchronized SplitEventsManager instance(){
+        if(instance == null){
+            synchronized (SplitEventsManager.class) { // double checked locking principle to improve performance
+                if(instance == null){
+                    instance = new SplitEventsManager();
+                }
+            }
+        }
+        return instance;
+    }
+
+
+    private SplitEventsManager(SplitClient client, SplitClientConfig config, SDKReadinessGates gates){
         _client = client;
         _config = config;
         _gates = gates;
@@ -64,6 +80,7 @@ public class SplitEventsManager {
         * */
     }
 
+    @Override
     public void run(){
 
     }
