@@ -79,6 +79,9 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             }
         }
 
+        if (!toAdd.isEmpty()) {
+            _gates.splitsAreReady(); //Check-mark to know that Splits are ready from cache.
+        }
         _concurrentMap.putAll(toAdd);
     }
 

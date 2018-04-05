@@ -31,6 +31,9 @@ public class RefreshableMySegments implements Runnable, MySegments {
 
     private void initializaFromCache(){
         _mySegments = _mySegmentsFetcher.fetch(_matchingKey, FetcherPolicy.CacheOnly);
+        if (_mySegments != null && !_mySegments.isEmpty()) {
+            _gates.mySegmentsAreReady(); //Check-mark to know that mySegments are ready from cache.
+        }
     }
 
     public static RefreshableMySegments create(String matchingKey, MySegmentsFetcher mySegmentsFetcher, SDKReadinessGates gates) {

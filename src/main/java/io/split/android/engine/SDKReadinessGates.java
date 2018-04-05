@@ -47,6 +47,30 @@ public class SDKReadinessGates {
         return _splitsAreReady.getCount() == 0 && _mySegmentsAreReady.getCount() == 0;
     }
 
+    public boolean awaitSDKReadyTimeOut(long milliseconds) {
+        try {
+            return isSDKReady(milliseconds);
+        } catch (InterruptedException e) {
+            return false;
+        }
+    }
+
+    public boolean awaitSDKReady() {
+        try {
+            _splitsAreReady.await();
+        } catch (InterruptedException e) {
+            return false;
+        }
+
+        try {
+            _mySegmentsAreReady.await();
+        } catch (InterruptedException e) {
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * Records that the SDK split initialization is done.
      * This operation is atomic and idempotent. Repeated invocations
