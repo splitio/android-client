@@ -2,6 +2,7 @@ package io.split.android.engine.experiments;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
 
@@ -27,13 +28,13 @@ public class RefreshableSplitFetcherProvider implements Closeable {
     private final SplitChangeFetcher _splitChangeFetcher;
     private final AtomicLong _refreshEveryNSeconds;
     private final AtomicReference<RefreshableSplitFetcher> _splitFetcher = new AtomicReference<RefreshableSplitFetcher>();
-    private final SDKReadinessGates _gates;
+    private final SplitEventsManager _eventsManager;
     private final AtomicReference<ScheduledExecutorService> _executorService = new AtomicReference<>();
 
     private final Object _lock = new Object();
 
 
-    public RefreshableSplitFetcherProvider(SplitChangeFetcher splitChangeFetcher, SplitParser splitParser, long refreshEveryNSeconds, SDKReadinessGates sdkBuildBlocker) {
+    public RefreshableSplitFetcherProvider(SplitChangeFetcher splitChangeFetcher, SplitParser splitParser, long refreshEveryNSeconds, SplitEventsManager eventsManager) {
         _splitChangeFetcher = splitChangeFetcher;
         checkNotNull(_splitChangeFetcher);
 
@@ -43,8 +44,8 @@ public class RefreshableSplitFetcherProvider implements Closeable {
         checkArgument(refreshEveryNSeconds >= 0L);
         _refreshEveryNSeconds = new AtomicLong(refreshEveryNSeconds);
 
-        _gates = sdkBuildBlocker;
-        checkNotNull(_gates);
+        _eventsManager = eventsManager;
+        checkNotNull(_eventsManager);
 
     }
 
@@ -60,7 +61,7 @@ public class RefreshableSplitFetcherProvider implements Closeable {
                 return _splitFetcher.get();
             }
 
-            RefreshableSplitFetcher splitFetcher = new RefreshableSplitFetcher(_splitChangeFetcher, _splitParser, _gates);
+            RefreshableSplitFetcher splitFetcher = new RefreshableSplitFetcher(_splitChangeFetcher, _splitParser, _eventsManager);
 
             ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
             threadFactoryBuilder.setDaemon(true);

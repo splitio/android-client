@@ -19,5 +19,5 @@ public abstract class SplitEventExecutorAbstract {
         _task = task;
     }
 
-    public abstract void execute(SplitClient sclient);
+    public abstract void execute();
 }

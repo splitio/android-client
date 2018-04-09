@@ -1,17 +1,21 @@
 package io.split.android.client.events;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 
-import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.executors.SplitEventExecutorAbstract;
-import io.split.android.client.events.executors.SplitEventExecutorOnReady;
-import io.split.android.client.events.executors.SplitEventExecutorOnReadyTimeOut;
-import io.split.android.engine.SDKReadinessGates;
+import io.split.android.client.events.executors.SplitEventExecutorFactory;
+import io.split.android.client.events.executors.SplitEventExecutorResources;
+import io.split.android.client.utils.Logger;
 
 /**
  * Created by sarrubia on 4/3/18.
@@ -19,69 +23,149 @@ import io.split.android.engine.SDKReadinessGates;
 
 public class SplitEventsManager implements Runnable {
 
-    //https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ArrayBlockingQueue.html
+    private final int QUEUE_CAPACITY = 10;
 
-    private final SplitClientConfig _config;
-    private SDKReadinessGates _gates;
-    private SplitClient _client;
+    private SplitClientConfig _config;
 
-    private ArrayBlockingQueue<SplitEvent> _queue;
+    private final ScheduledExecutorService _scheduler;
+
+    private ArrayBlockingQueue<SplitInternalEvent> _queue;
 
     private Map<SplitEvent, List<SplitEventTask>> _suscriptions;
 
-    private static SplitEventsManager instance;
 
-    private SplitEventsManager(){}
 
-    public static synchronized SplitEventsManager instance(){
-        if(instance == null){
-            synchronized (SplitEventsManager.class) { // double checked locking principle to improve performance
-                if(instance == null){
-                    instance = new SplitEventsManager();
+    private SplitEventExecutorResources _resources;
+
+    private boolean _eventMySegmentsAreReady = false;
+    private boolean _eventSplitsAreReady = false;
+
+    private Map<SplitEvent, Integer> _executionTimes;
+
+    public SplitEventsManager(SplitClientConfig config){
+
+        _config = config;
+
+        _queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
+        _suscriptions = new HashMap<>();
+
+        _executionTimes = new HashMap<>();
+        _resources = new SplitEventExecutorResources();
+
+        registerMaxAllowebExecutionTimesPerEvent();
+
+        Runnable SDKReadyTimeout = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(_config.blockUntilReady());
+                    notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
+                } catch (InterruptedException e) {
+                    Logger.d(e.getMessage());
                 }
             }
-        }
-        return instance;
+        };
+        new Thread(SDKReadyTimeout).start();
+
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat("Split-EventsManager-%d")
+                .build();
+        _scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        _scheduler.submit(this);
+
     }
 
 
-    private SplitEventsManager(SplitClient client, SplitClientConfig config, SDKReadinessGates gates){
-        _client = client;
-        _config = config;
-        _gates = gates;
+    private void registerMaxAllowebExecutionTimesPerEvent(){
+        _executionTimes.put(SplitEvent.SDK_READY, 1);
+        _executionTimes.put(SplitEvent.SDK_READY_TIMED_OUT, 1);
+    }
 
-        _queue = new ArrayBlockingQueue<>(10);
-        _suscriptions = new HashMap<>();
+    public SplitEventExecutorResources getExecutorResources(){
+        return _resources;
+    }
+
+    public void notifyInternalEvent(SplitInternalEvent internalEvent){
+        try{
+            _queue.add(internalEvent);
+        } catch (IllegalStateException e) {
+            Logger.d("Internal events queue is full");
+        }
     }
 
     public void register(SplitEvent event, SplitEventTask task){
+
+        // If event is already triggered, execute the task
+        if (_executionTimes.containsKey(event) && _executionTimes.get(event) == 0) {
+            executeTask(event, task);
+            return;
+        }
 
         if (!_suscriptions.containsKey(event)) {
             _suscriptions.put(event, new ArrayList<>());
         }
         _suscriptions.get(event).add(task);
-
-        /*
-        SplitEventExecutorAbstract executor = null;
-
-        switch(event){
-            case SDK_READY:
-                executor = new SplitEventExecutorOnReady(_gates, task);
-                break;
-
-            case SDK_READY_TIMED_OUT:
-                executor = new SplitEventExecutorOnReadyTimeOut(_config.blockUntilReady(), _gates, task);
-                break;
-        }
-
-        if (executor != null){
-            executor.execute(_client);
-        }
-        * */
     }
+
 
     @Override
     public void run(){
+        while(true){
+            triggerEventsWhenAreAvailable();
+        }
+    }
 
+    private void triggerEventsWhenAreAvailable(){
+        try {
+            SplitInternalEvent event = _queue.take(); //Blocking method (waiting if necessary until an element becomes available.)
+            switch (event){
+                case SPLITS_ARE_READY:
+                    _eventSplitsAreReady = true;
+                    if (_eventMySegmentsAreReady) {
+                        trigger(SplitEvent.SDK_READY);
+                    }
+                    break;
+                case MYSEGEMENTS_ARE_READY:
+                    _eventMySegmentsAreReady = true;
+                    if (_eventSplitsAreReady) {
+                        trigger(SplitEvent.SDK_READY);
+                    }
+                    break;
+                case SDK_READY_TIMEOUT_REACHED:
+                    if (!_eventSplitsAreReady || !_eventMySegmentsAreReady ) {
+                        trigger(SplitEvent.SDK_READY_TIMED_OUT);
+                    }
+                    break;
+            }
+        } catch (InterruptedException e) {
+            Logger.d(e.getMessage());
+        }
+    }
+
+    private void trigger(SplitEvent event) {
+
+        // If executionTimes is zero, maximum executions has been reached
+        if (_executionTimes.get(event) == 0){
+            return;
+        // If executionTimes is grater than zero, maximum executions decrease 1
+        } else if (_executionTimes.get(event) > 0) {
+            _executionTimes.put(event, _executionTimes.get(event) - 1);
+        } //If executionTimes is lower than zero, execute it without limitation
+
+        if (_suscriptions.containsKey(event)) {
+            List<SplitEventTask> toExecute = _suscriptions.get(event);
+
+            for (SplitEventTask task : toExecute) {
+                executeTask(event, task);
+            }
+        }
+    }
+
+    private void executeTask(SplitEvent event, SplitEventTask task){
+        SplitEventExecutorAbstract executor = SplitEventExecutorFactory.factory(event, task, _resources);
+        if (executor != null){
+            executor.execute();
+        }
     }
 }

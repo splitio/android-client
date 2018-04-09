@@ -1,5 +1,7 @@
 package io.split.android.engine;
 
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.utils.Logger;
 
 
@@ -84,6 +86,7 @@ public class SDKReadinessGates {
         }
     }
 
+
     /**
      * Records that the SDK mySegments initialization is done.
      * This operation is atomic and idempotent. Repeated invocations
@@ -96,6 +99,7 @@ public class SDKReadinessGates {
             Logger.d("mySegments are ready");
         }
     }
+
 
     /**
      * Returns true if the SDK is ready w.r.t mySegments. In other words, this method returns true if:

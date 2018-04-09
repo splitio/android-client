@@ -27,7 +27,13 @@ public class FileStorage implements IStorage {
     @Override
     public String read(String elementId) throws IOException {
         FileInputStream fis;
-        fis = _context.openFileInput(elementId);
+        try {
+            fis = _context.openFileInput(elementId);
+        } catch (FileNotFoundException e) {
+            Logger.d(e.getMessage());
+            return null;
+        }
+
         StringBuilder fileContent = new StringBuilder("");
 
         byte[] buffer = new byte[1024];

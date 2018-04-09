@@ -11,13 +11,16 @@ import io.split.android.client.utils.Logger;
  * Created by sarrubia on 4/3/18.
  */
 
-public abstract class SplitEventExecutorBase extends SplitEventExecutorAbstract{
+public class SplitEventExecutorWithClient extends SplitEventExecutorAbstract{
 
-    public SplitEventExecutorBase(SplitEventTask task) {
+    private SplitClient _sclient;
+
+    public SplitEventExecutorWithClient(SplitEventTask task, SplitClient client) {
         super(task);
+        _sclient = client;
     }
 
-    public void execute(SplitClient sclient){
+    public void execute(){
 
         _asyncTansk = new AsyncTask<SplitClient, Void, SplitClient>() {
 
@@ -26,16 +29,11 @@ public abstract class SplitEventExecutorBase extends SplitEventExecutorAbstract{
 
                 SplitClient client = splitClients[0];
 
-                if (shouldCallOnPostExecutionMethod(client)) {
-                    //BACKGROUND POST EXECUTION
-                    try {
-                        _task.onPostExecution(client);
-                    } catch (SplitEventTaskMethodNotImplementedException e) {
-                        //Method not implemented by user
-                    }
-                } else {
-                    cancel(true);
-                    Logger.d("Cancelled, executor condition has not been approved");
+                //BACKGROUND POST EXECUTION
+                try {
+                    _task.onPostExecution(client);
+                } catch (SplitEventTaskMethodNotImplementedException e) {
+                    //Method not implemented by user
                 }
 
                 return client;
@@ -49,13 +47,11 @@ public abstract class SplitEventExecutorBase extends SplitEventExecutorAbstract{
                 try {
                     _task.onPostExecutionView(sclient);
                 } catch (SplitEventTaskMethodNotImplementedException e) {
-                    //do exception stuff
+                    //Method not implemented by user
                 }
             }
         };
 
-        _asyncTansk.execute(sclient);
+        _asyncTansk.execute(_sclient);
     }
-
-    protected abstract boolean shouldCallOnPostExecutionMethod(SplitClient client);
 }
