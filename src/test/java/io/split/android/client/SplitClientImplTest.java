@@ -518,48 +518,4 @@ public class SplitClientImplTest {
         assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo("foolabel")));
         assertThat(impressionCaptor.getValue().attributes(), is(equalTo(attributes)));
     }
-
-    @Test
-    public void event_on_ready() {
-
-        String test = "test1";
-        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition("on", 100)));
-        List<ParsedCondition> conditions = Lists.newArrayList(rollOutToEveryone);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1);
-
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
-
-        SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("sebastian@codigo.com"), splitFetcher, eventManager);
-
-        class MyTestTask extends SplitEventTask {
-
-            private int _bg = 0;
-            private int _ui = 0;
-
-            public int getBG(){return _bg;}
-            public int getUI(){return _ui;}
-
-            public void onPostExecution(SplitClient client){
-                _bg = 1;
-            }
-
-            public void onPostExecutionView(SplitClient client){
-                _ui = 2;
-            }
-        }
-
-        MyTestTask task = new MyTestTask();
-        client.on(SplitEvent.SDK_READY, task);
-
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_READY);
-
-        assertThat(task.getBG(), is(equalTo(1)));
-        assertThat(task.getUI(), is(equalTo(2)));
-
-
-    }
 }

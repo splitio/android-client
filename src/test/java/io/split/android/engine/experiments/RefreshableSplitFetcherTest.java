@@ -49,10 +49,11 @@ public class RefreshableSplitFetcherTest {
 
     private void works(long startingChangeNumber) throws InterruptedException {
         AChangePerCallSplitChangeFetcher splitChangeFetcher = new AChangePerCallSplitChangeFetcher();
-        SDKReadinessGates gates = new SDKReadinessGates();
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", gates);
+        //SDKReadinessGates gates = new SDKReadinessGates();
+        SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
+        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", eventManager);
 
-        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, SplitParser.get(provider), gates, startingChangeNumber);
+        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, SplitParser.get(provider), eventManager, startingChangeNumber);
 
         // execute the fetcher for a little bit.
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -89,14 +90,15 @@ public class RefreshableSplitFetcherTest {
 
         assertThat(actual, is(equalTo(expected)));
 
-        assertThat(gates.areSplitsReady(0), is(equalTo(true)));
+        //assertThat(gates.areSplitsReady(0), is(equalTo(true)));
 
     }
 
     @Test
     public void when_parser_fails_we_remove_the_experiment() throws InterruptedException {
-        SDKReadinessGates gates = new SDKReadinessGates();
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", gates);
+        //SDKReadinessGates gates = new SDKReadinessGates();
+        SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
+        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", eventManager);
         Split validSplit = new Split();
         validSplit.status = Status.ACTIVE;
         validSplit.seed = (int) -1;
@@ -139,7 +141,7 @@ public class RefreshableSplitFetcherTest {
         Mockito.when(splitChangeFetcher.fetch(1L)).thenReturn(noReturn);
 
 
-        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, SplitParser.get(provider), gates, -1L);
+        RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, SplitParser.get(provider), eventManager, -1L);
 
         // execute the fetcher for a little bit.
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -168,12 +170,13 @@ public class RefreshableSplitFetcherTest {
     @Test
     public void if_there_is_a_problem_talking_to_split_change_count_down_latch_is_not_decremented() throws InterruptedException {
         String key = "key";
-        SDKReadinessGates gates = new SDKReadinessGates();
+        //SDKReadinessGates gates = new SDKReadinessGates();
+        SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
         SplitChangeFetcher splitChangeFetcher = mock(SplitChangeFetcher.class);
         Mockito.when(splitChangeFetcher.fetch(-1L)).thenThrow(new RuntimeException());
 
         RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher,
-                SplitParser.get(StaticMySegmentsFectherProvider.get("key", gates)), gates, -1L);
+                SplitParser.get(StaticMySegmentsFectherProvider.get("key", eventManager)), eventManager, -1L);
 
         // execute the fetcher for a little bit.
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -193,7 +196,7 @@ public class RefreshableSplitFetcherTest {
         }
 
         assertThat(fetcher.changeNumber(), is(equalTo(-1L)));
-        assertThat(gates.areSplitsReady(0), is(equalTo(false)));
+        //assertThat(gates.areSplitsReady(0), is(equalTo(false)));
 
     }
 
@@ -202,14 +205,14 @@ public class RefreshableSplitFetcherTest {
         long startingChangeNumber = -1;
         String segmentName = "foosegment";
         AChangePerCallSplitChangeFetcher experimentChangeFetcher = new AChangePerCallSplitChangeFetcher(segmentName);
-        SDKReadinessGates gates = new SDKReadinessGates();
+        //SDKReadinessGates gates = new SDKReadinessGates();
 
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
 
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", gates);
+        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", eventManager);
 
         RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(experimentChangeFetcher,
-                SplitParser.get(provider), gates, startingChangeNumber);
+                SplitParser.get(provider), eventManager, startingChangeNumber);
 
         // execute the fetcher for a little bit.
         ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();

@@ -58,8 +58,10 @@ public class SplitEventsManager implements Runnable {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(_config.blockUntilReady());
-                    notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
+                    if (_config.blockUntilReady() > 0) {
+                        Thread.sleep(_config.blockUntilReady());
+                        notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
+                    }
                 } catch (InterruptedException e) {
                     Logger.d(e.getMessage());
                 }
@@ -108,6 +110,13 @@ public class SplitEventsManager implements Runnable {
         _suscriptions.get(event).add(task);
     }
 
+    public boolean eventAlreadyTriggered(SplitEvent event){
+        if (_executionTimes.get(event) == 0){
+            return true;
+        }
+
+        return false;
+    }
 
     @Override
     public void run(){
