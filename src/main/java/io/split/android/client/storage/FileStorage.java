@@ -45,7 +45,7 @@ public class FileStorage implements IStorage {
     }
 
     @Override
-    public void write(String elementId, String content) throws IOException {
+    public boolean write(String elementId, String content) throws IOException {
         FileOutputStream fos = null;
         try {
             fos = _context.openFileOutput(elementId, Context.MODE_PRIVATE);
@@ -64,6 +64,7 @@ public class FileStorage implements IStorage {
                 Logger.e(e, "Failed to close file");
             }
         }
+        return true;
     }
 
     @Override

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 
+import io.split.android.client.api.Key;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
@@ -29,9 +30,14 @@ public class MySegmentsCache implements IMySegmentsCache {
         return MY_SEGMENTS_FILE_PREFIX;
     }
 
+    private String getMySegmentsKeyId() {
+        return MY_SEGMENTS_FILE_PREFIX + ".currentKey";
+    }
+
     @Override
-    public boolean saveMySegments(List<MySegment> mySegments) {
+    public boolean saveMySegments(String key, List<MySegment> mySegments) {
         try {
+            _storage.write(getMySegmentsKeyId(), key);
             _storage.write(getMySegmentsId(), Json.toJson(mySegments));
             return true;
         } catch (IOException e) {
@@ -41,16 +47,26 @@ public class MySegmentsCache implements IMySegmentsCache {
     }
 
     @Override
-    public List<MySegment> getMySegments() {
+    public List<MySegment> getMySegments(String key) {
         try {
-            String storedMySegments = _storage.read(getMySegmentsId());
-            Type listType = new TypeToken<List<MySegment>>() {
-            }.getType();
+            String savedKey = _storage.read(getMySegmentsKeyId());
+            if (savedKey != null && savedKey.equals(key)) {
+                String storedMySegments = _storage.read(getMySegmentsId());
+                Type listType = new TypeToken<List<MySegment>>() {
+                }.getType();
 
-            return Json.fromJson(storedMySegments, listType);
+                return Json.fromJson(storedMySegments, listType);
+            } else {
+                _storage.delete(getMySegmentsId());
+            }
         } catch (IOException e) {
             Logger.e(e, "Unable to get my segments");
         }
         return null;
+    }
+
+    @Override
+    public void deleteMySegments() {
+        _storage.delete(getMySegmentsId());
     }
 }

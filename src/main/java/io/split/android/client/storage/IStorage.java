@@ -22,8 +22,9 @@ public interface IStorage {
      *
      * @param elementId Identifier for the element to be written
      * @param content   JSON representation of the element
+     * @return Whether the write was successful or not
      */
-    void write(String elementId, String content) throws IOException;
+    boolean write(String elementId, String content) throws IOException;
 
     /**
      * Deletes an element based on it's identifier
