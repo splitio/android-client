@@ -7,8 +7,11 @@ import io.split.android.client.SplitClient;
  */
 
 public class SplitEventTask {
+    public void onPostExecution(SplitClient client) {
+        throw new SplitEventTaskMethodNotImplementedException();
+    }
 
-    public void onPostExecution(SplitClient client){throw new SplitEventTaskMethodNotImplementedException();}
-
-    public void onPostExecutionView(SplitClient client){throw new SplitEventTaskMethodNotImplementedException();}
+    public void onPostExecutionView(SplitClient client) {
+        throw new SplitEventTaskMethodNotImplementedException();
+    }
 }

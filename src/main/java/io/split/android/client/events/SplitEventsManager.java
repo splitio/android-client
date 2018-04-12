@@ -17,6 +17,8 @@ import io.split.android.client.events.executors.SplitEventExecutorFactory;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.utils.Logger;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * Created by sarrubia on 4/3/18.
  */
@@ -42,7 +44,7 @@ public class SplitEventsManager implements Runnable {
 
     private Map<SplitEvent, Integer> _executionTimes;
 
-    public SplitEventsManager(SplitClientConfig config){
+    public SplitEventsManager(SplitClientConfig config) {
 
         _config = config;
 
@@ -79,24 +81,34 @@ public class SplitEventsManager implements Runnable {
     }
 
 
-    private void registerMaxAllowebExecutionTimesPerEvent(){
+    /**
+     * This method should registering the allowed maximum times of event trigger
+     * EXAMPLE: SDK_READY should be triggered only once
+     */
+    private void registerMaxAllowebExecutionTimesPerEvent() {
         _executionTimes.put(SplitEvent.SDK_READY, 1);
         _executionTimes.put(SplitEvent.SDK_READY_TIMED_OUT, 1);
     }
 
-    public SplitEventExecutorResources getExecutorResources(){
+    public SplitEventExecutorResources getExecutorResources() {
         return _resources;
     }
 
-    public void notifyInternalEvent(SplitInternalEvent internalEvent){
-        try{
+    public void notifyInternalEvent(SplitInternalEvent internalEvent) {
+
+        checkNotNull(internalEvent);
+
+        try {
             _queue.add(internalEvent);
         } catch (IllegalStateException e) {
             Logger.d("Internal events queue is full");
         }
     }
 
-    public void register(SplitEvent event, SplitEventTask task){
+    public void register(SplitEvent event, SplitEventTask task) {
+
+        checkNotNull(event);
+        checkNotNull(task);
 
         // If event is already triggered, execute the task
         if (_executionTimes.containsKey(event) && _executionTimes.get(event) == 0) {
@@ -111,11 +123,7 @@ public class SplitEventsManager implements Runnable {
     }
 
     public boolean eventAlreadyTriggered(SplitEvent event){
-        if (_executionTimes.get(event) == 0){
-            return true;
-        }
-
-        return false;
+        return _executionTimes.get(event) == 0;
     }
 
     @Override
@@ -148,6 +156,8 @@ public class SplitEventsManager implements Runnable {
                     break;
             }
         } catch (InterruptedException e) {
+            //Catching the InterruptedException that can be thrown by _queue.take() if interrupted while waiting
+            // for further information read https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ArrayBlockingQueue.html#take()
             Logger.d(e.getMessage());
         }
     }

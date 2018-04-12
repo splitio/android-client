@@ -41,7 +41,7 @@ public class SplitEventExecutorWithClient extends SplitEventExecutorAbstract{
 
             @Override
             protected void onPostExecute(SplitClient sclient){
-                super.onPostExecute(sclient);
+
 
                 //UI POST EXECUTION
                 try {

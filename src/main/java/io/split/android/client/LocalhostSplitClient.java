@@ -62,9 +62,13 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     @Override
-    public boolean isReady() {return _container.isReady();}
+    public boolean isReady() {
+        return _container.isReady();
+    }
 
-    public void on(SplitEvent event, SplitEventTask task) {return;}
+    public void on(SplitEvent event, SplitEventTask task) {
+        return;
+    }
 
     void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {
         checkNotNull(featureToTreatmentMap, "featureToTreatmentMap must not be null");

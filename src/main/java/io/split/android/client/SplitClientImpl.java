@@ -9,7 +9,6 @@ import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.Logger;
-import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -238,6 +237,9 @@ public final class SplitClientImpl implements SplitClient {
 
 
     public void on(SplitEvent event, SplitEventTask task){
+        checkNotNull(event);
+        checkNotNull(task);
+
         _eventsManager.register(event, task);
     }
 
