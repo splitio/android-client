@@ -23,6 +23,9 @@ public class SplitEventExecutorFactory {
             case SDK_READY_TIMED_OUT:
                 executor = new SplitEventExecutorWithClient(task, resources.getSplitClient());
                 break;
+
+            default:
+                throw new IllegalArgumentException();
         }
 
         return executor;

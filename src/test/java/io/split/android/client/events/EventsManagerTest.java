@@ -1,5 +1,7 @@
 package io.split.android.client.events;
 
+import junit.framework.Assert;
+
 import org.junit.Test;
 
 import io.split.android.client.SplitClientConfig;
@@ -29,6 +31,7 @@ public class EventsManagerTest {
                 Thread.currentThread().sleep(intervalExecutionTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Assert.fail();
             }
 
             maxExecutionTime -= intervalExecutionTime;
@@ -60,6 +63,7 @@ public class EventsManagerTest {
                 Thread.currentThread().sleep(intervalExecutionTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Assert.fail();
             }
 
             maxExecutionTime -= intervalExecutionTime;
@@ -91,6 +95,7 @@ public class EventsManagerTest {
                 Thread.currentThread().sleep(intervalExecutionTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Assert.fail();
             }
 
             maxExecutionTime -= intervalExecutionTime;
@@ -120,6 +125,7 @@ public class EventsManagerTest {
                 Thread.currentThread().sleep(intervalExecutionTime);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Assert.fail();
             }
 
             maxExecutionTime -= intervalExecutionTime;
