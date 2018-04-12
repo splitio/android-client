@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -49,9 +50,9 @@ public class SplitEventsManager implements Runnable {
         _config = config;
 
         _queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-        _suscriptions = new HashMap<>();
+        _suscriptions = new ConcurrentHashMap<>();
 
-        _executionTimes = new HashMap<>();
+        _executionTimes = new ConcurrentHashMap<>();
         _resources = new SplitEventExecutorResources();
 
         registerMaxAllowebExecutionTimesPerEvent();
@@ -66,6 +67,7 @@ public class SplitEventsManager implements Runnable {
                     }
                 } catch (InterruptedException e) {
                     Logger.d(e.getMessage());
+                    notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
                 }
             }
         };
