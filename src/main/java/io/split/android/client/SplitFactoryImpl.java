@@ -34,6 +34,8 @@ import java.util.concurrent.TimeoutException;
 import javax.net.ssl.SSLContext;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.impressions.AsynchronousImpressionListener;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
@@ -65,6 +67,8 @@ public class SplitFactoryImpl implements SplitFactory {
     private final Runnable flusher;
     private boolean isTerminated = false;
 
+
+    private SplitEventsManager _eventsManager;
     private SDKReadinessGates gates;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
@@ -132,12 +136,13 @@ public class SplitFactoryImpl implements SplitFactory {
         HttpMetrics httpMetrics = HttpMetrics.create(httpclient, eventsRootTarget);
         final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
 
+        _eventsManager = new SplitEventsManager(config);
         gates = new SDKReadinessGates();
 
         // Segments
         IStorage mySegmentsStorage = new MemoryAndFileStorage(context);
         MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget, mySegmentsStorage);
-        final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), gates);
+        final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
@@ -145,7 +150,7 @@ public class SplitFactoryImpl implements SplitFactory {
         IStorage splitChangeStorage = new MemoryAndFileStorage(context);
         SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage);
 
-        final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), gates);
+        final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), _eventsManager);
 
         // Impressions
         IStorage impressionsStorage = new FileStorage(context);
@@ -211,8 +216,10 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-        _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(), impressionListener, cachedFireAndForgetMetrics, config);
+        _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(), impressionListener, cachedFireAndForgetMetrics, config, _eventsManager);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
+
+        _eventsManager.getExecutorResources().setSplitClient(_client);
 
         boolean dataReady = true;
         Logger.i("Android SDK initialized!");

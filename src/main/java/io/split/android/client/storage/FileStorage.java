@@ -24,10 +24,22 @@ public class FileStorage implements IStorage {
         _context = context;
     }
 
+    /**
+     * read the file content returning it as String. Could return null if file not found or could not be opened
+     * @param elementId Identifier for the element to be read
+     * @return String | null
+     * @throws IOException
+     */
     @Override
     public String read(String elementId) throws IOException {
         FileInputStream fis;
-        fis = _context.openFileInput(elementId);
+        try {
+            fis = _context.openFileInput(elementId);
+        } catch (FileNotFoundException e) {
+            Logger.d(e.getMessage());
+            return null;
+        }
+
         StringBuilder fileContent = new StringBuilder("");
 
         byte[] buffer = new byte[1024];

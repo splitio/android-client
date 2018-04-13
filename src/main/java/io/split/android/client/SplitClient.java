@@ -2,6 +2,9 @@ package io.split.android.client;
 
 import java.util.Map;
 
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
+
 public interface SplitClient {
 
     /**
@@ -68,4 +71,6 @@ public interface SplitClient {
      * @return true if the sdk is ready, if false, calls to getTreatment will return control
      */
     boolean isReady();
+
+    void on(SplitEvent event, SplitEventTask task);
 }

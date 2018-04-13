@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
 
@@ -26,20 +27,20 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
 
     private final Object _lock = new Object();
     private final ScheduledExecutorService _scheduledExecutorService;
-    private final SDKReadinessGates _gates;
     private RefreshableMySegments _mySegments;
     private String _matchingKey;
+    private final SplitEventsManager _eventsManager;
 
 
-    public RefreshableMySegmentsFetcherProvider(MySegmentsFetcher mySegmentsFetcher, long refreshEveryNSeconds, String matchingKey, SDKReadinessGates sdkBuildBlocker) {
+    public RefreshableMySegmentsFetcherProvider(MySegmentsFetcher mySegmentsFetcher, long refreshEveryNSeconds, String matchingKey, SplitEventsManager eventsManager) {
         _mySegmentsFetcher = mySegmentsFetcher;
         checkNotNull(_mySegmentsFetcher);
 
         _matchingKey = matchingKey;
         checkNotNull(_matchingKey);
 
-        _gates = sdkBuildBlocker;
-        checkNotNull(_gates);
+        _eventsManager = eventsManager;
+        checkNotNull(_eventsManager);
 
         checkArgument(refreshEveryNSeconds >= 0L);
         _refreshEveryNSeconds = new AtomicLong(refreshEveryNSeconds);
@@ -58,7 +59,7 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
                 return _mySegments;
             }
 
-            _mySegments = RefreshableMySegments.create(_matchingKey, _mySegmentsFetcher, _gates);
+            _mySegments = RefreshableMySegments.create(_matchingKey, _mySegmentsFetcher, _eventsManager);
 
             _scheduledExecutorService.scheduleWithFixedDelay(_mySegments, 0L, _refreshEveryNSeconds.get(), TimeUnit.SECONDS);
 

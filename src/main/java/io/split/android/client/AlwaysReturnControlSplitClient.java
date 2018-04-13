@@ -1,6 +1,7 @@
 package io.split.android.client;
 
-import io.split.android.client.api.Key;
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.grammar.Treatments;
 
 import java.util.Map;
@@ -36,5 +37,11 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
     public boolean isReady() {
         return true;
     }
+
+    @Override
+    public void on(SplitEvent event, SplitEventTask task) {
+        return;
+    }
+
 
 }
