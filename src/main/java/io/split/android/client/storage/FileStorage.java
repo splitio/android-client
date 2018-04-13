@@ -24,6 +24,12 @@ public class FileStorage implements IStorage {
         _context = context;
     }
 
+    /**
+     * read the file content returning it as String. Could return null if file not found or could not be opened
+     * @param elementId Identifier for the element to be read
+     * @return String | null
+     * @throws IOException
+     */
     @Override
     public String read(String elementId) throws IOException {
         FileInputStream fis;

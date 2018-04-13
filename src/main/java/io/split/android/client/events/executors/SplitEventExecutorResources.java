@@ -1,5 +1,7 @@
 package io.split.android.client.events.executors;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import io.split.android.client.SplitClient;
 
 /**
@@ -12,6 +14,8 @@ public class SplitEventExecutorResources {
 
 
     public void setSplitClient(SplitClient client) {
+        checkNotNull(client);
+
         _client = client;
     }
 

@@ -66,7 +66,11 @@ public class SplitEventsManager implements Runnable {
                         notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
                     }
                 } catch (InterruptedException e) {
-                    Logger.d(e.getMessage());
+                    //InterruptedException could be thrown by Thread.sleep trying to wait before check if sdk is ready
+                    Logger.d("Waiting before to check if SDK is READY has been interrupted",e.getMessage());
+                    notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
+                } catch (Throwable e) {
+                    Logger.d("Waiting before to check if SDK is READY interrupted ",e.getMessage());
                     notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
                 }
             }
