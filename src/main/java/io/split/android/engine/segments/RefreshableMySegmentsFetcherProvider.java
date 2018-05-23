@@ -51,6 +51,10 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
         threadFactoryBuilder.setNameFormat("split-mySegmentsFetcher-" + "%d");
         _scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactoryBuilder.build());
 
+        _mySegments = RefreshableMySegments.create(_matchingKey, _mySegmentsFetcher, _eventsManager);
+
+        _scheduledExecutorService.scheduleWithFixedDelay(_mySegments, 0L, _refreshEveryNSeconds.get(), TimeUnit.SECONDS);
+
     }
 
     public RefreshableMySegments mySegments() {
@@ -58,10 +62,6 @@ public class RefreshableMySegmentsFetcherProvider implements Closeable {
             if (_mySegments != null) {
                 return _mySegments;
             }
-
-            _mySegments = RefreshableMySegments.create(_matchingKey, _mySegmentsFetcher, _eventsManager);
-
-            _scheduledExecutorService.scheduleWithFixedDelay(_mySegments, 0L, _refreshEveryNSeconds.get(), TimeUnit.SECONDS);
 
             return _mySegments;
         }
