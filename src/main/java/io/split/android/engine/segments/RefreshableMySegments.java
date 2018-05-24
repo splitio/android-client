@@ -3,6 +3,8 @@ package io.split.android.engine.segments;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.FetcherPolicy;
@@ -11,30 +13,34 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class RefreshableMySegments implements Runnable, MySegments {
 
-    private final SDKReadinessGates _gates;
     private final Object _lock = new Object();
     private List<MySegment> _mySegments;
     private MySegmentsFetcher _mySegmentsFetcher;
     private String _matchingKey;
+    private boolean _firstLoad = true;
+    private final SplitEventsManager _eventsManager;
 
-    public RefreshableMySegments(String matchingKey, MySegmentsFetcher mySegmentsFetcher, SDKReadinessGates gates) {
+    public RefreshableMySegments(String matchingKey, MySegmentsFetcher mySegmentsFetcher, SplitEventsManager eventsManager) {
         _mySegmentsFetcher = mySegmentsFetcher;
         _matchingKey = matchingKey;
-        _gates = gates;
+        _eventsManager = eventsManager;
 
         checkNotNull(_mySegmentsFetcher);
         checkNotNull(_matchingKey);
-        checkNotNull(_gates);
+        checkNotNull(_eventsManager);
 
         initializaFromCache();
     }
 
     private void initializaFromCache(){
         _mySegments = _mySegmentsFetcher.fetch(_matchingKey, FetcherPolicy.CacheOnly);
+        if (_mySegments != null && !_mySegments.isEmpty()) {
+            _eventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_READY);
+        }
     }
 
-    public static RefreshableMySegments create(String matchingKey, MySegmentsFetcher mySegmentsFetcher, SDKReadinessGates gates) {
-        return new RefreshableMySegments(matchingKey, mySegmentsFetcher, gates);
+    public static RefreshableMySegments create(String matchingKey, MySegmentsFetcher mySegmentsFetcher, SplitEventsManager eventsManager) {
+        return new RefreshableMySegments(matchingKey, mySegmentsFetcher, eventsManager);
     }
 
     @Override
@@ -43,7 +49,11 @@ public class RefreshableMySegments implements Runnable, MySegments {
         MySegment mySegment = new MySegment();
         mySegment.name = segmentName;
 
-        return _mySegments.contains(mySegment);
+        if (_mySegments != null) {
+            return _mySegments.contains(mySegment);
+        }
+
+        return false;
     }
 
     @Override
@@ -56,7 +66,12 @@ public class RefreshableMySegments implements Runnable, MySegments {
         try {
             runWithoutExceptionHandling();
 
-            _gates.mySegmentsAreReady();
+            if (_firstLoad) {
+                _eventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_READY);
+                _firstLoad = false;
+            } else {
+                _eventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_UPDATED);
+            }
         } catch (Throwable t) {
             Logger.e(t,"RefreshableMySegments failed: %s", t.getMessage());
         }

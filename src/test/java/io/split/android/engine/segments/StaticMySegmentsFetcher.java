@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.MySegment;
+import io.split.android.engine.experiments.FetcherPolicy;
 
 /**
  * Created by fernandomartin on 2/17/18.
@@ -27,5 +28,10 @@ public class StaticMySegmentsFetcher implements MySegmentsFetcher {
         } else {
             return Lists.newArrayList();
         }
+    }
+
+    @Override
+    public List<MySegment> fetch(String matchingKey, FetcherPolicy fetcherPolicy) {
+        return fetch(matchingKey);
     }
 }

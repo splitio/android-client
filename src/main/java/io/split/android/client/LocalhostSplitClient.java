@@ -2,7 +2,9 @@ package io.split.android.client;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import io.split.android.client.api.Key;
+
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.grammar.Treatments;
 
 import java.util.Map;
@@ -62,6 +64,10 @@ public final class LocalhostSplitClient implements SplitClient {
     @Override
     public boolean isReady() {
         return _container.isReady();
+    }
+
+    public void on(SplitEvent event, SplitEventTask task) {
+        return;
     }
 
     void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {

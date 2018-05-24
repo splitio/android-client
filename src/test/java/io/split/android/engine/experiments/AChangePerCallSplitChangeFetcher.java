@@ -73,6 +73,11 @@ public class AChangePerCallSplitChangeFetcher implements SplitChangeFetcher {
         return splitChange;
     }
 
+    @Override
+    public SplitChange fetch(long since, FetcherPolicy fetcherPolicy) {
+        return fetch(since);
+    }
+
     public long lastAdded() {
         return _lastAdded.get();
     }

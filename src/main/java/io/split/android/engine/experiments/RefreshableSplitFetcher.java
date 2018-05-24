@@ -7,6 +7,8 @@ import com.google.common.collect.Sets;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
 
@@ -30,12 +32,14 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
     private final AtomicLong _changeNumber;
 
     private Map<String, ParsedSplit> _concurrentMap = Maps.newConcurrentMap();
-    private final SDKReadinessGates _gates;
+    private final SplitEventsManager _eventsManager;
+
+    private boolean _firstLoad = true;
 
     private final Object _lock = new Object();
 
-    public RefreshableSplitFetcher(SplitChangeFetcher splitChangeFetcher, SplitParser parser, SDKReadinessGates gates) {
-        this(splitChangeFetcher, parser, gates, -1);
+    public RefreshableSplitFetcher(SplitChangeFetcher splitChangeFetcher, SplitParser parser, SplitEventsManager eventsManager) {
+        this(splitChangeFetcher, parser, eventsManager, -1);
     }
 
     /**
@@ -49,11 +53,11 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
      */
     /*package private*/ RefreshableSplitFetcher(SplitChangeFetcher splitChangeFetcher,
                                                 SplitParser parser,
-                                                SDKReadinessGates gates,
+                                                SplitEventsManager eventsManager,
                                                 long startingChangeNumber) {
         _splitChangeFetcher = splitChangeFetcher;
         _parser = parser;
-        _gates = gates;
+        _eventsManager = eventsManager;
         _changeNumber = new AtomicLong(startingChangeNumber);
 
         checkNotNull(_parser);
@@ -79,6 +83,9 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             }
         }
 
+        if (!toAdd.isEmpty()) {
+            _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+        }
         _concurrentMap.putAll(toAdd);
     }
 
@@ -114,7 +121,14 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
         long start = _changeNumber.get();
         try {
             runWithoutExceptionHandling();
-            _gates.splitsAreReady();
+
+            if (_firstLoad) {
+                _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+                _firstLoad = false;
+            } else {
+                _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_UPDATED);
+            }
+
         } catch (InterruptedException e) {
             Logger.w(e,"Interrupting split fetcher task");
             Thread.currentThread().interrupt();

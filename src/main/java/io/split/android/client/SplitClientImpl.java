@@ -2,6 +2,9 @@ package io.split.android.client;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.ConditionType;
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
@@ -39,7 +42,9 @@ public final class SplitClientImpl implements SplitClient {
     private final String _matchingKey;
     private final String _bucketingKey;
 
-    public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config) {
+    private final SplitEventsManager _eventsManager;
+
+    public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config, SplitEventsManager eventsManager) {
         _container = container;
         _splitFetcher = splitFetcher;
         _impressionListener = impressionListener;
@@ -47,10 +52,13 @@ public final class SplitClientImpl implements SplitClient {
         _config = config;
         _matchingKey = key.matchingKey();
         _bucketingKey = key.bucketingKey();
+        _eventsManager = eventsManager;
 
         checkNotNull(_splitFetcher);
         checkNotNull(_impressionListener);
         checkNotNull(_matchingKey);
+        checkNotNull(_eventsManager);
+
     }
 
     @Override
@@ -228,5 +236,11 @@ public final class SplitClientImpl implements SplitClient {
     }
 
 
+    public void on(SplitEvent event, SplitEventTask task){
+        checkNotNull(event);
+        checkNotNull(task);
+
+        _eventsManager.register(event, task);
+    }
 
 }

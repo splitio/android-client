@@ -67,8 +67,8 @@ public class SplitCache implements ISplitCache {
     public long getChangeNumber() {
         try {
             return Long.parseLong(_storage.read(getChangeNumberId()));
-        } catch (IOException e) {
-            Logger.e(e, "Failed to get changeNumber");
+        } catch (Exception e) {
+            Logger.d("Failed to get changeNumber", e);
             return -1;
         }
     }
