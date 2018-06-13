@@ -1,7 +1,10 @@
 package io.split.android.client;
 
+import com.google.common.base.Strings;
+
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.ConditionType;
+import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -44,7 +47,9 @@ public final class SplitClientImpl implements SplitClient {
 
     private final SplitEventsManager _eventsManager;
 
-    public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config, SplitEventsManager eventsManager) {
+    private final EventClient _eventClient;
+
+    public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config, SplitEventsManager eventsManager, EventClient eventClient) {
         _container = container;
         _splitFetcher = splitFetcher;
         _impressionListener = impressionListener;
@@ -53,11 +58,13 @@ public final class SplitClientImpl implements SplitClient {
         _matchingKey = key.matchingKey();
         _bucketingKey = key.bucketingKey();
         _eventsManager = eventsManager;
+        _eventClient = eventClient;
 
         checkNotNull(_splitFetcher);
         checkNotNull(_impressionListener);
         checkNotNull(_matchingKey);
         checkNotNull(_eventsManager);
+        checkNotNull(_eventClient);
 
     }
 
@@ -241,6 +248,49 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(task);
 
         _eventsManager.register(event, task);
+    }
+
+    @Override
+    public boolean track(String trafficType, String eventType) {
+        Event event = createEvent(_matchingKey, trafficType, eventType);
+        return track(event);
+    }
+
+    @Override
+    public boolean track(String trafficType, String eventType, double value) {
+        Event event = createEvent(_matchingKey, trafficType, eventType);
+        event.value = value;
+
+        return track(event);
+    }
+
+    private Event createEvent(String key, String trafficType, String eventType) {
+        Event event = new Event();
+        event.eventTypeId = eventType;
+        event.trafficTypeName = trafficType;
+        event.key = key;
+        event.timestamp = System.currentTimeMillis();
+        return event;
+    }
+
+    private boolean track(Event event) {
+        if (Strings.isNullOrEmpty(event.trafficTypeName)) {
+            Logger.w("Traffic Type was null or empty");
+            return false;
+        }
+
+        if (Strings.isNullOrEmpty(event.eventTypeId)) {
+            Logger.w("Event Type was null or empty");
+            return false;
+        }
+
+        if (Strings.isNullOrEmpty(event.key)) {
+            Logger.w("Cannot track event for null key");
+            return false;
+        }
+
+        return _eventClient.track(event);
+
     }
 
 }

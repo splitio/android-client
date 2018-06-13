@@ -35,7 +35,6 @@ import javax.net.ssl.SSLContext;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEventsManager;
-import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.impressions.AsynchronousImpressionListener;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
@@ -216,7 +215,11 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-        _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(), impressionListener, cachedFireAndForgetMetrics, config, _eventsManager);
+        //TODO add configuration parameters into SplitClientConfig class
+        EventClient eventClient = EventClientImpl.create(httpclient, eventsRootTarget,0,0,0);
+
+        _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, eventClient);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);
