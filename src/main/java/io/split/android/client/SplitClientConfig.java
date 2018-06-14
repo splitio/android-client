@@ -37,6 +37,10 @@ public class SplitClientConfig {
     private final int _waitBeforeShutdown;
     private long _impressionsChunkSize;
 
+    //.Track configuration
+    private final int _eventsQueueSize;
+    private final long _eventFlushInterval;
+
     // Proxy configs
     private final HttpHost _proxy;
     private final String _proxyUsername;
@@ -69,7 +73,9 @@ public class SplitClientConfig {
                               String proxyUsername,
                               String proxyPassword,
                               String hostname,
-                              String ip) {
+                              String ip,
+                              int eventsQueueSize,
+                              long eventFlushInterval) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -92,6 +98,9 @@ public class SplitClientConfig {
         _proxyPassword = proxyPassword;
         _hostname = hostname;
         _ip = ip;
+
+        _eventsQueueSize = eventsQueueSize;
+        _eventFlushInterval = eventFlushInterval;
 
         Properties props = new Properties();
         try {
@@ -119,6 +128,14 @@ public class SplitClientConfig {
             result = false;
         }
         return result;
+    }
+
+    public long eventFlushInterval() {
+        return _eventFlushInterval;
+    }
+
+    public int eventsQueueSize() {
+        return _eventsQueueSize;
     }
 
     public String endpoint() {
@@ -234,10 +251,36 @@ public class SplitClientConfig {
         private String _proxyPassword;
         private long _impressionsChunkSize = 2 * 1024; //2KB default size
 
+        //.track configuration
+        private int _eventsQueueSize = 500;
+        private long _eventFlushInterval = 30;
+
         private String _hostname = "unknown";
         private String _ip = "unknown";
 
         public Builder() {
+        }
+
+        /**
+         * Max size of the queue to trigger a flush
+         *
+         * @param eventsQueueSize
+         * @return this builder
+         */
+        public Builder eventsQueueSize(int eventsQueueSize) {
+            _eventsQueueSize = eventsQueueSize;
+            return this;
+        }
+
+        /**
+         * How often to flush data to the collection services
+         *
+         * @param eventFlushInterval
+         * @return this builder
+         */
+        public Builder eventFlushInterval(long eventFlushInterval) {
+            _eventFlushInterval = eventFlushInterval;
+            return this;
         }
 
         /**
@@ -605,7 +648,9 @@ public class SplitClientConfig {
                     _proxyUsername,
                     _proxyPassword,
                     _hostname,
-                    _ip);
+                    _ip,
+                    _eventsQueueSize,
+                    _eventFlushInterval);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

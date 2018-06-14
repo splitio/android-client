@@ -47,9 +47,9 @@ public final class SplitClientImpl implements SplitClient {
 
     private final SplitEventsManager _eventsManager;
 
-    private final EventClient _eventClient;
+    private final TrackClient _trackClient;
 
-    public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config, SplitEventsManager eventsManager, EventClient eventClient) {
+    public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config, SplitEventsManager eventsManager, TrackClient trackClient) {
         _container = container;
         _splitFetcher = splitFetcher;
         _impressionListener = impressionListener;
@@ -58,13 +58,13 @@ public final class SplitClientImpl implements SplitClient {
         _matchingKey = key.matchingKey();
         _bucketingKey = key.bucketingKey();
         _eventsManager = eventsManager;
-        _eventClient = eventClient;
+        _trackClient = trackClient;
 
         checkNotNull(_splitFetcher);
         checkNotNull(_impressionListener);
         checkNotNull(_matchingKey);
         checkNotNull(_eventsManager);
-        checkNotNull(_eventClient);
+        checkNotNull(_trackClient);
 
     }
 
@@ -289,7 +289,7 @@ public final class SplitClientImpl implements SplitClient {
             return false;
         }
 
-        return _eventClient.track(event);
+        return _trackClient.track(event);
 
     }
 

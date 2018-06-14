@@ -216,10 +216,11 @@ public class SplitFactoryImpl implements SplitFactory {
         });
 
         //TODO add configuration parameters into SplitClientConfig class
-        EventClient eventClient = EventClientImpl.create(httpclient, eventsRootTarget,0,0,0);
+        TrackClient trackClient = TrackClientImpl.create(httpclient, eventsRootTarget,
+                config.eventsQueueSize(),config.eventFlushInterval(),config.waitBeforeShutdown());
 
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
-                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, eventClient);
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, trackClient);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);

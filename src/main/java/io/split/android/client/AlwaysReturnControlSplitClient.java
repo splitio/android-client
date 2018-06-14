@@ -43,5 +43,15 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
         return;
     }
 
+    @Override
+    public boolean track(String trafficType, String eventType) {
+        return false;
+    }
+
+    @Override
+    public boolean track(String trafficType, String eventType, double value) {
+        return false;
+    }
+
 
 }

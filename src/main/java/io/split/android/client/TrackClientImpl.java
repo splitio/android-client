@@ -1,18 +1,24 @@
 package io.split.android.client;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.utils.Logger;
 
 
-public class EventClientImpl implements EventClient {
+public class TrackClientImpl implements TrackClient, Runnable {
 
     //Events memory queue
     private final BlockingQueue<Event> _eventQueue;
@@ -25,12 +31,13 @@ public class EventClientImpl implements EventClient {
     private final int _waitBeforeShutdown;
     private final int _maxQueueSize;
     private final long _flushIntervalMillis;
+    private final ScheduledExecutorService _scheduler;
 
-    public static EventClient create(CloseableHttpClient httpclient, URI eventsRootTarget, int maxQueueSize, long flushIntervalMillis, int waitBeforeShutdown) throws URISyntaxException {
-        return new EventClientImpl(new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, maxQueueSize, flushIntervalMillis, waitBeforeShutdown);
+    public static TrackClient create(CloseableHttpClient httpclient, URI eventsRootTarget, int maxQueueSize, long flushIntervalMillis, int waitBeforeShutdown) throws URISyntaxException {
+        return new TrackClientImpl(new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, maxQueueSize, flushIntervalMillis, waitBeforeShutdown);
     }
 
-    public EventClientImpl(BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, int maxQueueSize,
+    public TrackClientImpl(BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, int maxQueueSize,
                            long flushIntervalMillis, int waitBeforeShutdown) throws URISyntaxException {
 
 
@@ -43,6 +50,14 @@ public class EventClientImpl implements EventClient {
 
         _maxQueueSize = maxQueueSize;
         _flushIntervalMillis = flushIntervalMillis;
+
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setDaemon(true)
+                .setNameFormat("Split-ImpressionsManager-%d")
+                .build();
+        _scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        _scheduler.scheduleAtFixedRate(this, 10, _flushIntervalMillis, TimeUnit.SECONDS);
+
 
     }
 
@@ -64,5 +79,15 @@ public class EventClientImpl implements EventClient {
     @Override
     public void close() {
 
+    }
+
+    @Override
+    public void run() {
+        flushEvents();
+    }
+
+    private void flushEvents(){
+        Logger.i("*** Flushing events!!!!!");
+        Logger.d(_eventQueue.toString());
     }
 }
