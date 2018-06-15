@@ -48,6 +48,7 @@ import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.storage.MemoryAndFileStorage;
+import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
@@ -215,9 +216,10 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-        //TODO add configuration parameters into SplitClientConfig class
+        IStorage eventsStorage = new FileStorage(context);
+        TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
         TrackClient trackClient = TrackClientImpl.create(httpclient, eventsRootTarget,
-                config.eventsQueueSize(),config.eventFlushInterval(),config.waitBeforeShutdown());
+                config.eventsQueueSize(),config.eventFlushInterval(),config.waitBeforeShutdown(), trackStorageManager);
 
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
                 impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, trackClient);
