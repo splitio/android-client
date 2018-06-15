@@ -264,6 +264,20 @@ public final class SplitClientImpl implements SplitClient {
         return track(event);
     }
 
+    @Override
+    public boolean track(String eventType) {
+        Event event = createEvent(_matchingKey, _config.trafficType(), eventType);
+        return track(event);
+    }
+
+    @Override
+    public boolean track(String eventType, double value) {
+        Event event = createEvent(_matchingKey, _config.trafficType(), eventType);
+        event.value = value;
+
+        return track(event);
+    }
+
     private Event createEvent(String key, String trafficType, String eventType) {
         Event event = new Event();
         event.eventTypeId = eventType;

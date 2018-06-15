@@ -40,6 +40,7 @@ public class SplitClientConfig {
     //.Track configuration
     private final int _eventsQueueSize;
     private final long _eventFlushInterval;
+    private final String _trafficType;
 
     // Proxy configs
     private final HttpHost _proxy;
@@ -75,7 +76,8 @@ public class SplitClientConfig {
                               String hostname,
                               String ip,
                               int eventsQueueSize,
-                              long eventFlushInterval) {
+                              long eventFlushInterval,
+                              String trafficType) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -101,6 +103,7 @@ public class SplitClientConfig {
 
         _eventsQueueSize = eventsQueueSize;
         _eventFlushInterval = eventFlushInterval;
+        _trafficType = trafficType;
 
         Properties props = new Properties();
         try {
@@ -128,6 +131,10 @@ public class SplitClientConfig {
             result = false;
         }
         return result;
+    }
+
+    public String trafficType() {
+        return _trafficType;
     }
 
     public long eventFlushInterval() {
@@ -252,13 +259,25 @@ public class SplitClientConfig {
         private long _impressionsChunkSize = 2 * 1024; //2KB default size
 
         //.track configuration
-        private int _eventsQueueSize = 500;
+        private int _eventsQueueSize = 10000;
         private long _eventFlushInterval = 30;
+        private String _trafficType = null;
 
         private String _hostname = "unknown";
         private String _ip = "unknown";
 
         public Builder() {
+        }
+
+        /**
+         * Default Traffic Type to use in .track method
+         *
+         * @param trafficType
+         * @return this builder
+         */
+        public Builder trafficType(String trafficType) {
+            _trafficType = trafficType;
+            return this;
         }
 
         /**
@@ -650,7 +669,8 @@ public class SplitClientConfig {
                     _hostname,
                     _ip,
                     _eventsQueueSize,
-                    _eventFlushInterval);
+                    _eventFlushInterval,
+                    _trafficType);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

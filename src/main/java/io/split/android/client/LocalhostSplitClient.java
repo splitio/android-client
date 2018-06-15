@@ -89,4 +89,14 @@ public final class LocalhostSplitClient implements SplitClient {
     public boolean track(String trafficType, String eventType, double value) {
         return false;
     }
+
+    @Override
+    public boolean track(String eventType) {
+        return false;
+    }
+
+    @Override
+    public boolean track(String eventType, double value) {
+        return false;
+    }
 }

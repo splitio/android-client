@@ -100,4 +100,29 @@ public interface SplitClient {
      * @return true if the track was successful, false otherwise
      */
     boolean track(String trafficType, String eventType, double value);
+
+    /**
+     * Enqueue a new event to be sent to split data collection services
+     *
+     * Example:
+     *      client.track(“checkout”)
+     *
+     * @param eventType the type of the event
+     *
+     * @return true if the track was successful, false otherwise
+     */
+    boolean track(String eventType);
+
+    /**
+     * Enqueue a new event to be sent to split data collection services
+     *
+     * Example:
+     *      client.track(“checkout”, 200.00)
+     *
+     * @param eventType the type of the event
+     * @param value the value of the event
+     *
+     * @return true if the track was successful, false otherwise
+     */
+    boolean track(String eventType, double value);
 }
