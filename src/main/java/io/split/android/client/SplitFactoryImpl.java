@@ -219,7 +219,7 @@ public class SplitFactoryImpl implements SplitFactory {
         IStorage eventsStorage = new FileStorage(context);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
         TrackClient trackClient = TrackClientImpl.create(httpclient, eventsRootTarget,
-                config.eventsQueueSize(),config.eventFlushInterval(),config.waitBeforeShutdown(), trackStorageManager);
+                config.eventsQueueSize(),config.eventsPerPush(),config.eventFlushInterval(),config.waitBeforeShutdown(), trackStorageManager);
 
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
                 impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, trackClient);

@@ -15,6 +15,10 @@ public class Utils {
 
     public static StringEntity toJsonEntity(Object obj) {
         String json = Json.toJson(obj);
+        return Utils.toJsonEntity(json);
+    }
+
+    public static StringEntity toJsonEntity(String json) {
         StringEntity entity = null;
         try {
             entity = new StringEntity(json, "UTF-8");

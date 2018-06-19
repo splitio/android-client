@@ -39,6 +39,7 @@ public class SplitClientConfig {
 
     //.Track configuration
     private final int _eventsQueueSize;
+    private final int _eventsPerPush;
     private final long _eventFlushInterval;
     private final String _trafficType;
 
@@ -76,6 +77,7 @@ public class SplitClientConfig {
                               String hostname,
                               String ip,
                               int eventsQueueSize,
+                              int eventsPerPush,
                               long eventFlushInterval,
                               String trafficType) {
         _endpoint = endpoint;
@@ -102,6 +104,7 @@ public class SplitClientConfig {
         _ip = ip;
 
         _eventsQueueSize = eventsQueueSize;
+        _eventsPerPush = eventsPerPush;
         _eventFlushInterval = eventFlushInterval;
         _trafficType = trafficType;
 
@@ -143,6 +146,10 @@ public class SplitClientConfig {
 
     public int eventsQueueSize() {
         return _eventsQueueSize;
+    }
+
+    public int eventsPerPush() {
+        return _eventsPerPush;
     }
 
     public String endpoint() {
@@ -261,6 +268,7 @@ public class SplitClientConfig {
         //.track configuration
         private int _eventsQueueSize = 10000;
         private long _eventFlushInterval = 30;
+        private int _eventsPerPush = 2000;
         private String _trafficType = null;
 
         private String _hostname = "unknown";
@@ -288,6 +296,17 @@ public class SplitClientConfig {
          */
         public Builder eventsQueueSize(int eventsQueueSize) {
             _eventsQueueSize = eventsQueueSize;
+            return this;
+        }
+
+        /**
+         * Max size of the batch to push events
+         *
+         * @param eventsPerPush
+         * @return this builder
+         */
+        public Builder eventsPerPush(int eventsPerPush) {
+            _eventsPerPush = eventsPerPush;
             return this;
         }
 
@@ -669,6 +688,7 @@ public class SplitClientConfig {
                     _hostname,
                     _ip,
                     _eventsQueueSize,
+                    _eventsPerPush,
                     _eventFlushInterval,
                     _trafficType);
         }
