@@ -32,6 +32,10 @@ public class TrackStorageManager {
         return attemp;
     }
 
+    public boolean isEmptyCache(){
+        return getAllChunkIds().isEmpty();
+    }
+
     synchronized public void deleteCachedEvents(String filename){
         _storage.delete(filename);
     }

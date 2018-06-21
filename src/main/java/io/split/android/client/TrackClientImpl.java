@@ -132,7 +132,6 @@ public class TrackClientImpl implements TrackClient {
           }, _flushIntervalMillis, _flushIntervalMillis, TimeUnit.SECONDS);
     }
 
-
     @Override
     public boolean track(Event event) {
         try {
@@ -152,6 +151,7 @@ public class TrackClientImpl implements TrackClient {
         try {
             _consumerExecutor.shutdownNow();
             _flushScheduler.shutdownNow();
+            _cachedflushScheduler.shutdownNow();
             _senderExecutor.awaitTermination(_waitBeforeShutdown, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             Logger.w("Error when shutting down EventClientImpl", e);
@@ -166,17 +166,23 @@ public class TrackClientImpl implements TrackClient {
     }
 
     public void flushFromLocalCache(){
-        List<String> files = _storageManager.getAllChunkIds();
 
-        for(String filename : files){
-            String events = _storageManager.readCachedEvents(filename);
-            int attemp = _storageManager.getLastAttemp(filename);
+        if (Utils.isSplitServiceReachable(_eventsTarget)) {
 
-            if(attemp < MAX_POST_ATTEMPS) {
-                _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, EventsDataString.create(events), _storageManager, attemp + 1));
+            List<String> files = _storageManager.getAllChunkIds();
+
+            for(String filename : files){
+                String events = _storageManager.readCachedEvents(filename);
+                int attemp = _storageManager.getLastAttemp(filename);
+
+                if(attemp < MAX_POST_ATTEMPS) {
+                    _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, EventsDataString.create(events), _storageManager, attemp + 1));
+                }
+                _storageManager.deleteCachedEvents(filename);
             }
-            _storageManager.deleteCachedEvents(filename);
 
+        } else {
+            Logger.i("Split events server cannot be reached out. Prevent post cached events");
         }
     }
 
@@ -260,17 +266,19 @@ public class TrackClientImpl implements TrackClient {
 
         @Override
         public void run() {
+            if (Utils.isSplitServiceReachable(_endpoint)) {
+                int status = GenericClientUtil.POST(_data.asJSONEntity(), _endpoint, _client);
 
-            int status = GenericClientUtil.POST(_data.asJSONEntity(), _endpoint, _client);
+                if (!(status >= 200 && status < 300)) {
+                    Logger.d(String.format("Error posting events [error code: %d]", status));
+                    Logger.d("Caching events to next iteration");
 
-            if (!(status >= 200 && status < 300)) {
-                Logger.d(String.format("Error posting events [error code: %d]", status));
-                Logger.d("Caching events to next iteration");
-
-                //Saving events to disk
+                    //Saving events to disk
+                    _storage.saveEvents(_data.toString(), _attemp);
+                }
+            } else {
                 _storage.saveEvents(_data.toString(), _attemp);
             }
-
         }
     }
 

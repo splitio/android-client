@@ -7,4 +7,6 @@ public interface TrackClient {
     boolean track(Event event);
 
     void close();
+
+    void flush();
 }

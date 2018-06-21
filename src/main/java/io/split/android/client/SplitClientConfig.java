@@ -245,16 +245,16 @@ public class SplitClientConfig {
         private String _eventsEndpoint = "https://events.split.io/api";
         private boolean _eventsEndpointSet = false;
 
-        private int _featuresRefreshRate = 60;
-        private int _segmentsRefreshRate = 60;
-        private int _impressionsRefreshRate = 30;
+        private int _featuresRefreshRate = 3600;
+        private int _segmentsRefreshRate = 1800;
+        private int _impressionsRefreshRate = 1800;
         private int _impressionsQueueSize = 30000;
         private int _connectionTimeout = 15000;
         private int _readTimeout = 15000;
         private int _numThreadsForSegmentFetch = 2;
         private boolean _debugEnabled = false;
         private int _ready = -1; // -1 means no blocking
-        private int _metricsRefreshRate = 60;
+        private int _metricsRefreshRate = 1800;
         private boolean _labelsEnabled = true;
         private ImpressionListener _impressionListener;
         private int _impressionListenerCapacity;

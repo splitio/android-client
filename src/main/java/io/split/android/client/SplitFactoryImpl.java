@@ -71,6 +71,8 @@ public class SplitFactoryImpl implements SplitFactory {
     private SplitEventsManager _eventsManager;
     private SDKReadinessGates gates;
 
+    private TrackClient _trackClient;
+
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         SSLContext sslContext = null;
         try {
@@ -171,10 +173,19 @@ public class SplitFactoryImpl implements SplitFactory {
         CachedMetrics cachedMetrics = new CachedMetrics(httpMetrics, TimeUnit.SECONDS.toMillis(config.metricsRefreshRate()));
         final FireAndForgetMetrics cachedFireAndForgetMetrics = FireAndForgetMetrics.instance(cachedMetrics, 2, 1000);
 
+
+        IStorage eventsStorage = new FileStorage(context);
+        TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
+        _trackClient = TrackClientImpl.create(httpclient, eventsRootTarget,
+                config.eventsQueueSize(),config.eventsPerPush(),config.eventFlushInterval(),config.waitBeforeShutdown(), trackStorageManager);
+
+
         destroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");
                 try {
+                    _trackClient.close();
+                    Logger.i("Successful shutdown of Track client");
                     segmentFetcher.close();
                     Logger.i("Successful shutdown of segment fetchers");
                     splitFetcherProvider.close();
@@ -200,6 +211,8 @@ public class SplitFactoryImpl implements SplitFactory {
             public void run() {
                 Logger.w("Flush called for split");
                 try {
+                    _trackClient.flush();
+                    Logger.i("Successful flush of track client");
                     splitImpressionListener.flushImpressions();
                     Logger.i("Successful flush of impressions");
                 } catch (Exception e) {
@@ -216,13 +229,9 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-        IStorage eventsStorage = new FileStorage(context);
-        TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
-        TrackClient trackClient = TrackClientImpl.create(httpclient, eventsRootTarget,
-                config.eventsQueueSize(),config.eventsPerPush(),config.eventFlushInterval(),config.waitBeforeShutdown(), trackStorageManager);
 
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
-                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, trackClient);
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);
