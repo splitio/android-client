@@ -23,7 +23,7 @@ public class GenericClientUtil {
             int status = response.getStatusLine().getStatusCode();
 
             if (status < 200 || status >= 300) {
-                Logger.i(String.format("Posting records returned with status: %d", status));
+                Logger.d(String.format("Posting records returned with status: %d", status));
             }
 
             return status;
