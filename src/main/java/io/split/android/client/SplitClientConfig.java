@@ -267,7 +267,7 @@ public class SplitClientConfig {
 
         //.track configuration
         private int _eventsQueueSize = 10000;
-        private long _eventFlushInterval = 30;
+        private long _eventFlushInterval = 1800;
         private int _eventsPerPush = 2000;
         private String _trafficType = null;
 
