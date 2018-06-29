@@ -102,7 +102,9 @@ public interface SplitClient {
     boolean track(String trafficType, String eventType, double value);
 
     /**
-     * Enqueue a new event to be sent to split data collection services
+     * Enqueue a new event to be sent to split data collection services.
+     *
+     * The traffic type used is the one set by trafficType() in SplitClientConfig.
      *
      * Example:
      *      client.track(“checkout”)
@@ -116,6 +118,8 @@ public interface SplitClient {
     /**
      * Enqueue a new event to be sent to split data collection services
      *
+     * The traffic type used is the one set by trafficType() in SplitClientConfig.
+
      * Example:
      *      client.track(“checkout”, 200.00)
      *
