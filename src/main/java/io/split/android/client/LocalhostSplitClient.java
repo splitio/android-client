@@ -79,4 +79,24 @@ public final class LocalhostSplitClient implements SplitClient {
     ImmutableMap<String, String> featureToTreatmentMap() {
         return _featureToTreatmentMap;
     }
+
+    @Override
+    public boolean track(String trafficType, String eventType) {
+        return false;
+    }
+
+    @Override
+    public boolean track(String trafficType, String eventType, double value) {
+        return false;
+    }
+
+    @Override
+    public boolean track(String eventType) {
+        return false;
+    }
+
+    @Override
+    public boolean track(String eventType, double value) {
+        return false;
+    }
 }

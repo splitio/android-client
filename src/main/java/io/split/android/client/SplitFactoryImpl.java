@@ -35,7 +35,6 @@ import javax.net.ssl.SSLContext;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEventsManager;
-import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.impressions.AsynchronousImpressionListener;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
@@ -49,6 +48,7 @@ import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.storage.MemoryAndFileStorage;
+import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
@@ -70,6 +70,8 @@ public class SplitFactoryImpl implements SplitFactory {
 
     private SplitEventsManager _eventsManager;
     private SDKReadinessGates gates;
+
+    private TrackClient _trackClient;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
         SSLContext sslContext = null;
@@ -171,10 +173,19 @@ public class SplitFactoryImpl implements SplitFactory {
         CachedMetrics cachedMetrics = new CachedMetrics(httpMetrics, TimeUnit.SECONDS.toMillis(config.metricsRefreshRate()));
         final FireAndForgetMetrics cachedFireAndForgetMetrics = FireAndForgetMetrics.instance(cachedMetrics, 2, 1000);
 
+
+        IStorage eventsStorage = new FileStorage(context);
+        TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
+        _trackClient = TrackClientImpl.create(httpclient, eventsRootTarget,
+                config.eventsQueueSize(),config.eventsPerPush(),config.eventFlushInterval(),config.waitBeforeShutdown(), trackStorageManager);
+
+
         destroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");
                 try {
+                    _trackClient.close();
+                    Logger.i("Successful shutdown of Track client");
                     segmentFetcher.close();
                     Logger.i("Successful shutdown of segment fetchers");
                     splitFetcherProvider.close();
@@ -200,6 +211,8 @@ public class SplitFactoryImpl implements SplitFactory {
             public void run() {
                 Logger.w("Flush called for split");
                 try {
+                    _trackClient.flush();
+                    Logger.i("Successful flush of track client");
                     splitImpressionListener.flushImpressions();
                     Logger.i("Successful flush of impressions");
                 } catch (Exception e) {
@@ -216,7 +229,9 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-        _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(), impressionListener, cachedFireAndForgetMetrics, config, _eventsManager);
+
+        _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);

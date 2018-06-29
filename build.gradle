@@ -5,7 +5,7 @@ apply plugin: "maven-publish"
 
 allprojects {
     group = 'io.split.client'
-    version = '0.9.3'
+    version = '1.0.0'
 }
 
 android {
@@ -24,7 +24,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 26
         versionCode 0
-        versionName "0.9.3"
+        versionName "1.0.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 

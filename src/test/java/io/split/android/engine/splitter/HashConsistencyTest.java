@@ -45,6 +45,13 @@ public class HashConsistencyTest {
     }
 
     @Test
+    public void testMurmur3HashDoubleTreatmentUsers() throws IOException {
+        URL resource = getClass().getClassLoader().getResource("murmur3-sample-double-treatment-users.csv");
+        File file = new File(resource.getFile());
+        validateFileMurmur3Hash(file);
+    }
+
+    @Test
     public void testGuavaMurmur3HashAlphaNum() throws IOException {
         URL resource = getClass().getClassLoader().getResource("murmur3-sample-data.csv");
         File file = new File(resource.getFile());
@@ -76,6 +83,21 @@ public class HashConsistencyTest {
             Assert.assertEquals(expected_hash, hash);
             Assert.assertEquals(expected_bucket, bucket);
         }
+    }
+
+
+    @Test
+    public void testUUIDMurmur3Hash(){
+        String key = "0bac8bc0-1a75-0136-46fe-0242ac11510f";
+        int seed = 467569525;
+        long hash = Splitter.murmur_hash(key, seed);
+        int bucket = Splitter.bucket(hash);
+
+        long expected_hash = 1127423255L;
+        int expected_bucket = 56;
+
+        Assert.assertEquals(expected_hash, hash);
+        Assert.assertEquals(expected_bucket, bucket);
     }
 
     private void validateFileMurmur3Hash(File file) throws IOException {
