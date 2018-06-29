@@ -37,6 +37,12 @@ public class SplitClientConfig {
     private final int _waitBeforeShutdown;
     private long _impressionsChunkSize;
 
+    //.Track configuration
+    private final int _eventsQueueSize;
+    private final int _eventsPerPush;
+    private final long _eventFlushInterval;
+    private final String _trafficType;
+
     // Proxy configs
     private final HttpHost _proxy;
     private final String _proxyUsername;
@@ -69,7 +75,11 @@ public class SplitClientConfig {
                               String proxyUsername,
                               String proxyPassword,
                               String hostname,
-                              String ip) {
+                              String ip,
+                              int eventsQueueSize,
+                              int eventsPerPush,
+                              long eventFlushInterval,
+                              String trafficType) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -92,6 +102,11 @@ public class SplitClientConfig {
         _proxyPassword = proxyPassword;
         _hostname = hostname;
         _ip = ip;
+
+        _eventsQueueSize = eventsQueueSize;
+        _eventsPerPush = eventsPerPush;
+        _eventFlushInterval = eventFlushInterval;
+        _trafficType = trafficType;
 
         Properties props = new Properties();
         try {
@@ -119,6 +134,22 @@ public class SplitClientConfig {
             result = false;
         }
         return result;
+    }
+
+    public String trafficType() {
+        return _trafficType;
+    }
+
+    public long eventFlushInterval() {
+        return _eventFlushInterval;
+    }
+
+    public int eventsQueueSize() {
+        return _eventsQueueSize;
+    }
+
+    public int eventsPerPush() {
+        return _eventsPerPush;
     }
 
     public String endpoint() {
@@ -214,16 +245,16 @@ public class SplitClientConfig {
         private String _eventsEndpoint = "https://events.split.io/api";
         private boolean _eventsEndpointSet = false;
 
-        private int _featuresRefreshRate = 60;
-        private int _segmentsRefreshRate = 60;
-        private int _impressionsRefreshRate = 30;
+        private int _featuresRefreshRate = 3600;
+        private int _segmentsRefreshRate = 1800;
+        private int _impressionsRefreshRate = 1800;
         private int _impressionsQueueSize = 30000;
         private int _connectionTimeout = 15000;
         private int _readTimeout = 15000;
         private int _numThreadsForSegmentFetch = 2;
         private boolean _debugEnabled = false;
         private int _ready = -1; // -1 means no blocking
-        private int _metricsRefreshRate = 60;
+        private int _metricsRefreshRate = 1800;
         private boolean _labelsEnabled = true;
         private ImpressionListener _impressionListener;
         private int _impressionListenerCapacity;
@@ -234,10 +265,60 @@ public class SplitClientConfig {
         private String _proxyPassword;
         private long _impressionsChunkSize = 2 * 1024; //2KB default size
 
+        //.track configuration
+        private int _eventsQueueSize = 10000;
+        private long _eventFlushInterval = 1800;
+        private int _eventsPerPush = 2000;
+        private String _trafficType = null;
+
         private String _hostname = "unknown";
         private String _ip = "unknown";
 
         public Builder() {
+        }
+
+        /**
+         * Default Traffic Type to use in .track method
+         *
+         * @param trafficType
+         * @return this builder
+         */
+        public Builder trafficType(String trafficType) {
+            _trafficType = trafficType;
+            return this;
+        }
+
+        /**
+         * Max size of the queue to trigger a flush
+         *
+         * @param eventsQueueSize
+         * @return this builder
+         */
+        public Builder eventsQueueSize(int eventsQueueSize) {
+            _eventsQueueSize = eventsQueueSize;
+            return this;
+        }
+
+        /**
+         * Max size of the batch to push events
+         *
+         * @param eventsPerPush
+         * @return this builder
+         */
+        public Builder eventsPerPush(int eventsPerPush) {
+            _eventsPerPush = eventsPerPush;
+            return this;
+        }
+
+        /**
+         * How often to flush data to the collection services
+         *
+         * @param eventFlushInterval
+         * @return this builder
+         */
+        public Builder eventFlushInterval(long eventFlushInterval) {
+            _eventFlushInterval = eventFlushInterval;
+            return this;
         }
 
         /**
@@ -605,7 +686,11 @@ public class SplitClientConfig {
                     _proxyUsername,
                     _proxyPassword,
                     _hostname,
-                    _ip);
+                    _ip,
+                    _eventsQueueSize,
+                    _eventsPerPush,
+                    _eventFlushInterval,
+                    _trafficType);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

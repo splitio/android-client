@@ -1,6 +1,7 @@
 package io.split.android.client.utils;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 
 import java.io.IOException;
@@ -9,12 +10,17 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 
 public class Utils {
 
     public static StringEntity toJsonEntity(Object obj) {
         String json = Json.toJson(obj);
+        return Utils.toJsonEntity(json);
+    }
+
+    public static StringEntity toJsonEntity(String json) {
         StringEntity entity = null;
         try {
             entity = new StringEntity(json, "UTF-8");
@@ -34,6 +40,15 @@ public class Utils {
         } catch (IOException e) {
             // ignore
         }
+    }
+
+    public static boolean isSplitServiceReachable(URI uri) {
+        try {
+            return Utils.isReachable(new URIBuilder(uri).setPath("/api/version").build());
+        } catch (URISyntaxException e) {
+            Logger.e("URI mal formed. Reachability function fails ", e);
+        }
+        return false;
     }
 
     public static boolean isReachable(URI uri) {
