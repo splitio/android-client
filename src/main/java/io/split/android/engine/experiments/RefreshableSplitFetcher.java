@@ -71,18 +71,15 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 
         Map<String, ParsedSplit> toAdd = Maps.newHashMap();
 
-        if (change.splits != null && !change.splits.isEmpty()) {
-            for (Split split : change.splits) {
-                if (split.status != null && split.name != null) {
-                    if (Status.ACTIVE.equals(split.status)) {
-                        ParsedSplit parsedSplit = _parser.parse(split);
-                        if (parsedSplit == null) {
-                            Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
-                            continue;
-                        }
-                        toAdd.put(split.name, parsedSplit);
-                    }
+        for (Split split : change.splits) {
+
+            if (split.status == Status.ACTIVE) {
+                ParsedSplit parsedSplit = _parser.parse(split);
+                if (parsedSplit == null) {
+                    Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
+                    continue;
                 }
+                toAdd.put(split.name, parsedSplit);
             }
         }
 
