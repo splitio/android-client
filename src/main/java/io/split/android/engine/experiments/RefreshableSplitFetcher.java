@@ -71,7 +71,7 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 
         Map<String, ParsedSplit> toAdd = Maps.newHashMap();
 
-        if (change.splits != null && !change.splits.isEmpty()) {
+        if (change != null && change.splits != null && !change.splits.isEmpty()) {
             for (Split split : change.splits) {
                 if (split != null && split.status != null && split.name != null) {
                     if (Status.ACTIVE.equals(split.status)) {
