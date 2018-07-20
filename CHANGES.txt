@@ -1,3 +1,5 @@
+1.0.1: (Jul 19, 2018)
+ - Hotfix: More defensive checks for possible corrupt caches.
 1.0.0: (Jun 29, 2018)
  - .Track feature
 0.9.4: (May 24, 2018)
