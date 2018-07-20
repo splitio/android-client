@@ -58,10 +58,12 @@ public class SplitChangeCache implements ISplitChangeCache {
         for (String splitName :
                 _splitCache.getSplitNames()) {
             String cachedSplit = _splitCache.getSplit(splitName);
-            if (cachedSplit != null) {
+            if (cachedSplit != null && !cachedSplit.isEmpty()) {
                 try {
                     Split split = Json.fromJson(cachedSplit, Split.class);
-                    splits.add(split);
+                    if (split != null) {
+                        splits.add(split);
+                    }
                 } catch (JsonSyntaxException e) {
                     Logger.e(e, "Failed to parse split %s, cache: %s", splitName, cachedSplit);
                 }
