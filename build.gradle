@@ -10,7 +10,7 @@ allprojects {
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    buildToolsVersion '27.0.3'
     useLibrary 'org.apache.http.legacy'
     targetCompatibility = '1.7'
     sourceCompatibility = '1.7'
@@ -29,7 +29,7 @@ android {
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
-    
+
     configurations {
         javadocDeps
     }

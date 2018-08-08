@@ -161,10 +161,9 @@ public class SplitFactoryImpl implements SplitFactory {
         final ImpressionListener impressionListener;
 
         if (config.impressionListener() != null) {
-            AsynchronousImpressionListener wrapper = AsynchronousImpressionListener.build(config.impressionListener(), config.impressionListenerCapactity());
             List<ImpressionListener> impressionListeners = new ArrayList<ImpressionListener>();
             impressionListeners.add(splitImpressionListener);
-            impressionListeners.add(wrapper);
+            impressionListeners.add(config.impressionListener());
             impressionListener = new ImpressionListener.FederatedImpressionListener(impressionListeners);
         } else {
             impressionListener = splitImpressionListener;
