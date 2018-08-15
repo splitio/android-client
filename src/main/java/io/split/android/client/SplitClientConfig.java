@@ -33,7 +33,6 @@ public class SplitClientConfig {
     private final boolean _labelsEnabled;
     private final int _ready;
     private final ImpressionListener _impressionListener;
-    private final int _impressionListenerCapacity;
     private final int _waitBeforeShutdown;
     private long _impressionsChunkSize;
 
@@ -69,7 +68,6 @@ public class SplitClientConfig {
                               boolean debugEnabled,
                               boolean labelsEnabled,
                               ImpressionListener impressionListener,
-                              int impressionListenerCapacity,
                               int waitBeforeShutdown,
                               HttpHost proxy,
                               String proxyUsername,
@@ -94,7 +92,6 @@ public class SplitClientConfig {
         _debugEnabled = debugEnabled;
         _labelsEnabled = labelsEnabled;
         _impressionListener = impressionListener;
-        _impressionListenerCapacity = impressionListenerCapacity;
         _waitBeforeShutdown = waitBeforeShutdown;
         _impressionsChunkSize = impressionsChunkSize;
         _proxy = proxy;
@@ -210,10 +207,6 @@ public class SplitClientConfig {
         return _impressionListener;
     }
 
-    public int impressionListenerCapactity() {
-        return _impressionListenerCapacity;
-    }
-
     public int waitBeforeShutdown() {
         return _waitBeforeShutdown;
     }
@@ -257,7 +250,6 @@ public class SplitClientConfig {
         private int _metricsRefreshRate = 1800;
         private boolean _labelsEnabled = true;
         private ImpressionListener _impressionListener;
-        private int _impressionListenerCapacity;
         private int _waitBeforeShutdown = 5000;
         private String _proxyHost = "localhost";
         private int _proxyPort = -1;
@@ -422,13 +414,10 @@ public class SplitClientConfig {
          * This is an ADVANCED function.
          *
          * @param impressionListener
-         * @param queueSize maximum number of impressions that will be queued in memory. If the impressionListener is
-         *                 slow, the queue will fill up and any subsequent impressions will be dropped.
          * @return this builder
          */
-        private Builder impressionListener(ImpressionListener impressionListener, int queueSize) {
+        public Builder impressionListener(ImpressionListener impressionListener) {
             _impressionListener = impressionListener;
-            _impressionListenerCapacity = queueSize;
             return this;
         }
 
@@ -658,13 +647,6 @@ public class SplitClientConfig {
                 throw new IllegalArgumentException("Number of threads for fetching segments MUST be greater than zero");
             }
 
-
-            if (_impressionListener != null) {
-                if (_impressionListenerCapacity <= 0) {
-                    throw new IllegalArgumentException("An ImpressionListener was provided, but its capacity was non-positive: " + _impressionListenerCapacity);
-                }
-            }
-
             return new SplitClientConfig(
                     _endpoint,
                     _eventsEndpoint,
@@ -680,7 +662,6 @@ public class SplitClientConfig {
                     _debugEnabled,
                     _labelsEnabled,
                     _impressionListener,
-                    _impressionListenerCapacity,
                     _waitBeforeShutdown,
                     proxy(),
                     _proxyUsername,
@@ -697,6 +678,4 @@ public class SplitClientConfig {
             this._impressionsChunkSize = _impressionsChunkSize;
         }
     }
-
-
 }
