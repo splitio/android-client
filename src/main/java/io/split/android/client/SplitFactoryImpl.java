@@ -35,7 +35,6 @@ import javax.net.ssl.SSLContext;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEventsManager;
-import io.split.android.client.impressions.AsynchronousImpressionListener;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
 import io.split.android.client.impressions.ImpressionsStorageManager;

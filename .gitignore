@@ -7,3 +7,4 @@ gradlew.bat
 local.properties
 gradle.properties
 *.iml
+.DS_Store
