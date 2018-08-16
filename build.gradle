@@ -5,12 +5,12 @@ apply plugin: "maven-publish"
 
 allprojects {
     group = 'io.split.client'
-    version = '1.0.1'
+    version = '1.0.2'
 }
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    buildToolsVersion '27.0.3'
     useLibrary 'org.apache.http.legacy'
     targetCompatibility = '1.7'
     sourceCompatibility = '1.7'
@@ -24,12 +24,12 @@ android {
         minSdkVersion 15
         targetSdkVersion 26
         versionCode 0
-        versionName "1.0.1"
+        versionName "1.0.2"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
     }
-    
+
     configurations {
         javadocDeps
     }

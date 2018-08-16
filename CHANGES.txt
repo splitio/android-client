@@ -1,5 +1,7 @@
+1.0.2: (Aug 15, 2018)
+- Adding impression listener
 1.0.1: (Jul 19, 2018)
- - Hotfix: More defensive checks for possible corrupt caches.
+ - Hotfix: More defensive checks for possible corrupt caches
 1.0.0: (Jun 29, 2018)
  - .Track feature
 0.9.4: (May 24, 2018)
@@ -11,4 +13,4 @@
 0.9.1: (Feb 20, 2018)
  - Adding clear log messages
 0.9.0: (Feb 19, 2018)
- - Initial Release.
+ - Initial Release
