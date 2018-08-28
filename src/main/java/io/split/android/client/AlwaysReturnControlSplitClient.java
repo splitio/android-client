@@ -3,7 +3,7 @@ package io.split.android.client;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.grammar.Treatments;
-
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -21,6 +21,19 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
     @Override
     public String getTreatment(String split, Map<String, Object> attributes) {
         return Treatments.CONTROL;
+    }
+
+    @Override
+    public Map<String, String> getTreatments(String[] splits, Map<String, Object> attributes) {
+        Map<String, String> results = new HashMap<>();
+        if(splits == null) {
+            return results;
+        }
+
+        for(String split : splits) {
+            results.put(split, Treatments.CONTROL);
+        }
+        return results;
     }
 
     @Override

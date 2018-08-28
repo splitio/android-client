@@ -50,6 +50,11 @@ public final class LocalhostSplitClient implements SplitClient {
         return getTreatment(split);
     }
 
+    @Override
+    public Map<String, String> getTreatments(String[] splits, Map<String, Object> attributes) {
+        return getTreatments(splits, attributes);
+    }
+
 
     @Override
     public void destroy() {
