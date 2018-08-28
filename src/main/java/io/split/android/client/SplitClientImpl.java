@@ -22,6 +22,7 @@ import io.split.android.grammar.Treatments;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -95,7 +96,7 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
-    public Map<String,String> getTreatments(String[] splits, Map<String, Object> attributes) {
+    public Map<String,String> getTreatments(List<String> splits, Map<String, Object> attributes) {
         Map<String, String> results = new HashMap<>();
         if(splits == null) {
             return results;
