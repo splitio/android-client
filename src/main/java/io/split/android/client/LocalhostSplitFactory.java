@@ -64,8 +64,8 @@ public final class LocalhostSplitFactory implements SplitFactory {
         return _client;
     }
 
-
-    private SplitManager manager() {
+    @Override
+    public SplitManager manager() {
         return _manager;
     }
 
