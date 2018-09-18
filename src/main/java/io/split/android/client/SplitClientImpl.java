@@ -96,7 +96,7 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
-    public Map<String,String> getTreatments(List<String> splits, Map<String, Object> attributes) {
+    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
         Map<String, String> results = new HashMap<>();
         if(splits == null) {
             return results;

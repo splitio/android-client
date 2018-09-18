@@ -67,7 +67,7 @@ public interface SplitClient {
      * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatments, the default treatment of a feature, or 'control'.
      */
-    Map<String,String> getTreatments(List<String> splits, Map<String, Object> attributes);
+    Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes);
 
     /**
      * Destroys the background processes and clears the cache, releasing the resources used by
