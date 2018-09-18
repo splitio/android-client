@@ -7,6 +7,7 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.grammar.Treatments;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -48,6 +49,11 @@ public final class LocalhostSplitClient implements SplitClient {
     @Override
     public String getTreatment(String split, Map<String, Object> attributes) {
         return getTreatment(split);
+    }
+
+    @Override
+    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
+        return getTreatments(splits, attributes);
     }
 
 
