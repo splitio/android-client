@@ -1,5 +1,6 @@
 package io.split.android.client;
 
+import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.events.SplitEvent;
@@ -54,6 +55,19 @@ public interface SplitClient {
      */
     String getTreatment(String split, Map<String, Object> attributes);
 
+
+    /**
+     * This method is useful when you want to determine the treatment of several splits at
+     * the same time.
+     * <p/>
+     * <p/>
+     * It can be used to cache treatments you know it won't change very often.
+     *
+     * @param splits    the features you want to evaluate. MUST NOT be null.
+     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
+     * @return the evaluated treatments, the default treatment of a feature, or 'control'.
+     */
+    Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes);
 
     /**
      * Destroys the background processes and clears the cache, releasing the resources used by
