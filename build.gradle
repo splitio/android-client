@@ -8,7 +8,7 @@ group='com.github.splitio'
 
 allprojects {
     group = 'io.split.client'
-    version = '1.2.0-rc1'
+    version = '1.1.0'
 }
 
 android {
