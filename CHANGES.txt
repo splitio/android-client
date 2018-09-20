@@ -1,4 +1,4 @@
-1.0.3: (Aug 28, 2018)
+1.1.0: (Aug 28, 2018)
 - Adding get treatments feature
 1.0.2: (Aug 15, 2018)
 - Adding impression listener
