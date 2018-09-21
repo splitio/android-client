@@ -3,6 +3,7 @@ package io.split.android.client.utils;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientImpl;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.TrackClient;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
@@ -26,7 +27,8 @@ public class SplitClientImplFactory {
                 new ImpressionListener.NoopImpressionListener(),
                 new Metrics.NoopMetrics(),
                 cfg,
-                new SplitEventsManager(cfg)
+                new SplitEventsManager(cfg),
+                mock(TrackClient.class)
         );
     }
 
@@ -39,7 +41,8 @@ public class SplitClientImplFactory {
                 impressionListener,
                 new Metrics.NoopMetrics(),
                 cfg,
-                new SplitEventsManager(cfg)
+                new SplitEventsManager(cfg),
+                mock(TrackClient.class)
         );
     }
 
@@ -51,7 +54,8 @@ public class SplitClientImplFactory {
                 new ImpressionListener.NoopImpressionListener(),
                 new Metrics.NoopMetrics(),
                 SplitClientConfig.builder().build(),
-                eventsManager
+                eventsManager,
+                mock(TrackClient.class)
         );
     }
 
