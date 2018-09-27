@@ -3,9 +3,13 @@ apply plugin: 'signing'
 apply plugin: 'maven'
 apply plugin: "maven-publish"
 
+ext {
+    splitVersion = '1.2.1-rc1'
+}
+
 allprojects {
     group = 'io.split.client'
-    version = '1.2.0'
+    version = splitVersion
 }
 
 android {
@@ -24,7 +28,7 @@ android {
         minSdkVersion 15
         targetSdkVersion 26
         versionCode 0
-        versionName "1.2.0"
+        versionName splitVersion
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'split-proguard-rules.pro'
