@@ -26,7 +26,7 @@ public class SplitChangeCache implements ISplitChangeCache {
 
     @Override
     public boolean addChange(SplitChange splitChange) {
-        if (_splitCache == null) return false;
+        if (_splitCache == null || splitChange == null || splitChange.splits == null) return false;
         boolean result = true;
         _splitCache.setChangeNumber(splitChange.till);
         for (Split split :
