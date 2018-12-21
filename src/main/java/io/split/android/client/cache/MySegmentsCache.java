@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import io.split.android.client.utils.Utils;
 public class MySegmentsCache implements IMySegmentsCache, LifecycleObserver {
 
     private static final String MY_SEGMENTS_FILE_PREFIX = "SPLITIO.mysegments";
+    private static final String MY_SEGMENTS_FILE_KEYS = MY_SEGMENTS_FILE_PREFIX + ".allKeys";
 
     private final IStorage mFileStorage;
     private Map<String, List<MySegment>> mSegments = null;
@@ -39,14 +41,11 @@ public class MySegmentsCache implements IMySegmentsCache, LifecycleObserver {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorage = storage;
         mSegments = Collections.synchronizedMap(new HashMap<String, List<MySegment>>());
+        loadSegmentsFromDisk();
     }
 
     private String getMySegmentsId(String key) {
         return MY_SEGMENTS_FILE_PREFIX + "_" + Utils.sanitizeForFileName(key);
-    }
-
-    private String getMySegmentsKeyId() {
-        return MY_SEGMENTS_FILE_PREFIX + ".currentKey";
     }
 
     @Override
@@ -56,51 +55,54 @@ public class MySegmentsCache implements IMySegmentsCache, LifecycleObserver {
 
     @Override
     public List<MySegment> getMySegments(String key) {
-        List<MySegment> segments = mSegments.get(key);
-        if(segments == null){
-            segments = loadSegmentsFromDisk(key);
-            if(segments != null){
-                mSegments.put(key, segments);
-            }
-        }
-        return segments;
-    }
-
-    public List<MySegment> loadSegmentsFromDisk(String key){
-        try {
-            if (key != null) {
-                String storedMySegments = mFileStorage.read(getMySegmentsId(key));
-                if(storedMySegments == null || storedMySegments.trim().equals("")) return null;
-                Type listType = new TypeToken<List<MySegment>>() {
-                }.getType();
-
-                List<MySegment> segments = Json.fromJson(storedMySegments, listType);
-                if(segments == null) return null;
-                mSegments.put(key, Collections.synchronizedList(segments));
-                return segments;
-            }
-        } catch (IOException e) {
-            Logger.e(e, "Unable to get my segments");
-        } catch (JsonSyntaxException syntaxException) {
-            Logger.e(syntaxException, "Unable to parse saved segments");
-        }
-        return null;
+        return mSegments.get(key);
     }
 
     @Override
     public void deleteMySegments(String key) {
-        mSegments.clear();
+        mSegments.remove(key);
+    }
+
+    private void loadSegmentsFromDisk(){
+        String allKeys = null;
+        try {
+            allKeys = mFileStorage.read(MY_SEGMENTS_FILE_KEYS);
+        } catch (IOException e) {
+            Logger.e(e, "Unable to get all my keys");
+        }
+
+        if(allKeys == null) return;
+
+        List<String> keys = Arrays.asList(allKeys.split(","));
+        for (String key : keys) {
+            try {
+                String storedMySegments = mFileStorage.read(getMySegmentsId(key));
+                if(storedMySegments == null || storedMySegments.trim().equals("")) continue;
+                Type listType = new TypeToken<List<MySegment>>() {
+                }.getType();
+
+                List<MySegment> segments = Json.fromJson(storedMySegments, listType);
+                if(segments == null) continue;
+                mSegments.put(key, Collections.synchronizedList(segments));
+            } catch (IOException e) {
+                Logger.e(e, "Unable to get my segments");
+            } catch (JsonSyntaxException syntaxException) {
+                Logger.e(syntaxException, "Unable to parse saved segments");
+            }
+        }
+
     }
 
     // Lifecyle observer
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    public void saveToDisk() {
+    private void saveToDisk() {
         try {
             Set<String> keys = mSegments.keySet();
             for (String key : keys) {
                 List<MySegment> segments = mSegments.get(key);
                 mFileStorage.write(getMySegmentsId(key), Json.toJson(segments));
             }
+            mFileStorage.write(MY_SEGMENTS_FILE_KEYS, Utils.join(",", keys));
         } catch (IOException e) {
             Logger.e(e, "Could not save my segments");
         }
