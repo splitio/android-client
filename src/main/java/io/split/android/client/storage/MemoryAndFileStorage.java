@@ -3,6 +3,7 @@ package io.split.android.client.storage;
 import android.content.Context;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by guillermo on 11/24/17.
@@ -50,6 +51,11 @@ public class MemoryAndFileStorage implements IStorage {
     @Override
     public String[] getAllIds() {
         return _fileStorage.getAllIds();
+    }
+
+    @Override
+    public List<String> getAllIds(String fileNamePrefix) {
+        return _fileStorage.getAllIds(fileNamePrefix);
     }
 
     @Override

@@ -148,7 +148,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
         // Feature Changes
-        IStorage splitChangeStorage = new MemoryAndFileStorage(context);
+        IStorage splitChangeStorage = new FileStorage(context);
         SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage);
 
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), _eventsManager);

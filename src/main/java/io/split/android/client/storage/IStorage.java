@@ -40,6 +40,14 @@ public interface IStorage {
     String[] getAllIds();
 
     /**
+     * Gets all stored element Ids starting with fileNamePrefix
+     *
+     * @param fileNamePrefix Prefix to filter returned ids
+     * @return Array of element Ids
+     */
+    public List<String> getAllIds(String fileNamePrefix);
+
+    /**
      * Changes the Id for an element in the storage
      * @param currentId Current Id
      * @param newId New Id for the element
