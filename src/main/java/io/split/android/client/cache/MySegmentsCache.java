@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,8 +32,7 @@ import io.split.android.client.utils.Utils;
 
 public class MySegmentsCache implements IMySegmentsCache, LifecycleObserver {
 
-    private static final String MY_SEGMENTS_FILE_PREFIX = "SPLITIO.mysegments";
-    private static final String MY_SEGMENTS_FILE_KEYS = MY_SEGMENTS_FILE_PREFIX + ".allKeys";
+    private static final String MY_SEGMENTS_FILE_NAME = "SPLITIO.mysegments";
 
     private final IStorage mFileStorage;
     private Map<String, List<MySegment>> mSegments = null;
@@ -44,8 +44,8 @@ public class MySegmentsCache implements IMySegmentsCache, LifecycleObserver {
         loadSegmentsFromDisk();
     }
 
-    private String getMySegmentsId(String key) {
-        return MY_SEGMENTS_FILE_PREFIX + "_" + Utils.sanitizeForFileName(key);
+    private String getMySegmentsFileName() {
+        return MY_SEGMENTS_FILE_NAME;
     }
 
     @Override
@@ -64,47 +64,39 @@ public class MySegmentsCache implements IMySegmentsCache, LifecycleObserver {
     }
 
     private void loadSegmentsFromDisk(){
-        String allKeys = null;
+
         try {
-            allKeys = mFileStorage.read(MY_SEGMENTS_FILE_KEYS);
-        } catch (IOException e) {
-            Logger.e(e, "Unable to get all my keys");
-        }
+            String storedMySegments = mFileStorage.read(getMySegmentsFileName());
+            if(storedMySegments == null || storedMySegments.trim().equals("")) return;
+            Type listType = new TypeToken<Map<String, List<MySegment>>>() {
+            }.getType();
 
-        if(allKeys == null) return;
-
-        List<String> keys = Arrays.asList(allKeys.split(","));
-        for (String key : keys) {
-            try {
-                String storedMySegments = mFileStorage.read(getMySegmentsId(key));
-                if(storedMySegments == null || storedMySegments.trim().equals("")) continue;
-                Type listType = new TypeToken<List<MySegment>>() {
-                }.getType();
-
-                List<MySegment> segments = Json.fromJson(storedMySegments, listType);
-                if(segments == null) continue;
-                mSegments.put(key, Collections.synchronizedList(segments));
-            } catch (IOException e) {
-                Logger.e(e, "Unable to get my segments");
-            } catch (JsonSyntaxException syntaxException) {
-                Logger.e(syntaxException, "Unable to parse saved segments");
+            Map<String, List<MySegment>> segments = Json.fromJson(storedMySegments, listType);
+            Set<String> keys = segments.keySet();
+            for (String key : keys) {
+                List<MySegment> keySegments = segments.get(key);
+                if(keySegments != null) {
+                    mSegments.put(key, Collections.synchronizedList(keySegments));
+                }
             }
-        }
 
+        } catch (IOException e) {
+            Logger.e(e, "Unable to get my segments");
+        } catch (JsonSyntaxException syntaxException) {
+            Logger.e(syntaxException, "Unable to parse saved segments");
+        }
     }
 
     // Lifecyle observer
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     private void saveToDisk() {
         try {
-            Set<String> keys = mSegments.keySet();
-            for (String key : keys) {
-                List<MySegment> segments = mSegments.get(key);
-                mFileStorage.write(getMySegmentsId(key), Json.toJson(segments));
-            }
-            mFileStorage.write(MY_SEGMENTS_FILE_KEYS, Utils.join(",", keys));
+            String json = Json.toJson(mSegments);
+            mFileStorage.write(getMySegmentsFileName(), json);
         } catch (IOException e) {
             Logger.e(e, "Could not save my segments");
+        } catch (JsonSyntaxException syntaxException) {
+            Logger.e(syntaxException, "Unable to parse segments to save");
         }
     }
 

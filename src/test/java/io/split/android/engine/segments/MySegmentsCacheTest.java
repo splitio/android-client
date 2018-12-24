@@ -7,13 +7,16 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.cache.IMySegmentsCache;
 import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.storage.MemoryStorage;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Utils;
 
 public class MySegmentsCacheTest {
@@ -22,28 +25,27 @@ public class MySegmentsCacheTest {
 
     @Before
     public void setupUp(){
-        final String JSON_SEGMENT_TEMPLATE = "{\"id\":\"id-%d-%d\", \"name\":\"segment-%d-%d\"}";
-        final String FILE_PREFIX = "SPLITIO.mysegments";
-        final String ALL_KEYS_FILE = FILE_PREFIX + ".allKeys";
-        List<String > allKeys = new ArrayList<>();
+
+        final String FILE_NAME = "SPLITIO.mysegments";
+
+
+        Map<String, List<MySegment>> allSegments = new HashMap<String, List<MySegment>>();
         IStorage memStorage = new MemoryStorage();
 
         for(int i = 0; i < 3; i++) {
             String key = String.format("key-%d", i);
-            allKeys.add(key);
-            List<String> segments  = new ArrayList<>();
-
+            List<MySegment> segments  = new ArrayList<>();
             for(int j = 0; j < 4; j++) {
-                segments.add(String.format(JSON_SEGMENT_TEMPLATE, i, j, i, j));
+                MySegment segment = new MySegment();
+                segment.id = String.format("id-%d-%d", i, j);
+                segment.name = String.format("name-%d-%d", i, j);
+                segments.add(segment);
             }
-            final String jsonSegments = "[" + String.join(",", segments) + "]";
-            try {
-                memStorage.write(FILE_PREFIX + "_" + key, jsonSegments);
-            } catch (IOException e) {
-            }
+            allSegments.put(key, segments);
         }
         try {
-            memStorage.write(ALL_KEYS_FILE, Utils.join(",", allKeys));
+            String allSegmentsJson = Json.toJson(allSegments);
+            memStorage.write(FILE_NAME, allSegmentsJson);
         } catch (IOException e) {
         }
         mCache = new MySegmentsCache(memStorage);
