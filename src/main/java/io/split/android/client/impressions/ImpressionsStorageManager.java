@@ -1,18 +1,28 @@
 package io.split.android.client.impressions;
 
 import android.annotation.SuppressLint;
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
@@ -22,15 +32,17 @@ import io.split.android.client.utils.Logger;
  * Created by guillermo on 1/18/18.
  */
 
-public class ImpressionsStorageManager {
+public class ImpressionsStorageManager implements LifecycleObserver {
 
-    private static final String IMPRESSIONS_CHUNK_FILE_PREFIX = "impressions";
+    private static final String IMPRESSIONS_FILE_NAME = "SPLITIO.impressions";
 
-    private IStorage _storage;
-
+    private IStorage mFileStorage;
+    Map<String, StoredImpressions> mImpressionsToSend;
 
     public ImpressionsStorageManager(IStorage storage) {
-        _storage = storage;
+        mFileStorage = storage;
+        mImpressionsToSend = Collections.synchronizedMap(new HashMap<>());
+        loadImpressionsFromDisk();
     }
 
     @SuppressLint("DefaultLocale")
@@ -63,28 +75,12 @@ public class ImpressionsStorageManager {
             toShip.add(testImpressionsDTO);
         }
 
-        String entity = Json.toJson(toShip);
-
-        Logger.d("Entity to store: %s", entity);
-
-        String chunkId = String.format("%s_%d_0.json", IMPRESSIONS_CHUNK_FILE_PREFIX, System.currentTimeMillis());
-
-        _storage.write(chunkId, entity);
+        String chunkId = UUID.randomUUID().toString();
+        mImpressionsToSend.put(chunkId, StoredImpressions.from(chunkId, toShip, System.currentTimeMillis()));
     }
 
     public List<StoredImpressions> getStoredImpressions() {
-        List<String> ids = getAllChunkIds();
-        List<StoredImpressions> result = Lists.newArrayList();
-        for(String id: ids) {
-            String stored = readStringChunk(id);
-            if (stored != null) {
-                List<TestImpressions> testImpressions = Json.fromJsonList(stored, TestImpressions.class);
-                result.add(StoredImpressions.from(id, testImpressions));
-            } else {
-                Logger.w("Could not read chunk %s", id);
-            }
-        }
-        return result;
+        return new ArrayList<>(mImpressionsToSend.values());
     }
 
     public void failedStoredImpression(StoredImpressions storedImpression) {
@@ -112,68 +108,67 @@ public class ImpressionsStorageManager {
         return true;
     }
 
-
     private String readStringChunk(String chunkId) {
         try {
-            return _storage.read(chunkId);
+            return mFileStorage.read(chunkId);
         } catch (IOException e) {
             Logger.e(e, "Could not read chunk %s", chunkId);
         }
         return null;
     }
 
-    private List<String> getAllChunkIds() {
-        List<String> names = Lists.newArrayList(_storage.getAllIds());
-        List<String> chunkIds = Lists.newArrayList();
-
-        for (String name :
-                names) {
-            if (name.startsWith(IMPRESSIONS_CHUNK_FILE_PREFIX)) {
-                chunkIds.add(name);
-            }
-        }
-
-        List<String> resultChunkIds = Lists.newArrayList(chunkIds);
-
-        for (String chunkId :
-                chunkIds) {
-            int idxStart = chunkId.indexOf("_");
-            int idxEnd = chunkId.lastIndexOf("_");
-
-            String timestampStr = chunkId.substring(idxStart + 1, idxEnd);
-
-            long diff = System.currentTimeMillis() - Long.parseLong(timestampStr);
-
-            long oneDayMillis = 3600 * 1000;
-            if (diff > oneDayMillis) {
-                resultChunkIds.remove(chunkId);
-                _storage.delete(chunkId);
-            }
-        }
-
-        return resultChunkIds;
-    }
-
     private void chunkSucceeded(String chunkId) {
-        _storage.delete(chunkId);
+        mImpressionsToSend.remove(chunkId);
     }
 
     @SuppressLint("DefaultLocale")
     private void chunkFailed(String chunkId) {
+
         if (Strings.isNullOrEmpty(chunkId)) {
             return;
         }
-        int idxStart = chunkId.lastIndexOf("_");
-        int idxEnd = chunkId.lastIndexOf(".json");
-        String attemptsStr = chunkId.substring(idxStart + 1, idxEnd);
-        int attempt = Integer.parseInt(attemptsStr);
-        if (attempt >= 3) {
-            _storage.delete(chunkId);
+
+        StoredImpressions failedChunk = mImpressionsToSend.get(chunkId);
+        if (failedChunk.getAttempts() >= 3 || failedChunk.isDeprecated()) {
+            mImpressionsToSend.remove(chunkId);
         } else {
-            String oldPart = String.format("_%d.json", attempt);
-            String newPart = String.format("_%d.json", attempt + 1);
-            String newChunkId = chunkId.replace(oldPart, newPart);
-            _storage.rename(chunkId, newChunkId);
+            failedChunk.addAttempt();
+        }
+
+    }
+
+    private void loadImpressionsFromDisk(){
+
+        try {
+            String storedImpressions = mFileStorage.read(IMPRESSIONS_FILE_NAME);
+            if(storedImpressions == null || storedImpressions.trim().equals("")) return;
+
+            Type dataType = new TypeToken<Map<String, StoredImpressions>>() {
+            }.getType();
+
+            Map<String, StoredImpressions> impressions = Json.fromJson(storedImpressions, dataType);
+            for (Map.Entry<String, StoredImpressions> entry : impressions.entrySet()) {
+                if(!entry.getValue().isDeprecated()){
+                    mImpressionsToSend.put(entry.getKey(), entry.getValue());
+                }
+            }
+
+        } catch (IOException e) {
+            Logger.e(e, "Unable to load impressions from disk: " + e.getLocalizedMessage());
+        } catch (JsonSyntaxException syntaxException) {
+            Logger.e(syntaxException, "Unable to parse saved impressions: " + syntaxException.getLocalizedMessage());
+        }
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    private void saveToDisk() {
+        try {
+            String json = Json.toJson(mImpressionsToSend);
+            mFileStorage.write(IMPRESSIONS_FILE_NAME, json);
+        } catch (IOException e) {
+            Logger.e(e, "Could not save my segments");
+        } catch (JsonSyntaxException syntaxException) {
+            Logger.e(syntaxException, "Unable to parse segments to save");
         }
     }
 }
