@@ -95,6 +95,10 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         }
     }
 
+    public void close(){
+        saveToDisk();
+    }
+
     private boolean chunkCanBeStored(StoredImpressions storedImpressions) {
         if (storedImpressions == null) {
             return false;
