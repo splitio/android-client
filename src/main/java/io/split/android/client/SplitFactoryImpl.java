@@ -196,6 +196,9 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of ImpressionListener");
                     httpclient.close();
                     Logger.i("Successful shutdown of httpclient");
+                    _manager.destroy();
+                    Logger.i("Successful shutdown of manager");
+
                 } catch (IOException e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {

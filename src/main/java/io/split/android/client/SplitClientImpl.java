@@ -11,6 +11,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.track.EventBuilder;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
@@ -51,6 +52,8 @@ public final class SplitClientImpl implements SplitClient {
 
     private final TrackClient _trackClient;
 
+    private boolean _isClientDestroyed = false;
+
     public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config, SplitEventsManager eventsManager, TrackClient trackClient) {
         _container = container;
         _splitFetcher = splitFetcher;
@@ -72,6 +75,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public void destroy() {
+        _isClientDestroyed = true;
         _container.destroy();
     }
 
@@ -92,32 +96,56 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes) {
+        if(_isClientDestroyed) {
+            Logger.e("Client has already been destroyed - no calls possible");
+            return Treatments.CONTROL;
+        }
+
         return getTreatment(_matchingKey, _bucketingKey, split, attributes);
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
+
         Map<String, String> results = new HashMap<>();
+        if(_isClientDestroyed){
+            Logger.e("Client has already been destroyed - no calls possible");
+            for(String split : splits) {
+                if(split != null) {
+                    results.put(split, Treatments.CONTROL);
+                }
+            }
+            return results;
+        }
+
         if(splits == null) {
+            Logger.e("getTreatments: split_names cannot be null");
+            return results;
+        }
+
+        if(splits.size() == 0) {
+            Logger.w("getTreatments: split_names is an empty array or has null values");
             return results;
         }
 
         for(String split : splits) {
-            results.put(split, getTreatment(split, attributes));
+            if(split != null) {
+                results.put(split, getTreatment(split, attributes));
+            }
         }
         return results;
     }
 
     private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
         try {
-            if (matchingKey == null) {
-                Logger.w("matchingKey was null for split: %s", split);
+
+            if (Strings.isNullOrEmpty(split)) {
+                Logger.e("getTreatment: key cannot be null");
                 return Treatments.CONTROL;
             }
 
-            if (split == null) {
-                Logger.w("split was null for key: %s", matchingKey);
-                return Treatments.CONTROL;
+            if (!_eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)) {
+                Logger.w("No listeners for SDK Readiness detected. Incorrect control treatments could be logged if you call getTreatment while the SDK is not yet ready");
             }
 
             long start = System.currentTimeMillis();
@@ -163,6 +191,16 @@ public final class SplitClientImpl implements SplitClient {
 
     private TreatmentLabelAndChangeNumber getTreatmentResultWithoutImpressions(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
         TreatmentLabelAndChangeNumber result;
+
+        if (Strings.isNullOrEmpty(matchingKey)) {
+            Logger.e("getTreatment: key cannot be null");
+            return new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION);
+        }
+
+        if (Strings.isNullOrEmpty(bucketingKey)) {
+            Logger.w("getTreatment: Key object should have bucketingKey set");
+        }
+
         try {
             result = getTreatmentWithoutExceptionHandling(matchingKey, bucketingKey, split, attributes);
         } catch (ChangeNumberExceptionWrapper e) {
@@ -262,64 +300,57 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(event);
         checkNotNull(task);
 
+        if(_eventsManager.eventAlreadyTriggered(event)) {
+            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event.toString()));
+            return;
+        }
+
         _eventsManager.register(event, task);
     }
 
     @Override
     public boolean track(String trafficType, String eventType) {
-        Event event = createEvent(_matchingKey, trafficType, eventType);
-        return track(event);
+        return track(_matchingKey, trafficType, eventType);
     }
 
     @Override
     public boolean track(String trafficType, String eventType, double value) {
-        Event event = createEvent(_matchingKey, trafficType, eventType);
-        event.value = value;
-
-        return track(event);
+        return track(_matchingKey, trafficType, eventType, value);
     }
 
     @Override
     public boolean track(String eventType) {
-        Event event = createEvent(_matchingKey, _config.trafficType(), eventType);
-        return track(event);
+        return track(_matchingKey, _config.trafficType(), eventType);
     }
 
     @Override
     public boolean track(String eventType, double value) {
-        Event event = createEvent(_matchingKey, _config.trafficType(), eventType);
-        event.value = value;
-
-        return track(event);
+        return track(_matchingKey, _config.trafficType(), eventType, value);
     }
 
-    private Event createEvent(String key, String trafficType, String eventType) {
-        Event event = new Event();
-        event.eventTypeId = eventType;
-        event.trafficTypeName = trafficType;
-        event.key = key;
-        event.timestamp = System.currentTimeMillis();
-        return event;
+    private boolean track(String key, String trafficType, String eventType) {
+        return track(key, trafficType, eventType, 0.0);
     }
 
-    private boolean track(Event event) {
-        if (Strings.isNullOrEmpty(event.trafficTypeName)) {
-            Logger.w("Traffic Type was null or empty");
+    private boolean track(String key, String trafficType, String eventType, double value) {
+
+        if(_isClientDestroyed) {
+            Logger.e("Client has already been destroyed - no calls possible");
             return false;
         }
 
-        if (Strings.isNullOrEmpty(event.eventTypeId)) {
-            Logger.w("Event Type was null or empty");
-            return false;
+        EventBuilder eventBuilder = new EventBuilder();
+        try {
+            Event event = eventBuilder
+                    .setType(trafficType)
+                    .setMatchingKey(key)
+                    .setType(eventType)
+                    .setValue(value)
+            .build();
+            return _trackClient.track(event);
+        } catch (EventBuilder.EventValidationException e) {
         }
-
-        if (Strings.isNullOrEmpty(event.key)) {
-            Logger.w("Cannot track event for null key");
-            return false;
-        }
-
-        return _trackClient.track(event);
-
+        return false;
     }
 
 }

@@ -41,6 +41,10 @@ android {
     lintOptions {
         disable 'InvalidPackage'
     }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {

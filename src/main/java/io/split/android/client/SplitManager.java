@@ -29,4 +29,10 @@ public interface SplitManager {
      * @return a List of String (Split Feature Names) or empty
      */
     List<String> splitNames();
+
+    /**
+     * Makes functions return empty or null values
+     */
+    void destroy();
+
 }

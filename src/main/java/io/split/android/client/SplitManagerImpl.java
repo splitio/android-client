@@ -1,7 +1,10 @@
 package io.split.android.client;
 
+import com.google.common.base.Strings;
+
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Partition;
+import io.split.android.client.utils.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -14,6 +17,7 @@ import java.util.Set;
 public class SplitManagerImpl implements SplitManager {
 
     private final SplitFetcher _splitFetcher;
+    private boolean _isManagerDestroyed = false;
 
 
     public SplitManagerImpl(SplitFetcher splitFetcher) {
@@ -23,6 +27,12 @@ public class SplitManagerImpl implements SplitManager {
     @Override
     public List<SplitView> splits() {
         List<SplitView> result = new ArrayList<>();
+
+        if(_isManagerDestroyed){
+            Logger.e("Manager has already been destroyed - no calls possible");
+            return result;
+        }
+
         List<ParsedSplit> parsedSplits = _splitFetcher.fetchAll();
         for (ParsedSplit split : parsedSplits) {
             result.add(toSplitView(split));
@@ -32,6 +42,17 @@ public class SplitManagerImpl implements SplitManager {
 
     @Override
     public SplitView split(String featureName) {
+
+        if(_isManagerDestroyed){
+            Logger.e("Manager has already been destroyed - no calls possible");
+            return null;
+        }
+
+        if(Strings.isNullOrEmpty(featureName)){
+            Logger.e("split: split_name cannot be null");
+            return null;
+        }
+
         ParsedSplit parsedSplit = _splitFetcher.fetch(featureName);
         return parsedSplit == null ? null : toSplitView(parsedSplit);
     }
@@ -39,11 +60,22 @@ public class SplitManagerImpl implements SplitManager {
     @Override
     public List<String> splitNames() {
         List<String> result = new ArrayList<>();
+
+        if(_isManagerDestroyed){
+            Logger.e("Manager has already been destroyed - no calls possible");
+            return result;
+        }
+
         List<ParsedSplit> parsedSplits = _splitFetcher.fetchAll();
         for (ParsedSplit split : parsedSplits) {
             result.add(split.feature());
         }
         return result;
+    }
+
+    @Override
+    public void destroy() {
+        _isManagerDestroyed = true;
     }
 
     private SplitView toSplitView(ParsedSplit parsedSplit) {
