@@ -27,6 +27,7 @@ public interface IMySegmentsCache {
 
     /**
      * Deletes the list of MySegments from the cache
+     * @param key The key corresponding to the cached segments
      */
     void deleteMySegments(String key);
 }
