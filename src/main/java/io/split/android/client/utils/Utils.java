@@ -84,4 +84,11 @@ public class Utils {
             return true;
         } catch (IOException e) { return false; }
     }
+
+    public static String sanitizeForFileName(String string) {
+        if(string == null) {
+            return "";
+        }
+        return string.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+    }
 }

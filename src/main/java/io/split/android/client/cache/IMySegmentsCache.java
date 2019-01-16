@@ -12,12 +12,11 @@ import io.split.android.client.dtos.MySegment;
 public interface IMySegmentsCache {
 
     /**
-     * Saves the list of MySegments in cache
+     * Sets the list of MySegments in cache for a key
      * @param key The key for the list to be saved
      * @param mySegments List of MySegments to cache
-     * @return If it was successfully saved or not
      */
-    boolean saveMySegments(String key, List<MySegment> mySegments);
+    void setMySegments(String key, List<MySegment> mySegments);
 
     /**
      * Gets MySegments from the cache
@@ -29,5 +28,5 @@ public interface IMySegmentsCache {
     /**
      * Deletes the list of MySegments from the cache
      */
-    void deleteMySegments();
+    void deleteMySegments(String key);
 }
