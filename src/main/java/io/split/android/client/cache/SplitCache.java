@@ -5,6 +5,7 @@ import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
 
+import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.IOException;
@@ -103,7 +104,9 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     private Split getSplitFromDisk(String splitName){
         Split split = null;
 
-        if(splitName == null || splitName.trim().equals("")) return null;
+        if(Strings.isNullOrEmpty(splitName)) {
+            return null;
+        }
 
         try {
             String splitJson = mFileStorageManager.read(getSplitId(splitName));
