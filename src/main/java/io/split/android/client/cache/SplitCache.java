@@ -108,14 +108,17 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
             return null;
         }
 
+        String splitId = getSplitId(splitName);
+
         try {
-            String splitJson = mFileStorageManager.read(getSplitId(splitName));
+            String splitJson = mFileStorageManager.read(splitId);
             if (splitJson != null && !splitJson.trim().equals("")) {
                 split = Json.fromJson(splitJson, Split.class);
             }
         } catch (IOException e) {
             Logger.e(e, "Unable to load split from disk");
         } catch (JsonSyntaxException syntaxException) {
+            mFileStorageManager.delete(splitId);
             Logger.e(syntaxException, "Unable to parse saved segments");
         }
         return split;
