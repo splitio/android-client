@@ -13,16 +13,13 @@ import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
@@ -36,11 +33,11 @@ public class ImpressionsStorageManager implements LifecycleObserver {
 
     private static final String IMPRESSIONS_FILE_NAME = "SPLITIO.impressions";
 
-    private IStorage mFileStorage;
+    private IStorage mFileStorageManager;
     Map<String, StoredImpressions> mImpressionsToSend;
 
     public ImpressionsStorageManager(IStorage storage) {
-        mFileStorage = storage;
+        mFileStorageManager = storage;
         mImpressionsToSend = Collections.synchronizedMap(new HashMap<>());
         loadImpressionsFromDisk();
     }
@@ -114,7 +111,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
 
     private String readStringChunk(String chunkId) {
         try {
-            return mFileStorage.read(chunkId);
+            return mFileStorageManager.read(chunkId);
         } catch (IOException e) {
             Logger.e(e, "Could not read chunk %s", chunkId);
         }
@@ -144,8 +141,10 @@ public class ImpressionsStorageManager implements LifecycleObserver {
     private void loadImpressionsFromDisk(){
 
         try {
-            String storedImpressions = mFileStorage.read(IMPRESSIONS_FILE_NAME);
-            if(storedImpressions == null || storedImpressions.trim().equals("")) return;
+            String storedImpressions = mFileStorageManager.read(IMPRESSIONS_FILE_NAME);
+            if(storedImpressions.isEmpty()) {
+                return;
+            }
 
             Type dataType = new TypeToken<Map<String, StoredImpressions>>() {
             }.getType();
@@ -168,7 +167,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
     private void saveToDisk() {
         try {
             String json = Json.toJson(mImpressionsToSend);
-            mFileStorage.write(IMPRESSIONS_FILE_NAME, json);
+            mFileStorageManager.write(IMPRESSIONS_FILE_NAME, json);
         } catch (IOException e) {
             Logger.e(e, "Could not save my segments");
         } catch (JsonSyntaxException syntaxException) {
