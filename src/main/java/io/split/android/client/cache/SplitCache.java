@@ -46,6 +46,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     private String getSplitId(String splitName) {
+
         if (splitName.startsWith(SPLIT_FILE_PREFIX)) {
             return splitName;
         }
@@ -98,7 +99,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     @Override
     public List<String> getSplitNames() {
-        return new ArrayList(mInMemorySplits.keySet()) ;
+        return new ArrayList<String>(mInMemorySplits.keySet()) ;
     }
 
     private Split getSplitFromDisk(String splitName){

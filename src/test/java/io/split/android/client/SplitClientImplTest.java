@@ -422,12 +422,20 @@ public class SplitClientImplTest {
     }
 
     @Test
+    public void in_split_if_1_percent_allocation() {
+        traffic_allocation(Key.withMatchingKey("aaaaaaklmnbv"), 1, -1667452163, "on", "in segment all", 2);
+    }
+
+    @Test
     public void whitelist_overrides_traffic_allocation() {
         traffic_allocation(Key.withMatchingKey("adil@split.io"), 0, 123, "on", "whitelisted user");
     }
 
-
     private void traffic_allocation(Key key, int trafficAllocation, int trafficAllocationSeed, String expected_treatment_on_or_off, String label) {
+        traffic_allocation(key, trafficAllocation, trafficAllocationSeed, expected_treatment_on_or_off, label, 1);
+    }
+
+    private void traffic_allocation(Key key, int trafficAllocation, int trafficAllocationSeed, String expected_treatment_on_or_off, String label, int algo) {
 
         String test = "test1";
 
@@ -436,7 +444,7 @@ public class SplitClientImplTest {
 
         List<ParsedCondition> conditions = Lists.newArrayList(whitelistCondition, rollOutToEveryone);
 
-        ParsedSplit parsedSplit = new ParsedSplit(test, 123, false, Treatments.OFF, conditions, null, 1, trafficAllocation, trafficAllocationSeed, 1);
+        ParsedSplit parsedSplit = new ParsedSplit(test, 123, false, Treatments.OFF, conditions, null, 1, trafficAllocation, trafficAllocationSeed, algo);
 
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
