@@ -91,13 +91,4 @@ public class Utils {
         }
         return string.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
     }
-
-    public static String join(String separator, Iterable<String> iterable) {
-        StringBuilder builder = new StringBuilder();
-        for(String string : iterable) {
-            builder.append(string).append(",");
-        }
-        builder.deleteCharAt(builder.length() - 1);
-        return builder.toString();
-    }
 }
