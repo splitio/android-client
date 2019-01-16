@@ -142,7 +142,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
 
         try {
             String storedImpressions = mFileStorageManager.read(IMPRESSIONS_FILE_NAME);
-            if(storedImpressions.isEmpty()) {
+            if(Strings.isNullOrEmpty(storedImpressions)) {
                 return;
             }
 
