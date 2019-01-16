@@ -4,6 +4,7 @@ package io.split.android.client.track;
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.OnLifecycleEvent;
 
+import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -14,9 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
@@ -25,11 +24,11 @@ public class TrackStorageManager {
 
     private static final String EVENTS_FILE_NAME = "SPLITIO.events.json";
 
-    private IStorage mFileStorage;
+    private IStorage mFileStorageManager;
     Map<String, EventsChunk> mEventsChunks;
 
     public TrackStorageManager(IStorage storage) {
-        mFileStorage = storage;
+        mFileStorageManager = storage;
         mEventsChunks = Collections.synchronizedMap(new HashMap<String, EventsChunk>());
         loadEventsFromDisk();
     }
@@ -61,9 +60,10 @@ public class TrackStorageManager {
     private void loadEventsFromDisk(){
 
         try {
-            String storedTracks = mFileStorage.read(EVENTS_FILE_NAME);
-            if(storedTracks == null || storedTracks.trim().equals("")) return;
-
+            String storedTracks = mFileStorageManager.read(EVENTS_FILE_NAME);
+            if(Strings.isNullOrEmpty(storedTracks)) {
+                return;
+            }
             Type dataType = new TypeToken<Map<String, EventsChunk>>() {
             }.getType();
 
@@ -81,7 +81,7 @@ public class TrackStorageManager {
     private void saveToDisk() {
         try {
             String json = Json.toJson(mEventsChunks);
-            mFileStorage.write(EVENTS_FILE_NAME, json);
+            mFileStorageManager.write(EVENTS_FILE_NAME, json);
         } catch (IOException e) {
             Logger.e(e, "Could not save tracks");
         } catch (JsonSyntaxException syntaxException) {
