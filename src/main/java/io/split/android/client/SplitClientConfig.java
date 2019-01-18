@@ -232,11 +232,24 @@ public class SplitClientConfig {
         return _hostname;
     }
 
+    /**
+     * Maximum attempts count while sending impressions.
+     * to the server. Internal setting.
+     *
+     * @return Maximum attempts limit.
+     */
+
     int impressionsMaxSentAttempts() {
         return _impressionsMaxSentAttempts;
     }
 
-    long impressionsChunkOudatedTime() {
+    /**
+     * Elapsed time in millis to consider that a chunk of impression
+     * is outdated. Internal property
+     *
+     * @return Time in millis.
+     */
+    long impressionsChunkOutdatedTime() {
         return _impressionsChunkOudatedTime;
     }
 
@@ -602,6 +615,11 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * The current proxy host.
+         *
+         * @return an HttpHost representing current proxy
+         */
         HttpHost proxy() {
             if (_proxyPort != -1) {
                 return new HttpHost(_proxyHost, _proxyPort);
