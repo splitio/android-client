@@ -1,5 +1,7 @@
 package io.split.android.client.impressions;
 
+import android.util.Log;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -17,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 
@@ -91,6 +94,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
             _scheduler.shutdown();
             flushImpressions();
             sendImpressions();
+            _storageManager.close();
             _scheduler.awaitTermination(_config.waitBeforeShutdown(), TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             Logger.e(e, "Unable to close ImpressionsManager");
@@ -155,6 +159,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
                 _storageManager.failedStoredImpression(storedImpression);
             }
         }
+
         Logger.d("Posting Split impressions took %d millis", (System.currentTimeMillis() - start));
     }
 
@@ -162,5 +167,4 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
         long size = Utils.toJsonEntity(keyImpression).getContentLength();
         _currentChunkSize += size;
     }
-
 }
