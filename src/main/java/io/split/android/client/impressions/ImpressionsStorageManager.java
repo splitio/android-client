@@ -35,10 +35,12 @@ public class ImpressionsStorageManager implements LifecycleObserver {
 
     private IStorage mFileStorageManager;
     Map<String, StoredImpressions> mImpressionsToSend;
+    ImpressionsStorageManagerConfig mConfig;
 
-    public ImpressionsStorageManager(IStorage storage) {
+    public ImpressionsStorageManager(IStorage storage, ImpressionsStorageManagerConfig config) {
         mFileStorageManager = storage;
         mImpressionsToSend = Collections.synchronizedMap(new HashMap<>());
+        mConfig = config;
         loadImpressionsFromDisk();
     }
 
@@ -130,12 +132,20 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         }
 
         StoredImpressions failedChunk = mImpressionsToSend.get(chunkId);
-        if (failedChunk.getAttempts() >= 3 || failedChunk.isDeprecated()) {
+        if (failedChunk.getAttempts() >= mConfig.getImpressionsMaxSentAttempts() || isChunkOutdated(failedChunk)) {
             mImpressionsToSend.remove(chunkId);
         } else {
             failedChunk.addAttempt();
         }
+    }
 
+    private boolean isChunkOutdated(StoredImpressions chunk) {
+        long diff = System.currentTimeMillis() - chunk.getTimestamp();
+
+        if (diff > mConfig.getImpressionsChunkOudatedTime()) {
+            return true;
+        }
+        return false;
     }
 
     private void loadImpressionsFromDisk(){
@@ -151,7 +161,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
 
             Map<String, StoredImpressions> impressions = Json.fromJson(storedImpressions, dataType);
             for (Map.Entry<String, StoredImpressions> entry : impressions.entrySet()) {
-                if(!entry.getValue().isDeprecated()){
+                if(!isChunkOutdated(entry.getValue())){
                     mImpressionsToSend.put(entry.getKey(), entry.getValue());
                 }
             }

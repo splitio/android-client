@@ -167,5 +167,4 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
         long size = Utils.toJsonEntity(keyImpression).getContentLength();
         _currentChunkSize += size;
     }
-
 }

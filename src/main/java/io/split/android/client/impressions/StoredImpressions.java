@@ -29,7 +29,6 @@ public class StoredImpressions {
     public List<TestImpressions> impressions() {
         return impressions;
     }
-
     public int  getAttempts(){
         return attempts;
     }
@@ -38,13 +37,8 @@ public class StoredImpressions {
         attempts++;
     }
 
-    public boolean isDeprecated() {
-        long diff = System.currentTimeMillis() - timestamp;
-
-        long oneDayMillis = 3600 * 1000;
-        if (diff > oneDayMillis) {
-            return true;
-        }
-        return false;
+    public long getTimestamp() {
+        return timestamp;
     }
+
 }
