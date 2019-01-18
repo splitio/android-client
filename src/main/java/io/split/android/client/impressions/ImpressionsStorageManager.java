@@ -13,16 +13,13 @@ import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
@@ -36,12 +33,14 @@ public class ImpressionsStorageManager implements LifecycleObserver {
 
     private static final String IMPRESSIONS_FILE_NAME = "SPLITIO.impressions";
 
-    private IStorage mFileStorage;
+    private IStorage mFileStorageManager;
     Map<String, StoredImpressions> mImpressionsToSend;
+    ImpressionsStorageManagerConfig mConfig;
 
-    public ImpressionsStorageManager(IStorage storage) {
-        mFileStorage = storage;
+    public ImpressionsStorageManager(IStorage storage, ImpressionsStorageManagerConfig config) {
+        mFileStorageManager = storage;
         mImpressionsToSend = Collections.synchronizedMap(new HashMap<>());
+        mConfig = config;
         loadImpressionsFromDisk();
     }
 
@@ -114,7 +113,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
 
     private String readStringChunk(String chunkId) {
         try {
-            return mFileStorage.read(chunkId);
+            return mFileStorageManager.read(chunkId);
         } catch (IOException e) {
             Logger.e(e, "Could not read chunk %s", chunkId);
         }
@@ -133,26 +132,36 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         }
 
         StoredImpressions failedChunk = mImpressionsToSend.get(chunkId);
-        if (failedChunk.getAttempts() >= 3 || failedChunk.isDeprecated()) {
+        if (failedChunk.getAttempts() >= mConfig.getImpressionsMaxSentAttempts() || isChunkOutdated(failedChunk)) {
             mImpressionsToSend.remove(chunkId);
         } else {
             failedChunk.addAttempt();
         }
+    }
 
+    private boolean isChunkOutdated(StoredImpressions chunk) {
+        long diff = System.currentTimeMillis() - chunk.getTimestamp();
+
+        if (diff > mConfig.getImpressionsChunkOudatedTime()) {
+            return true;
+        }
+        return false;
     }
 
     private void loadImpressionsFromDisk(){
 
         try {
-            String storedImpressions = mFileStorage.read(IMPRESSIONS_FILE_NAME);
-            if(storedImpressions == null || storedImpressions.trim().equals("")) return;
+            String storedImpressions = mFileStorageManager.read(IMPRESSIONS_FILE_NAME);
+            if(Strings.isNullOrEmpty(storedImpressions)) {
+                return;
+            }
 
             Type dataType = new TypeToken<Map<String, StoredImpressions>>() {
             }.getType();
 
             Map<String, StoredImpressions> impressions = Json.fromJson(storedImpressions, dataType);
             for (Map.Entry<String, StoredImpressions> entry : impressions.entrySet()) {
-                if(!entry.getValue().isDeprecated()){
+                if(!isChunkOutdated(entry.getValue())){
                     mImpressionsToSend.put(entry.getKey(), entry.getValue());
                 }
             }
@@ -168,7 +177,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
     private void saveToDisk() {
         try {
             String json = Json.toJson(mImpressionsToSend);
-            mFileStorage.write(IMPRESSIONS_FILE_NAME, json);
+            mFileStorageManager.write(IMPRESSIONS_FILE_NAME, json);
         } catch (IOException e) {
             Logger.e(e, "Could not save my segments");
         } catch (JsonSyntaxException syntaxException) {

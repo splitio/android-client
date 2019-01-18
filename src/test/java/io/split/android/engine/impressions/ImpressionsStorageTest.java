@@ -16,6 +16,7 @@ package io.split.android.engine.impressions;
         import io.split.android.client.dtos.KeyImpression;
         import io.split.android.client.dtos.TestImpressions;
         import io.split.android.client.impressions.ImpressionsStorageManager;
+        import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
         import io.split.android.client.impressions.StoredImpressions;
         import io.split.android.client.storage.IStorage;
         import io.split.android.client.storage.MemoryStorage;
@@ -24,12 +25,14 @@ package io.split.android.engine.impressions;
 public class ImpressionsStorageTest {
 
     ImpressionsStorageManager mImpStorage = null;
+    final long OUTDATED_LIMIT = 3600 * 1000; // One day millis
+    final int MAX_ATTEMPTS = 3;
 
     @Before
-    public void setupUp(){
+    public void setUp(){
+
 
         final String FILE_NAME = "SPLITIO.impressions";
-
 
         Map<String, StoredImpressions> storedImpressions = new HashMap<>();
         IStorage memStorage = new MemoryStorage();
@@ -56,7 +59,7 @@ public class ImpressionsStorageTest {
 
             long timestamp = System.currentTimeMillis();
             if(i == CHUNK_COUNT -1){
-                timestamp = timestamp - 3600 * 1000 * 2; // Two day millis, chunck is deprecated and should not be loaded
+                timestamp = timestamp - OUTDATED_LIMIT * 2; // Two day millis, chunck is deprecated and should not be loaded
             }
             StoredImpressions storedImpressionsItem = StoredImpressions.from(chunkId, testImpressions, timestamp);
             storedImpressions.put(chunkId, storedImpressionsItem);
@@ -66,7 +69,10 @@ public class ImpressionsStorageTest {
             memStorage.write(FILE_NAME, allImpressionsJson);
         } catch (IOException e) {
         }
-        mImpStorage = new ImpressionsStorageManager(memStorage);
+        ImpressionsStorageManagerConfig config = new ImpressionsStorageManagerConfig();
+        config.setImpressionsMaxSentAttempts(MAX_ATTEMPTS);
+        config.setImpressionsChunkOudatedTime(OUTDATED_LIMIT);
+        mImpStorage = new ImpressionsStorageManager(memStorage, config);
     }
 
     @Test
@@ -156,10 +162,19 @@ public class ImpressionsStorageTest {
         Assert.assertEquals(1, chunk1.getAttempts());
     }
 
+    @Test
+    public void impressionsSendMaxAttemptsReached() {
+        List<StoredImpressions> storedImpressions = mImpStorage.getStoredImpressions();
+        StoredImpressions chunk1 = storedImpressions.get(getIndexForStoredImpression("chunk-1", storedImpressions));
+        for(int i = 0; i <= MAX_ATTEMPTS; i++) {
+            mImpStorage.failedStoredImpression(chunk1);
+        }
+        storedImpressions = mImpStorage.getStoredImpressions();
+        Assert.assertEquals(-1, getIndexForStoredImpression("chunk-1", storedImpressions));
+    }
 
     // Helpers
     private int getIndexForStoredImpression(String chunkId, List<StoredImpressions> impressions) {
-
         int index = -1;
         int i = 0;
         boolean found = false;
@@ -176,7 +191,6 @@ public class ImpressionsStorageTest {
     }
 
     private int getIndexForUUIDStoredImpression(List<StoredImpressions> impressions) {
-
         int index = -1;
         int i = 0;
         boolean found = false;
