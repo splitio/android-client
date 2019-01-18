@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.track.EventsChunk;
+import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.GenericClientUtil;
 import io.split.android.client.utils.Logger;
@@ -45,9 +46,7 @@ public class TrackClientImpl implements TrackClient {
     //Track configuration
     private final CloseableHttpClient _httpclient;
     private final URI _eventsTarget;
-    private final int _waitBeforeShutdown;
-    private final int _maxQueueSize;
-    private final int _maxEventsPerPost;
+    private final TrackClientConfig _config;
     private final ScheduledExecutorService _flushScheduler;
     private final ScheduledExecutorService _cachedflushScheduler;
 
@@ -73,12 +72,11 @@ public class TrackClientImpl implements TrackClient {
         };
     }
 
-    public static TrackClient create(CloseableHttpClient httpclient, URI eventsRootTarget, int maxQueueSize, int maxEventsPerPost, long flushIntervalMillis, int waitBeforeShutdown, TrackStorageManager storageManager) throws URISyntaxException {
-        return new TrackClientImpl(new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, maxQueueSize, maxEventsPerPost, flushIntervalMillis, waitBeforeShutdown, storageManager);
+    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager);
     }
 
-    private TrackClientImpl(BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, int maxQueueSize, int maxEventsPerPost,
-                           long flushIntervalMillis, int waitBeforeShutdown, TrackStorageManager storageManager) throws URISyntaxException {
+    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager) throws URISyntaxException {
 
 
         _storageManager = storageManager;
@@ -88,10 +86,7 @@ public class TrackClientImpl implements TrackClient {
         _eventsTarget = new URIBuilder(eventsRootTarget).setPath("/api/events/bulk").build();
 
         _eventQueue = eventQueue;
-        _waitBeforeShutdown = waitBeforeShutdown;
-
-        _maxQueueSize = maxQueueSize;
-        _maxEventsPerPost = maxEventsPerPost;
+        _config = config;
 
         // Thread to send events to backend
         _senderExecutor = new ThreadPoolExecutor(
@@ -119,14 +114,14 @@ public class TrackClientImpl implements TrackClient {
             public void run() {
                                 flush();
                             }
-        }, flushIntervalMillis, flushIntervalMillis, TimeUnit.SECONDS);
+        }, config.getFlushIntervalMillis(), config.getFlushIntervalMillis(), TimeUnit.SECONDS);
 
         // Cached events flusher
         _cachedflushScheduler = Executors.newScheduledThreadPool(1, eventClientThreadFactory("eventclient-cache-flush"));
         _cachedflushScheduler.scheduleAtFixedRate(new Runnable() {
               @Override
               public void run() {flushFromLocalCache();}
-          }, flushIntervalMillis, flushIntervalMillis, TimeUnit.SECONDS);
+          }, config.getFlushIntervalMillis(), config.getFlushIntervalMillis(), TimeUnit.SECONDS);
     }
 
     @Override
@@ -149,7 +144,7 @@ public class TrackClientImpl implements TrackClient {
             _consumerExecutor.shutdownNow();
             _flushScheduler.shutdownNow();
             _cachedflushScheduler.shutdownNow();
-            _senderExecutor.awaitTermination(_waitBeforeShutdown, TimeUnit.MILLISECONDS);
+            _senderExecutor.awaitTermination(_config.hasToWaitBeforeShutdown(), TimeUnit.MILLISECONDS);
             _storageManager.close();
         } catch (Exception e) {
             Logger.w("Error when shutting down EventClientImpl", e);
@@ -169,7 +164,7 @@ public class TrackClientImpl implements TrackClient {
             List<EventsChunk> eventsChunks = _storageManager.getEventsChunks();
             for(EventsChunk chunk : eventsChunks){
                 if(chunk.getAttempt() < MAX_POST_ATTEMPS) {
-                    _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, chunk, _storageManager));
+                    _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, chunk, _storageManager, _config.getMaxSentAttempts()));
                 }
             }
         } else {
@@ -207,20 +202,20 @@ public class TrackClientImpl implements TrackClient {
                         continue;
                     }
 
-                    if (events.size() >= _maxQueueSize || event == CENTINEL) {
+                    if (events.size() >= _config.getMaxQueueSize() || event == CENTINEL) {
 
                         Logger.d(String.format("Sending %d events", events.size()));
 
-                        if(events.size() > _maxEventsPerPost){
-                            List<List<Event>> eventsChunks = Lists.partition(events, _maxEventsPerPost);
+                        if(events.size() > _config.getMaxEventsPerPost()){
+                            List<List<Event>> eventsChunks = Lists.partition(events, _config.getMaxEventsPerPost());
                             for (List<Event> eventsChunk : eventsChunks) {
 
                                 // Dispatch
-                                _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(eventsChunk), _storageManager));
+                                _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(eventsChunk), _storageManager, _config.getMaxSentAttempts()));
                             }
                         } else {
                             // Dispatch
-                            _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(events), _storageManager));
+                            _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(events), _storageManager, _config.getMaxSentAttempts()));
                         }
 
                         // Clear the queue of events for the next batch.
@@ -241,18 +236,20 @@ public class TrackClientImpl implements TrackClient {
         private final URI mEndpoint;
         private final CloseableHttpClient mHttpClient;
         private final TrackStorageManager mTrackStorageManager;
+        private final int mMaxSentAttempts;
 
         static EventSenderTask create(CloseableHttpClient httpclient, URI eventsTarget,
-                                      EventsChunk events, TrackStorageManager storage) {
-            return new EventSenderTask(httpclient, eventsTarget, events, storage);
+                                      EventsChunk events, TrackStorageManager storage, int maxSentAttempts) {
+            return new EventSenderTask(httpclient, eventsTarget, events, storage, maxSentAttempts);
         }
 
         EventSenderTask(CloseableHttpClient httpclient, URI eventsTarget,
-                        EventsChunk events, TrackStorageManager storage) {
+                        EventsChunk events, TrackStorageManager storage, int maxSentAttempts) {
             mHttpClient = httpclient;
             mChunk = events;
             mEndpoint = eventsTarget;
             mTrackStorageManager = storage;
+            mMaxSentAttempts = maxSentAttempts;
         }
 
         @SuppressLint("DefaultLocale")
@@ -267,7 +264,7 @@ public class TrackClientImpl implements TrackClient {
 
                     //Saving events to disk
                     mChunk.addAtempt();
-                    if(mChunk.getAttempt() < MAX_POST_ATTEMPS) {
+                    if(mChunk.getAttempt() <mMaxSentAttempts) {
                         mTrackStorageManager.saveEvents(mChunk);
                     } else {
                         mTrackStorageManager.deleteCachedEvents(mChunk.getId());
