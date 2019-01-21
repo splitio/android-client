@@ -44,6 +44,7 @@ public class SplitClientConfig {
     private final int _eventsPerPush;
     private final long _eventFlushInterval;
     private final String _trafficType;
+    private final int _eventsMaxSentAttemps = 3;
 
     // Proxy configs
     private final HttpHost _proxy;
@@ -251,6 +252,17 @@ public class SplitClientConfig {
      */
     long impressionsChunkOutdatedTime() {
         return _impressionsChunkOudatedTime;
+    }
+
+    /**
+     * Maximum attempts count while sending tracks
+     * to the server. Internal setting.
+     *
+     * @return Maximum attempts limit.
+     */
+
+    int eventsMaxSentAttempts() {
+        return _eventsMaxSentAttemps;
     }
 
     public String ip() {

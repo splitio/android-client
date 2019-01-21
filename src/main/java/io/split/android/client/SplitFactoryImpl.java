@@ -47,6 +47,7 @@ import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
+import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
@@ -175,10 +176,15 @@ public class SplitFactoryImpl implements SplitFactory {
         final FireAndForgetMetrics cachedFireAndForgetMetrics = FireAndForgetMetrics.instance(cachedMetrics, 2, 1000);
 
 
+        TrackClientConfig trackConfig = new TrackClientConfig();
+        trackConfig.setFlushIntervalMillis(config.eventFlushInterval());
+        trackConfig.setMaxEventsPerPost(config.eventsPerPush());
+        trackConfig.setMaxQueueSize(config.eventsQueueSize());
+        trackConfig.setWaitBeforeShutdown(config.waitBeforeShutdown());
+        trackConfig.setMaxSentAttempts(config.eventsMaxSentAttempts());
         IStorage eventsStorage = new FileStorage(context);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
-        _trackClient = TrackClientImpl.create(httpclient, eventsRootTarget,
-                config.eventsQueueSize(),config.eventsPerPush(),config.eventFlushInterval(),config.waitBeforeShutdown(), trackStorageManager);
+        _trackClient = TrackClientImpl.create(trackConfig, httpclient, eventsRootTarget, trackStorageManager);
 
 
         destroyer = new Runnable() {
