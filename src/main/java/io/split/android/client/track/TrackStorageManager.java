@@ -1,93 +1,92 @@
 package io.split.android.client.track;
 
 
-import com.google.common.collect.Lists;
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.OnLifecycleEvent;
+
+import com.google.common.base.Strings;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
 public class TrackStorageManager {
 
-    private static final String FILE_PREFIX = "SPLITIO.events";
-    private static final String FILENAME_TEMPLATE = "%s_%d_%d.json";
+    private static final String EVENTS_FILE_NAME = "SPLITIO.events.json";
 
-    private IStorage _storage;
+    private IStorage mFileStorageManager;
+    Map<String, EventsChunk> mEventsChunks;
 
     public TrackStorageManager(IStorage storage) {
-        _storage = storage;
-    }
-
-    public int getLastAttemp(String filename){
-        int attemp = 0;
-
-        int idxStart = filename.lastIndexOf("_");
-        int idxEnd = filename.lastIndexOf(".json");
-
-        attemp = Integer.parseInt(filename.substring(idxStart+1, idxEnd));
-        return attemp;
+        mFileStorageManager = storage;
+        mEventsChunks = Collections.synchronizedMap(new HashMap<String, EventsChunk>());
+        loadEventsFromDisk();
     }
 
     public boolean isEmptyCache(){
-        return getAllChunkIds().isEmpty();
+        return mEventsChunks.isEmpty();
     }
 
-    synchronized public void deleteCachedEvents(String filename){
-        _storage.delete(filename);
+    synchronized public void deleteCachedEvents(String chunkId){
+        mEventsChunks.remove(chunkId);
     }
 
-    synchronized public void saveEvents(String events, int attemp){
-        if (events == null || events.isEmpty()) {
+    synchronized public void saveEvents(EventsChunk chunk){
+        if (chunk == null || chunk.getEvents().isEmpty()) {
             return; // Nothing to write
         }
 
-        Logger.d("Track events to store: %s", events);
+        mEventsChunks.put(chunk.getId(), chunk);
+    }
 
-        String filename = String.format(FILENAME_TEMPLATE, FILE_PREFIX, System.currentTimeMillis(), attemp);
+    public List<EventsChunk> getEventsChunks() {
+        return new ArrayList<>(mEventsChunks.values());
+    }
+
+    public void close(){
+        saveToDisk();
+    }
+
+    private void loadEventsFromDisk(){
 
         try {
-            Logger.d(String.format("Saving events at %s", filename));
-            _storage.write(filename, events);
-        } catch (IOException e) {
-            Logger.e("Error saving events to disk", e);
-        }
-    }
-
-    synchronized public void saveEvents(List<Event> events, int attemp){
-        if (events == null || events.isEmpty()) {
-            return; // Nothing to write
-        }
-
-        String entity = Json.toJson(events);
-        this.saveEvents(entity, attemp);
-    }
-
-    public List<String> getAllChunkIds() {
-        List<String> names = Lists.newArrayList(_storage.getAllIds());
-        List<String> chunkIds = Lists.newArrayList();
-
-        for (String name :
-                names) {
-            if (name.startsWith(FILE_PREFIX)) {
-                chunkIds.add(name);
+            String storedTracks = mFileStorageManager.read(EVENTS_FILE_NAME);
+            if(Strings.isNullOrEmpty(storedTracks)) {
+                return;
             }
-        }
+            Type dataType = new TypeToken<Map<String, EventsChunk>>() {
+            }.getType();
 
-        List<String> resultChunkIds = Lists.newArrayList(chunkIds);
-        return resultChunkIds;
+            Map<String, EventsChunk> chunkTracks = Json.fromJson(storedTracks, dataType);
+            mEventsChunks.putAll(chunkTracks);
+
+        } catch (IOException e) {
+            Logger.e(e, "Unable to load tracks from disk: " + e.getLocalizedMessage());
+        } catch (JsonSyntaxException syntaxException) {
+            Logger.e(syntaxException, "Unable to parse saved tracks: " + syntaxException.getLocalizedMessage());
+        }
     }
 
-    public String readCachedEvents(String filename) {
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    private void saveToDisk() {
         try {
-            return _storage.read(filename);
+            String json = Json.toJson(mEventsChunks);
+            mFileStorageManager.write(EVENTS_FILE_NAME, json);
         } catch (IOException e) {
-            Logger.e(e, "Could not read chunk %s", filename);
+            Logger.e(e, "Could not save tracks");
+        } catch (JsonSyntaxException syntaxException) {
+            Logger.e(syntaxException, "Unable to parse tracks to save");
         }
-        return null;
     }
 
 }

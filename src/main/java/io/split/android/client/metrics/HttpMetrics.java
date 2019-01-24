@@ -81,7 +81,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
             int status = response.getStatusLine().getStatusCode();
 
             if (status < 200 || status >= 300) {
-                Logger.w("Response status was: %i", status);
+                Logger.w("Response status was: %d", status);
             }
 
         } catch (Throwable t) {

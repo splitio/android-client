@@ -96,7 +96,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
 
             List<MySegment> mySegmentList = mySegmentsMap.get("mySegments");
 
-            _mySegmentsCache.saveMySegments(matchingKey, mySegmentList);
+            _mySegmentsCache.setMySegments(matchingKey, mySegmentList);
 
             return mySegmentList;
         } catch (Throwable t) {

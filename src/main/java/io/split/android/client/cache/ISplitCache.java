@@ -2,6 +2,8 @@ package io.split.android.client.cache;
 
 import java.util.List;
 
+import io.split.android.client.dtos.Split;
+
 /**
  * Created by guillermo on 11/23/17.
  */
@@ -9,11 +11,10 @@ import java.util.List;
 public interface ISplitCache {
     /**
      *
-     * @param splitName Split Name
-     * @param split Split JSON representation
+     * @param split Split
      * @return Whether the Split was added or not
      */
-    boolean addSplit(String splitName, String split);
+    boolean addSplit(Split split);
 
     /**
      *
@@ -40,7 +41,7 @@ public interface ISplitCache {
      * @param splitName Split Name
      * @return Split JSON representation
      */
-    String getSplit(String splitName);
+    Split getSplit(String splitName);
 
     /**
      * Get all cached splits names

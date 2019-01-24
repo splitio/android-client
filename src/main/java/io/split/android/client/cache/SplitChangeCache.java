@@ -1,6 +1,5 @@
 package io.split.android.client.cache;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
@@ -18,20 +17,21 @@ import io.split.android.client.utils.Logger;
 
 public class SplitChangeCache implements ISplitChangeCache {
 
-    private ISplitCache _splitCache;
+    private ISplitCache mSplitCache;
 
     public SplitChangeCache(IStorage storage) {
-        this._splitCache = new SplitCache(storage);
+        this.mSplitCache = new SplitCache(storage);
     }
 
     @Override
     public boolean addChange(SplitChange splitChange) {
-        if (_splitCache == null) return false;
+        if (mSplitCache == null) {
+            return false;
+        }
         boolean result = true;
-        _splitCache.setChangeNumber(splitChange.till);
-        for (Split split :
-                splitChange.splits) {
-            result = result && _splitCache.addSplit(split.name, Json.toJson(split));
+        mSplitCache.setChangeNumber(splitChange.till);
+        for (Split split : splitChange.splits) {
+            result = result && mSplitCache.addSplit(split);
         }
         return result;
     }
@@ -39,7 +39,7 @@ public class SplitChangeCache implements ISplitChangeCache {
     @Override
     public SplitChange getChanges(long since) {
 
-        long changeNumber = _splitCache.getChangeNumber();
+        long changeNumber = mSplitCache.getChangeNumber();
 
         SplitChange splitChange = new SplitChange();
 
@@ -55,20 +55,10 @@ public class SplitChangeCache implements ISplitChangeCache {
     }
 
     private void addAllSplits(List<Split> splits) {
-        for (String splitName :
-                _splitCache.getSplitNames()) {
-            String cachedSplit = _splitCache.getSplit(splitName);
-            if (cachedSplit != null && !cachedSplit.isEmpty()) {
-                try {
-                    Split split = Json.fromJson(cachedSplit, Split.class);
-                    if (split != null) {
-                        splits.add(split);
-                    }
-                } catch (JsonSyntaxException e) {
-                    Logger.e(e, "Failed to parse split %s, cache: %s", splitName, cachedSplit);
-                }
-            } else {
-                Logger.w("split %s was not cached", splitName);
+        for (String splitName : mSplitCache.getSplitNames()) {
+            Split cachedSplit = mSplitCache.getSplit(splitName);
+            if (cachedSplit != null) {
+                splits.add(cachedSplit);
             }
         }
     }
