@@ -4,13 +4,15 @@ import com.google.common.base.Strings;
 
 import io.split.android.client.api.Key;
 
+/**
+ * Validates an instance of Key class.
+ */
 public class KeyValidator implements Validator<Key> {
-
+    
     public final static int NO_ERROR = 0;
     public final static int ERROR_NULL_MATCHING_KEY = 1;
     public final static int ERROR_EMPTY_MATCHING_KEY = 2;
     public final static int ERROR_LONG_MATCHING_KEY = 3;
-    public final static int ERROR_NULL_BUCKETING_KEY = 4;
     public final static int ERROR_EMPTY_BUCKETING_KEY = 5;
     public final static int ERROR_LONG_BUCKETING_KEY = 5;
 
@@ -70,5 +72,4 @@ public class KeyValidator implements Validator<Key> {
     public void setMessageLogger(ValidationMessageLogger logger) {
         this.mMessageLogger = logger;
     }
-
 }

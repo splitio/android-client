@@ -3,7 +3,7 @@ package io.split.android.client.api;
 import io.split.android.client.validators.Validatable;
 import io.split.android.client.validators.Validator;
 
-public final class Key implements Validatable {
+public final class Key implements Validatable<Key> {
     private final String _matchingKey;
     private final String _bucketingKey;
 
