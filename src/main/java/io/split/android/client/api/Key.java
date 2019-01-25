@@ -1,6 +1,9 @@
 package io.split.android.client.api;
 
-public final class Key {
+import io.split.android.client.validators.Validatable;
+import io.split.android.client.validators.Validator;
+
+public final class Key implements Validatable {
     private final String _matchingKey;
     private final String _bucketingKey;
 
@@ -15,10 +18,6 @@ public final class Key {
     public Key(String matchingKey, String bucketingKey) {
         _matchingKey = matchingKey;
         _bucketingKey = bucketingKey;
-
-        if (_matchingKey == null) {
-            throw new IllegalArgumentException("Matching key cannot be null");
-        }
     }
 
     public String matchingKey() {
@@ -71,4 +70,8 @@ public final class Key {
         return bldr.toString();
     }
 
+    @Override
+    public Boolean isValid(Validator validator) {
+        return validator.isValidEntity(this);
+    }
 }
