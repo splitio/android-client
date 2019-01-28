@@ -38,7 +38,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage());
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage(), storageConfig());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -72,7 +72,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage());
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage(), storageConfig());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -107,7 +107,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage());
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage(), storageConfig());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -144,7 +144,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage());
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage(), storageConfig());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -164,6 +164,13 @@ public class ImpressionsManagerTest {
         result.time = time;
         result.changeNumber = changeNumber;
         return result;
+    }
+
+    private ImpressionsStorageManagerConfig storageConfig() {
+        ImpressionsStorageManagerConfig config = new ImpressionsStorageManagerConfig();
+        config.setImpressionsChunkOudatedTime(3600000);
+        config.setImpressionsMaxSentAttempts(3);
+        return config;
     }
 
 }

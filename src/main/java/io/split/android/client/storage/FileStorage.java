@@ -90,6 +90,19 @@ public class FileStorage implements IStorage {
     }
 
     @Override
+    public List<String> getAllIds(String fileNamePrefix) {
+        List<String> fileNames = new ArrayList<>();
+        String[] fileList = _context.fileList();
+
+        for(String fileName : fileList) {
+            if(fileName.startsWith(fileNamePrefix)){
+                fileNames.add(fileName);
+            }
+        }
+        return fileNames;
+    }
+
+    @Override
     public boolean rename(String currentId, String newId) {
         File oldFile = _context.getFileStreamPath(currentId);
         File newFile = _context.getFileStreamPath(newId);

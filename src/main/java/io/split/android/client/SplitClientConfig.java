@@ -25,6 +25,9 @@ public class SplitClientConfig {
     private final int _segmentsRefreshRate;
     private final int _impressionsRefreshRate;
     private final int _impressionsQueueSize;
+    private final int _impressionsMaxSentAttempts = 3;
+    private final long _impressionsChunkOudatedTime = 3600 * 1000; // One day millis
+
     private final int _metricsRefreshRate;
     private final int _connectionTimeout;
     private final int _readTimeout;
@@ -41,6 +44,7 @@ public class SplitClientConfig {
     private final int _eventsPerPush;
     private final long _eventFlushInterval;
     private final String _trafficType;
+    private final int _eventsMaxSentAttemps = 3;
 
     // Proxy configs
     private final HttpHost _proxy;
@@ -104,6 +108,8 @@ public class SplitClientConfig {
         _eventsPerPush = eventsPerPush;
         _eventFlushInterval = eventFlushInterval;
         _trafficType = trafficType;
+
+
 
         Properties props = new Properties();
         try {
@@ -225,6 +231,38 @@ public class SplitClientConfig {
 
     public String hostname() {
         return _hostname;
+    }
+
+    /**
+     * Maximum attempts count while sending impressions.
+     * to the server. Internal setting.
+     *
+     * @return Maximum attempts limit.
+     */
+
+    int impressionsMaxSentAttempts() {
+        return _impressionsMaxSentAttempts;
+    }
+
+    /**
+     * Elapsed time in millis to consider that a chunk of impression
+     * is outdated. Internal property
+     *
+     * @return Time in millis.
+     */
+    long impressionsChunkOutdatedTime() {
+        return _impressionsChunkOudatedTime;
+    }
+
+    /**
+     * Maximum attempts count while sending tracks
+     * to the server. Internal setting.
+     *
+     * @return Maximum attempts limit.
+     */
+
+    int eventsMaxSentAttempts() {
+        return _eventsMaxSentAttemps;
     }
 
     public String ip() {
@@ -589,6 +627,11 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * The current proxy host.
+         *
+         * @return an HttpHost representing current proxy
+         */
         HttpHost proxy() {
             if (_proxyPort != -1) {
                 return new HttpHost(_proxyHost, _proxyPort);
