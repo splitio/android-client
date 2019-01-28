@@ -6,10 +6,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import io.split.android.client.dtos.Event;
+import io.split.android.client.validators.EventTypeNameHelper;
 
 public class EventBuilderTest {
 
     private EventBuilder builder;
+    EventTypeNameHelper eventTypeNameHelper = new EventTypeNameHelper();
 
     @Before
     public void setUp() {
@@ -116,13 +118,13 @@ public class EventBuilderTest {
 
     @Test
     public void testValidTypeName() {
-        final String TYPE_NAME = "Abcdefghij:klmnopkrstuvwxyz_-12345.6789:";
+        final String TYPE_NAME = eventTypeNameHelper.getValidAllValidChars();
         Event event = null;
         try {
             event = builder
                     .setMatchingKey("key1")
                     .setTrafficType("custom")
-                    .setType(TYPE_NAME)
+                    .setType(eventTypeNameHelper.getValidAllValidChars())
                     .build();
         } catch (EventBuilder.EventValidationException ve) {
         }
@@ -133,7 +135,7 @@ public class EventBuilderTest {
 
     @Test
     public void testNumberStartValidTypeName() {
-        final String TYPE_NAME = "1Abcdefghijklmnopkrstuvwxyz_-12345.6789:";
+        final String TYPE_NAME = eventTypeNameHelper.getValidStartNumber();
         Event event = null;
         try {
             event = builder
@@ -150,7 +152,7 @@ public class EventBuilderTest {
 
     @Test
     public void testHypenStartInvalidTypeName() {
-        final String TYPE_NAME = "-1Abcdefghijklmnopkrstuvwxyz_-123456789:";
+        final String TYPE_NAME = eventTypeNameHelper.getInvalidHypenStart();
         Event event = null;
         try {
             event = builder
@@ -166,7 +168,7 @@ public class EventBuilderTest {
 
     @Test
     public void testUndercoreStartInvalidTypeName() {
-        final String TYPE_NAME = "_1Abcdefghijklmnopkrstuvwxyz_-123456789:";
+        final String TYPE_NAME = eventTypeNameHelper.getInvalidUndercoreStart();
         Event event = null;
         try {
             event = builder
@@ -182,7 +184,7 @@ public class EventBuilderTest {
 
     @Test
     public void testInvalidCharsTypeName() {
-        final String TYPE_NAME = "Abcd,;][}{efghijklmnopkrstuvwxyz_-123456789:";
+        final String TYPE_NAME = eventTypeNameHelper.getInvalidChars();
         Event event = null;
         try {
             event = builder

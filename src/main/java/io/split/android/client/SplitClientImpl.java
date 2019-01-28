@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -13,6 +14,9 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.track.EventBuilder;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.validators.KeyValidator;
+import io.split.android.client.validators.SplitNameValidator;
+import io.split.android.client.validators.Validator;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -107,9 +111,11 @@ public final class SplitClientImpl implements SplitClient {
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
 
+        final String validationTag = "getTreatments";
+
         Map<String, String> results = new HashMap<>();
         if(_isClientDestroyed){
-            Logger.e("Client has already been destroyed - no calls possible");
+            Logger.e(validationTag + ": client has already been destroyed - no calls possible");
             for(String split : splits) {
                 if(split != null) {
                     results.put(split, Treatments.CONTROL);
@@ -119,18 +125,24 @@ public final class SplitClientImpl implements SplitClient {
         }
 
         if(splits == null) {
-            Logger.e("getTreatments: split_names cannot be null");
+            Logger.e(validationTag + ": split_names cannot be null");
             return results;
         }
 
         if(splits.size() == 0) {
-            Logger.w("getTreatments: split_names is an empty array or has null values");
+            Logger.w(validationTag + ": split_names is an empty array or has null values");
             return results;
         }
 
+        Validator splitValidator = new SplitNameValidator(validationTag);
         for(String split : splits) {
             if(split != null) {
-                results.put(split, getTreatment(split, attributes));
+                Split splitToValidate = new Split(split);
+                if (!splitToValidate.isValid(splitValidator)) {
+                    results.put(split, Treatments.CONTROL);
+                } else {
+                    results.put(split, getTreatment(split, attributes));
+                }
             }
         }
         return results;
@@ -138,9 +150,16 @@ public final class SplitClientImpl implements SplitClient {
 
     private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
         try {
+            final String validationTag = "getTreatment";
+            Key keyToValidate = new Key(matchingKey, bucketingKey);
+            Validator keyValidator = new KeyValidator(validationTag);
+            if (!keyToValidate.isValid(keyValidator)) {
+                return Treatments.CONTROL;
+            }
 
-            if (Strings.isNullOrEmpty(split)) {
-                Logger.e("getTreatment: key cannot be null");
+            Split splitToValidate = new Split(split);
+            Validator splitValidator = new SplitNameValidator(validationTag);
+            if (!splitToValidate.isValid(splitValidator)) {
                 return Treatments.CONTROL;
             }
 
