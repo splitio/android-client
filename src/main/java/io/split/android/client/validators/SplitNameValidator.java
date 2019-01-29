@@ -16,7 +16,10 @@ public class SplitNameValidator implements Validator<Split> {
     public final static int NO_ERROR = 0;
     public final static int SOME_ERROR = 1;
 
+    public final static int WARNING_NAME_WAS_TRIMMED = 101;
+
     private int mError = SplitNameValidator.NO_ERROR;
+    private List<Integer> mWarnings = new ArrayList<>();
     private ValidationMessageLogger mMessageLogger;
 
     public SplitNameValidator(String tag) {
@@ -28,6 +31,7 @@ public class SplitNameValidator implements Validator<Split> {
 
         final String name = entity.name;
         mError = SplitNameValidator.SOME_ERROR;
+        mWarnings.clear();
 
         if (name == null) {
             mMessageLogger.e("you passed a null split name, split name must be a non-empty string");
@@ -39,13 +43,17 @@ public class SplitNameValidator implements Validator<Split> {
             return false;
         }
 
+        if (name.trim().length() != name.length()) {
+            mWarnings.add(new Integer(WARNING_NAME_WAS_TRIMMED));
+        }
+
         mError = SplitNameValidator.NO_ERROR;
         return true;
     }
 
     @Override
     public List<Integer> getWarnings() {
-        return new ArrayList<>();
+        return mWarnings;
     }
 
     @Override

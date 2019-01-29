@@ -167,14 +167,15 @@ public final class SplitClientImpl implements SplitClient {
                 Logger.w("No listeners for SDK Readiness detected. Incorrect control treatments could be logged if you call getTreatment while the SDK is not yet ready");
             }
 
+            String trimmedSplitName = split.trim();
             long start = System.currentTimeMillis();
 
-            TreatmentLabelAndChangeNumber result = getTreatmentResultWithoutImpressions(matchingKey, bucketingKey, split, attributes);
+            TreatmentLabelAndChangeNumber result = getTreatmentResultWithoutImpressions(matchingKey, bucketingKey, trimmedSplitName, attributes);
 
             recordStats(
                     matchingKey,
                     bucketingKey,
-                    split,
+                    trimmedSplitName,
                     start,
                     result._treatment,
                     "sdk.getTreatment",

@@ -57,7 +57,7 @@ public class SplitManagerImpl implements SplitManager {
             return null;
         }
 
-        ParsedSplit parsedSplit = _splitFetcher.fetch(featureName);
+        ParsedSplit parsedSplit = _splitFetcher.fetch(featureName.trim());
         return parsedSplit == null ? null : toSplitView(parsedSplit);
     }
 
