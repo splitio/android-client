@@ -52,6 +52,7 @@ import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidatable;
 import io.split.android.client.validators.ApiKeyValidator;
+import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.Validator;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
@@ -78,6 +79,8 @@ public class SplitFactoryImpl implements SplitFactory {
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
 
+        ValidationConfig.getInstance().setMaximumKeyLength(config.maximumKeyLength());
+        ValidationConfig.getInstance().setTrackEventNamePattern(config.trackEventNamePattern());
         ApiKeyValidatable apiKeyToValidate = new ApiKeyValidatable(apiToken);
         Validator apiKeyValidator = new ApiKeyValidator("factory instantiation");
         apiKeyToValidate.isValid(apiKeyValidator);

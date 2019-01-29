@@ -271,10 +271,9 @@ public class SplitClientConfig {
 
 
     /**
-     * Maximum attempts count while sending tracks
-     * to the server. Internal setting.
+     * Regex to validate Track event name
      *
-     * @return Maximum attempts limit.
+     * @return Regex pattern string
      */
     String trackEventNamePattern() {
         return _trackEventNamePattern;
