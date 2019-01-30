@@ -33,9 +33,7 @@ public interface Validator<T extends Validatable> {
      * Returns an integer representing the validation error that has occurred
      * If no error by convention the value should be 0
      *
-     * @param: A logger implementing ValidationMessageLogger interface
-     *
-     * @return Void
+     * @return int
      */
     public int getError();
 

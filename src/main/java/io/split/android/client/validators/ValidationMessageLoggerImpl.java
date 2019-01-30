@@ -2,6 +2,9 @@ package io.split.android.client.validators;
 
 import io.split.android.client.utils.Logger;
 
+/**
+ * Default implementation of ValidationMessageLogger interface
+ */
 class ValidationMessageLoggerImpl implements ValidationMessageLogger {
 
     private String mTag;
