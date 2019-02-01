@@ -1,9 +1,6 @@
 package io.split.android.client.api;
 
-import io.split.android.client.validators.Validatable;
-import io.split.android.client.validators.Validator;
-
-public final class Key implements Validatable<Key> {
+public final class Key {
     private final String _matchingKey;
     private final String _bucketingKey;
 
@@ -68,10 +65,5 @@ public final class Key implements Validatable<Key> {
         bldr.append(", ");
         bldr.append(_bucketingKey);
         return bldr.toString();
-    }
-
-    @Override
-    public Boolean isValid(Validator validator) {
-        return validator.isValidEntity(this);
     }
 }

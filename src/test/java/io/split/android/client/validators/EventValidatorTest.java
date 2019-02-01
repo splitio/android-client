@@ -16,7 +16,7 @@ public class EventValidatorTest {
 
     @Before
     public void setUp() {
-        validator = new EventValidator("KeyValidatorTests");
+        validator = new EventValidatorImpl("KeyValidatorTests");
         validator.setMessageLogger(Mockito.mock(ValidationMessageLogger.class));
     }
 
@@ -27,9 +27,7 @@ public class EventValidatorTest {
         event.trafficTypeName = "traffic1";
         event.key = "pepe";
         event.value = 1.0;
-        Assert.assertTrue(event.isValid(validator));
-        Assert.assertEquals(EventValidator.NO_ERROR, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertTrue(validator.isValidEvent(event));
     }
 
     @Test
@@ -38,9 +36,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = "pepe";
-        Assert.assertTrue(event.isValid(validator));
-        Assert.assertEquals(EventValidator.NO_ERROR, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertTrue(validator.isValidEvent(event));
     }
 
     @Test
@@ -49,10 +45,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = null;
-        Assert.assertFalse(event.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(EventValidator.ERROR_NULL_KEY, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertFalse(validator.isValidEvent(event));
     }
 
     @Test
@@ -61,10 +54,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = "";
-        Assert.assertFalse(event.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(validator.getError(), EventValidator.ERROR_EMPTY_KEY);
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertFalse(validator.isValidEvent(event));
     }
 
     @Test
@@ -73,10 +63,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = Strings.repeat("p", 300);
-        Assert.assertFalse(event.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(EventValidator.ERROR_LONG_KEY, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertFalse(validator.isValidEvent(event));
     }
 
     @Test
@@ -85,10 +72,7 @@ public class EventValidatorTest {
         event.eventTypeId = null;
         event.trafficTypeName = "traffic1";
         event.key = "key1";
-        Assert.assertFalse(event.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(EventValidator.ERROR_NULL_TYPE, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertFalse(validator.isValidEvent(event));
     }
 
     @Test
@@ -97,11 +81,7 @@ public class EventValidatorTest {
         event.eventTypeId = "";
         event.trafficTypeName = "traffic1";
         event.key = "key1";
-        Assert.assertFalse(event.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(EventValidator.ERROR_EMPTY_TYPE, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
-
+        Assert.assertFalse(validator.isValidEvent(event));
     }
 
     @Test
@@ -113,34 +93,18 @@ public class EventValidatorTest {
         Event event3 = newEventTypeName();
         Event event4 = newEventTypeName();
         Event event5 = newEventTypeName();
+
         event1.eventTypeId = nameHelper.getValidAllValidChars();
         event2.eventTypeId = nameHelper.getValidStartNumber();
         event3.eventTypeId = nameHelper.getInvalidChars();
         event4.eventTypeId = nameHelper.getInvalidUndercoreStart();
         event5.eventTypeId = nameHelper.getInvalidHypenStart();
 
-        Assert.assertTrue(event1.isValid(validator));
-        Assert.assertTrue(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(0, validator.getWarnings().size());
-
-        Assert.assertTrue(event2.isValid(validator));
-        Assert.assertTrue(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(0, validator.getWarnings().size());
-
-        Assert.assertFalse(event3.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(EventValidator.ERROR_REGEX_TYPE, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
-
-        Assert.assertFalse(event4.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(EventValidator.ERROR_REGEX_TYPE, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
-
-        Assert.assertFalse(event5.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(EventValidator.ERROR_REGEX_TYPE, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertTrue(validator.isValidEvent(event1));
+        Assert.assertTrue(validator.isValidEvent(event2));
+        Assert.assertFalse(validator.isValidEvent(event3));
+        Assert.assertFalse(validator.isValidEvent(event4));
+        Assert.assertFalse(validator.isValidEvent(event5));
     }
 
     @Test
@@ -149,10 +113,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = null;
         event.key = "key1";
-        Assert.assertFalse(event.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(EventValidator.ERROR_NULL_TRAFFIC_TYPE, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertFalse(validator.isValidEvent(event));
     }
 
     @Test
@@ -162,43 +123,34 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "";
         event.key = "key1";
-        Assert.assertFalse(event.isValid(validator));
-        Assert.assertFalse(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(EventValidator.ERROR_EMPTY_TRAFFIC_TYPE, validator.getError());
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertFalse(validator.isValidEvent(event));
     }
 
     @Test
     public void testUppercaseCharsInTrafficType() {
 
+        Event event0 = newEventUppercase();
         Event event1 = newEventUppercase();
         Event event2 = newEventUppercase();
         Event event3 = newEventUppercase();
+
+        event0.trafficTypeName = "custom";
         event1.trafficTypeName = "Custom";
         event2.trafficTypeName = "cUSTom";
         event3.trafficTypeName = "custoM";
 
-        Assert.assertTrue(event1.isValid(validator));
-        Assert.assertTrue(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(1, validator.getWarnings().size());
+        Assert.assertTrue(validator.isValidEvent(event0));
+        Assert.assertFalse(validator.trafficTypeHasUppercaseLetters(event0));
 
-        if (validator.getWarnings().size() > 0) {
-            Assert.assertEquals(EventValidator.WARNING_UPPERCASE_CHARS_IN_TRAFFIC_TYPE, validator.getWarnings().get(0).intValue());
-        }
+        Assert.assertTrue(validator.isValidEvent(event1));
+        Assert.assertTrue(validator.trafficTypeHasUppercaseLetters(event1));
 
-        Assert.assertTrue(event2.isValid(validator));
-        Assert.assertTrue(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(1, validator.getWarnings().size());
-        if (validator.getWarnings().size()> 0) {
-            Assert.assertEquals(EventValidator.WARNING_UPPERCASE_CHARS_IN_TRAFFIC_TYPE, validator.getWarnings().get(0).intValue());
-        }
+        Assert.assertTrue(validator.isValidEvent(event2));
+        Assert.assertTrue(validator.trafficTypeHasUppercaseLetters(event2));
 
-        Assert.assertTrue(event2.isValid(validator));
-        Assert.assertTrue(validator.getError() == EventValidator.NO_ERROR);
-        Assert.assertEquals(1, validator.getWarnings().size());
-        if (validator.getWarnings().size() > 0) {
-            Assert.assertEquals(EventValidator.WARNING_UPPERCASE_CHARS_IN_TRAFFIC_TYPE, validator.getWarnings().get(0).intValue());
-        }
+        Assert.assertTrue(validator.isValidEvent(event3));
+        Assert.assertTrue(validator.trafficTypeHasUppercaseLetters(event3));
+
     }
 
     private Event newEventTypeName()  {

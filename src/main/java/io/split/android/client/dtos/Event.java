@@ -2,10 +2,7 @@ package io.split.android.client.dtos;
 
 import com.google.common.base.Objects;
 
-import io.split.android.client.validators.Validatable;
-import io.split.android.client.validators.Validator;
-
-public class Event implements Validatable {
+public class Event {
 
     public String eventTypeId;
     public String trafficTypeName;
@@ -30,8 +27,4 @@ public class Event implements Validatable {
         return Objects.hashCode(eventTypeId, trafficTypeName, key, value, timestamp);
     }
 
-    @Override
-    public Boolean isValid(Validator validator) {
-        return validator.isValidEntity(this);
-    }
 }

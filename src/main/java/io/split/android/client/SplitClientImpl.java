@@ -15,8 +15,9 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.track.EventBuilder;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.KeyValidator;
-import io.split.android.client.validators.SplitNameValidator;
-import io.split.android.client.validators.Validator;
+import io.split.android.client.validators.KeyValidatorImpl;
+import io.split.android.client.validators.SplitValidator;
+import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -56,6 +57,9 @@ public final class SplitClientImpl implements SplitClient {
 
     private final TrackClient _trackClient;
 
+    private final KeyValidator keyValidator = new KeyValidatorImpl();
+    private final SplitValidator splitValidator = new SplitValidatorImpl();
+
     private boolean _isClientDestroyed = false;
 
     public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config, SplitEventsManager eventsManager, TrackClient trackClient) {
@@ -68,6 +72,7 @@ public final class SplitClientImpl implements SplitClient {
         _bucketingKey = key.bucketingKey();
         _eventsManager = eventsManager;
         _trackClient = trackClient;
+
 
         checkNotNull(_splitFetcher);
         checkNotNull(_impressionListener);
@@ -134,11 +139,10 @@ public final class SplitClientImpl implements SplitClient {
             return results;
         }
 
-        Validator splitValidator = new SplitNameValidator(validationTag);
+        splitValidator.setTag(validationTag);
         for(String split : splits) {
             if(split != null) {
-                Split splitToValidate = new Split(split);
-                if (!splitToValidate.isValid(splitValidator)) {
+                if (!splitValidator.isValidName(split)) {
                     results.put(split, Treatments.CONTROL);
                 } else {
                     results.put(split, getTreatment(split, attributes));
@@ -151,15 +155,14 @@ public final class SplitClientImpl implements SplitClient {
     private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
         try {
             final String validationTag = "getTreatment";
-            Key keyToValidate = new Key(matchingKey, bucketingKey);
-            Validator keyValidator = new KeyValidator(validationTag);
-            if (!keyToValidate.isValid(keyValidator)) {
+
+            keyValidator.setTag(validationTag);
+            if (!keyValidator.isValidKey(matchingKey, bucketingKey)) {
                 return Treatments.CONTROL;
             }
 
-            Split splitToValidate = new Split(split);
-            Validator splitValidator = new SplitNameValidator(validationTag);
-            if (!splitToValidate.isValid(splitValidator)) {
+            splitValidator.setTag(validationTag);
+            if (!splitValidator.isValidName(split)) {
                 return Treatments.CONTROL;
             }
 

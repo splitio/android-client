@@ -12,48 +12,42 @@ import io.split.android.client.dtos.Split;
 
 public class SplitNameValidatorTest {
 
-    private SplitNameValidator validator;
+    private SplitValidator validator;
 
     @Before
     public void setUp() {
-        validator = new SplitNameValidator("SplitNameValidatorTests");
+        validator = new SplitValidatorImpl("SplitNameValidatorTests");
         validator.setMessageLogger(Mockito.mock(ValidationMessageLogger.class));
     }
 
     @Test
     public void testValidName() {
-        Split split = new Split("split1");
-        Assert.assertTrue(split.isValid(validator));
-        Assert.assertEquals(0, validator.getWarnings().size());
+        String splitName = "split1";
+        Assert.assertTrue(validator.isValidName(splitName));
+        Assert.assertFalse(validator.nameHasToBeTrimmed(splitName));
     }
 
     @Test
     public void testNullName() {
-        Split split = new Split(null);
-        Assert.assertFalse(split.isValid(validator));
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertFalse(validator.isValidName(null));
     }
 
     @Test
     public void testInvalidEmptyName() {
-        Split split = new Split("");
-        Assert.assertFalse(split.isValid(validator));
-        Assert.assertEquals(0, validator.getWarnings().size());
+        Assert.assertFalse(validator.isValidName(""));
     }
 
     @Test
     public void testLeadingSpacesName() {
-        Split split = new Split(" splitName");
-        Assert.assertTrue(split.isValid(validator));
-        Assert.assertEquals(1, validator.getWarnings().size());
-        Assert.assertEquals(SplitNameValidator.WARNING_NAME_WAS_TRIMMED, validator.getWarnings().get(0).intValue());
+        String splitName = " splitName";
+        Assert.assertTrue(validator.isValidName(splitName));
+        Assert.assertTrue(validator.nameHasToBeTrimmed(splitName));
     }
 
     @Test
     public void testTrailingSpacesName() {
-        Split split = new Split("splitName ");
-        Assert.assertTrue(split.isValid(validator));
-        Assert.assertEquals(1, validator.getWarnings().size());
-        Assert.assertEquals(SplitNameValidator.WARNING_NAME_WAS_TRIMMED, validator.getWarnings().get(0).intValue());
+        String splitName = "splitName ";
+        Assert.assertTrue(validator.isValidName(splitName));
+        Assert.assertTrue(validator.nameHasToBeTrimmed(splitName));
     }
 }

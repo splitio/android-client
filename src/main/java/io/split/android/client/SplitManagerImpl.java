@@ -1,13 +1,11 @@
 package io.split.android.client;
 
-import com.google.common.base.Strings;
-
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.validators.SplitNameValidator;
-import io.split.android.client.validators.Validator;
+import io.split.android.client.validators.SplitValidator;
+import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -21,10 +19,12 @@ public class SplitManagerImpl implements SplitManager {
 
     private final SplitFetcher _splitFetcher;
     private boolean _isManagerDestroyed = false;
+    private SplitValidator _splitValidator;
 
 
     public SplitManagerImpl(SplitFetcher splitFetcher) {
         _splitFetcher  = splitFetcher;
+        _splitValidator = new SplitValidatorImpl();
     }
 
     @Override
@@ -51,9 +51,8 @@ public class SplitManagerImpl implements SplitManager {
             return null;
         }
 
-        Split split = new Split(featureName);
-        Validator splitValidator = new SplitNameValidator("split");
-        if (!split.isValid(splitValidator)) {
+        _splitValidator.setTag("split");
+        if (!_splitValidator.isValidName(featureName)) {
             return null;
         }
 

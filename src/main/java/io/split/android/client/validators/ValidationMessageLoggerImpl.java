@@ -14,6 +14,11 @@ class ValidationMessageLoggerImpl implements ValidationMessageLogger {
     }
 
     @Override
+    public void setTag(String tag) {
+        mTag = tag;
+    }
+
+    @Override
     public void e(String message) {
         Logger.e(mTag + ": " + message);
     }

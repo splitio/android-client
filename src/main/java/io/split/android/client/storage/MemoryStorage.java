@@ -40,7 +40,7 @@ public class MemoryStorage implements IStorage {
 
     @Override
     public List<String> getAllIds(String fileNamePrefix) {
-        return new ArrayList(_storage.keySet());
+        return new ArrayList<String>(_storage.keySet());
     }
 
     @Override

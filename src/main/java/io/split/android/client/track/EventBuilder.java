@@ -1,11 +1,8 @@
 package io.split.android.client.track;
 
-import com.google.common.base.Strings;
-
 import io.split.android.client.dtos.Event;
-import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
-import io.split.android.client.validators.Validator;
+import io.split.android.client.validators.EventValidatorImpl;
 
 public class EventBuilder {
 
@@ -49,8 +46,8 @@ public class EventBuilder {
         event.value = value;
         event.timestamp = System.currentTimeMillis();
 
-        Validator eventValidator = new EventValidator("track");
-        if (!event.isValid(eventValidator)) {
+        EventValidator eventValidator = new EventValidatorImpl("track");
+        if (!eventValidator.isValidEvent(event)) {
             throw new EventValidationException("Event is not valid");
         }
 
