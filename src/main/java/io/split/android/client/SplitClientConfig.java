@@ -52,8 +52,8 @@ public class SplitClientConfig {
     private final String _proxyPassword;
 
     // Validation settings
-    private int _maximumKeyLength = 250;
-    private String _trackEventNamePattern = "^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$";
+    private static final int _maximumKeyLength = 250;
+    private static final String _trackEventNamePattern = "^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$";
 
     // To be set during startup
     public static String splitSdkVersion;

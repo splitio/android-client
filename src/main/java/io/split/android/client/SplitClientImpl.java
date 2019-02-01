@@ -5,14 +5,12 @@ import com.google.common.base.Strings;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
-import io.split.android.client.track.EventBuilder;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
@@ -57,8 +55,8 @@ public final class SplitClientImpl implements SplitClient {
 
     private final TrackClient _trackClient;
 
-    private final KeyValidator keyValidator = new KeyValidatorImpl();
-    private final SplitValidator splitValidator = new SplitValidatorImpl();
+    private final KeyValidator _keyValidator = new KeyValidatorImpl();
+    private final SplitValidator _splitValidator = new SplitValidatorImpl();
 
     private boolean _isClientDestroyed = false;
 
@@ -139,10 +137,9 @@ public final class SplitClientImpl implements SplitClient {
             return results;
         }
 
-        splitValidator.setTag(validationTag);
         for(String split : splits) {
             if(split != null) {
-                if (!splitValidator.isValidName(split)) {
+                if (!_splitValidator.isValidName(split, validationTag)) {
                     results.put(split, Treatments.CONTROL);
                 } else {
                     results.put(split, getTreatment(split, attributes));
@@ -156,13 +153,11 @@ public final class SplitClientImpl implements SplitClient {
         try {
             final String validationTag = "getTreatment";
 
-            keyValidator.setTag(validationTag);
-            if (!keyValidator.isValidKey(matchingKey, bucketingKey)) {
+            if (!_keyValidator.isValidKey(matchingKey, bucketingKey, validationTag)) {
                 return Treatments.CONTROL;
             }
 
-            splitValidator.setTag(validationTag);
-            if (!splitValidator.isValidName(split)) {
+            if (!_splitValidator.isValidName(split, validationTag)) {
                 return Treatments.CONTROL;
             }
 
@@ -170,7 +165,7 @@ public final class SplitClientImpl implements SplitClient {
                 Logger.w("No listeners for SDK Readiness detected. Incorrect control treatments could be logged if you call getTreatment while the SDK is not yet ready");
             }
 
-            String trimmedSplitName = split.trim();
+            String trimmedSplitName = _splitValidator.trimName(split, validationTag);
             long start = System.currentTimeMillis();
 
             TreatmentLabelAndChangeNumber result = getTreatmentResultWithoutImpressions(matchingKey, bucketingKey, trimmedSplitName, attributes);
@@ -362,18 +357,14 @@ public final class SplitClientImpl implements SplitClient {
             return false;
         }
 
-        EventBuilder eventBuilder = new EventBuilder();
-        try {
-            Event event = eventBuilder
-                    .setType(trafficType)
-                    .setMatchingKey(key)
-                    .setType(eventType)
-                    .setValue(value)
-            .build();
-            return _trackClient.track(event);
-        } catch (EventBuilder.EventValidationException e) {
-        }
-        return false;
+        Event event = new Event();
+        event.eventTypeId = eventType;
+        event.trafficTypeName = trafficType;
+        event.key = key;
+        event.value = value;
+        event.timestamp = System.currentTimeMillis();
+
+        return _trackClient.track(event);
     }
 
 }

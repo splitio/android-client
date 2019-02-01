@@ -26,5 +26,4 @@ public class Event {
     public int hashCode() {
         return Objects.hashCode(eventTypeId, trafficTypeName, key, value, timestamp);
     }
-
 }

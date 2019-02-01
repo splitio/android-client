@@ -5,7 +5,8 @@ package io.split.android.client.validators;
  * logger for validations components
  */
 interface ValidationMessageLogger {
-    void setTag(String tag);
     void e(String message);
     void w(String message);
+    void e(String tag, String message);
+    void w(String tag, String message);
 }

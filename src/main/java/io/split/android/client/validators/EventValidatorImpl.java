@@ -16,21 +16,22 @@ public class EventValidatorImpl implements EventValidator {
     private ValidationMessageLogger mMessageLogger;
     private final String TYPE_REGEX = ValidationConfig.getInstance().getTrackEventNamePattern();
     private KeyValidator mKeyValidator;
+    private String mTag = "";
 
     public EventValidatorImpl(String tag) {
         this.mMessageLogger = new ValidationMessageLoggerImpl(tag);
-        this.mKeyValidator = new KeyValidatorImpl(tag);
+        this.mKeyValidator = new KeyValidatorImpl();
+        this.mTag = tag;
     }
 
     @Override
     public boolean isValidEvent(Event event) {
 
         if(event == null) {
-            mMessageLogger.e("you passed a null or undefined event, event must be a non-null instance");
             return false;
         }
 
-        if(!mKeyValidator.isValidKey(event.key, null)){
+        if(!mKeyValidator.isValidKey(event.key, null, mTag)){
             return false;
         }
 

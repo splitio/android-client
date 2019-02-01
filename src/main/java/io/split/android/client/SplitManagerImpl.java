@@ -46,17 +46,18 @@ public class SplitManagerImpl implements SplitManager {
     @Override
     public SplitView split(String featureName) {
 
+        final String validationTag = "split";
+
         if(_isManagerDestroyed){
             Logger.e("Manager has already been destroyed - no calls possible");
             return null;
         }
 
-        _splitValidator.setTag("split");
-        if (!_splitValidator.isValidName(featureName)) {
+        if (!_splitValidator.isValidName(featureName, validationTag)) {
             return null;
         }
 
-        ParsedSplit parsedSplit = _splitFetcher.fetch(featureName.trim());
+        ParsedSplit parsedSplit = _splitFetcher.fetch(_splitValidator.trimName(featureName, validationTag));
         return parsedSplit == null ? null : toSplitView(parsedSplit);
     }
 

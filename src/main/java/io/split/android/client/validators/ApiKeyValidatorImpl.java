@@ -19,7 +19,7 @@ public class ApiKeyValidatorImpl implements ApiKeyValidator {
         }
 
         if (Strings.isNullOrEmpty(apiKey)) {
-            mMessageLogger.e("you passed and empty api_key, api_key must be a non-empty string");
+            mMessageLogger.e("you passed an empty api_key, api_key must be a non-empty string");
             return false;
         }
 

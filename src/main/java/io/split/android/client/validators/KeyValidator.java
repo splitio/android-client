@@ -9,18 +9,11 @@ public interface KeyValidator {
 
     /**
      * Checks that a Key is valid
-     * @param key: Key instance
-     * @return true when the key is valid, false when it is not
-     */
-    public boolean isValidKey(Key key);
-
-    /**
-     * Checks that a Key is valid
      * @param matchingKey: Matching key
      * @param bucketingKey: Bucketing key
      * @return true when the key is valid, false when it is not
      */
-    public boolean isValidKey(String matchingKey, String bucketingKey);
+    public boolean isValidKey(String matchingKey, String bucketingKey, String logTag);
 
     /**
      * Overrides de default message logger
@@ -29,10 +22,4 @@ public interface KeyValidator {
      */
     public void setMessageLogger(ValidationMessageLogger logger);
 
-    /**
-     * Sets the tag displayed in logs
-     * @param tag: String tag
-     *
-     */
-    public void setTag(String tag);
 }

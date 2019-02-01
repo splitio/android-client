@@ -28,6 +28,8 @@ import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.GenericClientUtil;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
+import io.split.android.client.validators.EventValidator;
+import io.split.android.client.validators.EventValidatorImpl;
 
 import static java.lang.Thread.MIN_PRIORITY;
 
@@ -54,8 +56,8 @@ public class TrackClientImpl implements TrackClient {
     private final ExecutorService _consumerExecutor;
 
     private final TrackStorageManager _storageManager;
-
-
+    private final String validationTag = "track";
+    private final EventValidator _eventValidator = new EventValidatorImpl(validationTag);
 
     private ThreadFactory eventClientThreadFactory(final String name) {
         return new ThreadFactory() {
@@ -127,9 +129,15 @@ public class TrackClientImpl implements TrackClient {
     @Override
     public boolean track(Event event) {
         try {
-            if (event == null) {
+            if (!_eventValidator.isValidEvent(event)) {
                 return false;
             }
+
+            if (_eventValidator.trafficTypeHasUppercaseLetters(event)) {
+                event.trafficTypeName = event.trafficTypeName.toLowerCase();
+                Logger.w(validationTag + ": traffic_type_name should be all lowercase - converting string to lowercase");
+            }
+
             _eventQueue.put(event);
         } catch (InterruptedException e) {
             Logger.w("Interruption when adding event withed while adding message %s.", event);
