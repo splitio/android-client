@@ -121,7 +121,7 @@ public final class SplitClientImpl implements SplitClient {
             Logger.e(validationTag + ": client has already been destroyed - no calls possible");
             for(String split : splits) {
                 if (_splitValidator.isValidName(split, validationTag)) {
-                    results.put(split, Treatments.CONTROL);
+                    results.put(_splitValidator.trimName(split, validationTag), Treatments.CONTROL);
                 }
             }
             return results;
@@ -141,7 +141,7 @@ public final class SplitClientImpl implements SplitClient {
             if (_splitValidator.isValidName(split, validationTag)) {
                 results.put(split, getTreatment(_matchingKey, _bucketingKey, split, attributes, false));
             } else {
-                results.put(split, Treatments.CONTROL);
+                results.put(_splitValidator.trimName(split, validationTag), Treatments.CONTROL);
             }
         }
         return results;
@@ -171,8 +171,6 @@ public final class SplitClientImpl implements SplitClient {
                 }
 
                 splitName = _splitValidator.trimName(split, validationTag);
-            } else if (_splitValidator.nameHasToBeTrimmed(split)) {
-                splitName = split.trim();
             }
 
             long start = System.currentTimeMillis();
