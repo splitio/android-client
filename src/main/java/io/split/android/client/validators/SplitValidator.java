@@ -28,4 +28,10 @@ public interface SplitValidator {
      */
     public void setMessageLogger(ValidationMessageLogger logger);
 
+    /**
+     * Check if split name has leading or trailing spaces
+     * @param name: Split name
+     *
+     */
+    public boolean nameHasToBeTrimmed(String name);
 }

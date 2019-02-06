@@ -36,7 +36,6 @@ public class SplitValidatorImpl implements SplitValidator {
             return false;
         }
 
-
         return true;
     }
 
@@ -54,7 +53,8 @@ public class SplitValidatorImpl implements SplitValidator {
         this.mMessageLogger = logger;
     }
 
-    private boolean nameHasToBeTrimmed(String name) {
+    @Override
+    public boolean nameHasToBeTrimmed(String name) {
         return name.trim().length() != name.length();
     }
 

@@ -120,7 +120,7 @@ public final class SplitClientImpl implements SplitClient {
         if(_isClientDestroyed){
             Logger.e(validationTag + ": client has already been destroyed - no calls possible");
             for(String split : splits) {
-                if(split != null) {
+                if (_splitValidator.isValidName(split, validationTag)) {
                     results.put(split, Treatments.CONTROL);
                 }
             }
@@ -138,42 +138,61 @@ public final class SplitClientImpl implements SplitClient {
         }
 
         for(String split : splits) {
-            if(split != null) {
-                if (!_splitValidator.isValidName(split, validationTag)) {
-                    results.put(split, Treatments.CONTROL);
-                } else {
-                    results.put(split, getTreatment(split, attributes));
-                }
+            if (_splitValidator.isValidName(split, validationTag)) {
+                results.put(split, getTreatment(_matchingKey, _bucketingKey, split, attributes, false));
+            } else {
+                results.put(split, Treatments.CONTROL);
             }
         }
         return results;
     }
 
     private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
+        return getTreatment(matchingKey, bucketingKey, split, attributes, true);
+    }
+
+    private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes, boolean validateInput) {
         try {
-            final String validationTag = "getTreatment";
 
-            if (!_keyValidator.isValidKey(matchingKey, bucketingKey, validationTag)) {
-                return Treatments.CONTROL;
+            String splitName = split;
+            if (validateInput) {
+                final String validationTag = "getTreatment";
+
+                if (!_keyValidator.isValidKey(matchingKey, bucketingKey, validationTag)) {
+                    return Treatments.CONTROL;
+                }
+
+                if (!_splitValidator.isValidName(split, validationTag)) {
+                    return Treatments.CONTROL;
+                }
+
+                if (!_eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)) {
+                    Logger.w("No listeners for SDK Readiness detected. Incorrect control treatments could be logged if you call getTreatment while the SDK is not yet ready");
+                }
+
+                splitName = _splitValidator.trimName(split, validationTag);
+            } else if (_splitValidator.nameHasToBeTrimmed(split)) {
+                splitName = split.trim();
             }
 
-            if (!_splitValidator.isValidName(split, validationTag)) {
-                return Treatments.CONTROL;
-            }
-
-            if (!_eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)) {
-                Logger.w("No listeners for SDK Readiness detected. Incorrect control treatments could be logged if you call getTreatment while the SDK is not yet ready");
-            }
-
-            String trimmedSplitName = _splitValidator.trimName(split, validationTag);
             long start = System.currentTimeMillis();
 
-            TreatmentLabelAndChangeNumber result = getTreatmentResultWithoutImpressions(matchingKey, bucketingKey, trimmedSplitName, attributes);
+            TreatmentLabelAndChangeNumber result = null;
+
+            try {
+                result = getTreatmentWithoutExceptionHandling(matchingKey, bucketingKey, splitName, attributes);
+            } catch (ChangeNumberExceptionWrapper e) {
+                result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION, e.changeNumber());
+                Logger.e(e.wrappedException());
+            } catch (Exception e) {
+                result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION);
+                Logger.e(e);
+            }
 
             recordStats(
                     matchingKey,
                     bucketingKey,
-                    trimmedSplitName,
+                    splitName,
                     start,
                     result._treatment,
                     "sdk.getTreatment",
