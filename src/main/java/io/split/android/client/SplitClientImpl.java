@@ -116,17 +116,16 @@ public final class SplitClientImpl implements SplitClient {
 
         final String validationTag = "getTreatments";
 
-        Map<String, String> results = new HashMap<>();
         if(_isClientDestroyed){
             Logger.e(validationTag + ": client has already been destroyed - no calls possible");
-            for(String split : splits) {
-                if (_splitValidator.isValidName(split, validationTag)) {
-                    results.put(_splitValidator.trimName(split, validationTag), Treatments.CONTROL);
-                }
-            }
-            return results;
+            return controlTreatmentsForSplits(splits, validationTag);
         }
 
+        if (!_keyValidator.isValidKey(_matchingKey, _bucketingKey, validationTag)) {
+            return controlTreatmentsForSplits(splits, validationTag);
+        }
+
+        Map<String, String> results = new HashMap<>();
         if(splits == null) {
             Logger.e(validationTag + ": split_names cannot be null");
             return results;
@@ -142,6 +141,16 @@ public final class SplitClientImpl implements SplitClient {
                 results.put(split, getTreatment(_matchingKey, _bucketingKey, split, attributes, false));
             } else {
                 results.put(split, Treatments.CONTROL);
+            }
+        }
+        return results;
+    }
+
+    private Map<String, String> controlTreatmentsForSplits(List<String> splits, String validationTag) {
+        Map<String, String> results = new HashMap<>();
+        for(String split : splits) {
+            if(_splitValidator.isValidName(split, validationTag)) {
+                results.put(_splitValidator.trimName(split, validationTag), Treatments.CONTROL);
             }
         }
         return results;
