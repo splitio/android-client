@@ -139,8 +139,6 @@ public final class SplitClientImpl implements SplitClient {
         for(String split : splits) {
             if (_splitValidator.isValidName(split, validationTag)) {
                 results.put(split, getTreatment(_matchingKey, _bucketingKey, split, attributes, false));
-            } else {
-                results.put(split, Treatments.CONTROL);
             }
         }
         return results;
