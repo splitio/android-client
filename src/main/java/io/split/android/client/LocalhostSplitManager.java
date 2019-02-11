@@ -44,6 +44,10 @@ public final class LocalhostSplitManager implements SplitManager {
     }
 
     @Override
+    public void destroy() {
+    }
+
+    @Override
     public SplitView split(String featureName) {
         if (!_featureToTreatmentMap.containsKey(featureName)) {
             return null;

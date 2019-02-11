@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '1.2.3-rc1'
+    splitVersion = '2.0.0-sdks-31.1'
 }
 
 allprojects {
@@ -40,6 +40,10 @@ android {
 
     lintOptions {
         disable 'InvalidPackage'
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
     }
 }
 
