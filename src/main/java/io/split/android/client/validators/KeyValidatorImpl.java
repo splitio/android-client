@@ -29,7 +29,7 @@ public class KeyValidatorImpl implements KeyValidator {
             return false;
         }
 
-        if (Strings.isNullOrEmpty(matchingKey)) {
+        if (Strings.isNullOrEmpty(matchingKey.trim())) {
             mMessageLogger.e(logTag,"you passed an empty string, matching key must be a non-empty string");
             return false;
         }
@@ -40,7 +40,7 @@ public class KeyValidatorImpl implements KeyValidator {
         }
 
         if (bucketingKey != null) {
-            if (bucketingKey.trim() == "") {
+            if (Strings.isNullOrEmpty(bucketingKey.trim())) {
                 mMessageLogger.e(logTag,"you passed an empty string, bucketing key must be null or a non-empty string");
                 return false;
             }

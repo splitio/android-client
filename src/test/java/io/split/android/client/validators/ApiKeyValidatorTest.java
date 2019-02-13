@@ -30,4 +30,9 @@ public class ApiKeyValidatorTest {
     public void testInvalidEmptyKey() {
         Assert.assertFalse(validator.isValidApiKey(""));
     }
+
+    @Test
+    public void testInvalidAllSpacesKey() {
+        Assert.assertFalse(validator.isValidApiKey("   "));
+    }
 }

@@ -38,6 +38,10 @@ public class SplitNameValidatorTest {
         Assert.assertFalse(validator.isValidName("", tag));
     }
 
+    public void testInvalidAllSpacesInName() {
+        Assert.assertFalse(validator.isValidName("   ", tag));
+    }
+
     @Test
     public void testLeadingSpacesName() {
         String splitName = " splitName";

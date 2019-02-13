@@ -58,6 +58,15 @@ public class EventValidatorTest {
     }
 
     @Test
+    public void testAllSpacesInKey() {
+        Event event = new Event();
+        event.eventTypeId = "type1";
+        event.trafficTypeName = "traffic1";
+        event.key = "   ";
+        Assert.assertFalse(validator.isValidEvent(event));
+    }
+
+    @Test
     public void testLongKey() {
         Event event = new Event();
         event.eventTypeId = "type1";
@@ -79,6 +88,15 @@ public class EventValidatorTest {
     public void testEmptyType() {
         Event event = new Event();
         event.eventTypeId = "";
+        event.trafficTypeName = "traffic1";
+        event.key = "key1";
+        Assert.assertFalse(validator.isValidEvent(event));
+    }
+
+    @Test
+    public void testAllSpacesInType() {
+        Event event = new Event();
+        event.eventTypeId = "   ";
         event.trafficTypeName = "traffic1";
         event.key = "key1";
         Assert.assertFalse(validator.isValidEvent(event));
@@ -122,6 +140,16 @@ public class EventValidatorTest {
         Event event = new Event();
         event.eventTypeId = "type1";
         event.trafficTypeName = "";
+        event.key = "key1";
+        Assert.assertFalse(validator.isValidEvent(event));
+    }
+
+    @Test
+    public void testAllSpacesInTrafficType() {
+
+        Event event = new Event();
+        event.eventTypeId = "type1";
+        event.trafficTypeName = "   ";
         event.key = "key1";
         Assert.assertFalse(validator.isValidEvent(event));
     }
