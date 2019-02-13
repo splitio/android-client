@@ -42,6 +42,11 @@ public class KeyValidatorTest {
     }
 
     @Test
+    public void testInvalidAllSpacesInMatchingKey() {
+        Assert.assertFalse(validator.isValidKey("   ", null, tag));
+    }
+
+    @Test
     public void testInvalidLongMatchingKey() {
         Assert.assertFalse(validator.isValidKey(Strings.repeat("p", 256), null, tag));
     }
@@ -49,6 +54,11 @@ public class KeyValidatorTest {
     @Test
     public void testInvalidEmptyBucketingKey() {
         Assert.assertFalse(validator.isValidKey("key1", "", tag));
+    }
+
+    @Test
+    public void testInvalidAllSpacesInBucketingKey() {
+        Assert.assertFalse(validator.isValidKey("key1", "   ", tag));
     }
 
     @Test

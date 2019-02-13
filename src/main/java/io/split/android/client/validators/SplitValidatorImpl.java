@@ -31,7 +31,7 @@ public class SplitValidatorImpl implements SplitValidator {
             return false;
         }
 
-        if (Strings.isNullOrEmpty(name)) {
+        if (Strings.isNullOrEmpty(name.trim())) {
             mMessageLogger.e(logTag, "you passed an empty split name, split name must be a non-empty string");
             return false;
         }

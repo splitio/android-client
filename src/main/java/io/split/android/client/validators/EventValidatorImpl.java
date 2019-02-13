@@ -40,7 +40,7 @@ public class EventValidatorImpl implements EventValidator {
             return false;
         }
 
-        if (Strings.isNullOrEmpty(event.trafficTypeName)) {
+        if (Strings.isNullOrEmpty(event.trafficTypeName.trim())) {
             mMessageLogger.e("you passed an empty traffic_type_name, traffic_type_name must be a non-empty string");
             return false;
         }
@@ -50,7 +50,7 @@ public class EventValidatorImpl implements EventValidator {
             return false;
         }
 
-        if (Strings.isNullOrEmpty(event.eventTypeId)) {
+        if (Strings.isNullOrEmpty(event.eventTypeId.trim())) {
             mMessageLogger.e("you passed an empty event_type, event_type must be a non-empty String");
             return false;
         }
