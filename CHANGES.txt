@@ -1,3 +1,5 @@
+2.0.0: (Feb 11, 2019)
+- Adding several validations for passed parameters
 1.2.3: (Jan 21, 2019)
 - Storing splits, segments, impressions and tracks on disk only when app goes to background or close
 - Fixing issue when traffic allocation equals to zero

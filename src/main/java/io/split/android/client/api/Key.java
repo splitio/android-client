@@ -15,10 +15,6 @@ public final class Key {
     public Key(String matchingKey, String bucketingKey) {
         _matchingKey = matchingKey;
         _bucketingKey = bucketingKey;
-
-        if (_matchingKey == null) {
-            throw new IllegalArgumentException("Matching key cannot be null");
-        }
     }
 
     public String matchingKey() {
@@ -70,5 +66,4 @@ public final class Key {
         bldr.append(_bucketingKey);
         return bldr.toString();
     }
-
 }

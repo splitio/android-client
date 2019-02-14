@@ -12,6 +12,10 @@ import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.validators.KeyValidator;
+import io.split.android.client.validators.KeyValidatorImpl;
+import io.split.android.client.validators.SplitValidator;
+import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -51,6 +55,11 @@ public final class SplitClientImpl implements SplitClient {
 
     private final TrackClient _trackClient;
 
+    private final KeyValidator _keyValidator = new KeyValidatorImpl();
+    private final SplitValidator _splitValidator = new SplitValidatorImpl();
+
+    private boolean _isClientDestroyed = false;
+
     public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config, SplitEventsManager eventsManager, TrackClient trackClient) {
         _container = container;
         _splitFetcher = splitFetcher;
@@ -62,6 +71,7 @@ public final class SplitClientImpl implements SplitClient {
         _eventsManager = eventsManager;
         _trackClient = trackClient;
 
+
         checkNotNull(_splitFetcher);
         checkNotNull(_impressionListener);
         checkNotNull(_matchingKey);
@@ -72,6 +82,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public void destroy() {
+        _isClientDestroyed = true;
         _container.destroy();
     }
 
@@ -92,42 +103,101 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes) {
+        if(_isClientDestroyed) {
+            Logger.e("Client has already been destroyed - no calls possible");
+            return Treatments.CONTROL;
+        }
+
         return getTreatment(_matchingKey, _bucketingKey, split, attributes);
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
+
+        final String validationTag = "getTreatments";
+
+        if(_isClientDestroyed){
+            Logger.e(validationTag + ": client has already been destroyed - no calls possible");
+            return controlTreatmentsForSplits(splits, validationTag);
+        }
+
+        if (!_keyValidator.isValidKey(_matchingKey, _bucketingKey, validationTag)) {
+            return controlTreatmentsForSplits(splits, validationTag);
+        }
+
         Map<String, String> results = new HashMap<>();
         if(splits == null) {
+            Logger.e(validationTag + ": split_names cannot be null");
+            return results;
+        }
+
+        if(splits.size() == 0) {
+            Logger.w(validationTag + ": split_names is an empty array or has null values");
             return results;
         }
 
         for(String split : splits) {
-            results.put(split, getTreatment(split, attributes));
+            if (_splitValidator.isValidName(split, validationTag)) {
+                results.put(split.trim(), getTreatment(_matchingKey, _bucketingKey, _splitValidator.trimName(split, validationTag), attributes, false));
+            }
+        }
+        return results;
+    }
+
+    private Map<String, String> controlTreatmentsForSplits(List<String> splits, String validationTag) {
+        Map<String, String> results = new HashMap<>();
+        for(String split : splits) {
+            if(_splitValidator.isValidName(split, validationTag)) {
+                results.put(_splitValidator.trimName(split, validationTag), Treatments.CONTROL);
+            }
         }
         return results;
     }
 
     private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
-        try {
-            if (matchingKey == null) {
-                Logger.w("matchingKey was null for split: %s", split);
-                return Treatments.CONTROL;
-            }
+        return getTreatment(matchingKey, bucketingKey, split, attributes, true);
+    }
 
-            if (split == null) {
-                Logger.w("split was null for key: %s", matchingKey);
-                return Treatments.CONTROL;
+    private String getTreatment(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes, boolean validateInput) {
+        try {
+
+            String splitName = split;
+            if (validateInput) {
+                final String validationTag = "getTreatment";
+
+                if (!_keyValidator.isValidKey(matchingKey, bucketingKey, validationTag)) {
+                    return Treatments.CONTROL;
+                }
+
+                if (!_splitValidator.isValidName(split, validationTag)) {
+                    return Treatments.CONTROL;
+                }
+
+                if (!_eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)) {
+                    Logger.w("No listeners for SDK Readiness detected. Incorrect control treatments could be logged if you call getTreatment while the SDK is not yet ready");
+                }
+
+                splitName = _splitValidator.trimName(split, validationTag);
             }
 
             long start = System.currentTimeMillis();
 
-            TreatmentLabelAndChangeNumber result = getTreatmentResultWithoutImpressions(matchingKey, bucketingKey, split, attributes);
+            TreatmentLabelAndChangeNumber result = null;
+
+            try {
+                result = getTreatmentWithoutExceptionHandling(matchingKey, bucketingKey, splitName, attributes);
+            } catch (ChangeNumberExceptionWrapper e) {
+                result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION, e.changeNumber());
+                Logger.e(e.wrappedException());
+            } catch (Exception e) {
+                result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION);
+                Logger.e(e);
+            }
 
             recordStats(
                     matchingKey,
                     bucketingKey,
-                    split,
+                    splitName,
                     start,
                     result._treatment,
                     "sdk.getTreatment",
@@ -163,6 +233,16 @@ public final class SplitClientImpl implements SplitClient {
 
     private TreatmentLabelAndChangeNumber getTreatmentResultWithoutImpressions(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
         TreatmentLabelAndChangeNumber result;
+
+        if (Strings.isNullOrEmpty(matchingKey)) {
+            Logger.e("getTreatment: key cannot be null");
+            return new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION);
+        }
+
+        if (Strings.isNullOrEmpty(bucketingKey)) {
+            Logger.w("getTreatment: Key object should have bucketingKey set");
+        }
+
         try {
             result = getTreatmentWithoutExceptionHandling(matchingKey, bucketingKey, split, attributes);
         } catch (ChangeNumberExceptionWrapper e) {
@@ -262,64 +342,53 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(event);
         checkNotNull(task);
 
+        if(_eventsManager.eventAlreadyTriggered(event)) {
+            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event.toString()));
+            return;
+        }
+
         _eventsManager.register(event, task);
     }
 
     @Override
     public boolean track(String trafficType, String eventType) {
-        Event event = createEvent(_matchingKey, trafficType, eventType);
-        return track(event);
+        return track(_matchingKey, trafficType, eventType);
     }
 
     @Override
     public boolean track(String trafficType, String eventType, double value) {
-        Event event = createEvent(_matchingKey, trafficType, eventType);
-        event.value = value;
-
-        return track(event);
+        return track(_matchingKey, trafficType, eventType, value);
     }
 
     @Override
     public boolean track(String eventType) {
-        Event event = createEvent(_matchingKey, _config.trafficType(), eventType);
-        return track(event);
+        return track(_matchingKey, _config.trafficType(), eventType);
     }
 
     @Override
     public boolean track(String eventType, double value) {
-        Event event = createEvent(_matchingKey, _config.trafficType(), eventType);
-        event.value = value;
-
-        return track(event);
+        return track(_matchingKey, _config.trafficType(), eventType, value);
     }
 
-    private Event createEvent(String key, String trafficType, String eventType) {
+    private boolean track(String key, String trafficType, String eventType) {
+        return track(key, trafficType, eventType, 0.0);
+    }
+
+    private boolean track(String key, String trafficType, String eventType, double value) {
+
+        if(_isClientDestroyed) {
+            Logger.e("Client has already been destroyed - no calls possible");
+            return false;
+        }
+
         Event event = new Event();
         event.eventTypeId = eventType;
         event.trafficTypeName = trafficType;
         event.key = key;
+        event.value = value;
         event.timestamp = System.currentTimeMillis();
-        return event;
-    }
-
-    private boolean track(Event event) {
-        if (Strings.isNullOrEmpty(event.trafficTypeName)) {
-            Logger.w("Traffic Type was null or empty");
-            return false;
-        }
-
-        if (Strings.isNullOrEmpty(event.eventTypeId)) {
-            Logger.w("Event Type was null or empty");
-            return false;
-        }
-
-        if (Strings.isNullOrEmpty(event.key)) {
-            Logger.w("Cannot track event for null key");
-            return false;
-        }
 
         return _trackClient.track(event);
-
     }
 
 }

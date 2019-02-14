@@ -51,6 +51,10 @@ public class SplitClientConfig {
     private final String _proxyUsername;
     private final String _proxyPassword;
 
+    // Validation settings
+    private static final int _maximumKeyLength = 250;
+    private static final String _trackEventNamePattern = "^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$";
+
     // To be set during startup
     public static String splitSdkVersion;
 
@@ -263,6 +267,26 @@ public class SplitClientConfig {
 
     int eventsMaxSentAttempts() {
         return _eventsMaxSentAttemps;
+    }
+
+
+    /**
+     * Regex to validate Track event name
+     *
+     * @return Regex pattern string
+     */
+    String trackEventNamePattern() {
+        return _trackEventNamePattern;
+    }
+
+
+    /**
+     * Maximum key char length for matching and bucketing
+     *
+     * @return Maximum char length
+     */
+    int maximumKeyLength() {
+        return _maximumKeyLength;
     }
 
     public String ip() {

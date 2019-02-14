@@ -407,7 +407,7 @@ public class SplitClientImplTest {
     public void not_in_split_if_10_percent_allocation() {
         Key key = Key.withMatchingKey("pato@split.io");
         int i = 0;
-        for (; i <= 10; i++) {
+        for (; i <= 9; i++) {
             traffic_allocation(key, i, 123, "off", "not in split");
         }
 

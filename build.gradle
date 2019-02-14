@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '1.2.3'
+    splitVersion = '2.0.0'
 }
 
 allprojects {
@@ -40,6 +40,10 @@ android {
 
     lintOptions {
         disable 'InvalidPackage'
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
     }
 }
 
@@ -86,7 +90,7 @@ uploadArchives {
 
             beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-            repository(url: "https://oss.sonatype.org/content/repositories/releases") {
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
                 authentication(userName: ossrhUsername, password: ossrhPassword)
             }
 

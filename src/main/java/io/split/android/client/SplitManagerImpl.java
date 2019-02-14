@@ -2,6 +2,10 @@ package io.split.android.client;
 
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Partition;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.utils.Logger;
+import io.split.android.client.validators.SplitValidator;
+import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -14,15 +18,24 @@ import java.util.Set;
 public class SplitManagerImpl implements SplitManager {
 
     private final SplitFetcher _splitFetcher;
+    private boolean _isManagerDestroyed = false;
+    private SplitValidator _splitValidator;
 
 
     public SplitManagerImpl(SplitFetcher splitFetcher) {
         _splitFetcher  = splitFetcher;
+        _splitValidator = new SplitValidatorImpl();
     }
 
     @Override
     public List<SplitView> splits() {
         List<SplitView> result = new ArrayList<>();
+
+        if(_isManagerDestroyed){
+            Logger.e("Manager has already been destroyed - no calls possible");
+            return result;
+        }
+
         List<ParsedSplit> parsedSplits = _splitFetcher.fetchAll();
         for (ParsedSplit split : parsedSplits) {
             result.add(toSplitView(split));
@@ -32,18 +45,41 @@ public class SplitManagerImpl implements SplitManager {
 
     @Override
     public SplitView split(String featureName) {
-        ParsedSplit parsedSplit = _splitFetcher.fetch(featureName);
+
+        final String validationTag = "split";
+
+        if(_isManagerDestroyed){
+            Logger.e("Manager has already been destroyed - no calls possible");
+            return null;
+        }
+
+        if (!_splitValidator.isValidName(featureName, validationTag)) {
+            return null;
+        }
+
+        ParsedSplit parsedSplit = _splitFetcher.fetch(_splitValidator.trimName(featureName, validationTag));
         return parsedSplit == null ? null : toSplitView(parsedSplit);
     }
 
     @Override
     public List<String> splitNames() {
         List<String> result = new ArrayList<>();
+
+        if(_isManagerDestroyed){
+            Logger.e("Manager has already been destroyed - no calls possible");
+            return result;
+        }
+
         List<ParsedSplit> parsedSplits = _splitFetcher.fetchAll();
         for (ParsedSplit split : parsedSplits) {
             result.add(split.feature());
         }
         return result;
+    }
+
+    @Override
+    public void destroy() {
+        _isManagerDestroyed = true;
     }
 
     private SplitView toSplitView(ParsedSplit parsedSplit) {

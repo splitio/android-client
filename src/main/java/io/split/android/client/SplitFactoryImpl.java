@@ -50,6 +50,9 @@ import io.split.android.client.storage.IStorage;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.validators.ApiKeyValidator;
+import io.split.android.client.validators.ApiKeyValidatorImpl;
+import io.split.android.client.validators.ValidationConfig;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
 import io.split.android.engine.experiments.SplitChangeFetcher;
@@ -74,6 +77,12 @@ public class SplitFactoryImpl implements SplitFactory {
     private TrackClient _trackClient;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+
+        ValidationConfig.getInstance().setMaximumKeyLength(config.maximumKeyLength());
+        ValidationConfig.getInstance().setTrackEventNamePattern(config.trackEventNamePattern());
+        ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl("factory instantiation");
+        apiKeyValidator.isValidApiKey(apiToken);
+
         SSLContext sslContext = null;
         try {
             sslContext = SSLContexts.custom()
@@ -205,6 +214,9 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of ImpressionListener");
                     httpclient.close();
                     Logger.i("Successful shutdown of httpclient");
+                    _manager.destroy();
+                    Logger.i("Successful shutdown of manager");
+
                 } catch (IOException e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
