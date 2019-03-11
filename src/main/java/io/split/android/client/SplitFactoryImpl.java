@@ -50,6 +50,7 @@ import io.split.android.client.storage.IStorage;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
 import io.split.android.client.validators.ValidationConfig;
@@ -150,15 +151,20 @@ public class SplitFactoryImpl implements SplitFactory {
         _eventsManager = new SplitEventsManager(config);
         gates = new SDKReadinessGates();
 
+        String dataFolderName = Utils.convertApiKeyToFolder(apiToken);
+        if(dataFolderName == null) {
+            dataFolderName = config.defaultDataFolder();
+        }
+
         // Segments
-        IStorage mySegmentsStorage = new FileStorage(context);
+        IStorage mySegmentsStorage = new FileStorage(context, dataFolderName);
         MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget, mySegmentsStorage);
         final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
         // Feature Changes
-        IStorage splitChangeStorage = new FileStorage(context);
+        IStorage splitChangeStorage = new FileStorage(context, dataFolderName);
         SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage);
 
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), _eventsManager);
@@ -167,7 +173,7 @@ public class SplitFactoryImpl implements SplitFactory {
         ImpressionsStorageManagerConfig impressionsStorageManagerConfig = new ImpressionsStorageManagerConfig();
         impressionsStorageManagerConfig.setImpressionsMaxSentAttempts(config.impressionsMaxSentAttempts());
         impressionsStorageManagerConfig.setImpressionsChunkOudatedTime(config.impressionsChunkOutdatedTime());
-        IStorage impressionsStorage = new FileStorage(context);
+        IStorage impressionsStorage = new FileStorage(context, dataFolderName);
         final ImpressionsStorageManager impressionsStorageManager = new ImpressionsStorageManager(impressionsStorage, impressionsStorageManagerConfig);
         final ImpressionsManager splitImpressionListener = ImpressionsManager.instance(httpclient, config, impressionsStorageManager);
         final ImpressionListener impressionListener;
@@ -191,7 +197,7 @@ public class SplitFactoryImpl implements SplitFactory {
         trackConfig.setMaxQueueSize(config.eventsQueueSize());
         trackConfig.setWaitBeforeShutdown(config.waitBeforeShutdown());
         trackConfig.setMaxSentAttempts(config.eventsMaxSentAttempts());
-        IStorage eventsStorage = new FileStorage(context);
+        IStorage eventsStorage = new FileStorage(context, dataFolderName);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
         _trackClient = TrackClientImpl.create(trackConfig, httpclient, eventsRootTarget, trackStorageManager);
 

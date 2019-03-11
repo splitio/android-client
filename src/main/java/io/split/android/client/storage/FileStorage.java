@@ -2,6 +2,8 @@ package io.split.android.client.storage;
 
 import android.content.Context;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -19,9 +21,11 @@ import io.split.android.client.utils.Logger;
 public class FileStorage implements IStorage {
 
     private final Context _context;
+    private final File _dataFolder;
 
-    public FileStorage(Context context) {
+    public FileStorage(@NotNull Context context, @NotNull String folderName) {
         _context = context;
+        _dataFolder = _context.getDir(folderName, Context.MODE_PRIVATE);
     }
 
     /**
@@ -32,9 +36,11 @@ public class FileStorage implements IStorage {
      */
     @Override
     public String read(String elementId) throws IOException {
-        FileInputStream fis;
+
+        File file = new File(_dataFolder, elementId);
+        FileInputStream fileInputStream;
         try {
-            fis = _context.openFileInput(elementId);
+            fileInputStream = new FileInputStream(file);
         } catch (FileNotFoundException e) {
             Logger.d(e.getMessage());
             return null;
@@ -46,7 +52,7 @@ public class FileStorage implements IStorage {
         int n;
 
         try {
-            while ((n = fis.read(buffer)) != -1) {
+            while ((n = fileInputStream.read(buffer)) != -1) {
                 fileContent.append(new String(buffer, 0, n));
             }
             return fileContent.toString();
@@ -58,11 +64,11 @@ public class FileStorage implements IStorage {
 
     @Override
     public boolean write(String elementId, String content) throws IOException {
-        FileOutputStream fos = null;
+        File file = new File(_dataFolder, elementId);
+        FileOutputStream fileOutputStream = null;
         try {
-            fos = _context.openFileOutput(elementId, Context.MODE_PRIVATE);
-            fos.write(content.getBytes());
-
+            fileOutputStream = new FileOutputStream(file);
+            fileOutputStream.write(content.getBytes());
         } catch (FileNotFoundException e) {
             Logger.e(e, "Failed to write content");
             throw e;
@@ -71,7 +77,7 @@ public class FileStorage implements IStorage {
             throw e;
         } finally {
             try {
-                fos.close();
+                fileOutputStream.close();
             } catch (IOException e) {
                 Logger.e(e, "Failed to close file");
             }
