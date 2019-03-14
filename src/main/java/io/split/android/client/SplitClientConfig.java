@@ -55,6 +55,9 @@ public class SplitClientConfig {
     private static final int _maximumKeyLength = 250;
     private static final String _trackEventNamePattern = "^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$";
 
+    // Data folder
+    private static final String _defaultDataFolder = "split_data";
+
     // To be set during startup
     public static String splitSdkVersion;
 
@@ -287,6 +290,17 @@ public class SplitClientConfig {
      */
     int maximumKeyLength() {
         return _maximumKeyLength;
+    }
+
+    /**
+     * Default data folder to use when some
+     * problem arises while creating it
+     * based on api key
+     *
+     * @return Default data folder
+     */
+    String defaultDataFolder() {
+        return _defaultDataFolder;
     }
 
     public String ip() {

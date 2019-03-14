@@ -14,9 +14,9 @@ public class MemoryAndFileStorage implements IStorage {
     private final MemoryStorage _memoryStorage;
     private final FileStorage _fileStorage;
 
-    public MemoryAndFileStorage(Context context) {
+    public MemoryAndFileStorage(Context context, String dataFolder) {
         _memoryStorage = new MemoryStorage();
-        _fileStorage = new FileStorage(context);
+        _fileStorage = new FileStorage(context, dataFolder);
     }
 
     @Override
