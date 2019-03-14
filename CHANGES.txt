@@ -1,3 +1,5 @@
+2.0.1: (Mar 14, 2019)
+- Using different folders for api key to store cached data
 2.0.0: (Feb 11, 2019)
 - Adding several validations for passed parameters
 1.2.3: (Jan 21, 2019)
