@@ -8,7 +8,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import io.split.android.client.cache.TrafficTypesCache;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.Status;
 
 public class EventValidatorTest {
 
@@ -16,7 +22,12 @@ public class EventValidatorTest {
 
     @Before
     public void setUp() {
-        validator = new EventValidatorImpl("KeyValidatorTests");
+        TrafficTypesCache trafficTypesCache = new TrafficTypesCache();
+        List<Split> splits = new ArrayList<>();
+        splits.add(newSplit("s0", "traffic1", Status.ACTIVE));
+        splits.add(newSplit("s1", "trafficType1", Status.ACTIVE));
+        trafficTypesCache.setFromSplits(splits);
+        validator = new EventValidatorImpl("KeyValidatorTests", trafficTypesCache);
         validator.setMessageLogger(Mockito.mock(ValidationMessageLogger.class));
     }
 
@@ -181,6 +192,15 @@ public class EventValidatorTest {
 
     }
 
+    @Test
+    public void noChachedServerTrafficType() {
+        Event event = new Event();
+        event.eventTypeId = "type1";
+        event.trafficTypeName = "nocached";
+        event.key = "key1";
+        Assert.assertTrue(validator.isValidEvent(event));
+    }
+
     private Event newEventTypeName()  {
         Event event = new Event();
         event.trafficTypeName = "traffic1";
@@ -193,5 +213,13 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.key = "key1";
         return event;
+    }
+
+    private Split newSplit(String name, String trafficType, Status status) {
+        Split split = new Split();
+        split.name = name;
+        split.trafficTypeName = trafficType;
+        split.status = status;
+        return split;
     }
 }

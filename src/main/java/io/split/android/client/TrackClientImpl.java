@@ -21,6 +21,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.cache.ITrafficTypesCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.TrackClientConfig;
@@ -57,7 +58,7 @@ public class TrackClientImpl implements TrackClient {
 
     private final TrackStorageManager _storageManager;
     private final String validationTag = "track";
-    private final EventValidator _eventValidator = new EventValidatorImpl(validationTag);
+    private final EventValidator _eventValidator;
 
     private ThreadFactory eventClientThreadFactory(final String name) {
         return new ThreadFactory() {
@@ -74,11 +75,11 @@ public class TrackClientImpl implements TrackClient {
         };
     }
 
-    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager);
+    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, trafficTypesCache);
     }
 
-    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager) throws URISyntaxException {
+    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
 
 
         _storageManager = storageManager;
@@ -86,6 +87,8 @@ public class TrackClientImpl implements TrackClient {
         _httpclient = httpclient;
 
         _eventsTarget = new URIBuilder(eventsRootTarget).setPath("/api/events/bulk").build();
+
+        _eventValidator = new EventValidatorImpl(validationTag, trafficTypesCache);
 
         _eventQueue = eventQueue;
         _config = config;
@@ -129,13 +132,16 @@ public class TrackClientImpl implements TrackClient {
     @Override
     public boolean track(Event event) {
         try {
-            if (!_eventValidator.isValidEvent(event)) {
-                return false;
-            }
 
-            if (_eventValidator.trafficTypeHasUppercaseLetters(event)) {
-                event.trafficTypeName = event.trafficTypeName.toLowerCase();
-                Logger.w(validationTag + ": traffic_type_name should be all lowercase - converting string to lowercase");
+            if (event != CENTINEL) {
+                if (!_eventValidator.isValidEvent(event)) {
+                    return false;
+                }
+
+                if (_eventValidator.trafficTypeHasUppercaseLetters(event)) {
+                    event.trafficTypeName = event.trafficTypeName.toLowerCase();
+                    Logger.w(validationTag + ": traffic_type_name should be all lowercase - converting string to lowercase");
+                }
             }
 
             _eventQueue.put(event);
