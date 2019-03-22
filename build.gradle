@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '2.0.1-sdks-468'
+    splitVersion = '2.0.1-sdks-516.1'
 }
 
 allprojects {
