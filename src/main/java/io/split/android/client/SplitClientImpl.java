@@ -182,15 +182,15 @@ public final class SplitClientImpl implements SplitClient {
 
             long start = System.currentTimeMillis();
 
-            TreatmentLabelAndChangeNumber result = null;
+            EvaluationResult result = null;
 
             try {
                 result = getTreatmentWithoutExceptionHandling(matchingKey, bucketingKey, splitName, attributes);
             } catch (ChangeNumberExceptionWrapper e) {
-                result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION, e.changeNumber());
+                result = new EvaluationResult(Treatments.CONTROL, EXCEPTION, e.changeNumber());
                 Logger.e(e.wrappedException());
             } catch (Exception e) {
-                result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION);
+                result = new EvaluationResult(Treatments.CONTROL, EXCEPTION);
                 Logger.e(e);
             }
 
@@ -231,12 +231,12 @@ public final class SplitClientImpl implements SplitClient {
         return getTreatmentResultWithoutImpressions(matchingKey, bucketingKey, split, attributes)._treatment;
     }
 
-    private TreatmentLabelAndChangeNumber getTreatmentResultWithoutImpressions(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
-        TreatmentLabelAndChangeNumber result;
+    private EvaluationResult getTreatmentResultWithoutImpressions(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) {
+        EvaluationResult result;
 
         if (Strings.isNullOrEmpty(matchingKey)) {
             Logger.e("getTreatment: key cannot be null");
-            return new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION);
+            return new EvaluationResult(Treatments.CONTROL, EXCEPTION);
         }
 
         if (Strings.isNullOrEmpty(bucketingKey)) {
@@ -246,22 +246,22 @@ public final class SplitClientImpl implements SplitClient {
         try {
             result = getTreatmentWithoutExceptionHandling(matchingKey, bucketingKey, split, attributes);
         } catch (ChangeNumberExceptionWrapper e) {
-            result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION, e.changeNumber());
+            result = new EvaluationResult(Treatments.CONTROL, EXCEPTION, e.changeNumber());
             Logger.e(e.wrappedException());
         } catch (Exception e) {
-            result = new TreatmentLabelAndChangeNumber(Treatments.CONTROL, EXCEPTION);
+            result = new EvaluationResult(Treatments.CONTROL, EXCEPTION);
             Logger.e(e);
         }
 
         return result;
     }
 
-    private TreatmentLabelAndChangeNumber getTreatmentWithoutExceptionHandling(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) throws ChangeNumberExceptionWrapper {
+    private EvaluationResult getTreatmentWithoutExceptionHandling(String matchingKey, String bucketingKey, String split, Map<String, Object> attributes) throws ChangeNumberExceptionWrapper {
         ParsedSplit parsedSplit = _splitFetcher.fetch(split);
 
         if (parsedSplit == null) {
             Logger.d("Returning control because no split was found for: %s", split);
-            return new TreatmentLabelAndChangeNumber(Treatments.CONTROL, DEFINITION_NOT_FOUND);
+            return new EvaluationResult(Treatments.CONTROL, DEFINITION_NOT_FOUND);
         }
 
         return getTreatment(matchingKey, bucketingKey, parsedSplit, attributes);
@@ -275,10 +275,10 @@ public final class SplitClientImpl implements SplitClient {
      * @return
      * @throws ChangeNumberExceptionWrapper
      */
-    private TreatmentLabelAndChangeNumber getTreatment(String matchingKey, String bucketingKey, ParsedSplit parsedSplit, Map<String, Object> attributes) throws ChangeNumberExceptionWrapper {
+    private EvaluationResult getTreatment(String matchingKey, String bucketingKey, ParsedSplit parsedSplit, Map<String, Object> attributes) throws ChangeNumberExceptionWrapper {
         try {
             if (parsedSplit.killed()) {
-                return new TreatmentLabelAndChangeNumber(parsedSplit.defaultTreatment(), KILLED, parsedSplit.changeNumber());
+                return new EvaluationResult(parsedSplit.defaultTreatment(), KILLED, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()));
             }
 
             /*
@@ -301,7 +301,7 @@ public final class SplitClientImpl implements SplitClient {
 
                         if (bucket > parsedSplit.trafficAllocation()) {
                             // out of split
-                            return new TreatmentLabelAndChangeNumber(parsedSplit.defaultTreatment(), NOT_IN_SPLIT, parsedSplit.changeNumber());
+                            return new EvaluationResult(parsedSplit.defaultTreatment(), NOT_IN_SPLIT, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()));
                         }
 
                     }
@@ -310,31 +310,45 @@ public final class SplitClientImpl implements SplitClient {
 
                 if (parsedCondition.matcher().match(matchingKey, bucketingKey, attributes, this)) {
                     String treatment = Splitter.getTreatment(bk, parsedSplit.seed(), parsedCondition.partitions(), parsedSplit.algo());
-                    return new TreatmentLabelAndChangeNumber(treatment, parsedCondition.label(), parsedSplit.changeNumber());
+                    return new EvaluationResult(treatment, parsedCondition.label(), parsedSplit.changeNumber(), configForTreatment(parsedSplit, treatment));
                 }
             }
 
-            return new TreatmentLabelAndChangeNumber(parsedSplit.defaultTreatment(), DEFAULT_RULE, parsedSplit.changeNumber());
+            return new EvaluationResult(parsedSplit.defaultTreatment(), DEFAULT_RULE, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()));
         } catch (Exception e) {
             throw new ChangeNumberExceptionWrapper(e, parsedSplit.changeNumber());
         }
 
     }
 
-    private static final class TreatmentLabelAndChangeNumber {
+    private static final class EvaluationResult {
         private final String _treatment;
         private final String _label;
         private final Long _changeNumber;
+        private final String _configurations;
 
-        public TreatmentLabelAndChangeNumber(String treatment, String label) {
+        public EvaluationResult(String treatment, String label) {
             this(treatment, label, null);
         }
 
-        public TreatmentLabelAndChangeNumber(String treatment, String label, Long changeNumber) {
+        public EvaluationResult(String treatment, String label, Long changeNumber) {
+            this(treatment, label, changeNumber, null);
+        }
+
+        public EvaluationResult(String treatment, String label, Long changeNumber, String configurations) {
             _treatment = treatment;
             _label = label;
             _changeNumber = changeNumber;
+            _configurations = configurations;
         }
+    }
+
+    private String configForTreatment(ParsedSplit split, String treatment) {
+        String config = null;
+        if(split.configurations() != null) {
+            config = split.configurations().get(treatment);
+        }
+        return config;
     }
 
 
