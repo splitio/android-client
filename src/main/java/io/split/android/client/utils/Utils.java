@@ -94,7 +94,7 @@ public class Utils {
         return string.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
     }
 
-    public static String sanitizeForFolderName(String string) {
+    private static String sanitizeForFolderName(String string) {
         if(string == null) {
             return "";
         }
