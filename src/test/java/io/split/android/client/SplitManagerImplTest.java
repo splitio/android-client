@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 
 public class SplitManagerImplTest {
@@ -39,7 +41,10 @@ public class SplitManagerImplTest {
         String existent = "existent";
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
 
-        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition("off")), "traffic", 456L, 1, null);
+        Map<String, String> configs = new HashMap<>();
+        configs.put("off", "{\"f\":\"v\"}");
+        configs.put("on", "{\"f1\":\"v1\"}");
+        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition("off")), "traffic", 456L, 1, configs);
         Mockito.when(splitFetcher.fetch(existent)).thenReturn(response);
 
         SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
@@ -50,6 +55,12 @@ public class SplitManagerImplTest {
         assertThat(theOne.trafficType, is(equalTo(response.trafficTypeName())));
         assertThat(theOne.treatments.size(), is(equalTo(1)));
         assertThat(theOne.treatments.get(0), is(equalTo("off")));
+        assertThat(theOne.configs, is(notNullValue()));
+        assertThat(theOne.configs.get("off"), is(notNullValue()));
+        assertThat(theOne.configs.get("off"), is(equalTo("{\"f\":\"v\"}")));
+        assertThat(theOne.configs.get("on"), is(notNullValue()));
+        assertThat(theOne.configs.get("on"), is(equalTo("{\"f1\":\"v1\"}")));
+        assertThat(theOne.configs.get("onOff"), is(nullValue()));
     }
 
     @Test

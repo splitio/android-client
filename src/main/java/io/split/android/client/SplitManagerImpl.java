@@ -88,6 +88,7 @@ public class SplitManagerImpl implements SplitManager {
         splitView.trafficType = parsedSplit.trafficTypeName();
         splitView.killed = parsedSplit.killed();
         splitView.changeNumber = parsedSplit.changeNumber();
+        splitView.configs = parsedSplit.configurations();
 
         Set<String> treatments = new HashSet<String>();
         for (ParsedCondition condition : parsedSplit.parsedConditions()) {
