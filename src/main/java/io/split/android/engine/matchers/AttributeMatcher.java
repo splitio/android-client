@@ -1,5 +1,6 @@
 package io.split.android.engine.matchers;
 
+import io.split.android.client.Evaluator;
 import io.split.android.client.SplitClientImpl;
 
 import java.util.Map;
@@ -23,9 +24,9 @@ public final class AttributeMatcher {
         _matcher = new NegatableMatcher(matcher, negate);
     }
 
-    public boolean match(String key, String bucketingKey, Map<String, Object> attributes, SplitClientImpl splitClient) {
+    public boolean match(String key, String bucketingKey, Map<String, Object> attributes, Evaluator evaluator) {
         if (_attribute == null) {
-            return _matcher.match(key, bucketingKey, attributes, splitClient);
+            return _matcher.match(key, bucketingKey, attributes, evaluator);
         }
 
         if (attributes == null) {
@@ -93,8 +94,8 @@ public final class AttributeMatcher {
 
 
         @Override
-        public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, SplitClientImpl splitClient) {
-            boolean result = _delegate.match(matchValue, bucketingKey, attributes, splitClient);
+        public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, Evaluator evaluator) {
+            boolean result = _delegate.match(matchValue, bucketingKey, attributes, evaluator);
             return (_negate) ? !result : result;
         }
 
