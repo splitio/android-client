@@ -9,6 +9,7 @@ import io.split.android.client.dtos.Status;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.grammar.Treatments;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -19,6 +20,7 @@ public class AChangePerCallSplitChangeFetcher implements SplitChangeFetcher {
 
     private AtomicLong _lastAdded = new AtomicLong(-1);
     private String _segmentName;
+    public Map<String, String> configurations = null;
 
     public AChangePerCallSplitChangeFetcher() {
         this(null);
@@ -51,6 +53,10 @@ public class AChangePerCallSplitChangeFetcher implements SplitChangeFetcher {
         add.defaultTreatment = Treatments.OFF;
         add.changeNumber = latestChangeNumber;
 
+        if(this.configurations != null) {
+            add.configurations = this.configurations;
+        }
+
         Split remove = new Split();
         remove.status = Status.ACTIVE;
         remove.trafficAllocation = 100;
@@ -61,6 +67,10 @@ public class AChangePerCallSplitChangeFetcher implements SplitChangeFetcher {
         remove.name = "" + since;
         remove.killed = true;
         remove.changeNumber = latestChangeNumber;
+
+        if(this.configurations != null) {
+            remove.configurations = this.configurations;
+        }
 
 
         SplitChange splitChange = new SplitChange();
