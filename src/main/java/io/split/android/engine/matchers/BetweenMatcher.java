@@ -1,5 +1,6 @@
 package io.split.android.engine.matchers;
 
+import io.split.android.client.Evaluator;
 import io.split.android.client.SplitClientImpl;
 import io.split.android.client.dtos.DataType;
 
@@ -32,7 +33,7 @@ public class BetweenMatcher implements Matcher {
     }
 
     @Override
-    public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, SplitClientImpl splitClient) {
+    public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, Evaluator evaluator) {
         Long keyAsLong;
 
         if (_dataType == DataType.DATETIME) {

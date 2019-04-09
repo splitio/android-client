@@ -30,7 +30,7 @@ import io.split.android.engine.matchers.collections.PartOfSetMatcher;
 import io.split.android.engine.matchers.strings.ContainsAnyOfMatcher;
 import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProviderImpl;
 import io.split.android.engine.segments.StaticMySegmentsFectherProvider;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.SplitHelper;
@@ -47,7 +47,7 @@ public class SplitParserTest {
 
     @Test
     public void less_than_or_equal_to() {
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key");
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key");
         SplitParser parser = SplitParser.get(provider);
 
         Matcher ageLessThan10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.LESS_THAN_OR_EQUAL_TO, DataType.NUMBER, 10L, false);
@@ -78,7 +78,7 @@ public class SplitParserTest {
     @Test
     public void equal_to() {
 
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key");
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key");
 
         SplitParser parser = SplitParser.get(provider);
 

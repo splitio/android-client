@@ -5,6 +5,12 @@ package io.split.android.engine.metrics;
  *
  */
 public interface Metrics {
+
+    public static String GET_TREATMENT_TIME = "sdk.getTreatment";
+    public static String GET_TREATMENTS_TIME = "sdk.getTreatments";
+    public static String GET_TREATMENT_WITH_CONFIG_TIME = "sdk.getTreatmentWithConfig";
+    public static String GET_TREATMENTS_WITH_CONFIG_TIME = "sdk.getTreatmentsWithConfig";
+
     /**
      * Adjusts the specified counter by a given delta.
      * <p/>

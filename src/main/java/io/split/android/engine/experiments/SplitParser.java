@@ -32,6 +32,7 @@ import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
 import io.split.android.engine.segments.MySegments;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProviderImpl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -46,7 +47,7 @@ public final class SplitParser {
 
     private RefreshableMySegmentsFetcherProvider _mySegmentsFetcherProvider;
 
-    public static SplitParser get(RefreshableMySegmentsFetcherProvider provider) {
+    public static SplitParser get(RefreshableMySegmentsFetcherProviderImpl provider) {
         return new SplitParser(provider);
     }
 

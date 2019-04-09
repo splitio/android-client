@@ -20,11 +20,6 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
     }
 
     @Override
-    public String getTreatment(String split, Map<String, Object> attributes) {
-        return Treatments.CONTROL;
-    }
-
-    @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
         Map<String, String> results = new HashMap<>();
         if(splits == null) {
@@ -35,6 +30,29 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
             results.put(split, Treatments.CONTROL);
         }
         return results;
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
+        Map<String, SplitResult> results = new HashMap<>();
+        if(splits == null) {
+            return results;
+        }
+
+        for(String split : splits) {
+            results.put(split, new SplitResult(Treatments.CONTROL));
+        }
+        return results;
+    }
+
+    @Override
+    public String getTreatment(String split, Map<String, Object> attributes) {
+        return Treatments.CONTROL;
+    }
+
+    @Override
+    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
+        return new SplitResult(Treatments.CONTROL);
     }
 
     @Override

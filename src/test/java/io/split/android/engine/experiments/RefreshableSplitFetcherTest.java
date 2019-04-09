@@ -2,8 +2,6 @@ package io.split.android.engine.experiments;
 
 import com.google.common.collect.Lists;
 
-import junit.framework.Assert;
-
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -25,10 +23,9 @@ import io.split.android.client.dtos.Status;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.ConditionsTestUtil;
-import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.CombiningMatcher;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProviderImpl;
 import io.split.android.engine.segments.StaticMySegmentsFectherProvider;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.SplitHelper;
@@ -60,7 +57,7 @@ public class RefreshableSplitFetcherTest {
         splitChangeFetcher.configurations = configs;
 
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", eventManager);
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key", eventManager);
 
         RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, SplitParser.get(provider), eventManager, startingChangeNumber);
 
@@ -105,7 +102,7 @@ public class RefreshableSplitFetcherTest {
     public void when_parser_fails_we_remove_the_experiment() throws InterruptedException {
 
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", eventManager);
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key", eventManager);
         Split validSplit = new Split();
         validSplit.status = Status.ACTIVE;
         validSplit.seed = (int) -1;
@@ -214,7 +211,7 @@ public class RefreshableSplitFetcherTest {
 
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
 
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", eventManager);
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key", eventManager);
 
         RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(experimentChangeFetcher,
                 SplitParser.get(provider), eventManager, startingChangeNumber);

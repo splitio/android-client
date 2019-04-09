@@ -3,10 +3,12 @@ package io.split.android.client;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 
+import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.grammar.Treatments;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,8 +54,24 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     @Override
+    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
+        return new SplitResult(getTreatment(split));
+    }
+
+    @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
         return getTreatments(splits, attributes);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
+
+        Map<String, SplitResult> result = new HashMap<String, SplitResult>();
+        for(String split : splits) {
+            result.put(split, new SplitResult(getTreatment(split)));
+        }
+
+        return result;
     }
 
 
