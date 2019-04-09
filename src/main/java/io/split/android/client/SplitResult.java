@@ -2,22 +2,22 @@ package io.split.android.client;
 
 public class SplitResult {
     private String treatment;
-    private String configurations;
+    private String config;
 
-    public SplitResult(String treatment, String configurations) {
+    public SplitResult(String treatment, String config) {
         this.treatment = treatment;
-        this.configurations = configurations;
+        this.config = config;
     }
 
     public SplitResult(String treatment) {
         this(treatment, null);
     }
 
-    public String getTreatment() {
+    public String treatment() {
         return treatment;
     }
 
-    public String getConfigurations() {
-        return configurations;
+    public String config() {
+        return config;
     }
 }
