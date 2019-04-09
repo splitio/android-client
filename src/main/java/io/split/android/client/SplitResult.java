@@ -4,9 +4,9 @@ public class SplitResult {
     private String treatment;
     private String config;
 
-    public SplitResult(String treatment, String configs) {
+    public SplitResult(String treatment, String config) {
         this.treatment = treatment;
-        this.config = configs;
+        this.config = config;
     }
 
     public SplitResult(String treatment) {
@@ -17,7 +17,7 @@ public class SplitResult {
         return treatment;
     }
 
-    public String configs() {
+    public String config() {
         return config;
     }
 }
