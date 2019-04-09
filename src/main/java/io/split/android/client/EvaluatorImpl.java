@@ -22,7 +22,6 @@ public class EvaluatorImpl implements Evaluator {
     @Override
     public EvaluationResult getTreatment(String matchingKey, String bucketingKey, String splitName, Map<String, Object> attributes) {
 
-
         try {
             ParsedSplit parsedSplit = mSplitFetcher.fetch(splitName);
 
