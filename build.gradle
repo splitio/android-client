@@ -54,6 +54,7 @@ dependencies {
     implementation 'com.google.guava:guava:18.0'
     implementation 'org.apache.httpcomponents:httpclient-android:4.3.5'
     implementation "android.arch.lifecycle:extensions:1.1.1"
+    implementation "org.yaml:snakeyaml:1.24"
 
     // Test
     androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {

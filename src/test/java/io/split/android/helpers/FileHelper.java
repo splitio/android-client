@@ -32,6 +32,8 @@ public class FileHelper {
         return null;
     }
 
+    public String 
+
     private String convertStreamToString(InputStream is) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
