@@ -8,7 +8,6 @@ import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitResult;
-import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.Logger;
@@ -60,7 +59,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         }
 
         long start = System.currentTimeMillis();
-        String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag, isSdkReadyFired).getTreatment();
+        String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag, isSdkReadyFired).treatment();
         mMetrics.time(Metrics.GET_TREATMENT_TIME, System.currentTimeMillis() - start);
         return treatment;
     }
@@ -98,7 +97,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         Map<String, String> result = new HashMap<>();
 
         for (Map.Entry<String, SplitResult> entry : resultWithConfig.entrySet()) {
-            result.put(entry.getKey(), entry.getValue().getTreatment());
+            result.put(entry.getKey(), entry.getValue().treatment());
         }
         mMetrics.time(Metrics.GET_TREATMENTS_TIME, System.currentTimeMillis() - start);
         return result;

@@ -57,8 +57,8 @@ public class TreatmentManagerTest {
         SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false, false);
 
         Assert.assertNotNull(splitResult);
-        Assert.assertEquals("off", splitResult.getTreatment());
-        Assert.assertNull(splitResult.getConfigurations());
+        Assert.assertEquals("off", splitResult.treatment());
+        Assert.assertNull(splitResult.config());
     }
 
     @Test
@@ -70,8 +70,8 @@ public class TreatmentManagerTest {
         SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false, false);
 
         Assert.assertNotNull(splitResult);
-        Assert.assertEquals("off", splitResult.getTreatment());
-        Assert.assertNotNull(splitResult.getConfigurations());
+        Assert.assertEquals("off", splitResult.treatment());
+        Assert.assertNotNull(splitResult.config());
     }
 
     @Test
@@ -87,16 +87,16 @@ public class TreatmentManagerTest {
         SplitResult r3 = splitResultList.get("Test");
 
         Assert.assertNotNull(r1);
-        Assert.assertEquals("off", r1.getTreatment());
-        Assert.assertNull(r1.getConfigurations());
+        Assert.assertEquals("off", r1.treatment());
+        Assert.assertNull(r1.config());
 
         Assert.assertNotNull(r2);
-        Assert.assertEquals("pesto", r2.getTreatment());
-        Assert.assertNull(r2.getConfigurations());
+        Assert.assertEquals("pesto", r2.treatment());
+        Assert.assertNull(r2.config());
 
         Assert.assertNotNull(r3);
-        Assert.assertEquals("off", r3.getTreatment());
-        Assert.assertNotNull(r3.getConfigurations());
+        Assert.assertEquals("off", r3.treatment());
+        Assert.assertNotNull(r3.config());
     }
 
     @Test
@@ -208,8 +208,8 @@ public class TreatmentManagerTest {
         Assert.assertEquals(Treatments.CONTROL, treatment);
 
         Assert.assertNotNull(splitResult);
-        Assert.assertEquals(Treatments.CONTROL, splitResult.getTreatment());
-        Assert.assertNull(splitResult.getConfigurations());
+        Assert.assertEquals(Treatments.CONTROL, splitResult.treatment());
+        Assert.assertNull(splitResult.config());
 
         for(String split : splitList) {
             Assert.assertNotNull(treatmentList.get(split));
@@ -222,8 +222,8 @@ public class TreatmentManagerTest {
 
         for(SplitResult result : splitResultList.values()) {
             Assert.assertNotNull(splitResult);
-            Assert.assertEquals(Treatments.CONTROL, splitResult.getTreatment());
-            Assert.assertNull(splitResult.getConfigurations());
+            Assert.assertEquals(Treatments.CONTROL, splitResult.treatment());
+            Assert.assertNull(splitResult.config());
         }
     }
 
