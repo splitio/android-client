@@ -1,0 +1,6 @@
+- split_0:
+    treatment: "off"
+    config: "{ \"size\" : 20 }"
+- split_1:
+# Missing treatment key
+    key: "hasKey"

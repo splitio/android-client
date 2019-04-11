@@ -1,0 +1,41 @@
+package io.split.android.client.Localhost;
+
+import junit.framework.Assert;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Map;
+
+import io.split.android.client.dtos.Split;
+import io.split.android.client.storage.ResourcesFileStorage;
+
+public class LocalhostPropertiesParserTest {
+    LocalhostFileParser parser;
+
+    @Before
+    public void setup() {
+        parser = new LocalhostPropertiesFileParser();
+    }
+
+    @Test
+    public void testFile() {
+        Map<String, Split> splits = parser.parse("splits.properties");
+        Split split1 = splits.get("split1");
+        Split split2 = splits.get("split2");
+        Split split3 = splits.get("split3");
+
+        Assert.assertNotNull(split1);
+        Assert.assertNotNull(split2);
+        Assert.assertNotNull(split3);
+
+        Assert.assertEquals("split1", split1.name);
+        Assert.assertEquals("on", split1.defaultTreatment);
+
+        Assert.assertEquals("split2", split2.name);
+        Assert.assertEquals("off", split2.defaultTreatment);
+
+        Assert.assertEquals("split3", split3.name);
+        Assert.assertEquals("u1", split3.defaultTreatment);
+    }
+}

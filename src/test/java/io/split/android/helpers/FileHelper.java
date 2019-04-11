@@ -16,14 +16,8 @@ import io.split.android.client.utils.Json;
 public class FileHelper {
 
     public List<Split> loadAndParseSplitChangeFile (String name) {
-        ClassLoader classLoader = this.getClass().getClassLoader();
-        URL resource = classLoader.getResource(name);
-        File file = new File(resource.getPath());
-        String content = null;
         try {
-            FileInputStream fin = new FileInputStream(file);
-            content = convertStreamToString(fin);
-            fin.close();
+            String content = loadFileContent(name);;
             SplitChange change = Json.fromJson(content, SplitChange.class);
             List<Split> splits = change.splits;
             return splits;
@@ -32,7 +26,19 @@ public class FileHelper {
         return null;
     }
 
-    public String 
+    public String loadFileContent(String name) {
+        ClassLoader classLoader = this.getClass().getClassLoader();
+        URL resource = classLoader.getResource(name);
+        File file = new File(resource.getPath());
+        String content = null;
+        try {
+            FileInputStream fin = new FileInputStream(file);
+            content = convertStreamToString(fin);
+            fin.close();
+        } catch (Exception e) {
+        }
+        return content;
+    }
 
     private String convertStreamToString(InputStream is) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));

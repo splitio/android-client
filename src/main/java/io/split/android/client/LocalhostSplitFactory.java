@@ -2,15 +2,16 @@ package io.split.android.client;
 
 import android.content.Context;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
+import io.split.android.client.Localhost.LocalhostFileParser;
+import io.split.android.client.Localhost.LocalhostPropertiesFileParser;
+import io.split.android.client.Localhost.LocalhostYamlFileParser;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.storage.ResourcesFileStorage;
 import io.split.android.client.utils.Logger;
 
 /**
@@ -22,13 +23,13 @@ import io.split.android.client.utils.Logger;
  */
 public final class LocalhostSplitFactory implements SplitFactory {
 
-    static final String FILENAME = "split.properties";
+    static final String SPLITS_YAML_FILENAME = "split.yaml";
+    static final String SPLITS_PROPERTIES_FILENAME = "split.properties";
     static final String LOCALHOST = "localhost";
 
-    private final LocalhostSplitClient _client;
-    private final LocalhostSplitManager _manager;
-
-    private boolean _ready;
+    private final LocalhostSplitClient mClient;
+    private final LocalhostSplitManager mManager;
+    private boolean mIsSdkReady;
 
     public static LocalhostSplitFactory createLocalhostSplitFactory(String key, Context context) throws IOException {
         return new LocalhostSplitFactory(key, context);
@@ -36,56 +37,49 @@ public final class LocalhostSplitFactory implements SplitFactory {
 
     public LocalhostSplitFactory(String key, Context context) throws IOException {
 
-        Map<String, String> _featureToTreatmentMap = new HashMap<>();
-
-        try {
-            _ready = true;
-            Properties _properties = new Properties();
-            _properties.load(context.getAssets().open(FILENAME));
-            for (Object k: _properties.keySet()) {
-                _featureToTreatmentMap.put((String) k,_properties.getProperty((String) k));
-            }
-        } catch (FileNotFoundException e) {
-            _ready = false;
-            Logger.e("File not found. Add split.properties in your application assets");
-        } catch (Exception e){
-            _ready = false;
-            Logger.e(e.getMessage());
+        LocalhostFileParser parser = new LocalhostYamlFileParser(new ResourcesFileStorage());
+        Map<String, Split> featureToTreatmentMap = parser.parse(SPLITS_YAML_FILENAME);
+        if (featureToTreatmentMap == null) {
+            parser = new LocalhostPropertiesFileParser();
+            featureToTreatmentMap = parser.parse(SPLITS_PROPERTIES_FILENAME);
         }
 
-        _client = new LocalhostSplitClient(this, key, _featureToTreatmentMap);
-        _manager = new LocalhostSplitManager(_featureToTreatmentMap);
+        mIsSdkReady = (featureToTreatmentMap != null);
+
+        mClient = new LocalhostSplitClient(this, key, featureToTreatmentMap);
+        mManager = new LocalhostSplitManager(featureToTreatmentMap);
 
         Logger.i("Android SDK initialized!");
     }
 
     @Override
     public SplitClient client() {
-        return _client;
+        return mClient;
     }
 
     @Override
     public SplitManager manager() {
-        return _manager;
+        return mManager;
     }
 
     @Override
     public void destroy() {
-        _client.updateFeatureToTreatmentMap(ImmutableMap.<String, String>of());
+        mClient.updateFeatureToTreatmentMap(ImmutableMap.<String, String>of());
     }
 
     @Override
     public void flush() {
-        _client.flush();
+        mClient.flush();
     }
 
     @Override
     public boolean isReady() {
-        return _ready;
+        return mIsSdkReady;
     }
 
     public void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {
-        _client.updateFeatureToTreatmentMap(featureToTreatmentMap);
-        _manager.updateFeatureToTreatmentMap(featureToTreatmentMap);
+        mClient.updateFeatureToTreatmentMap(featureToTreatmentMap);
+        mManager.updateFeatureToTreatmentMap(featureToTreatmentMap);
     }
+
 }
