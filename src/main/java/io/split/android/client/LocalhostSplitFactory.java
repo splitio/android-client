@@ -1,17 +1,19 @@
 package io.split.android.client;
 
 import android.content.Context;
+import android.support.annotation.VisibleForTesting;
 
 import com.google.common.collect.ImmutableMap;
-
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.Localhost.LocalhostFileParser;
 import io.split.android.client.Localhost.LocalhostPropertiesFileParser;
 import io.split.android.client.Localhost.LocalhostYamlFileParser;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.storage.ResourcesFileStorage;
+import io.split.android.client.storage.FileStorage;
+import io.split.android.client.utils.FileUtils;
 import io.split.android.client.utils.Logger;
 
 /**
@@ -23,31 +25,54 @@ import io.split.android.client.utils.Logger;
  */
 public final class LocalhostSplitFactory implements SplitFactory {
 
-    static final String SPLITS_YAML_FILENAME = "split.yaml";
-    static final String SPLITS_PROPERTIES_FILENAME = "split.properties";
+    static final String DEFAULT_SPLITS_YAML_FILENAME = "splits.yaml";
+    static final String DEFAULT_SPLITS_PROPERTIES_FILENAME = "splits.properties";
     static final String LOCALHOST = "localhost";
+    static final String LOCALHOST_FOLDER = "localhost";
 
     private final LocalhostSplitClient mClient;
     private final LocalhostSplitManager mManager;
     private boolean mIsSdkReady;
+
+    private String mLocalhostYamlFileName = DEFAULT_SPLITS_YAML_FILENAME;
+    private String mLocalhostPropertiesFileName = DEFAULT_SPLITS_PROPERTIES_FILENAME;
 
     public static LocalhostSplitFactory createLocalhostSplitFactory(String key, Context context) throws IOException {
         return new LocalhostSplitFactory(key, context);
     }
 
     public LocalhostSplitFactory(String key, Context context) throws IOException {
+        this(key, context, null);
+    }
 
-        LocalhostFileParser parser = new LocalhostYamlFileParser(new ResourcesFileStorage());
-        Map<String, Split> featureToTreatmentMap = parser.parse(SPLITS_YAML_FILENAME);
-        if (featureToTreatmentMap == null) {
-            parser = new LocalhostPropertiesFileParser();
-            featureToTreatmentMap = parser.parse(SPLITS_PROPERTIES_FILENAME);
+    @VisibleForTesting
+    public LocalhostSplitFactory(String key, Context context, String localhostFileName) throws IOException {
+
+        if(localhostFileName != null) {
+            mLocalhostYamlFileName = localhostFileName + ".yaml";
+            mLocalhostPropertiesFileName = localhostFileName + ".properties";
         }
 
-        mIsSdkReady = (featureToTreatmentMap != null);
+        FileStorage fileStorage = new FileStorage(context, LOCALHOST_FOLDER);
+        copyYamlFileResourceToDataFolder(fileStorage, context);
+        LocalhostFileParser parser = new LocalhostYamlFileParser(fileStorage);
+        Map<String, Split> featureToTreatmentMap = parser.parse(mLocalhostYamlFileName);
+        if (featureToTreatmentMap == null) {
+            parser = new LocalhostPropertiesFileParser(context);
+            featureToTreatmentMap = parser.parse(mLocalhostPropertiesFileName);
+        }
+        ImmutableMap<String, Split> splits;
+        if (featureToTreatmentMap != null) {
+            mIsSdkReady = true;
+            splits = ImmutableMap.copyOf(featureToTreatmentMap);
+        } else {
+            mIsSdkReady = false;
+            splits = ImmutableMap.<String, Split>of();
+            Logger.w("Neither yaml file nor properties were found. Localhost feature map is empty.");
+        }
 
-        mClient = new LocalhostSplitClient(this, key, featureToTreatmentMap);
-        mManager = new LocalhostSplitManager(featureToTreatmentMap);
+        mClient = new LocalhostSplitClient(this, key, splits);
+        mManager = new LocalhostSplitManager(splits);
 
         Logger.i("Android SDK initialized!");
     }
@@ -64,7 +89,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
 
     @Override
     public void destroy() {
-        mClient.updateFeatureToTreatmentMap(ImmutableMap.<String, String>of());
+        mClient.updateSplitsMap(ImmutableMap.<String, Split>of());
     }
 
     @Override
@@ -77,9 +102,47 @@ public final class LocalhostSplitFactory implements SplitFactory {
         return mIsSdkReady;
     }
 
+    @Deprecated
     public void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {
-        mClient.updateFeatureToTreatmentMap(featureToTreatmentMap);
-        mManager.updateFeatureToTreatmentMap(featureToTreatmentMap);
+        ImmutableMap<String, Split> splits = convertFeatureNamesMapToSplits(featureToTreatmentMap);
+        mClient.updateSplitsMap(splits);
+        mManager.updateSplitsMap(splits);
+    }
+
+    public void updateSplitsMap(Map<String, Split> splits) {
+        ImmutableMap<String, Split> immutableSplits = ImmutableMap.copyOf(splits);
+        mClient.updateSplitsMap(immutableSplits);
+        mManager.updateSplitsMap(immutableSplits);
+    }
+
+    private ImmutableMap<String, Split> convertFeatureNamesMapToSplits(Map<String, String> features) {
+        Map<String, Split> splits = new HashMap<>();
+        if(features != null) {
+            for (Map.Entry<String, String> entry : features.entrySet()) {
+                System.out.println(entry.getKey() + "/" + entry.getValue());
+                if (entry.getKey() != null && entry.getValue() != null) {
+                    Split split = new Split();
+                    split.name = entry.getKey();
+                    split.defaultTreatment = entry.getValue();
+                    splits.put(entry.getKey(), split);
+                }
+            }
+        }
+        return ImmutableMap.copyOf(splits);
+    }
+
+    private void copyYamlFileResourceToDataFolder(FileStorage fileStorage, Context context) {
+
+        FileUtils fileUtils = new FileUtils();
+        String yamlContent = null;
+        try {
+            yamlContent = fileUtils.loadFileContent(mLocalhostYamlFileName, context);
+            if(yamlContent != null) {
+                fileStorage.write(mLocalhostYamlFileName, yamlContent);
+            }
+        } catch (IOException e) {
+            Logger.e(e.getLocalizedMessage());
+        }
     }
 
 }

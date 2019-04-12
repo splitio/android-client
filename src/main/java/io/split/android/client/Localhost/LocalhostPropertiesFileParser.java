@@ -1,17 +1,24 @@
 package io.split.android.client.Localhost;
 
+import android.content.Context;
+
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import io.split.android.client.LocalhostSplitManager;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.utils.FileUtils;
 import io.split.android.client.utils.Logger;
 
 public class LocalhostPropertiesFileParser implements LocalhostFileParser {
 
-    FileUtils mFileHelper = new FileUtils();
+    Context mContext;
+
+    public LocalhostPropertiesFileParser(Context context) {
+        mContext = context;
+    }
 
     @Override
     public Map<String, Split> parse(String fileName) {
@@ -19,7 +26,7 @@ public class LocalhostPropertiesFileParser implements LocalhostFileParser {
         Map<String, Split> splits = null;
         try {
             Properties _properties = new Properties();
-            _properties.load(mFileHelper.fileStream(fileName));
+            _properties.load(mContext.getAssets().open(fileName));
             splits = new HashMap<>();
             for (Object k: _properties.keySet()) {
                 Split split = new Split();

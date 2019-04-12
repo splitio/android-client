@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.split.android.client.api.SplitView;
+import io.split.android.client.dtos.Split;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,18 +21,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public final class LocalhostSplitManager implements SplitManager {
 
-    private ImmutableMap<String, String> _featureToTreatmentMap;
+    private ImmutableMap<String, Split> mFeatureToTreatmentMap;
 
-    public LocalhostSplitManager(Map<String, String> featureToTreatmentMap) {
-        checkNotNull(featureToTreatmentMap, "featureToTreatmentMap must not be null");
-        _featureToTreatmentMap = ImmutableMap.copyOf(featureToTreatmentMap);
+    public LocalhostSplitManager(ImmutableMap<String, Split> featureToTreatmentMap) {
+        mFeatureToTreatmentMap = featureToTreatmentMap;
     }
 
     @Override
     public List<SplitView> splits() {
         List<SplitView> result = new ArrayList<SplitView>();
 
-        for (Map.Entry<String, String> entry : _featureToTreatmentMap.entrySet()) {
+        for (Map.Entry<String, Split> entry : mFeatureToTreatmentMap.entrySet()) {
             result.add(toSplitView(entry.getKey(), entry.getValue()));
         }
 
@@ -40,7 +40,7 @@ public final class LocalhostSplitManager implements SplitManager {
 
     @Override
     public List<String> splitNames() {
-        return Lists.newArrayList(_featureToTreatmentMap.keySet());
+        return Lists.newArrayList(mFeatureToTreatmentMap.keySet());
     }
 
     @Override
@@ -49,33 +49,33 @@ public final class LocalhostSplitManager implements SplitManager {
 
     @Override
     public SplitView split(String featureName) {
-        if (!_featureToTreatmentMap.containsKey(featureName)) {
+        if (!mFeatureToTreatmentMap.containsKey(featureName)) {
             return null;
         }
 
-        return toSplitView(featureName, _featureToTreatmentMap.get(featureName));
+        return toSplitView(featureName, mFeatureToTreatmentMap.get(featureName));
     }
 
-    void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {
-        checkNotNull(featureToTreatmentMap, "featureToTreatmentMap must not be null");
-        _featureToTreatmentMap = ImmutableMap.copyOf(featureToTreatmentMap);
+    void updateSplitsMap(ImmutableMap<String, Split> featureToTreatmentMap) {
+        mFeatureToTreatmentMap = featureToTreatmentMap;
     }
 
     @VisibleForTesting
-    ImmutableMap<String, String> featureToTreatmentMap() {
-        return _featureToTreatmentMap;
+    ImmutableMap<String, Split> featureToTreatmentMap() {
+        return mFeatureToTreatmentMap;
     }
 
-    private SplitView toSplitView(String featureName, String treatment) {
+    private SplitView toSplitView(String featureName, Split split) {
         SplitView view = new SplitView();
         view.name = featureName;
         view.killed = false;
         view.trafficType = null;
         view.changeNumber = 0;
         view.treatments = new ArrayList<String>();
-        if (treatment != null) {
-            view.treatments.add(treatment);
+        if (split != null && split.defaultTreatment != null) {
+            view.treatments.add(split.defaultTreatment);
         }
+        view.configs = split.configurations;
 
         return view;
     }

@@ -26,9 +26,8 @@ public final class LocalhostSplitClient implements SplitClient {
     private ImmutableMap<String, Split> mFeatureToTreatmentMap;
     private String mKey;
 
-    public LocalhostSplitClient(LocalhostSplitFactory container, String key, Map<String, Split> featureToTreatmentMap) {
-        checkNotNull(featureToTreatmentMap, "featureToTreatmentMap must not be null");
-        mFeatureToTreatmentMap = ImmutableMap.copyOf(featureToTreatmentMap);
+    public LocalhostSplitClient(LocalhostSplitFactory container, String key, ImmutableMap<String, Split> featureToTreatmentMap) {
+        mFeatureToTreatmentMap = featureToTreatmentMap;
         mfactory = container;
         mKey = key;
     }
@@ -109,10 +108,8 @@ public final class LocalhostSplitClient implements SplitClient {
         return;
     }
 
-    void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {
-        checkNotNull(featureToTreatmentMap, "featureToTreatmentMap must not be null");
-        for()
-        mFeatureToTreatmentMap = ImmutableMap.copyOf(featureToTreatmentMap);
+    void updateSplitsMap(ImmutableMap<String, Split> splits) {
+        mFeatureToTreatmentMap = splits;
     }
 
     @VisibleForTesting

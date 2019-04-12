@@ -7,8 +7,6 @@ import org.junit.Test;
 import java.util.Map;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.storage.ResourcesFileStorage;
-import io.split.android.helpers.FileHelper;
 
 public class LocalhostYamlParserTest {
 
