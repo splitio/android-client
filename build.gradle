@@ -45,13 +45,10 @@ android {
     testOptions {
         unitTests.returnDefaultValues = true
     }
-
-
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    //implementation 'junit:junit:4.12'
     implementation 'com.google.code.gson:gson:2.8.2'
     implementation 'com.google.guava:guava:18.0'
     implementation 'org.apache.httpcomponents:httpclient-android:4.3.5'
@@ -59,14 +56,9 @@ dependencies {
     implementation "org.yaml:snakeyaml:1.24"
 
     // Test
-    // Required -- JUnit 4 framework
     testImplementation 'junit:junit:4.12'
 
     androidTestImplementation 'androidx.test:core:1.1.0'
-
-    //androidTestImplementation('com.android.support.test.espresso:espresso-core:2.2.2', {
-    //    exclude group: 'com.android.support', module: 'support-annotations'
-    //})
     androidTestImplementation 'androidx.test:runner:1.1.0'
     androidTestImplementation 'androidx.test:rules:1.1.0'
     testImplementation 'org.mockito:mockito-core:2.11.0'

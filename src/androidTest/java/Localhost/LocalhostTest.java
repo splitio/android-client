@@ -20,8 +20,6 @@ import io.split.android.client.api.SplitView;
 
 public class LocalhostTest {
 
-    private Context context = ApplicationProvider.getApplicationContext();
-
     @Before
     public void  setUp() {
     }

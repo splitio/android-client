@@ -1,12 +1,11 @@
 package io.split.android.client.Localhost;
 
 import junit.framework.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 import java.util.Map;
-
 import io.split.android.client.dtos.Split;
+import io.split.android.helpers.ResourcesFileStorage;
 
 public class LocalhostYamlParserTest {
 

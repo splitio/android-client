@@ -1,4 +1,6 @@
-package io.split.android.client.Localhost;
+package Localhost;
+
+import android.content.Context;
 
 import junit.framework.Assert;
 
@@ -7,6 +9,9 @@ import org.junit.Test;
 
 import java.util.Map;
 
+import androidx.test.InstrumentationRegistry;
+import io.split.android.client.Localhost.LocalhostFileParser;
+import io.split.android.client.Localhost.LocalhostPropertiesFileParser;
 import io.split.android.client.dtos.Split;
 
 public class LocalhostPropertiesParserTest {
@@ -14,12 +19,12 @@ public class LocalhostPropertiesParserTest {
 
     @Before
     public void setup() {
-        parser = new LocalhostPropertiesFileParser();
+        parser = new LocalhostPropertiesFileParser(InstrumentationRegistry.getTargetContext());
     }
 
     @Test
     public void testFile() {
-        Map<String, Split> splits = parser.parse("splits.properties");
+        Map<String, Split> splits = parser.parse("splits1.properties");
         Split split1 = splits.get("split1");
         Split split2 = splits.get("split2");
         Split split3 = splits.get("split3");

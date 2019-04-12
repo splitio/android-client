@@ -1,15 +1,11 @@
 package io.split.android.client.Localhost;
 
 import android.content.Context;
-
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-
-import io.split.android.client.LocalhostSplitManager;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.utils.FileUtils;
 import io.split.android.client.utils.Logger;
 
 public class LocalhostPropertiesFileParser implements LocalhostFileParser {
