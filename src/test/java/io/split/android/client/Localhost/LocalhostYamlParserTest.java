@@ -21,19 +21,22 @@ public class LocalhostYamlParserTest {
 
         Map<String, Split> splits = parser.parse("splits.yaml");
 
-        Assert.assertEquals(8, splits.size());
+        Assert.assertEquals(9, splits.size());
 
         Split split0 = splits.get("split_0");
         Split split1 = splits.get("split_1");
+        Split split1_hasKey = splits.get("split_1:haskey");
         Split split2 = splits.get("split_2");
         Split myFeature = splits.get("my_feature");
         Split otherFeature3 = splits.get("other_feature_3");
         Split xFeature = splits.get("x_feature");
+        Split xFeature_theKey = splits.get("x_feature:thekey");
         Split otherFeature = splits.get("other_feature");
         Split otherFeature2 = splits.get("other_feature_2");
 
         Assert.assertNotNull(split0);
-        Assert.assertNotNull(split1);
+        Assert.assertNull(split1);
+        Assert.assertNotNull(split1_hasKey);
         Assert.assertNotNull(split2);
         Assert.assertNotNull(myFeature);
         Assert.assertNotNull(otherFeature3);
@@ -46,9 +49,9 @@ public class LocalhostYamlParserTest {
         Assert.assertNotNull(split0.configurations);
         Assert.assertEquals("{ \"size\" : 20 }", split0.configurations.get("off"));
 
-        Assert.assertEquals("split_1", split1.name);
-        Assert.assertEquals("on", split1.defaultTreatment);
-        Assert.assertNull(split1.configurations);
+        Assert.assertEquals("split_1:haskey", split1_hasKey.name);
+        Assert.assertEquals("on", split1_hasKey.defaultTreatment);
+        Assert.assertNull(split1_hasKey.configurations);
 
         Assert.assertEquals("split_2", split2.name);
         Assert.assertEquals("off", split2.defaultTreatment);
@@ -63,6 +66,10 @@ public class LocalhostYamlParserTest {
         Assert.assertEquals("other_feature_3", otherFeature3.name);
         Assert.assertEquals("off", otherFeature3.defaultTreatment);
         Assert.assertNull(otherFeature3.configurations);
+
+        Assert.assertEquals("x_feature:thekey", xFeature_theKey.name);
+        Assert.assertEquals("on", xFeature_theKey.defaultTreatment);
+        Assert.assertNull(xFeature_theKey.configurations);
 
         Assert.assertEquals("x_feature", xFeature.name);
         Assert.assertEquals("off", xFeature.defaultTreatment);
@@ -88,7 +95,22 @@ public class LocalhostYamlParserTest {
     @Test
     public void testMissingTreatment() {
         Map<String, Split> splits = parser.parse("splits_missing_treatment.yaml");
-        Assert.assertNull(splits);
+
+        Assert.assertEquals(2, splits.size());
+
+        Split split0 = splits.get("split_0");
+        Split split1 = splits.get("split_1");
+        Split split1HasKey = splits.get("split_1:haskey");
+
+        Assert.assertEquals("split_0", split0.name);
+        Assert.assertEquals("off", split0.defaultTreatment);
+        Assert.assertEquals("{ \"size\" : 20 }", split0.configurations.get("off"));
+
+        Assert.assertNull(split1);
+
+        Assert.assertEquals("split_1:haskey", split1HasKey.name);
+        Assert.assertEquals("control", split1HasKey.defaultTreatment);
+        Assert.assertNull(split1HasKey.configurations);
 
     }
 

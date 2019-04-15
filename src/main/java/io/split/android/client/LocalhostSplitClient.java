@@ -3,6 +3,7 @@ package io.split.android.client;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 
+import io.split.android.client.Localhost.LocalhostGrammar;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
@@ -25,11 +26,13 @@ public final class LocalhostSplitClient implements SplitClient {
     private LocalhostSplitFactory mfactory;
     private ImmutableMap<String, Split> mFeatureToTreatmentMap;
     private String mKey;
+    private LocalhostGrammar mLocalhostGrammar;
 
     public LocalhostSplitClient(LocalhostSplitFactory container, String key, ImmutableMap<String, Split> featureToTreatmentMap) {
         mFeatureToTreatmentMap = featureToTreatmentMap;
         mfactory = container;
         mKey = key;
+        mLocalhostGrammar = new LocalhostGrammar();
     }
 
     @Override
@@ -38,7 +41,10 @@ public final class LocalhostSplitClient implements SplitClient {
             return Treatments.CONTROL;
         }
 
-        Split splitDefinition = mFeatureToTreatmentMap.get(split);
+        Split splitDefinition = mFeatureToTreatmentMap.get(mLocalhostGrammar.buildSplitKeyName(split, mKey));
+        if(splitDefinition == null) {
+            splitDefinition = mFeatureToTreatmentMap.get(split);
+        }
 
         if (splitDefinition == null || splitDefinition.defaultTreatment == null) {
             return Treatments.CONTROL;
@@ -58,7 +64,10 @@ public final class LocalhostSplitClient implements SplitClient {
             return new SplitResult(Treatments.CONTROL);
         }
 
-        Split splitDefinition = mFeatureToTreatmentMap.get(split);
+        Split splitDefinition = mFeatureToTreatmentMap.get(mLocalhostGrammar.buildSplitKeyName(split, mKey));
+        if(splitDefinition == null) {
+            splitDefinition = mFeatureToTreatmentMap.get(split);
+        }
 
         if (splitDefinition == null || splitDefinition.defaultTreatment == null) {
             return new SplitResult(Treatments.CONTROL);

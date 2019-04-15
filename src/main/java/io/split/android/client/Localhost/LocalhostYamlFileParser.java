@@ -8,16 +8,20 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.YamlParser;
+import io.split.android.grammar.Treatments;
 
 public class LocalhostYamlFileParser implements LocalhostFileParser {
 
     private static final String TREATMENT_FIELD = "treatment";
     private static final String CONFIG_FIELD = "config";
+    private static final String KEY_FIELD = "key";
 
     private IStorage mFileStorage;
+    private LocalhostGrammar mLocalhostGrammar;
 
     public LocalhostYamlFileParser(IStorage fileStorage) {
         mFileStorage = fileStorage;
+        mLocalhostGrammar = new LocalhostGrammar();
     }
 
     @Override
@@ -47,12 +51,14 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
                 if (splitNameContainer.length > 0) {
                     String splitName = (String) splitNameContainer[0];
                     Map<String, String> splitMap = (Map<String, String>) parsedSplit.get(splitName);
+                    String matchingKey = splitMap.get(KEY_FIELD);
                     Split split = new Split();
-                    split.name = splitName;
+                    split.name = mLocalhostGrammar.buildSplitKeyName(splitName, matchingKey);
                     split.defaultTreatment = splitMap.get(TREATMENT_FIELD);
+
                     if (split.defaultTreatment == null) {
-                        Logger.e("Parsing Localhost Split " + split.name + "does not have a treatment value");
-                        return null;
+                        Logger.e("Parsing Localhost Split " + split.name + "does not have a treatment value. Using control");
+                        split.defaultTreatment = Treatments.CONTROL;
                     }
                     String config = splitMap.get(CONFIG_FIELD);
                     if (config != null) {
@@ -60,7 +66,7 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
                         configs.put(split.defaultTreatment, config);
                         split.configurations = configs;
                     }
-                    splits.put(splitName, split);
+                    splits.put(split.name, split);
                 }
             }
         } catch (Exception e) {

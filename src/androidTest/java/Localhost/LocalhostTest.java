@@ -44,14 +44,19 @@ public class LocalhostTest {
         SplitView sv0 = manager.split("split_0");
         SplitView sv1 = manager.split("split_1");
 
+        SplitView svx = manager.split("x_feature");
+
         String s0Treatment = client.getTreatment("split_0", null);
         SplitResult s0Result = client.getTreatmentWithConfig("split_0", null);
 
-        String s1Treatment = client.getTreatment("split_1", null);
-        SplitResult s1Result = client.getTreatmentWithConfig("split_1", null);
+        String s1Treatment_hasKey = client.getTreatment("split_1:haskey", null);
+        SplitResult s1Result_hasKey = client.getTreatmentWithConfig("split_1:haskey", null);
 
         String xTreatment = client.getTreatment("x_feature", null);
         SplitResult xResult = client.getTreatmentWithConfig("x_feature", null);
+
+        String xTreatment_key = client.getTreatment("x_feature:key", null);
+        SplitResult xResult_key = client.getTreatmentWithConfig("x_feature:key", null);
 
         String nonExistingTreatment = client.getTreatment("nonExistingTreatment", null);
 
@@ -63,13 +68,17 @@ public class LocalhostTest {
         Assert.assertEquals("off", s0Result.treatment());
         Assert.assertEquals("{ \"size\" : 20 }", s0Result.config());
 
-        Assert.assertEquals("on", s1Treatment);
-        Assert.assertEquals("on", s1Result.treatment());
-        Assert.assertNull(s1Result.config());
+        Assert.assertEquals("on", s1Treatment_hasKey);
+        Assert.assertEquals("on", s1Result_hasKey.treatment());
+        Assert.assertNull(s1Result_hasKey.config());
 
-        Assert.assertEquals("off", xTreatment);
-        Assert.assertEquals("off", xResult.treatment());
-        Assert.assertEquals("{\"desc\" : \"this applies only to OFF and only for only_key. The rest will receive ON\"}", xResult.config());
+        Assert.assertEquals("on", xTreatment);
+        Assert.assertEquals("on", xResult.treatment());
+        Assert.assertNull(xResult_key.config());
+
+        Assert.assertEquals("on", xTreatment_key);
+        Assert.assertEquals("on", xResult_key.treatment());
+        Assert.assertNull(xResult_key.config());
 
         Assert.assertEquals("control", nonExistingTreatment);
 
@@ -82,6 +91,14 @@ public class LocalhostTest {
         Assert.assertNotNull(sv1);
         Assert.assertEquals(sv1.treatments.get(0) , "on");
         Assert.assertNull(sv1.configs);
+
+        Assert.assertNotNull(svx);
+        Assert.assertEquals(svx.treatments.get(0) , "red");
+        Assert.assertEquals(svx.treatments.get(1) , "on");
+        Assert.assertEquals(svx.treatments.get(2) , "off");
+        Assert.assertNull(svx.configs.get("on"));
+        Assert.assertEquals("{\"desc\" : \"this applies only to OFF and only for only_key. The rest will receive ON\"}", svx.configs.get("off"));
+        Assert.assertNull(svx.configs.get("red"));
 
     }
 
