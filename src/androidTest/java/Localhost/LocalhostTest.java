@@ -8,7 +8,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
@@ -52,9 +54,6 @@ public class LocalhostTest {
         String s1Treatment_hasKey = client.getTreatment("split_1", null);
         SplitResult s1Result_hasKey = client.getTreatmentWithConfig("split_1", null);
 
-        String xTreatment = client.getTreatment("x_feature", null);
-        SplitResult xResult = client.getTreatmentWithConfig("x_feature", null);
-
         String xTreatment_key = client.getTreatment("x_feature", null);
         SplitResult xResult_key = client.getTreatmentWithConfig("x_feature", null);
 
@@ -62,6 +61,14 @@ public class LocalhostTest {
         SplitResult myFeatureResult_key = client.getTreatmentWithConfig("my_feature", null);
 
         String nonExistingTreatment = client.getTreatment("nonExistingTreatment", null);
+
+        List<String> splitNames = new ArrayList<>();
+        splitNames.add("split_0");
+        splitNames.add("x_feature");
+        splitNames.add("my_feature");
+        Map<String, String> treatments = client.getTreatments(splitNames, null);
+        Map<String, SplitResult> results = client.getTreatmentsWithConfig(splitNames, null);
+
 
         Assert.assertNotNull(factory);
         Assert.assertNotNull(client);
@@ -74,10 +81,6 @@ public class LocalhostTest {
         Assert.assertEquals("control", s1Treatment_hasKey);
         Assert.assertEquals("control", s1Result_hasKey.treatment());
         Assert.assertNull(s1Result_hasKey.config());
-
-        Assert.assertEquals("on", xTreatment);
-        Assert.assertEquals("on", xResult.treatment());
-        Assert.assertNull(xResult_key.config());
 
         Assert.assertEquals("on", xTreatment_key);
         Assert.assertEquals("on", xResult_key.treatment());
@@ -107,6 +110,18 @@ public class LocalhostTest {
         Assert.assertEquals("{\"desc\" : \"this applies only to OFF and only for only_key. The rest will receive ON\"}", svx.configs.get("off"));
         Assert.assertNull(svx.configs.get("red"));
 
+        Assert.assertEquals("off", treatments.get("split_0"));
+        Assert.assertEquals("on", treatments.get("x_feature"));
+        Assert.assertEquals("red", treatments.get("my_feature"));
+
+        Assert.assertEquals("off", results.get("split_0").treatment());
+        Assert.assertEquals("{ \"size\" : 20 }", results.get("split_0").config());
+
+        Assert.assertEquals("on", results.get("x_feature").treatment());
+        Assert.assertNull(results.get("x_feature").config());
+
+        Assert.assertEquals("red", results.get("my_feature").treatment());
+        Assert.assertNull(results.get("my_feature").config());
     }
 
     @Test
@@ -197,6 +212,26 @@ public class LocalhostTest {
         Assert.assertEquals(0, splits.size());
 
         Assert.assertNull(sva);
+    }
+
+    @Test
+    public void testLoadYmlFile() {
+
+        Context context = InstrumentationRegistry.getTargetContext();
+        LocalhostSplitFactory factory = null;
+        LocalhostSplitClient client = null;
+        try {
+            factory = new LocalhostSplitFactory("key", context, "splits_yml");
+            client = (LocalhostSplitClient) factory.client();
+
+        } catch (IOException e) {
+        }
+
+        Assert.assertNotNull(factory);
+        Assert.assertNotNull(client);
+
+        String t = client.getTreatment("split_0", null);
+        Assert.assertEquals("off", t);
     }
 
 }

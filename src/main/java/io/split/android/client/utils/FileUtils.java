@@ -43,4 +43,13 @@ public class FileUtils {
         }
         return sb.toString();
     }
+
+    public boolean fileExists(String fileName, Context context) {
+        String content = null;
+        try {
+            content = loadFileContent(fileName, context);
+        } catch (IOException e) {
+        }
+        return content != null;
+    }
 }

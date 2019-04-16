@@ -83,17 +83,20 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
-        return getTreatments(splits, attributes);
+        Map<String, SplitResult> results = getTreatmentsWithConfig(splits, attributes);
+        Map<String, String> treatments = new HashMap<>();
+        for (Map.Entry<String, SplitResult> entry : results.entrySet()) {
+            treatments.put(entry.getKey(), entry.getValue().treatment());
+        }
+        return treatments;
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
-
         Map<String, SplitResult> result = new HashMap<String, SplitResult>();
         for(String split : splits) {
-            result.put(split, new SplitResult(getTreatment(split)));
+            result.put(split, getTreatmentWithConfig(split, null));
         }
-
         return result;
     }
 

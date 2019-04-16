@@ -25,17 +25,18 @@ import io.split.android.client.utils.Logger;
  */
 public final class LocalhostSplitFactory implements SplitFactory {
 
-    static final String DEFAULT_SPLITS_YAML_FILENAME = "splits.yaml";
-    static final String DEFAULT_SPLITS_PROPERTIES_FILENAME = "splits.properties";
+    static final String DEFAULT_SPLITS_FILENAME = "splits";
     static final String LOCALHOST = "localhost";
     static final String LOCALHOST_FOLDER = "localhost";
+    static final String PROPERTIES_EXTENSION = "properties";
+    static final String YML_EXTENSION = "yml";
+    static final String YAML_EXTENSION = "yaml";
 
     private final LocalhostSplitClient mClient;
     private final LocalhostSplitManager mManager;
     private boolean mIsSdkReady;
 
-    private String mLocalhostYamlFileName = DEFAULT_SPLITS_YAML_FILENAME;
-    private String mLocalhostPropertiesFileName = DEFAULT_SPLITS_PROPERTIES_FILENAME;
+    private String mLocalhostFileName = DEFAULT_SPLITS_FILENAME;
 
     public static LocalhostSplitFactory createLocalhostSplitFactory(String key, Context context) throws IOException {
         return new LocalhostSplitFactory(key, context);
@@ -49,17 +50,20 @@ public final class LocalhostSplitFactory implements SplitFactory {
     public LocalhostSplitFactory(String key, Context context, String localhostFileName) throws IOException {
 
         if(localhostFileName != null) {
-            mLocalhostYamlFileName = localhostFileName + ".yaml";
-            mLocalhostPropertiesFileName = localhostFileName + ".properties";
+            mLocalhostFileName = localhostFileName;
         }
 
-        FileStorage fileStorage = new FileStorage(context, LOCALHOST_FOLDER);
-        copyYamlFileResourceToDataFolder(fileStorage, context);
-        LocalhostFileParser parser = new LocalhostYamlFileParser(fileStorage);
-        Map<String, Split> featureToTreatmentMap = parser.parse(mLocalhostYamlFileName);
-        if (featureToTreatmentMap == null) {
+        Map<String, Split> featureToTreatmentMap = null;
+        LocalhostFileParser parser = null;
+        String yamlName = getYamlFileName(context);
+        if(yamlName != null) {
+            FileStorage fileStorage = new FileStorage(context, LOCALHOST_FOLDER);
+            copyYamlFileResourceToDataFolder(yamlName, fileStorage, context);
+            parser = new LocalhostYamlFileParser(fileStorage);
+            featureToTreatmentMap = parser.parse(yamlName);
+        } else {
             parser = new LocalhostPropertiesFileParser(context);
-            featureToTreatmentMap = parser.parse(mLocalhostPropertiesFileName);
+            featureToTreatmentMap = parser.parse(mLocalhostFileName + "." + PROPERTIES_EXTENSION);
         }
         ImmutableMap<String, Split> splits;
         if (featureToTreatmentMap != null) {
@@ -131,18 +135,31 @@ public final class LocalhostSplitFactory implements SplitFactory {
         return ImmutableMap.copyOf(splits);
     }
 
-    private void copyYamlFileResourceToDataFolder(FileStorage fileStorage, Context context) {
-
+    private void copyYamlFileResourceToDataFolder(String fileName, FileStorage fileStorage, Context context) {
         FileUtils fileUtils = new FileUtils();
         String yamlContent = null;
         try {
-            yamlContent = fileUtils.loadFileContent(mLocalhostYamlFileName, context);
+            yamlContent = fileUtils.loadFileContent(fileName, context);
             if(yamlContent != null) {
-                fileStorage.write(mLocalhostYamlFileName, yamlContent);
+                fileStorage.write(fileName, yamlContent);
             }
         } catch (IOException e) {
             Logger.e(e.getLocalizedMessage());
         }
+    }
+
+    private String getYamlFileName(Context context) {
+        String fileName = mLocalhostFileName + "." + YAML_EXTENSION;
+        FileUtils fileUtils = new FileUtils();
+        if(fileUtils.fileExists(fileName, context)) {
+            return  fileName;
+        }
+
+        fileName = mLocalhostFileName + "." + YML_EXTENSION;
+        if(fileUtils.fileExists(mLocalhostFileName + "." + YML_EXTENSION, context)) {
+            return fileName;
+        }
+        return null;
     }
 
 }
