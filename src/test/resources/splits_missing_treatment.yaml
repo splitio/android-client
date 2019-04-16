@@ -3,4 +3,4 @@
     config: "{ \"size\" : 20 }"
 - split_1:
 # Missing treatment key
-    key: "haskey"
+    keys: "haskey"

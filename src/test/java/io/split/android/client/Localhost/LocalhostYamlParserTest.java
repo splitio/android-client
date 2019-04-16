@@ -21,7 +21,7 @@ public class LocalhostYamlParserTest {
 
         Map<String, Split> splits = parser.parse("splits.yaml");
 
-        Assert.assertEquals(9, splits.size());
+        Assert.assertEquals(12, splits.size());
 
         Split split0 = splits.get("split_0");
         Split split1 = splits.get("split_1");
@@ -34,6 +34,9 @@ public class LocalhostYamlParserTest {
         Split otherFeature = splits.get("other_feature");
         Split otherFeature2 = splits.get("other_feature_2");
 
+        Split myFeature_k1 = splits.get("my_feature:k1");
+        Split myFeature_k3 = splits.get("my_feature:k3");
+
         Assert.assertNotNull(split0);
         Assert.assertNull(split1);
         Assert.assertNotNull(split1_hasKey);
@@ -43,6 +46,8 @@ public class LocalhostYamlParserTest {
         Assert.assertNotNull(xFeature);
         Assert.assertNotNull(otherFeature);
         Assert.assertNotNull(otherFeature2);
+        Assert.assertNotNull(myFeature_k1);
+        Assert.assertNotNull(myFeature_k3);
 
         Assert.assertEquals("split_0", split0.name);
         Assert.assertEquals("off", split0.defaultTreatment);
@@ -83,6 +88,14 @@ public class LocalhostYamlParserTest {
         Assert.assertEquals("other_feature_2", otherFeature2.name);
         Assert.assertEquals("on", otherFeature2.defaultTreatment);
         Assert.assertNull(otherFeature2.configurations);
+
+        Assert.assertEquals("my_feature:k1", myFeature_k1.name);
+        Assert.assertEquals("white", myFeature_k1.defaultTreatment);
+        Assert.assertNull(myFeature_k1.configurations);
+
+        Assert.assertEquals("my_feature:k3", myFeature_k3.name);
+        Assert.assertEquals("white", myFeature_k3.defaultTreatment);
+        Assert.assertNull(myFeature_k3.configurations);
 
     }
 

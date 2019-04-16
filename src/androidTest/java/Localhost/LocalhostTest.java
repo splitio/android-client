@@ -49,14 +49,17 @@ public class LocalhostTest {
         String s0Treatment = client.getTreatment("split_0", null);
         SplitResult s0Result = client.getTreatmentWithConfig("split_0", null);
 
-        String s1Treatment_hasKey = client.getTreatment("split_1:haskey", null);
-        SplitResult s1Result_hasKey = client.getTreatmentWithConfig("split_1:haskey", null);
+        String s1Treatment_hasKey = client.getTreatment("split_1", null);
+        SplitResult s1Result_hasKey = client.getTreatmentWithConfig("split_1", null);
 
         String xTreatment = client.getTreatment("x_feature", null);
         SplitResult xResult = client.getTreatmentWithConfig("x_feature", null);
 
-        String xTreatment_key = client.getTreatment("x_feature:key", null);
-        SplitResult xResult_key = client.getTreatmentWithConfig("x_feature:key", null);
+        String xTreatment_key = client.getTreatment("x_feature", null);
+        SplitResult xResult_key = client.getTreatmentWithConfig("x_feature", null);
+
+        String myFeatureTreatment_key = client.getTreatment("my_feature", null);
+        SplitResult myFeatureResult_key = client.getTreatmentWithConfig("my_feature", null);
 
         String nonExistingTreatment = client.getTreatment("nonExistingTreatment", null);
 
@@ -68,8 +71,8 @@ public class LocalhostTest {
         Assert.assertEquals("off", s0Result.treatment());
         Assert.assertEquals("{ \"size\" : 20 }", s0Result.config());
 
-        Assert.assertEquals("on", s1Treatment_hasKey);
-        Assert.assertEquals("on", s1Result_hasKey.treatment());
+        Assert.assertEquals("control", s1Treatment_hasKey);
+        Assert.assertEquals("control", s1Result_hasKey.treatment());
         Assert.assertNull(s1Result_hasKey.config());
 
         Assert.assertEquals("on", xTreatment);
@@ -79,6 +82,10 @@ public class LocalhostTest {
         Assert.assertEquals("on", xTreatment_key);
         Assert.assertEquals("on", xResult_key.treatment());
         Assert.assertNull(xResult_key.config());
+
+        Assert.assertEquals("red", myFeatureTreatment_key);
+        Assert.assertEquals("red", myFeatureResult_key.treatment());
+        Assert.assertNull(myFeatureResult_key.config());
 
         Assert.assertEquals("control", nonExistingTreatment);
 

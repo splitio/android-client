@@ -3,7 +3,7 @@
     config: "{ \"size\" : 20 }"
 - split_1:
     treatment: "on"
-    key: "haskey"
+    keys: "haskey"
 - split_2:
     treatment: "off"
     config: "{ \"size\" : 20 }"
@@ -16,10 +16,10 @@
     treatment: "off"
     config: "{\"desc\" : \"this applies only to OFF and only for only_key. The rest will receive ON\"}"
 - x_feature:
-    key: "key"
+    keys: "key"
     treatment: "on"
 - x_feature:
-    key: "key1"
+    keys: "key1"
     treatment: "red"
 - other_feature:
     treatment: "on"
@@ -27,3 +27,9 @@
     treatment: "on"
 - instrumentation:
     treatment: "yes"
+- my_feature:
+    keys: ["k1", "k2", "k3"]
+    treatment: "white"
+- my_feature:
+    keys: ["key1", "key", "key3"]
+    treatment: "red"

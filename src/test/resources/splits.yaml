@@ -1,9 +1,12 @@
+- my_feature:
+    keys: ["k1", "k2", "k3"]
+    treatment: "white"
 - split_0:
     treatment: "off"
     config: "{ \"size\" : 20 }"
 - split_1:
     treatment: "on"
-    key: "haskey"
+    keys: "haskey"
 - split_2:
     treatment: "off"
     config: "{ \"size\" : 20 }"
@@ -17,7 +20,7 @@
     config: "{\"desc\" : \"this applies only to OFF and only for only_key. The rest will receive ON\"}"
 - x_feature:
     treatment: "on"
-    key: "thekey"
+    keys: "thekey"
 - other_feature:
     treatment: "on"
 - other_feature_2:
