@@ -18,7 +18,6 @@ public class FileUtils {
 
         try {
             InputStream fin = context.getAssets().open(name);
-            //fin = new FileInputStream(file);
             content = convertStreamToString(fin);
             fin.close();
         } catch (FileNotFoundException fnfe) {
