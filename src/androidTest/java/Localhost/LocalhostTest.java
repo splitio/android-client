@@ -100,7 +100,8 @@ public class LocalhostTest {
 
         Assert.assertNotNull(sv1);
         Assert.assertEquals(sv1.treatments.get(0) , "on");
-        Assert.assertNull(sv1.configs);
+        Assert.assertNotNull(sv1.configs);
+        Assert.assertEquals(0, sv1.configs.size());
 
         Assert.assertNotNull(svx);
         Assert.assertEquals(svx.treatments.get(0) , "red");
@@ -165,11 +166,13 @@ public class LocalhostTest {
 
         Assert.assertNotNull(sva);
         Assert.assertEquals(sva.treatments.get(0) , "on");
-        Assert.assertNull(sva.configs);
+        Assert.assertNotNull(sva.configs);
+        Assert.assertEquals(0, sva.configs.size());
 
         Assert.assertNotNull(svb);
         Assert.assertEquals(svb.treatments.get(0) , "off");
-        Assert.assertNull(svb.configs);
+        Assert.assertNotNull(svb.configs);
+        Assert.assertEquals(0, svb.configs.size());
 
         Assert.assertNull(svd);
     }

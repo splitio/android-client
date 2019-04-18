@@ -84,7 +84,7 @@ public final class LocalhostSplitManager implements SplitManager {
         if (split != null && treatments != null) {
             view.treatments.addAll(treatments);
         }
-        view.configs = split.configurations;
+        view.configs = (split.configurations != null ? split.configurations : new HashMap<>());
 
         return view;
     }
