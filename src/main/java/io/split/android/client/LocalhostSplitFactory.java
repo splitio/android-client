@@ -64,6 +64,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
         } else {
             parser = new LocalhostPropertiesFileParser(context);
             featureToTreatmentMap = parser.parse(mLocalhostFileName + "." + PROPERTIES_EXTENSION);
+            Logger.w("Localhost mode: .split mocks will be deprecated soon in favor of YAML files, which provide more targeting power. Take a look in our documentation.");
         }
         ImmutableMap<String, Split> splits;
         if (featureToTreatmentMap != null) {
