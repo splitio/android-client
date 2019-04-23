@@ -16,6 +16,17 @@ import io.split.android.client.utils.Json;
 public class FileHelper {
 
     public List<Split> loadAndParseSplitChangeFile (String name) {
+        try {
+            String content = loadFileContent(name);;
+            SplitChange change = Json.fromJson(content, SplitChange.class);
+            List<Split> splits = change.splits;
+            return splits;
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
+    public String loadFileContent(String name) {
         ClassLoader classLoader = this.getClass().getClassLoader();
         URL resource = classLoader.getResource(name);
         File file = new File(resource.getPath());
@@ -24,12 +35,9 @@ public class FileHelper {
             FileInputStream fin = new FileInputStream(file);
             content = convertStreamToString(fin);
             fin.close();
-            SplitChange change = Json.fromJson(content, SplitChange.class);
-            List<Split> splits = change.splits;
-            return splits;
         } catch (Exception e) {
         }
-        return null;
+        return content;
     }
 
     private String convertStreamToString(InputStream is) throws IOException {

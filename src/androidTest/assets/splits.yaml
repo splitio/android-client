@@ -1,0 +1,35 @@
+- split_0:
+    treatment: "off"
+    config: "{ \"size\" : 20 }"
+- split_1:
+    treatment: "on"
+    keys: "haskey"
+- split_2:
+    treatment: "off"
+    config: "{ \"size\" : 20 }"
+- my_feature:
+    treatment: "on"
+    config: "{\"desc\" : \"this applies only to ON treatment\"}"
+- other_feature_3:
+    treatment: "off"
+- x_feature:
+    treatment: "off"
+    config: "{\"desc\" : \"this applies only to OFF and only for only_key. The rest will receive ON\"}"
+- x_feature:
+    keys: "key"
+    treatment: "on"
+- x_feature:
+    keys: "key1"
+    treatment: "red"
+- other_feature:
+    treatment: "on"
+- other_feature_2:
+    treatment: "on"
+- instrumentation:
+    treatment: "yes"
+- my_feature:
+    keys: ["k1", "k2", "k3"]
+    treatment: "white"
+- my_feature:
+    keys: ["key1", "key", "key3"]
+    treatment: "red"

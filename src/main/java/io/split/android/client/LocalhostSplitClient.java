@@ -3,6 +3,7 @@ package io.split.android.client;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 
+import io.split.android.client.Localhost.LocalhostGrammar;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
@@ -22,30 +23,34 @@ import static com.google.common.base.Preconditions.checkNotNull;
  *
  */
 public final class LocalhostSplitClient implements SplitClient {
-    private LocalhostSplitFactory _container;
-    private ImmutableMap<String, String> _featureToTreatmentMap;
-    private String key;
+    private LocalhostSplitFactory mfactory;
+    private ImmutableMap<String, Split> mFeatureToTreatmentMap;
+    private String mKey;
+    private LocalhostGrammar mLocalhostGrammar;
 
-    public LocalhostSplitClient(LocalhostSplitFactory container, String key, Map<String, String> featureToTreatmentMap) {
-        checkNotNull(featureToTreatmentMap, "featureToTreatmentMap must not be null");
-        _featureToTreatmentMap = ImmutableMap.copyOf(featureToTreatmentMap);
-        _container = container;
-        this.key = key;
+    public LocalhostSplitClient(LocalhostSplitFactory container, String key, ImmutableMap<String, Split> featureToTreatmentMap) {
+        mFeatureToTreatmentMap = featureToTreatmentMap;
+        mfactory = container;
+        mKey = key;
+        mLocalhostGrammar = new LocalhostGrammar();
     }
 
     @Override
     public String getTreatment(String split) {
-        if (key == null || split == null) {
+        if (mKey == null || split == null) {
             return Treatments.CONTROL;
         }
 
-        String treatment = _featureToTreatmentMap.get(split);
+        Split splitDefinition = mFeatureToTreatmentMap.get(mLocalhostGrammar.buildSplitKeyName(split, mKey));
+        if(splitDefinition == null) {
+            splitDefinition = mFeatureToTreatmentMap.get(split);
+        }
 
-        if (treatment == null) {
+        if (splitDefinition == null || splitDefinition.defaultTreatment == null) {
             return Treatments.CONTROL;
         }
 
-        return treatment;
+        return splitDefinition.defaultTreatment;
     }
 
     @Override
@@ -55,29 +60,50 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
-        return new SplitResult(getTreatment(split));
+        if (mKey == null || split == null) {
+            return new SplitResult(Treatments.CONTROL);
+        }
+
+        Split splitDefinition = mFeatureToTreatmentMap.get(mLocalhostGrammar.buildSplitKeyName(split, mKey));
+        if(splitDefinition == null) {
+            splitDefinition = mFeatureToTreatmentMap.get(split);
+        }
+
+        if (splitDefinition == null || splitDefinition.defaultTreatment == null) {
+            return new SplitResult(Treatments.CONTROL);
+        }
+
+        String config = null;
+        if (splitDefinition.configurations != null) {
+            config = splitDefinition.configurations.get(splitDefinition.defaultTreatment);
+        }
+
+        return new SplitResult(splitDefinition.defaultTreatment, config);
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
-        return getTreatments(splits, attributes);
+        Map<String, SplitResult> results = getTreatmentsWithConfig(splits, attributes);
+        Map<String, String> treatments = new HashMap<>();
+        for (Map.Entry<String, SplitResult> entry : results.entrySet()) {
+            treatments.put(entry.getKey(), entry.getValue().treatment());
+        }
+        return treatments;
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
-
         Map<String, SplitResult> result = new HashMap<String, SplitResult>();
         for(String split : splits) {
-            result.put(split, new SplitResult(getTreatment(split)));
+            result.put(split, getTreatmentWithConfig(split, null));
         }
-
         return result;
     }
 
 
     @Override
     public void destroy() {
-        _container.destroy();
+        mfactory.destroy();
     }
 
     @Override
@@ -87,21 +113,20 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public boolean isReady() {
-        return _container.isReady();
+        return mfactory.isReady();
     }
 
     public void on(SplitEvent event, SplitEventTask task) {
         return;
     }
 
-    void updateFeatureToTreatmentMap(Map<String, String> featureToTreatmentMap) {
-        checkNotNull(featureToTreatmentMap, "featureToTreatmentMap must not be null");
-        _featureToTreatmentMap = ImmutableMap.copyOf(featureToTreatmentMap);
+    void updateSplitsMap(ImmutableMap<String, Split> splits) {
+        mFeatureToTreatmentMap = splits;
     }
 
     @VisibleForTesting
-    ImmutableMap<String, String> featureToTreatmentMap() {
-        return _featureToTreatmentMap;
+    ImmutableMap<String, Split> featureToTreatmentMap() {
+        return mFeatureToTreatmentMap;
     }
 
     @Override
