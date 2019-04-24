@@ -179,6 +179,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
             if (mSplitValidator.isValidName(split, validationTag)) {
                 EvaluationResult result = mEvaluator.getTreatment(mMatchingKey, mBucketingKey, mSplitValidator.trimName(split, validationTag), attributes);
                 results.put(split.trim(), new SplitResult(result.getTreatment(), result.getConfigurations()));
+
+                logImpression(
+                        mMatchingKey,
+                        mBucketingKey,
+                        split,
+                        result.getTreatment(),
+                        "sdk.getTreatment",
+                        mSplitClientConfig.labelsEnabled() ? result.getLabel() : null,
+                        result.getChangeNumber(),
+                        attributes);
             }
         }
 
