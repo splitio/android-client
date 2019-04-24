@@ -5,7 +5,9 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -21,12 +23,12 @@ import io.split.android.client.dtos.Status;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.ConditionsTestUtil;
-import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.CombiningMatcher;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProviderImpl;
 import io.split.android.engine.segments.StaticMySegmentsFectherProvider;
 import io.split.android.grammar.Treatments;
+import io.split.android.helpers.SplitHelper;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -50,8 +52,12 @@ public class RefreshableSplitFetcherTest {
     private void works(long startingChangeNumber) throws InterruptedException {
         AChangePerCallSplitChangeFetcher splitChangeFetcher = new AChangePerCallSplitChangeFetcher();
 
+        Map<String, String> configs = SplitHelper.createConfigs(Arrays.asList("t1","t2"), Arrays.asList("{\"f1\":\"v1\"}", "{\"f2\":\"v2\"}"));
+
+        splitChangeFetcher.configurations = configs;
+
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", eventManager);
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key", eventManager);
 
         RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(splitChangeFetcher, SplitParser.get(provider), eventManager, startingChangeNumber);
 
@@ -84,7 +90,7 @@ public class RefreshableSplitFetcherTest {
 
         ParsedCondition expectedParsedCondition = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(ConditionsTestUtil.partition("on", 10)));
         List<ParsedCondition> expectedListOfMatcherAndSplits = Lists.newArrayList(expectedParsedCondition);
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("" + fetcher.changeNumber(), (int) fetcher.changeNumber(), false, Treatments.OFF, expectedListOfMatcherAndSplits, null, fetcher.changeNumber(), 1);
+        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("" + fetcher.changeNumber(), (int) fetcher.changeNumber(), false, Treatments.OFF, expectedListOfMatcherAndSplits, null, fetcher.changeNumber(), 0, configs);
 
         ParsedSplit actual = fetcher.fetch("" + fetcher.changeNumber());
 
@@ -96,7 +102,7 @@ public class RefreshableSplitFetcherTest {
     public void when_parser_fails_we_remove_the_experiment() throws InterruptedException {
 
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", eventManager);
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key", eventManager);
         Split validSplit = new Split();
         validSplit.status = Status.ACTIVE;
         validSplit.seed = (int) -1;
@@ -205,7 +211,7 @@ public class RefreshableSplitFetcherTest {
 
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder().build());
 
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key", eventManager);
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key", eventManager);
 
         RefreshableSplitFetcher fetcher = new RefreshableSplitFetcher(experimentChangeFetcher,
                 SplitParser.get(provider), eventManager, startingChangeNumber);

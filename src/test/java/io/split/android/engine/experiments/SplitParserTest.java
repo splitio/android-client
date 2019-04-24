@@ -5,7 +5,9 @@ import com.google.common.collect.Lists;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.DataType;
@@ -28,9 +30,10 @@ import io.split.android.engine.matchers.collections.PartOfSetMatcher;
 import io.split.android.engine.matchers.strings.ContainsAnyOfMatcher;
 import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProviderImpl;
 import io.split.android.engine.segments.StaticMySegmentsFectherProvider;
 import io.split.android.grammar.Treatments;
+import io.split.android.helpers.SplitHelper;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -44,7 +47,7 @@ public class SplitParserTest {
 
     @Test
     public void less_than_or_equal_to() {
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key");
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key");
         SplitParser parser = SplitParser.get(provider);
 
         Matcher ageLessThan10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.LESS_THAN_OR_EQUAL_TO, DataType.NUMBER, 10L, false);
@@ -56,7 +59,9 @@ public class SplitParserTest {
 
         List<Condition> conditions = Lists.newArrayList(c);
 
-        Split split = makeSplit("first.name", 123, conditions, 1);
+        Map<String, String> configs = SplitHelper.createConfigs(Arrays.asList("t1","t2"), Arrays.asList("{\"f1\":\"v1\"}", "{\"f2\":\"v2\"}"));
+
+        Split split = makeSplit("first.name", 123, conditions, 1, configs);
 
         ParsedSplit actual = parser.parse(split);
 
@@ -65,7 +70,7 @@ public class SplitParserTest {
         ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1);
+        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, configs);
 
         assertThat(actual, is(equalTo(expected)));
     }
@@ -73,7 +78,7 @@ public class SplitParserTest {
     @Test
     public void equal_to() {
 
-        RefreshableMySegmentsFetcherProvider provider = StaticMySegmentsFectherProvider.get("key");
+        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key");
 
         SplitParser parser = SplitParser.get(provider);
 
@@ -94,7 +99,7 @@ public class SplitParserTest {
         ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1);
+        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
     }
@@ -121,7 +126,7 @@ public class SplitParserTest {
         ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1);
+        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
     }
@@ -153,7 +158,7 @@ public class SplitParserTest {
         ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1);
+        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
     }
@@ -312,12 +317,16 @@ public class SplitParserTest {
         ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("splitName", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1);
+        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("splitName", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
     }
 
     private Split makeSplit(String name, int seed, List<Condition> conditions, long changeNumber) {
+        return makeSplit(name, seed, conditions, changeNumber,null);
+    }
+
+    private Split makeSplit(String name, int seed, List<Condition> conditions, long changeNumber, Map<String, String> configurations) {
         Split split = new Split();
         split.name = name;
         split.seed = seed;
@@ -329,6 +338,7 @@ public class SplitParserTest {
         split.trafficTypeName = "user";
         split.changeNumber = changeNumber;
         split.algo = 1;
+        split.configurations = configurations;
         return split;
     }
 

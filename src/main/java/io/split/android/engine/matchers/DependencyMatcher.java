@@ -1,5 +1,7 @@
 package io.split.android.engine.matchers;
 
+import io.split.android.client.EvaluationResult;
+import io.split.android.client.Evaluator;
 import io.split.android.client.SplitClientImpl;
 
 import java.util.List;
@@ -18,7 +20,7 @@ public class DependencyMatcher implements Matcher {
     }
 
     @Override
-    public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, SplitClientImpl splitClient) {
+    public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, Evaluator evaluator) {
         if (matchValue == null) {
             return false;
         }
@@ -27,14 +29,14 @@ public class DependencyMatcher implements Matcher {
             return false;
         }
 
-        String result = splitClient.getTreatmentWithoutImpressions(
+        EvaluationResult result = evaluator.getTreatment(
                 (String) matchValue,
                 bucketingKey,
                 _split,
                 attributes
         );
 
-        return _treatments.contains(result);
+        return _treatments.contains(result.getTreatment());
     }
 
     @Override

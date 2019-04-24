@@ -57,6 +57,23 @@ public interface SplitClient {
 
 
     /**
+     * This method is useful when you want to determine the treatment to show
+     * to an customer (user, account etc.) based on an attribute of that customer
+     * instead of it's key.
+     * <p/>
+     * <p/>
+     * Examples include showing a different treatment to users on trial plan
+     * vs. premium plan. Another example is to show a different treatment
+     * to users created after a certain date.
+     *
+     * @param split    the feature we want to evaluate. MUST NOT be null.
+     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
+     * @return the evaluated treatment, the default treatment of this feature, or 'control'
+     *  with its corresponding configurations if it has one.
+     */
+    SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes);
+
+    /**
      * This method is useful when you want to determine the treatment of several splits at
      * the same time.
      * <p/>
@@ -68,6 +85,21 @@ public interface SplitClient {
      * @return the evaluated treatments, the default treatment of a feature, or 'control'.
      */
     Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes);
+
+
+    /**
+     * This method is useful when you want to determine the treatment of several splits at
+     * the same time.
+     * <p/>
+     * <p/>
+     * It can be used to cache treatments you know it won't change very often.
+     *
+     * @param splits    the features you want to evaluate. MUST NOT be null.
+     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
+     * @return the evaluated treatments, the default treatment of a feature, or 'control'
+     * with its corresponding configurations if it has one.
+     */
+    Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes);
 
     /**
      * Destroys the background processes and clears the cache, releasing the resources used by
