@@ -149,7 +149,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 mBucketingKey,
                 splitName,
                 evaluationResult.getTreatment(),
-                "sdk.getTreatment",
                 mSplitClientConfig.labelsEnabled() ? evaluationResult.getLabel() : null,
                 evaluationResult.getChangeNumber(),
                 attributes
@@ -179,13 +178,22 @@ public class TreatmentManagerImpl implements TreatmentManager {
             if (mSplitValidator.isValidName(split, validationTag)) {
                 EvaluationResult result = mEvaluator.getTreatment(mMatchingKey, mBucketingKey, mSplitValidator.trimName(split, validationTag), attributes);
                 results.put(split.trim(), new SplitResult(result.getTreatment(), result.getConfigurations()));
+
+                logImpression(
+                        mMatchingKey,
+                        mBucketingKey,
+                        split,
+                        result.getTreatment(),
+                        mSplitClientConfig.labelsEnabled() ? result.getLabel() : null,
+                        result.getChangeNumber(),
+                        attributes);
             }
         }
 
         return results;
     }
 
-    private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String operation, String label, Long changeNumber, Map<String, Object> attributes) {
+    private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes) {
         try {
             mImpressionListener.log(new Impression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes));
         } catch (Throwable t) {
