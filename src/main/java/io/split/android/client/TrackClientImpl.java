@@ -30,6 +30,10 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
+import io.split.android.client.validators.KeyValidatorImpl;
+import io.split.android.client.validators.ValidationErrorInfo;
+import io.split.android.client.validators.ValidationMessageLogger;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 
 import static java.lang.Thread.MIN_PRIORITY;
 
@@ -57,7 +61,8 @@ public class TrackClientImpl implements TrackClient {
 
     private final TrackStorageManager _storageManager;
     private final String validationTag = "track";
-    private final EventValidator _eventValidator = new EventValidatorImpl(validationTag);
+    private final EventValidator _eventValidator;
+    private final ValidationMessageLogger _validationLogger;
 
     private ThreadFactory eventClientThreadFactory(final String name) {
         return new ThreadFactory() {
@@ -89,6 +94,9 @@ public class TrackClientImpl implements TrackClient {
 
         _eventQueue = eventQueue;
         _config = config;
+
+        _eventValidator = new EventValidatorImpl(new KeyValidatorImpl());
+        _validationLogger = new ValidationMessageLoggerImpl();
 
         // Thread to send events to backend
         _senderExecutor = new ThreadPoolExecutor(
@@ -129,13 +137,13 @@ public class TrackClientImpl implements TrackClient {
     @Override
     public boolean track(Event event) {
         try {
-            if (!_eventValidator.isValidEvent(event)) {
-                return false;
-            }
-
-            if (_eventValidator.trafficTypeHasUppercaseLetters(event)) {
+            ValidationErrorInfo errorInfo = _eventValidator.validate(event);
+            if (errorInfo != null) {
+                _validationLogger.log(errorInfo, validationTag);
+                if(errorInfo.isError()) {
+                    return false;
+                }
                 event.trafficTypeName = event.trafficTypeName.toLowerCase();
-                Logger.w(validationTag + ": traffic_type_name should be all lowercase - converting string to lowercase");
             }
 
             _eventQueue.put(event);

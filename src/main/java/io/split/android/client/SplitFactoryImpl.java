@@ -54,6 +54,9 @@ import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
 import io.split.android.client.validators.ValidationConfig;
+import io.split.android.client.validators.ValidationErrorInfo;
+import io.split.android.client.validators.ValidationMessageLogger;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
 import io.split.android.engine.experiments.SplitChangeFetcher;
@@ -81,8 +84,13 @@ public class SplitFactoryImpl implements SplitFactory {
 
         ValidationConfig.getInstance().setMaximumKeyLength(config.maximumKeyLength());
         ValidationConfig.getInstance().setTrackEventNamePattern(config.trackEventNamePattern());
-        ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl("factory instantiation");
-        apiKeyValidator.isValidApiKey(apiToken);
+        ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
+        ValidationMessageLogger validationLogger = new ValidationMessageLoggerImpl();
+
+        ValidationErrorInfo errorInfo = apiKeyValidator.validate(apiToken);
+        if(errorInfo != null) {
+            validationLogger.log(errorInfo, "factory instantiation");
+        }
 
         SSLContext sslContext = null;
         try {

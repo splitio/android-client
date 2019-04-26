@@ -12,26 +12,6 @@ public interface SplitValidator {
      * @param name: Split name
      * @return true when name is valid, false when it is not
      */
-    public boolean isValidName(String name, String logTag);
+    public ValidationErrorInfo validateName(String name);
 
-    /**
-     * Trims the name if it has leading/trailing whitespaces
-     * @param name: Split name
-     * @return true when name contains t , false when it is not
-     */
-    public String trimName(String name, String logTag);
-
-    /**
-     * Overrides de default message logger
-     * @param logger: An implementation of ValidationMessageLogger
-     *
-     */
-    public void setMessageLogger(ValidationMessageLogger logger);
-
-    /**
-     * Check if split name has leading or trailing spaces
-     * @param name: Split name
-     *
-     */
-    public boolean nameHasToBeTrimmed(String name);
 }

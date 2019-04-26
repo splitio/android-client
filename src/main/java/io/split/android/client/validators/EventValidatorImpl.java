@@ -18,65 +18,49 @@ public class EventValidatorImpl implements EventValidator {
     private KeyValidator mKeyValidator;
     private String mTag = "";
 
-    public EventValidatorImpl(String tag) {
-        this.mMessageLogger = new ValidationMessageLoggerImpl(tag);
-        this.mKeyValidator = new KeyValidatorImpl();
-        this.mTag = tag;
+    public EventValidatorImpl(KeyValidator keyValidator) {
+        this.mKeyValidator = keyValidator;
     }
 
     @Override
-    public boolean isValidEvent(Event event) {
+    public ValidationErrorInfo validate(Event event) {
 
         if(event == null) {
-            return false;
+            return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "Event could not be null");
         }
 
-        if(!mKeyValidator.isValidKey(event.key, null, mTag)){
-            return false;
+        ValidationErrorInfo errorInfo = mKeyValidator.validate(event.key, null);
+        if(errorInfo != null){
+            return errorInfo;
         }
 
         if (event.trafficTypeName == null) {
-            mMessageLogger.e("you passed a null or undefined traffic_type_name, traffic_type_name must be a non-empty string");
-            return false;
+            return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed a null or undefined traffic_type_name, traffic_type_name must be a non-empty string");
         }
 
         if (Strings.isNullOrEmpty(event.trafficTypeName.trim())) {
-            mMessageLogger.e("you passed an empty traffic_type_name, traffic_type_name must be a non-empty string");
-            return false;
+            return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed an empty traffic_type_name, traffic_type_name must be a non-empty string");
         }
 
         if (event.eventTypeId == null) {
-            mMessageLogger.e("you passed a null or undefined event_type, event_type must be a non-empty String");
-            return false;
+            return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed a null or undefined event_type, event_type must be a non-empty String");
         }
 
         if (Strings.isNullOrEmpty(event.eventTypeId.trim())) {
-            mMessageLogger.e("you passed an empty event_type, event_type must be a non-empty String");
-            return false;
+            return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed an empty event_type, event_type must be a non-empty String");
         }
 
         if (!event.eventTypeId.matches(TYPE_REGEX)) {
-            mMessageLogger.e("you passed " + (event.eventTypeId == null ? "null" : event.eventTypeId)
+            return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed " + event.eventTypeId
             + ", event name must adhere to the regular expression " + TYPE_REGEX
                     + ". This means an event name must be alphanumeric, cannot be more than 80 characters long, and can only include a dash, "
                     + " underscore, period, or colon as separators of alphanumeric characters.");
-            return false;
         }
 
-        return true;
-    }
-
-    @Override
-    public boolean trafficTypeHasUppercaseLetters(Event event) {
-        if(event == null) {
-            return false;
+        if(!event.trafficTypeName.toLowerCase().equals(event.trafficTypeName)) {
+            return new ValidationErrorInfo(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS, "traffic_type_name should be all lowercase - converting string to lowercase", true);
         }
-        return !event.trafficTypeName.toLowerCase().equals(event.trafficTypeName);
-    }
 
-    @Override
-    public void setMessageLogger(ValidationMessageLogger logger) {
-        this.mMessageLogger = logger;
+        return null;
     }
-
 }

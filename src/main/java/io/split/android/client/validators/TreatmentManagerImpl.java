@@ -34,6 +34,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final String mMatchingKey;
     private final String mBucketingKey;
     private final SplitClientConfig mSplitClientConfig;
+    private final ValidationMessageLogger mValidationLogger;
 
     public TreatmentManagerImpl(String matchingKey, String bucketingKey,
                                 Evaluator evaluator, KeyValidator keyValidator,
@@ -47,6 +48,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mBucketingKey = bucketingKey;
         mImpressionListener = impressionListener;
         mSplitClientConfig = splitClientConfig;
+        mValidationLogger = new ValidationMessageLoggerImpl();
     }
 
     @Override
@@ -131,15 +133,20 @@ public class TreatmentManagerImpl implements TreatmentManager {
             Logger.w(validationTag + SDK_READY_NOT_FIRED);
         }
 
-        if (!mKeyValidator.isValidKey(mMatchingKey, mBucketingKey, validationTag)) {
+        ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
+        if (errorInfo != null) {
+            mValidationLogger.log(errorInfo, validationTag);
             return new SplitResult(Treatments.CONTROL);
         }
 
-        if (!mSplitValidator.isValidName(split, validationTag)) {
-            return new SplitResult(Treatments.CONTROL);
+        errorInfo = mSplitValidator.validateName(split);
+        if (errorInfo != null) {
+            mValidationLogger.log(errorInfo, validationTag);
+            if (errorInfo.isError()) {
+                return new SplitResult(Treatments.CONTROL);
+            }
+            splitName = split.trim();
         }
-
-        splitName = mSplitValidator.trimName(split, validationTag);
 
         EvaluationResult evaluationResult = mEvaluator.getTreatment(mMatchingKey, mBucketingKey, split, attributes);
         SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
@@ -163,7 +170,9 @@ public class TreatmentManagerImpl implements TreatmentManager {
             Logger.w(validationTag + SDK_READY_NOT_FIRED);
         }
 
-        if (!mKeyValidator.isValidKey(mMatchingKey, mBucketingKey, validationTag)) {
+        ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
+        if (errorInfo != null) {
+            mValidationLogger.log(errorInfo, validationTag);
             return controlTreatmentsForSplitsWithConfig(splits, validationTag);
         }
 
@@ -175,19 +184,24 @@ public class TreatmentManagerImpl implements TreatmentManager {
         }
 
         for(String split : splits) {
-            if (mSplitValidator.isValidName(split, validationTag)) {
-                EvaluationResult result = mEvaluator.getTreatment(mMatchingKey, mBucketingKey, mSplitValidator.trimName(split, validationTag), attributes);
-                results.put(split.trim(), new SplitResult(result.getTreatment(), result.getConfigurations()));
-
-                logImpression(
-                        mMatchingKey,
-                        mBucketingKey,
-                        split,
-                        result.getTreatment(),
-                        mSplitClientConfig.labelsEnabled() ? result.getLabel() : null,
-                        result.getChangeNumber(),
-                        attributes);
+            errorInfo = mSplitValidator.validateName(split);
+            if (errorInfo != null) {
+                mValidationLogger.log(errorInfo, validationTag);
+                if(errorInfo.isError()) {
+                    continue;
+                }
             }
+            EvaluationResult result = mEvaluator.getTreatment(mMatchingKey, mBucketingKey, split.trim(), attributes);
+            results.put(split.trim(), new SplitResult(result.getTreatment(), result.getConfigurations()));
+
+            logImpression(
+                    mMatchingKey,
+                    mBucketingKey,
+                    split,
+                    result.getTreatment(),
+                    mSplitClientConfig.labelsEnabled() ? result.getLabel() : null,
+                    result.getChangeNumber(),
+                    attributes);
         }
 
         return results;
@@ -204,9 +218,14 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private Map<String, SplitResult> controlTreatmentsForSplitsWithConfig(List<String> splits, String validationTag) {
         Map<String, SplitResult> results = new HashMap<>();
         for(String split : splits) {
-            if(mSplitValidator.isValidName(split, validationTag)) {
-                results.put(mSplitValidator.trimName(split, validationTag), new SplitResult(Treatments.CONTROL));
+            ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
+            if(errorInfo != null) {
+                mValidationLogger.log(errorInfo, validationTag);
+                if(errorInfo.isError()) {
+                    continue;
+                }
             }
+            results.put(split.trim(), new SplitResult(Treatments.CONTROL));
         }
         return results;
     }
@@ -214,9 +233,14 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private Map<String, String> controlTreatmentsForSplits(List<String> splits, String validationTag) {
         Map<String, String> results = new HashMap<>();
         for(String split : splits) {
-            if(mSplitValidator.isValidName(split, validationTag)) {
-                results.put(mSplitValidator.trimName(split, validationTag), Treatments.CONTROL);
+            ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
+            if(errorInfo != null) {
+                mValidationLogger.log(errorInfo, validationTag);
+                if(errorInfo.isError()) {
+                    continue;
+                }
             }
+            results.put(split.trim(), Treatments.CONTROL);
         }
         return results;
     }
