@@ -1,0 +1,4 @@
+treatment: "off"
+- split_0:
+    treatment: "off"
+    config: "{ \"size\" : 20 }"

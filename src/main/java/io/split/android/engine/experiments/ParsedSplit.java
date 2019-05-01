@@ -3,6 +3,7 @@ package io.split.android.engine.experiments;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * a value class representing an io.codigo.dtos.Experiment. Why are we not using
@@ -23,6 +24,7 @@ public class ParsedSplit {
     private final int _trafficAllocation;
     private final int _trafficAllocationSeed;
     private final int _algo;
+    private final Map<String, String> _configurations;
 
     public static ParsedSplit createParsedSplitForTests(
             String feature,
@@ -32,7 +34,8 @@ public class ParsedSplit {
             List<ParsedCondition> matcherAndSplits,
             String trafficTypeName,
             long changeNumber,
-            int algo
+            int algo,
+            Map<String, String> configurations
     ) {
         return new ParsedSplit(
                 feature,
@@ -44,7 +47,8 @@ public class ParsedSplit {
                 changeNumber,
                 100,
                 seed,
-                algo
+                algo,
+                configurations
         );
     }
 
@@ -58,7 +62,8 @@ public class ParsedSplit {
             long changeNumber,
             int trafficAllocation,
             int trafficAllocationSeed,
-            int algo
+            int algo,
+            Map<String, String> configurations
     ) {
         _split = feature;
         _seed = seed;
@@ -68,6 +73,8 @@ public class ParsedSplit {
         _trafficTypeName = trafficTypeName;
         _changeNumber = changeNumber;
         _algo = algo;
+        _configurations = configurations;
+
         if (_defaultTreatment == null) {
             throw new IllegalArgumentException("DefaultTreatment is null");
         }
@@ -111,6 +118,8 @@ public class ParsedSplit {
 
     public int algo() {return _algo;}
 
+    public Map<String, String> configurations() {return _configurations;}
+
     @Override
     public int hashCode() {
         int result = 17;
@@ -132,15 +141,16 @@ public class ParsedSplit {
         if (!(obj instanceof ParsedSplit)) return false;
 
         ParsedSplit other = (ParsedSplit) obj;
-
         return _split.equals(other._split)
                 && _seed == other._seed
                 && _killed == other._killed
                 && _defaultTreatment.equals(other._defaultTreatment)
                 && _parsedCondition.equals(other._parsedCondition)
-                && _trafficTypeName == null ? other._trafficTypeName == null : _trafficTypeName.equals(other._trafficTypeName)
+                && (_trafficTypeName == null ? other._trafficTypeName == null : _trafficTypeName.equals(other._trafficTypeName))
                 && _changeNumber == other._changeNumber
-                && _algo == other._algo;
+                && _algo == other._algo
+                && (_configurations == null ? other._configurations == null : _configurations.equals(other._configurations));
+
     }
 
     @Override
@@ -162,6 +172,8 @@ public class ParsedSplit {
         bldr.append(_changeNumber);
         bldr.append(", algo:");
         bldr.append(_algo);
+        bldr.append(", config:");
+        bldr.append(_configurations);
         return bldr.toString();
 
     }

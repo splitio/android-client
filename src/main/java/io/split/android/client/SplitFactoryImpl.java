@@ -59,7 +59,7 @@ import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
 import io.split.android.engine.experiments.SplitChangeFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.segments.MySegmentsFetcher;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProviderImpl;
 
 public class SplitFactoryImpl implements SplitFactory {
 
@@ -159,7 +159,7 @@ public class SplitFactoryImpl implements SplitFactory {
         // Segments
         IStorage mySegmentsStorage = new FileStorage(context, dataFolderName);
         MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget, mySegmentsStorage);
-        final RefreshableMySegmentsFetcherProvider segmentFetcher = new RefreshableMySegmentsFetcherProvider(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
+        final RefreshableMySegmentsFetcherProviderImpl segmentFetcher = new RefreshableMySegmentsFetcherProviderImpl(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
