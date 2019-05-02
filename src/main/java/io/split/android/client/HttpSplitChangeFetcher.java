@@ -10,7 +10,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.split.android.client.cache.ISplitChangeCache;
+import io.split.android.client.cache.ITrafficTypesCache;
 import io.split.android.client.cache.SplitChangeCache;
+import io.split.android.client.cache.TrafficTypesCache;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
@@ -31,20 +33,23 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
     private final URI _target;
     private final Metrics _metrics;
     private final ISplitChangeCache _splitChangeCache;
+    private final ITrafficTypesCache _trafficTypesCache;
 
-    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, IStorage storage) throws URISyntaxException {
-        return create(client, root, new Metrics.NoopMetrics(), storage);
+    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, IStorage storage, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
+        return create(client, root, new Metrics.NoopMetrics(), storage, trafficTypesCache);
     }
 
-    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, Metrics metrics, IStorage storage) throws URISyntaxException {
-        return new HttpSplitChangeFetcher(client, new URIBuilder(root).setPath("/api/splitChanges").build(), metrics, storage);
+    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, Metrics metrics, IStorage storage, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
+        return new HttpSplitChangeFetcher(client, new URIBuilder(root).setPath("/api/splitChanges").build(), metrics, storage, trafficTypesCache);
     }
 
-    private HttpSplitChangeFetcher(CloseableHttpClient client, URI uri, Metrics metrics, IStorage storage) {
+    private HttpSplitChangeFetcher(CloseableHttpClient client, URI uri, Metrics metrics, IStorage storage, ITrafficTypesCache trafficTypesCache) {
         _client = client;
         _target = uri;
         _metrics = metrics;
         _splitChangeCache = new SplitChangeCache(storage);
+        _trafficTypesCache = trafficTypesCache;
+        _trafficTypesCache.setFromSplits(_splitChangeCache.getChanges(-1).splits);
         checkNotNull(_target);
     }
 
@@ -88,6 +93,7 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
             SplitChange splitChange = Json.fromJson(json, SplitChange.class);
 
             _splitChangeCache.addChange(splitChange);
+            _trafficTypesCache.updateFromSplits(splitChange.splits);
 
             return splitChange;
         } catch (Throwable t) {

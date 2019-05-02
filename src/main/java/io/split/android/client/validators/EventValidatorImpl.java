@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.cache.ITrafficTypesCache;
 import io.split.android.client.dtos.Event;
 
 /**
@@ -17,11 +18,13 @@ public class EventValidatorImpl implements EventValidator {
     private final String TYPE_REGEX = ValidationConfig.getInstance().getTrackEventNamePattern();
     private KeyValidator mKeyValidator;
     private String mTag = "";
+    private ITrafficTypesCache mTrafficTypesCache;
 
-    public EventValidatorImpl(String tag) {
+    public EventValidatorImpl(String tag, ITrafficTypesCache trafficTypesCache) {
         this.mMessageLogger = new ValidationMessageLoggerImpl(tag);
         this.mKeyValidator = new KeyValidatorImpl();
         this.mTag = tag;
+        this.mTrafficTypesCache = trafficTypesCache;
     }
 
     @Override
@@ -61,6 +64,11 @@ public class EventValidatorImpl implements EventValidator {
                     + ". This means an event name must be alphanumeric, cannot be more than 80 characters long, and can only include a dash, "
                     + " underscore, period, or colon as separators of alphanumeric characters.");
             return false;
+        }
+
+        if (!mTrafficTypesCache.contains(event.trafficTypeName)) {
+            mMessageLogger.w("Traffic Type " + event.trafficTypeName + " does not have any corresponding Splits in this environment, "
+                    + "make sure you’re tracking your events to a valid traffic type defined in the Split console");
         }
 
         return true;
