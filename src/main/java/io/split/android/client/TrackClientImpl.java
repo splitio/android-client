@@ -21,6 +21,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.cache.ITrafficTypesCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.TrackClientConfig;
@@ -79,11 +80,11 @@ public class TrackClientImpl implements TrackClient {
         };
     }
 
-    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager);
+    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, trafficTypesCache);
     }
 
-    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager) throws URISyntaxException {
+    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
 
 
         _storageManager = storageManager;
@@ -92,10 +93,11 @@ public class TrackClientImpl implements TrackClient {
 
         _eventsTarget = new URIBuilder(eventsRootTarget).setPath("/api/events/bulk").build();
 
+        _eventValidator = new EventValidatorImpl(new KeyValidatorImpl(), trafficTypesCache);
+
         _eventQueue = eventQueue;
         _config = config;
 
-        _eventValidator = new EventValidatorImpl(new KeyValidatorImpl());
         _validationLogger = new ValidationMessageLoggerImpl();
 
         // Thread to send events to backend
@@ -137,6 +139,8 @@ public class TrackClientImpl implements TrackClient {
     @Override
     public boolean track(Event event) {
         try {
+
+          if (event != CENTINEL) {
             ValidationErrorInfo errorInfo = _eventValidator.validate(event);
             if (errorInfo != null) {
                 _validationLogger.log(errorInfo, validationTag);
@@ -145,6 +149,7 @@ public class TrackClientImpl implements TrackClient {
                 }
                 event.trafficTypeName = event.trafficTypeName.toLowerCase();
             }
+          }
 
             _eventQueue.put(event);
         } catch (InterruptedException e) {

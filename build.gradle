@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '2.2.0-rc2'
+    splitVersion = '2.3.0-sdks-516.1'
 }
 
 allprojects {
@@ -30,7 +30,7 @@ android {
         versionCode 0
         versionName splitVersion
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'split-proguard-rules.pro'
     }
 

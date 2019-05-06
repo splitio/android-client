@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.cache.ITrafficTypesCache;
 import io.split.android.client.dtos.Event;
 
 /**
@@ -13,13 +14,13 @@ import io.split.android.client.dtos.Event;
  */
 public class EventValidatorImpl implements EventValidator {
 
-    private ValidationMessageLogger mMessageLogger;
     private final String TYPE_REGEX = ValidationConfig.getInstance().getTrackEventNamePattern();
     private KeyValidator mKeyValidator;
-    private String mTag = "";
+    private ITrafficTypesCache mTrafficTypesCache;
 
-    public EventValidatorImpl(KeyValidator keyValidator) {
+    public EventValidatorImpl(KeyValidator keyValidator, ITrafficTypesCache trafficTypesCache) {
         this.mKeyValidator = keyValidator;
+        this.mTrafficTypesCache = trafficTypesCache;
     }
 
     @Override
@@ -58,9 +59,20 @@ public class EventValidatorImpl implements EventValidator {
         }
 
         if(!event.trafficTypeName.toLowerCase().equals(event.trafficTypeName)) {
-            return new ValidationErrorInfo(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS, "traffic_type_name should be all lowercase - converting string to lowercase", true);
+            errorInfo = new ValidationErrorInfo(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS, "traffic_type_name should be all lowercase - converting string to lowercase", true);
         }
 
-        return null;
+        if (!mTrafficTypesCache.contains(event.trafficTypeName)) {
+            String message = "Traffic Type " + event.trafficTypeName + " does not have any corresponding Splits in this environment, "
+                    + "make sure you’re tracking your events to a valid traffic type defined in the Split console";
+            if(errorInfo == null) {
+                errorInfo = new ValidationErrorInfo(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_WITHOUT_SPLIT_IN_ENVIRONMENT, message, true);
+            } else {
+                errorInfo.addWarning(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_WITHOUT_SPLIT_IN_ENVIRONMENT, message);
+            }
+
+        }
+
+        return errorInfo;
     }
 }

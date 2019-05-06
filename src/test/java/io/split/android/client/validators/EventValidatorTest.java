@@ -8,7 +8,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import io.split.android.client.cache.TrafficTypesCache;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.Status;
 
 public class EventValidatorTest {
 
@@ -16,7 +22,13 @@ public class EventValidatorTest {
 
     @Before
     public void setUp() {
-        validator = new EventValidatorImpl(new KeyValidatorImpl());
+        TrafficTypesCache trafficTypesCache = new TrafficTypesCache();
+        List<Split> splits = new ArrayList<>();
+        splits.add(newSplit("s0", "traffic1", Status.ACTIVE));
+        splits.add(newSplit("s1", "trafficType1", Status.ACTIVE));
+        splits.add(newSplit("s2", "custom", Status.ACTIVE));
+        trafficTypesCache.setFromSplits(splits);
+        validator = new EventValidatorImpl(new KeyValidatorImpl(), trafficTypesCache);
     }
 
     @Test
@@ -187,7 +199,7 @@ public class EventValidatorTest {
 
     @Test
     public void testEmptyTrafficType() {
-        
+
         Event event = new Event();
         event.eventTypeId = "type1";
         event.trafficTypeName = "";
@@ -235,7 +247,7 @@ public class EventValidatorTest {
 
 
         Assert.assertNull(errorInfo0);
-        
+
         Assert.assertNotNull(errorInfo1);
         Assert.assertFalse(errorInfo1.isError());
         Assert.assertEquals(uppercaseMessage, errorInfo1.getWarnings().get(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS));
@@ -247,6 +259,21 @@ public class EventValidatorTest {
         Assert.assertNotNull(errorInfo3);
         Assert.assertFalse(errorInfo3.isError());
         Assert.assertEquals(uppercaseMessage, errorInfo3.getWarnings().get(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS));
+    }
+
+    @Test
+    public void noChachedServerTrafficType() {
+        Event event = new Event();
+        event.eventTypeId = "type1";
+        event.trafficTypeName = "nocached";
+        event.key = "key1";
+
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertFalse(errorInfo.isError());
+        Assert.assertEquals("Traffic Type nocached does not have any corresponding Splits in this environment, "
+                + "make sure you’re tracking your events to a valid traffic type defined in the Split console", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_WITHOUT_SPLIT_IN_ENVIRONMENT));
     }
 
     private Event newEventTypeName()  {
@@ -270,4 +297,11 @@ public class EventValidatorTest {
                 + " underscore, period, or colon as separators of alphanumeric characters.";
     }
 
+    private Split newSplit(String name, String trafficType, Status status) {
+        Split split = new Split();
+        split.name = name;
+        split.trafficTypeName = trafficType;
+        split.status = status;
+        return split;
+    }
 }
