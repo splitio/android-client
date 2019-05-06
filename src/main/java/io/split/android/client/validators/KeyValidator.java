@@ -13,13 +13,5 @@ public interface KeyValidator {
      * @param bucketingKey: Bucketing key
      * @return true when the key is valid, false when it is not
      */
-    public boolean isValidKey(String matchingKey, String bucketingKey, String logTag);
-
-    /**
-     * Overrides de default message logger
-     * @param logger: An implementation of ValidationMessageLogger
-     *
-     */
-    public void setMessageLogger(ValidationMessageLogger logger);
-
+    public ValidationErrorInfo validate(String matchingKey, String bucketingKey);
 }

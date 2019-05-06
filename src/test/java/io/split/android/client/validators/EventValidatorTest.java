@@ -26,9 +26,9 @@ public class EventValidatorTest {
         List<Split> splits = new ArrayList<>();
         splits.add(newSplit("s0", "traffic1", Status.ACTIVE));
         splits.add(newSplit("s1", "trafficType1", Status.ACTIVE));
+        splits.add(newSplit("s2", "custom", Status.ACTIVE));
         trafficTypesCache.setFromSplits(splits);
-        validator = new EventValidatorImpl("KeyValidatorTests", trafficTypesCache);
-        validator.setMessageLogger(Mockito.mock(ValidationMessageLogger.class));
+        validator = new EventValidatorImpl(new KeyValidatorImpl(), trafficTypesCache);
     }
 
     @Test
@@ -38,7 +38,9 @@ public class EventValidatorTest {
         event.trafficTypeName = "traffic1";
         event.key = "pepe";
         event.value = 1.0;
-        Assert.assertTrue(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNull(errorInfo);
     }
 
     @Test
@@ -47,7 +49,9 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = "pepe";
-        Assert.assertTrue(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNull(errorInfo);
     }
 
     @Test
@@ -56,7 +60,11 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = null;
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed a null key, matching key must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -65,7 +73,11 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = "";
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty string, matching key must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -74,7 +86,11 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = "   ";
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty string, matching key must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -83,7 +99,11 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = Strings.repeat("p", 300);
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("matching key too long - must be " + ValidationConfig.getInstance().getMaximumKeyLength() + " characters or less", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -92,7 +112,11 @@ public class EventValidatorTest {
         event.eventTypeId = null;
         event.trafficTypeName = "traffic1";
         event.key = "key1";
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed a null or undefined event_type, event_type must be a non-empty String", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -101,7 +125,11 @@ public class EventValidatorTest {
         event.eventTypeId = "";
         event.trafficTypeName = "traffic1";
         event.key = "key1";
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty event_type, event_type must be a non-empty String", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -110,7 +138,11 @@ public class EventValidatorTest {
         event.eventTypeId = "   ";
         event.trafficTypeName = "traffic1";
         event.key = "key1";
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty event_type, event_type must be a non-empty String", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -129,11 +161,27 @@ public class EventValidatorTest {
         event4.eventTypeId = nameHelper.getInvalidUndercoreStart();
         event5.eventTypeId = nameHelper.getInvalidHypenStart();
 
-        Assert.assertTrue(validator.isValidEvent(event1));
-        Assert.assertTrue(validator.isValidEvent(event2));
-        Assert.assertFalse(validator.isValidEvent(event3));
-        Assert.assertFalse(validator.isValidEvent(event4));
-        Assert.assertFalse(validator.isValidEvent(event5));
+        ValidationErrorInfo errorInfo1 = validator.validate(event1);
+        ValidationErrorInfo errorInfo2 = validator.validate(event2);
+        ValidationErrorInfo errorInfo3 = validator.validate(event3);
+        ValidationErrorInfo errorInfo4 = validator.validate(event4);
+        ValidationErrorInfo errorInfo5 = validator.validate(event5);
+
+        Assert.assertNull(errorInfo1);
+
+        Assert.assertNull(errorInfo2);
+
+        Assert.assertNotNull(errorInfo3);
+        Assert.assertTrue(errorInfo3.isError());
+        Assert.assertEquals(buildEventTypeValidationMessage(event3.eventTypeId), errorInfo3.getErrorMessage());
+
+        Assert.assertNotNull(errorInfo4);
+        Assert.assertTrue(errorInfo4.isError());
+        Assert.assertEquals(buildEventTypeValidationMessage(event4.eventTypeId), errorInfo4.getErrorMessage());
+
+        Assert.assertNotNull(errorInfo5);
+        Assert.assertTrue(errorInfo5.isError());
+        Assert.assertEquals(buildEventTypeValidationMessage(event5.eventTypeId), errorInfo5.getErrorMessage());
     }
 
     @Test
@@ -142,17 +190,25 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = null;
         event.key = "key1";
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed a null or undefined traffic_type_name, traffic_type_name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testEmptyTrafficType() {
-        
+
         Event event = new Event();
         event.eventTypeId = "type1";
         event.trafficTypeName = "";
         event.key = "key1";
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty traffic_type_name, traffic_type_name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -162,7 +218,11 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "   ";
         event.key = "key1";
-        Assert.assertFalse(validator.isValidEvent(event));
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty traffic_type_name, traffic_type_name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -173,23 +233,32 @@ public class EventValidatorTest {
         Event event2 = newEventUppercase();
         Event event3 = newEventUppercase();
 
+        final String uppercaseMessage = "traffic_type_name should be all lowercase - converting string to lowercase";
+
         event0.trafficTypeName = "custom";
         event1.trafficTypeName = "Custom";
         event2.trafficTypeName = "cUSTom";
         event3.trafficTypeName = "custoM";
 
-        Assert.assertTrue(validator.isValidEvent(event0));
-        Assert.assertFalse(validator.trafficTypeHasUppercaseLetters(event0));
+        ValidationErrorInfo errorInfo0 = validator.validate(event0);
+        ValidationErrorInfo errorInfo1 = validator.validate(event1);
+        ValidationErrorInfo errorInfo2 = validator.validate(event2);
+        ValidationErrorInfo errorInfo3 = validator.validate(event3);
 
-        Assert.assertTrue(validator.isValidEvent(event1));
-        Assert.assertTrue(validator.trafficTypeHasUppercaseLetters(event1));
 
-        Assert.assertTrue(validator.isValidEvent(event2));
-        Assert.assertTrue(validator.trafficTypeHasUppercaseLetters(event2));
+        Assert.assertNull(errorInfo0);
 
-        Assert.assertTrue(validator.isValidEvent(event3));
-        Assert.assertTrue(validator.trafficTypeHasUppercaseLetters(event3));
+        Assert.assertNotNull(errorInfo1);
+        Assert.assertFalse(errorInfo1.isError());
+        Assert.assertEquals(uppercaseMessage, errorInfo1.getWarnings().get(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS));
 
+        Assert.assertNotNull(errorInfo2);
+        Assert.assertFalse(errorInfo2.isError());
+        Assert.assertEquals(uppercaseMessage, errorInfo2.getWarnings().get(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS));
+
+        Assert.assertNotNull(errorInfo3);
+        Assert.assertFalse(errorInfo3.isError());
+        Assert.assertEquals(uppercaseMessage, errorInfo3.getWarnings().get(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS));
     }
 
     @Test
@@ -198,7 +267,13 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "nocached";
         event.key = "key1";
-        Assert.assertTrue(validator.isValidEvent(event));
+
+        ValidationErrorInfo errorInfo = validator.validate(event);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertFalse(errorInfo.isError());
+        Assert.assertEquals("Traffic Type nocached does not have any corresponding Splits in this environment, "
+                + "make sure you’re tracking your events to a valid traffic type defined in the Split console", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_WITHOUT_SPLIT_IN_ENVIRONMENT));
     }
 
     private Event newEventTypeName()  {
@@ -213,6 +288,13 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.key = "key1";
         return event;
+    }
+
+    private String buildEventTypeValidationMessage(String eventType) {
+        return "you passed " + eventType
+                + ", event name must adhere to the regular expression " + ValidationConfig.getInstance().getTrackEventNamePattern()
+                + ". This means an event name must be alphanumeric, cannot be more than 80 characters long, and can only include a dash, "
+                + " underscore, period, or colon as separators of alphanumeric characters.";
     }
 
     private Split newSplit(String name, String trafficType, Status status) {

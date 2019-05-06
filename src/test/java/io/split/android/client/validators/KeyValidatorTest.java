@@ -18,51 +18,83 @@ public class KeyValidatorTest {
     @Before
     public void setUp() {
         validator = new KeyValidatorImpl();
-        validator.setMessageLogger(Mockito.mock(ValidationMessageLogger.class));
     }
 
     @Test
     public void testValidMatchingKey() {
-        Assert.assertTrue(validator.isValidKey("key1", null, tag));
+
+        ValidationErrorInfo errorInfo = validator.validate("key1", null);
+
+        Assert.assertNull(errorInfo);
     }
 
     @Test
     public void testValidMatchingAndBucketingKey() {
-        Assert.assertTrue(validator.isValidKey("key1", "bkey1", tag));
+        ValidationErrorInfo errorInfo = validator.validate("key1", "bkey1");
+
+        Assert.assertNull(errorInfo);
     }
 
     @Test
     public void testNullMatchingKey() {
-        Assert.assertFalse(validator.isValidKey(null, null, tag));
+        ValidationErrorInfo errorInfo = validator.validate(null, null);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed a null key, matching key must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testInvalidEmptyMatchingKey() {
-        Assert.assertFalse(validator.isValidKey("", null, tag));
+        ValidationErrorInfo errorInfo = validator.validate("", null);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty string, matching key must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testInvalidAllSpacesInMatchingKey() {
-        Assert.assertFalse(validator.isValidKey("   ", null, tag));
+        ValidationErrorInfo errorInfo = validator.validate("     ", null);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty string, matching key must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testInvalidLongMatchingKey() {
-        Assert.assertFalse(validator.isValidKey(Strings.repeat("p", 256), null, tag));
+        ValidationErrorInfo errorInfo = validator.validate(Strings.repeat("p", 256), null);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("matching key too long - must be " + ValidationConfig.getInstance().getMaximumKeyLength() + " characters or less", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testInvalidEmptyBucketingKey() {
-        Assert.assertFalse(validator.isValidKey("key1", "", tag));
+        ValidationErrorInfo errorInfo = validator.validate("key1", "");
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty string, bucketing key must be null or a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testInvalidAllSpacesInBucketingKey() {
-        Assert.assertFalse(validator.isValidKey("key1", "   ", tag));
+        ValidationErrorInfo errorInfo = validator.validate("key1", "    ");
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty string, bucketing key must be null or a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testInvalidLongBucketingKey() {
-        Assert.assertFalse(validator.isValidKey("key1", Strings.repeat("p", 256), tag));
+        ValidationErrorInfo errorInfo = validator.validate("key1", Strings.repeat("p", 256));
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("bucketing key too long - must be " + ValidationConfig.getInstance().getMaximumKeyLength() + " characters or less", errorInfo.getErrorMessage());
     }
 }

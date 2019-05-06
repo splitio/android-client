@@ -1,39 +1,39 @@
 package io.split.android.client.validators;
 
+import java.util.ArrayList;
+import java.util.Map;
+
 import io.split.android.client.utils.Logger;
 
 /**
  * Default implementation of ValidationMessageLogger interface
  */
-class ValidationMessageLoggerImpl implements ValidationMessageLogger {
+public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
 
     private String mTag;
 
-    public ValidationMessageLoggerImpl() {
-        this(null);
-    }
-
-    public ValidationMessageLoggerImpl(String tag) {
-        this.mTag = tag != null ?  tag : "";
-    }
-
     @Override
-    public void e(String message) {
-        Logger.e(mTag + ": " + message);
+    public void log(ValidationErrorInfo errorInfo, String tag) {
+        if(errorInfo.isError() && errorInfo.getErrorMessage() != null) {
+            e(tag, errorInfo.getErrorMessage());
+        } else {
+            ArrayList<String> warnings = (ArrayList<String>) errorInfo.getWarnings().values();
+            for(String warning : warnings) {
+                w(tag, warning);
+            }
+        }
     }
 
-    @Override
-    public void w(String message) {
-        Logger.w(mTag + ": " + message);
+    private void e(String tag, String message) {
+        Logger.e(sanitizeTag(tag) + ": " + message);
     }
 
-    @Override
-    public void e(String tag, String message) {
-        Logger.e(tag + ": " + message);
+    private void w(String tag, String message) {
+        Logger.w(sanitizeTag(tag) + ": " + message);
     }
 
-    @Override
-    public void w(String tag, String message) {
-        Logger.w(tag + ": " + message);
+    private String sanitizeTag(String tag) {
+        return (tag != null ? tag : "");
     }
+
 }

@@ -31,6 +31,10 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
+import io.split.android.client.validators.KeyValidatorImpl;
+import io.split.android.client.validators.ValidationErrorInfo;
+import io.split.android.client.validators.ValidationMessageLogger;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 
 import static java.lang.Thread.MIN_PRIORITY;
 
@@ -59,6 +63,7 @@ public class TrackClientImpl implements TrackClient {
     private final TrackStorageManager _storageManager;
     private final String validationTag = "track";
     private final EventValidator _eventValidator;
+    private final ValidationMessageLogger _validationLogger;
 
     private ThreadFactory eventClientThreadFactory(final String name) {
         return new ThreadFactory() {
@@ -88,10 +93,12 @@ public class TrackClientImpl implements TrackClient {
 
         _eventsTarget = new URIBuilder(eventsRootTarget).setPath("/api/events/bulk").build();
 
-        _eventValidator = new EventValidatorImpl(validationTag, trafficTypesCache);
+        _eventValidator = new EventValidatorImpl(new KeyValidatorImpl(), trafficTypesCache);
 
         _eventQueue = eventQueue;
         _config = config;
+
+        _validationLogger = new ValidationMessageLoggerImpl();
 
         // Thread to send events to backend
         _senderExecutor = new ThreadPoolExecutor(
@@ -133,16 +140,16 @@ public class TrackClientImpl implements TrackClient {
     public boolean track(Event event) {
         try {
 
-            if (event != CENTINEL) {
-                if (!_eventValidator.isValidEvent(event)) {
+          if (event != CENTINEL) {
+            ValidationErrorInfo errorInfo = _eventValidator.validate(event);
+            if (errorInfo != null) {
+                _validationLogger.log(errorInfo, validationTag);
+                if(errorInfo.isError()) {
                     return false;
                 }
-
-                if (_eventValidator.trafficTypeHasUppercaseLetters(event)) {
-                    event.trafficTypeName = event.trafficTypeName.toLowerCase();
-                    Logger.w(validationTag + ": traffic_type_name should be all lowercase - converting string to lowercase");
-                }
+                event.trafficTypeName = event.trafficTypeName.toLowerCase();
             }
+          }
 
             _eventQueue.put(event);
         } catch (InterruptedException e) {

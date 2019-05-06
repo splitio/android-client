@@ -18,41 +18,59 @@ public class SplitNameValidatorTest {
     @Before
     public void setUp() {
         validator = new SplitValidatorImpl();
-        validator.setMessageLogger(Mockito.mock(ValidationMessageLogger.class));
     }
 
     @Test
     public void testValidName() {
         String splitName = "split1";
-        Assert.assertTrue(validator.isValidName(splitName, tag));
-        Assert.assertEquals(splitName, validator.trimName(splitName, tag));
+        ValidationErrorInfo errorInfo = validator.validateName(splitName);
+
+        Assert.assertNull(errorInfo);
     }
 
     @Test
     public void testNullName() {
-        Assert.assertFalse(validator.isValidName(null, tag));
+        ValidationErrorInfo errorInfo = validator.validateName(null);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed a null split name, split name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testInvalidEmptyName() {
-        Assert.assertFalse(validator.isValidName("", tag));
+        ValidationErrorInfo errorInfo = validator.validateName("");
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty split name, split name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     public void testInvalidAllSpacesInName() {
-        Assert.assertFalse(validator.isValidName("   ", tag));
+        ValidationErrorInfo errorInfo = validator.validateName("    ");
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed a empty split name, split name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testLeadingSpacesName() {
         String splitName = " splitName";
-        Assert.assertTrue(validator.isValidName(splitName, tag));
-        Assert.assertFalse(splitName.equals(validator.trimName(splitName, tag)));
+        ValidationErrorInfo errorInfo = validator.validateName(splitName);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertFalse(errorInfo.isError());
+        Assert.assertEquals("split name ' splitName' has extra whitespace, trimming", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED));
     }
 
     @Test
     public void testTrailingSpacesName() {
         String splitName = "splitName ";
-        Assert.assertTrue(validator.isValidName(splitName, tag));
-        Assert.assertFalse(splitName.equals(validator.trimName(splitName, tag)));
+        ValidationErrorInfo errorInfo = validator.validateName(splitName);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertFalse(errorInfo.isError());
+        Assert.assertEquals("split name 'splitName ' has extra whitespace, trimming", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED));
     }
 }
