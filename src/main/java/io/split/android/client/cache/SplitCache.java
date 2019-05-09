@@ -46,6 +46,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
         mTrafficTypesCache = new InMemoryTrafficTypesCache();
         loadChangeNumberFromDisk();
         mTrafficTypesCache.updateFromSplits(new ArrayList<>(mInMemorySplits.values()));
+        loadSplitsNamesFromDisk();
     }
 
     private String getSplitId(String splitName) {
@@ -54,6 +55,10 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
             return splitName;
         }
         return String.format("%s%s", SPLIT_FILE_PREFIX, splitName);
+    }
+
+    private String getSplitName(String fileId) {
+        return fileId.replace(SPLIT_FILE_PREFIX, "");
     }
 
     private String getChangeNumberFileName() {
@@ -164,6 +169,13 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
             } catch (Exception e) {
                 Logger.e(e, "Could not remove split " + splitName + " to disk: " + e.getLocalizedMessage());
             }
+        }
+    }
+
+    void loadSplitsNamesFromDisk() {
+        List<String> fileIds = mFileStorageManager.getAllIds(SPLIT_FILE_PREFIX);
+        for(String fileId : fileIds) {
+            mInMemorySplits.put(getSplitName(fileId), null);
         }
     }
 }

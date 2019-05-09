@@ -36,10 +36,12 @@ public class InMemoryTrafficTypesCache implements ITrafficTypesCache {
     @Override
     synchronized public void updateFromSplit(Split split) {
         if(split != null) {
-            if(split.status != null && split.status.equals(Status.ACTIVE) && split.trafficTypeName != null) {
-                add(split.trafficTypeName.toLowerCase());
-            } else {
-                remove(split.trafficTypeName.toLowerCase());
+            if(split.status != null && split.trafficTypeName != null) {
+                if (split.status.equals(Status.ACTIVE)) {
+                    add(split.trafficTypeName.toLowerCase());
+                } else {
+                    remove(split.trafficTypeName.toLowerCase());
+                }
             }
         }
     }
