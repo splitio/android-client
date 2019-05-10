@@ -35,7 +35,7 @@ import javax.net.ssl.SSLContext;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.cache.ITrafficTypesCache;
-import io.split.android.client.cache.TrafficTypesCache;
+import io.split.android.client.cache.InMemoryTrafficTypesCache;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
@@ -174,9 +174,9 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
         // Feature Changes
-        ITrafficTypesCache trafficTypesCache = new TrafficTypesCache();
+        ITrafficTypesCache trafficTypesCache = new InMemoryTrafficTypesCache();
         IStorage splitChangeStorage = new FileStorage(context, dataFolderName);
-        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage, trafficTypesCache);
+        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage);
 
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), _eventsManager);
 

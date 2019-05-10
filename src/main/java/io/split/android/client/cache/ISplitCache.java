@@ -18,13 +18,6 @@ public interface ISplitCache {
 
     /**
      *
-     * @param splitName Split Name
-     * @return Whether the Split was removed or not
-     */
-    boolean removeSplit(String splitName);
-
-    /**
-     *
      * @param changeNumber Change number of the last fetch
      * @return Whether the change number was saved or not
      */
@@ -48,4 +41,10 @@ public interface ISplitCache {
      * @return List containing all splits names
      */
     List<String> getSplitNames();
+
+    /**
+     * Indicates if a traffic type exists for the environment
+     * @return true if it exists, false otherwise
+     */
+    boolean existsTrafficType(String trafficType);
 }

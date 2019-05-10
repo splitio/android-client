@@ -81,18 +81,6 @@ public class SplitCacheTest {
     }
 
     @Test
-    public void deleteSplit() {
-        String split0 = "split-0";
-        String split3 = "split-3";
-        mCache.removeSplit(split0);
-        mCache.removeSplit(split3);
-
-        Assert.assertNull(mCache.getSplit(split0));
-        Assert.assertNull(mCache.getSplit(split3));
-        Assert.assertNotNull(mCache.getSplit("split-1"));
-    }
-
-    @Test
     public void initialChangeNumber() {
         Assert.assertTrue(INITIAL_CHANGE_NUMBER == mCache.getChangeNumber());
     }

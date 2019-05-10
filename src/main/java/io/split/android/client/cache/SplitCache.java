@@ -36,13 +36,16 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     private long mChangeNumber = -1;
     private Set<String> mRemovedSplits = null;
     private Map<String, Split> mInMemorySplits = null;
+    private ITrafficTypesCache mTrafficTypesCache = null;
 
     public SplitCache(IStorage storage) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
         mInMemorySplits = Collections.synchronizedMap(new HashMap<String, Split>());
         mRemovedSplits = Collections.synchronizedSet(new HashSet<String>());
+        mTrafficTypesCache = new InMemoryTrafficTypesCache();
         loadChangeNumberFromDisk();
+        mTrafficTypesCache.updateFromSplits(new ArrayList<>(mInMemorySplits.values()));
     }
 
     private String getSplitId(String splitName) {
@@ -60,13 +63,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     @Override
     public boolean addSplit(Split split) {
         mInMemorySplits.put(split.name, split);
-        return true;
-    }
-
-    @Override
-    public boolean removeSplit(String splitName) {
-        mInMemorySplits.remove(splitName);
-        mRemovedSplits.add(splitName);
+        mTrafficTypesCache.updateFromSplit(split);
         return true;
     }
 
@@ -100,6 +97,11 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     @Override
     public List<String> getSplitNames() {
         return new ArrayList<String>(mInMemorySplits.keySet()) ;
+    }
+
+    @Override
+    public boolean existsTrafficType(String trafficType) {
+        return mTrafficTypesCache.contains(trafficType);
     }
 
     private Split getSplitFromDisk(String splitName){

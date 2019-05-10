@@ -7,13 +7,13 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.split.android.client.cache.TrafficTypesCache;
+import io.split.android.client.cache.InMemoryTrafficTypesCache;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 
 public class TrafficTypesCacheTests {
 
-    private TrafficTypesCache cache;
+    private InMemoryTrafficTypesCache cache;
 
     @Before
     public void setUp(){
@@ -22,8 +22,8 @@ public class TrafficTypesCacheTests {
         splits.add(newSplit("s1", "trafficType1", Status.ACTIVE));
         splits.add(newSplit("s2", "trafficType2", Status.ACTIVE));
         splits.add(newSplit("s3", "trafficType3", Status.ACTIVE));
-        cache = new TrafficTypesCache();
-        cache.setFromSplits(splits);
+        cache = new InMemoryTrafficTypesCache();
+        cache.updateFromSplits(splits);
     }
 
     @Test
@@ -100,8 +100,8 @@ public class TrafficTypesCacheTests {
 
     @Test
     public void initWithNullSplits() {
-        TrafficTypesCache cache = new TrafficTypesCache();
-        cache.setFromSplits(null);
+        InMemoryTrafficTypesCache cache = new InMemoryTrafficTypesCache();
+        cache.updateFromSplits(null);
         Assert.assertFalse(cache.contains("trafficType0"));
         Assert.assertFalse(cache.contains("trafficType1"));
         Assert.assertFalse(cache.contains("trafficType2"));
@@ -110,8 +110,8 @@ public class TrafficTypesCacheTests {
 
     @Test
     public void initWithNullSplitsAndUpdate() {
-        TrafficTypesCache cache = new TrafficTypesCache();
-        cache.setFromSplits(null);
+        InMemoryTrafficTypesCache cache = new InMemoryTrafficTypesCache();
+        cache.updateFromSplits(null);
         List<Split> splits = new ArrayList<>();
         splits.add(newSplit("s0", "trafficType0", Status.ACTIVE));
         splits.add(newSplit("s1", "trafficType1", Status.ACTIVE));
@@ -125,7 +125,7 @@ public class TrafficTypesCacheTests {
 
     @Test
     public void noSetWithSplits() {
-        TrafficTypesCache cache = new TrafficTypesCache();
+        InMemoryTrafficTypesCache cache = new InMemoryTrafficTypesCache();
         Assert.assertFalse(cache.contains("trafficType0"));
         Assert.assertFalse(cache.contains("trafficType1"));
         Assert.assertFalse(cache.contains("trafficType2"));
@@ -134,8 +134,8 @@ public class TrafficTypesCacheTests {
 
     @Test
     public void noSetWithSplitsAndUpdate() {
-        TrafficTypesCache cache = new TrafficTypesCache();
-        cache.setFromSplits(null);
+        InMemoryTrafficTypesCache cache = new InMemoryTrafficTypesCache();
+        cache.updateFromSplits(null);
         List<Split> splits = new ArrayList<>();
         splits.add(newSplit("s0", "trafficType0", Status.ACTIVE));
         splits.add(newSplit("s1", "trafficType1", Status.ACTIVE));
@@ -145,6 +145,32 @@ public class TrafficTypesCacheTests {
         Assert.assertTrue(cache.contains("trafficType1"));
         Assert.assertFalse(cache.contains("trafficType2"));
         Assert.assertFalse(cache.contains("trafficType3"));
+    }
+
+    @Test
+    public void singleUpdateArchived() {
+
+        List<Split> splits = new ArrayList<>();
+
+        cache.updateFromSplit(newSplit("s0", "trafficType0", Status.ARCHIVED));
+        Assert.assertFalse(cache.contains("trafficType0"));
+    }
+
+    @Test
+    public void singleUpdateActive() {
+        cache.updateFromSplit(newSplit("s10", "trafficType10", Status.ACTIVE));
+        Assert.assertTrue(cache.contains("trafficType10"));
+    }
+
+    @Test
+    public void updateWithNullSplit() {
+        boolean exceptionOccurs = false;
+        try {
+            cache.updateFromSplit(null);
+        } catch (Exception e) {
+            exceptionOccurs = true;
+        }
+        Assert.assertFalse(exceptionOccurs);
     }
 
     private Split newSplit(String name, String trafficType, Status status) {

@@ -2,6 +2,7 @@ package io.split.android.client.cache;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,12 +10,12 @@ import java.util.Map;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 
-public class TrafficTypesCache implements ITrafficTypesCache {
+public class InMemoryTrafficTypesCache implements ITrafficTypesCache {
 
     private Map<String, Integer> trafficTypes = null;
 
-    public TrafficTypesCache() {
-        trafficTypes = new HashMap<>();
+    public InMemoryTrafficTypesCache() {
+        trafficTypes = Collections.synchronizedMap(new HashMap<String, Integer>());
     }
 
     @Override
@@ -33,22 +34,22 @@ public class TrafficTypesCache implements ITrafficTypesCache {
     }
 
     @Override
+    synchronized public void updateFromSplit(Split split) {
+        if(split != null) {
+            if(split.status != null && split.status.equals(Status.ACTIVE) && split.trafficTypeName != null) {
+                add(split.trafficTypeName.toLowerCase());
+            } else {
+                remove(split.trafficTypeName.toLowerCase());
+            }
+        }
+    }
+
+    @Override
     public boolean contains(String name) {
         if(name == null) {
             return false;
         }
         return (trafficTypes.get(name.toLowerCase()) != null);
-    }
-
-    @Override
-    synchronized public void setFromSplits(List<Split> splits) {
-        if(splits != null) {
-            for (Split split : splits) {
-                if(split.status != null && split.status.equals(Status.ACTIVE) && split.trafficTypeName != null) {
-                    add(split.trafficTypeName.toLowerCase());
-                }
-            }
-        }
     }
 
     private void add(@NotNull String name) {

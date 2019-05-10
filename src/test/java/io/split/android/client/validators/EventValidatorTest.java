@@ -6,12 +6,11 @@ import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import io.split.android.client.cache.TrafficTypesCache;
+import io.split.android.client.cache.InMemoryTrafficTypesCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
@@ -22,13 +21,13 @@ public class EventValidatorTest {
 
     @Before
     public void setUp() {
-        TrafficTypesCache trafficTypesCache = new TrafficTypesCache();
+        InMemoryTrafficTypesCache inMemoryTrafficTypesCache = new InMemoryTrafficTypesCache();
         List<Split> splits = new ArrayList<>();
         splits.add(newSplit("s0", "traffic1", Status.ACTIVE));
         splits.add(newSplit("s1", "trafficType1", Status.ACTIVE));
         splits.add(newSplit("s2", "custom", Status.ACTIVE));
-        trafficTypesCache.setFromSplits(splits);
-        validator = new EventValidatorImpl(new KeyValidatorImpl(), trafficTypesCache);
+        inMemoryTrafficTypesCache.updateFromSplits(splits);
+        validator = new EventValidatorImpl(new KeyValidatorImpl(), inMemoryTrafficTypesCache);
     }
 
     @Test
