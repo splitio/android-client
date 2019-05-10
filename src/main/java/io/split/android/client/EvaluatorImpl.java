@@ -24,9 +24,7 @@ public class EvaluatorImpl implements Evaluator {
 
         try {
             ParsedSplit parsedSplit = mSplitFetcher.fetch(splitName);
-
             if (parsedSplit == null) {
-                Logger.d("Returning control because no split was found for: %s", splitName);
                 return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.DEFINITION_NOT_FOUND);
             }
             return getTreatment(matchingKey, bucketingKey, parsedSplit, attributes);

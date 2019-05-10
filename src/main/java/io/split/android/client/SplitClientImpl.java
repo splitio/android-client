@@ -52,7 +52,7 @@ public final class SplitClientImpl implements SplitClient {
         mTrackClient = trackClient;
         mTreatmentManager = new TreatmentManagerImpl(
                 mMatchingKey, mBucketingKey, new EvaluatorImpl(mSplitFetcher),
-                new KeyValidatorImpl(), new SplitValidatorImpl(), mMetrics,
+                new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), mMetrics,
                 impressionListener, mConfig);
 
         checkNotNull(mSplitFetcher);

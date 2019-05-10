@@ -8,6 +8,7 @@ import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -26,8 +27,9 @@ public class SplitManagerImpl implements SplitManager {
 
 
     public SplitManagerImpl(SplitFetcher splitFetcher) {
+        _validationMessageLogger = new ValidationMessageLoggerImpl();
         _splitFetcher  = splitFetcher;
-        _splitValidator = new SplitValidatorImpl();
+        _splitValidator = new SplitValidatorImpl(splitFetcher);
     }
 
     @Override
@@ -67,6 +69,9 @@ public class SplitManagerImpl implements SplitManager {
         }
 
         ParsedSplit parsedSplit = _splitFetcher.fetch(splitName);
+        if(parsedSplit == null) {
+            _validationMessageLogger.e(_splitValidator.splitNotFoundMessage(splitName), validationTag);
+        }
         return parsedSplit == null ? null : toSplitView(parsedSplit);
     }
 

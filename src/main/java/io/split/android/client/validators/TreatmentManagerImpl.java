@@ -1,5 +1,7 @@
 package io.split.android.client.validators;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +10,7 @@ import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitResult;
+import io.split.android.client.TreatmentLabels;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.Logger;
@@ -60,8 +63,23 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return Treatments.CONTROL;
         }
 
+        if (!isSdkReadyFired) {
+            mValidationLogger.e(SDK_READY_NOT_FIRED, validationTag);
+            logImpression(
+                    mMatchingKey,
+                    mBucketingKey,
+                    split,
+                    Treatments.CONTROL,
+                    (mSplitClientConfig.labelsEnabled() ? TreatmentLabels.NOT_READY : null),
+                    null,
+                    attributes
+            );
+
+            return Treatments.CONTROL;
+        }
+
         long start = System.currentTimeMillis();
-        String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag, isSdkReadyFired).treatment();
+        String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag).treatment();
         mMetrics.time(Metrics.GET_TREATMENT_TIME, System.currentTimeMillis() - start);
         return treatment;
     }
@@ -73,8 +91,24 @@ public class TreatmentManagerImpl implements TreatmentManager {
             Logger.e(validationTag + CLIENT_DESTROYED_MESSAGE);
             return new SplitResult(Treatments.CONTROL);
         }
+
+        if (!isSdkReadyFired) {
+            mValidationLogger.e(SDK_READY_NOT_FIRED, validationTag);
+            logImpression(
+                    mMatchingKey,
+                    mBucketingKey,
+                    split,
+                    Treatments.CONTROL,
+                    (mSplitClientConfig.labelsEnabled() ? TreatmentLabels.NOT_READY : null),
+                    null,
+                    attributes
+            );
+
+            return new SplitResult(Treatments.CONTROL);
+        }
+
         long start = System.currentTimeMillis();
-        SplitResult result = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag, isSdkReadyFired);
+        SplitResult result = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag);
         mMetrics.time(Metrics.GET_TREATMENT_WITH_CONFIG_TIME, System.currentTimeMillis() - start);
         return result;
     }
@@ -85,17 +119,24 @@ public class TreatmentManagerImpl implements TreatmentManager {
         final String validationTag = ValidationTag.GET_TREATMENTS;
 
         if(splits == null) {
-            Logger.e(validationTag + ": split_names must be a non-empty array");
+            mValidationLogger.e("split_names must be a non-empty array", validationTag);
             return new HashMap<>();
         }
 
         if(isClientDestroyed) {
-            Logger.e(validationTag + CLIENT_DESTROYED_MESSAGE);
+            mValidationLogger.e( CLIENT_DESTROYED_MESSAGE, validationTag);
             return controlTreatmentsForSplits(splits, validationTag);
         }
 
+        if (!isSdkReadyFired) {
+            mValidationLogger.e(SDK_READY_NOT_FIRED, validationTag);
+            Map<String, String> controls = controlTreatmentsForSplits(splits, validationTag);
+            logControlImpressions(new ArrayList(controls.keySet()), attributes, TreatmentLabels.NOT_READY);
+            return controls;
+        }
+
         long start = System.currentTimeMillis();
-        Map<String, SplitResult> resultWithConfig = getTreatmentsWithConfigWithoutMetrics(splits, attributes ,validationTag, isSdkReadyFired);
+        Map<String, SplitResult> resultWithConfig = getTreatmentsWithConfigWithoutMetrics(splits, attributes ,validationTag);
         Map<String, String> result = new HashMap<>();
 
         for (Map.Entry<String, SplitResult> entry : resultWithConfig.entrySet()) {
@@ -111,7 +152,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         final String validationTag = ValidationTag.GET_TREATMENTS_WITH_CONFIG;
 
         if(splits == null) {
-            Logger.e(validationTag + ": split_names must be a non-empty array");
+            mValidationLogger.e("split_names must be a non-empty array", validationTag);
             return new HashMap<>();
         }
 
@@ -120,18 +161,20 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return controlTreatmentsForSplitsWithConfig(splits, validationTag);
         }
 
+        if (!isSdkReadyFired) {
+            mValidationLogger.e(SDK_READY_NOT_FIRED, validationTag);
+            Map<String, SplitResult> controls = controlTreatmentsForSplitsWithConfig(splits, validationTag);
+            logControlImpressions(new ArrayList(controls.keySet()), attributes, TreatmentLabels.NOT_READY);
+            return controls;
+        }
+
         long start = System.currentTimeMillis();
-        Map<String, SplitResult> result = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag, isSdkReadyFired);
+        Map<String, SplitResult> result = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
         mMetrics.time(Metrics.GET_TREATMENTS_WITH_CONFIG_TIME, System.currentTimeMillis() - start);
         return result;
     }
 
-    private SplitResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> attributes, String validationTag, boolean isSdkReadyFired) {
-
-        String splitName = split;
-        if (!isSdkReadyFired) {
-            Logger.w(validationTag + SDK_READY_NOT_FIRED);
-        }
+    private SplitResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> attributes, String validationTag) {
 
         ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
         if (errorInfo != null) {
@@ -139,6 +182,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return new SplitResult(Treatments.CONTROL);
         }
 
+        String splitName = split;
         errorInfo = mSplitValidator.validateName(split);
         if (errorInfo != null) {
             mValidationLogger.log(errorInfo, validationTag);
@@ -151,12 +195,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
         EvaluationResult evaluationResult = mEvaluator.getTreatment(mMatchingKey, mBucketingKey, split, attributes);
         SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
 
+        if(evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
+            mValidationLogger.w(mSplitValidator.splitNotFoundMessage(splitName), validationTag);
+        }
+
         logImpression(
                 mMatchingKey,
                 mBucketingKey,
                 splitName,
                 evaluationResult.getTreatment(),
-                mSplitClientConfig.labelsEnabled() ? evaluationResult.getLabel() : null,
+                (mSplitClientConfig.labelsEnabled() ? evaluationResult.getLabel() : null),
                 evaluationResult.getChangeNumber(),
                 attributes
         );
@@ -164,11 +212,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         return splitResult;
     }
 
-    private Map<String, SplitResult> getTreatmentsWithConfigWithoutMetrics(List<String> splits, Map<String, Object> attributes, String validationTag, boolean isSdkReadyFired) {
-
-        if (!isSdkReadyFired) {
-            Logger.w(validationTag + SDK_READY_NOT_FIRED);
-        }
+    private Map<String, SplitResult> getTreatmentsWithConfigWithoutMetrics(List<String> splits, Map<String, Object> attributes, String validationTag) {
 
         ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
         if (errorInfo != null) {
@@ -191,15 +235,20 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     continue;
                 }
             }
+
             EvaluationResult result = mEvaluator.getTreatment(mMatchingKey, mBucketingKey, split.trim(), attributes);
             results.put(split.trim(), new SplitResult(result.getTreatment(), result.getConfigurations()));
+
+            if(result.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
+                mValidationLogger.w(mSplitValidator.splitNotFoundMessage(split), validationTag);
+            }
 
             logImpression(
                     mMatchingKey,
                     mBucketingKey,
                     split,
                     result.getTreatment(),
-                    mSplitClientConfig.labelsEnabled() ? result.getLabel() : null,
+                    (mSplitClientConfig.labelsEnabled() ? result.getLabel() : null),
                     result.getChangeNumber(),
                     attributes);
         }
@@ -243,6 +292,19 @@ public class TreatmentManagerImpl implements TreatmentManager {
             results.put(split.trim(), Treatments.CONTROL);
         }
         return results;
+    }
+
+    private void logControlImpressions(List<String> splits, Map<String, Object> attributes, String label) {
+        for(String split : splits) {
+            logImpression(
+                    mMatchingKey,
+                    mBucketingKey,
+                    split,
+                    Treatments.CONTROL,
+                    label,
+                    null,
+                    attributes);
+        }
     }
 
 }

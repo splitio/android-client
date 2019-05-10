@@ -13,4 +13,18 @@ public interface ValidationMessageLogger {
      * @param tag: Tag for a log line
      */
     void log(ValidationErrorInfo errorInfo, String tag);
+
+    /**
+     * Logs info related a validation warning
+     * @param message: Warning message to log
+     * @param tag: Tag for a log line
+     */
+    void w(String message, String tag);
+
+    /**
+     * Logs info related a validation warning
+     * @param message: Warning message to log
+     * @param tag: Tag for a log line
+     */
+    void e(String message, String tag);
 }

@@ -24,11 +24,19 @@ public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
         }
     }
 
-    private void e(String tag, String message) {
+    public void e(String message, String tag) {
+        logError(message, tag);
+    }
+
+    public void w(String message, String tag) {
+        logWarning(message, tag);
+    }
+
+    private void logError(String message, String tag) {
         Logger.e(sanitizeTag(tag) + ": " + message);
     }
 
-    private void w(String tag, String message) {
+    private void logWarning(String message, String tag) {
         Logger.w(sanitizeTag(tag) + ": " + message);
     }
 
