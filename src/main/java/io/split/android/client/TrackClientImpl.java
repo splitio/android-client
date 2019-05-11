@@ -21,6 +21,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.ITrafficTypesCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.track.EventsChunk;
@@ -80,11 +81,11 @@ public class TrackClientImpl implements TrackClient {
         };
     }
 
-    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, trafficTypesCache);
+    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, splitCache);
     }
 
-    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
+    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache) throws URISyntaxException {
 
 
         _storageManager = storageManager;
@@ -93,7 +94,7 @@ public class TrackClientImpl implements TrackClient {
 
         _eventsTarget = new URIBuilder(eventsRootTarget).setPath("/api/events/bulk").build();
 
-        _eventValidator = new EventValidatorImpl(new KeyValidatorImpl(), trafficTypesCache);
+        _eventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
 
         _eventQueue = eventQueue;
         _config = config;

@@ -45,8 +45,8 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
         mRemovedSplits = Collections.synchronizedSet(new HashSet<String>());
         mTrafficTypesCache = new InMemoryTrafficTypesCache();
         loadChangeNumberFromDisk();
+        loadSplitsFromDisk();
         mTrafficTypesCache.updateFromSplits(new ArrayList<>(mInMemorySplits.values()));
-        loadSplitsNamesFromDisk();
     }
 
     private String getSplitId(String splitName) {
@@ -172,10 +172,13 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
         }
     }
 
-    void loadSplitsNamesFromDisk() {
+    void loadSplitsFromDisk() {
         List<String> fileIds = mFileStorageManager.getAllIds(SPLIT_FILE_PREFIX);
         for(String fileId : fileIds) {
-            mInMemorySplits.put(getSplitName(fileId), null);
+            Split split = getSplitFromDisk(fileId);
+            if(split != null && split.name != null) {
+                mInMemorySplits.put(split.name, split);
+            }
         }
     }
 }

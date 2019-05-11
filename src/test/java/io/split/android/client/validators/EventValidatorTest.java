@@ -7,13 +7,17 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.InMemoryTrafficTypesCache;
+import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.storage.FileStorage;
 
 public class EventValidatorTest {
 
@@ -21,13 +25,12 @@ public class EventValidatorTest {
 
     @Before
     public void setUp() {
-        InMemoryTrafficTypesCache inMemoryTrafficTypesCache = new InMemoryTrafficTypesCache();
-        List<Split> splits = new ArrayList<>();
-        splits.add(newSplit("s0", "traffic1", Status.ACTIVE));
-        splits.add(newSplit("s1", "trafficType1", Status.ACTIVE));
-        splits.add(newSplit("s2", "custom", Status.ACTIVE));
-        inMemoryTrafficTypesCache.updateFromSplits(splits);
-        validator = new EventValidatorImpl(new KeyValidatorImpl(), inMemoryTrafficTypesCache);
+        ISplitCache splitCache = new SplitCache(new FileStorage(new File("./build", "."), "folder"));
+        splitCache.addSplit(newSplit("s0", "traffic1", Status.ACTIVE));
+        splitCache.addSplit(newSplit("s1", "trafficType1", Status.ACTIVE));
+        splitCache.addSplit(newSplit("s2", "custom", Status.ACTIVE));
+
+        validator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
     }
 
     @Test
