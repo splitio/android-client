@@ -4,18 +4,20 @@ import io.split.android.client.SplitFactory;
 
 public class FactoryMonitorImpl implements FactoryMonitor {
 
+    private FactoryRegistry factoryRegistry;
+
     @Override
     public int allCount() {
-        return 0;
+        return factoryRegistry.count();
     }
 
     @Override
     public int instanceCount(String apiKey) {
-        return 0;
+        return factoryRegistry.count(apiKey);
     }
 
     @Override
     public void register(SplitFactory instance, String apiKey) {
-
+        factoryRegistry.append(new WeakFactory(instance), apiKey);
     }
 }
