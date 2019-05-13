@@ -1,3 +1,7 @@
+2.2.1: (May 9, 2019)
+- Fixing issue when device in airplane mode
+2.2.0: (May 1, 2019)
+- Adding Dynamic Configs feature
 2.0.1: (Mar 14, 2019)
 - Using different folders for api key to store cached data
 2.0.0: (Feb 11, 2019)
