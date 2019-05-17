@@ -5,12 +5,15 @@ import android.annotation.SuppressLint;
 import com.google.common.collect.Lists;
 
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,10 +29,12 @@ import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.GenericClientUtil;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
+import io.split.android.client.validators.ValidationConfig;
 
 import static java.lang.Thread.MIN_PRIORITY;
 
@@ -136,6 +141,30 @@ public class TrackClientImpl implements TrackClient {
             if (_eventValidator.trafficTypeHasUppercaseLetters(event)) {
                 event.trafficTypeName = event.trafficTypeName.toLowerCase();
                 Logger.w(validationTag + ": traffic_type_name should be all lowercase - converting string to lowercase");
+            }
+
+            if(event.properties != null) {
+                Map<String, Object> finalProperties = new HashMap<>(event.properties);
+                Map<String, Object> properties = event.properties;
+                for (Map.Entry entry : properties.entrySet()) {
+                    if (entry.getValue() != null &&
+                            entry.getValue().getClass() != String.class &&
+                            entry.getValue().getClass() != Integer.class &&
+                            entry.getValue().getClass() != Long.class &&
+                            entry.getValue().getClass() != Float.class &&
+                            entry.getValue().getClass() != Double.class &&
+                            entry.getValue().getClass() != Boolean.class) {
+                        finalProperties.put(entry.getKey().toString(), null);
+                    }
+
+                    int valueSize = (entry.getValue() != null && entry.getValue().getClass() == String.class ? entry.getValue().toString().getBytes().length : 0);
+
+                    if (valueSize + entry.getKey().toString().getBytes().length > ValidationConfig.getInstance().getMaximumEventPropertyBytes())  {
+                        Logger.w(validationTag + "The maximum size allowed for the properties is 32kb. Current is " + entry.getKey().toString() + ". Event not queued");
+                        return false;
+                    }
+                }
+                event.properties = finalProperties;
             }
 
             _eventQueue.put(event);
@@ -264,6 +293,7 @@ public class TrackClientImpl implements TrackClient {
         @Override
         public void run() {
             if (Utils.isSplitServiceReachable(mEndpoint)) {
+                String c = Json.toJson(mChunk);
                 int status = GenericClientUtil.POST(mChunk.asJSONEntity(), mEndpoint, mHttpClient);
 
                 if (!(status >= 200 && status < 300)) {

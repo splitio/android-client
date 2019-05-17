@@ -7,6 +7,7 @@ package io.split.android.client.track;
      private long flushIntervalMillis;
      private int waitBeforeShutdown;
      private int maxSentAttempts;
+     private int maxQueueSizeInBytes;
 
      public int getMaxQueueSize() {
          return maxQueueSize;
@@ -25,7 +26,8 @@ package io.split.android.client.track;
      }
 
      public long getFlushIntervalMillis() {
-         return flushIntervalMillis;
+         return 5000;
+         //return flushIntervalMillis;
      }
 
      public void setFlushIntervalMillis(long flushIntervalMillis) {
@@ -46,5 +48,13 @@ package io.split.android.client.track;
 
      public void setMaxSentAttempts(int maxSentAttempts) {
          this.maxSentAttempts = maxSentAttempts;
+     }
+
+     public void setMaxQueueSizeInBytes(int maxQueueSizeInBytes) {
+         this.maxQueueSizeInBytes = maxQueueSizeInBytes;
+     }
+
+     public int getMaxQueueSizeInBytes() {
+         return maxQueueSizeInBytes;
      }
  }
