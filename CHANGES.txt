@@ -1,4 +1,5 @@
-2.3.0: (May 9, 2019)
+2.3.0: (May 20, 2019)
+- Adding track event properties
 2.2.1: (May 9, 2019)
 - Fixing issue when device in airplane mode
 2.2.0: (May 1, 2019)
