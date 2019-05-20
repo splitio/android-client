@@ -44,6 +44,8 @@ public class TrackClientImpl implements TrackClient {
     //Events post max attemps
     private static final int MAX_POST_ATTEMPS = 3;
 
+    public static final long MAX_SIZE_BYTES = 5 * 1024 * 1024L;
+
     //Events memory queue
     private final BlockingQueue<Event> _eventQueue;
 
@@ -63,6 +65,9 @@ public class TrackClientImpl implements TrackClient {
     private final TrackStorageManager _storageManager;
     private final String validationTag = "track";
     private final EventValidator _eventValidator = new EventValidatorImpl(validationTag);
+
+    // Estimated event size without properties
+    public final static int EVENT_SIZE_WITHOUT_PROPS = 1024;
 
     private ThreadFactory eventClientThreadFactory(final String name) {
         return new ThreadFactory() {
@@ -143,30 +148,39 @@ public class TrackClientImpl implements TrackClient {
                 Logger.w(validationTag + ": traffic_type_name should be all lowercase - converting string to lowercase");
             }
 
+            int sizeInBytes = EVENT_SIZE_WITHOUT_PROPS;
             if(event.properties != null) {
+
+                if (event.properties.size() > 300) {
+                    Logger.w(validationTag + "Event has more than 300 properties. Some of them will be trimmed when processed");
+                }
+
                 Map<String, Object> finalProperties = new HashMap<>(event.properties);
                 Map<String, Object> properties = event.properties;
                 for (Map.Entry entry : properties.entrySet()) {
-                    if (entry.getValue() != null &&
-                            entry.getValue().getClass() != String.class &&
-                            entry.getValue().getClass() != Integer.class &&
-                            entry.getValue().getClass() != Long.class &&
-                            entry.getValue().getClass() != Float.class &&
-                            entry.getValue().getClass() != Double.class &&
-                            entry.getValue().getClass() != Boolean.class) {
+                    if (entry.getValue() == null) {
+                        continue;
+                    }
+
+                    String key = entry.getKey().toString();
+                    Object value = entry.getValue();
+                    if (!(value instanceof Number) &&
+                            !(value instanceof Boolean) &&
+                            !(value instanceof String)) {
                         finalProperties.put(entry.getKey().toString(), null);
                     }
 
-                    int valueSize = (entry.getValue() != null && entry.getValue().getClass() == String.class ? entry.getValue().toString().getBytes().length : 0);
+                    sizeInBytes += (value.getClass() == String.class ? value.toString().getBytes().length : 0);
+                    sizeInBytes += key.getBytes().length;
 
-                    if (valueSize + entry.getKey().toString().getBytes().length > ValidationConfig.getInstance().getMaximumEventPropertyBytes())  {
+                    if (sizeInBytes  > ValidationConfig.getInstance().getMaximumEventPropertyBytes())  {
                         Logger.w(validationTag + "The maximum size allowed for the properties is 32kb. Current is " + entry.getKey().toString() + ". Event not queued");
                         return false;
                     }
                 }
                 event.properties = finalProperties;
             }
-
+            event.setSizeInBytes(sizeInBytes);
             _eventQueue.put(event);
         } catch (InterruptedException e) {
             Logger.w("Interruption when adding event withed while adding message %s.", event);
@@ -227,6 +241,7 @@ public class TrackClientImpl implements TrackClient {
         @Override
         public void run() {
             List<Event> events = new ArrayList<>();
+            long totalSizeInBytes = 0;
 
             try {
                 while (true) {
@@ -238,8 +253,8 @@ public class TrackClientImpl implements TrackClient {
                         Logger.d("No messages to publish.");
                         continue;
                     }
-
-                    if (events.size() >= _config.getMaxQueueSize() || event == CENTINEL) {
+                    totalSizeInBytes+= event.getSizeInBytes();
+                    if (events.size() >= _config.getMaxQueueSize() ||  totalSizeInBytes >= MAX_SIZE_BYTES || event == CENTINEL) {
 
                         Logger.d(String.format("Sending %d events", events.size()));
 

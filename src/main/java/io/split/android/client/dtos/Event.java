@@ -13,6 +13,8 @@ public class Event {
     public long timestamp;
     public Map<String,Object> properties;
 
+    private transient int sizeInBytes = 0;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -29,5 +31,13 @@ public class Event {
     @Override
     public int hashCode() {
         return Objects.hashCode(eventTypeId, trafficTypeName, key, value, timestamp);
+    }
+
+    public void setSizeInBytes(int sizeInBytes) {
+        this.sizeInBytes = sizeInBytes;
+    }
+
+    public int getSizeInBytes() {
+        return sizeInBytes;
     }
 }
