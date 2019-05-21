@@ -1,6 +1,7 @@
 package io.split.android.client;
 
 import android.annotation.SuppressLint;
+import android.support.annotation.VisibleForTesting;
 
 import com.google.common.collect.Lists;
 
@@ -85,10 +86,15 @@ public class TrackClientImpl implements TrackClient {
     }
 
     public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager);
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, null);
     }
 
-    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager) throws URISyntaxException {
+    @VisibleForTesting
+    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ExecutorService senderExecutor) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, senderExecutor);
+    }
+
+    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ExecutorService senderExecutor) throws URISyntaxException {
 
 
         _storageManager = storageManager;
@@ -100,20 +106,24 @@ public class TrackClientImpl implements TrackClient {
         _eventQueue = eventQueue;
         _config = config;
 
-        // Thread to send events to backend
-        _senderExecutor = new ThreadPoolExecutor(
-                1,
-                1,
-                0L,
-                TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(50),
-                eventClientThreadFactory("eventclient-sender"),
-                new RejectedExecutionHandler() {
-                    @Override
-                    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                                                Logger.w("Executor queue full. Dropping events.");
-                                            }
-                });
+        if(senderExecutor == null) {
+            // Thread to send events to backend
+            _senderExecutor = new ThreadPoolExecutor(
+                    1,
+                    1,
+                    0L,
+                    TimeUnit.MILLISECONDS,
+                    new LinkedBlockingQueue<Runnable>(50),
+                    eventClientThreadFactory("eventclient-sender"),
+                    new RejectedExecutionHandler() {
+                        @Override
+                        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+                            Logger.w("Executor queue full. Dropping events.");
+                        }
+                    });
+        } else {
+            _senderExecutor = senderExecutor;
+        }
 
         // Queue consumer
         _consumerExecutor = Executors.newSingleThreadExecutor(eventClientThreadFactory("eventclient-consumer"));
@@ -255,13 +265,10 @@ public class TrackClientImpl implements TrackClient {
                     }
                     totalSizeInBytes+= event.getSizeInBytes();
                     if (events.size() >= _config.getMaxQueueSize() ||  totalSizeInBytes >= MAX_SIZE_BYTES || event == CENTINEL) {
-
                         Logger.d(String.format("Sending %d events", events.size()));
-
                         if(events.size() > _config.getMaxEventsPerPost()){
                             List<List<Event>> eventsChunks = Lists.partition(events, _config.getMaxEventsPerPost());
                             for (List<Event> eventsChunk : eventsChunks) {
-
                                 // Dispatch
                                 _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(eventsChunk), _storageManager, _config.getMaxSentAttempts()));
                             }
@@ -269,7 +276,6 @@ public class TrackClientImpl implements TrackClient {
                             // Dispatch
                             _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(events), _storageManager, _config.getMaxSentAttempts()));
                         }
-
                         // Clear the queue of events for the next batch.
                         events = new ArrayList<>();
                     }
