@@ -314,7 +314,6 @@ public class TrackClientImpl implements TrackClient {
         @Override
         public void run() {
             if (Utils.isSplitServiceReachable(mEndpoint)) {
-                String c = Json.toJson(mChunk);
                 int status = GenericClientUtil.POST(mChunk.asJSONEntity(), mEndpoint, mHttpClient);
 
                 if (!(status >= 200 && status < 300)) {
