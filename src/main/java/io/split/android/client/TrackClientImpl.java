@@ -216,7 +216,11 @@ public class TrackClientImpl implements TrackClient {
      * the existence of this message in the queue triggers a send event in the consumer thread.
      */
     public void flush() {
-        track(CENTINEL);
+        try {
+            _eventQueue.put(CENTINEL);
+        } catch (InterruptedException e) {
+            Logger.w("Interruption when flusing events");
+        }
     }
 
     private void flushFromLocalCache(){
