@@ -26,8 +26,7 @@ package io.split.android.client.track;
      }
 
      public long getFlushIntervalMillis() {
-         return 5000;
-         //return flushIntervalMillis;
+         return flushIntervalMillis;
      }
 
      public void setFlushIntervalMillis(long flushIntervalMillis) {
