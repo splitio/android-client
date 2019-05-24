@@ -70,6 +70,76 @@ public class TrackClientImplTest {
         Assert.assertEquals(1, ex.getSubmitCount());
     }
 
+    @Test
+    public void testEventsFlushedWhenCountLimitReached() throws URISyntaxException, InterruptedException, IOException {
+
+        CountDownLatch latch = new CountDownLatch(5);
+        ExecutorService senderExecutor = new ExecutorServiceMock(latch);
+
+        TrackClientConfig config = new TrackClientConfig();
+        config.setMaxQueueSize(10);
+        config.setFlushIntervalMillis(999999);
+        config.setWaitBeforeShutdown(100000);
+        config.setMaxEventsPerPost(2);
+        CloseableHttpClient client = Mockito.mock(CloseableHttpClient.class);
+        TrackClient eventClient = TrackClientImpl.create(
+                config, client,
+                URI.create("https://kubernetesturl.com/split"),
+                new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), senderExecutor);
+
+        for (int i = 0; i < 9; ++i) {
+            eventClient.track(create32kbEvent());
+        }
+
+        latch.await(5, TimeUnit.SECONDS);
+
+        ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
+
+        int prevSubmitCount = ex.getSubmitCount();
+
+        eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
+
+        latch.await(5, TimeUnit.SECONDS);
+
+        Assert.assertEquals(0, prevSubmitCount);
+        Assert.assertEquals(5, ex.getSubmitCount());
+    }
+
+
+    @Test
+    public void testEventsFlushedWhenCountLimitExceded() throws URISyntaxException, InterruptedException, IOException {
+
+        CountDownLatch latch = new CountDownLatch(6);
+        ExecutorService senderExecutor = new ExecutorServiceMock(latch);
+
+        TrackClientConfig config = new TrackClientConfig();
+        config.setMaxQueueSize(10);
+        config.setFlushIntervalMillis(999999);
+        config.setWaitBeforeShutdown(100000);
+        config.setMaxEventsPerPost(2);
+        CloseableHttpClient client = Mockito.mock(CloseableHttpClient.class);
+        TrackClient eventClient = TrackClientImpl.create(
+                config, client,
+                URI.create("https://kubernetesturl.com/split"),
+                new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), senderExecutor);
+
+        for (int i = 0; i < 10; ++i) {
+            eventClient.track(create32kbEvent());
+        }
+
+        ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
+
+        latch.await(5, TimeUnit.SECONDS);
+        int prevSubmitCount = ex.getSubmitCount();
+
+        eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
+
+        latch.await(5, TimeUnit.SECONDS);
+
+        Assert.assertEquals(5, prevSubmitCount);
+        Assert.assertEquals(5, ex.getSubmitCount());
+    }
+
     private Event create32kbEvent() {
         Event event = new Event();
         event.trafficTypeName = "custom";
