@@ -121,33 +121,6 @@ public interface SplitClient {
     void on(SplitEvent event, SplitEventTask task);
 
     /**
-     * Enqueue a new event to be sent to split data collection services
-     *
-     * Example:
-     *      client.track(“account”, “checkout”)
-     *
-     * @param trafficType the type of the event
-     * @param eventType the type of the event
-     *
-     * @return true if the track was successful, false otherwise
-     */
-    boolean track(String trafficType, String eventType);
-
-    /**
-     * Enqueue a new event to be sent to split data collection services
-     *
-     * Example:
-     *      client.track(“account”, “checkout”, 200.00)
-     *
-     * @param trafficType the type of the event
-     * @param eventType the type of the event
-     * @param value the value of the event
-     *
-     * @return true if the track was successful, false otherwise
-     */
-    boolean track(String trafficType, String eventType, double value);
-
-    /**
      * Enqueue a new event to be sent to split data collection services.
      *
      * The traffic type used is the one set by trafficType() in SplitClientConfig.
@@ -164,6 +137,33 @@ public interface SplitClient {
     /**
      * Enqueue a new event to be sent to split data collection services
      *
+     * Example:
+     *      client.track(“account”, “checkout”, 200.00)
+     *
+     * @param trafficType the type of the event
+     * @param eventType the type of the event
+     * @param value the value of the event
+     *
+     * @return true if the track was successful, false otherwise
+     */
+    boolean track(String trafficType, String eventType, double value);
+
+    /**
+     * Enqueue a new event to be sent to split data collection services
+     *
+     * Example:
+     *      client.track(“account”, “checkout”)
+     *
+     * @param trafficType the type of the event
+     * @param eventType the type of the event
+     *
+     * @return true if the track was successful, false otherwise
+     */
+    boolean track(String trafficType, String eventType);
+
+    /**
+     * Enqueue a new event to be sent to split data collection services
+     *
      * The traffic type used is the one set by trafficType() in SplitClientConfig.
 
      * Example:
@@ -175,4 +175,64 @@ public interface SplitClient {
      * @return true if the track was successful, false otherwise
      */
     boolean track(String eventType, double value);
+
+    /**
+     * Enqueue a new event to be sent to split data collection services.
+     *
+     * The traffic type used is the one set by trafficType() in SplitClientConfig.
+     *
+     * Example:
+     *      client.track(“checkout”)
+     *
+     * @param eventType the type of the event
+     * @param properties custom user data map
+     *
+     * @return true if the track was successful, false otherwise
+     */
+    boolean track(String eventType, Map<String,Object> properties);
+
+    /**
+     * Enqueue a new event to be sent to split data collection services
+     *
+     * Example:
+     *      client.track(“account”, “checkout”, 200.00)
+     *
+     * @param trafficType the type of the event
+     * @param eventType the type of the event
+     * @param value the value of the event
+     * @param properties custom user data map
+     *
+     * @return true if the track was successful, false otherwise
+     */
+    boolean track(String trafficType, String eventType, double value, Map<String,Object> properties);
+
+    /**
+     * Enqueue a new event to be sent to split data collection services
+     *
+     * Example:
+     *      client.track(“account”, “checkout”)
+     *
+     * @param trafficType the type of the event
+     * @param eventType the type of the event
+     * @param properties custom user data map
+     *
+     * @return true if the track was successful, false otherwise
+     */
+    boolean track(String trafficType, String eventType, Map<String,Object> properties);
+
+    /**
+     * Enqueue a new event to be sent to split data collection services
+     *
+     * The traffic type used is the one set by trafficType() in SplitClientConfig.
+
+     * Example:
+     *      client.track(“checkout”, 200.00)
+     *
+     * @param eventType the type of the event
+     * @param value the value of the event
+     * @param properties custom user data map
+     *
+     * @return true if the track was successful, false otherwise
+     */
+    boolean track(String eventType, double value, Map<String,Object> properties);
 }
