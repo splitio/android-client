@@ -57,7 +57,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
         LocalhostFileParser parser = null;
         String yamlName = getYamlFileName(context);
         if(yamlName != null) {
-            FileStorage fileStorage = new FileStorage(context, LOCALHOST_FOLDER);
+            FileStorage fileStorage = new FileStorage(context.getCacheDir(), LOCALHOST_FOLDER);
             copyYamlFileResourceToDataFolder(yamlName, fileStorage, context);
             parser = new LocalhostYamlFileParser(fileStorage);
             featureToTreatmentMap = parser.parse(yamlName);

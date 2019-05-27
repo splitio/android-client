@@ -20,12 +20,13 @@ import io.split.android.client.utils.Logger;
 
 public class FileStorage implements IStorage {
 
-    private final Context _context;
     private final File _dataFolder;
 
-    public FileStorage(@NotNull Context context, @NotNull String folderName) {
-        _context = context;
-        _dataFolder = _context.getDir(folderName, Context.MODE_PRIVATE);
+    public FileStorage(@NotNull File rootFolder, @NotNull String folderName) {
+        _dataFolder = new File(rootFolder, folderName);
+        if(!_dataFolder.exists()) {
+            _dataFolder.mkdir();
+        }
     }
 
     /**
@@ -87,20 +88,31 @@ public class FileStorage implements IStorage {
 
     @Override
     public void delete(String elementId) {
-        _context.deleteFile(elementId);
+        File fileToDelete = new File(_dataFolder, elementId);
+        fileToDelete.delete();
     }
 
     @Override
     public String[] getAllIds() {
-        return _context.fileList();
+        File dataFolder = new File(_dataFolder, ".");
+        File[] fileList = dataFolder.listFiles();
+        if(fileList == null) {
+            return new String[0];
+        }
+        String[] nameList = new String[fileList.length];
+        int i = 0;
+        for(File file : fileList) {
+            nameList[i] = file.getName();
+            i++;
+        }
+        return nameList;
     }
 
     @Override
     public List<String> getAllIds(String fileNamePrefix) {
         List<String> fileNames = new ArrayList<>();
-        String[] fileList = _context.fileList();
-
-        for(String fileName : fileList) {
+        String[] fileIds = getAllIds();
+        for(String fileName : fileIds) {
             if(fileName.startsWith(fileNamePrefix)){
                 fileNames.add(fileName);
             }
@@ -110,8 +122,8 @@ public class FileStorage implements IStorage {
 
     @Override
     public boolean rename(String currentId, String newId) {
-        File oldFile = _context.getFileStreamPath(currentId);
-        File newFile = _context.getFileStreamPath(newId);
+        File oldFile = new File(_dataFolder, currentId);
+        File newFile = new File(_dataFolder, newId);
         return oldFile.renameTo(newFile);
     }
 }

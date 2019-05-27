@@ -16,6 +16,7 @@ import io.split.android.engine.metrics.Metrics;
 
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,7 @@ public final class SplitClientImpl implements SplitClient {
     private final SplitEventsManager mEventsManager;
     private final TrackClient mTrackClient;
     private final TreatmentManager mTreatmentManager;
+    private static final double TRACK_DEFAULT_VALUE = 0.0;
 
     private boolean mIsClientDestroyed = false;
 
@@ -118,29 +120,45 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean track(String trafficType, String eventType) {
-        return track(mMatchingKey, trafficType, eventType);
+        return track(mMatchingKey, trafficType, eventType, TRACK_DEFAULT_VALUE, null);
     }
 
     @Override
     public boolean track(String trafficType, String eventType, double value) {
-        return track(mMatchingKey, trafficType, eventType, value);
+        return track(mMatchingKey, trafficType, eventType, value, null);
     }
 
     @Override
     public boolean track(String eventType) {
-        return track(mMatchingKey, mConfig.trafficType(), eventType);
+        return track(mMatchingKey, mConfig.trafficType(), eventType, TRACK_DEFAULT_VALUE, null);
     }
 
     @Override
     public boolean track(String eventType, double value) {
-        return track(mMatchingKey, mConfig.trafficType(), eventType, value);
+        return track(mMatchingKey, mConfig.trafficType(), eventType, value, null);
     }
 
-    private boolean track(String key, String trafficType, String eventType) {
-        return track(key, trafficType, eventType, 0.0);
+    @Override
+    public boolean track(String trafficType, String eventType, Map<String, Object> properties) {
+        return track(mMatchingKey, trafficType, eventType, TRACK_DEFAULT_VALUE, properties);
     }
 
-    private boolean track(String key, String trafficType, String eventType, double value) {
+    @Override
+    public boolean track(String trafficType, String eventType, double value, Map<String, Object> properties) {
+        return track(mMatchingKey, trafficType, eventType, value, properties);
+    }
+
+    @Override
+    public boolean track(String eventType, Map<String, Object> properties) {
+        return track(mMatchingKey, mConfig.trafficType(), eventType, TRACK_DEFAULT_VALUE, properties);
+    }
+
+    @Override
+    public boolean track(String eventType, double value, Map<String, Object> properties) {
+        return track(mMatchingKey, mConfig.trafficType(), eventType, value, properties);
+    }
+
+    private boolean track(String key, String trafficType, String eventType, double value, Map<String, Object> properties) {
 
         if(mIsClientDestroyed) {
             Logger.e("Client has already been destroyed - no calls possible");
@@ -153,6 +171,8 @@ public final class SplitClientImpl implements SplitClient {
         event.key = key;
         event.value = value;
         event.timestamp = System.currentTimeMillis();
+        event.properties = properties;
+
 
         return mTrackClient.track(event);
     }
