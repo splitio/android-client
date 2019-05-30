@@ -174,14 +174,9 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
         // Feature Changes
-<<<<<<< HEAD
         ITrafficTypesCache trafficTypesCache = new TrafficTypesCache();
-        IStorage splitChangeStorage = new FileStorage(context, dataFolderName);
-        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage, trafficTypesCache);
-=======
         IStorage splitChangeStorage = new FileStorage(context.getCacheDir(), dataFolderName);
-        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage);
->>>>>>> master
+        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage, trafficTypesCache);
 
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), _eventsManager);
 
