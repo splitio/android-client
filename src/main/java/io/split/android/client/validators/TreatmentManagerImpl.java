@@ -197,6 +197,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         if(evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
             mValidationLogger.w(mSplitValidator.splitNotFoundMessage(splitName), validationTag);
+            return splitResult;
         }
 
         logImpression(
@@ -241,6 +242,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
             if(result.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
                 mValidationLogger.w(mSplitValidator.splitNotFoundMessage(split), validationTag);
+                continue;
             }
 
             logImpression(
