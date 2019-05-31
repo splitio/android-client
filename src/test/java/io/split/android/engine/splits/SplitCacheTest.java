@@ -7,7 +7,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import io.split.android.client.cache.IMySegmentsCache;
 import io.split.android.client.cache.ISplitCache;
@@ -102,6 +104,18 @@ public class SplitCacheTest {
         final Long NEW_CHANGE_NUMBER = 70000L;
         mCache.setChangeNumber(NEW_CHANGE_NUMBER);
         Assert.assertTrue(NEW_CHANGE_NUMBER == mCache.getChangeNumber());
+    }
+
+    @Test
+    public void testGetSplitNames() {
+        Set<String> names = new HashSet<>(mCache.getSplitNames());
+
+        Assert.assertTrue(names.contains("split-0"));
+        Assert.assertTrue(names.contains("split-1"));
+        Assert.assertTrue(names.contains("split-2"));
+        Assert.assertTrue(names.contains("split-3"));
+        Assert.assertFalse(names.contains("other"));
+
     }
 
 }
