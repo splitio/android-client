@@ -92,10 +92,6 @@ public class TrackClientImpl implements TrackClient {
     }
 
     public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, trafficTypesCache);
-    }
-
-    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
         return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, trafficTypesCache, null);
     }
 
@@ -117,6 +113,8 @@ public class TrackClientImpl implements TrackClient {
 
         _eventQueue = eventQueue;
         _config = config;
+
+        _validationLogger = new ValidationMessageLoggerImpl();
 
         if(senderExecutor == null) {
             // Thread to send events to backend
