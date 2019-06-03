@@ -17,7 +17,7 @@ public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
         if(errorInfo.isError() && errorInfo.getErrorMessage() != null) {
             e(tag, errorInfo.getErrorMessage());
         } else {
-            ArrayList<String> warnings = (ArrayList<String>) errorInfo.getWarnings().values();
+            ArrayList<String> warnings = new ArrayList<String>(errorInfo.getWarnings().values());
             for(String warning : warnings) {
                 w(tag, warning);
             }
