@@ -140,17 +140,18 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
         if (errorInfo != null) {
-            mValidationLogger.log(errorInfo, validationTag);
+            mValidationLogger.e(errorInfo, validationTag);
             return new SplitResult(Treatments.CONTROL);
         }
 
         String splitName = split;
         errorInfo = mSplitValidator.validateName(split);
         if (errorInfo != null) {
-            mValidationLogger.log(errorInfo, validationTag);
             if (errorInfo.isError()) {
+                mValidationLogger.e(errorInfo, validationTag);
                 return new SplitResult(Treatments.CONTROL);
             }
+            mValidationLogger.w(errorInfo, validationTag);
             splitName = split.trim();
         }
 
@@ -193,10 +194,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         for(String split : splits) {
             errorInfo = mSplitValidator.validateName(split);
             if (errorInfo != null) {
-                mValidationLogger.log(errorInfo, validationTag);
                 if(errorInfo.isError()) {
+                    mValidationLogger.e(errorInfo, validationTag);
                     continue;
                 }
+                mValidationLogger.w(errorInfo, validationTag);
             }
 
             EvaluationResult result = evaluateIfReady(split.trim(), attributes);
@@ -233,10 +235,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         for(String split : splits) {
             ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
             if(errorInfo != null) {
-                mValidationLogger.log(errorInfo, validationTag);
                 if(errorInfo.isError()) {
+                    mValidationLogger.e(errorInfo, validationTag);
                     continue;
                 }
+                mValidationLogger.w(errorInfo, validationTag);
             }
             results.put(split.trim(), new SplitResult(Treatments.CONTROL));
         }
@@ -248,11 +251,12 @@ public class TreatmentManagerImpl implements TreatmentManager {
         for(String split : splits) {
             ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
             if(errorInfo != null) {
-                mValidationLogger.log(errorInfo, validationTag);
                 if(errorInfo.isError()) {
+                    mValidationLogger.e(errorInfo, validationTag);
                     continue;
                 }
             }
+            mValidationLogger.w(errorInfo, validationTag);
             results.put(split.trim(), Treatments.CONTROL);
         }
         return results;
