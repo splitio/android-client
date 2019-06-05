@@ -53,7 +53,7 @@ public final class SplitClientImpl implements SplitClient {
         mTreatmentManager = new TreatmentManagerImpl(
                 mMatchingKey, mBucketingKey, new EvaluatorImpl(mSplitFetcher),
                 new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), mMetrics,
-                impressionListener, mConfig);
+                impressionListener, mConfig, eventsManager);
 
         checkNotNull(mSplitFetcher);
         checkNotNull(mImpressionListener);
@@ -86,22 +86,22 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatment(split, attributes, mIsClientDestroyed, mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
+        return mTreatmentManager.getTreatment(split, attributes, mIsClientDestroyed);
     }
 
     @Override
     public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentWithConfig(split, attributes, mIsClientDestroyed, mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
+        return mTreatmentManager.getTreatmentWithConfig(split, attributes, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatments(splits, attributes, mIsClientDestroyed, mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
+        return mTreatmentManager.getTreatments(splits, attributes, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed, mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
+        return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed);
     }
 
     public void on(SplitEvent event, SplitEventTask task){
