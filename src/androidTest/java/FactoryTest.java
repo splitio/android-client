@@ -16,6 +16,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -65,7 +66,7 @@ public class FactoryTest {
         Key key = new Key("CUSTOMER_ID",null);
         SplitClientConfig config = SplitClientConfig.builder()
                 .endpoint(url, url)
-                .ready(30000)
+                .ready(300000)
                 .featuresRefreshRate(30)
                 .segmentsRefreshRate(30)
                 .impressionsRefreshRate(30)
@@ -79,37 +80,18 @@ public class FactoryTest {
 
 
         client = splitFactory.client();
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                //Assert.assertTrue(true);
-                latch.countDown();
-            }
 
-            @Override
-            public void onPostExecutionView(SplitClient client) {
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
 
-            }
-        });
+        client.on(SplitEvent.SDK_READY, readyTask);
+        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
 
-        client.on(SplitEvent.SDK_READY_TIMED_OUT, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                //Assert.assertTrue(false);
-                latch.countDown();
-            }
-
-            @Override
-            public void onPostExecutionView(SplitClient client) {
-
-            }
-        });
-
-        latch.await(60, TimeUnit.SECONDS);
-
-
+        latch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(dataFolder.exists());
+        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
+        Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
 
     }
 
@@ -121,7 +103,7 @@ public class FactoryTest {
             @Override
             public MockResponse dispatch (RecordedRequest request) throws InterruptedException {
                 if (request.getPath().contains("/api/mySegments")) {
-                    return new MockResponse().setResponseCode(200).setBody("[\\\"segment1\\\", \\\"segment2\\\"]");
+                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
                 } else if (request.getPath().contains("/api/splitChanges")) {
                     int r = curSplitReqId;
                     curSplitReqId++;
@@ -139,10 +121,10 @@ public class FactoryTest {
         switch (reqId) {
             case 1:
                 log("req sp 1");
-                return "{\\\"splits\\\":[], \\\"since\\\":-1, \\\"till\\\":1000000000001}";
+                return "{\"splits\":[], \"since\":-1, \"till\":10000000001}";
             case 2:
                 log("req sp 2");
-                return "{\\\"splits\\\":[], \\\"since\\\":1000000000001, \\\"till\\\":1000000000002}";
+                return "{\"splits\":[], \"since\":10000000001, \"till\":10000000002}";
         }
         return "";
     }
