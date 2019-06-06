@@ -36,7 +36,7 @@ public interface ValidationMessageLogger {
     void w(String message, String tag);
 
     /**
-     * Logs info related a validation warning
+     * Logs info related a validation error
      * @param message: Warning message to log
      * @param tag: Tag for a log line
      */
