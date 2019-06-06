@@ -16,8 +16,10 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -144,14 +146,16 @@ public class IntegrationTest {
 
         latch.await(40, TimeUnit.SECONDS);
         String t1 = client.getTreatment("FACUNDO_TEST");
-        String t2 = client.getTreatment("NO_VALID_FEATURE");
+        String t2 = client.getTreatment("NO_EXISTING_FEATURE");
+
+        Map<String, String> ts1 = client.getTreatments(Arrays.asList("testing222", "NO_EXISTING_FEATURE1", "NO_EXISTING_FEATURE2"), null);
 
         SplitView s1 = manager.split("FACUNDO_TEST");
-        SplitView s2 = manager.split("NO_VALID_FEATURE");
+        SplitView s2 = manager.split("NO_EXISTING_FEATURE");
         List<SplitView> splits = manager.splits();
 
         Impression i1 = impListener.getImpression(impListener.buildKey("CUSTOMER_ID", "FACUNDO_TEST", "off"));
-        Impression i2 = impListener.getImpression(impListener.buildKey("CUSTOMER_ID", "NO_VALID_FEATURE", Treatments.CONTROL));
+        Impression i2 = impListener.getImpression(impListener.buildKey("CUSTOMER_ID", "NO_EXISTING_FEATURE", Treatments.CONTROL));
 
         for(int i=0; i<101; i++) {
             client.track("account", i);
@@ -168,6 +172,9 @@ public class IntegrationTest {
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
         Assert.assertEquals("off", t1);
         Assert.assertEquals(Treatments.CONTROL, t2);
+        Assert.assertEquals("off", ts1.get("testing222"));
+        Assert.assertEquals(Treatments.CONTROL, ts1.get("NO_EXISTING_FEATURE1"));
+        Assert.assertEquals(Treatments.CONTROL, ts1.get("NO_EXISTING_FEATURE2"));
         Assert.assertEquals(29, splits.size());
         Assert.assertNotNull(s1);
         Assert.assertNull(s2);
