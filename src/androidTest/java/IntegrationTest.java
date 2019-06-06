@@ -179,6 +179,40 @@ public class IntegrationTest {
         Assert.assertNull(event100);
     }
 
+
+    @Test
+    public void testSdkTimeout() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
+
+        SplitClient client;
+
+        Key key = new Key("CUSTOMER_ID",null);
+        SplitClientConfig config = SplitClientConfig.builder()
+                .ready(30000)
+                .featuresRefreshRate(99999)
+                .segmentsRefreshRate(99999)
+                .impressionsRefreshRate(99999)
+                .trafficType("account")
+                .build();
+
+
+        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+
+        client = splitFactory.client();
+
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+
+        client.on(SplitEvent.SDK_READY, readyTask);
+        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+
+        latch.await(40, TimeUnit.SECONDS);
+
+        Assert.assertFalse(readyTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyTimeOutTask.isOnPostExecutionCalled);
+    }
+
     private String splitsPerRequest(int reqId) {
         int req = mJsonChanges.size() - 1;
         if(reqId < req) {
