@@ -2,16 +2,19 @@ package io.split.android.client.validators;
 
 import com.google.common.base.Strings;
 
-import java.util.ArrayList;
-import java.util.List;
 
-import io.split.android.client.api.Key;
-import io.split.android.client.dtos.Split;
+import io.split.android.engine.experiments.SplitFetcher;
 
 /**
  * Implementation of split validation interface
  */
 public class SplitValidatorImpl implements SplitValidator {
+
+    SplitFetcher mSplitFetcher;
+
+    public SplitValidatorImpl(SplitFetcher splitFetcher) {
+        mSplitFetcher = splitFetcher;
+    }
 
     @Override
     public ValidationErrorInfo validateName(String name) {
@@ -30,4 +33,9 @@ public class SplitValidatorImpl implements SplitValidator {
 
         return null;
     }
+
+    public String splitNotFoundMessage(String splitName) {
+        return "split: you passed '" + splitName + "' that does not exist in this environment, please double check what Splits exist in the web console.";
+    }
+
 }

@@ -6,4 +6,5 @@ public class TreatmentLabels {
     public static final String DEFINITION_NOT_FOUND = "definition not found";
     public static final String EXCEPTION = "exception";
     public static final String KILLED = "killed";
+    public static final String NOT_READY = "not ready";
 }

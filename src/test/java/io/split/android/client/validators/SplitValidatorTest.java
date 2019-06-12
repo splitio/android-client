@@ -8,16 +8,33 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import io.split.android.client.dtos.Split;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-public class SplitNameValidatorTest {
+import io.split.android.client.cache.ISplitCache;
+import io.split.android.client.dtos.Split;
+import io.split.android.engine.experiments.SplitFetcher;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
+import io.split.android.fake.SplitCacheStub;
+import io.split.android.fake.SplitFetcherStub;
+import io.split.android.helpers.FileHelper;
+import io.split.android.helpers.SplitHelper;
+
+public class SplitValidatorTest {
 
     private SplitValidator validator;
     private final  String  tag = "SplitNameValidatorTests";
 
     @Before
     public void setUp() {
-        validator = new SplitValidatorImpl();
+        FileHelper fileHelper = new FileHelper();
+        List<String> mySegments = Arrays.asList("s1", "s2", "test_copy");
+        RefreshableMySegmentsFetcherProvider mySegmentsProvider = new RefreshableMySegmentsFetcherProviderStub(mySegments);
+        List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
+        SplitFetcher splitFetcher = new SplitFetcherStub(splits, mySegmentsProvider);
+        validator = new SplitValidatorImpl(splitFetcher);
     }
 
     @Test
@@ -72,5 +89,11 @@ public class SplitNameValidatorTest {
         Assert.assertNotNull(errorInfo);
         Assert.assertFalse(errorInfo.isError());
         Assert.assertEquals("split name 'splitName ' has extra whitespace, trimming", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED));
+    }
+
+    private Split createSplit(String name) {
+        Split split = new Split();
+        split.name = name;
+        return split;
     }
 }
