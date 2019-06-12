@@ -54,7 +54,7 @@ public class TreatmentManagerTest {
         String splitName = "FACUNDO_TEST";
 
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false, true);
 
         Assert.assertNotNull(splitResult);
         Assert.assertEquals("off", splitResult.treatment());
@@ -67,7 +67,7 @@ public class TreatmentManagerTest {
         String splitName = "Test";
 
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false, true);
 
         Assert.assertNotNull(splitResult);
         Assert.assertEquals("off", splitResult.treatment());
@@ -80,7 +80,7 @@ public class TreatmentManagerTest {
         List<String> splitList = Arrays.asList("FACUNDO_TEST", "testo2222", "Test");
 
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
-        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, false, false);
+        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, false, true);
 
         SplitResult r1 = splitResultList.get("FACUNDO_TEST");
         SplitResult r2 = splitResultList.get("testo2222");
@@ -228,10 +228,17 @@ public class TreatmentManagerTest {
     }
 
     private TreatmentManager createTreatmentManager(String matchingKey, String bucketingKey) {
+
+        FileHelper fileHelper = new FileHelper();
+        List<String> mySegments = Arrays.asList("s1", "s2", "test_copy");
+        RefreshableMySegmentsFetcherProvider mySegmentsProvider = new RefreshableMySegmentsFetcherProviderStub(mySegments);
+        List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
+        SplitFetcher splitFetcher = new SplitFetcherStub(splits, mySegmentsProvider);
+
         SplitClientConfig config = SplitClientConfig.builder().build();
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
-                new KeyValidatorImpl(), new SplitValidatorImpl(), new MetricsMock(),
+                new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), new MetricsMock(),
                 new ImpressionListenerMock(), config);
     }
 

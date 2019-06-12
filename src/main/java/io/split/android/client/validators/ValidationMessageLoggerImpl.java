@@ -15,20 +15,38 @@ public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
     @Override
     public void log(ValidationErrorInfo errorInfo, String tag) {
         if(errorInfo.isError() && errorInfo.getErrorMessage() != null) {
-            e(tag, errorInfo.getErrorMessage());
+            e(errorInfo, tag);
         } else {
-            ArrayList<String> warnings = new ArrayList<String>(errorInfo.getWarnings().values());
-            for(String warning : warnings) {
-                w(tag, warning);
-            }
+            w(errorInfo, tag);
         }
     }
 
-    private void e(String tag, String message) {
+    @Override
+    public void e(ValidationErrorInfo errorInfo, String tag) {
+        e(tag, errorInfo.getErrorMessage());
+    }
+
+    @Override
+    public void w(ValidationErrorInfo errorInfo, String tag) {
+        ArrayList<String> warnings = (ArrayList<String>) errorInfo.getWarnings().values();
+        for(String warning : warnings) {
+            w(tag, warning);
+        }
+    }
+
+    public void e(String message, String tag) {
+        logError(message, tag);
+    }
+
+    public void w(String message, String tag) {
+        logWarning(message, tag);
+    }
+
+    private void logError(String message, String tag) {
         Logger.e(sanitizeTag(tag) + ": " + message);
     }
 
-    private void w(String tag, String message) {
+    private void logWarning(String message, String tag) {
         Logger.w(sanitizeTag(tag) + ": " + message);
     }
 
