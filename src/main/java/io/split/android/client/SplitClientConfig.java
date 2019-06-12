@@ -45,6 +45,7 @@ public class SplitClientConfig {
     private final long _eventFlushInterval;
     private final String _trafficType;
     private final int _eventsMaxSentAttemps = 3;
+    private final int _maxQueueSizeInBytes = 5242880; // 5mb
 
     // Proxy configs
     private final HttpHost _proxy;
@@ -270,6 +271,15 @@ public class SplitClientConfig {
 
     int eventsMaxSentAttempts() {
         return _eventsMaxSentAttemps;
+    }
+
+    /**
+     * Maximum events queue size in bytes
+     *
+     * @return Maximum events queue size in bytes.
+     */
+    int maxQueueSizeInBytes() {
+        return _maxQueueSizeInBytes;
     }
 
 
