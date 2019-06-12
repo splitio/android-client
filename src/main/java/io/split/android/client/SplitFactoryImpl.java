@@ -213,6 +213,7 @@ public class SplitFactoryImpl implements SplitFactory {
         trackConfig.setMaxQueueSize(config.eventsQueueSize());
         trackConfig.setWaitBeforeShutdown(config.waitBeforeShutdown());
         trackConfig.setMaxSentAttempts(config.eventsMaxSentAttempts());
+        trackConfig.setMaxQueueSizeInBytes(config.maxQueueSizeInBytes());
         IStorage eventsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
         _trackClient = TrackClientImpl.create(trackConfig, httpclient, eventsRootTarget, trackStorageManager, splitCache);

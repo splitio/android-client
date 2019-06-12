@@ -15,6 +15,20 @@ public interface ValidationMessageLogger {
     void log(ValidationErrorInfo errorInfo, String tag);
 
     /**
+     * Logs info related a validation fail
+     * @param errorInfo: Info about a failed validation result
+     * @param tag: Tag for a log line
+     */
+    void e(ValidationErrorInfo errorInfo, String tag);
+
+    /**
+     * Logs info related a validation warning
+     * @param errorInfo: Info about a validation warning
+     * @param tag: Tag for a log line
+     */
+    void w(ValidationErrorInfo errorInfo, String tag);
+
+    /**
      * Logs info related a validation warning
      * @param message: Warning message to log
      * @param tag: Tag for a log line
@@ -22,7 +36,7 @@ public interface ValidationMessageLogger {
     void w(String message, String tag);
 
     /**
-     * Logs info related a validation warning
+     * Logs info related a validation error
      * @param message: Warning message to log
      * @param tag: Tag for a log line
      */
