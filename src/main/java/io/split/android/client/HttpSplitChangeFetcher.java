@@ -4,6 +4,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 
 import java.net.URI;
@@ -87,7 +88,7 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
             }
 
 
-            String json = EntityUtils.toString(response.getEntity());
+            String json = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
             Logger.d("Received json: %s", json);
 
             SplitChange splitChange = Json.fromJson(json, SplitChange.class);
