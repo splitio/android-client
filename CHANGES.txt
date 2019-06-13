@@ -1,4 +1,4 @@
-2.4.0: (Jun 15, 2019)
+2.3.1: (Jun 15, 2019)
 - Adding missing UTF-8 support to some json parsing
 2.3.0: (May 24, 2019)
 - Adding track event properties
