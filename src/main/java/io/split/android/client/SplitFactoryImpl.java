@@ -271,7 +271,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
 
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
-                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient);
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient, splitCache);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);

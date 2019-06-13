@@ -68,7 +68,7 @@ public class TrackClientImpl implements TrackClient {
 
     private final TrackStorageManager _storageManager;
     private final String validationTag = "track";
-    private final EventValidator _eventValidator;
+
     private final ValidationMessageLogger _validationLogger;
 
     // Estimated event size without properties
@@ -105,8 +105,6 @@ public class TrackClientImpl implements TrackClient {
         _httpclient = httpclient;
 
         _eventsTarget = new URIBuilder(eventsRootTarget).setPath("/api/events/bulk").build();
-
-        _eventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
 
         _eventQueue = eventQueue;
         _config = config;
@@ -156,17 +154,6 @@ public class TrackClientImpl implements TrackClient {
     @Override
     public boolean track(Event event) {
         try {
-
-          if (event != CENTINEL) {
-            ValidationErrorInfo errorInfo = _eventValidator.validate(event);
-            if (errorInfo != null) {
-                _validationLogger.log(errorInfo, validationTag);
-                if(errorInfo.isError()) {
-                    return false;
-                }
-                event.trafficTypeName = event.trafficTypeName.toLowerCase();
-            }
-          }
 
             int sizeInBytes = EVENT_SIZE_WITHOUT_PROPS;
             if(event.properties != null) {
