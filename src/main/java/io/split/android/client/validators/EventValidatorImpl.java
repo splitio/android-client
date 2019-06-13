@@ -3,7 +3,6 @@ package io.split.android.client.validators;
 import com.google.common.base.Strings;
 
 import io.split.android.client.cache.ISplitCache;
-import io.split.android.client.cache.ITrafficTypesCache;
 import io.split.android.client.dtos.Event;
 
 /**

@@ -36,8 +36,6 @@ import javax.net.ssl.SSLContext;
 import io.split.android.client.api.Key;
 import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.ISplitChangeCache;
-import io.split.android.client.cache.ITrafficTypesCache;
-import io.split.android.client.cache.InMemoryTrafficTypesCache;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.events.SplitEventsManager;

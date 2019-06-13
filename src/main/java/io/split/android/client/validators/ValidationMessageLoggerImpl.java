@@ -10,8 +10,6 @@ import io.split.android.client.utils.Logger;
  */
 public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
 
-    private String mTag;
-
     @Override
     public void log(ValidationErrorInfo errorInfo, String tag) {
         if(errorInfo.isError() && errorInfo.getErrorMessage() != null) {

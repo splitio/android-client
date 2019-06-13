@@ -8,11 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import io.split.android.client.cache.ISplitCache;
-import io.split.android.client.cache.InMemoryTrafficTypesCache;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;

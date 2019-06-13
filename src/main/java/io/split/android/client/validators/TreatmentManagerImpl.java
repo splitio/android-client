@@ -11,6 +11,7 @@ import io.split.android.client.Evaluator;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitResult;
 import io.split.android.client.TreatmentLabels;
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.Impression;
@@ -40,13 +41,13 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final String mBucketingKey;
     private final SplitClientConfig mSplitClientConfig;
     private final ValidationMessageLogger mValidationLogger;
-    private final SplitEventsManager mEventsManager;
+    private final ISplitEventsManager mEventsManager;
 
     public TreatmentManagerImpl(String matchingKey, String bucketingKey,
                                 Evaluator evaluator, KeyValidator keyValidator,
                                 SplitValidator splitValidator, Metrics metrics,
                                 ImpressionListener impressionListener, SplitClientConfig splitClientConfig,
-                                SplitEventsManager eventsManager) {
+                                ISplitEventsManager eventsManager) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -255,8 +256,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     mValidationLogger.e(errorInfo, validationTag);
                     continue;
                 }
+                mValidationLogger.w(errorInfo, validationTag);
             }
-            mValidationLogger.w(errorInfo, validationTag);
             results.put(split.trim(), Treatments.CONTROL);
         }
         return results;

@@ -6,7 +6,6 @@ import android.support.annotation.VisibleForTesting;
 import com.google.common.collect.Lists;
 
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.net.URI;
@@ -26,13 +25,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.cache.ISplitCache;
-import io.split.android.client.cache.ITrafficTypesCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.GenericClientUtil;
-import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.EventValidator;
