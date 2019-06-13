@@ -165,6 +165,10 @@ public final class SplitClientImpl implements SplitClient {
             return false;
         }
 
+        if(!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)) {
+            return false;
+        }
+
         Event event = new Event();
         event.eventTypeId = eventType;
         event.trafficTypeName = trafficType;
