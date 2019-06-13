@@ -50,7 +50,7 @@ public class SplitCacheStub implements ISplitCache {
     }
 
     @Override
-    public boolean existsTrafficType(String trafficType) {
+    public boolean trafficTypeExists(String trafficType) {
         return true;
     }
 }

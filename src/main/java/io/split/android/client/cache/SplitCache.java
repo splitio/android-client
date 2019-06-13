@@ -114,7 +114,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     @Override
-    public boolean existsTrafficType(String trafficType) {
+    public boolean trafficTypeExists(String trafficType) {
         if(trafficType == null) {
             return false;
         }

@@ -58,7 +58,7 @@ public class EventValidatorImpl implements EventValidator {
             errorInfo = new ValidationErrorInfo(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS, "traffic_type_name should be all lowercase - converting string to lowercase", true);
         }
 
-        if (!mSplitCache.existsTrafficType(event.trafficTypeName)) {
+        if (!mSplitCache.trafficTypeExists(event.trafficTypeName)) {
             String message = "Traffic Type " + event.trafficTypeName + " does not have any corresponding Splits in this environment, "
                     + "make sure you’re tracking your events to a valid traffic type defined in the Split console";
             if(errorInfo == null) {
