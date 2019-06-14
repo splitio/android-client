@@ -103,7 +103,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     @Override
-    public List<String> getSplitNames() {
+    synchronized public List<String> getSplitNames() {
         return new ArrayList<String>(mInMemorySplits.keySet()) ;
     }
 
