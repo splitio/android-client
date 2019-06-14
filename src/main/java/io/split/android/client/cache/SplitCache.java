@@ -4,6 +4,7 @@ import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
+import android.support.annotation.VisibleForTesting;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
@@ -175,5 +176,10 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
         for(String fileId : fileIds) {
             mInMemorySplits.put(getSplitName(fileId), null);
         }
+    }
+
+    @VisibleForTesting
+    public void fireWriteToDisk() {
+        writeSplitsToDisk();
     }
 }

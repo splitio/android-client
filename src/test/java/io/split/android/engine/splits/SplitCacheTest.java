@@ -5,11 +5,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.cache.IMySegmentsCache;
 import io.split.android.client.cache.ISplitCache;
@@ -115,6 +118,73 @@ public class SplitCacheTest {
         Assert.assertTrue(names.contains("split-2"));
         Assert.assertTrue(names.contains("split-3"));
         Assert.assertFalse(names.contains("other"));
+
+    }
+
+    @Test
+    public void testWriteToDiskConcurrency() throws Exception {
+        final String ROOT_FOLDER = "./build";
+        final String FOLDER = "thefolder";
+        final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
+        final String FILE_PREFIX = "SPLITIO.split.";
+        final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\"}";
+
+        File rootFolder = new File(ROOT_FOLDER);
+        //IStorage storage = new FileStorage(rootFolder, FOLDER);
+        IStorage storage = new MemoryStorage();
+        CountDownLatch latch = new CountDownLatch(2);
+
+        for(int i = 0; i < 10000; i++) {
+            String splitName = "split-" + i;
+            try {
+                storage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName));
+            } catch (IOException e) {
+            }
+        }
+
+        try {
+            storage.write(CHANGE_NUMBER_FILE, String.valueOf(INITIAL_CHANGE_NUMBER));
+        } catch (IOException e) {
+        }
+        SplitCache cache = new SplitCache(storage);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("TEST SPLIT CACHE: write start ");
+                cache.fireWriteToDisk();
+                latch.countDown();
+            }
+        }).start();
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Split s1 = new Split();
+                s1.name = "add_split1";
+                cache.addSplit(s1);
+                System.out.println("TEST SPLIT CACHE: Adding " + s1.name);
+
+                Split s2 = new Split();
+                s2.name = "add_split2";
+                cache.addSplit(s2);
+                System.out.println("TEST SPLIT CACHE: Adding " + s2.name);
+
+                Split s3 = new Split();
+                s3.name = "add_split3";
+                cache.addSplit(s3);
+                System.out.println("TEST SPLIT CACHE: Adding " + s3.name);
+
+                for(int i = 0; i < 990; i++) {
+                    String splitName = "split-" + i + "0";
+                    cache.removeSplit(splitName);
+                    System.out.println("TEST SPLIT CACHE: Removing " + splitName);
+                }
+                latch.countDown();
+            }
+        }).start();
+        latch.await(10, TimeUnit.SECONDS);
+        Assert.assertTrue(latch.getCount() == 0);
 
     }
 
