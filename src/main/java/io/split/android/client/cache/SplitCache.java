@@ -63,13 +63,13 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     @Override
-    public boolean addSplit(Split split) {
+    synchronized public boolean addSplit(Split split) {
         mInMemorySplits.put(split.name, split);
         return true;
     }
 
     @Override
-    public boolean removeSplit(String splitName) {
+    synchronized public boolean removeSplit(String splitName) {
         mInMemorySplits.remove(splitName);
         mRemovedSplits.add(splitName);
         return true;
@@ -93,7 +93,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     @Override
-    public Split getSplit(String splitName) {
+    synchronized public Split getSplit(String splitName) {
         Split split =  mInMemorySplits.get(splitName);
         if(split == null && !mRemovedSplits.contains(splitName)) {
             split = getSplitFromDisk(splitName);
@@ -141,7 +141,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     // Lifecyle observer
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    private void writeSplitsToDisk() {
+    synchronized private void writeSplitsToDisk() {
         // Save change number
         try {
             mFileStorageManager.write(getChangeNumberFileName(), String.valueOf(mChangeNumber));
