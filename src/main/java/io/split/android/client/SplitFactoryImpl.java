@@ -34,8 +34,10 @@ import java.util.concurrent.TimeoutException;
 import javax.net.ssl.SSLContext;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.cache.ITrafficTypesCache;
-import io.split.android.client.cache.TrafficTypesCache;
+import io.split.android.client.cache.ISplitCache;
+import io.split.android.client.cache.ISplitChangeCache;
+import io.split.android.client.cache.SplitCache;
+import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
@@ -174,10 +176,11 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
         // Feature Changes
-        ITrafficTypesCache trafficTypesCache = new TrafficTypesCache();
-        IStorage splitChangeStorage = new FileStorage(context.getCacheDir(), dataFolderName);
-        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage, trafficTypesCache);
+        IStorage fileStorage = new FileStorage(context.getCacheDir(), dataFolderName);
+        ISplitCache splitCache = new SplitCache(fileStorage);
+        ISplitChangeCache splitChangeCache = new SplitChangeCache(splitCache);
 
+        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeCache);
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), _eventsManager);
 
         // Impressions
@@ -211,7 +214,7 @@ public class SplitFactoryImpl implements SplitFactory {
         trackConfig.setMaxQueueSizeInBytes(config.maxQueueSizeInBytes());
         IStorage eventsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
-        _trackClient = TrackClientImpl.create(trackConfig, httpclient, eventsRootTarget, trackStorageManager, trafficTypesCache);
+        _trackClient = TrackClientImpl.create(trackConfig, httpclient, eventsRootTarget, trackStorageManager, splitCache);
 
 
         destroyer = new Runnable() {
@@ -268,7 +271,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
 
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
-                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient);
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient, splitCache);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);

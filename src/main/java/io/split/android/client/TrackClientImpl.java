@@ -6,7 +6,6 @@ import android.support.annotation.VisibleForTesting;
 import com.google.common.collect.Lists;
 
 import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.net.URI;
@@ -25,13 +24,12 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import io.split.android.client.cache.ITrafficTypesCache;
+import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.GenericClientUtil;
-import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.EventValidator;
@@ -70,7 +68,7 @@ public class TrackClientImpl implements TrackClient {
 
     private final TrackStorageManager _storageManager;
     private final String validationTag = "track";
-    private final EventValidator _eventValidator;
+
     private final ValidationMessageLogger _validationLogger;
 
     // Estimated event size without properties
@@ -91,25 +89,22 @@ public class TrackClientImpl implements TrackClient {
         };
     }
 
-    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, trafficTypesCache, null);
+    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, splitCache, null);
     }
 
     @VisibleForTesting
-    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache, ExecutorService senderExecutor) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, trafficTypesCache, senderExecutor);
+    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache, ExecutorService senderExecutor) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, splitCache, senderExecutor);
     }
 
-    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ITrafficTypesCache trafficTypesCache, ExecutorService senderExecutor) throws URISyntaxException {
-
+    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache, ExecutorService senderExecutor) throws URISyntaxException {
 
         _storageManager = storageManager;
 
         _httpclient = httpclient;
 
         _eventsTarget = new URIBuilder(eventsRootTarget).setPath("/api/events/bulk").build();
-
-        _eventValidator = new EventValidatorImpl(new KeyValidatorImpl(), trafficTypesCache);
 
         _eventQueue = eventQueue;
         _config = config;
@@ -159,17 +154,6 @@ public class TrackClientImpl implements TrackClient {
     @Override
     public boolean track(Event event) {
         try {
-
-          if (event != CENTINEL) {
-            ValidationErrorInfo errorInfo = _eventValidator.validate(event);
-            if (errorInfo != null) {
-                _validationLogger.log(errorInfo, validationTag);
-                if(errorInfo.isError()) {
-                    return false;
-                }
-                event.trafficTypeName = event.trafficTypeName.toLowerCase();
-            }
-          }
 
             int sizeInBytes = EVENT_SIZE_WITHOUT_PROPS;
             if(event.properties != null) {

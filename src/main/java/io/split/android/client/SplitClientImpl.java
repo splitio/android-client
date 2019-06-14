@@ -1,16 +1,23 @@
 package io.split.android.client;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.cache.ISplitCache;
+import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.validators.EventValidator;
+import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
+import io.split.android.client.validators.ValidationErrorInfo;
+import io.split.android.client.validators.ValidationMessageLogger;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.metrics.Metrics;
 
@@ -38,11 +45,22 @@ public final class SplitClientImpl implements SplitClient {
     private final SplitEventsManager mEventsManager;
     private final TrackClient mTrackClient;
     private final TreatmentManager mTreatmentManager;
+    private final EventValidator mEventValidator;
+    private final ValidationMessageLogger mValidationLogger;
+
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
     private boolean mIsClientDestroyed = false;
 
-    public SplitClientImpl(SplitFactory container, Key key, SplitFetcher splitFetcher, ImpressionListener impressionListener, Metrics metrics, SplitClientConfig config, SplitEventsManager eventsManager, TrackClient trackClient) {
+    public SplitClientImpl(SplitFactory container,
+                           Key key,
+                           SplitFetcher splitFetcher,
+                           ImpressionListener impressionListener,
+                           Metrics metrics,
+                           SplitClientConfig config,
+                           SplitEventsManager eventsManager,
+                           TrackClient trackClient,
+                           ISplitCache splitCache) {
         mSplitFactory = container;
         mSplitFetcher = splitFetcher;
         mImpressionListener = impressionListener;
@@ -52,6 +70,8 @@ public final class SplitClientImpl implements SplitClient {
         mBucketingKey = key.bucketingKey();
         mEventsManager = eventsManager;
         mTrackClient = trackClient;
+        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
+        mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = new TreatmentManagerImpl(
                 mMatchingKey, mBucketingKey, new EvaluatorImpl(mSplitFetcher),
                 new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), mMetrics,
@@ -159,10 +179,15 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     private boolean track(String key, String trafficType, String eventType, double value, Map<String, Object> properties) {
-
+        final String validationTag = "track";
+        final boolean isSdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
         if(mIsClientDestroyed) {
-            Logger.e("Client has already been destroyed - no calls possible");
+            mValidationLogger.e("Client has already been destroyed - no calls possible", validationTag);
             return false;
+        }
+
+        if(!isSdkReady) {
+            mValidationLogger.w("the SDK is not ready, results may be incorrect. Make sure to wait for SDK readiness before using this method", validationTag);
         }
 
         Event event = new Event();
@@ -173,6 +198,16 @@ public final class SplitClientImpl implements SplitClient {
         event.timestamp = System.currentTimeMillis();
         event.properties = properties;
 
+        ValidationErrorInfo errorInfo = mEventValidator.validate(event, isSdkReady);
+        if (errorInfo != null) {
+
+            if(errorInfo.isError()) {
+                mValidationLogger.e(errorInfo, validationTag);
+                return false;
+            }
+            mValidationLogger.w(errorInfo, validationTag);
+            event.trafficTypeName = event.trafficTypeName.toLowerCase();
+        }
 
         return mTrackClient.track(event);
     }

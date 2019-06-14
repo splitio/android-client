@@ -8,6 +8,8 @@ import android.arch.lifecycle.ProcessLifecycleOwner;
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
@@ -36,14 +39,16 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     private long mChangeNumber = -1;
     private Set<String> mRemovedSplits = null;
     private Map<String, Split> mInMemorySplits = null;
+    private Map<String, Integer> mTrafficTypes = null;
 
     public SplitCache(IStorage storage) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
         mInMemorySplits = Collections.synchronizedMap(new HashMap<String, Split>());
         mRemovedSplits = Collections.synchronizedSet(new HashSet<String>());
+        mTrafficTypes = Collections.synchronizedMap(new HashMap<String, Integer>());
         loadChangeNumberFromDisk();
-        loadSplitsNamesFromDisk();
+        loadSplitsFromDisk();
     }
 
     private String getSplitId(String splitName) {
@@ -64,14 +69,15 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     @Override
     public boolean addSplit(Split split) {
-        mInMemorySplits.put(split.name, split);
-        return true;
-    }
-
-    @Override
-    public boolean removeSplit(String splitName) {
-        mInMemorySplits.remove(splitName);
-        mRemovedSplits.add(splitName);
+        if(split != null && split.status != null && split.status == Status.ACTIVE) {
+            mInMemorySplits.put(split.name, split);
+            mRemovedSplits.remove(split.name);
+            addTrafficType(split.trafficTypeName);
+        } else {
+            mInMemorySplits.remove(split.name);
+            mRemovedSplits.add(split.name);
+            removeTrafficType(split.trafficTypeName);
+        }
         return true;
     }
 
@@ -105,6 +111,45 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     @Override
     public List<String> getSplitNames() {
         return new ArrayList<String>(mInMemorySplits.keySet()) ;
+    }
+
+    @Override
+    public boolean trafficTypeExists(String trafficType) {
+        if(trafficType == null) {
+            return false;
+        }
+        return (mTrafficTypes.get(trafficType.toLowerCase()) != null);
+    }
+
+    private void addTrafficType(@NotNull String name) {
+        if(name == null) {
+            return;
+        }
+
+        int count = countForTrafficType(name);
+        mTrafficTypes.put(name.toLowerCase(), Integer.valueOf(count++));
+    }
+
+    private void removeTrafficType(@NotNull String name) {
+        if(name == null) {
+            return;
+        }
+
+        int count = countForTrafficType(name);
+        if(count > 0) {
+            mTrafficTypes.put(name, Integer.valueOf(count--));
+        } else {
+            mTrafficTypes.remove(name);
+        }
+    }
+
+    private int countForTrafficType(@NotNull String name) {
+        int count = 0;
+        Integer countValue = mTrafficTypes.get(name);
+        if(countValue != null) {
+            count = countValue.intValue();
+        }
+        return count;
     }
 
     private Split getSplitFromDisk(String splitName){
@@ -170,10 +215,14 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
         }
     }
 
-    void loadSplitsNamesFromDisk() {
+    void loadSplitsFromDisk() {
         List<String> fileIds = mFileStorageManager.getAllIds(SPLIT_FILE_PREFIX);
         for(String fileId : fileIds) {
-            mInMemorySplits.put(getSplitName(fileId), null);
+            Split split = getSplitFromDisk(fileId);
+            if(split != null && split.name != null) {
+                mInMemorySplits.put(split.name, split);
+                addTrafficType(split.trafficTypeName);
+            }
         }
     }
 }
