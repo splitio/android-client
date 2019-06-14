@@ -8,11 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import io.split.android.client.cache.ISplitCache;
-import io.split.android.client.cache.InMemoryTrafficTypesCache;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;
@@ -40,7 +37,7 @@ public class EventValidatorTest {
         event.trafficTypeName = "traffic1";
         event.key = "pepe";
         event.value = 1.0;
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNull(errorInfo);
     }
@@ -51,7 +48,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = "pepe";
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNull(errorInfo);
     }
@@ -62,7 +59,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = null;
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -75,7 +72,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = "";
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -88,7 +85,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = "   ";
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -101,7 +98,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
         event.key = Strings.repeat("p", 300);
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -114,7 +111,7 @@ public class EventValidatorTest {
         event.eventTypeId = null;
         event.trafficTypeName = "traffic1";
         event.key = "key1";
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -127,7 +124,7 @@ public class EventValidatorTest {
         event.eventTypeId = "";
         event.trafficTypeName = "traffic1";
         event.key = "key1";
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -140,7 +137,7 @@ public class EventValidatorTest {
         event.eventTypeId = "   ";
         event.trafficTypeName = "traffic1";
         event.key = "key1";
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -163,11 +160,11 @@ public class EventValidatorTest {
         event4.eventTypeId = nameHelper.getInvalidUndercoreStart();
         event5.eventTypeId = nameHelper.getInvalidHypenStart();
 
-        ValidationErrorInfo errorInfo1 = validator.validate(event1);
-        ValidationErrorInfo errorInfo2 = validator.validate(event2);
-        ValidationErrorInfo errorInfo3 = validator.validate(event3);
-        ValidationErrorInfo errorInfo4 = validator.validate(event4);
-        ValidationErrorInfo errorInfo5 = validator.validate(event5);
+        ValidationErrorInfo errorInfo1 = validator.validate(event1, true);
+        ValidationErrorInfo errorInfo2 = validator.validate(event2, true);
+        ValidationErrorInfo errorInfo3 = validator.validate(event3, true);
+        ValidationErrorInfo errorInfo4 = validator.validate(event4, true);
+        ValidationErrorInfo errorInfo5 = validator.validate(event5, true);
 
         Assert.assertNull(errorInfo1);
 
@@ -192,7 +189,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = null;
         event.key = "key1";
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -206,7 +203,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "";
         event.key = "key1";
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -220,7 +217,7 @@ public class EventValidatorTest {
         event.eventTypeId = "type1";
         event.trafficTypeName = "   ";
         event.key = "key1";
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -242,10 +239,10 @@ public class EventValidatorTest {
         event2.trafficTypeName = "cUSTom";
         event3.trafficTypeName = "custoM";
 
-        ValidationErrorInfo errorInfo0 = validator.validate(event0);
-        ValidationErrorInfo errorInfo1 = validator.validate(event1);
-        ValidationErrorInfo errorInfo2 = validator.validate(event2);
-        ValidationErrorInfo errorInfo3 = validator.validate(event3);
+        ValidationErrorInfo errorInfo0 = validator.validate(event0, true);
+        ValidationErrorInfo errorInfo1 = validator.validate(event1, true);
+        ValidationErrorInfo errorInfo2 = validator.validate(event2, true);
+        ValidationErrorInfo errorInfo3 = validator.validate(event3, true);
 
 
         Assert.assertNull(errorInfo0);
@@ -270,7 +267,7 @@ public class EventValidatorTest {
         event.trafficTypeName = "nocached";
         event.key = "key1";
 
-        ValidationErrorInfo errorInfo = validator.validate(event);
+        ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertFalse(errorInfo.isError());

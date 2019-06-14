@@ -70,9 +70,10 @@ public class SplitManagerImpl implements SplitManager {
 
         ParsedSplit parsedSplit = _splitFetcher.fetch(splitName);
         if(parsedSplit == null) {
-            _validationMessageLogger.e(_splitValidator.splitNotFoundMessage(splitName), validationTag);
+            _validationMessageLogger.w(_splitValidator.splitNotFoundMessage(splitName), validationTag);
+            return null;
         }
-        return parsedSplit == null ? null : toSplitView(parsedSplit);
+        return toSplitView(parsedSplit);
     }
 
     @Override

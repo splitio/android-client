@@ -36,8 +36,6 @@ import javax.net.ssl.SSLContext;
 import io.split.android.client.api.Key;
 import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.ISplitChangeCache;
-import io.split.android.client.cache.ITrafficTypesCache;
-import io.split.android.client.cache.InMemoryTrafficTypesCache;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.events.SplitEventsManager;
@@ -228,6 +226,7 @@ public class SplitFactoryImpl implements SplitFactory {
         trackConfig.setMaxQueueSize(config.eventsQueueSize());
         trackConfig.setWaitBeforeShutdown(config.waitBeforeShutdown());
         trackConfig.setMaxSentAttempts(config.eventsMaxSentAttempts());
+        trackConfig.setMaxQueueSizeInBytes(config.maxQueueSizeInBytes());
         IStorage eventsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
         _trackClient = TrackClientImpl.create(trackConfig, httpclient, eventsRootTarget, trackStorageManager, splitCache);
@@ -288,7 +287,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
 
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
-                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient);
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient, splitCache);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);

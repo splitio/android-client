@@ -10,17 +10,25 @@ import io.split.android.client.utils.Logger;
  */
 public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
 
-    private String mTag;
-
     @Override
     public void log(ValidationErrorInfo errorInfo, String tag) {
         if(errorInfo.isError() && errorInfo.getErrorMessage() != null) {
-            e(tag, errorInfo.getErrorMessage());
+            e(errorInfo, tag);
         } else {
-            ArrayList<String> warnings = new ArrayList<>(errorInfo.getWarnings().values());
-            for(String warning : warnings) {
-                w(tag, warning);
-            }
+            w(errorInfo, tag);
+        }
+    }
+
+    @Override
+    public void e(ValidationErrorInfo errorInfo, String tag) {
+        e(tag, errorInfo.getErrorMessage());
+    }
+
+    @Override
+    public void w(ValidationErrorInfo errorInfo, String tag) {
+        ArrayList<String> warnings = (ArrayList<String>) errorInfo.getWarnings().values();
+        for(String warning : warnings) {
+            w(tag, warning);
         }
     }
 

@@ -46,5 +46,5 @@ public interface ISplitCache {
      * Indicates if a traffic type exists for the environment
      * @return true if it exists, false otherwise
      */
-    boolean existsTrafficType(String trafficType);
+    boolean trafficTypeExists(String trafficType);
 }
