@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '2.3.0'
+    splitVersion = '2.3.1-rc2'
 }
 
 allprojects {
@@ -14,7 +14,6 @@ allprojects {
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '27.0.3'
     useLibrary 'org.apache.http.legacy'
     targetCompatibility = '1.7'
     sourceCompatibility = '1.7'
