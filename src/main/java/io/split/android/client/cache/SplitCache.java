@@ -4,6 +4,7 @@ import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
+import android.support.annotation.VisibleForTesting;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
@@ -63,13 +64,13 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     @Override
-    public boolean addSplit(Split split) {
+    synchronized public boolean addSplit(Split split) {
         mInMemorySplits.put(split.name, split);
         return true;
     }
 
     @Override
-    public boolean removeSplit(String splitName) {
+    synchronized public boolean removeSplit(String splitName) {
         mInMemorySplits.remove(splitName);
         mRemovedSplits.add(splitName);
         return true;
@@ -93,7 +94,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     @Override
-    public Split getSplit(String splitName) {
+    synchronized public Split getSplit(String splitName) {
         Split split =  mInMemorySplits.get(splitName);
         if(split == null && !mRemovedSplits.contains(splitName)) {
             split = getSplitFromDisk(splitName);
@@ -103,7 +104,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     @Override
-    public List<String> getSplitNames() {
+    synchronized public List<String> getSplitNames() {
         return new ArrayList<String>(mInMemorySplits.keySet()) ;
     }
 
@@ -141,7 +142,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     // Lifecyle observer
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    private void writeSplitsToDisk() {
+    synchronized private void writeSplitsToDisk() {
         // Save change number
         try {
             mFileStorageManager.write(getChangeNumberFileName(), String.valueOf(mChangeNumber));
@@ -175,5 +176,10 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
         for(String fileId : fileIds) {
             mInMemorySplits.put(getSplitName(fileId), null);
         }
+    }
+
+    @VisibleForTesting
+    public void fireWriteToDisk() {
+        writeSplitsToDisk();
     }
 }
