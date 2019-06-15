@@ -6,6 +6,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 
 import java.lang.reflect.Type;
@@ -86,7 +87,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
                 throw new IllegalStateException("Could not retrieve mySegments for " + matchingKey + "; http return code " + statusCode);
             }
 
-            String json = EntityUtils.toString(response.getEntity());
+            String json = EntityUtils.toString(response.getEntity(), HTTP.UTF_8);
 
             Logger.d("Received json: %s", json);
             Type mapType = new TypeToken<Map<String, List<MySegment>>>() {
