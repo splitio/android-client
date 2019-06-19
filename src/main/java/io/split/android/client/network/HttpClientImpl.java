@@ -1,25 +1,30 @@
 package io.split.android.client.network;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HttpClientImpl implements HttpClient {
 
+    Map<String, String> mHeaders;
 
+    public HttpClientImpl() {
+        mHeaders = new HashMap<>();
+    }
 
+    @Override
+    public HttpRequest request(URI uri, String requestMethod) {
+        return request(uri, requestMethod, null);
+    }
 
     @Override
     public HttpRequest request(URI uri, String requestMethod, String body) {
-
-
-
-        return null;
+        return new HttpRequestImpl(uri.toString(), requestMethod, body, mHeaders);
     }
 
-
+    public void setHeader(String name, String value) {
+        mHeaders.put(name, value);
+    }
 
 
 }

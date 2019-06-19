@@ -25,10 +25,13 @@ public class HttpRequestImpl implements HttpRequest {
 
     @Override
     public HttpResponse execute() throws IOException, ProtocolException {
-        return null;
+        if(mHttpMethod.equals(HttpClient.HTTP_GET)) {
+            return getRequest();
+        }
+        return postRequest();
     }
 
-    private HttpResponse sendGet() throws IOException, ProtocolException {
+    private HttpResponse getRequest() throws IOException, ProtocolException {
         HttpResponse response = null;
 
         URL obj = new URL(mUrl);
@@ -54,7 +57,7 @@ public class HttpRequestImpl implements HttpRequest {
 
     }
 
-    private HttpResponse sendPost() throws IOException, ProtocolException {
+    private HttpResponse postRequest() throws IOException, ProtocolException {
         HttpResponse response;
 
         URL obj = new URL(mUrl);

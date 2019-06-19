@@ -55,6 +55,7 @@ dependencies {
     implementation "android.arch.lifecycle:extensions:1.1.1"
     implementation "org.yaml:snakeyaml:1.24"
     implementation 'org.jetbrains:annotations:15.0'
+    implementation 'com.squareup.okhttp3:mockwebserver:3.14.2'
 
     // Test
     testImplementation 'junit:junit:4.12'
