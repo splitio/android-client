@@ -139,6 +139,12 @@ public class SplitClientImplTest {
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
+
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
             @Override
@@ -208,6 +214,11 @@ public class SplitClientImplTest {
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
