@@ -19,8 +19,8 @@ public class SplitChangeCache implements ISplitChangeCache {
 
     private ISplitCache mSplitCache;
 
-    public SplitChangeCache(IStorage storage) {
-        this.mSplitCache = new SplitCache(storage);
+    public SplitChangeCache(ISplitCache splitCache) {
+        this.mSplitCache = splitCache;
     }
 
     @Override

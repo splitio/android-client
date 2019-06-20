@@ -26,12 +26,6 @@ public class SplitCacheStub implements ISplitCache {
     }
 
     @Override
-    public boolean removeSplit(String splitName) {
-        mSplits.remove(splitName);
-        return false;
-    }
-
-    @Override
     public boolean setChangeNumber(long changeNumber) {
         return false;
     }
@@ -53,5 +47,10 @@ public class SplitCacheStub implements ISplitCache {
             names.add(entry.getKey());
         }
         return names;
+    }
+
+    @Override
+    public boolean trafficTypeExists(String trafficType) {
+        return true;
     }
 }

@@ -34,9 +34,13 @@ import java.util.concurrent.TimeoutException;
 import javax.net.ssl.SSLContext;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.cache.ITrafficTypesCache;
-import io.split.android.client.cache.TrafficTypesCache;
+import io.split.android.client.cache.ISplitCache;
+import io.split.android.client.cache.ISplitChangeCache;
+import io.split.android.client.cache.SplitCache;
+import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.factory.FactoryMonitor;
+import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
 import io.split.android.client.impressions.ImpressionsStorageManager;
@@ -75,12 +79,14 @@ public class SplitFactoryImpl implements SplitFactory {
     private final Runnable destroyer;
     private final Runnable flusher;
     private boolean isTerminated = false;
+    private final String _apiKey;
 
 
     private SplitEventsManager _eventsManager;
     private SDKReadinessGates gates;
 
     private TrackClient _trackClient;
+    FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
 
@@ -90,10 +96,21 @@ public class SplitFactoryImpl implements SplitFactory {
         ValidationMessageLogger validationLogger = new ValidationMessageLoggerImpl();
 
         ValidationErrorInfo errorInfo = apiKeyValidator.validate(apiToken);
+        String validationTag = "factory instantiation";
         if(errorInfo != null) {
-            validationLogger.log(errorInfo, "factory instantiation");
+            validationLogger.log(errorInfo, validationTag);
         }
 
+        int factoryCount = _factoryMonitor.count(apiToken);
+        if (factoryCount > 0) {
+            validationLogger.w( "You already have " + factoryCount + (factoryCount == 1 ? " factory" : " factories") + "with this API Key. We recommend keeping only " +
+                    "one instance of the factory at all times (Singleton pattern) and reusing it throughout your application.", validationTag);
+        } else if (_factoryMonitor.count() > 0) {
+            validationLogger.w("You already have an instance of the Split factory. Make sure you definitely want this additional instance. We recommend " +
+                            "keeping only one instance of the factory at all times (Singleton pattern) and reusing it throughout your application.", validationTag);
+        }
+        _factoryMonitor.add(apiToken);
+        _apiKey = apiToken;
         SSLContext sslContext = null;
         try {
             sslContext = SSLContexts.custom()
@@ -174,10 +191,11 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitParser splitParser = new SplitParser(segmentFetcher);
 
         // Feature Changes
-        ITrafficTypesCache trafficTypesCache = new TrafficTypesCache();
-        IStorage splitChangeStorage = new FileStorage(context.getCacheDir(), dataFolderName);
-        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeStorage, trafficTypesCache);
+        IStorage fileStorage = new FileStorage(context.getCacheDir(), dataFolderName);
+        ISplitCache splitCache = new SplitCache(fileStorage);
+        ISplitChangeCache splitChangeCache = new SplitChangeCache(splitCache);
 
+        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeCache);
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), _eventsManager);
 
         // Impressions
@@ -211,13 +229,14 @@ public class SplitFactoryImpl implements SplitFactory {
         trackConfig.setMaxQueueSizeInBytes(config.maxQueueSizeInBytes());
         IStorage eventsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
-        _trackClient = TrackClientImpl.create(trackConfig, httpclient, eventsRootTarget, trackStorageManager, trafficTypesCache);
+        _trackClient = TrackClientImpl.create(trackConfig, httpclient, eventsRootTarget, trackStorageManager, splitCache);
 
 
         destroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");
                 try {
+                    _factoryMonitor.remove(_apiKey);
                     _trackClient.close();
                     Logger.i("Successful shutdown of Track client");
                     segmentFetcher.close();
@@ -268,7 +287,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
 
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
-                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient);
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient, splitCache);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);

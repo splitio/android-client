@@ -16,6 +16,7 @@ import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.storage.MemoryStorage;
 import io.split.android.client.utils.Utils;
@@ -71,6 +72,7 @@ public class SplitCacheTest {
             String splitName = "split-test-" + i;
             Split split = new Split();
             split.name = splitName;
+            split.status = Status.ACTIVE;
             mCache.addSplit(split);
         }
 
@@ -80,18 +82,6 @@ public class SplitCacheTest {
             Assert.assertNotNull(splitTest);
             Assert.assertEquals(splitName, splitTest.name);
         }
-    }
-
-    @Test
-    public void deleteSplit() {
-        String split0 = "split-0";
-        String split3 = "split-3";
-        mCache.removeSplit(split0);
-        mCache.removeSplit(split3);
-
-        Assert.assertNull(mCache.getSplit(split0));
-        Assert.assertNull(mCache.getSplit(split3));
-        Assert.assertNotNull(mCache.getSplit("split-1"));
     }
 
     @Test
