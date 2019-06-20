@@ -35,6 +35,7 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
     private final SplitEventsManager _eventsManager;
 
     private boolean _firstLoad = true;
+    private boolean _shouldInitialize = true;
 
     private final Object _lock = new Object();
 
@@ -63,33 +64,13 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
         checkNotNull(_parser);
         checkNotNull(_splitChangeFetcher);
 
-        initializeFromCache();
     }
 
-    private void initializeFromCache(){
+    private void initializeFromCache() throws InterruptedException {
         SplitChange change = _splitChangeFetcher.fetch(-1, FetcherPolicy.CacheOnly);
-
-        Map<String, ParsedSplit> toAdd = Maps.newHashMap();
-
         if (change != null && change.splits != null && !change.splits.isEmpty()) {
-            for (Split split : change.splits) {
-                if (split != null && split.status != null && split.name != null) {
-                    if (Status.ACTIVE.equals(split.status)) {
-                        ParsedSplit parsedSplit = _parser.parse(split);
-                        if (parsedSplit == null) {
-                            Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
-                            continue;
-                        }
-                        toAdd.put(split.name, parsedSplit);
-                    }
-                }
-            }
+            parseChange(change, false);
         }
-
-        if (!toAdd.isEmpty()) {
-            _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
-        }
-        _concurrentMap.putAll(toAdd);
     }
 
     @Override
@@ -123,9 +104,16 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
     public void run() {
         long start = _changeNumber.get();
         try {
+            if(_shouldInitialize) {
+                initializeFromCache();
+                _shouldInitialize = false;
+                if (!_concurrentMap.isEmpty()) {
+                    _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+                }
+            }
             runWithoutExceptionHandling();
 
-            if (_firstLoad) {
+            if (_firstLoad && !_concurrentMap.isEmpty()) {
                 _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
                 _firstLoad = false;
             } else {
@@ -169,11 +157,16 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             _changeNumber.set(change.till);
             return;
         }
+        parseChange(change, true);
+
+    }
+
+    public void parseChange(SplitChange change, boolean fromNetwork) throws InterruptedException  {
 
         synchronized (_lock) {
             // check state one more time.
-            if (change.since != _changeNumber.get()
-                    || change.till < _changeNumber.get()) {
+            if (fromNetwork && (change.since != _changeNumber.get()
+                    || change.till < _changeNumber.get())) {
                 // some other thread may have updated the shared state. exit
                 return;
             }
@@ -215,8 +208,9 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
                 Logger.d("Deleted features: %s", toRemove);
             }
 
-            _changeNumber.set(change.till);
+            if(fromNetwork) {
+                _changeNumber.set(change.till);
+            }
         }
-
     }
 }
