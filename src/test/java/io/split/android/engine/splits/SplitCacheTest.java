@@ -127,10 +127,7 @@ public class SplitCacheTest {
 
         for(int i = 0; i < 10000; i++) {
             String splitName = "split-" + i;
-            try {
-                storage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName));
-            } catch (IOException e) {
-            }
+            storage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName));
         }
 
         try {
