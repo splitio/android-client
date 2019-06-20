@@ -41,8 +41,8 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     private long mChangeNumber = -1;
     private Set<String> mRemovedSplits = null;
-    private ConcurrentHashMap<String, Split> mInMemorySplits = null;
-    private ConcurrentHashMap<String, Integer> mTrafficTypes = null;
+    private Map<String, Split> mInMemorySplits = null;
+    private Map<String, Integer> mTrafficTypes = null;
 
     public SplitCache(IStorage storage) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
