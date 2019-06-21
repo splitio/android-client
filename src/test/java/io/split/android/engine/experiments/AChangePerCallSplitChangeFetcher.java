@@ -93,4 +93,8 @@ public class AChangePerCallSplitChangeFetcher implements SplitChangeFetcher {
     }
 
 
+    @Override
+    public boolean isSourceReachable() {
+        return true;
+    }
 }
