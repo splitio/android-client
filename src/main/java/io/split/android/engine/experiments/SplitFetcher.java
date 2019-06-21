@@ -12,4 +12,5 @@ public interface SplitFetcher {
      * syncs. This method MUST NOT throw any exceptions.
      */
     void forceRefresh();
+
 }

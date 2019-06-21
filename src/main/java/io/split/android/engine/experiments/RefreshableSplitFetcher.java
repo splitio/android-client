@@ -23,7 +23,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An ExperimentFetcher that refreshes experiment definitions periodically.
- *
  */
 public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 
@@ -69,7 +68,9 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
     private void initializeFromCache() throws InterruptedException {
         SplitChange change = _splitChangeFetcher.fetch(-1, FetcherPolicy.CacheOnly);
         if (change != null && change.splits != null && !change.splits.isEmpty()) {
-            parseChange(change, false);
+            synchronized (_lock) {
+                parseChange(change);
+            }
         }
     }
 
@@ -104,16 +105,16 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
     public void run() {
         long start = _changeNumber.get();
         try {
-            if(_shouldInitialize) {
+            if (_shouldInitialize) {
                 initializeFromCache();
                 _shouldInitialize = false;
-                if (!_concurrentMap.isEmpty()) {
+                if (!_splitChangeFetcher.isSourceReachable() && !_concurrentMap.isEmpty()) {
                     _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+                    _firstLoad = false;
                 }
             }
             runWithoutExceptionHandling();
-
-            if (_firstLoad && !_concurrentMap.isEmpty()) {
+            if (_firstLoad) {
                 _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
                 _firstLoad = false;
             } else {
@@ -121,10 +122,10 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             }
 
         } catch (InterruptedException e) {
-            Logger.w(e,"Interrupting split fetcher task");
+            Logger.w(e, "Interrupting split fetcher task");
             Thread.currentThread().interrupt();
         } catch (Throwable t) {
-            Logger.e(t,"RefreshableSplitFetcher failed: %s" , t.getMessage());
+            Logger.e(t, "RefreshableSplitFetcher failed: %s", t.getMessage());
         } finally {
             try {
                 Logger.d("split fetch before: %d, after: %d", start, _changeNumber.get());
@@ -157,60 +158,51 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             _changeNumber.set(change.till);
             return;
         }
-        parseChange(change, true);
-
-    }
-
-    public void parseChange(SplitChange change, boolean fromNetwork) throws InterruptedException  {
 
         synchronized (_lock) {
-            // check state one more time.
-            if (fromNetwork && (change.since != _changeNumber.get()
-                    || change.till < _changeNumber.get())) {
-                // some other thread may have updated the shared state. exit
-                return;
+            parseChange(change);
+            _changeNumber.set(change.till);
+        }
+    }
+
+    public void parseChange(SplitChange change) throws InterruptedException {
+
+
+        Set<String> toRemove = Sets.newHashSet();
+        Map<String, ParsedSplit> toAdd = Maps.newHashMap();
+
+        for (Split split : change.splits) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
             }
 
-            Set<String> toRemove = Sets.newHashSet();
-            Map<String, ParsedSplit> toAdd = Maps.newHashMap();
-
-            for (Split split : change.splits) {
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new InterruptedException();
-                }
-
-                if (split.status != Status.ACTIVE) {
-                    // archive.
-                    toRemove.add(split.name);
-                    continue;
-                }
-
-                ParsedSplit parsedSplit = _parser.parse(split);
-                if (parsedSplit == null) {
-                    Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
-                    toRemove.add(split.name);
-                    continue;
-                }
-
-                toAdd.put(split.name, parsedSplit);
+            if (split.status != Status.ACTIVE) {
+                // archive.
+                toRemove.add(split.name);
+                continue;
             }
 
-            _concurrentMap.putAll(toAdd);
-            for (String remove : toRemove) {
-                _concurrentMap.remove(remove);
+            ParsedSplit parsedSplit = _parser.parse(split);
+            if (parsedSplit == null) {
+                Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
+                toRemove.add(split.name);
+                continue;
             }
 
-            if (!toAdd.isEmpty()) {
-                Logger.d("Updated features: %s", toAdd.keySet());
-            }
+            toAdd.put(split.name, parsedSplit);
+        }
 
-            if (!toRemove.isEmpty()) {
-                Logger.d("Deleted features: %s", toRemove);
-            }
+        _concurrentMap.putAll(toAdd);
+        for (String remove : toRemove) {
+            _concurrentMap.remove(remove);
+        }
 
-            if(fromNetwork) {
-                _changeNumber.set(change.till);
-            }
+        if (!toAdd.isEmpty()) {
+            Logger.d("Updated features: %s", toAdd.keySet());
+        }
+
+        if (!toRemove.isEmpty()) {
+            Logger.d("Deleted features: %s", toRemove);
         }
     }
 }
