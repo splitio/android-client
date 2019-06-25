@@ -1,3 +1,8 @@
+2.3.3: (Jun 25, 2019)
+- Improved code to retrieve Split SDK version
+2.3.2: (Jun 24, 2019)
+- Fixing issue with sdk ready event when no internet connection
+- Adding integration tests
 2.3.1: (Jun 14, 2019)
 - Fixing concurrence issue when writing split to disk
 - Adding missing UTF-8 support to some json parsing
