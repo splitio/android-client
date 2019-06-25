@@ -59,12 +59,13 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
 
         long start = System.currentTimeMillis();
 
-        if (fetcherPolicy == FetcherPolicy.NetworkAndCache && !Utils.isReachable(_target)) {
-            Logger.d("%s is NOT REACHABLE... USING PERSISTED", _target.getHost());
-            return _splitChangeCache.getChanges(since);
-        } else if (fetcherPolicy == FetcherPolicy.CacheOnly) {
+        if (fetcherPolicy == FetcherPolicy.CacheOnly) {
             Logger.d("First load... USING PERSISTED");
             return _splitChangeCache.getChanges(since);
+        }
+
+        if (!isSourceReachable()) {
+            throw new IllegalStateException("Problem fetching splitChanges: Source not reachable");
         }
 
         CloseableHttpResponse response = null;
@@ -98,6 +99,11 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
             Utils.forceClose(response);
             _metrics.time(PREFIX + ".time", System.currentTimeMillis() - start);
         }
+    }
+
+    @Override
+    public boolean isSourceReachable() {
+        return Utils.isReachable(_target);
     }
 
 }
