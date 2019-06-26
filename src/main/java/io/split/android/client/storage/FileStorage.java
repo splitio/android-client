@@ -78,7 +78,9 @@ public class FileStorage implements IStorage {
             throw e;
         } finally {
             try {
-                fileOutputStream.close();
+                if(fileOutputStream != null) {
+                    fileOutputStream.close();
+                }
             } catch (IOException e) {
                 Logger.e(e, "Failed to close file");
             }

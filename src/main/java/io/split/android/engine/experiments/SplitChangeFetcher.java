@@ -32,4 +32,6 @@ public interface SplitChangeFetcher {
 
     SplitChange fetch(long since, FetcherPolicy fetcherPolicy);
 
+    boolean isSourceReachable();
+
 }

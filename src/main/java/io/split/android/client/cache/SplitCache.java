@@ -4,8 +4,10 @@ import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
+import android.support.annotation.VisibleForTesting;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.gson.JsonSyntaxException;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
@@ -44,9 +47,9 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     public SplitCache(IStorage storage) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
-        mInMemorySplits = Collections.synchronizedMap(new HashMap<String, Split>());
-        mRemovedSplits = Collections.synchronizedSet(new HashSet<String>());
-        mTrafficTypes = Collections.synchronizedMap(new HashMap<String, Integer>());
+        mInMemorySplits = new ConcurrentHashMap<String, Split>();
+        mRemovedSplits = Collections.synchronizedSet(new HashSet<>());
+        mTrafficTypes = new ConcurrentHashMap<String, Integer>();
         loadChangeNumberFromDisk();
         loadSplitsFromDisk();
     }
@@ -99,7 +102,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     @Override
-    public Split getSplit(String splitName) {
+    synchronized public Split getSplit(String splitName) {
         Split split =  mInMemorySplits.get(splitName);
         if(split == null && !mRemovedSplits.contains(splitName)) {
             split = getSplitFromDisk(splitName);
@@ -109,7 +112,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     @Override
-    public List<String> getSplitNames() {
+    synchronized public List<String> getSplitNames() {
         return new ArrayList<String>(mInMemorySplits.keySet()) ;
     }
 
@@ -186,7 +189,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     // Lifecyle observer
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    private void writeSplitsToDisk() {
+    synchronized private void writeSplitsToDisk() {
         // Save change number
         try {
             mFileStorageManager.write(getChangeNumberFileName(), String.valueOf(mChangeNumber));
@@ -224,5 +227,10 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
                 addTrafficType(split.trafficTypeName);
             }
         }
+    }
+
+    @VisibleForTesting
+    public void fireWriteToDisk() {
+        writeSplitsToDisk();
     }
 }

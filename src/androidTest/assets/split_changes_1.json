@@ -1485,6 +1485,9 @@
       "defaultTreatment":"off",
       "changeNumber":1500577256901,
       "algo":2,
+      "configurations": {
+        "off": "{\"the_emojis\":\"\uD83D\uDE01 -- áéíóúöÖüÜÏëç\"}"
+      },
       "conditions":[
         {
           "conditionType":"ROLLOUT",

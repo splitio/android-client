@@ -31,6 +31,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.SplitManager;
+import io.split.android.client.SplitResult;
 import io.split.android.client.api.Key;
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Event;
@@ -147,6 +148,7 @@ public class IntegrationTest {
         latch.await(40, TimeUnit.SECONDS);
         String t1 = client.getTreatment("FACUNDO_TEST");
         String t2 = client.getTreatment("NO_EXISTING_FEATURE");
+        SplitResult treatmentConfigEmojis = client.getTreatmentWithConfig("Welcome_Page_UI", null);
 
         Map<String, String> ts1 = client.getTreatments(Arrays.asList("testing222", "NO_EXISTING_FEATURE1", "NO_EXISTING_FEATURE2"), null);
 
@@ -172,9 +174,12 @@ public class IntegrationTest {
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
         Assert.assertEquals("off", t1);
         Assert.assertEquals(Treatments.CONTROL, t2);
+        Assert.assertEquals("off", treatmentConfigEmojis.treatment());
+        Assert.assertEquals("{\"the_emojis\":\"\uD83D\uDE01 -- áéíóúöÖüÜÏëç\"}", treatmentConfigEmojis.config());
         Assert.assertEquals("off", ts1.get("testing222"));
         Assert.assertEquals(Treatments.CONTROL, ts1.get("NO_EXISTING_FEATURE1"));
         Assert.assertEquals(Treatments.CONTROL, ts1.get("NO_EXISTING_FEATURE2"));
+
         Assert.assertEquals(29, splits.size());
         Assert.assertNotNull(s1);
         Assert.assertNull(s2);
