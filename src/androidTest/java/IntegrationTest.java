@@ -175,7 +175,7 @@ public class IntegrationTest {
         Assert.assertEquals("off", t1);
         Assert.assertEquals(Treatments.CONTROL, t2);
         Assert.assertEquals("off", treatmentConfigEmojis.treatment());
-        Assert.assertEquals("{\"the_emojis\":\"\uD83D\uDE01 -- áéíóúöÖüÜÏëç\"", treatmentConfigEmojis.config());
+        Assert.assertEquals("{\"the_emojis\":\"\uD83D\uDE01 -- áéíóúöÖüÜÏëç\"}", treatmentConfigEmojis.config());
         Assert.assertEquals("off", ts1.get("testing222"));
         Assert.assertEquals(Treatments.CONTROL, ts1.get("NO_EXISTING_FEATURE1"));
         Assert.assertEquals(Treatments.CONTROL, ts1.get("NO_EXISTING_FEATURE2"));
