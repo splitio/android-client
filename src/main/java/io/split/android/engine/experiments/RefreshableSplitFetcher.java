@@ -23,7 +23,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An ExperimentFetcher that refreshes experiment definitions periodically.
- *
  */
 public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
 
@@ -35,6 +34,7 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
     private final SplitEventsManager _eventsManager;
 
     private boolean _firstLoad = true;
+    private boolean _shouldInitialize = true;
 
     private final Object _lock = new Object();
 
@@ -63,33 +63,15 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
         checkNotNull(_parser);
         checkNotNull(_splitChangeFetcher);
 
-        initializeFromCache();
     }
 
-    private void initializeFromCache(){
+    private void initializeFromCache() throws InterruptedException {
         SplitChange change = _splitChangeFetcher.fetch(-1, FetcherPolicy.CacheOnly);
-
-        Map<String, ParsedSplit> toAdd = Maps.newHashMap();
-
         if (change != null && change.splits != null && !change.splits.isEmpty()) {
-            for (Split split : change.splits) {
-                if (split != null && split.status != null && split.name != null) {
-                    if (Status.ACTIVE.equals(split.status)) {
-                        ParsedSplit parsedSplit = _parser.parse(split);
-                        if (parsedSplit == null) {
-                            Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
-                            continue;
-                        }
-                        toAdd.put(split.name, parsedSplit);
-                    }
-                }
+            synchronized (_lock) {
+                parseChange(change);
             }
         }
-
-        if (!toAdd.isEmpty()) {
-            _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
-        }
-        _concurrentMap.putAll(toAdd);
     }
 
     @Override
@@ -123,8 +105,15 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
     public void run() {
         long start = _changeNumber.get();
         try {
+            if (_shouldInitialize) {
+                initializeFromCache();
+                _shouldInitialize = false;
+                if (!_splitChangeFetcher.isSourceReachable() && !_concurrentMap.isEmpty()) {
+                    _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+                    _firstLoad = false;
+                }
+            }
             runWithoutExceptionHandling();
-
             if (_firstLoad) {
                 _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
                 _firstLoad = false;
@@ -133,10 +122,10 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
             }
 
         } catch (InterruptedException e) {
-            Logger.w(e,"Interrupting split fetcher task");
+            Logger.w(e, "Interrupting split fetcher task");
             Thread.currentThread().interrupt();
         } catch (Throwable t) {
-            Logger.e(t,"RefreshableSplitFetcher failed: %s" , t.getMessage());
+            Logger.e(t, "RefreshableSplitFetcher failed: %s", t.getMessage());
         } finally {
             try {
                 Logger.d("split fetch before: %d, after: %d", start, _changeNumber.get());
@@ -171,52 +160,49 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
         }
 
         synchronized (_lock) {
-            // check state one more time.
-            if (change.since != _changeNumber.get()
-                    || change.till < _changeNumber.get()) {
-                // some other thread may have updated the shared state. exit
-                return;
-            }
-
-            Set<String> toRemove = Sets.newHashSet();
-            Map<String, ParsedSplit> toAdd = Maps.newHashMap();
-
-            for (Split split : change.splits) {
-                if (Thread.currentThread().isInterrupted()) {
-                    throw new InterruptedException();
-                }
-
-                if (split.status != Status.ACTIVE) {
-                    // archive.
-                    toRemove.add(split.name);
-                    continue;
-                }
-
-                ParsedSplit parsedSplit = _parser.parse(split);
-                if (parsedSplit == null) {
-                    Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
-                    toRemove.add(split.name);
-                    continue;
-                }
-
-                toAdd.put(split.name, parsedSplit);
-            }
-
-            _concurrentMap.putAll(toAdd);
-            for (String remove : toRemove) {
-                _concurrentMap.remove(remove);
-            }
-
-            if (!toAdd.isEmpty()) {
-                Logger.d("Updated features: %s", toAdd.keySet());
-            }
-
-            if (!toRemove.isEmpty()) {
-                Logger.d("Deleted features: %s", toRemove);
-            }
-
+            parseChange(change);
             _changeNumber.set(change.till);
         }
+    }
 
+    public void parseChange(SplitChange change) throws InterruptedException {
+
+
+        Set<String> toRemove = Sets.newHashSet();
+        Map<String, ParsedSplit> toAdd = Maps.newHashMap();
+
+        for (Split split : change.splits) {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
+
+            if (split.status != Status.ACTIVE) {
+                // archive.
+                toRemove.add(split.name);
+                continue;
+            }
+
+            ParsedSplit parsedSplit = _parser.parse(split);
+            if (parsedSplit == null) {
+                Logger.i("We could not parse the experiment definition for: %s so we are removing it completely to be careful", split.name);
+                toRemove.add(split.name);
+                continue;
+            }
+
+            toAdd.put(split.name, parsedSplit);
+        }
+
+        _concurrentMap.putAll(toAdd);
+        for (String remove : toRemove) {
+            _concurrentMap.remove(remove);
+        }
+
+        if (!toAdd.isEmpty()) {
+            Logger.d("Updated features: %s", toAdd.keySet());
+        }
+
+        if (!toRemove.isEmpty()) {
+            Logger.d("Deleted features: %s", toRemove);
+        }
     }
 }
