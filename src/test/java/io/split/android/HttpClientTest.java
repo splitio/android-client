@@ -9,6 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
@@ -41,48 +42,65 @@ public class HttpClientTest {
 
         @Test
         public void severalRequest() throws Exception {
+            RecordedRequest recReq;
             HttpClient client  = new HttpClientImpl();
 
             // Test dummy request and response
             HttpUrl url = mWebServer.url("/test1/");
             HttpRequest dummyReq = client.request(url.uri(), HttpClient.HTTP_GET);
             HttpResponse dummyResp = dummyReq.execute();
+            recReq = mWebServer.takeRequest();
 
             // Test my segments
             url = mWebServer.url("/test2/");
             HttpRequest mySegmentsReq = client.request(url.uri(), HttpClient.HTTP_GET);
             HttpResponse mySegmentsResp = mySegmentsReq.execute();
+            recReq = mWebServer.takeRequest();
 
             // Test split changes
             url = mWebServer.url("/test3/");
             HttpRequest splitChangeReq = client.request(url.uri(), HttpClient.HTTP_GET);
             HttpResponse splitChangeResp = splitChangeReq.execute();
+            recReq = mWebServer.takeRequest();
 
             // Test empty response
             url = mWebServer.url("/test4/");
             HttpRequest emptyReq = client.request(url.uri(), HttpClient.HTTP_GET);
             HttpResponse emptyResp = emptyReq.execute();
+            recReq = mWebServer.takeRequest();
 
             // Test post with response data
             url = mWebServer.url("/post_resp/");
             HttpRequest postDataReq = client.request(url.uri(), HttpClient.HTTP_POST);
             HttpResponse postDataResp = postDataReq.execute();
+            recReq = mWebServer.takeRequest();
 
             // Test post no response data
             url = mWebServer.url("/post_no_resp/");
             HttpRequest postNoDataReq = client.request(url.uri(), HttpClient.HTTP_POST);
             HttpResponse postNoDataResp = postNoDataReq.execute();
+            recReq = mWebServer.takeRequest();
 
+            // Test post tracks
+            String postTracksData = new FileHelper().loadFileContent("tracks_1.json");
+            url = mWebServer.url("/tracks/");
+            HttpRequest postTracksReq = client.request(url.uri(), HttpClient.HTTP_POST, postTracksData);
+            HttpResponse postTracksResp = postTracksReq.execute();
+            RecordedRequest postTrackRecReq = mWebServer.takeRequest();
+            String receivedPostTrackData = postTrackRecReq.getBody().readUtf8();
+            List<Event> trackEventsSent = parseTrackEvents(receivedPostTrackData);
 
             // Test limit wrong request
             url = mWebServer.url("/limit_wrong/");
             HttpRequest limitNoSuccessReq = client.request(url.uri(), HttpClient.HTTP_GET);
             HttpResponse limitNoSuccessResp = limitNoSuccessReq.execute();
+            recReq = mWebServer.takeRequest();
 
             // Test bad request
             url = mWebServer.url("/bad/");
             HttpRequest badReq = client.request(url.uri(), HttpClient.HTTP_GET);
             HttpResponse badResp = badReq.execute();
+            recReq = mWebServer.takeRequest();
 
             // Assert dummy request and response
             Assert.assertEquals(200, dummyResp.getHttpStatus());
@@ -120,6 +138,17 @@ public class HttpClientTest {
             Assert.assertEquals(201, postNoDataResp.getHttpStatus());
             Assert.assertTrue(postNoDataResp.isSuccess());
             Assert.assertNull(postNoDataResp.getData());
+
+            // Assert tracks
+            Assert.assertEquals(200, postTracksResp.getHttpStatus());
+            Assert.assertTrue(postTracksResp.isSuccess());
+            Assert.assertNull(postTracksResp.getData());
+            Assert.assertEquals(10, trackEventsSent.size());
+            Assert.assertEquals("open_web", trackEventsSent.get(0).eventTypeId);
+            Assert.assertEquals("CUSTOMER_ID", trackEventsSent.get(0).key);
+            Assert.assertEquals(1.0, trackEventsSent.get(0).value);
+            Assert.assertEquals("by_shirt", trackEventsSent.get(9).eventTypeId);
+
 
             // Assert limit wrong request
             Assert.assertEquals(300, limitNoSuccessResp.getHttpStatus());
@@ -166,6 +195,9 @@ public class HttpClientTest {
                         case "/post_no_resp/":
                             return new MockResponse().setResponseCode(201);
 
+                        case "/tracks/":
+                            return new MockResponse().setResponseCode(200);
+
                         case "/limit_wrong/":
                             return new MockResponse().setResponseCode(300);
 
@@ -190,6 +222,13 @@ public class HttpClientTest {
             Map<String, List<MySegment>> mySegmentsMap = Json.fromJson(json, mapType);
             return mySegmentsMap.get("mySegments");
         }
+
+    private List<Event> parseTrackEvents(String json) {
+        Type mapType = new TypeToken<List<Event>>() {
+        }.getType();
+
+        return Json.fromJson(json, mapType);
+    }
 
     }
 
