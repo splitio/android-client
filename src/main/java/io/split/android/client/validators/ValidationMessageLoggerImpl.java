@@ -1,6 +1,8 @@
 package io.split.android.client.validators;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.utils.Logger;
@@ -26,7 +28,7 @@ public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
 
     @Override
     public void w(ValidationErrorInfo errorInfo, String tag) {
-        ArrayList<String> warnings = (ArrayList<String>) errorInfo.getWarnings().values();
+        List<String> warnings = new ArrayList<>(errorInfo.getWarnings().values());
         for(String warning : warnings) {
             w(tag, warning);
         }

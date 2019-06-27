@@ -1,6 +1,8 @@
 package io.split.android.client.network;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -39,22 +41,7 @@ public class HttpRequestImpl implements HttpRequest {
         HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
         connection.setRequestMethod(mHttpMethod);
         addHeaders(connection);
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            BufferedReader in = new BufferedReader(new InputStreamReader(
-                    connection.getInputStream()));
-            String inputLine;
-            StringBuffer responseData = new StringBuffer();
-
-            while ((inputLine = in.readLine()) != null) {
-                responseData.append(inputLine);
-            }
-            in.close();
-
-            return new HttpResponseImpl(HttpResponse.REQUEST_STATUS_OK, responseCode, (responseData != null ? responseData.toString() : null));
-        }
-        return new HttpResponseImpl(HttpResponse.REQUEST_STATUS_FAIL, responseCode);
-
+        return buildResponse(connection);
     }
 
     private HttpResponse postRequest() throws IOException, ProtocolException {
@@ -64,34 +51,40 @@ public class HttpRequestImpl implements HttpRequest {
         HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
         addHeaders(connection);
         connection.setRequestMethod(mHttpMethod);
-        connection.setDoOutput(true);
-        OutputStream os = connection.getOutputStream();
-        os.write(mBody.getBytes());
-        os.flush();
-        os.close();
+        if(mBody != null && !mBody.isEmpty()) {
+            connection.setDoOutput(true);
+            OutputStream os = connection.getOutputStream();
+            os.write(mBody.getBytes());
+            os.flush();
+            os.close();
+        }
 
+        return buildResponse(connection);
+
+    }
+
+    private void addHeaders(HttpURLConnection connection) {
+        for (Map.Entry<String, String> entry : mHeaders.entrySet()) {
+            connection.setRequestProperty(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private HttpResponse buildResponse(HttpURLConnection connection) throws IOException {
         int responseCode = connection.getResponseCode();
-
-        if (responseCode == HttpURLConnection.HTTP_OK) {
+        if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < 300) {
             BufferedReader in = new BufferedReader(new InputStreamReader(
                     connection.getInputStream()));
+
             String inputLine;
             StringBuffer responseData = new StringBuffer();
-
             while ((inputLine = in.readLine()) != null) {
                 responseData.append(inputLine);
             }
             in.close();
 
-            return new HttpResponseImpl(HttpResponse.REQUEST_STATUS_OK, responseCode, (responseData != null ? responseData.toString() : null));
+            return new HttpResponseImpl(responseCode, (responseData.length() > 0 ? responseData.toString() : null));
         }
-        return new HttpResponseImpl(HttpResponse.REQUEST_STATUS_FAIL, responseCode);
-
+        return new HttpResponseImpl(responseCode);
     }
 
-    void addHeaders(HttpURLConnection connection) {
-        for (Map.Entry<String, String> entry : mHeaders.entrySet()) {
-            connection.setRequestProperty(entry.getKey(), entry.getValue());
-        }
-    }
 }

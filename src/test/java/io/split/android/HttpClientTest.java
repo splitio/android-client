@@ -58,8 +58,35 @@ public class HttpClientTest {
             HttpRequest splitChangeReq = client.request(url.uri(), HttpClient.HTTP_GET);
             HttpResponse splitChangeResp = splitChangeReq.execute();
 
+            // Test empty response
+            url = mWebServer.url("/test4/");
+            HttpRequest emptyReq = client.request(url.uri(), HttpClient.HTTP_GET);
+            HttpResponse emptyResp = emptyReq.execute();
+
+            // Test post with response data
+            url = mWebServer.url("/post_resp/");
+            HttpRequest postDataReq = client.request(url.uri(), HttpClient.HTTP_POST);
+            HttpResponse postDataResp = postDataReq.execute();
+
+            // Test post no response data
+            url = mWebServer.url("/post_no_resp/");
+            HttpRequest postNoDataReq = client.request(url.uri(), HttpClient.HTTP_POST);
+            HttpResponse postNoDataResp = postNoDataReq.execute();
+
+
+            // Test limit wrong request
+            url = mWebServer.url("/limit_wrong/");
+            HttpRequest limitNoSuccessReq = client.request(url.uri(), HttpClient.HTTP_GET);
+            HttpResponse limitNoSuccessResp = limitNoSuccessReq.execute();
+
+            // Test bad request
+            url = mWebServer.url("/bad/");
+            HttpRequest badReq = client.request(url.uri(), HttpClient.HTTP_GET);
+            HttpResponse badResp = badReq.execute();
+
             // Assert dummy request and response
             Assert.assertEquals(200, dummyResp.getHttpStatus());
+            Assert.assertTrue(dummyResp.isSuccess());
             Assert.assertEquals("this is split test", dummyResp.getData());
 
             // Assert my segments
@@ -74,9 +101,35 @@ public class HttpClientTest {
             // Assert split changes
             SplitChange splitChange = Json.fromJson(splitChangeResp.getData(), SplitChange.class);
             Assert.assertEquals(200, splitChangeResp.getHttpStatus());
+            Assert.assertTrue(splitChangeResp.isSuccess());
             Assert.assertEquals(-1, splitChange.since);
             Assert.assertEquals(1506703262916L, splitChange.till);
             Assert.assertEquals(30, splitChange.splits.size());
+
+            // Assert empty response
+            Assert.assertEquals(200, emptyResp.getHttpStatus());
+            Assert.assertTrue(emptyResp.isSuccess());
+            Assert.assertNull(emptyResp.getData());
+
+            // Assert post non empty response
+            Assert.assertEquals(201, postDataResp.getHttpStatus());
+            Assert.assertTrue(postDataResp.isSuccess());
+            Assert.assertEquals("{\"resp\": 1 }", postDataResp.getData());
+
+            // Assert empty response
+            Assert.assertEquals(201, postNoDataResp.getHttpStatus());
+            Assert.assertTrue(postNoDataResp.isSuccess());
+            Assert.assertNull(postNoDataResp.getData());
+
+            // Assert limit wrong request
+            Assert.assertEquals(300, limitNoSuccessResp.getHttpStatus());
+            Assert.assertFalse(limitNoSuccessResp.isSuccess());
+            Assert.assertNull(limitNoSuccessResp.getData());
+
+            // Assert bad request
+            Assert.assertEquals(400, badResp.getHttpStatus());
+            Assert.assertFalse(badResp.isSuccess());
+            Assert.assertNull(badResp.getData());
         }
 
         @After
@@ -97,10 +150,27 @@ public class HttpClientTest {
                     switch (request.getPath()) {
                         case "/test1/":
                             return new MockResponse().setResponseCode(200).setBody("this is split test");
+
                         case "/test2/":
+
                             return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{\"id\":\"id1\", \"name\":\"groupa\"}, {\"id\":\"id2\", \"name\":\"groupb\"}]}");
                         case "/test3/":
                             return new MockResponse().setResponseCode(200).setBody(splitChangesResponse);
+
+                        case "/test4/":
+                            return new MockResponse().setResponseCode(200);
+
+                        case "/post_resp/":
+                            return new MockResponse().setResponseCode(201).setBody("{\"resp\": 1 }");
+
+                        case "/post_no_resp/":
+                            return new MockResponse().setResponseCode(201);
+
+                        case "/limit_wrong/":
+                            return new MockResponse().setResponseCode(300);
+
+                        case "/bad/":
+                            return new MockResponse().setResponseCode(400);
                     }
                     return new MockResponse().setResponseCode(404);
                 }

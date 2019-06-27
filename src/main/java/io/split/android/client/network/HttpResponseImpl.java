@@ -2,24 +2,21 @@ package io.split.android.client.network;
 
 public class HttpResponseImpl implements HttpResponse {
 
-    private int mRequestStatus;
     private int mHttpStatus;
     private String mData;
 
-    HttpResponseImpl(int requestStatus, int httpStatus) {
-        mRequestStatus = requestStatus;
+    HttpResponseImpl(int httpStatus) {
         mHttpStatus = httpStatus;
     }
 
-    HttpResponseImpl(int requestStatus, int httpStatus, String data) {
-        mRequestStatus = requestStatus;
+    HttpResponseImpl(int httpStatus, String data) {
         mHttpStatus = httpStatus;
         mData = data;
     }
 
     @Override
-    public int getRequestStatus() {
-        return mRequestStatus;
+    public boolean isSuccess() {
+        return mHttpStatus >= 200 && mHttpStatus< 300;
     }
 
     @Override
