@@ -39,11 +39,20 @@ public class SplitHttpHeadersBuilder {
         if (clientVersion == null) {
             throw new IllegalArgumentException("Client Version Http Header cannot be null!");
         }
-        mHeaders.put(CLIENT_MACHINE_IP_HEADER, clientVersion);
+        mHeaders.put(CLIENT_VERSION, clientVersion);
         return this;
     }
 
     public Map<String, String> build() {
+
+        if (mHeaders.get(AUTHORIZATION) == null) {
+            throw new IllegalArgumentException("Missing authorization header!");
+        }
+
+        if (mHeaders.get(CLIENT_VERSION) == null) {
+            throw new IllegalArgumentException("Missing client version header!");
+        }
+
         return mHeaders;
     }
 
