@@ -51,6 +51,8 @@ import io.split.android.client.interceptors.GzipEncoderRequestInterceptor;
 import io.split.android.client.metrics.CachedMetrics;
 import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
+import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.track.TrackClientConfig;
@@ -111,6 +113,8 @@ public class SplitFactoryImpl implements SplitFactory {
         }
         _factoryMonitor.add(apiToken);
         _apiKey = apiToken;
+
+
         SSLContext sslContext = null;
         try {
             sslContext = SSLContexts.custom()
@@ -148,6 +152,9 @@ public class SplitFactoryImpl implements SplitFactory {
                 .addInterceptorLast(new GzipEncoderRequestInterceptor())
                 .addInterceptorLast(new GzipDecoderResponseInterceptor());
 
+
+
+
         // Set up proxy is it exists
         if (config.proxy() != null) {
             Logger.i("Initializing Split SDK with proxy settings");
@@ -164,6 +171,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 httpClientbuilder.setDefaultCredentialsProvider(credsProvider);
             }
         }
+
+        final HttpClient httpClient = new HttpClientImpl();
 
         final CloseableHttpClient httpclient = httpClientbuilder.build();
 
@@ -204,7 +213,7 @@ public class SplitFactoryImpl implements SplitFactory {
         impressionsStorageManagerConfig.setImpressionsChunkOudatedTime(config.impressionsChunkOutdatedTime());
         IStorage impressionsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
         final ImpressionsStorageManager impressionsStorageManager = new ImpressionsStorageManager(impressionsStorage, impressionsStorageManagerConfig);
-        final ImpressionsManager splitImpressionListener = ImpressionsManager.instance(httpclient, config, impressionsStorageManager);
+        final ImpressionsManager splitImpressionListener = ImpressionsManager.instance(httpClient, config, impressionsStorageManager);
         final ImpressionListener impressionListener;
 
         if (config.impressionListener() != null) {

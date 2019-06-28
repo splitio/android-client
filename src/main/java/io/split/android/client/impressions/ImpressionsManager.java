@@ -20,13 +20,14 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.network.HttpClient;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 
 public class ImpressionsManager implements ImpressionListener, Runnable {
 
     private final SplitClientConfig _config;
-    private final CloseableHttpClient _client;
+    private final HttpClient _client;
     private final BlockingQueue<KeyImpression> _queue;
     private final ScheduledExecutorService _scheduler;
     private final ImpressionsSender _impressionsSender;
@@ -35,7 +36,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
     private long _currentChunkSize = 0;
 
-    private ImpressionsManager(CloseableHttpClient client, SplitClientConfig config, ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
+    private ImpressionsManager(HttpClient client, SplitClientConfig config, ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
 
         _config = config;
         _client = client;
@@ -59,12 +60,12 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
     }
 
-    public static ImpressionsManager instance(CloseableHttpClient client,
+    public static ImpressionsManager instance(HttpClient client,
                                               SplitClientConfig config, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
         return new ImpressionsManager(client, config, null, impressionsStorageManager);
     }
 
-    public static ImpressionsManager instanceForTest(CloseableHttpClient client,
+    public static ImpressionsManager instanceForTest(HttpClient client,
                                                      SplitClientConfig config,
                                                      ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
         return new ImpressionsManager(client, config, impressionsSender, impressionsStorageManager);

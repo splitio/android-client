@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class HttpClientImpl implements HttpClient {
 
-    Map<String, String> mHeaders;
+    private Map<String, String> mHeaders;
 
     public HttpClientImpl() {
         mHeaders = new HashMap<>();
@@ -22,9 +22,18 @@ public class HttpClientImpl implements HttpClient {
         return new HttpRequestImpl(uri.toString(), requestMethod, body, mHeaders);
     }
 
+    @Override
     public void setHeader(String name, String value) {
+        if(name == null || value == null) {
+            throw new IllegalArgumentException(String.format("Invalid value for header %s: %s", name, value));
+        }
         mHeaders.put(name, value);
     }
 
-
+    @Override
+    public void addHeaders(Map<String, String> headers) {
+        for(Map.Entry<String, String> header : headers.entrySet()) {
+            setHeader(header.getKey(), header.getValue());
+        }
+    }
 }
