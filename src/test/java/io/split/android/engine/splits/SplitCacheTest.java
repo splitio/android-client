@@ -19,6 +19,8 @@ import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.Status;
+import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.storage.MemoryStorage;
 import io.split.android.client.utils.Utils;
@@ -74,6 +76,7 @@ public class SplitCacheTest {
             String splitName = "split-test-" + i;
             Split split = new Split();
             split.name = splitName;
+            split.status = Status.ACTIVE;
             mCache.addSplit(split);
         }
 
@@ -83,18 +86,6 @@ public class SplitCacheTest {
             Assert.assertNotNull(splitTest);
             Assert.assertEquals(splitName, splitTest.name);
         }
-    }
-
-    @Test
-    public void deleteSplit() {
-        String split0 = "split-0";
-        String split3 = "split-3";
-        mCache.removeSplit(split0);
-        mCache.removeSplit(split3);
-
-        Assert.assertNull(mCache.getSplit(split0));
-        Assert.assertNull(mCache.getSplit(split3));
-        Assert.assertNotNull(mCache.getSplit("split-1"));
     }
 
     @Test
@@ -130,16 +121,13 @@ public class SplitCacheTest {
         final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\"}";
 
         File rootFolder = new File(ROOT_FOLDER);
-        //IStorage storage = new FileStorage(rootFolder, FOLDER);
-        IStorage storage = new MemoryStorage();
+        IStorage storage = new FileStorage(rootFolder, FOLDER);
+        //IStorage storage = new MemoryStorage();
         CountDownLatch latch = new CountDownLatch(2);
 
         for(int i = 0; i < 10000; i++) {
             String splitName = "split-" + i;
-            try {
-                storage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName));
-            } catch (IOException e) {
-            }
+            storage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName));
         }
 
         try {
@@ -151,7 +139,7 @@ public class SplitCacheTest {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                System.out.println("TEST SPLIT CACHE: write start ");
+                //System.out.println("TEST SPLIT CACHE: write start ");
                 cache.fireWriteToDisk();
                 latch.countDown();
             }
@@ -162,31 +150,40 @@ public class SplitCacheTest {
             public void run() {
                 Split s1 = new Split();
                 s1.name = "add_split1";
+                s1.status = Status.ACTIVE;
                 cache.addSplit(s1);
-                System.out.println("TEST SPLIT CACHE: Adding " + s1.name);
+                //System.out.println("TEST SPLIT CACHE: Adding " + s1.name);
 
                 Split s2 = new Split();
                 s2.name = "add_split2";
+                s1.status = Status.ACTIVE;
                 cache.addSplit(s2);
-                System.out.println("TEST SPLIT CACHE: Adding " + s2.name);
+                //System.out.println("TEST SPLIT CACHE: Adding " + s2.name);
 
                 Split s3 = new Split();
                 s3.name = "add_split3";
+                s3.status = Status.ACTIVE;
                 cache.addSplit(s3);
-                System.out.println("TEST SPLIT CACHE: Adding " + s3.name);
+                //System.out.println("TEST SPLIT CACHE: Adding " + s3.name);
 
-                for(int i = 0; i < 990; i++) {
-                    String splitName = "split-" + i + "0";
-                    cache.removeSplit(splitName);
-                    System.out.println("TEST SPLIT CACHE: Removing " + splitName);
+                for(int i = 0; i < 990; i+=10) {
+                    Split s = new Split();
+                    s.name = "split-" + i;
+                    s.status = Status.ARCHIVED;
+                    cache.addSplit(s);
+                    //System.out.println("TEST SPLIT CACHE: Removing " + s.name);
                 }
                 latch.countDown();
             }
         }).start();
         latch.await(10, TimeUnit.SECONDS);
         Assert.assertTrue(latch.getCount() == 0);
+        Assert.assertEquals(9903, cache.getSplitNames().size());
+        Assert.assertNotNull(cache.getSplit("split-11"));
+        Assert.assertNotNull(cache.getSplit("split-9901"));
+        Assert.assertNull(cache.getSplit("split-90"));
+        Assert.assertNull(cache.getSplit("split-980"));
 
     }
 
 }
-

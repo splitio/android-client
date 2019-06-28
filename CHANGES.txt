@@ -1,3 +1,8 @@
+2.4.0: (Jun 28, 2019)
+- Adding validation for multiple factory instantiation
+- Adding validation for Traffic types
+- Adding validation for Split while evaluating
+- Improving code to retrieve Split SDK version
 2.3.2: (Jun 24, 2019)
 - Fixing issue with sdk ready event when no internet connection
 - Adding integration tests

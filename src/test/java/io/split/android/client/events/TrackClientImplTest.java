@@ -9,6 +9,7 @@ import io.split.android.client.storage.FileStorage;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.fake.ExecutorServiceMock;
+import io.split.android.fake.SplitCacheStub;
 
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -53,7 +55,7 @@ public class TrackClientImplTest {
         TrackClient eventClient = TrackClientImpl.create(
                 config, client,
                 URI.create("https://kubernetesturl.com/split"),
-                new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), senderExecutor);
+                new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 
         for (int i = 0; i < 175; ++i) {
             eventClient.track(create32kbEvent());
@@ -85,7 +87,7 @@ public class TrackClientImplTest {
         TrackClient eventClient = TrackClientImpl.create(
                 config, client,
                 URI.create("https://kubernetesturl.com/split"),
-                new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), senderExecutor);
+                new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 
         for (int i = 0; i < 9; ++i) {
             eventClient.track(create32kbEvent());
@@ -121,7 +123,7 @@ public class TrackClientImplTest {
         TrackClient eventClient = TrackClientImpl.create(
                 config, client,
                 URI.create("https://kubernetesturl.com/split"),
-                new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), senderExecutor);
+                new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 
         for (int i = 0; i < 10; ++i) {
             eventClient.track(create32kbEvent());

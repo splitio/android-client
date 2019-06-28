@@ -15,6 +15,8 @@ import java.util.Set;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.DataType;
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.SplitClientImplFactory;
@@ -43,7 +45,6 @@ import static org.mockito.Mockito.when;
 
 /**
  * Tests for SplitClientImpl
- *
  */
 public class SplitClientImplTest {
 
@@ -78,20 +79,24 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(null, null), is(equalTo(Treatments.CONTROL)));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
-        verifyZeroInteractions(splitFetcher);
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(null, null), is(equalTo(Treatments.CONTROL)));
+
+            }
+        });
     }
 
     @Test
     public void exceptions_result_in_control() {
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(anyString())).thenThrow(RuntimeException.class);
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@relateiq.com"), splitFetcher);
 
         assertThat(client.getTreatment("test1"), is(equalTo(Treatments.CONTROL)));
-        verify(splitFetcher).fetch("test1");
+
     }
 
     @Test
@@ -108,10 +113,15 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        int numKeys = 1;
-        assertThat(client.getTreatment(test), is(equalTo("on")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
-        verify(splitFetcher, times(numKeys)).fetch(test);
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo("on")));
+            }
+        });
+
+
     }
 
 
@@ -130,9 +140,19 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(test), is(equalTo(Treatments.OFF)));
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
 
-        verify(splitFetcher).fetch(test);
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo(Treatments.OFF)));
+            }
+        });
+
     }
 
     @Test
@@ -151,16 +171,34 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(test), is(equalTo("on")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo("on")));
+            }
+        });
 
         client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(test), is(equalTo("off")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+
+                assertThat(client.getTreatment(test), is(equalTo("off")));
+            }
+        });
 
         client = SplitClientImplFactory.get(Key.withMatchingKey("trevor@codigo.com"), splitFetcher);
-        assertThat(client.getTreatment(test), is(equalTo("on")));
 
-        verify(splitFetcher, times(3)).fetch(test);
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo("on")));
+            }
+        });
     }
 
 
@@ -176,9 +214,21 @@ public class SplitClientImplTest {
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
-        assertThat(client.getTreatment(test), is(equalTo(Treatments.OFF)));
 
-        verify(splitFetcher).fetch(test);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
+
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo(Treatments.OFF)));
+            }
+        });
+
+
     }
 
     @Test
@@ -200,8 +250,14 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitFetcher);
 
-        assertThat(client.getTreatment(parent), is(equalTo(Treatments.ON)));
-        assertThat(client.getTreatment(dependent), is(equalTo(Treatments.ON)));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(parent), is(equalTo(Treatments.ON)));
+                assertThat(client.getTreatment(dependent), is(equalTo(Treatments.ON)));
+            }
+        });
     }
 
     @Test
@@ -223,8 +279,14 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitFetcher);
 
-        assertThat(client.getTreatment(parent), is(equalTo(Treatments.ON)));
-        assertThat(client.getTreatment(dependent), is(equalTo(Treatments.OFF)));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(parent), is(equalTo(Treatments.ON)));
+                assertThat(client.getTreatment(dependent), is(equalTo(Treatments.OFF)));
+            }
+        });
     }
 
     @Test
@@ -240,7 +302,13 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitFetcher);
 
-        assertThat(client.getTreatment(dependent), is(equalTo(Treatments.ON)));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(dependent), is(equalTo(Treatments.ON)));
+            }
+        });
 
     }
 
@@ -259,16 +327,27 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(test), is(equalTo("on")));
-        assertThat(client.getTreatment(test, null), is(equalTo("on")));
-        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of()), is(equalTo("on")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo("on")));
+                assertThat(client.getTreatment(test, null), is(equalTo("on")));
+                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of()), is(equalTo("on")));
+            }
+        });
 
         client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("on")));
-        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 9)), is(equalTo("off")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
-        verify(splitFetcher, times(5)).fetch(test);
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("on")));
+                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 9)), is(equalTo("off")));
+
+            }
+        });
     }
 
     @Test
@@ -285,17 +364,26 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(test), is(equalTo("off")));
-        assertThat(client.getTreatment(test, null), is(equalTo("off")));
-        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of()), is(equalTo("off")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo("off")));
+                assertThat(client.getTreatment(test, null), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of()), is(equalTo("off")));
+            }
+        });
 
         client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
 
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
-        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("off")));
-        assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 0)), is(equalTo("on")));
-
-        verify(splitFetcher, times(5)).fetch(test);
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 0)), is(equalTo("on")));
+            }
+        });
     }
 
     @Test
@@ -312,18 +400,33 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(test), is(equalTo("off")));
-        assertThat(client.getTreatment(test, null), is(equalTo("off")));
-        assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo("off")));
+                assertThat(client.getTreatment(test, null), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
+            }
+        });
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(test, ImmutableMap.of("age", 10)), is(equalTo("off")));
-        assertThat(client.getTreatment(test, ImmutableMap.of("age", -20)), is(equalTo("on")));
-        assertThat(client.getTreatment(test, ImmutableMap.of("age", 20)), is(equalTo("off")));
-        assertThat(client.getTreatment(test, ImmutableMap.of("age", -21)), is(equalTo("off")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
-        verify(splitFetcher, times(7)).fetch(test);
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test, ImmutableMap.of("age", 10)), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("age", -20)), is(equalTo("on")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("age", 20)), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("age", -21)), is(equalTo("off")));
+            }
+        });
     }
 
 
@@ -340,20 +443,32 @@ public class SplitClientImplTest {
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
-        assertThat(client.getTreatment(test), is(equalTo("off")));
-        assertThat(client.getTreatment(test, null), is(equalTo("off")));
-        assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
+
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo("off")));
+                assertThat(client.getTreatment(test, null), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
+            }
+        });
 
         client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
 
-        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList())), is(equalTo("off")));
-        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList(""))), is(equalTo("off")));
-        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("talk"))), is(equalTo("off")));
-        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms"))), is(equalTo("on")));
-        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms", "video"))), is(equalTo("on")));
-        assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("video"))), is(equalTo("on")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList())), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList(""))), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("talk"))), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms"))), is(equalTo("on")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms", "video"))), is(equalTo("on")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("video"))), is(equalTo("on")));
+            }
+        });
 
-        verify(splitFetcher, times(9)).fetch(test);
+
     }
 
     @Test
@@ -368,25 +483,25 @@ public class SplitClientImplTest {
 
         List<ParsedCondition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
         ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
-
         SplitFetcher splitFetcher = mock(SplitFetcher.class);
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
-
         ImpressionListener impressionListener = mock(ImpressionListener.class);
-
-
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher, impressionListener);
-
         Map<String, Object> attributes = ImmutableMap.<String, Object>of("age", -20, "acv", "1000000");
-        assertThat(client.getTreatment(test, attributes), is(equalTo("on")));
 
-        ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
 
-        verify(impressionListener).log(impressionCaptor.capture());
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test, attributes), is(equalTo("on")));
+                ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
+                verify(impressionListener).log(impressionCaptor.capture());
+                assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo("foolabel")));
+                assertThat(impressionCaptor.getValue().attributes(), is(attributes));
+            }
+        });
 
-        assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo("foolabel")));
 
-        assertThat(impressionCaptor.getValue().attributes(), is(attributes));
     }
 
     @Test
@@ -398,10 +513,9 @@ public class SplitClientImplTest {
      * This test depends on the underlying hashing algorithm. I have
      * figured out that pato@split.io will be in bucket 10 for seed 123.
      * That is why the test has been set up this way.
-     *
+     * <p>
      * If the underlying hashing algorithm changes, say to murmur, then we will
      * have to update this test.
-     *
      */
     @Test
     public void not_in_split_if_10_percent_allocation() {
@@ -452,13 +566,21 @@ public class SplitClientImplTest {
         ImpressionListener impressionListener = mock(ImpressionListener.class);
 
         SplitClientImpl client = SplitClientImplFactory.get(key, splitFetcher, impressionListener);
-        assertThat(client.getTreatment(test), is(equalTo(expected_treatment_on_or_off)));
 
-        ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test), is(equalTo(expected_treatment_on_or_off)));
 
-        verify(impressionListener).log(impressionCaptor.capture());
+                ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
 
-        assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo(label)));
+                verify(impressionListener).log(impressionCaptor.capture());
+
+                assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo(label)));
+            }
+        });
+
+
     }
 
 
@@ -480,13 +602,25 @@ public class SplitClientImplTest {
 
         Key bad_key = new Key("adil", "aijaz");
         SplitClientImpl client = SplitClientImplFactory.get(bad_key, splitFetcher);
-        assertThat(client.getTreatment(test, Collections.<String, Object>emptyMap()), is(equalTo("off")));
+
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test, Collections.<String, Object>emptyMap()), is(equalTo("off")));
+            }
+        });
 
         Key good_key = new Key("aijaz", "adil");
         client = SplitClientImplFactory.get(good_key, splitFetcher);
-        assertThat(client.getTreatment(test, Collections.<String, Object>emptyMap()), is(equalTo("on")));
 
-        verify(splitFetcher, times(2)).fetch(test);
+
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test, Collections.<String, Object>emptyMap()), is(equalTo("on")));
+            }
+        });
+
     }
 
     @Test
@@ -512,13 +646,17 @@ public class SplitClientImplTest {
 
         Map<String, Object> attributes = ImmutableMap.<String, Object>of("age", -20, "acv", "1000000");
 
-        assertThat(client.getTreatment(test, attributes), is(equalTo("on")));
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                assertThat(client.getTreatment(test, attributes), is(equalTo("on")));
+                ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
 
-        ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
+                verify(impressionListener).log(impressionCaptor.capture());
 
-        verify(impressionListener).log(impressionCaptor.capture());
-
-        assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo("foolabel")));
-        assertThat(impressionCaptor.getValue().attributes(), is(equalTo(attributes)));
+                assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo("foolabel")));
+                assertThat(impressionCaptor.getValue().attributes(), is(equalTo(attributes)));
+            }
+        });
     }
 }

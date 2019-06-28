@@ -157,7 +157,7 @@ public class IntegrationTest {
         List<SplitView> splits = manager.splits();
 
         Impression i1 = impListener.getImpression(impListener.buildKey("CUSTOMER_ID", "FACUNDO_TEST", "off"));
-        Impression i2 = null;// TODO: Uncomment when merging IV2: impListener.getImpression(impListener.buildKey("CUSTOMER_ID", "NO_EXISTING_FEATURE", Treatments.CONTROL));
+        Impression i2 = impListener.getImpression(impListener.buildKey("CUSTOMER_ID", "NO_EXISTING_FEATURE", Treatments.CONTROL));
 
         for(int i=0; i<101; i++) {
             client.track("account", i);

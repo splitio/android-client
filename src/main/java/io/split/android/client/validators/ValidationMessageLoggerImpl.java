@@ -1,39 +1,56 @@
 package io.split.android.client.validators;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import io.split.android.client.utils.Logger;
 
 /**
  * Default implementation of ValidationMessageLogger interface
  */
-class ValidationMessageLoggerImpl implements ValidationMessageLogger {
+public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
 
-    private String mTag;
-
-    public ValidationMessageLoggerImpl() {
-        this(null);
-    }
-
-    public ValidationMessageLoggerImpl(String tag) {
-        this.mTag = tag != null ?  tag : "";
+    @Override
+    public void log(ValidationErrorInfo errorInfo, String tag) {
+        if(errorInfo.isError() && errorInfo.getErrorMessage() != null) {
+            e(errorInfo, tag);
+        } else {
+            w(errorInfo, tag);
+        }
     }
 
     @Override
-    public void e(String message) {
-        Logger.e(mTag + ": " + message);
+    public void e(ValidationErrorInfo errorInfo, String tag) {
+        e(tag, errorInfo.getErrorMessage());
     }
 
     @Override
-    public void w(String message) {
-        Logger.w(mTag + ": " + message);
+    public void w(ValidationErrorInfo errorInfo, String tag) {
+        List<String> warnings = new ArrayList<>(errorInfo.getWarnings().values());
+        for(String warning : warnings) {
+            w(tag, warning);
+        }
     }
 
-    @Override
-    public void e(String tag, String message) {
-        Logger.e(tag + ": " + message);
+    public void e(String message, String tag) {
+        logError(message, tag);
     }
 
-    @Override
-    public void w(String tag, String message) {
-        Logger.w(tag + ": " + message);
+    public void w(String message, String tag) {
+        logWarning(message, tag);
     }
+
+    private void logError(String message, String tag) {
+        Logger.e(sanitizeTag(tag) + ": " + message);
+    }
+
+    private void logWarning(String message, String tag) {
+        Logger.w(sanitizeTag(tag) + ": " + message);
+    }
+
+    private String sanitizeTag(String tag) {
+        return (tag != null ? tag : "");
+    }
+
 }

@@ -12,19 +12,6 @@ public interface EventValidator {
      * @param event: Event instance
      * @return true when the key is valid, false when it is not
      */
-    public boolean isValidEvent(Event event);
+    public ValidationErrorInfo validate(Event event, boolean validateTrafficType);
 
-    /**
-     * Checks if TrafficTypeName has uppercase letters
-     * @param event: An instance of Event class
-     * @return true when the key is valid, false when it is not
-     */
-    public boolean trafficTypeHasUppercaseLetters(Event event);
-
-    /**
-     * Overrides de default message logger
-     * @param logger: An implementation of ValidationMessageLogger
-     *
-     */
-    public void setMessageLogger(ValidationMessageLogger logger);
 }

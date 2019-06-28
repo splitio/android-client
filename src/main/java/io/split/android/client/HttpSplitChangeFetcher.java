@@ -33,19 +33,20 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
     private final Metrics _metrics;
     private final ISplitChangeCache _splitChangeCache;
 
-    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, IStorage storage) throws URISyntaxException {
-        return create(client, root, new Metrics.NoopMetrics(), storage);
+    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, ISplitChangeCache splitChangeCache) throws URISyntaxException {
+        return create(client, root, new Metrics.NoopMetrics(), splitChangeCache);
     }
 
-    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, Metrics metrics, IStorage storage) throws URISyntaxException {
-        return new HttpSplitChangeFetcher(client, new URIBuilder(root).setPath("/api/splitChanges").build(), metrics, storage);
+    public static HttpSplitChangeFetcher create(CloseableHttpClient client, URI root, Metrics metrics, ISplitChangeCache splitChangeCache) throws URISyntaxException {
+        return new HttpSplitChangeFetcher(client, new URIBuilder(root).setPath("/api/splitChanges").build(), metrics, splitChangeCache);
     }
 
-    private HttpSplitChangeFetcher(CloseableHttpClient client, URI uri, Metrics metrics, IStorage storage) {
+    private HttpSplitChangeFetcher(CloseableHttpClient client, URI uri, Metrics metrics, ISplitChangeCache splitChangeCache) {
         _client = client;
         _target = uri;
         _metrics = metrics;
-        _splitChangeCache = new SplitChangeCache(storage);
+        _splitChangeCache = splitChangeCache;
+
         checkNotNull(_target);
     }
 

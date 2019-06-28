@@ -12,27 +12,40 @@ public class ApiKeyValidatorTest {
 
     @Before
     public void setUp() {
-        validator = new ApiKeyValidatorImpl("KeyValidatorTests");
-        validator.setMessageLogger(Mockito.mock(ValidationMessageLogger.class));
+        validator = new ApiKeyValidatorImpl();
     }
 
     @Test
     public void testValidKey() {
-        Assert.assertTrue(validator.isValidApiKey("key1"));
+        ValidationErrorInfo errorInfo = validator.validate("key1");
+
+        Assert.assertNull(errorInfo);
     }
 
     @Test
     public void testNullKey() {
-        Assert.assertFalse(validator.isValidApiKey(null));
+        ValidationErrorInfo errorInfo = validator.validate(null);
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed a null api_key, the api_key must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testInvalidEmptyKey() {
-        Assert.assertFalse(validator.isValidApiKey(""));
+        ValidationErrorInfo errorInfo = validator.validate("");
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty api_key, api_key must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testInvalidAllSpacesKey() {
-        Assert.assertFalse(validator.isValidApiKey("   "));
+        ValidationErrorInfo errorInfo = validator.validate("    ");
+
+        Assert.assertNotNull(errorInfo);
+        Assert.assertTrue(errorInfo.isError());
+        Assert.assertEquals("you passed an empty api_key, api_key must be a non-empty string", errorInfo.getErrorMessage());
     }
 }

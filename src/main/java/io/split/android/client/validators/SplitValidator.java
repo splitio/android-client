@@ -10,28 +10,16 @@ public interface SplitValidator {
     /**
      * Checks that Split name follow validation rules
      * @param name: Split name
-     * @return true when name is valid, false when it is not
+     * @return ValidationErrorInfo with code and message when name is not valid, null when if valid
      */
-    public boolean isValidName(String name, String logTag);
+    public ValidationErrorInfo validateName(String name);
 
     /**
-     * Trims the name if it has leading/trailing whitespaces
-     * @param name: Split name
-     * @return true when name contains t , false when it is not
+     * Builds the message to log when split is not found
+     * @param splitName: Split name
+     * @return message to log
      */
-    public String trimName(String name, String logTag);
+    public String splitNotFoundMessage(String splitName);
 
-    /**
-     * Overrides de default message logger
-     * @param logger: An implementation of ValidationMessageLogger
-     *
-     */
-    public void setMessageLogger(ValidationMessageLogger logger);
 
-    /**
-     * Check if split name has leading or trailing spaces
-     * @param name: Split name
-     *
-     */
-    public boolean nameHasToBeTrimmed(String name);
 }

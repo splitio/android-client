@@ -117,19 +117,7 @@ public class SplitClientConfig {
         _eventFlushInterval = eventFlushInterval;
         _trafficType = trafficType;
 
-
-
-        Properties props = new Properties();
-        try {
-            props.load(this.getClass().getClassLoader().getResourceAsStream("version.properties"));
-        } catch (IOException e) {
-            throw new IllegalStateException("cannot find client version in classpath", e);
-        }
-        splitSdkVersion = "undefined";
-
-        if (props.getProperty("sdk.version") != null) {
-            splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
-        }
+        splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
         if (_debugEnabled){
             Logger.instance().debugLevel(true);

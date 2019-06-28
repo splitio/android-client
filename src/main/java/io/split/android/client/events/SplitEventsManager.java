@@ -24,7 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Created by sarrubia on 4/3/18.
  */
 
-public class SplitEventsManager implements Runnable {
+public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
     private final int QUEUE_CAPACITY = 10;
 

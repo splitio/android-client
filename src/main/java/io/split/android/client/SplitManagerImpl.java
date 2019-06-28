@@ -6,6 +6,9 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
+import io.split.android.client.validators.ValidationErrorInfo;
+import io.split.android.client.validators.ValidationMessageLogger;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -20,11 +23,13 @@ public class SplitManagerImpl implements SplitManager {
     private final SplitFetcher _splitFetcher;
     private boolean _isManagerDestroyed = false;
     private SplitValidator _splitValidator;
+    private ValidationMessageLogger _validationMessageLogger;
 
 
     public SplitManagerImpl(SplitFetcher splitFetcher) {
+        _validationMessageLogger = new ValidationMessageLoggerImpl();
         _splitFetcher  = splitFetcher;
-        _splitValidator = new SplitValidatorImpl();
+        _splitValidator = new SplitValidatorImpl(splitFetcher);
     }
 
     @Override
@@ -47,18 +52,28 @@ public class SplitManagerImpl implements SplitManager {
     public SplitView split(String featureName) {
 
         final String validationTag = "split";
+        String splitName = featureName;
 
         if(_isManagerDestroyed){
             Logger.e("Manager has already been destroyed - no calls possible");
             return null;
         }
 
-        if (!_splitValidator.isValidName(featureName, validationTag)) {
-            return null;
+        ValidationErrorInfo errorInfo = _splitValidator.validateName(featureName);
+        if (errorInfo != null) {
+            _validationMessageLogger.log(errorInfo, validationTag);
+            if(errorInfo.isError()) {
+                return null;
+            }
+            splitName = featureName.trim();
         }
 
-        ParsedSplit parsedSplit = _splitFetcher.fetch(_splitValidator.trimName(featureName, validationTag));
-        return parsedSplit == null ? null : toSplitView(parsedSplit);
+        ParsedSplit parsedSplit = _splitFetcher.fetch(splitName);
+        if(parsedSplit == null) {
+            _validationMessageLogger.w(_splitValidator.splitNotFoundMessage(splitName), validationTag);
+            return null;
+        }
+        return toSplitView(parsedSplit);
     }
 
     @Override
