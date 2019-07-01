@@ -43,7 +43,6 @@ public class HttpImpressionsSender implements ImpressionsSender {
 
         synchronized (this) {
             Logger.d("Posting %d Split impressions", impressions.size());
-                //entity.setContentType("application/json");
             return post(Json.toJson(impressions));
         }
     }
