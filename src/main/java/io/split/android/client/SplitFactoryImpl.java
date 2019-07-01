@@ -53,6 +53,7 @@ import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
+import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.track.TrackClientConfig;
@@ -172,7 +173,14 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         }
 
+        SplitHttpHeadersBuilder headersBuilder  = new SplitHttpHeadersBuilder();
+        headersBuilder.setHostIp(config.ip());
+        headersBuilder.setHostname(config.hostname());
+        headersBuilder.setClientVersion(SplitClientConfig.splitSdkVersion);
+        headersBuilder.setApiToken(apiToken);
+
         final HttpClient httpClient = new HttpClientImpl();
+        httpClient.addHeaders(headersBuilder.build());
 
         final CloseableHttpClient httpclient = httpClientbuilder.build();
 

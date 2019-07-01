@@ -14,6 +14,12 @@ public class SplitHttpHeadersBuilder {
 
     public SplitHttpHeadersBuilder() {
         mHeaders = new HashMap<>();
+        addDefaultHeaders();
+    }
+
+    private void addDefaultHeaders() {
+        mHeaders.put("Content-Type", "application/json");
+        mHeaders.put("Accept", "application/json");
     }
 
     public SplitHttpHeadersBuilder setApiToken(String apiToken) {
