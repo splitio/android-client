@@ -202,7 +202,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Segments
         IStorage mySegmentsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
-        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget, mySegmentsStorage);
+        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpClient, rootTarget, mySegmentsStorage);
         final RefreshableMySegmentsFetcherProviderImpl segmentFetcher = new RefreshableMySegmentsFetcherProviderImpl(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
