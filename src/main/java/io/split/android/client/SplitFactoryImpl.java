@@ -189,7 +189,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // TODO: 11/23/17  Add MetricsCache
         // Metrics
-        HttpMetrics httpMetrics = HttpMetrics.create(httpclient, eventsRootTarget);
+        HttpMetrics httpMetrics = HttpMetrics.create(httpClient, eventsRootTarget);
         final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
 
         _eventsManager = new SplitEventsManager(config);

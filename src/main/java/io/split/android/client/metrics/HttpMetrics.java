@@ -4,6 +4,9 @@ import com.google.common.collect.Lists;
 
 import io.split.android.client.dtos.Counter;
 import io.split.android.client.dtos.Latency;
+import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpResponse;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.engine.metrics.Metrics;
@@ -23,16 +26,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HttpMetrics implements Metrics, DTOMetrics {
 
-    private final CloseableHttpClient _client;
+    private final HttpClient _client;
     private final URI _target;
 
 
-    public static HttpMetrics create(CloseableHttpClient client, URI root) throws URISyntaxException {
+    public static HttpMetrics create(HttpClient client, URI root) throws URISyntaxException {
         return new HttpMetrics(client, new URIBuilder(root).build());
     }
 
 
-    public HttpMetrics(CloseableHttpClient client, URI uri) {
+    public HttpMetrics(HttpClient client, URI uri) {
         _client = client;
         _target = uri;
         checkNotNull(_client);
@@ -63,31 +66,19 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         } catch (Throwable t) {
             Logger.e(t, "Exception when posting metric %s", dto);
         }
-
     }
 
     private void post(URI uri, Object dto) {
 
-        CloseableHttpResponse response = null;
-
         try {
-            StringEntity entity = Utils.toJsonEntity(dto);
+            String jsonMetrics = Json.toJson(dto);
+            HttpResponse response = _client.request(uri, HttpClient.HTTP_POST, jsonMetrics).execute();
 
-            HttpPost request = new HttpPost(uri);
-            request.setEntity(entity);
-
-            response = _client.execute(request);
-
-            int status = response.getStatusLine().getStatusCode();
-
-            if (status < 200 || status >= 300) {
-                Logger.w("Response status was: %d", status);
+            if (!response.isSuccess()) {
+                Logger.w("Response status was: %d", response.getHttpStatus());
             }
-
         } catch (Throwable t) {
             Logger.e(t,"Exception when posting metrics");
-        } finally {
-            Utils.forceClose(response);
         }
 
     }
