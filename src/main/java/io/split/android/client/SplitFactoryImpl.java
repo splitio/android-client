@@ -115,64 +115,6 @@ public class SplitFactoryImpl implements SplitFactory {
         _factoryMonitor.add(apiToken);
         _apiKey = apiToken;
 
-
-        SSLContext sslContext = null;
-        try {
-            sslContext = SSLContexts.custom()
-                    .useTLS()
-                    .build();
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new RuntimeException("Unable to create support for secure connection.");
-        }
-
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-                sslContext,
-                new String[]{"TLSv1.1", "TLSv1.2"},
-                null,
-                SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-
-        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
-                .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                .register("https", sslsf)
-                .build();
-
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(config.connectionTimeout())
-                .setSocketTimeout(config.readTimeout())
-                .build();
-
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(registry);
-        cm.setMaxTotal(20);
-        cm.setDefaultMaxPerRoute(20);
-
-        HttpClientBuilder httpClientbuilder = HttpClients.custom()
-                .setConnectionManager(cm)
-                .setDefaultRequestConfig(requestConfig)
-                .setSSLSocketFactory(sslsf)
-                .addInterceptorLast(AddSplitHeadersFilter.instance(apiToken, config.hostname(), config.ip()))
-                .addInterceptorLast(new GzipEncoderRequestInterceptor())
-                .addInterceptorLast(new GzipDecoderResponseInterceptor());
-
-
-
-
-        // Set up proxy is it exists
-        if (config.proxy() != null) {
-            Logger.i("Initializing Split SDK with proxy settings");
-            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(config.proxy());
-            httpClientbuilder.setRoutePlanner(routePlanner);
-
-            if (config.proxyUsername() != null && config.proxyPassword() != null) {
-                Logger.i("Proxy setup using credentials");
-                CredentialsProvider credsProvider = new BasicCredentialsProvider();
-                AuthScope siteScope = new AuthScope(config.proxy().getHostName(), config.proxy().getPort());
-                Credentials siteCreds = new UsernamePasswordCredentials(config.proxyUsername(), config.proxyPassword());
-                credsProvider.setCredentials(siteScope, siteCreds);
-
-                httpClientbuilder.setDefaultCredentialsProvider(credsProvider);
-            }
-        }
-
         SplitHttpHeadersBuilder headersBuilder  = new SplitHttpHeadersBuilder();
         headersBuilder.setHostIp(config.ip());
         headersBuilder.setHostname(config.hostname());
@@ -181,8 +123,6 @@ public class SplitFactoryImpl implements SplitFactory {
 
         final HttpClient httpClient = new HttpClientImpl();
         httpClient.addHeaders(headersBuilder.build());
-
-        final CloseableHttpClient httpclient = httpClientbuilder.build();
 
         URI rootTarget = URI.create(config.endpoint());
         URI eventsRootTarget = URI.create(config.eventsEndpoint());
@@ -266,12 +206,12 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of metrics 2");
                     impressionListener.close();
                     Logger.i("Successful shutdown of ImpressionListener");
-                    httpclient.close();
+                    httpClient.close();
                     Logger.i("Successful shutdown of httpclient");
                     _manager.destroy();
                     Logger.i("Successful shutdown of manager");
 
-                } catch (IOException e) {
+                } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
                     isTerminated = true;

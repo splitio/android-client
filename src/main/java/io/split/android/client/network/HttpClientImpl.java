@@ -36,4 +36,9 @@ public class HttpClientImpl implements HttpClient {
             setHeader(header.getKey(), header.getValue());
         }
     }
+
+    @Override
+    public void close() {
+        // TODO: Cleanup code here
+    }
 }
