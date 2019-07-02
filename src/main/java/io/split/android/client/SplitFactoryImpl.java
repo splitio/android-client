@@ -2,36 +2,14 @@ package io.split.android.client;
 
 import android.content.Context;
 
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContexts;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import javax.net.ssl.SSLContext;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.cache.ISplitCache;
@@ -45,9 +23,6 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
-import io.split.android.client.interceptors.AddSplitHeadersFilter;
-import io.split.android.client.interceptors.GzipDecoderResponseInterceptor;
-import io.split.android.client.interceptors.GzipEncoderRequestInterceptor;
 import io.split.android.client.metrics.CachedMetrics;
 import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;

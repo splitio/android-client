@@ -1,12 +1,5 @@
 package io.split.android.client;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -15,6 +8,7 @@ import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpResponse;
+import io.split.android.client.network.URIBuilder;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
@@ -40,7 +34,7 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
     }
 
     public static HttpSplitChangeFetcher create(HttpClient client, URI root, Metrics metrics, ISplitChangeCache splitChangeCache) throws URISyntaxException {
-        return new HttpSplitChangeFetcher(client, new URIBuilder(root).setPath("/api/splitChanges").build(), metrics, splitChangeCache);
+        return new HttpSplitChangeFetcher(client, new URIBuilder(root, "/api/splitChanges").build(), metrics, splitChangeCache);
     }
 
     private HttpSplitChangeFetcher(HttpClient client, URI uri, Metrics metrics, ISplitChangeCache splitChangeCache) {

@@ -3,7 +3,6 @@ package io.split.android.client;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
-import org.apache.http.HttpHost;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -47,11 +46,6 @@ public class SplitClientConfig {
     private final int _eventsMaxSentAttemps = 3;
     private final int _maxQueueSizeInBytes = 5242880; // 5mb
 
-    // Proxy configs
-    private final HttpHost _proxy;
-    private final String _proxyUsername;
-    private final String _proxyPassword;
-
     // Validation settings
     private static final int _maximumKeyLength = 250;
     private static final String _trackEventNamePattern = "^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$";
@@ -81,9 +75,6 @@ public class SplitClientConfig {
                               boolean labelsEnabled,
                               ImpressionListener impressionListener,
                               int waitBeforeShutdown,
-                              HttpHost proxy,
-                              String proxyUsername,
-                              String proxyPassword,
                               String hostname,
                               String ip,
                               int eventsQueueSize,
@@ -106,9 +97,6 @@ public class SplitClientConfig {
         _impressionListener = impressionListener;
         _waitBeforeShutdown = waitBeforeShutdown;
         _impressionsChunkSize = impressionsChunkSize;
-        _proxy = proxy;
-        _proxyUsername = proxyUsername;
-        _proxyPassword = proxyPassword;
         _hostname = hostname;
         _ip = ip;
 
@@ -225,18 +213,6 @@ public class SplitClientConfig {
         return _waitBeforeShutdown;
     }
 
-    public HttpHost proxy() {
-        return _proxy;
-    }
-
-    public String proxyUsername() {
-        return _proxyUsername;
-    }
-
-    public String proxyPassword() {
-        return _proxyPassword;
-    }
-
     public String hostname() {
         return _hostname;
     }
@@ -337,10 +313,6 @@ public class SplitClientConfig {
         private boolean _labelsEnabled = true;
         private ImpressionListener _impressionListener;
         private int _waitBeforeShutdown = 5000;
-        private String _proxyHost = "localhost";
-        private int _proxyPort = -1;
-        private String _proxyUsername;
-        private String _proxyPassword;
         private long _impressionsChunkSize = 2 * 1024; //2KB default size
 
         //.track configuration
@@ -610,50 +582,6 @@ public class SplitClientConfig {
         }
 
         /**
-         * The host location of the proxy. Default is localhost.
-         *
-         * @param proxyHost location of the proxy
-         * @return this builder
-         */
-        public Builder proxyHost(String proxyHost) {
-            _proxyHost = proxyHost;
-            return this;
-        }
-
-        /**
-         * The port of the proxy. Default is -1.
-         *
-         * @param proxyPort port for the proxy
-         * @return this builder
-         */
-        public Builder proxyPort(int proxyPort) {
-            _proxyPort = proxyPort;
-            return this;
-        }
-
-        /**
-         * Set the username for authentication against the proxy (if proxy settings are enabled). (Optional).
-         *
-         * @param proxyUsername
-         * @return this builder
-         */
-        public Builder proxyUsername(String proxyUsername) {
-            _proxyUsername = proxyUsername;
-            return this;
-        }
-
-        /**
-         * Set the password for authentication against the proxy (if proxy settings are enabled). (Optional).
-         *
-         * @param proxyPassword
-         * @return this builder
-         */
-        public Builder proxyPassword(String proxyPassword) {
-            _proxyPassword = proxyPassword;
-            return this;
-        }
-
-        /**
          * The host name for the current device.
          *
          * @param hostname
@@ -674,20 +602,6 @@ public class SplitClientConfig {
             _ip = ip;
             return this;
         }
-
-        /**
-         * The current proxy host.
-         *
-         * @return an HttpHost representing current proxy
-         */
-        HttpHost proxy() {
-            if (_proxyPort != -1) {
-                return new HttpHost(_proxyHost, _proxyPort);
-            }
-            // Default is no proxy.
-            return null;
-        }
-
 
         public SplitClientConfig build() {
             if (_featuresRefreshRate < 30 ) {
@@ -754,9 +668,6 @@ public class SplitClientConfig {
                     _labelsEnabled,
                     _impressionListener,
                     _waitBeforeShutdown,
-                    proxy(),
-                    _proxyUsername,
-                    _proxyPassword,
                     _hostname,
                     _ip,
                     _eventsQueueSize,

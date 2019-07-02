@@ -9,11 +9,9 @@ import io.split.android.client.storage.FileStorage;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.fake.ExecutorServiceMock;
+import io.split.android.fake.HttpClientMock;
 import io.split.android.fake.SplitCacheStub;
 
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,9 +49,8 @@ public class TrackClientImplTest {
         config.setFlushIntervalMillis(100000);
         config.setWaitBeforeShutdown(100000);
         config.setMaxEventsPerPost(10000);
-        CloseableHttpClient client = Mockito.mock(CloseableHttpClient.class);
         TrackClient eventClient = TrackClientImpl.create(
-                config, client,
+                config, new HttpClientMock(),
                 URI.create("https://kubernetesturl.com/split"),
                 new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 
@@ -83,9 +80,8 @@ public class TrackClientImplTest {
         config.setFlushIntervalMillis(999999);
         config.setWaitBeforeShutdown(100000);
         config.setMaxEventsPerPost(2);
-        CloseableHttpClient client = Mockito.mock(CloseableHttpClient.class);
         TrackClient eventClient = TrackClientImpl.create(
-                config, client,
+                config, new HttpClientMock(),
                 URI.create("https://kubernetesturl.com/split"),
                 new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 
@@ -119,9 +115,8 @@ public class TrackClientImplTest {
         config.setFlushIntervalMillis(999999);
         config.setWaitBeforeShutdown(100000);
         config.setMaxEventsPerPost(2);
-        CloseableHttpClient client = Mockito.mock(CloseableHttpClient.class);
         TrackClient eventClient = TrackClientImpl.create(
-                config, client,
+                config, new HttpClientMock(),
                 URI.create("https://kubernetesturl.com/split"),
                 new TrackStorageManager(new FileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 

@@ -6,16 +6,10 @@ import io.split.android.client.dtos.Counter;
 import io.split.android.client.dtos.Latency;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpResponse;
+import io.split.android.client.network.URIBuilder;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.Utils;
 import io.split.android.engine.metrics.Metrics;
-
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
 
 
 
@@ -31,7 +25,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
 
 
     public static HttpMetrics create(HttpClient client, URI root) throws URISyntaxException {
-        return new HttpMetrics(client, new URIBuilder(root).build());
+        return new HttpMetrics(client, root);
     }
 
 
@@ -51,7 +45,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         }
 
         try {
-            post(new URIBuilder(_target).setPath("/api/metrics/time").build(), dto);
+            post(new URIBuilder(_target, "/api/metrics/time").build(), dto);
         } catch (Throwable t) {
             Logger.e(t, "Exception when posting metric %s", dto);
         }
@@ -62,7 +56,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
     public void count(Counter dto) {
 
         try {
-            post(new URIBuilder(_target).setPath("/api/metrics/counter").build(), dto);
+            post(new URIBuilder(_target, "/api/metrics/counter").build(), dto);
         } catch (Throwable t) {
             Logger.e(t, "Exception when posting metric %s", dto);
         }

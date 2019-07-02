@@ -4,9 +4,8 @@ import android.util.Log;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import org.apache.http.impl.client.CloseableHttpClient;
-
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +20,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 
@@ -55,7 +55,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
         if (impressionsSender != null) {
             _impressionsSender = impressionsSender;
         } else {
-            _impressionsSender = new HttpImpressionsSender(_client, config.eventsEndpoint(), _storageManager);
+            _impressionsSender = new HttpImpressionsSender(_client, new URI(config.eventsEndpoint()), _storageManager);
         }
 
     }
@@ -165,7 +165,9 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
     }
 
     private void accumulateChunkSize(KeyImpression keyImpression) {
-        long size = Utils.toJsonEntity(keyImpression).getContentLength();
-        _currentChunkSize += size;
+        String data = Json.toJson(keyImpression);
+        if(data != null) {
+            _currentChunkSize += data.getBytes().length;
+        }
     }
 }

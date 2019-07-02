@@ -5,9 +5,6 @@ import android.support.annotation.VisibleForTesting;
 
 import com.google.common.collect.Lists;
 
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,17 +26,13 @@ import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpResponse;
+import io.split.android.client.network.URIBuilder;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
-import io.split.android.client.utils.GenericClientUtil;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
-import io.split.android.client.validators.EventValidator;
-import io.split.android.client.validators.EventValidatorImpl;
-import io.split.android.client.validators.KeyValidatorImpl;
-import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.client.validators.ValidationConfig;
@@ -108,7 +101,7 @@ public class TrackClientImpl implements TrackClient {
 
         _httpclient = httpclient;
 
-        _eventsTarget = new URIBuilder(eventsRootTarget).setPath("/api/events/bulk").build();
+        _eventsTarget = new URIBuilder(eventsRootTarget, "/api/events/bulk").build();
 
         _eventQueue = eventQueue;
         _config = config;

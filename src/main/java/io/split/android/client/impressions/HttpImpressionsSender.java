@@ -1,10 +1,5 @@
 package io.split.android.client.impressions;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -14,6 +9,7 @@ import java.util.List;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpResponse;
+import io.split.android.client.network.URIBuilder;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
@@ -24,9 +20,9 @@ public class HttpImpressionsSender implements ImpressionsSender {
     private URI _eventsEndpoint;
     private ImpressionsStorageManager _storageManager;
 
-    public HttpImpressionsSender(HttpClient client, String eventsEndpoint, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
+    public HttpImpressionsSender(HttpClient client, URI eventsEndpoint, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
         _client = client;
-        _eventsEndpoint = new URIBuilder(eventsEndpoint).setPath("/api/testImpressions/bulk").build();
+        _eventsEndpoint = new URIBuilder(eventsEndpoint, "/api/testImpressions/bulk").build();
         _storageManager = impressionsStorageManager;
     }
 

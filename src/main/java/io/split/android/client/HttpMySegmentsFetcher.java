@@ -2,13 +2,6 @@ package io.split.android.client;
 
 import com.google.gson.reflect.TypeToken;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
-
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -20,6 +13,7 @@ import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpResponse;
+import io.split.android.client.network.URIBuilder;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
@@ -53,7 +47,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
     }
 
     public static HttpMySegmentsFetcher create(HttpClient client, URI root, Metrics metrics, IStorage storage) throws URISyntaxException {
-        return new HttpMySegmentsFetcher(client, new URIBuilder(root).setPath("/api/mySegments").build(), metrics, storage);
+        return new HttpMySegmentsFetcher(client, new URIBuilder(root, "/api/mySegments").build(), metrics, storage);
     }
 
     @Override
@@ -75,7 +69,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
 
         try {
             String path = String.format("%s/%s", _target.getPath(), matchingKey);
-            URI uri = new URIBuilder(_target).setPath(path).build();
+            URI uri = new URIBuilder(_target, path).build();
             HttpResponse response = _client.request(uri, HttpClient.HTTP_GET).execute();
 
             //TODO: Reason

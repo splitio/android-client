@@ -1,10 +1,9 @@
-package io.split.android;
+package io.split.android.http;
 
 import com.google.gson.reflect.TypeToken;
 
 import junit.framework.Assert;
 
-import org.apache.http.client.utils.URIBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

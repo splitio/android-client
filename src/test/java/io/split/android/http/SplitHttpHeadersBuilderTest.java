@@ -1,8 +1,7 @@
-package io.split.android;
+package io.split.android.http;
 
 import junit.framework.Assert;
 
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

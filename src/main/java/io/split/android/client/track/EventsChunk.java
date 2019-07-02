@@ -1,12 +1,9 @@
 package io.split.android.client.track;
 
-import org.apache.http.entity.StringEntity;
-
 import java.util.List;
 import java.util.UUID;
 
 import io.split.android.client.dtos.Event;
-import io.split.android.client.utils.Utils;
 
 public class EventsChunk {
     private String id;
@@ -34,7 +31,4 @@ public class EventsChunk {
         attempt++;
     }
 
-    public StringEntity asJSONEntity() {
-        return Utils.toJsonEntity(events);
-    }
 }
