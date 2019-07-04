@@ -45,7 +45,7 @@ public class HttpRequestImpl implements HttpRequest {
         return buildResponse(connection);
     }
 
-    private HttpResponse postRequest() throws IOException, ProtocolException {
+    private HttpResponse postRequest() throws IOException {
 
         HttpResponse response;
         URL url = mUri.toURL();
@@ -55,14 +55,20 @@ public class HttpRequestImpl implements HttpRequest {
         connection.setRequestMethod(mHttpMethod);
         if(mBody != null && !mBody.isEmpty()) {
             connection.setDoOutput(true);
-            OutputStream os = connection.getOutputStream();
-            os.write(mBody.getBytes());
-            os.flush();
-            os.close();
+            OutputStream bodyStream = null;
+            try {
+                bodyStream = connection.getOutputStream();
+                bodyStream.write(mBody.getBytes());
+                bodyStream.flush();
+            } catch (IOException e) {
+                throw (e);
+            } finally {
+                if(bodyStream != null) {
+                    bodyStream.close();
+                }
+            }
         }
-
         return buildResponse(connection);
-
     }
 
     private void addHeaders(HttpURLConnection connection) {
