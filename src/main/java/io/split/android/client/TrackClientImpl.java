@@ -101,7 +101,7 @@ public class TrackClientImpl implements TrackClient {
 
         _httpclient = httpclient;
 
-        _eventsTarget = new URIBuilder(eventsRootTarget, "/api/events/bulk").build();
+        _eventsTarget = new URIBuilder(eventsRootTarget, "/events/bulk").build();
 
         _eventQueue = eventQueue;
         _config = config;

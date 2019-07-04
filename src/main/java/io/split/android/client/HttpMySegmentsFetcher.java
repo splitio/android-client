@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import android.util.Log;
+
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -47,7 +49,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
     }
 
     public static HttpMySegmentsFetcher create(HttpClient client, URI root, Metrics metrics, IStorage storage) throws URISyntaxException {
-        return new HttpMySegmentsFetcher(client, new URIBuilder(root, "/api/mySegments").build(), metrics, storage);
+        return new HttpMySegmentsFetcher(client, new URIBuilder(root, "/mySegments").build(), metrics, storage);
     }
 
     @Override
@@ -68,12 +70,9 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
         }
 
         try {
-            String path = String.format("%s/%s", _target.getPath(), matchingKey);
-            URI uri = new URIBuilder(_target, path).build();
+            URI uri = new URIBuilder(_target, matchingKey).build();
             HttpResponse response = _client.request(uri, HttpClient.HTTP_GET).execute();
 
-            //TODO: Reason
-            String reason = "";
             int statusCode = response.getHttpStatus();
             if (!response.isSuccess()) {
                 Logger.e(String.format("Response status was: %d", statusCode));

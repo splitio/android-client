@@ -34,7 +34,7 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
     }
 
     public static HttpSplitChangeFetcher create(HttpClient client, URI root, Metrics metrics, ISplitChangeCache splitChangeCache) throws URISyntaxException {
-        return new HttpSplitChangeFetcher(client, new URIBuilder(root, "/api/splitChanges").build(), metrics, splitChangeCache);
+        return new HttpSplitChangeFetcher(client, new URIBuilder(root, "/splitChanges").build(), metrics, splitChangeCache);
     }
 
     private HttpSplitChangeFetcher(HttpClient client, URI uri, Metrics metrics, ISplitChangeCache splitChangeCache) {
@@ -70,8 +70,6 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
 
             HttpResponse response = _client.request(uri, HttpClient.HTTP_GET).execute();
 
-            //TODO: Reason
-            String reason = "";
             if (!response.isSuccess()) {
                 _metrics.count(PREFIX + ".status." + response.getHttpStatus(), 1);
                 throw new IllegalStateException("Could not retrieve splitChanges; http return code " + response.getHttpStatus());

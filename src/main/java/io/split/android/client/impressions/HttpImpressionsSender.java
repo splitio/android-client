@@ -22,7 +22,7 @@ public class HttpImpressionsSender implements ImpressionsSender {
 
     public HttpImpressionsSender(HttpClient client, URI eventsEndpoint, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
         _client = client;
-        _eventsEndpoint = new URIBuilder(eventsEndpoint, "/api/testImpressions/bulk").build();
+        _eventsEndpoint = new URIBuilder(eventsEndpoint, "/testImpressions/bulk").build();
         _storageManager = impressionsStorageManager;
     }
 

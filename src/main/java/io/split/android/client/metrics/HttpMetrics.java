@@ -45,7 +45,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
         }
 
         try {
-            post(new URIBuilder(_target, "/api/metrics/time").build(), dto);
+            post(new URIBuilder(_target, "/metrics/time").build(), dto);
         } catch (Throwable t) {
             Logger.e(t, "Exception when posting metric %s", dto);
         }
@@ -56,7 +56,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
     public void count(Counter dto) {
 
         try {
-            post(new URIBuilder(_target, "/api/metrics/counter").build(), dto);
+            post(new URIBuilder(_target, "/metrics/counter").build(), dto);
         } catch (Throwable t) {
             Logger.e(t, "Exception when posting metric %s", dto);
         }

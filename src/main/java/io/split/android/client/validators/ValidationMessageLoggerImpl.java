@@ -1,7 +1,6 @@
 package io.split.android.client.validators;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
