@@ -32,6 +32,36 @@ public class URIBuilderTest {
     }
 
     @Test
+    public void rootWithPathAndPathUrl_NoExcedentSlash() throws URISyntaxException {
+
+        URI root = new URI("https://api.split.io/somepath");
+        String path = "internal/api/v2/workspaces";
+        URI uri = new URIBuilder(root, path).build();
+
+        Assert.assertEquals("https://api.split.io/somepath/internal/api/v2/workspaces", uri.toString());
+    }
+
+    @Test
+    public void rootWithPathAndPathUrl_OneExcedentSlash() throws URISyntaxException {
+
+        URI root = new URI("https://api.split.io/somepath");
+        String path = "/internal/api/v2/workspaces";
+        URI uri = new URIBuilder(root, path).build();
+
+        Assert.assertEquals("https://api.split.io/somepath/internal/api/v2/workspaces", uri.toString());
+    }
+
+    @Test
+    public void rootWithPathAndPathUrl_TwoExcedentSlash() throws URISyntaxException {
+
+        URI root = new URI("https://api.split.io/somepath/");
+        String path = "/internal/api/v2/workspaces";
+        URI uri = new URIBuilder(root, path).build();
+
+        Assert.assertEquals("https://api.split.io/somepath/internal/api/v2/workspaces", uri.toString());
+    }
+
+    @Test
     public void basicAddParameter() throws URISyntaxException {
 
         URI root = new URI("https://api.split.io");
@@ -52,22 +82,6 @@ public class URIBuilderTest {
                 .build();
 
         Assert.assertEquals("https://api.split.io/internal/api/v2/workspaces?p1=v1&p2=v2", uri.toString());
-    }
-
-    @Test
-    public void malformedUrl() throws URISyntaxException {
-
-        URI root = new URI("https:/api.split.io");
-        boolean exceptionRaised = false;
-
-        URI uri = null;
-        try {
-            uri = new URIBuilder(root, "!!!!!!!::::::-------------:+23453I1`1@!#").build();
-        } catch (URISyntaxException e) {
-            exceptionRaised = true;
-        }
-
-        Assert.assertTrue(exceptionRaised);
     }
 
 }

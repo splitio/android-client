@@ -63,7 +63,7 @@ public class TrackClientImplTest {
 
         eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
 
-        latch.await(5, TimeUnit.SECONDS);
+        latch.await(15, TimeUnit.SECONDS);
 
         Assert.assertEquals(0, prevSubmitCount);
         Assert.assertEquals(1, ex.getSubmitCount());

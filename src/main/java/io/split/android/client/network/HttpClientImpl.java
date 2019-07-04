@@ -19,7 +19,7 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpRequest request(URI uri, String requestMethod, String body) {
-        return new HttpRequestImpl(uri.toString(), requestMethod, body, mHeaders);
+        return new HttpRequestImpl(uri, requestMethod, body, mHeaders);
     }
 
     @Override

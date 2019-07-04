@@ -8,18 +8,19 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 
 public class HttpRequestImpl implements HttpRequest {
 
-    String mUrl;
+    URI mUri;
     String mBody;
     String mHttpMethod;
     Map<String, String> mHeaders;
 
-    HttpRequestImpl(String url, String httpMethod, String body, Map<String, String> headers) {
-        mUrl = url;
+    HttpRequestImpl(URI uri, String httpMethod, String body, Map<String, String> headers) {
+        mUri = uri;
         mHttpMethod = httpMethod;
         mBody = body;
         mHeaders = headers;
@@ -36,19 +37,20 @@ public class HttpRequestImpl implements HttpRequest {
     private HttpResponse getRequest() throws IOException, ProtocolException {
         HttpResponse response = null;
 
-        URL obj = new URL(mUrl);
+        URL url = mUri.toURL();
 
-        HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(mHttpMethod);
         addHeaders(connection);
         return buildResponse(connection);
     }
 
     private HttpResponse postRequest() throws IOException, ProtocolException {
-        HttpResponse response;
 
-        URL obj = new URL(mUrl);
-        HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
+        HttpResponse response;
+        URL url = mUri.toURL();
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         addHeaders(connection);
         connection.setRequestMethod(mHttpMethod);
         if(mBody != null && !mBody.isEmpty()) {

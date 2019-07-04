@@ -65,8 +65,6 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
             throw new IllegalStateException("Problem fetching splitChanges: Source not reachable");
         }
 
-
-
         try {
             URI uri = new URIBuilder(_target).addParameter(SINCE, "" + since).build();
 

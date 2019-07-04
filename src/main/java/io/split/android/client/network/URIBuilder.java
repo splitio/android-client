@@ -14,7 +14,16 @@ public class URIBuilder {
 
     public URIBuilder(URI rootURI, String path) {
         mRootURI = rootURI;
-        mPath = path;
+        String rootPath = mRootURI.getPath();
+        if(path != null && rootPath != null) {
+            mPath = String.format("%s/%s", rootPath, path);
+            mPath = mPath.replace("///", "/");
+            mPath = mPath.replace("//", "/");
+        } else if (rootPath != null) {
+            mPath = rootPath;
+        } else {
+            mPath = path;
+        }
         mParams = new HashMap<>();
     }
 
