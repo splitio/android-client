@@ -1,18 +1,22 @@
 package io.split.android.client.network;
 
 import android.net.Uri;
+import android.support.annotation.NonNull;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class URIBuilder {
     private URI mRootURI;
     private String mPath;
     private Map<String, String> mParams;
 
-    public URIBuilder(URI rootURI, String path) {
+    public URIBuilder(@NonNull URI rootURI, String path) {
+        checkNotNull(rootURI);
         mRootURI = rootURI;
         String rootPath = mRootURI.getPath();
         if(path != null && rootPath != null) {
@@ -27,7 +31,7 @@ public class URIBuilder {
         mParams = new HashMap<>();
     }
 
-    public URIBuilder(URI rootURI) {
+    public URIBuilder(@NonNull URI rootURI) {
         this(rootURI, null);
     }
 
