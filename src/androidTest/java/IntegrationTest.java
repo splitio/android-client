@@ -77,14 +77,14 @@ public class IntegrationTest {
 
             @Override
             public MockResponse dispatch (RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/api/mySegments")) {
+                if (request.getPath().contains("/mySegments")) {
                     return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
-                } else if (request.getPath().contains("/api/splitChanges")) {
+                } else if (request.getPath().contains("/splitChanges")) {
                     int r = mCurSplitReqId;
                     mCurSplitReqId++;
                     return new MockResponse().setResponseCode(200)
                             .setBody(splitsPerRequest(r));
-                } else if (request.getPath().contains("/api/events/bulk")) {
+                } else if (request.getPath().contains("/events/bulk")) {
                     String trackRequestBody = request.getBody().readUtf8();
                     mTrackEndpointHits.add(trackRequestBody);
                     if(mLatchTrack != null) {
