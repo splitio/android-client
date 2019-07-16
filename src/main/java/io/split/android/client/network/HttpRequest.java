@@ -4,5 +4,5 @@ import java.io.IOException;
 import java.net.ProtocolException;
 
 public interface HttpRequest {
-    HttpResponse execute() throws IOException, ProtocolException;
+    HttpResponse execute() throws HttpException;
 }

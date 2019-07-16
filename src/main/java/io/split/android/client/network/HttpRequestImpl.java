@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URL;
@@ -27,22 +28,36 @@ public class HttpRequestImpl implements HttpRequest {
     }
 
     @Override
-    public HttpResponse execute() throws IOException, ProtocolException {
+    public HttpResponse execute() throws HttpException {
         if(mHttpMethod.equals(HttpMethod.GET)) {
             return getRequest();
         }
-        return postRequest();
+        try {
+            return postRequest();
+        } catch (IOException e) {
+            throw new HttpException("An IO exception has ocurred during post request: " + e.getLocalizedMessage());
+        }
     }
 
-    private HttpResponse getRequest() throws IOException, ProtocolException {
+    private HttpResponse getRequest() throws HttpException {
+        URL url = null;
+        HttpURLConnection connection = null;
         HttpResponse response = null;
+        try {
+            url = mUri.toURL();
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod(mHttpMethod.name());
+            addHeaders(connection);
+            response = buildResponse(connection);
 
-        URL url = mUri.toURL();
-
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod(mHttpMethod.name());
-        addHeaders(connection);
-        return buildResponse(connection);
+        } catch (MalformedURLException e) {
+            throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
+        } catch (ProtocolException e) {
+            throw new HttpException("Http method not allowed: " + e.getLocalizedMessage());
+        } catch (IOException e) {
+            throw new HttpException("Something happened while retrieving data: " + e.getLocalizedMessage());
+        }
+        return response;
     }
 
     private HttpResponse postRequest() throws IOException {

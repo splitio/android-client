@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
@@ -332,8 +333,8 @@ public class TrackClientImpl implements TrackClient {
                             mTrackStorageManager.deleteCachedEvents(mChunk.getId());
                         }
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (HttpException e) {
+                    Logger.e("Error while sending track events: " + e.getLocalizedMessage());
                 }
             } else {
                 mTrackStorageManager.saveEvents(mChunk);

@@ -8,6 +8,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
@@ -58,8 +59,8 @@ public class HttpImpressionsSender implements ImpressionsSender {
             Logger.d("Entity sent: %s", data);
 
             return true;
-        } catch (Throwable t) {
-            Logger.e(t, "Exception when posting impressions %s", data);
+        } catch (HttpException e) {
+            Logger.e(e, "Exception when posting impressions %s", data);
             return false;
         }
 
