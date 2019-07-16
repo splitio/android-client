@@ -1,7 +1,5 @@
 package io.split.android.client;
 
-import android.util.Log;
-
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -35,12 +33,14 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
     private final URI _target;
     private final Metrics _metrics;
     private final IMySegmentsCache _mySegmentsCache;
+    private Type _mySegmentsJsonMapType;
 
     public HttpMySegmentsFetcher(HttpClient client, URI uri, Metrics metrics, IStorage storage) {
         _client = client;
         _target = uri;
         _metrics = metrics;
         _mySegmentsCache = new MySegmentsCache(storage);
+        _mySegmentsJsonMapType = new TypeToken<Map<String, List<MySegment>>>() {}.getType();
         checkNotNull(_target);
     }
 
@@ -73,7 +73,6 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
             URI uri = new URIBuilder(_target, matchingKey).build();
             HttpResponse response = _client.request(uri, HttpClient.HTTP_GET).execute();
 
-
             if (!response.isSuccess()) {
                 int statusCode = response.getHttpStatus();
                 Logger.e(String.format("Response status was: %d", statusCode));
@@ -82,13 +81,8 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
             };
 
             Logger.d("Received json: %s", response.getData());
-            Type mapType = new TypeToken<Map<String, List<MySegment>>>() {
-            }.getType();
-
-            Map<String, List<MySegment>> mySegmentsMap = Json.fromJson(response.getData(), mapType);
-
+            Map<String, List<MySegment>> mySegmentsMap = Json.fromJson(response.getData(), _mySegmentsJsonMapType);
             List<MySegment> mySegmentList = mySegmentsMap.get("mySegments");
-
             _mySegmentsCache.setMySegments(matchingKey, mySegmentList);
 
             return mySegmentList;
