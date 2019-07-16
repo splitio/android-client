@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.Map;
 
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpRequest;
 
 public class HttpClientMock implements HttpClient {
@@ -18,12 +19,12 @@ public class HttpClientMock implements HttpClient {
     }
 
     @Override
-    public HttpRequest request(URI uri, String httpMethod) {
+    public HttpRequest request(URI uri, HttpMethod httpMethod) {
         return null;
     }
 
     @Override
-    public HttpRequest request(URI uri, String httpMethod, String body) {
+    public HttpRequest request(URI uri, HttpMethod httpMethod, String body) {
         return null;
     }
 

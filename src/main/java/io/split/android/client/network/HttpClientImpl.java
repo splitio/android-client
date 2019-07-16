@@ -13,12 +13,12 @@ public class HttpClientImpl implements HttpClient {
     }
 
     @Override
-    public HttpRequest request(URI uri, String requestMethod) {
+    public HttpRequest request(URI uri, HttpMethod requestMethod) {
         return request(uri, requestMethod, null);
     }
 
     @Override
-    public HttpRequest request(URI uri, String requestMethod, String body) {
+    public HttpRequest request(URI uri, HttpMethod requestMethod, String body) {
         return new HttpRequestImpl(uri, requestMethod, body, mHeaders);
     }
 

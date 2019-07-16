@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.track.EventsChunk;
@@ -317,7 +318,7 @@ public class TrackClientImpl implements TrackClient {
                 try {
 
                     String jsonEvents = (mChunk != null ? Json.toJson(mChunk.getEvents()) : null);
-                    response = mHttpClient.request(mEndpoint, HttpClient.HTTP_POST, jsonEvents).execute();
+                    response = mHttpClient.request(mEndpoint, HttpMethod.POST, jsonEvents).execute();
 
                     if (!response.isSuccess()) {
                         Logger.d(String.format("Error posting events [error code: %d]", response.getHttpStatus()));

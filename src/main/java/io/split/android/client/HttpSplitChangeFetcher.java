@@ -7,6 +7,7 @@ import io.split.android.client.cache.ISplitChangeCache;
 import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.storage.IStorage;
@@ -68,7 +69,7 @@ public final class HttpSplitChangeFetcher implements SplitChangeFetcher {
         try {
             URI uri = new URIBuilder(_target).addParameter(SINCE, "" + since).build();
 
-            HttpResponse response = _client.request(uri, HttpClient.HTTP_GET).execute();
+            HttpResponse response = _client.request(uri, HttpMethod.GET).execute();
 
             if (!response.isSuccess()) {
                 _metrics.count(PREFIX + ".status." + response.getHttpStatus(), 1);

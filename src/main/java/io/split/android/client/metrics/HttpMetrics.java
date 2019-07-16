@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import io.split.android.client.dtos.Counter;
 import io.split.android.client.dtos.Latency;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.utils.Json;
@@ -66,7 +67,7 @@ public class HttpMetrics implements Metrics, DTOMetrics {
 
         try {
             String jsonMetrics = Json.toJson(dto);
-            HttpResponse response = _client.request(uri, HttpClient.HTTP_POST, jsonMetrics).execute();
+            HttpResponse response = _client.request(uri, HttpMethod.POST, jsonMetrics).execute();
 
             if (!response.isSuccess()) {
                 Logger.w("Response status was: %d", response.getHttpStatus());

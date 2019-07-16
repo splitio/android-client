@@ -16,10 +16,10 @@ public class HttpRequestImpl implements HttpRequest {
 
     URI mUri;
     String mBody;
-    String mHttpMethod;
+    HttpMethod mHttpMethod;
     Map<String, String> mHeaders;
 
-    HttpRequestImpl(URI uri, String httpMethod, String body, Map<String, String> headers) {
+    HttpRequestImpl(URI uri, HttpMethod httpMethod, String body, Map<String, String> headers) {
         mUri = uri;
         mHttpMethod = httpMethod;
         mBody = body;
@@ -28,7 +28,7 @@ public class HttpRequestImpl implements HttpRequest {
 
     @Override
     public HttpResponse execute() throws IOException, ProtocolException {
-        if(mHttpMethod.equals(HttpClient.HTTP_GET)) {
+        if(mHttpMethod.equals(HttpMethod.GET)) {
             return getRequest();
         }
         return postRequest();
@@ -40,7 +40,7 @@ public class HttpRequestImpl implements HttpRequest {
         URL url = mUri.toURL();
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod(mHttpMethod);
+        connection.setRequestMethod(mHttpMethod.name());
         addHeaders(connection);
         return buildResponse(connection);
     }
@@ -52,7 +52,7 @@ public class HttpRequestImpl implements HttpRequest {
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         addHeaders(connection);
-        connection.setRequestMethod(mHttpMethod);
+        connection.setRequestMethod(mHttpMethod.name());
         if(mBody != null && !mBody.isEmpty()) {
             connection.setDoOutput(true);
             OutputStream bodyStream = null;

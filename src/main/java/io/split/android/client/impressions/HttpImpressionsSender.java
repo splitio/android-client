@@ -8,6 +8,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.utils.Json;
@@ -46,7 +47,7 @@ public class HttpImpressionsSender implements ImpressionsSender {
     private boolean post(String data) {
 
         try {
-            HttpResponse response = _client.request(_eventsEndpoint, HttpClient.HTTP_POST, data).execute();
+            HttpResponse response = _client.request(_eventsEndpoint, HttpMethod.POST, data).execute();
 
             //TODO: Reason
             String reason = "";

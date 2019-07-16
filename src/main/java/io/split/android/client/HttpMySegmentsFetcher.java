@@ -12,6 +12,7 @@ import io.split.android.client.cache.IMySegmentsCache;
 import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.storage.IStorage;
@@ -71,7 +72,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
 
         try {
             URI uri = new URIBuilder(_target, matchingKey).build();
-            HttpResponse response = _client.request(uri, HttpClient.HTTP_GET).execute();
+            HttpResponse response = _client.request(uri, HttpMethod.GET).execute();
 
             if (!response.isSuccess()) {
                 int statusCode = response.getHttpStatus();

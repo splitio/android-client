@@ -20,6 +20,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpRequest;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.utils.Json;
@@ -47,44 +48,44 @@ public class HttpClientTest {
 
         // Test dummy request and response
         HttpUrl url = mWebServer.url("/test1/");
-        HttpRequest dummyReq = client.request(url.uri(), HttpClient.HTTP_GET);
+        HttpRequest dummyReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse dummyResp = dummyReq.execute();
         recReq = mWebServer.takeRequest();
 
         // Test my segments
         url = mWebServer.url("/test2/");
-        HttpRequest mySegmentsReq = client.request(url.uri(), HttpClient.HTTP_GET);
+        HttpRequest mySegmentsReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse mySegmentsResp = mySegmentsReq.execute();
         recReq = mWebServer.takeRequest();
 
         // Test split changes
         url = mWebServer.url("/test3/");
-        HttpRequest splitChangeReq = client.request(url.uri(), HttpClient.HTTP_GET);
+        HttpRequest splitChangeReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse splitChangeResp = splitChangeReq.execute();
         recReq = mWebServer.takeRequest();
 
         // Test empty response
         url = mWebServer.url("/test4/");
-        HttpRequest emptyReq = client.request(url.uri(), HttpClient.HTTP_GET);
+        HttpRequest emptyReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse emptyResp = emptyReq.execute();
         recReq = mWebServer.takeRequest();
 
         // Test post with response data
         url = mWebServer.url("/post_resp/");
-        HttpRequest postDataReq = client.request(url.uri(), HttpClient.HTTP_POST);
+        HttpRequest postDataReq = client.request(url.uri(), HttpMethod.POST);
         HttpResponse postDataResp = postDataReq.execute();
         recReq = mWebServer.takeRequest();
 
         // Test post no response data
         url = mWebServer.url("/post_no_resp/");
-        HttpRequest postNoDataReq = client.request(url.uri(), HttpClient.HTTP_POST);
+        HttpRequest postNoDataReq = client.request(url.uri(), HttpMethod.POST);
         HttpResponse postNoDataResp = postNoDataReq.execute();
         recReq = mWebServer.takeRequest();
 
         // Test post tracks
         String postTracksData = new FileHelper().loadFileContent("tracks_1.json");
         url = mWebServer.url("/tracks/");
-        HttpRequest postTracksReq = client.request(url.uri(), HttpClient.HTTP_POST, postTracksData);
+        HttpRequest postTracksReq = client.request(url.uri(), HttpMethod.POST, postTracksData);
         HttpResponse postTracksResp = postTracksReq.execute();
         RecordedRequest postTrackRecReq = mWebServer.takeRequest();
         String receivedPostTrackData = postTrackRecReq.getBody().readUtf8();
@@ -94,7 +95,7 @@ public class HttpClientTest {
         // Test post impressions
         String postImpData = new FileHelper().loadFileContent("impressions_1.json");
         url = mWebServer.url("/impressions/");
-        HttpRequest postImpReq = client.request(url.uri(), HttpClient.HTTP_POST, postImpData);
+        HttpRequest postImpReq = client.request(url.uri(), HttpMethod.POST, postImpData);
         HttpResponse postImpResp = postImpReq.execute();
         RecordedRequest postImpRecReq = mWebServer.takeRequest();
         String receivedPostImpData = postImpRecReq.getBody().readUtf8();
@@ -102,13 +103,13 @@ public class HttpClientTest {
 
         // Test limit wrong request
         url = mWebServer.url("/limit_wrong/");
-        HttpRequest limitNoSuccessReq = client.request(url.uri(), HttpClient.HTTP_GET);
+        HttpRequest limitNoSuccessReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse limitNoSuccessResp = limitNoSuccessReq.execute();
         recReq = mWebServer.takeRequest();
 
         // Test bad request
         url = mWebServer.url("/bad/");
-        HttpRequest badReq = client.request(url.uri(), HttpClient.HTTP_GET);
+        HttpRequest badReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse badResp = badReq.execute();
         recReq = mWebServer.takeRequest();
 
