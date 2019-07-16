@@ -73,8 +73,9 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
             URI uri = new URIBuilder(_target, matchingKey).build();
             HttpResponse response = _client.request(uri, HttpClient.HTTP_GET).execute();
 
-            int statusCode = response.getHttpStatus();
+
             if (!response.isSuccess()) {
+                int statusCode = response.getHttpStatus();
                 Logger.e(String.format("Response status was: %d", statusCode));
                 _metrics.count(PREFIX + ".status." + statusCode, 1);
                 throw new IllegalStateException("Could not retrieve mySegments for " + matchingKey + "; http return code " + statusCode);
