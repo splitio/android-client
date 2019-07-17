@@ -37,7 +37,7 @@ public class HttpRequestImpl implements HttpRequest {
                 try {
                     return postRequest();
                 } catch (IOException e) {
-                    throw new HttpException("An IO exception has occurred during post request: " + e.getLocalizedMessage());
+                    throw new HttpException("Error serializing request body: " + e.getLocalizedMessage());
                 }
             }
             default:
