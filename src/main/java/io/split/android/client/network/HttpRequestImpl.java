@@ -29,13 +29,19 @@ public class HttpRequestImpl implements HttpRequest {
 
     @Override
     public HttpResponse execute() throws HttpException {
-        if(mHttpMethod.equals(HttpMethod.GET)) {
-            return getRequest();
-        }
-        try {
-            return postRequest();
-        } catch (IOException e) {
-            throw new HttpException("An IO exception has ocurred during post request: " + e.getLocalizedMessage());
+
+        switch (mHttpMethod) {
+            case GET:
+                return getRequest();
+            case POST: {
+                try {
+                    return postRequest();
+                } catch (IOException e) {
+                    throw new HttpException("An IO exception has occurred during post request: " + e.getLocalizedMessage());
+                }
+            }
+            default:
+                throw new IllegalArgumentException("Request HTTP Method not valid: " + mHttpMethod.name());
         }
     }
 
