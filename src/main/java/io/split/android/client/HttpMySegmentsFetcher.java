@@ -34,14 +34,13 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
     private final URI _target;
     private final Metrics _metrics;
     private final IMySegmentsCache _mySegmentsCache;
-    private Type _mySegmentsJsonMapType;
+    static final private Type _mySegmentsJsonMapType = new TypeToken<Map<String, List<MySegment>>>() {}.getType();
 
     public HttpMySegmentsFetcher(HttpClient client, URI uri, Metrics metrics, IStorage storage) {
         _client = client;
         _target = uri;
         _metrics = metrics;
         _mySegmentsCache = new MySegmentsCache(storage);
-        _mySegmentsJsonMapType = new TypeToken<Map<String, List<MySegment>>>() {}.getType();
         checkNotNull(_target);
     }
 
