@@ -5,9 +5,7 @@ import android.support.annotation.VisibleForTesting;
 
 import com.google.common.collect.Lists;
 
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
-
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -26,16 +24,17 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpException;
+import io.split.android.client.network.HttpMethod;
+import io.split.android.client.network.HttpResponse;
+import io.split.android.client.network.URIBuilder;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
-import io.split.android.client.utils.GenericClientUtil;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
-import io.split.android.client.validators.EventValidator;
-import io.split.android.client.validators.EventValidatorImpl;
-import io.split.android.client.validators.KeyValidatorImpl;
-import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.client.validators.ValidationConfig;
@@ -57,7 +56,7 @@ public class TrackClientImpl implements TrackClient {
     static final private Event CENTINEL = new Event();
 
     //Track configuration
-    private final CloseableHttpClient _httpclient;
+    private final HttpClient _httpclient;
     private final URI _eventsTarget;
     private final TrackClientConfig _config;
     private final ScheduledExecutorService _flushScheduler;
@@ -89,29 +88,29 @@ public class TrackClientImpl implements TrackClient {
         };
     }
 
-    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, splitCache, null);
+    public static TrackClient create(TrackClientConfig config, HttpClient httpClient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpClient, eventsRootTarget, storageManager, splitCache, null);
     }
 
     @VisibleForTesting
-    public static TrackClient create(TrackClientConfig config, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache, ExecutorService senderExecutor) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpclient, eventsRootTarget, storageManager, splitCache, senderExecutor);
+    public static TrackClient create(TrackClientConfig config, HttpClient httpClient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache, ExecutorService senderExecutor) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpClient, eventsRootTarget, storageManager, splitCache, senderExecutor);
     }
 
-    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, CloseableHttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache, ExecutorService senderExecutor) throws URISyntaxException {
+    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, HttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache, ExecutorService senderExecutor) throws URISyntaxException {
 
         _storageManager = storageManager;
 
         _httpclient = httpclient;
 
-        _eventsTarget = new URIBuilder(eventsRootTarget).setPath("/api/events/bulk").build();
+        _eventsTarget = new URIBuilder(eventsRootTarget, "/events/bulk").build();
 
         _eventQueue = eventQueue;
         _config = config;
 
         _validationLogger = new ValidationMessageLoggerImpl();
 
-        if(senderExecutor == null) {
+        if (senderExecutor == null) {
             // Thread to send events to backend
             _senderExecutor = new ThreadPoolExecutor(
                     1,
@@ -139,16 +138,18 @@ public class TrackClientImpl implements TrackClient {
         _flushScheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                                flush();
-                            }
+                flush();
+            }
         }, config.getFlushIntervalMillis(), config.getFlushIntervalMillis(), TimeUnit.SECONDS);
 
         // Cached events flusher
         _cachedflushScheduler = Executors.newScheduledThreadPool(1, eventClientThreadFactory("eventclient-cache-flush"));
         _cachedflushScheduler.scheduleAtFixedRate(new Runnable() {
-              @Override
-              public void run() {flushFromLocalCache();}
-          }, config.getFlushIntervalMillis(), config.getFlushIntervalMillis(), TimeUnit.SECONDS);
+            @Override
+            public void run() {
+                flushFromLocalCache();
+            }
+        }, config.getFlushIntervalMillis(), config.getFlushIntervalMillis(), TimeUnit.SECONDS);
     }
 
     @Override
@@ -156,7 +157,7 @@ public class TrackClientImpl implements TrackClient {
         try {
 
             int sizeInBytes = EVENT_SIZE_WITHOUT_PROPS;
-            if(event.properties != null) {
+            if (event.properties != null) {
 
                 if (event.properties.size() > 300) {
                     Logger.w(validationTag + "Event has more than 300 properties. Some of them will be trimmed when processed");
@@ -180,7 +181,7 @@ public class TrackClientImpl implements TrackClient {
                     sizeInBytes += (value.getClass() == String.class ? value.toString().getBytes().length : 0);
                     sizeInBytes += key.getBytes().length;
 
-                    if (sizeInBytes  > ValidationConfig.getInstance().getMaximumEventPropertyBytes())  {
+                    if (sizeInBytes > ValidationConfig.getInstance().getMaximumEventPropertyBytes()) {
                         Logger.w(validationTag + "The maximum size allowed for the properties is 32kb. Current is " + entry.getKey().toString() + ". Event not queued");
                         return false;
                     }
@@ -220,12 +221,12 @@ public class TrackClientImpl implements TrackClient {
         }
     }
 
-    private void flushFromLocalCache(){
+    private void flushFromLocalCache() {
 
         if (Utils.isSplitServiceReachable(_eventsTarget)) {
             List<EventsChunk> eventsChunks = _storageManager.getEventsChunks();
-            for(EventsChunk chunk : eventsChunks){
-                if(chunk.getAttempt() < MAX_POST_ATTEMPS) {
+            for (EventsChunk chunk : eventsChunks) {
+                if (chunk.getAttempt() < MAX_POST_ATTEMPS) {
                     _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, chunk, _storageManager, _config.getMaxSentAttempts()));
                 }
             }
@@ -236,9 +237,8 @@ public class TrackClientImpl implements TrackClient {
 
     /**
      * Infinite loop that listens to event from the event queue, dequeue them and send them over once:
-     *  - a CENTINEL message has arrived, or
-     *  - the queue reached a specific size
-     *
+     * - a CENTINEL message has arrived, or
+     * - the queue reached a specific size
      */
     class Consumer implements Runnable {
 
@@ -264,10 +264,10 @@ public class TrackClientImpl implements TrackClient {
                         Logger.d("No messages to publish.");
                         continue;
                     }
-                    totalSizeInBytes+= event.getSizeInBytes();
-                    if (events.size() >= _config.getMaxQueueSize() ||  totalSizeInBytes >= MAX_SIZE_BYTES || event == CENTINEL) {
+                    totalSizeInBytes += event.getSizeInBytes();
+                    if (events.size() >= _config.getMaxQueueSize() || totalSizeInBytes >= MAX_SIZE_BYTES || event == CENTINEL) {
                         Logger.d(String.format("Sending %d events", events.size()));
-                        if(events.size() > _config.getMaxEventsPerPost()){
+                        if (events.size() > _config.getMaxEventsPerPost()) {
                             List<List<Event>> eventsChunks = Lists.partition(events, _config.getMaxEventsPerPost());
                             for (List<Event> eventsChunk : eventsChunks) {
                                 // Dispatch
@@ -293,18 +293,18 @@ public class TrackClientImpl implements TrackClient {
 
         private final EventsChunk mChunk;
         private final URI mEndpoint;
-        private final CloseableHttpClient mHttpClient;
+        private final HttpClient mHttpClient;
         private final TrackStorageManager mTrackStorageManager;
         private final int mMaxSentAttempts;
 
-        static EventSenderTask create(CloseableHttpClient httpclient, URI eventsTarget,
+        static EventSenderTask create(HttpClient httpclient, URI eventsTarget,
                                       EventsChunk events, TrackStorageManager storage, int maxSentAttempts) {
             return new EventSenderTask(httpclient, eventsTarget, events, storage, maxSentAttempts);
         }
 
-        EventSenderTask(CloseableHttpClient httpclient, URI eventsTarget,
+        EventSenderTask(HttpClient httpClient, URI eventsTarget,
                         EventsChunk events, TrackStorageManager storage, int maxSentAttempts) {
-            mHttpClient = httpclient;
+            mHttpClient = httpClient;
             mChunk = events;
             mEndpoint = eventsTarget;
             mTrackStorageManager = storage;
@@ -315,19 +315,26 @@ public class TrackClientImpl implements TrackClient {
         @Override
         public void run() {
             if (Utils.isSplitServiceReachable(mEndpoint)) {
-                int status = GenericClientUtil.POST(mChunk.asJSONEntity(), mEndpoint, mHttpClient);
+                HttpResponse response = null;
+                try {
 
-                if (!(status >= 200 && status < 300)) {
-                    Logger.d(String.format("Error posting events [error code: %d]", status));
-                    Logger.d("Caching events to next iteration");
+                    String jsonEvents = (mChunk != null ? Json.toJson(mChunk.getEvents()) : null);
+                    response = mHttpClient.request(mEndpoint, HttpMethod.POST, jsonEvents).execute();
 
-                    //Saving events to disk
-                    mChunk.addAtempt();
-                    if(mChunk.getAttempt() <mMaxSentAttempts) {
-                        mTrackStorageManager.saveEvents(mChunk);
-                    } else {
-                        mTrackStorageManager.deleteCachedEvents(mChunk.getId());
+                    if (!response.isSuccess()) {
+                        Logger.d(String.format("Error posting events [error code: %d]", response.getHttpStatus()));
+                        Logger.d("Caching events to next iteration");
+
+                        //Saving events to disk
+                        mChunk.addAtempt();
+                        if (mChunk.getAttempt() < mMaxSentAttempts) {
+                            mTrackStorageManager.saveEvents(mChunk);
+                        } else {
+                            mTrackStorageManager.deleteCachedEvents(mChunk.getId());
+                        }
                     }
+                } catch (HttpException e) {
+                    Logger.e("Error while sending track events: " + e.getLocalizedMessage());
                 }
             } else {
                 mTrackStorageManager.saveEvents(mChunk);

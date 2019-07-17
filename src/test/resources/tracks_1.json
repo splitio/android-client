@@ -1,0 +1,98 @@
+[
+  {
+    "eventTypeId": "open_web",
+    "key": "CUSTOMER_ID",
+    "properties": {
+      "p1": 1
+    },
+    "timestamp": 1561657369837,
+    "trafficTypeName": "custom",
+    "value": 1.0
+  },
+  {
+    "eventTypeId": "tap_go",
+    "key": "CUSTOMER_ID",
+    "properties": {
+      "p1": 1
+    },
+    "timestamp": 1561657373171,
+    "trafficTypeName": "custom",
+    "value": 12.0
+  },
+  {
+    "eventTypeId": "tap_go",
+    "key": "CUSTOMER_ID",
+    "properties": {
+      "p1": 1
+    },
+    "timestamp": 1561657374045,
+    "trafficTypeName": "custom",
+    "value": 123.0
+  },
+  {
+    "eventTypeId": "tap_cancel",
+    "key": "CUSTOMER_ID",
+    "properties": {
+      "p1": 1
+    },
+    "timestamp": 1561657374607,
+    "trafficTypeName": "custom",
+    "value": 1234.0
+  },
+  {
+    "eventTypeId": "tap_go",
+    "key": "CUSTOMER_ID",
+    "properties": {
+      "p1": 1
+    },
+    "timestamp": 1561657375310,
+    "trafficTypeName": "custom",
+    "value": 12345.0
+  },
+  {
+    "eventTypeId": "scroll_list",
+    "key": "CUSTOMER_ID",
+    "properties": {
+      "p1": 1
+    },
+    "timestamp": 1561657375927,
+    "trafficTypeName": "custom",
+    "value": 123456.0
+  },
+  {
+    "eventTypeId": "open_web",
+    "key": "CUSTOMER_ID",
+    "properties": null,
+    "timestamp": 1561657376593,
+    "trafficTypeName": "custom",
+    "value": 1234567.0
+  },
+  {
+    "eventTypeId": "tap_go",
+    "key": "CUSTOMER_ID",
+    "properties": null,
+    "timestamp": 1561657378067,
+    "trafficTypeName": "custom",
+    "value": 150.7
+  },
+  {
+    "eventTypeId": "open_web",
+    "key": "CUSTOMER_ID",
+    "properties": {
+      "param1": 1
+    },
+    "timestamp": 1561657378635,
+    "trafficTypeName": "custom",
+    "value": 1.234
+  },
+  {
+    "eventTypeId": "by_shirt",
+    "key": "CUSTOMER_ID",
+    "properties": {
+      "count": 1
+    },
+    "timestamp": 1561657379267,
+    "trafficTypeName": "custom",
+    "value": 12.23
+  }
+]

@@ -4,9 +4,8 @@ import android.util.Log;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import org.apache.http.impl.client.CloseableHttpClient;
-
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,13 +19,15 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.network.HttpClient;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 
 public class ImpressionsManager implements ImpressionListener, Runnable {
 
     private final SplitClientConfig _config;
-    private final CloseableHttpClient _client;
+    private final HttpClient _client;
     private final BlockingQueue<KeyImpression> _queue;
     private final ScheduledExecutorService _scheduler;
     private final ImpressionsSender _impressionsSender;
@@ -35,7 +36,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
 
     private long _currentChunkSize = 0;
 
-    private ImpressionsManager(CloseableHttpClient client, SplitClientConfig config, ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
+    private ImpressionsManager(HttpClient client, SplitClientConfig config, ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
 
         _config = config;
         _client = client;
@@ -54,17 +55,17 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
         if (impressionsSender != null) {
             _impressionsSender = impressionsSender;
         } else {
-            _impressionsSender = new HttpImpressionsSender(_client, config.eventsEndpoint(), _storageManager);
+            _impressionsSender = new HttpImpressionsSender(_client, new URI(config.eventsEndpoint()), _storageManager);
         }
 
     }
 
-    public static ImpressionsManager instance(CloseableHttpClient client,
+    public static ImpressionsManager instance(HttpClient client,
                                               SplitClientConfig config, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
         return new ImpressionsManager(client, config, null, impressionsStorageManager);
     }
 
-    public static ImpressionsManager instanceForTest(CloseableHttpClient client,
+    public static ImpressionsManager instanceForTest(HttpClient client,
                                                      SplitClientConfig config,
                                                      ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
         return new ImpressionsManager(client, config, impressionsSender, impressionsStorageManager);
@@ -164,7 +165,9 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
     }
 
     private void accumulateChunkSize(KeyImpression keyImpression) {
-        long size = Utils.toJsonEntity(keyImpression).getContentLength();
-        _currentChunkSize += size;
+        String data = Json.toJson(keyImpression);
+        if(data != null) {
+            _currentChunkSize += data.getBytes().length;
+        }
     }
 }

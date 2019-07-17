@@ -2,10 +2,6 @@ package io.split.android.client.utils;
 
 import com.google.common.base.Strings;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
@@ -14,39 +10,14 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import io.split.android.client.network.URIBuilder;
+
 
 public class Utils {
 
-    public static StringEntity toJsonEntity(Object obj) {
-        String json = Json.toJson(obj);
-        return Utils.toJsonEntity(json);
-    }
-
-    public static StringEntity toJsonEntity(String json) {
-        StringEntity entity = null;
-        try {
-            entity = new StringEntity(json, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            Logger.e(e);
-        }
-        entity.setContentType("application/json");
-        return entity;
-    }
-
-
-    public static void forceClose(CloseableHttpResponse response) {
-        try {
-            if (response != null) {
-                response.close();
-            }
-        } catch (IOException e) {
-            // ignore
-        }
-    }
-
     public static boolean isSplitServiceReachable(URI uri) {
         try {
-            return Utils.isReachable(new URIBuilder(uri).setPath("/api/version").build());
+            return Utils.isReachable(new URIBuilder(uri, "/api/version").build());
         } catch (URISyntaxException e) {
             Logger.e("URI mal formed. Reachability function fails ", e);
         }
