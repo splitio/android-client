@@ -13,7 +13,7 @@ public class Event {
     public long timestamp;
     public Map<String,Object> properties;
 
-    private transient int sizeInBytes = 0;
+    private int sizeInBytes = 0;
 
     @Override
     public boolean equals(Object o) {
