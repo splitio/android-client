@@ -35,4 +35,9 @@ public class ResourcesFileStorage implements IStorage {
     public boolean rename(String currentId, String newId) {
         return false;
     }
+
+    @Override
+    public boolean exists(String elementId) {
+        return false;
+    }
 }

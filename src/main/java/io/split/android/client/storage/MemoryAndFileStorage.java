@@ -66,4 +66,12 @@ public class MemoryAndFileStorage implements IStorage {
         }
         return false;
     }
+
+    @Override
+    public boolean exists(String elementId) {
+        if(_memoryStorage.exists(elementId)) {
+            return true;
+        }
+        return  _fileStorage.exists(elementId);
+    }
 }

@@ -128,4 +128,10 @@ public class FileStorage implements IStorage {
         File newFile = new File(_dataFolder, newId);
         return oldFile.renameTo(newFile);
     }
+
+    @Override
+    public boolean exists(String elementId) {
+        File file = new File(_dataFolder, elementId);
+        return file.exists();
+    }
 }

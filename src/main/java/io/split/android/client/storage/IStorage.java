@@ -54,4 +54,11 @@ public interface IStorage {
      * @return Whether the rename was successful or not
      */
     boolean rename(String currentId, String newId);
+
+    /**
+     * Checks existence of an element in the storage
+     * @param elementId Element Id
+     * @return Whether the file exists or not
+     */
+    boolean exists(String elementId);
 }
