@@ -2,7 +2,9 @@ package io.split.android.client.track;
 
 
 import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
+import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.support.annotation.VisibleForTesting;
 
 import com.google.common.base.Strings;
@@ -17,12 +19,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
-public class TrackStorageManager {
+public class TrackStorageManager implements LifecycleObserver {
 
     private static final String LEGACY_EVENTS_FILE_NAME = "SPLITIO.events.json";
     private static final String TRACK_FILE_PREFIX = "SPLITIO.events";
@@ -31,8 +34,6 @@ public class TrackStorageManager {
     private static final String EVENTS_FILE_NAME = EVENTS_FILE_PREFIX + "%d.json";
     private static final int MAX_BYTES_PER_CHUNK = 3000000; //3MB
 
-    private final static Type CHUNK_HEADER_TYPE = new TypeToken<List<TrackStorageManager.ChunkHeader>>() {
-    }.getType();
     private final static Type EVENTS_FILE_TYPE = new TypeToken<Map<String, List<Event>>>() {
     }.getType();
 
@@ -40,6 +41,7 @@ public class TrackStorageManager {
     Map<String, EventsChunk> mEventsChunks;
 
     public TrackStorageManager(IStorage storage) {
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
         mEventsChunks = Collections.synchronizedMap(new HashMap<String, EventsChunk>());
         loadEventsFromDisk();
@@ -104,9 +106,9 @@ public class TrackStorageManager {
         try {
             String headerContent = mFileStorageManager.read(CHUNK_HEADERS_FILE_NAME);
             if(headerContent != null) {
-                List<ChunkHeader> headers = Json.fromJson(headerContent, CHUNK_HEADER_TYPE);
+                List<ChunkHeader> headers = Json.fromJson(headerContent, ChunkHeader.CHUNK_HEADER_TYPE);
                 for (ChunkHeader header : headers) {
-                    EventsChunk chunk = new EventsChunk(header.id, header.attempts);
+                    EventsChunk chunk = new EventsChunk(header.getId(), header.getAttempt());
                     mEventsChunks.put(chunk.getId(), chunk);
                 }
             }
@@ -209,15 +211,6 @@ public class TrackStorageManager {
         Map<String, List<Event>> chunk = new HashMap<>();
         chunk.put(chunkId, events);
         return chunk;
-    }
-
-    public static class ChunkHeader {
-        private String id;
-        private int attempts;
-        public ChunkHeader(String id, int attempts) {
-            this.id = id;
-            this.attempts = attempts;
-        }
     }
 
 }
