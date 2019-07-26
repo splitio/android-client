@@ -43,7 +43,7 @@ public class TrackStorageManager implements LifecycleObserver {
     public TrackStorageManager(IStorage storage) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
-        mEventsChunks = Collections.synchronizedMap(new HashMap<String, EventsChunk>());
+        mEventsChunks = Collections.synchronizedMap(new HashMap<>());
         loadEventsFromDisk();
     }
 
