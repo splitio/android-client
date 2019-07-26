@@ -5,6 +5,7 @@ import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
+import android.util.Log;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -47,6 +48,9 @@ public class ImpressionsStorageManager implements LifecycleObserver {
 
     private final static Type LEGACY_IMPRESSIONS_FILE_TYPE = new TypeToken<Map<String, StoredImpressions>>() {
     }.getType();
+
+    private final static String RECORD_KEY_SEPARATOR = "_";
+    private final static String RECORD_KEY_FORMAT = "%s" + RECORD_KEY_SEPARATOR + "%s";
 
     private IStorage mFileStorageManager;
     Map<String, StoredImpressions> mImpressionsToSend;
@@ -326,15 +330,28 @@ public class ImpressionsStorageManager implements LifecycleObserver {
     }
 
     private String buildImpressionRecordKey(String storedImpressionId, String testName) {
-        return String.format("%s_%s", storedImpressionId, testName);
+        return String.format(RECORD_KEY_FORMAT, storedImpressionId, testName);
     }
 
     private String getStoredImpressionsIdFromRecordKey(String recordKey) {
-        return recordKey.substring(0, recordKey.indexOf("_"));
+
+        String chunkId = "";
+        try {
+            chunkId = recordKey.substring(0, recordKey.indexOf(RECORD_KEY_SEPARATOR));
+        } catch (IndexOutOfBoundsException e) {
+            Logger.e("Record key not valid loading impressions from disk: " + e.getLocalizedMessage());
+        }
+        return chunkId;
     }
 
     private String getTestNameFromRecordKey(String recordKey) {
-        return recordKey.substring(recordKey.indexOf("_") + 1, recordKey.length());
+        String testName = "";
+        try {
+            testName = recordKey.substring(recordKey.indexOf(RECORD_KEY_SEPARATOR) + 1, recordKey.length());
+        } catch (IndexOutOfBoundsException e) {
+            Logger.e("Record key not valid loading impressions from disk: " + e.getLocalizedMessage());
+        }
+        return testName;
     }
 
     private int getImpressionsIndexForTest(String testName, List<TestImpressions> impressionsList) {
