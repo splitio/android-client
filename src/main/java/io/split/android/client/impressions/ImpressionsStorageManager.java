@@ -11,8 +11,6 @@ import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import junit.framework.Test;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
