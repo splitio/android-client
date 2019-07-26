@@ -2,6 +2,7 @@ package io.split.android.client.impressions;
 
 import com.google.common.base.Preconditions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.TestImpressions;
@@ -16,10 +17,21 @@ public class StoredImpressions {
         return new StoredImpressions(id, impressions, timestamp);
     }
 
+    public static StoredImpressions from(String id, int attempts, long timestamp) {
+        return new StoredImpressions(id, attempts, timestamp);
+    }
+
     private StoredImpressions(String id, List<TestImpressions> impressions, long timestamp) {
         this.id = Preconditions.checkNotNull(id);
         this.impressions = Preconditions.checkNotNull(impressions);
         this.timestamp = timestamp;
+    }
+
+    private StoredImpressions(String id, int attempts, long timestamp) {
+        this.id = Preconditions.checkNotNull(id);
+        this.attempts = attempts;
+        this.timestamp = timestamp;
+        this.impressions = new ArrayList<>();
     }
 
     public String id() {
@@ -39,6 +51,10 @@ public class StoredImpressions {
 
     public long getTimestamp() {
         return timestamp;
+    }
+
+    public void addImpressions(List<TestImpressions> impressions) {
+        this.impressions.addAll(impressions);
     }
 
 }

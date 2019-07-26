@@ -1,5 +1,6 @@
 package io.split.android.client.track;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,6 +14,12 @@ public class EventsChunk {
     public EventsChunk(List<Event> events) {
         this.id = UUID.randomUUID().toString();
         this.events = events;
+    }
+
+    public EventsChunk(String id, int currentAttempt) {
+        this.id = id;
+        this.attempt = currentAttempt;
+        this.events = new ArrayList<>();
     }
 
     public String getId() {
@@ -29,6 +36,10 @@ public class EventsChunk {
 
     public void addAtempt() {
         attempt++;
+    }
+
+    public void addEvents(List<Event> events) {
+        this.events.addAll(events);
     }
 
 }
