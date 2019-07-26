@@ -56,7 +56,7 @@ public class TrackStorageManager implements LifecycleObserver {
     }
 
     synchronized public void saveEvents(EventsChunk chunk){
-        if (chunk == null || chunk.getEvents().isEmpty()) {
+        if(chunk == null || chunk.getEvents().isEmpty()) {
             return; // Nothing to write
         }
 
@@ -83,7 +83,7 @@ public class TrackStorageManager implements LifecycleObserver {
         // Legacy file
         try {
             String storedTracks = mFileStorageManager.read(LEGACY_EVENTS_FILE_NAME);
-            if (Strings.isNullOrEmpty(storedTracks)) {
+            if(Strings.isNullOrEmpty(storedTracks)) {
                 return;
 
             }
@@ -188,7 +188,7 @@ public class TrackStorageManager implements LifecycleObserver {
         for(EventsChunk eventsChunk : eventChunks) {
             List<Event> events = eventsChunk.getEvents();
             for(Event event : events) {
-                if (bytesCount + event.getSizeInBytes() > MAX_BYTES_PER_CHUNK) {
+                if(bytesCount + event.getSizeInBytes() > MAX_BYTES_PER_CHUNK) {
                     currentChunk.put(eventsChunk.getId(), currentEvents);
                     splitEvents.add(currentChunk);
                     currentChunk = new HashMap<>();
