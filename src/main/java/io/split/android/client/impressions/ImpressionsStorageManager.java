@@ -190,10 +190,12 @@ public class ImpressionsStorageManager implements LifecycleObserver {
                     }
                 }
             }
-        } catch (IOException e) {
-            Logger.e(e, "Unable to track chunks headers information from disk: " + e.getLocalizedMessage());
+        } catch (IOException ioe) {
+            Logger.e(ioe, "Unable to track chunks headers information from disk: " + ioe.getLocalizedMessage());
         } catch (JsonSyntaxException syntaxException) {
             Logger.e(syntaxException, "Unable to parse saved track chunks headers: " + syntaxException.getLocalizedMessage());
+        } catch (Exception e) {
+            Logger.e(e, "Error loading impressions headers from disk: " + e.getLocalizedMessage());
         }
 
         List<Map<String, List<KeyImpression>>> impressions = new ArrayList<>();
@@ -230,10 +232,12 @@ public class ImpressionsStorageManager implements LifecycleObserver {
                     testImpressions.keyImpressions.addAll(impressionsChunk.getValue());
                     storedImpressions.impressions().add(testImpressions);
                 }
-            } catch (IOException e) {
-                Logger.e(e, "Unable to impressions file from disk: " + e.getLocalizedMessage());
+            } catch (IOException ioe) {
+                Logger.e(ioe, "Unable to load impressions file from disk: " + ioe.getLocalizedMessage());
             } catch (JsonSyntaxException syntaxException) {
                 Logger.e(syntaxException, "Unable to parse saved impression: " + syntaxException.getLocalizedMessage());
+            } catch (Exception e) {
+                Logger.e(e, "Error loading impressions from disk: " + e.getLocalizedMessage());
             }
         }
     }
@@ -253,10 +257,12 @@ public class ImpressionsStorageManager implements LifecycleObserver {
                 }
             }
 
-        } catch (IOException e) {
-            Logger.e(e, "Unable to load impressions from disk: " + e.getLocalizedMessage());
+        } catch (IOException ioe) {
+            Logger.e(ioe, "Unable to load impressions from disk: " + ioe.getLocalizedMessage());
         } catch (JsonSyntaxException syntaxException) {
-            Logger.e(syntaxException, "Unable to parse saved impressions: " + syntaxException.getLocalizedMessage());
+            Logger.e(syntaxException, "Unable to parse loaded impressions from legacy file: " + syntaxException.getLocalizedMessage());
+        } catch (Exception e) {
+            Logger.e(e, "Error loading impressions legacy file from disk: " + e.getLocalizedMessage());
         }
     }
 
@@ -267,11 +273,14 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         try {
             String json = Json.toJson(headers);
             mFileStorageManager.write(CHUNK_HEADERS_FILE_NAME, json);
-        } catch (IOException e) {
-            Logger.e(e, "Could not save tracks headers");
+        } catch (IOException ioe) {
+            Logger.e(ioe, "Could not save tracks headers");
         } catch (JsonSyntaxException syntaxException) {
             Logger.e(syntaxException, "Unable to parse tracks to save");
+        } catch (Exception e) {
+            Logger.e(e, "Error loading tracks from legacy file from disk: " + e.getLocalizedMessage());
         }
+
 
         List<Map<String, List<KeyImpression>>> impressionsChunks = splitChunks(getStoredImpressions());
         int i = 0;
@@ -281,10 +290,12 @@ public class ImpressionsStorageManager implements LifecycleObserver {
                 String fileName = String.format(IMPRESSIONS_FILE_NAME, i);
                 mFileStorageManager.write(fileName, json);
                 i++;
-            } catch (IOException e) {
-                Logger.e(e, "Could not save impressions");
+            } catch (IOException ioe) {
+                Logger.e(ioe, "Could not save impressions");
             } catch (JsonSyntaxException syntaxException) {
                 Logger.e(syntaxException, "Unable to parse impressions to save");
+            } catch (Exception e) {
+                Logger.e(e, "Error parsing impressions to save on disk: " + e.getLocalizedMessage());
             }
         }
     }
