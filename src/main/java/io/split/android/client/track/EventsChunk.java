@@ -1,12 +1,10 @@
 package io.split.android.client.track;
 
-import org.apache.http.entity.StringEntity;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import io.split.android.client.dtos.Event;
-import io.split.android.client.utils.Utils;
 
 public class EventsChunk {
     private String id;
@@ -16,6 +14,12 @@ public class EventsChunk {
     public EventsChunk(List<Event> events) {
         this.id = UUID.randomUUID().toString();
         this.events = events;
+    }
+
+    public EventsChunk(String id, int currentAttempt) {
+        this.id = id;
+        this.attempt = currentAttempt;
+        this.events = new ArrayList<>();
     }
 
     public String getId() {
@@ -34,7 +38,8 @@ public class EventsChunk {
         attempt++;
     }
 
-    public StringEntity asJSONEntity() {
-        return Utils.toJsonEntity(events);
+    public void addEvents(List<Event> events) {
+        this.events.addAll(events);
     }
+
 }

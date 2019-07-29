@@ -2,36 +2,14 @@ package io.split.android.client;
 
 import android.content.Context;
 
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContexts;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.DefaultProxyRoutePlanner;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import javax.net.ssl.SSLContext;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.cache.ISplitCache;
@@ -45,12 +23,12 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManager;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
-import io.split.android.client.interceptors.AddSplitHeadersFilter;
-import io.split.android.client.interceptors.GzipDecoderResponseInterceptor;
-import io.split.android.client.interceptors.GzipEncoderRequestInterceptor;
 import io.split.android.client.metrics.CachedMetrics;
 import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
+import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpClientImpl;
+import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.track.TrackClientConfig;
@@ -111,68 +89,22 @@ public class SplitFactoryImpl implements SplitFactory {
         }
         _factoryMonitor.add(apiToken);
         _apiKey = apiToken;
-        SSLContext sslContext = null;
-        try {
-            sslContext = SSLContexts.custom()
-                    .useTLS()
-                    .build();
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new RuntimeException("Unable to create support for secure connection.");
-        }
 
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
-                sslContext,
-                new String[]{"TLSv1.1", "TLSv1.2"},
-                null,
-                SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        SplitHttpHeadersBuilder headersBuilder  = new SplitHttpHeadersBuilder();
+        headersBuilder.setHostIp(config.ip());
+        headersBuilder.setHostname(config.hostname());
+        headersBuilder.setClientVersion(SplitClientConfig.splitSdkVersion);
+        headersBuilder.setApiToken(apiToken);
 
-        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
-                .register("http", PlainConnectionSocketFactory.getSocketFactory())
-                .register("https", sslsf)
-                .build();
-
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(config.connectionTimeout())
-                .setSocketTimeout(config.readTimeout())
-                .build();
-
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(registry);
-        cm.setMaxTotal(20);
-        cm.setDefaultMaxPerRoute(20);
-
-        HttpClientBuilder httpClientbuilder = HttpClients.custom()
-                .setConnectionManager(cm)
-                .setDefaultRequestConfig(requestConfig)
-                .setSSLSocketFactory(sslsf)
-                .addInterceptorLast(AddSplitHeadersFilter.instance(apiToken, config.hostname(), config.ip()))
-                .addInterceptorLast(new GzipEncoderRequestInterceptor())
-                .addInterceptorLast(new GzipDecoderResponseInterceptor());
-
-        // Set up proxy is it exists
-        if (config.proxy() != null) {
-            Logger.i("Initializing Split SDK with proxy settings");
-            DefaultProxyRoutePlanner routePlanner = new DefaultProxyRoutePlanner(config.proxy());
-            httpClientbuilder.setRoutePlanner(routePlanner);
-
-            if (config.proxyUsername() != null && config.proxyPassword() != null) {
-                Logger.i("Proxy setup using credentials");
-                CredentialsProvider credsProvider = new BasicCredentialsProvider();
-                AuthScope siteScope = new AuthScope(config.proxy().getHostName(), config.proxy().getPort());
-                Credentials siteCreds = new UsernamePasswordCredentials(config.proxyUsername(), config.proxyPassword());
-                credsProvider.setCredentials(siteScope, siteCreds);
-
-                httpClientbuilder.setDefaultCredentialsProvider(credsProvider);
-            }
-        }
-
-        final CloseableHttpClient httpclient = httpClientbuilder.build();
+        final HttpClient httpClient = new HttpClientImpl();
+        httpClient.addHeaders(headersBuilder.build());
 
         URI rootTarget = URI.create(config.endpoint());
         URI eventsRootTarget = URI.create(config.eventsEndpoint());
 
         // TODO: 11/23/17  Add MetricsCache
         // Metrics
-        HttpMetrics httpMetrics = HttpMetrics.create(httpclient, eventsRootTarget);
+        HttpMetrics httpMetrics = HttpMetrics.create(httpClient, eventsRootTarget);
         final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
 
         _eventsManager = new SplitEventsManager(config);
@@ -185,7 +117,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Segments
         IStorage mySegmentsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
-        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpclient, rootTarget, mySegmentsStorage);
+        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpClient, rootTarget, mySegmentsStorage);
         final RefreshableMySegmentsFetcherProviderImpl segmentFetcher = new RefreshableMySegmentsFetcherProviderImpl(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
@@ -195,16 +127,16 @@ public class SplitFactoryImpl implements SplitFactory {
         ISplitCache splitCache = new SplitCache(fileStorage);
         ISplitChangeCache splitChangeCache = new SplitChangeCache(splitCache);
 
-        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpclient, rootTarget, uncachedFireAndForget, splitChangeCache);
+        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpClient, rootTarget, uncachedFireAndForget, splitChangeCache);
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), _eventsManager);
 
-        // Impressions
+        // Impressionss
         ImpressionsStorageManagerConfig impressionsStorageManagerConfig = new ImpressionsStorageManagerConfig();
         impressionsStorageManagerConfig.setImpressionsMaxSentAttempts(config.impressionsMaxSentAttempts());
         impressionsStorageManagerConfig.setImpressionsChunkOudatedTime(config.impressionsChunkOutdatedTime());
         IStorage impressionsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
         final ImpressionsStorageManager impressionsStorageManager = new ImpressionsStorageManager(impressionsStorage, impressionsStorageManagerConfig);
-        final ImpressionsManager splitImpressionListener = ImpressionsManager.instance(httpclient, config, impressionsStorageManager);
+        final ImpressionsManager splitImpressionListener = ImpressionsManager.instance(httpClient, config, impressionsStorageManager);
         final ImpressionListener impressionListener;
 
         if (config.impressionListener() != null) {
@@ -229,7 +161,7 @@ public class SplitFactoryImpl implements SplitFactory {
         trackConfig.setMaxQueueSizeInBytes(config.maxQueueSizeInBytes());
         IStorage eventsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
-        _trackClient = TrackClientImpl.create(trackConfig, httpclient, eventsRootTarget, trackStorageManager, splitCache);
+        _trackClient = TrackClientImpl.create(trackConfig, httpClient, eventsRootTarget, trackStorageManager, splitCache);
 
 
         destroyer = new Runnable() {
@@ -249,12 +181,12 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of metrics 2");
                     impressionListener.close();
                     Logger.i("Successful shutdown of ImpressionListener");
-                    httpclient.close();
+                    httpClient.close();
                     Logger.i("Successful shutdown of httpclient");
                     _manager.destroy();
                     Logger.i("Successful shutdown of manager");
 
-                } catch (IOException e) {
+                } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
                     isTerminated = true;

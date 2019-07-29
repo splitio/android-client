@@ -1,0 +1,93 @@
+[
+  {
+    "keyImpressions": [
+      {
+        "bucketingKey": null,
+        "changeNumber": 1561500492437,
+        "feature": "ANDROID_sameTreatmentWithBucketingKey",
+        "keyName": "CUSTOMER_ID",
+        "label": "default rule",
+        "time": 1561667586092,
+        "treatment": "V1"
+      },
+      {
+        "bucketingKey": null,
+        "changeNumber": 1561500492437,
+        "feature": "ANDROID_sameTreatmentWithBucketingKey",
+        "keyName": "CUSTOMER_ID",
+        "label": "default rule",
+        "time": 1561667586413,
+        "treatment": "V1"
+      },
+      {
+        "bucketingKey": null,
+        "changeNumber": 1561500492437,
+        "feature": "ANDROID_sameTreatmentWithBucketingKey",
+        "keyName": "CUSTOMER_ID",
+        "label": "default rule",
+        "time": 1561667587616,
+        "treatment": "V1"
+      },
+      {
+        "bucketingKey": null,
+        "changeNumber": 1561500492437,
+        "feature": "ANDROID_sameTreatmentWithBucketingKey",
+        "keyName": "CUSTOMER_ID",
+        "label": "default rule",
+        "time": 1561667588973,
+        "treatment": "V1"
+      }
+    ],
+    "testName": "ANDROID_sameTreatmentWithBucketingKey"
+  },
+  {
+    "keyImpressions": [
+      {
+        "bucketingKey": null,
+        "changeNumber": 1515711580857,
+        "feature": "sample_feature",
+        "keyName": "CUSTOMER_ID",
+        "label": "default rule",
+        "time": 1561667786937,
+        "treatment": "off"
+      },
+      {
+        "bucketingKey": null,
+        "changeNumber": 1515711580857,
+        "feature": "sample_feature",
+        "keyName": "CUSTOMER_ID",
+        "label": "default rule",
+        "time": 1561667787361,
+        "treatment": "off"
+      },
+      {
+        "bucketingKey": null,
+        "changeNumber": 1515711580857,
+        "feature": "sample_feature",
+        "keyName": "CUSTOMER_ID",
+        "label": "default rule",
+        "time": 1561667787780,
+        "treatment": "off"
+      },
+      {
+        "bucketingKey": null,
+        "changeNumber": 1515711580857,
+        "feature": "sample_feature",
+        "keyName": "CUSTOMER_ID",
+        "label": "default rule",
+        "time": 1561667788275,
+        "treatment": "off"
+      },
+      {
+        "bucketingKey": null,
+        "changeNumber": 1515711580857,
+        "feature": "sample_feature",
+        "keyName": "CUSTOMER_ID",
+        "label": "default rule",
+        "time": 1561667788863,
+        "treatment": "off"
+      }
+    ],
+    "testName": "sample_feature"
+  }
+]

@@ -40,7 +40,13 @@ public class MemoryStorage implements IStorage {
 
     @Override
     public List<String> getAllIds(String fileNamePrefix) {
-        return new ArrayList<String>(_storage.keySet());
+        List<String> allIds = new ArrayList<>();
+        for(String elementId : _storage.keySet()) {
+            if(elementId.startsWith(fileNamePrefix)) {
+                allIds.add(elementId);
+            }
+        }
+        return allIds;
     }
 
     @Override
@@ -51,5 +57,10 @@ public class MemoryStorage implements IStorage {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean exists(String elementId) {
+        return _storage.containsKey(elementId);
     }
 }
