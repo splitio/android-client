@@ -72,8 +72,11 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     @Override
     public boolean addSplit(Split split) {
-        if(split != null && split.status != null
-                && split.status == Status.ACTIVE) {
+        if(split == null) {
+            return false;
+        }
+
+        if(split.status != null && split.status == Status.ACTIVE) {
             if(mInMemorySplits.get(split.name) == null) {
                 addTrafficType(split.trafficTypeName);
             }
@@ -107,12 +110,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     @Override
     synchronized public Split getSplit(String splitName) {
-        Split split =  mInMemorySplits.get(splitName);
-        if(split == null && !mRemovedSplits.contains(splitName)) {
-            split = getSplitFromDisk(splitName);
-            mInMemorySplits.put(splitName, split);
-        }
-        return split;
+        return  mInMemorySplits.get(splitName);
     }
 
     @Override
