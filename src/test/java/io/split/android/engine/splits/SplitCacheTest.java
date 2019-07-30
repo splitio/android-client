@@ -186,4 +186,34 @@ public class SplitCacheTest {
 
     }
 
+    @Test
+    public void trafficType() {
+        Split s1 = newSplit("s1", Status.ACTIVE, "tt");
+
+        Split s2 = newSplit("s2", Status.ACTIVE, "mytt");
+        Split s2ar = newSplit("s2", Status.ARCHIVED, "mytt");
+        SplitCache cache = new SplitCache(new MemoryStorage());
+
+        cache.addSplit(s1);
+        cache.addSplit(s2);
+        cache.addSplit(s2);
+        cache.addSplit(s2);
+        cache.addSplit(s2ar);
+
+        Assert.assertTrue(cache.trafficTypeExists("tt"));
+        Assert.assertFalse(cache.trafficTypeExists("mytt"));
+    }
+
+    private Split newSplit(String name, Status status, String trafficType) {
+        Split split = new Split();
+        split.name = name;
+        split.status = status;
+        if(trafficType != null) {
+            split.trafficTypeName = trafficType;
+        } else {
+            split.trafficTypeName = "custom";
+        }
+        return split;
+    }
+
 }

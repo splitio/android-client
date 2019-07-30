@@ -72,10 +72,14 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     @Override
     public boolean addSplit(Split split) {
-        if(split != null && split.status != null && split.status == Status.ACTIVE) {
+        if(split != null && split.status != null
+                && split.status == Status.ACTIVE) {
+            if(mInMemorySplits.get(split.name) == null) {
+                addTrafficType(split.trafficTypeName);
+            }
             mInMemorySplits.put(split.name, split);
             mRemovedSplits.remove(split.name);
-            addTrafficType(split.trafficTypeName);
+
         } else {
             mInMemorySplits.remove(split.name);
             mRemovedSplits.add(split.name);
