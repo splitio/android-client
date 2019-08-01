@@ -84,7 +84,6 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
             addTrafficType(split.trafficTypeName);
             mInMemorySplits.put(split.name, split);
             mRemovedSplits.remove(split.name);
-
         } else {
             mInMemorySplits.remove(split.name);
             mRemovedSplits.add(split.name);
