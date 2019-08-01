@@ -187,7 +187,7 @@ public class SplitCacheTest {
     }
 
     @Test
-    public void trafficType() {
+    public void updatedSplitTrafficType() {
         Split s1 = newSplit("s1", Status.ACTIVE, "tt");
 
         Split s2 = newSplit("s2", Status.ACTIVE, "mytt");
@@ -202,6 +202,42 @@ public class SplitCacheTest {
 
         Assert.assertTrue(cache.trafficTypeExists("tt"));
         Assert.assertFalse(cache.trafficTypeExists("mytt"));
+    }
+
+    @Test
+    public void changedTrafficTypeForSplit() {
+        String splitName = "n_s1";
+
+        Split s1t1 = newSplit(splitName, Status.ACTIVE, "tt");
+        Split s1t2 = newSplit(splitName, Status.ACTIVE, "mytt");
+        SplitCache cache = new SplitCache(new MemoryStorage());
+
+        cache.addSplit(s1t1);
+        cache.addSplit(s1t1);
+        cache.addSplit(s1t1);
+        cache.addSplit(s1t2);
+
+        Assert.assertFalse(cache.trafficTypeExists("tt"));
+        Assert.assertTrue(cache.trafficTypeExists("mytt"));
+    }
+
+    @Test
+    public void existingChangedTrafficTypeForSplit() {
+        String splitName = "n_s1";
+
+        Split s0 = newSplit("n_s0", Status.ACTIVE, "tt");
+        Split s1t1 = newSplit(splitName, Status.ACTIVE, "tt");
+        Split s1t2 = newSplit(splitName, Status.ACTIVE, "mytt");
+        SplitCache cache = new SplitCache(new MemoryStorage());
+
+        cache.addSplit(s0);
+        cache.addSplit(s1t1);
+        cache.addSplit(s1t1);
+        cache.addSplit(s1t1);
+        cache.addSplit(s1t2);
+
+        Assert.assertTrue(cache.trafficTypeExists("tt"));
+        Assert.assertTrue(cache.trafficTypeExists("mytt"));
     }
 
     private Split newSplit(String name, Status status, String trafficType) {

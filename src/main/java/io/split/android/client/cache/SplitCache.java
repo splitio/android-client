@@ -72,14 +72,16 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
 
     @Override
     public boolean addSplit(Split split) {
-        if(split == null) {
+        if(split == null || split.name == null) {
             return false;
         }
 
         if(split.status != null && split.status == Status.ACTIVE) {
-            if(mInMemorySplits.get(split.name) == null) {
-                addTrafficType(split.trafficTypeName);
+            Split loadedSplit = mInMemorySplits.get(split.name);
+            if(loadedSplit != null && loadedSplit.trafficTypeName != null) {
+                removeTrafficType(loadedSplit.trafficTypeName);
             }
+            addTrafficType(split.trafficTypeName);
             mInMemorySplits.put(split.name, split);
             mRemovedSplits.remove(split.name);
 
@@ -131,20 +133,22 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
             return;
         }
 
-        int count = countForTrafficType(name);
-        mTrafficTypes.put(name.toLowerCase(), Integer.valueOf(count++));
+        String lowercaseName = name.toLowerCase();
+        int count = countForTrafficType(lowercaseName);
+        mTrafficTypes.put(lowercaseName, Integer.valueOf(++count));
     }
 
     private void removeTrafficType(@NotNull String name) {
         if(name == null) {
             return;
         }
+        String lowercaseName = name.toLowerCase();
 
-        int count = countForTrafficType(name);
-        if(count > 0) {
-            mTrafficTypes.put(name, Integer.valueOf(count--));
+        int count = countForTrafficType(lowercaseName);
+        if(count > 1) {
+            mTrafficTypes.put(lowercaseName, Integer.valueOf(--count));
         } else {
-            mTrafficTypes.remove(name);
+            mTrafficTypes.remove(lowercaseName);
         }
     }
 
