@@ -32,7 +32,8 @@ public class TrackStorageManager implements LifecycleObserver {
     private static final String EVENTS_FILE_PREFIX = TRACK_FILE_PREFIX + "_#";
     private static final String CHUNK_HEADERS_FILE_NAME = TRACK_FILE_PREFIX + "_chunk_headers.json";
     private static final String EVENTS_FILE_NAME = EVENTS_FILE_PREFIX + "%d.json";
-    private static final int MAX_BYTES_PER_CHUNK = 3000000; //3MB
+    private static final int MAX_BYTES_PER_CHUNK = 1000000; //1MB
+    private static final int MAX_BYTES_LEGACY_FILE = 5000000; //5MB
 
     private final static Type EVENTS_FILE_TYPE = new TypeToken<Map<String, List<Event>>>() {
     }.getType();
@@ -85,8 +86,8 @@ public class TrackStorageManager implements LifecycleObserver {
             String storedTracks = mFileStorageManager.read(LEGACY_EVENTS_FILE_NAME);
             if(Strings.isNullOrEmpty(storedTracks)) {
                 return;
-
             }
+
             Type dataType = new TypeToken<Map<String, EventsChunk>>() {
             }.getType();
 
@@ -99,6 +100,9 @@ public class TrackStorageManager implements LifecycleObserver {
             Logger.e(syntaxException, "Unable to parse saved tracks: " + syntaxException.getLocalizedMessage());
         } catch (Exception e) {
             Logger.e(e, "Error loading tracks from legacy file from disk: " + e.getLocalizedMessage());
+        } catch (Throwable t) {
+            Logger.e(t, "Could not load legacy file: " + t.getLocalizedMessage());
+            mFileStorageManager.delete(LEGACY_EVENTS_FILE_NAME);
         }
     }
 
@@ -159,6 +163,8 @@ public class TrackStorageManager implements LifecycleObserver {
             Logger.e(syntaxException, "Unable to parse tracks to save");
         } catch (Exception e) {
             Logger.e(e, "Error saving tracks events to disk: " + e.getLocalizedMessage());
+        } catch (Throwable t) {
+            Logger.e(t, "Error saving tracks events to disk: " + t.getLocalizedMessage());
         }
 
         List<Map<String, List<Event>>> eventChunks = splitChunks(getEventsChunks());
@@ -173,6 +179,8 @@ public class TrackStorageManager implements LifecycleObserver {
                 Logger.e(e, "Could not save tracks");
             } catch (JsonSyntaxException syntaxException) {
                 Logger.e(syntaxException, "Unable to parse tracks to save");
+            } catch (Throwable t) {
+                Logger.e(t, "Could not save: " + t.getLocalizedMessage());
             }
         }
     }
