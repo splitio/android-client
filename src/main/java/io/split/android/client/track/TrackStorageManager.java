@@ -33,7 +33,6 @@ public class TrackStorageManager implements LifecycleObserver {
     private static final String CHUNK_HEADERS_FILE_NAME = TRACK_FILE_PREFIX + "_chunk_headers.json";
     private static final String EVENTS_FILE_NAME = EVENTS_FILE_PREFIX + "%d.json";
     private static final int MAX_BYTES_PER_CHUNK = 1000000; //1MB
-    private static final int MAX_BYTES_LEGACY_FILE = 5000000; //5MB
 
     private final static Type EVENTS_FILE_TYPE = new TypeToken<Map<String, List<Event>>>() {
     }.getType();
