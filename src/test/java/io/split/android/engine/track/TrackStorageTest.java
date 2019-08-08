@@ -38,7 +38,7 @@ public class TrackStorageTest {
     }.getType();
     final String CHUNK_HEADERS_FILE_NAME = "SPLITIO.events_chunk_headers.json";
     final String EVENTS_FILE_NAME = "SPLITIO.events_#%d.json";
-    final int MAX_FILE_SIZE = 3000000;
+    final int MAX_FILE_SIZE = 1000000;
 
     @Before
     public void setupUp(){
@@ -120,7 +120,7 @@ public class TrackStorageTest {
     @Test
     public void testSaveAndLoadChunkFiles() throws IOException {
 
-
+        int totalSize = 0;
         final int chunkCount = 10;
         IStorage memStorage = new MemoryStorage();
         int[][] chunksData = {
@@ -140,6 +140,7 @@ public class TrackStorageTest {
                 event.key = String.format("key-%d-%d", i, j);
                 event.setSizeInBytes(eventSize);
                 events.add(event);
+                totalSize += eventSize;
             }
             EventsChunk chunk = new EventsChunk(events);
             chunk.addAtempt();
@@ -163,20 +164,20 @@ public class TrackStorageTest {
         List<ChunkHeader> headers = Json.fromJson(headerContent, chunkHeaderType);
         List<String> allEventFiles = memStorage.getAllIds("SPLITIO.events_#");
         List<Map<String, List<Event>>> events = new ArrayList<>();
-        int[] sizes = new int[9];
-        for (int i = 0; i < 9; i++) {
+        int expectedFileCount = totalSize / MAX_FILE_SIZE + (totalSize % MAX_FILE_SIZE > 0 ? 1 : 0);
+        List<Integer> sizes = new ArrayList();
+        for (int i = 0; i < expectedFileCount; i++) {
             String file = memStorage.read(String.format(EVENTS_FILE_NAME, i));
             Map<String, List<Event>> eventsFile = Json.fromJson(file, eventsFileType);
             events.add(eventsFile);
-
-            sizes[i] = sizeInBytes(eventsFile);
+            sizes.add(new Integer(sizeInBytes(eventsFile)));
         }
 
         Assert.assertNotNull(headerContent);
         Assert.assertEquals(10, headers.size());
-        Assert.assertEquals(9, allEventFiles.size()); // including headers file
-        for (int i = 0; i < 8; i++) {
-            Assert.assertTrue(sizes[i] <= MAX_FILE_SIZE);
+        Assert.assertEquals(expectedFileCount, allEventFiles.size()); // including headers file
+        for (int i = 0; i < sizes.size(); i++) {
+            Assert.assertTrue(sizes.get(i).intValue() <= MAX_FILE_SIZE);
         }
 
         Assert.assertEquals(10, loadedChunks.size());

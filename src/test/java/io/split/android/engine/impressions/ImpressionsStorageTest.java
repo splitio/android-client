@@ -42,7 +42,7 @@ public class ImpressionsStorageTest {
     }.getType();
     final String CHUNK_HEADERS_FILE_NAME = "SPLITIO.impressions_chunk_headers.json";
     final String IMPRESSIONS_FILE_NAME = "SPLITIO.impressions_#%d.json";
-    final int MAX_FILE_SIZE = 3000000;
+    final int MAX_FILE_SIZE = 1000000;
 
     @Before
     public void setUp() {
@@ -193,7 +193,6 @@ public class ImpressionsStorageTest {
     @Test
     public void testSaveAndLoadChunkFiles() throws IOException {
 
-
         IStorage memStorage = new MemoryStorage();
 
         ImpressionsStorageManagerConfig config = new ImpressionsStorageManagerConfig();
@@ -237,19 +236,19 @@ public class ImpressionsStorageTest {
         List<ChunkHeader> headers = Json.fromJson(headerContent, chunkHeaderType);
         List<String> allImpressionsFiles = memStorage.getAllIds("SPLITIO.impressions_#");
         List<Map<String, List<KeyImpression>>> loadedKeyImpressions = new ArrayList<>();
-        int[] sizes = new int[filesCount];
+        List<Integer> sizes = new ArrayList<>();
         for (int i = 0; i < filesCount; i++) {
             String file = memStorage.read(String.format(IMPRESSIONS_FILE_NAME, i));
             Map<String, List<KeyImpression>> impressionsFile = Json.fromJson(file, impressionsFileType);
             loadedKeyImpressions.add(impressionsFile);
-            sizes[i] = sizeInBytes(impressionsFile.size());
+            sizes.add(sizeInBytes(impressionsFile.size()));
         }
 
         Assert.assertNotNull(headerContent);
         Assert.assertEquals(chunkCount, headers.size());
         Assert.assertEquals(filesCount, allImpressionsFiles.size());
         for (int i = 0; i < filesCount; i++) {
-            Assert.assertTrue(sizes[i] <= MAX_FILE_SIZE);
+            Assert.assertTrue(sizes.get(i).intValue() <= MAX_FILE_SIZE);
         }
 
         Assert.assertEquals(chunkCount, loadedChunks.size());
