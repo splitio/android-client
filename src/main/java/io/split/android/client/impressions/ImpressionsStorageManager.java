@@ -262,6 +262,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
                     }
                 }
             } else {
+                mFileStorageManager.delete(LEGACY_IMPRESSIONS_FILE_NAME);
                 Logger.w("Unable to parse legacy impressions file. Memory not available");
             }
 

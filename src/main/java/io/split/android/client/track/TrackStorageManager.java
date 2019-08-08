@@ -95,6 +95,7 @@ public class TrackStorageManager implements LifecycleObserver {
                 Map<String, EventsChunk> chunkTracks = Json.fromJson(storedTracks, LEGACY_EVENTS_FILE_TYPE);
                 mEventsChunks.putAll(chunkTracks);
             } else {
+                mFileStorageManager.delete(LEGACY_EVENTS_FILE_NAME);
                 Logger.w("Unable to parse legacy track file. Memory not available");
             }
 
