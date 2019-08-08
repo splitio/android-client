@@ -5,7 +5,7 @@ import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
-import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
@@ -24,6 +24,7 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.Utils;
 
 public class TrackStorageManager implements LifecycleObserver {
 
@@ -32,9 +33,12 @@ public class TrackStorageManager implements LifecycleObserver {
     private static final String EVENTS_FILE_PREFIX = TRACK_FILE_PREFIX + "_#";
     private static final String CHUNK_HEADERS_FILE_NAME = TRACK_FILE_PREFIX + "_chunk_headers.json";
     private static final String EVENTS_FILE_NAME = EVENTS_FILE_PREFIX + "%d.json";
-    private static final int MAX_BYTES_PER_CHUNK = 3000000; //3MB
+    private static final int MAX_BYTES_PER_CHUNK = 1000000; //1MB
 
     private final static Type EVENTS_FILE_TYPE = new TypeToken<Map<String, List<Event>>>() {
+    }.getType();
+
+    private final static Type  LEGACY_EVENTS_FILE_TYPE = new TypeToken<Map<String, EventsChunk>>() {
     }.getType();
 
     private IStorage mFileStorageManager;
@@ -75,23 +79,24 @@ public class TrackStorageManager implements LifecycleObserver {
         if(mFileStorageManager.exists(CHUNK_HEADERS_FILE_NAME)) {
             loadEventsFromMultipleFiles();
         } else {
-            loadEventsFromOnFile();
+            loadEventsFromOneFile();
         }
     }
 
-    private void loadEventsFromOnFile() {
+    private void loadEventsFromOneFile() {
         // Legacy file
         try {
             String storedTracks = mFileStorageManager.read(LEGACY_EVENTS_FILE_NAME);
             if(Strings.isNullOrEmpty(storedTracks)) {
                 return;
-
             }
-            Type dataType = new TypeToken<Map<String, EventsChunk>>() {
-            }.getType();
 
-            Map<String, EventsChunk> chunkTracks = Json.fromJson(storedTracks, dataType);
-            mEventsChunks.putAll(chunkTracks);
+            if(Utils.isMemoryAvailableForJson(storedTracks)) {
+                Map<String, EventsChunk> chunkTracks = Json.fromJson(storedTracks, LEGACY_EVENTS_FILE_TYPE);
+                mEventsChunks.putAll(chunkTracks);
+            } else {
+                Logger.w("Unable to parse legacy track file. Memory not available");
+            }
 
         } catch (IOException ioe) {
             Logger.e(ioe, "Unable to load tracks from disk: " + ioe.getLocalizedMessage());
@@ -127,14 +132,18 @@ public class TrackStorageManager implements LifecycleObserver {
         for (String fileName : allFileNames) {
             try {
                 String file = mFileStorageManager.read(fileName);
-                Map<String, List<Event>> eventsFile = Json.fromJson(file, EVENTS_FILE_TYPE);
-                for(Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
-                    String chunkId = eventsChunk.getKey();
-                    EventsChunk chunk = mEventsChunks.get(chunkId);
-                    if(chunk == null) {
-                        chunk = new EventsChunk(chunkId, 0);
+                if(Utils.isMemoryAvailableForJson(file)) {
+                    Map<String, List<Event>> eventsFile = Json.fromJson(file, EVENTS_FILE_TYPE);
+                    for (Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
+                        String chunkId = eventsChunk.getKey();
+                        EventsChunk chunk = mEventsChunks.get(chunkId);
+                        if (chunk == null) {
+                            chunk = new EventsChunk(chunkId, 0);
+                        }
+                        chunk.addEvents(eventsChunk.getValue());
                     }
-                    chunk.addEvents(eventsChunk.getValue());
+                } else {
+                    Logger.w("Unable to parse track file " + fileName + ". Memory not available");
                 }
             } catch (IOException ioe) {
                 Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());

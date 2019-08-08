@@ -28,6 +28,7 @@ import io.split.android.client.storage.IStorage;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.Utils;
 
 /**
  * Created by guillermo on 1/18/18.
@@ -40,7 +41,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
     private static final String IMPRESSIONS_CHUNK_FILE_PREFIX = IMPRESSIONS_FILE_PREFIX + "_#";
     private static final String CHUNK_HEADERS_FILE_NAME = IMPRESSIONS_FILE_PREFIX + "_chunk_headers.json";
     private static final String IMPRESSIONS_FILE_NAME = IMPRESSIONS_CHUNK_FILE_PREFIX + "%d.json";
-    private static final int MAX_BYTES_PER_CHUNK = 3000000; //3MB
+    private static final int MAX_BYTES_PER_CHUNK = 1000000; //1MB
     private static final int ESTIMATED_IMPRESSION_SIZE = 500; //50 bytes
 
     private final static Type IMPRESSIONS_FILE_TYPE = new TypeToken<Map<String, List<KeyImpression>>>() {
@@ -204,33 +205,37 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         for (String fileName : allFileNames) {
             try {
                 String file = mFileStorageManager.read(fileName);
-                Map<String, List<KeyImpression>> impressionsFile = Json.fromJson(file, IMPRESSIONS_FILE_TYPE);
-                for (Map.Entry<String, List<KeyImpression>> impressionsChunk : impressionsFile.entrySet()) {
-                    String storedImpressionId = getStoredImpressionsIdFromRecordKey(impressionsChunk.getKey());
-                    String testName = getTestNameFromRecordKey(impressionsChunk.getKey());
+                if(Utils.isMemoryAvailableForJson(file)) {
+                    Map<String, List<KeyImpression>> impressionsFile = Json.fromJson(file, IMPRESSIONS_FILE_TYPE);
+                    for (Map.Entry<String, List<KeyImpression>> impressionsChunk : impressionsFile.entrySet()) {
+                        String storedImpressionId = getStoredImpressionsIdFromRecordKey(impressionsChunk.getKey());
+                        String testName = getTestNameFromRecordKey(impressionsChunk.getKey());
 
-                    StoredImpressions storedImpressions = mImpressionsToSend.get(storedImpressionId);
-                    if (storedImpressions == null) {
-                        storedImpressions = StoredImpressions.from(storedImpressionId, 0, System.currentTimeMillis());
-                    }
-                    List<TestImpressions> testImpressionsList = storedImpressions.impressions();
-                    if (testImpressionsList == null) {
-                        testImpressionsList = new ArrayList();
-                    }
+                        StoredImpressions storedImpressions = mImpressionsToSend.get(storedImpressionId);
+                        if (storedImpressions == null) {
+                            storedImpressions = StoredImpressions.from(storedImpressionId, 0, System.currentTimeMillis());
+                        }
+                        List<TestImpressions> testImpressionsList = storedImpressions.impressions();
+                        if (testImpressionsList == null) {
+                            testImpressionsList = new ArrayList();
+                        }
 
-                    int testImpressionsIndex = getImpressionsIndexForTest(testName, testImpressionsList);
-                    TestImpressions testImpressions;
-                    if(testImpressionsIndex == -1) {
-                        testImpressions = new TestImpressions();
-                        testImpressions.testName = testName;
-                        testImpressions.keyImpressions = new ArrayList<>();
-                    } else {
-                        testImpressions = testImpressionsList.get(testImpressionsIndex);
-                        storedImpressions.impressions().remove(testImpressionsIndex);
-                    }
+                        int testImpressionsIndex = getImpressionsIndexForTest(testName, testImpressionsList);
+                        TestImpressions testImpressions;
+                        if (testImpressionsIndex == -1) {
+                            testImpressions = new TestImpressions();
+                            testImpressions.testName = testName;
+                            testImpressions.keyImpressions = new ArrayList<>();
+                        } else {
+                            testImpressions = testImpressionsList.get(testImpressionsIndex);
+                            storedImpressions.impressions().remove(testImpressionsIndex);
+                        }
 
-                    testImpressions.keyImpressions.addAll(impressionsChunk.getValue());
-                    storedImpressions.impressions().add(testImpressions);
+                        testImpressions.keyImpressions.addAll(impressionsChunk.getValue());
+                        storedImpressions.impressions().add(testImpressions);
+                    }
+                } else {
+                    Logger.w("Unable to parse impressions file " + fileName + ". Memory not available");
                 }
             } catch (IOException ioe) {
                 Logger.e(ioe, "Unable to load impressions file from disk: " + ioe.getLocalizedMessage());
@@ -249,12 +254,15 @@ public class ImpressionsStorageManager implements LifecycleObserver {
             if (Strings.isNullOrEmpty(storedImpressions)) {
                 return;
             }
-
-            Map<String, StoredImpressions> impressions = Json.fromJson(storedImpressions, LEGACY_IMPRESSIONS_FILE_TYPE);
-            for (Map.Entry<String, StoredImpressions> entry : impressions.entrySet()) {
-                if (!isChunkOutdated(entry.getValue())) {
-                    mImpressionsToSend.put(entry.getKey(), entry.getValue());
+            if(Utils.isMemoryAvailableForJson(storedImpressions)) {
+                Map<String, StoredImpressions> impressions = Json.fromJson(storedImpressions, LEGACY_IMPRESSIONS_FILE_TYPE);
+                for (Map.Entry<String, StoredImpressions> entry : impressions.entrySet()) {
+                    if (!isChunkOutdated(entry.getValue())) {
+                        mImpressionsToSend.put(entry.getKey(), entry.getValue());
+                    }
                 }
+            } else {
+                Logger.w("Unable to parse legacy impressions file. Memory not available");
             }
 
         } catch (IOException ioe) {

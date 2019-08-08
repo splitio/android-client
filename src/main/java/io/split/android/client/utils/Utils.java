@@ -15,6 +15,8 @@ import io.split.android.client.network.URIBuilder;
 
 public class Utils {
 
+    private static final int MEMORY_ALLOCATION_TIMES_FOR_JSON = 2;
+
     public static boolean isSplitServiceReachable(URI uri) {
         try {
             return Utils.isReachable(new URIBuilder(uri, "/api/version").build());
@@ -89,5 +91,16 @@ public class Utils {
         String hash = BCrypt.hashpw(sanitizedApiKey, cleanedSalt);
 
         return (hash != null ? sanitizeForFolderName(hash) : null);
+    }
+
+    public static boolean isMemoryAvailableToAllocate(long bytes, int times) {
+        return Runtime.getRuntime().freeMemory() > bytes * times;
+    }
+
+    public static boolean isMemoryAvailableForJson(String json) {
+        if(Strings.isNullOrEmpty(json)) {
+            return true;
+        }
+        return Utils.isMemoryAvailableToAllocate(json.getBytes().length, MEMORY_ALLOCATION_TIMES_FOR_JSON);
     }
 }
