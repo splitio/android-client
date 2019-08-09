@@ -24,8 +24,11 @@ import io.split.android.client.impressions.StoredImpressions;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.storage.MemoryStorage;
 import io.split.android.client.track.EventsChunk;
+import io.split.android.client.track.ITracksStorage;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Json;
+import io.split.android.fake.MemoryUtilsNoMemoryStub;
+import io.split.android.fake.TrackFileStorageStub;
 
 public class TrackStorageTest {
 
@@ -38,15 +41,15 @@ public class TrackStorageTest {
     }.getType();
     final String CHUNK_HEADERS_FILE_NAME = "SPLITIO.events_chunk_headers.json";
     final String EVENTS_FILE_NAME = "SPLITIO.events_#%d.json";
-    final int MAX_FILE_SIZE = 3000000;
+    final int MAX_FILE_SIZE = 1000000;
 
     @Before
-    public void setupUp(){
+    public void setup(){
 
         final String FILE_NAME = "SPLITIO.events.json";
 
         Map<String, EventsChunk> eventsChunks = new HashMap<>();
-        IStorage memStorage = new MemoryStorage();
+        ITracksStorage memStorage = new TrackFileStorageStub();
         mInitialChunkIds = new HashSet<>();
         final int CHUNK_COUNT = 4;
         for(int i = 0; i < CHUNK_COUNT; i++) {
@@ -122,7 +125,7 @@ public class TrackStorageTest {
 
 
         final int chunkCount = 10;
-        IStorage memStorage = new MemoryStorage();
+        ITracksStorage memStorage = new TrackFileStorageStub();
         int[][] chunksData = {
                 {35, 4, 86, 40, 200, 120, 20, 420, 8, 911},
                 {1100, 1305, 4506, 7530, 3209, 5230, 6500, 6880, 4100, 23000},
@@ -194,7 +197,7 @@ public class TrackStorageTest {
         final String LEGACY_EVENTS_FILE_NAME = "SPLITIO.events.json";
 
         final int chunkCount = 10;
-        IStorage memStorage = new MemoryStorage();
+        ITracksStorage memStorage = new TrackFileStorageStub();
         int[][] chunksData = {
                 {35, 4, 86, 40, 200, 120, 20, 420, 8, 911},
                 {1100, 1305, 4506, 7530, 3209, 5230, 6500, 6880, 4100, 23000},
@@ -234,7 +237,7 @@ public class TrackStorageTest {
 
     @Test
     public void testMissingEventsFile() throws IOException {
-        IStorage memStorage = new MemoryStorage();
+        ITracksStorage memStorage = new TrackFileStorageStub();
         List<ChunkHeader> headers = new ArrayList<>();
         for(int i = 0; i < 3; i++) {
             ChunkHeader c = new ChunkHeader("c" + i, 0);
@@ -247,6 +250,109 @@ public class TrackStorageTest {
 
         Assert.assertNotNull(manager);
 
+    }
+
+    @Test
+    public void testUnavailableMemorySavingFileChunks() throws IOException {
+
+        ITracksStorage memStorage = new TrackFileStorageStub();
+
+        TrackStorageManager savingManager = new TrackStorageManager(memStorage, new MemoryUtilsNoMemoryStub());
+        int totalSize = populateStorageManager(savingManager);
+
+
+        List<EventsChunk> savedChunks = savingManager.getEventsChunks();
+
+        savingManager.close(); // Close saves to disk
+
+        TrackStorageManager loadingManager = new TrackStorageManager(memStorage);
+        List<EventsChunk> loadedChunks = loadingManager.getEventsChunks();
+
+        String headerContent = memStorage.read(CHUNK_HEADERS_FILE_NAME);
+        List<ChunkHeader> headers = Json.fromJson(headerContent, chunkHeaderType);
+        List<String> allEventFiles = memStorage.getAllIds("SPLITIO.events_#");
+        List<Map<String, List<Event>>> events = new ArrayList<>();
+        int expectedFileCount = totalSize / MAX_FILE_SIZE + (totalSize % MAX_FILE_SIZE > 0 ? 1 : 0);
+        List<Integer> sizes = new ArrayList();
+        for (int i = 0; i < expectedFileCount; i++) {
+            String file = memStorage.read(String.format(EVENTS_FILE_NAME, i));
+            Map<String, List<Event>> eventsFile = Json.fromJson(file, eventsFileType);
+            events.add(eventsFile);
+            sizes.add(new Integer(sizeInBytes(eventsFile)));
+        }
+
+        Assert.assertNotNull(headerContent);
+        Assert.assertEquals(10, headers.size());
+        Assert.assertEquals(0, allEventFiles.size());
+
+    }
+
+    @Test
+    public void testUnavailableMemoryLoadingFileChunks() throws IOException {
+
+        ITracksStorage memStorage = new TrackFileStorageStub();
+
+        TrackStorageManager savingManager = new TrackStorageManager(memStorage);
+        int totalSize = populateStorageManager(savingManager);
+
+
+        List<EventsChunk> savedChunks = savingManager.getEventsChunks();
+
+        savingManager.close(); // Close saves to disk
+
+        TrackStorageManager loadingManager = new TrackStorageManager(memStorage, new MemoryUtilsNoMemoryStub());
+        List<EventsChunk> loadedChunks = loadingManager.getEventsChunks();
+
+        String headerContent = memStorage.read(CHUNK_HEADERS_FILE_NAME);
+        List<ChunkHeader> headers = Json.fromJson(headerContent, chunkHeaderType);
+        List<String> allEventFiles = memStorage.getAllIds("SPLITIO.events_#");
+        List<Map<String, List<Event>>> events = new ArrayList<>();
+        int expectedFileCount = totalSize / MAX_FILE_SIZE + (totalSize % MAX_FILE_SIZE > 0 ? 1 : 0);
+        List<Integer> sizes = new ArrayList();
+        for (int i = 0; i < expectedFileCount; i++) {
+            String file = memStorage.read(String.format(EVENTS_FILE_NAME, i));
+            Map<String, List<Event>> eventsFile = Json.fromJson(file, eventsFileType);
+            events.add(eventsFile);
+            sizes.add(new Integer(sizeInBytes(eventsFile)));
+        }
+
+        Assert.assertNotNull(headerContent);
+        Assert.assertEquals(10, headers.size());
+        for(EventsChunk chunk : loadedChunks) {
+            Assert.assertEquals(0, chunk.getEvents().size());
+        }
+
+    }
+
+    // Helpers
+    private int populateStorageManager(TrackStorageManager manager) {
+        int totalSize = 0;
+        final int chunkCount = 10;
+        IStorage memStorage = new MemoryStorage();
+        int[][] chunksData = {
+                {35, 4, 86, 40, 200, 120, 20, 420, 8, 911},
+                {1100, 1305, 4506, 7530, 3209, 5230, 6500, 6880, 4100, 23000},
+        };
+
+        TrackStorageManager savingManager = manager;
+
+        for(int i = 0; i < chunkCount; i++) {
+            int eventCount = chunksData[0][i];
+            int eventSize = chunksData[1][i];
+            List<Event> events  = new ArrayList<>();
+            for (int j = 0; j < eventCount; j++) {
+                Event event = new Event();
+                event.eventTypeId = String.format("type-%d-%d", i, j);
+                event.key = String.format("key-%d-%d", i, j);
+                event.setSizeInBytes(eventSize);
+                events.add(event);
+                totalSize += eventSize;
+            }
+            EventsChunk chunk = new EventsChunk(events);
+            chunk.addAtempt();
+            savingManager.saveEvents(chunk);
+        }
+        return totalSize;
     }
 
     // Helpers

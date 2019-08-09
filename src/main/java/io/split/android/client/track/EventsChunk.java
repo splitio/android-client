@@ -42,4 +42,8 @@ public class EventsChunk {
         this.events.addAll(events);
     }
 
+    public void addEvent(Event event) {
+        this.events.add(event);
+    }
+
 }

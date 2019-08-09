@@ -1,5 +1,6 @@
 package io.split.android.client.track;
 
+import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -16,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.UUID;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
@@ -25,7 +27,7 @@ import io.split.android.client.utils.Logger;
 
 public class TracksFileStorage extends FileStorage implements ITracksStorage {
 
-    private static final String FILE_NAME_PREFIX = "SPLITIO.events_chunk_";
+    private static final String FILE_NAME_PREFIX = "SPLITIO.events_chunk_id_";
     private static final String FILE_NAME_TEMPLATE = FILE_NAME_PREFIX + "%s.jsonl";
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 
@@ -54,26 +56,36 @@ public class TracksFileStorage extends FileStorage implements ITracksStorage {
                 if (sc.hasNextLine()) {
                     ChunkHeader chunkHeader = null;
                     String chunkLine = sc.nextLine();
-                    if (chunkLine != null) {
-                        chunkHeader = Json.fromJson(chunkLine, EVENT_CHUNK_TYPE);
+                    if (!Strings.isNullOrEmpty(chunkLine)) {
+                        try {
+                            chunkHeader = Json.fromJson(chunkLine, EVENT_CHUNK_TYPE);
+                        } catch (JsonSyntaxException e) {
+                            chunkHeader = new ChunkHeader(UUID.randomUUID().toString(), 1);
+                        }
+                    } else {
+                        continue;
                     }
                     if (chunkHeader != null) {
                         eventsChunk = new EventsChunk(chunkHeader.getId(), chunkHeader.getAttempt());
-                        List<Event> events = new ArrayList<>();
                         while (sc.hasNextLine()) {
-                            String jsonEvent = sc.nextLine();
-                            events.add(Json.fromJson(jsonEvent, EVENT_ROW_TYPE));
+                            String jsonEvent = null;
+                            try {
+                                jsonEvent = sc.nextLine();
+                                eventsChunk.addEvent(Json.fromJson(jsonEvent, EVENT_ROW_TYPE));
+                            } catch (JsonSyntaxException e){
+                                Logger.e("Could not parse event: " + jsonEvent + " from file: " + fileName);
+                            }
                         }
-                        eventsChunk.addEvents(events);
+
                     }
                 }
-                tracks.put(eventsChunk.getId(), eventsChunk);
-
-                // note that Scanner suppresses exceptions
-                if (sc.ioException() != null) {
-                    throw sc.ioException();
+                if(eventsChunk.getEvents().size() > 0) {
+                    tracks.put(eventsChunk.getId(), eventsChunk);
                 }
 
+                if (sc.ioException() != null) {
+                    Logger.e("An error occurs parsing track events from JsonL files: " + sc.ioException().getLocalizedMessage());
+                }
 
             } catch (FileNotFoundException e) {
                 Logger.w("No cached track files found");
@@ -119,4 +131,8 @@ public class TracksFileStorage extends FileStorage implements ITracksStorage {
         }
     }
 
+    @Override
+    public boolean isUsingJsonLFiles() {
+        return getAllIds(FILE_NAME_PREFIX).size() > 0;
+    }
 }
