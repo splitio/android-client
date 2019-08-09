@@ -1,5 +1,6 @@
 package io.split.android.client.track;
 
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +21,9 @@ import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.Logger;
 
-public class TracksFileStorage extends FileStorage {
+public class TracksFileStorage extends FileStorage implements ITracksStorage {
 
     private static final String FILE_NAME_PREFIX = "SPLITIO.events_chunk_";
     private static final String FILE_NAME_TEMPLATE = FILE_NAME_PREFIX + "%s.jsonl";
@@ -39,27 +41,49 @@ public class TracksFileStorage extends FileStorage {
     public Map<String, EventsChunk> read() throws IOException {
 
         Map<String, EventsChunk> tracks = new HashMap<>();
-        FileInputStream inputStream = null;
-        Scanner sc = null;
-        try {
-            inputStream = new FileInputStream(FILE_NAME_TEMPLATE);
-            sc = new Scanner(inputStream, "UTF-8");
-            while (sc.hasNextLine()) {
-                String line = sc.nextLine();
-                // System.out.println(line);
-            }
-            // note that Scanner suppresses exceptions
-            if (sc.ioException() != null) {
-                throw sc.ioException();
-            }
-        } catch (FileNotFoundException e) {
-            return null;
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
-            if (sc != null) {
-                sc.close();
+        List<String> tracksFiles = getAllIds(FILE_NAME_PREFIX);
+
+        for (String fileName : tracksFiles) {
+            FileInputStream inputStream = null;
+            Scanner sc = null;
+            try {
+                File chunkFile = new File(_dataFolder, fileName);
+                inputStream = new FileInputStream(chunkFile);
+                sc = new Scanner(inputStream, "UTF-8");
+                EventsChunk eventsChunk = null;
+                if (sc.hasNextLine()) {
+                    ChunkHeader chunkHeader = null;
+                    String chunkLine = sc.nextLine();
+                    if (chunkLine != null) {
+                        chunkHeader = Json.fromJson(chunkLine, EVENT_CHUNK_TYPE);
+                    }
+                    if (chunkHeader != null) {
+                        eventsChunk = new EventsChunk(chunkHeader.getId(), chunkHeader.getAttempt());
+                        List<Event> events = new ArrayList<>();
+                        while (sc.hasNextLine()) {
+                            String jsonEvent = sc.nextLine();
+                            events.add(Json.fromJson(jsonEvent, EVENT_ROW_TYPE));
+                        }
+                        eventsChunk.addEvents(events);
+                    }
+                }
+                tracks.put(eventsChunk.getId(), eventsChunk);
+
+                // note that Scanner suppresses exceptions
+                if (sc.ioException() != null) {
+                    throw sc.ioException();
+                }
+
+
+            } catch (FileNotFoundException e) {
+                Logger.w("No cached track files found");
+            } finally {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (sc != null) {
+                    sc.close();
+                }
             }
         }
         return tracks;

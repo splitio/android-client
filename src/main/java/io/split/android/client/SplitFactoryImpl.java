@@ -31,8 +31,10 @@ import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
+import io.split.android.client.track.ITracksStorage;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
+import io.split.android.client.track.TracksFileStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ApiKeyValidator;
@@ -159,7 +161,7 @@ public class SplitFactoryImpl implements SplitFactory {
         trackConfig.setWaitBeforeShutdown(config.waitBeforeShutdown());
         trackConfig.setMaxSentAttempts(config.eventsMaxSentAttempts());
         trackConfig.setMaxQueueSizeInBytes(config.maxQueueSizeInBytes());
-        IStorage eventsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
+        ITracksStorage eventsStorage = new TracksFileStorage(context.getCacheDir(), dataFolderName);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
         _trackClient = TrackClientImpl.create(trackConfig, httpClient, eventsRootTarget, trackStorageManager, splitCache);
 

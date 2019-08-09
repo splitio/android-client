@@ -37,10 +37,10 @@ public class TrackStorageManager implements LifecycleObserver {
     private final static Type EVENTS_FILE_TYPE = new TypeToken<Map<String, List<Event>>>() {
     }.getType();
 
-    private IStorage mFileStorageManager;
+    private ITracksStorage mFileStorageManager;
     Map<String, EventsChunk> mEventsChunks;
 
-    public TrackStorageManager(IStorage storage) {
+    public TrackStorageManager(ITracksStorage storage) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
         mEventsChunks = Collections.synchronizedMap(new HashMap<>());
@@ -103,77 +103,27 @@ public class TrackStorageManager implements LifecycleObserver {
     }
 
     private void loadEventsFromMultipleFiles() {
-
         try {
-            String headerContent = mFileStorageManager.read(CHUNK_HEADERS_FILE_NAME);
-            if(headerContent != null) {
-                List<ChunkHeader> headers = Json.fromJson(headerContent, ChunkHeader.CHUNK_HEADER_TYPE);
-                for (ChunkHeader header : headers) {
-                    EventsChunk chunk = new EventsChunk(header.getId(), header.getAttempt());
-                    mEventsChunks.put(chunk.getId(), chunk);
-                }
-            }
+            mEventsChunks = mFileStorageManager.read();
         } catch (IOException ioe) {
-            Logger.e(ioe, "Unable to track chunks headers information from disk: " + ioe.getLocalizedMessage());
+            Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());
         } catch (JsonSyntaxException syntaxException) {
-            Logger.e(syntaxException, "Unable to parse saved track chunks headers: " + syntaxException.getLocalizedMessage());
+            Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
         } catch (Exception e) {
-            Logger.e(e, "Error loading tracks headers from disk: " + e.getLocalizedMessage());
-        }
-
-        List<Map<String, List<Event>>> events = new ArrayList<>();
-
-        List<String> allFileNames = mFileStorageManager.getAllIds(EVENTS_FILE_PREFIX);
-        for (String fileName : allFileNames) {
-            try {
-                String file = mFileStorageManager.read(fileName);
-                Map<String, List<Event>> eventsFile = Json.fromJson(file, EVENTS_FILE_TYPE);
-                for(Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
-                    String chunkId = eventsChunk.getKey();
-                    EventsChunk chunk = mEventsChunks.get(chunkId);
-                    if(chunk == null) {
-                        chunk = new EventsChunk(chunkId, 0);
-                    }
-                    chunk.addEvents(eventsChunk.getValue());
-                }
-            } catch (IOException ioe) {
-                Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());
-            } catch (JsonSyntaxException syntaxException) {
-                Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
-            } catch (Exception e) {
-                Logger.e(e, "Error loading tracks events from disk: " + e.getLocalizedMessage());
-            }
+            Logger.e(e, "Error loading tracks events from disk: " + e.getLocalizedMessage());
         }
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     private void saveToDisk() {
-        List<ChunkHeader> headers = getChunkHeaders(mEventsChunks);
-
         try {
-            String json = Json.toJson(headers);
-            mFileStorageManager.write(CHUNK_HEADERS_FILE_NAME, json);
+            mFileStorageManager.write(mEventsChunks);
         } catch (IOException ioe) {
-            Logger.e(ioe, "Could not save tracks headers");
+            Logger.e(ioe, "Unable to save tracks to disk: " + ioe.getLocalizedMessage());
         } catch (JsonSyntaxException syntaxException) {
-            Logger.e(syntaxException, "Unable to parse tracks to save");
+            Logger.e(syntaxException, "Unable to parse tracks to save: " + syntaxException.getLocalizedMessage());
         } catch (Exception e) {
-            Logger.e(e, "Error saving tracks events to disk: " + e.getLocalizedMessage());
-        }
-
-        List<Map<String, List<Event>>> eventChunks = splitChunks(getEventsChunks());
-        int i = 0;
-        for (Map<String, List<Event>> chunk : eventChunks){
-            try {
-                String json = Json.toJson(chunk);
-                String fileName = String.format(EVENTS_FILE_NAME, i);
-                mFileStorageManager.write(fileName, json);
-                i++;
-            } catch (IOException e) {
-                Logger.e(e, "Could not save tracks");
-            } catch (JsonSyntaxException syntaxException) {
-                Logger.e(syntaxException, "Unable to parse tracks to save");
-            }
+            Logger.e(e, "Error saving tracks from legacy file from disk: " + e.getLocalizedMessage());
         }
     }
 
