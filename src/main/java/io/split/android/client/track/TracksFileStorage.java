@@ -1,0 +1,98 @@
+package io.split.android.client.track;
+
+import com.google.gson.reflect.TypeToken;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
+
+import io.split.android.client.dtos.ChunkHeader;
+import io.split.android.client.dtos.Event;
+import io.split.android.client.storage.FileStorage;
+import io.split.android.client.utils.Json;
+
+public class TracksFileStorage extends FileStorage {
+
+    private static final String FILE_NAME_PREFIX = "SPLITIO.events_chunk_";
+    private static final String FILE_NAME_TEMPLATE = FILE_NAME_PREFIX + "%s.jsonl";
+    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+
+    private final static Type EVENT_CHUNK_TYPE = new TypeToken<ChunkHeader>() {
+    }.getType();
+    private final static Type EVENT_ROW_TYPE = new TypeToken<Event>() {
+    }.getType();
+
+    public TracksFileStorage(@NotNull File rootFolder, @NotNull String folderName) {
+        super(rootFolder, folderName);
+    }
+
+    public Map<String, EventsChunk> read() throws IOException {
+
+        Map<String, EventsChunk> tracks = new HashMap<>();
+        FileInputStream inputStream = null;
+        Scanner sc = null;
+        try {
+            inputStream = new FileInputStream(FILE_NAME_TEMPLATE);
+            sc = new Scanner(inputStream, "UTF-8");
+            while (sc.hasNextLine()) {
+                String line = sc.nextLine();
+                // System.out.println(line);
+            }
+            // note that Scanner suppresses exceptions
+            if (sc.ioException() != null) {
+                throw sc.ioException();
+            }
+        } catch (FileNotFoundException e) {
+            return null;
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
+            if (sc != null) {
+                sc.close();
+            }
+        }
+        return tracks;
+    }
+
+    public void write(Map<String, EventsChunk> tracks) throws IOException {
+
+        for (EventsChunk chunk : tracks.values()) {
+            FileWriter fileWriter = null;
+            List<Event> events = chunk.getEvents();
+            if (events != null && events.size() > 0) {
+                try {
+                    String fileName = String.format(FILE_NAME_TEMPLATE, chunk.getId());
+                    File file = new File(_dataFolder, fileName);
+                    fileWriter = new FileWriter(file);
+                    ChunkHeader chunkHeader = new ChunkHeader(chunk.getId(), chunk.getAttempt());
+                    String jsonChunkHeader = Json.toJson(chunkHeader);
+                    fileWriter.write(String.format(jsonChunkHeader));
+                    fileWriter.write(LINE_SEPARATOR);
+                    for(Event event : events) {
+                        String jsonEvent = Json.toJson(event);
+                        fileWriter.write(jsonEvent);
+                        fileWriter.write(LINE_SEPARATOR);
+                    }
+                } catch (IOException ex) {
+                    throw new IOException("Error writing track events chunk: " + FILE_NAME_TEMPLATE);
+                } finally {
+                    if(fileWriter != null) {
+                        fileWriter.close();
+                    }
+                }
+            }
+        }
+    }
+
+}

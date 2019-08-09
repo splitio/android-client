@@ -20,7 +20,7 @@ import io.split.android.client.utils.Logger;
 
 public class FileStorage implements IStorage {
 
-    private final File _dataFolder;
+    protected final File _dataFolder;
 
     public FileStorage(@NotNull File rootFolder, @NotNull String folderName) {
         _dataFolder = new File(rootFolder, folderName);
