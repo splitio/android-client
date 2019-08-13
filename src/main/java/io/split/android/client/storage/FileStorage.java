@@ -134,4 +134,8 @@ public class FileStorage implements IStorage {
         File file = new File(_dataFolder, elementId);
         return file.exists();
     }
+
+    public long fileSize(String elementId) {
+        return new File(_dataFolder, elementId).length();
+    }
 }

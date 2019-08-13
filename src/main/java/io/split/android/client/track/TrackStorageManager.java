@@ -34,6 +34,7 @@ public class TrackStorageManager implements LifecycleObserver {
     private static final String EVENTS_FILE_PREFIX = TRACK_FILE_PREFIX + "_#";
     private static final String CHUNK_HEADERS_FILE_NAME = TRACK_FILE_PREFIX + "_chunk_headers.json";
     private static final int MAX_BYTES_PER_CHUNK = 1000000; //1MB
+    private static final int MEMORY_ALLOCATION_TIMES = 2;
     private MemoryUtils mMemoryUtils;
 
     private final static Type EVENTS_FILE_TYPE = new TypeToken<Map<String, List<Event>>>() {
@@ -126,8 +127,9 @@ public class TrackStorageManager implements LifecycleObserver {
         List<String> allFileNames = mFileStorageManager.getAllIds(EVENTS_FILE_PREFIX);
         for (String fileName : allFileNames) {
             try {
-                String file = mFileStorageManager.read(fileName);
-                if(mMemoryUtils.isMemoryAvailableForJson(file)) {
+                long fileSize = mFileStorageManager.fileSize(fileName);
+                if(mMemoryUtils.isMemoryAvailableToAllocate(fileSize, MEMORY_ALLOCATION_TIMES)) {
+                    String file = mFileStorageManager.read(fileName);
                     Map<String, List<Event>> eventsFile = Json.fromJson(file, EVENTS_FILE_TYPE);
                     for (Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
                         String chunkId = eventsChunk.getKey();
@@ -140,6 +142,7 @@ public class TrackStorageManager implements LifecycleObserver {
                 } else {
                     Logger.w("Unable to parse track file " + fileName + ". Memory not available");
                 }
+
             } catch (IOException ioe) {
                 Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());
             } catch (JsonSyntaxException syntaxException) {
@@ -153,16 +156,21 @@ public class TrackStorageManager implements LifecycleObserver {
     private void loadEventsFromLegacyFile() {
         // Legacy file
         try {
-            String storedTracks = mFileStorageManager.read(LEGACY_EVENTS_FILE_NAME);
-            if(Strings.isNullOrEmpty(storedTracks)) {
-                return;
+            long fileSize = mFileStorageManager.fileSize(LEGACY_EVENTS_FILE_NAME);
+            if(mMemoryUtils.isMemoryAvailableToAllocate(fileSize, MEMORY_ALLOCATION_TIMES)) {
+                String storedTracks = mFileStorageManager.read(LEGACY_EVENTS_FILE_NAME);
+                if (Strings.isNullOrEmpty(storedTracks)) {
+                    return;
 
+                }
+                Type dataType = new TypeToken<Map<String, EventsChunk>>() {
+                }.getType();
+
+                Map<String, EventsChunk> chunkTracks = Json.fromJson(storedTracks, dataType);
+                mEventsChunks.putAll(chunkTracks);
+            } else {
+                Logger.w("Unable to load track file " + LEGACY_EVENTS_FILE_NAME + ". Memory not available");
             }
-            Type dataType = new TypeToken<Map<String, EventsChunk>>() {
-            }.getType();
-
-            Map<String, EventsChunk> chunkTracks = Json.fromJson(storedTracks, dataType);
-            mEventsChunks.putAll(chunkTracks);
 
         } catch (IOException ioe) {
             Logger.e(ioe, "Unable to load tracks from disk: " + ioe.getLocalizedMessage());

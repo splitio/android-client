@@ -61,4 +61,11 @@ public interface IStorage {
      * @return Whether the file exists or not
      */
     boolean exists(String elementId);
+
+    /**
+     * Returns file size
+     * @param elementId Element Id
+     * @return File size in bytes
+     */
+    public long fileSize(String elementId);
 }

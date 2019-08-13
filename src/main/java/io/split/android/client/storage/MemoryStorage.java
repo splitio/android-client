@@ -63,4 +63,14 @@ public class MemoryStorage implements IStorage {
     public boolean exists(String elementId) {
         return _storage.containsKey(elementId);
     }
+
+
+    @Override
+    public long fileSize(String elementId) {
+        String content = _storage.get(elementId);
+        if(content != null) {
+            return  content.getBytes().length;
+        }
+        return 0L;
+    }
 }

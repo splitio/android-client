@@ -74,4 +74,13 @@ public class MemoryAndFileStorage implements IStorage {
         }
         return  _fileStorage.exists(elementId);
     }
+
+    @Override
+    public long fileSize(String elementId) {
+        long fileSize = _memoryStorage.fileSize(elementId);
+        if(fileSize != 0) {
+            return  fileSize;
+        }
+        return  _fileStorage.fileSize(elementId);
+    }
 }
