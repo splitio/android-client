@@ -48,10 +48,10 @@ public class TrackStorageManager implements LifecycleObserver {
 
     public TrackStorageManager(ITracksStorage storage, MemoryUtils memoryUtils) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+        mMemoryUtils = memoryUtils;
         mFileStorageManager = storage;
         mEventsChunks = Collections.synchronizedMap(new HashMap<>());
         loadEventsFromDisk();
-        mMemoryUtils = memoryUtils;
     }
 
     public boolean isEmptyCache(){
@@ -83,8 +83,10 @@ public class TrackStorageManager implements LifecycleObserver {
             loadEventsFilesByLine();
         } else if(mFileStorageManager.exists(CHUNK_HEADERS_FILE_NAME)) {
             loadEventsFromChunkFiles();
+            deleteOldChunksFiles();
         } else {
             loadEventsFromLegacyFile();
+            mFileStorageManager.delete(LEGACY_EVENTS_FILE_NAME);
         }
     }
 
@@ -171,7 +173,7 @@ public class TrackStorageManager implements LifecycleObserver {
         }
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     private void saveToDisk() {
         try {
             mFileStorageManager.write(mEventsChunks);
@@ -227,4 +229,11 @@ public class TrackStorageManager implements LifecycleObserver {
         return chunk;
     }
 
+    private void deleteOldChunksFiles() {
+        List<String> oldChunkFiles = mFileStorageManager.getAllIds(EVENTS_FILE_PREFIX);
+        for(String fileName : oldChunkFiles) {
+            mFileStorageManager.delete(fileName);
+        }
+        mFileStorageManager.delete(CHUNK_HEADERS_FILE_NAME);
+    }
 }
