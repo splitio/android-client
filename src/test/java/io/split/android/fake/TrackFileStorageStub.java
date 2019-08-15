@@ -17,9 +17,4 @@ public class TrackFileStorageStub extends MemoryStorage implements ITracksStorag
     public void write(Map<String, EventsChunk> tracks) throws IOException {
 
     }
-
-    @Override
-    public boolean isUsingJsonLFiles() {
-        return false;
-    }
 }

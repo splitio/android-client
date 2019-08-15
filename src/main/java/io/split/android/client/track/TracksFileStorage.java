@@ -131,15 +131,10 @@ public class TracksFileStorage extends FileStorage implements ITracksStorage {
                         fileWriter.close();
                     }
                 }
-                for(String fileName : filesToRemove) {
-                    delete(fileName);
-                }
             }
         }
-    }
-
-    @Override
-    public boolean isUsingJsonLFiles() {
-        return getAllIds(FILE_NAME_PREFIX).size() > 0;
+        for(String fileName : filesToRemove) {
+            delete(fileName);
+        }
     }
 }

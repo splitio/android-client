@@ -16,12 +16,13 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.MemoryUtils;
@@ -63,8 +64,14 @@ public class TrackStorageManager implements LifecycleObserver {
         mEventsChunks.remove(chunkId);
     }
 
+    synchronized public List<EventsChunk> takeAll() {
+        List<EventsChunk> values = new ArrayList<>(mEventsChunks.values());
+        mEventsChunks.clear();
+        return values;
+    }
+
     synchronized public void saveEvents(EventsChunk chunk){
-        if(chunk == null || chunk.getEvents().isEmpty()) {
+        if(chunk == null || chunk.getEvents() != null && chunk.getEvents().isEmpty()) {
             return; // Nothing to write
         }
 
@@ -80,20 +87,23 @@ public class TrackStorageManager implements LifecycleObserver {
     }
 
     private void loadEventsFromDisk() {
-        if(mFileStorageManager.isUsingJsonLFiles()) {
-            loadEventsFilesByLine();
+        if(mFileStorageManager.exists(LEGACY_EVENTS_FILE_NAME)) {
+            loadEventsFromLegacyFile();
+            mFileStorageManager.delete(LEGACY_EVENTS_FILE_NAME);
         } else if(mFileStorageManager.exists(CHUNK_HEADERS_FILE_NAME)) {
             loadEventsFromChunkFiles();
             deleteOldChunksFiles();
         } else {
-            loadEventsFromLegacyFile();
-            mFileStorageManager.delete(LEGACY_EVENTS_FILE_NAME);
+            loadEventsFilesByLine();
         }
     }
 
     private void loadEventsFilesByLine() {
         try {
-            mEventsChunks = mFileStorageManager.read();
+            Map<String, EventsChunk> loaded = mFileStorageManager.read();
+            if (loaded != null) {
+                mEventsChunks.putAll(loaded);
+            }
         } catch (IOException ioe) {
             Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());
         } catch (JsonSyntaxException syntaxException) {
@@ -149,6 +159,13 @@ public class TrackStorageManager implements LifecycleObserver {
                 Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
             } catch (Exception e) {
                 Logger.e(e, "Error loading tracks events from disk: " + e.getLocalizedMessage());
+            }
+        }
+        List<String> chunkIds = new ArrayList(mEventsChunks.keySet());
+        for(String chunkId : chunkIds) {
+            EventsChunk chunk = mEventsChunks.get(chunkId);
+            if(chunk != null && chunk.getEvents() != null && chunk.getEvents().size() == 0) {
+                mEventsChunks.remove(chunkId);
             }
         }
     }

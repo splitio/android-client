@@ -3,6 +3,7 @@ package io.split.android.client;
 import android.annotation.SuppressLint;
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.LifecycleRegistry;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.support.annotation.VisibleForTesting;
@@ -227,14 +228,15 @@ public class TrackClientImpl implements TrackClient {
     }
 
     private void flushFromLocalCache() {
-
         if (Utils.isSplitServiceReachable(_eventsTarget)) {
-            List<EventsChunk> eventsChunks = _storageManager.getEventsChunks();
+
+            List<EventsChunk> eventsChunks = _storageManager.takeAll();
             for (EventsChunk chunk : eventsChunks) {
                 if (chunk.getAttempt() < MAX_POST_ATTEMPS) {
                     _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, chunk, _storageManager, _config.getMaxSentAttempts()));
                 }
             }
+
         } else {
             Logger.i("Split events server cannot be reached out. Prevent post cached events");
         }
@@ -249,10 +251,9 @@ public class TrackClientImpl implements TrackClient {
 
         private final TrackStorageManager _storageManager;
         List<Event> events;
-
         Consumer(TrackStorageManager storageManager) {
             _storageManager = storageManager;
-            events = Collections.synchronizedList(new ArrayList<>());
+            events = newEventList();
             ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         }
 
@@ -286,7 +287,7 @@ public class TrackClientImpl implements TrackClient {
                             _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(events), _storageManager, _config.getMaxSentAttempts()));
                         }
                         // Clear the queue of events for the next batch.
-                        events.clear();
+                        events = newEventList();
                     }
                 }
             } catch (InterruptedException e) {
@@ -296,11 +297,17 @@ public class TrackClientImpl implements TrackClient {
             }
         }
 
-        @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-        private void saveCurrentChunk() {
-            _storageManager.saveEvents(new EventsChunk(new ArrayList<>(events)));
-            events.clear();
+        private List<Event> newEventList() {
+            return Collections.synchronizedList(new ArrayList<>());
         }
+
+        @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+        private void pepe(){
+            _storageManager.saveEvents(new EventsChunk(events));
+            events = newEventList();
+        }
+
+
     }
 
     static class EventSenderTask implements Runnable {
@@ -328,13 +335,13 @@ public class TrackClientImpl implements TrackClient {
         @SuppressLint("DefaultLocale")
         @Override
         public void run() {
+            boolean shouldSaveEvents = false;
             if (Utils.isSplitServiceReachable(mEndpoint)) {
                 HttpResponse response = null;
                 try {
 
                     String jsonEvents = (mChunk != null ? Json.toJson(mChunk.getEvents()) : null);
                     response = mHttpClient.request(mEndpoint, HttpMethod.POST, jsonEvents).execute();
-
                     if (!response.isSuccess()) {
                         Logger.d(String.format("Error posting events [error code: %d]", response.getHttpStatus()));
                         Logger.d("Caching events to next iteration");
@@ -342,15 +349,17 @@ public class TrackClientImpl implements TrackClient {
                         //Saving events to disk
                         mChunk.addAtempt();
                         if (mChunk.getAttempt() < mMaxSentAttempts) {
-                            mTrackStorageManager.saveEvents(mChunk);
-                        } else {
-                            mTrackStorageManager.deleteCachedEvents(mChunk.getId());
+                            shouldSaveEvents = true;
                         }
                     }
                 } catch (HttpException e) {
+                    shouldSaveEvents = true;
                     Logger.e("Error while sending track events: " + e.getLocalizedMessage());
                 }
             } else {
+                shouldSaveEvents = true;
+            }
+            if(shouldSaveEvents) {
                 mTrackStorageManager.saveEvents(mChunk);
             }
         }
