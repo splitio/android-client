@@ -5,7 +5,6 @@ import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
-import android.support.annotation.VisibleForTesting;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
@@ -16,10 +15,8 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
@@ -41,14 +38,14 @@ public class TrackStorageManager implements LifecycleObserver {
     private final static Type EVENTS_FILE_TYPE = new TypeToken<Map<String, List<Event>>>() {
     }.getType();
 
-    private ITracksStorage mFileStorageManager;
+    private ITrackStorage mFileStorageManager;
     Map<String, EventsChunk> mEventsChunks;
 
-    public TrackStorageManager(ITracksStorage storage) {
+    public TrackStorageManager(ITrackStorage storage) {
         this(storage, new MemoryUtilsImpl());
     }
 
-    public TrackStorageManager(ITracksStorage storage, MemoryUtils memoryUtils) {
+    public TrackStorageManager(ITrackStorage storage, MemoryUtils memoryUtils) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mMemoryUtils = memoryUtils;
         mFileStorageManager = storage;

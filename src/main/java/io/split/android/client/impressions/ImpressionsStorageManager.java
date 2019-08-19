@@ -40,7 +40,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
     private static final String IMPRESSIONS_CHUNK_FILE_PREFIX = IMPRESSIONS_FILE_PREFIX + "_#";
     private static final String CHUNK_HEADERS_FILE_NAME = IMPRESSIONS_FILE_PREFIX + "_chunk_headers.json";
     private static final String IMPRESSIONS_FILE_NAME = IMPRESSIONS_CHUNK_FILE_PREFIX + "%d.json";
-    private static final int MAX_BYTES_PER_CHUNK = 3000000; //3MB
+    private static final int MAX_BYTES_PER_CHUNK = 1000000; //1MB
     private static final int ESTIMATED_IMPRESSION_SIZE = 500; //50 bytes
 
     private final static Type IMPRESSIONS_FILE_TYPE = new TypeToken<Map<String, List<KeyImpression>>>() {
@@ -52,11 +52,11 @@ public class ImpressionsStorageManager implements LifecycleObserver {
     private final static String RECORD_KEY_SEPARATOR = "_";
     private final static String RECORD_KEY_FORMAT = "%s" + RECORD_KEY_SEPARATOR + "%s";
 
-    private IStorage mFileStorageManager;
+    private IImpressionsStorage mFileStorageManager;
     Map<String, StoredImpressions> mImpressionsToSend;
     ImpressionsStorageManagerConfig mConfig;
 
-    public ImpressionsStorageManager(IStorage storage, ImpressionsStorageManagerConfig config) {
+    public ImpressionsStorageManager(IImpressionsStorage storage, ImpressionsStorageManagerConfig config) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
         mImpressionsToSend = Collections.synchronizedMap(new HashMap<>());
@@ -169,14 +169,19 @@ public class ImpressionsStorageManager implements LifecycleObserver {
     }
 
     private void loadImpressionsFromDisk() {
-        if (mFileStorageManager.exists(CHUNK_HEADERS_FILE_NAME)) {
-            loadImpressionsFromMultipleFiles();
+        if(mFileStorageManager.exists(LEGACY_IMPRESSIONS_FILE_NAME)) {
+            loadEventsFromLegacyFile();
+            mFileStorageManager.delete(LEGACY_IMPRESSIONS_FILE_NAME);
+        } else if(mFileStorageManager.exists(CHUNK_HEADERS_FILE_NAME)) {
+            loadEventsFromChunkFiles();
+            deleteOldChunksFiles();
         } else {
-            loadImpressionsFromOneFile();
+            loadEventsFilesByLine();
         }
+
     }
 
-    private void loadImpressionsFromMultipleFiles() {
+    private void loadEventsFromChunkFiles() {
 
         try {
             String headerContent = mFileStorageManager.read(CHUNK_HEADERS_FILE_NAME);
@@ -242,7 +247,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         }
     }
 
-    private void loadImpressionsFromOneFile() {
+    private void loadEventsFromLegacyFile() {
 
         try {
             String storedImpressions = mFileStorageManager.read(LEGACY_IMPRESSIONS_FILE_NAME);
@@ -266,37 +271,31 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         }
     }
 
+    private void loadEventsFilesByLine() {
+        try {
+            Map<String, StoredImpressions> loaded = mFileStorageManager.read();
+            if (loaded != null) {
+                mImpressionsToSend.putAll(loaded);
+            }
+        } catch (IOException ioe) {
+            Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());
+        } catch (JsonSyntaxException syntaxException) {
+            Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
+        } catch (Exception e) {
+            Logger.e(e, "Error loading tracks events from disk: " + e.getLocalizedMessage());
+        }
+    }
+
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     private void saveToDisk() {
-        List<ChunkHeader> headers = getChunkHeaders(mImpressionsToSend);
-
         try {
-            String json = Json.toJson(headers);
-            mFileStorageManager.write(CHUNK_HEADERS_FILE_NAME, json);
+            mFileStorageManager.write(mImpressionsToSend);
         } catch (IOException ioe) {
-            Logger.e(ioe, "Could not save tracks headers");
+            Logger.e(ioe, "Unable to save tracks to disk: " + ioe.getLocalizedMessage());
         } catch (JsonSyntaxException syntaxException) {
-            Logger.e(syntaxException, "Unable to parse tracks to save");
+            Logger.e(syntaxException, "Unable to parse tracks to save: " + syntaxException.getLocalizedMessage());
         } catch (Exception e) {
-            Logger.e(e, "Error loading tracks from legacy file from disk: " + e.getLocalizedMessage());
-        }
-
-
-        List<Map<String, List<KeyImpression>>> impressionsChunks = splitChunks(getStoredImpressions());
-        int i = 0;
-        for (Map<String, List<KeyImpression>> chunk : impressionsChunks) {
-            try {
-                String json = Json.toJson(chunk);
-                String fileName = String.format(IMPRESSIONS_FILE_NAME, i);
-                mFileStorageManager.write(fileName, json);
-                i++;
-            } catch (IOException ioe) {
-                Logger.e(ioe, "Could not save impressions");
-            } catch (JsonSyntaxException syntaxException) {
-                Logger.e(syntaxException, "Unable to parse impressions to save");
-            } catch (Exception e) {
-                Logger.e(e, "Error parsing impressions to save on disk: " + e.getLocalizedMessage());
-            }
+            Logger.e(e, "Error saving tracks from legacy file from disk: " + e.getLocalizedMessage());
         }
     }
 
@@ -376,5 +375,13 @@ public class ImpressionsStorageManager implements LifecycleObserver {
             i++;
         }
         return indexFound;
+    }
+
+    private void deleteOldChunksFiles() {
+        List<String> oldChunkFiles = mFileStorageManager.getAllIds(IMPRESSIONS_CHUNK_FILE_PREFIX);
+        for(String fileName : oldChunkFiles) {
+            mFileStorageManager.delete(fileName);
+        }
+        mFileStorageManager.delete(CHUNK_HEADERS_FILE_NAME);
     }
 }

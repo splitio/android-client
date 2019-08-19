@@ -5,9 +5,9 @@ import java.util.Map;
 
 import io.split.android.client.storage.MemoryStorage;
 import io.split.android.client.track.EventsChunk;
-import io.split.android.client.track.ITracksStorage;
+import io.split.android.client.track.ITrackStorage;
 
-public class TrackFileStorageStub extends MemoryStorage implements ITracksStorage {
+public class TrackFileStorageStub extends MemoryStorage implements ITrackStorage {
     @Override
     public Map<String, EventsChunk> read() throws IOException {
         return null;

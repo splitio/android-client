@@ -12,7 +12,6 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,7 +26,7 @@ import io.split.android.client.storage.FileStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
-public class TracksFileStorage extends FileStorage implements ITracksStorage {
+public class TracksFileStorage extends FileStorage implements ITrackStorage {
 
     private static final String FILE_NAME_PREFIX = "SPLITIO.events_chunk_id_";
     private static final String FILE_NAME_TEMPLATE = FILE_NAME_PREFIX + "%s.jsonl";
