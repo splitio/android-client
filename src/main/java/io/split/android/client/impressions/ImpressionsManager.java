@@ -1,5 +1,9 @@
 package io.split.android.client.impressions;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
+import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.util.Log;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -24,7 +28,7 @@ import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 
-public class ImpressionsManager implements ImpressionListener, Runnable {
+public class ImpressionsManager implements ImpressionListener, Runnable, LifecycleObserver {
 
     private final SplitClientConfig _config;
     private final HttpClient _client;
@@ -57,7 +61,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
         } else {
             _impressionsSender = new HttpImpressionsSender(_client, new URI(config.eventsEndpoint()), _storageManager);
         }
-
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
     }
 
     public static ImpressionsManager instance(HttpClient client,
@@ -169,5 +173,10 @@ public class ImpressionsManager implements ImpressionListener, Runnable {
         if(data != null) {
             _currentChunkSize += data.getBytes().length;
         }
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    private void storeEvents() {
+        flushImpressions();
     }
 }

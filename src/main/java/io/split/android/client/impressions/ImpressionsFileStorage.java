@@ -117,18 +117,18 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
                 }
             }
         }
+        for (String fileName : impressionFiles) {
+            delete(fileName);
+        }
         return impressions;
     }
 
     public void write(Map<String, StoredImpressions> impressions) throws IOException {
-        Set<String> filesToRemove = new HashSet(getAllIds(FILE_NAME_PREFIX));
-        int toto = 0;
+
         for (StoredImpressions chunk : impressions.values()) {
-            toto++;
             FileWriter fileWriter = null;
             try {
                 String fileName = String.format(FILE_NAME_TEMPLATE, chunk.id());
-                filesToRemove.remove(fileName);
                 File file = new File(_dataFolder, fileName);
                 fileWriter = new FileWriter(file);
                 ChunkHeader chunkHeader = new ChunkHeader(chunk.id(), chunk.getAttempts(), chunk.getTimestamp());
@@ -137,11 +137,7 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
                 fileWriter.write(LINE_SEPARATOR);
                 List<TestImpressions> testImpressions = chunk.impressions();
                 if (testImpressions != null) {
-                    int imp = 0;
                     for (TestImpressions testImpressionsRow : testImpressions) {
-                        imp++;
-
-
                         List<KeyImpression> keyImpressions = testImpressionsRow.keyImpressions;
                         if (keyImpressions != null) {
                             for (KeyImpression keyImpression : keyImpressions) {
@@ -150,8 +146,6 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
                                 fileWriter.write(LINE_SEPARATOR);
                             }
                         }
-
-
                     }
                 }
             } catch (IOException ex) {
@@ -161,9 +155,6 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
                     fileWriter.close();
                 }
             }
-        }
-        for (String fileName : filesToRemove) {
-            delete(fileName);
         }
     }
 }

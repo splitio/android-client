@@ -286,7 +286,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         }
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     private void saveToDisk() {
         try {
             mFileStorageManager.write(mImpressionsToSend);

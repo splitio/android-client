@@ -99,18 +99,19 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
                 }
             }
         }
+        for(String fileName : tracksFiles) {
+            delete(fileName);
+        }
         return tracks;
     }
 
     public void write(Map<String, EventsChunk> tracks) throws IOException {
-        Set<String> filesToRemove = new HashSet(getAllIds(FILE_NAME_PREFIX));
         for (EventsChunk chunk : tracks.values()) {
             FileWriter fileWriter = null;
             List<Event> events = chunk.getEvents();
             if (events != null && events.size() > 0) {
                 try {
                     String fileName = String.format(FILE_NAME_TEMPLATE, chunk.getId());
-                    filesToRemove.remove(fileName);
                     File file = new File(_dataFolder, fileName);
                     fileWriter = new FileWriter(file);
                     ChunkHeader chunkHeader = new ChunkHeader(chunk.getId(), chunk.getAttempt());
@@ -131,9 +132,6 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
                     }
                 }
             }
-        }
-        for(String fileName : filesToRemove) {
-            delete(fileName);
         }
     }
 }
