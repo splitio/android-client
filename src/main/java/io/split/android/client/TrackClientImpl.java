@@ -75,6 +75,9 @@ public class TrackClientImpl implements TrackClient {
 
     private final ValidationMessageLogger _validationLogger;
 
+    @VisibleForTesting
+    public Consumer _consumer;
+
     // Estimated event size without properties
     public final static int EVENT_SIZE_WITHOUT_PROPS = 1024;
 
@@ -135,8 +138,9 @@ public class TrackClientImpl implements TrackClient {
         }
 
         // Queue consumer
+        _consumer = new Consumer(_storageManager);
         _consumerExecutor = Executors.newSingleThreadExecutor(eventClientThreadFactory("eventclient-consumer"));
-        _consumerExecutor.submit(new Consumer(_storageManager));
+        _consumerExecutor.submit(_consumer);
 
 
         // Events flusher
@@ -302,7 +306,7 @@ public class TrackClientImpl implements TrackClient {
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-        private void pepe(){
+        private void doOnPause(){
             _storageManager.saveEvents(new EventsChunk(events));
             events = newEventList();
         }

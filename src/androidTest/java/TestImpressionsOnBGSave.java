@@ -27,7 +27,6 @@ public class TestImpressionsOnBGSave {
 
     @Before
     public void setup() {
-
     }
 
     @Test
