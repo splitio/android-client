@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import java.util.Map;
 
-import androidx.test.InstrumentationRegistry;
+import androidx.test.platform.app.InstrumentationRegistry;
 import io.split.android.client.Localhost.LocalhostFileParser;
 import io.split.android.client.Localhost.LocalhostPropertiesFileParser;
 import io.split.android.client.dtos.Split;
@@ -19,7 +19,7 @@ public class LocalhostPropertiesParserTest {
 
     @Before
     public void setup() {
-        parser = new LocalhostPropertiesFileParser(InstrumentationRegistry.getTargetContext());
+        parser = new LocalhostPropertiesFileParser(InstrumentationRegistry.getInstrumentation().getContext());
     }
 
     @Test
