@@ -57,11 +57,11 @@ public class ImpressionsStorageManager implements LifecycleObserver {
     ImpressionsStorageManagerConfig mConfig;
 
     public ImpressionsStorageManager(IImpressionsStorage storage, ImpressionsStorageManagerConfig config) {
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
         mImpressionsToSend = Collections.synchronizedMap(new HashMap<>());
         mConfig = config;
         loadImpressionsFromDisk();
+        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
     }
 
     @SuppressLint("DefaultLocale")
@@ -216,6 +216,7 @@ public class ImpressionsStorageManager implements LifecycleObserver {
 
                     StoredImpressions storedImpressions = mImpressionsToSend.get(storedImpressionId);
                     if (storedImpressions == null) {
+                        storedImpressions = StoredImpressions.from(storedImpressionId, 0, System.currentTimeMillis());
                         storedImpressions = StoredImpressions.from(storedImpressionId, 0, System.currentTimeMillis());
                     }
                     List<TestImpressions> testImpressionsList = storedImpressions.impressions();
