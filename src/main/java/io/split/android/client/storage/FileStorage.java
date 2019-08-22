@@ -1,5 +1,6 @@
 package io.split.android.client.storage;
 
+import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +93,13 @@ public class FileStorage implements IStorage {
     public void delete(String elementId) {
         File fileToDelete = new File(_dataFolder, elementId);
         fileToDelete.delete();
+    }
+
+    @Override
+    public void delete(List<String> files) {
+        for(String fileName : files) {
+            delete(fileName);
+        }
     }
 
     @Override

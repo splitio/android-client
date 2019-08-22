@@ -2,7 +2,6 @@ package io.split.android.client.track;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -11,18 +10,15 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
-import java.util.UUID;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.FileStorage;
+import io.split.android.client.storage.FileStorageHelper;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
@@ -30,15 +26,11 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
 
     private static final String FILE_NAME_PREFIX = "SPLITIO.events_chunk_id_";
     private static final String FILE_NAME_TEMPLATE = FILE_NAME_PREFIX + "%s.jsonl";
-    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
-
-    private final static Type EVENT_CHUNK_TYPE = new TypeToken<ChunkHeader>() {
-    }.getType();
-    private final static Type EVENT_ROW_TYPE = new TypeToken<Event>() {
-    }.getType();
+    private FileStorageHelper fileStorageHelper;
 
     public TracksFileStorage(@NotNull File rootFolder, @NotNull String folderName) {
         super(rootFolder, folderName);
+        fileStorageHelper = new FileStorageHelper();
     }
 
     public Map<String, EventsChunk> read() throws IOException {
@@ -48,60 +40,34 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
 
         for (String fileName : tracksFiles) {
             FileInputStream inputStream = null;
-            Scanner sc = null;
+            Scanner scanner = null;
             try {
                 File chunkFile = new File(_dataFolder, fileName);
                 inputStream = new FileInputStream(chunkFile);
-                sc = new Scanner(inputStream, "UTF-8");
+                scanner = new Scanner(inputStream, FileStorageHelper.UTF8_CHARSET);
                 EventsChunk eventsChunk = null;
-                if (sc.hasNextLine()) {
-                    ChunkHeader chunkHeader = null;
-                    String chunkLine = sc.nextLine();
-                    if (!Strings.isNullOrEmpty(chunkLine)) {
-                        try {
-                            chunkHeader = Json.fromJson(chunkLine, EVENT_CHUNK_TYPE);
-                        } catch (JsonSyntaxException e) {
-                            chunkHeader = new ChunkHeader(UUID.randomUUID().toString(), 1);
+                if (scanner.hasNextLine()) {
+                    ChunkHeader chunkHeader = fileStorageHelper.chunkFromLine(scanner.nextLine());
+                    eventsChunk = new EventsChunk(chunkHeader.getId(), chunkHeader.getAttempt());
+                    while (scanner.hasNextLine()) {
+                        Event event = eventFromLine(scanner.nextLine());
+                        if(event != null) {
+                            eventsChunk.addEvent(event);
                         }
-                    } else {
-                        continue;
-                    }
-                    if (chunkHeader != null) {
-                        eventsChunk = new EventsChunk(chunkHeader.getId(), chunkHeader.getAttempt());
-                        while (sc.hasNextLine()) {
-                            String jsonEvent = null;
-                            try {
-                                jsonEvent = sc.nextLine();
-                                eventsChunk.addEvent(Json.fromJson(jsonEvent, EVENT_ROW_TYPE));
-                            } catch (JsonSyntaxException e){
-                                Logger.e("Could not parse event: " + jsonEvent + " from file: " + fileName);
-                            }
-                        }
-
                     }
                 }
                 if(eventsChunk.getEvents().size() > 0) {
                     tracks.put(eventsChunk.getId(), eventsChunk);
                 }
-
-                if (sc.ioException() != null) {
-                    Logger.e("An error occurs parsing track events from JsonL files: " + sc.ioException().getLocalizedMessage());
-                }
-
+                fileStorageHelper.logIfScannerException(scanner, "An error occurs parsing track events from JsonL files");
             } catch (FileNotFoundException e) {
                 Logger.w("No cached track files found");
             } finally {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-                if (sc != null) {
-                    sc.close();
-                }
+                fileStorageHelper.closeFileInputStream(inputStream);
+                fileStorageHelper.closeScanner(scanner);
             }
         }
-        for(String fileName : tracksFiles) {
-            delete(fileName);
-        }
+        delete(tracksFiles);
         return tracks;
     }
 
@@ -115,23 +81,39 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
                     File file = new File(_dataFolder, fileName);
                     fileWriter = new FileWriter(file);
                     ChunkHeader chunkHeader = new ChunkHeader(chunk.getId(), chunk.getAttempt());
-                    String jsonChunkHeader = Json.toJson(chunkHeader);
-                    fileWriter.write(String.format(jsonChunkHeader));
-                    fileWriter.write(LINE_SEPARATOR);
+                    fileStorageHelper.writeChunkHeaderLine(chunkHeader, fileWriter);
                     for(Event event : events) {
-                        String jsonEvent = Json.toJson(event);
-                        fileWriter.write(jsonEvent);
-                        fileWriter.write(LINE_SEPARATOR);
+                        writeEventLine(event, fileWriter);
                     }
-
                 } catch (IOException ex) {
                     throw new IOException("Error writing track events chunk: " + FILE_NAME_TEMPLATE);
                 } finally {
-                    if(fileWriter != null) {
-                        fileWriter.close();
-                    }
+                    fileStorageHelper.closeFileWriter(fileWriter);
                 }
             }
         }
     }
+
+    private void writeEventLine(Event event, FileWriter fileWriter) throws IOException {
+        String jsonEvent = Json.toJson(event);
+        fileWriter.write(jsonEvent);
+        fileWriter.write(FileStorageHelper.LINE_SEPARATOR);
+    }
+
+    private Event eventFromLine(String jsonEvent) {
+
+        if(Strings.isNullOrEmpty(jsonEvent)) {
+            return null;
+        }
+
+        Event event = null;
+        try {
+            event = Json.fromJson(jsonEvent, Event.class);
+        } catch (JsonSyntaxException e){
+            Logger.e("Could not parse event: " + jsonEvent);
+        }
+        return event;
+    }
+
+
 }
