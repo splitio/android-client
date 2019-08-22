@@ -26,11 +26,11 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
 
     private static final String FILE_NAME_PREFIX = "SPLITIO.events_chunk_id_";
     private static final String FILE_NAME_TEMPLATE = FILE_NAME_PREFIX + "%s.jsonl";
-    private FileStorageHelper fileStorageHelper;
+    private FileStorageHelper _fileStorageHelper;
 
     public TracksFileStorage(@NotNull File rootFolder, @NotNull String folderName) {
         super(rootFolder, folderName);
-        fileStorageHelper = new FileStorageHelper();
+        _fileStorageHelper = new FileStorageHelper();
     }
 
     public Map<String, EventsChunk> read() throws IOException {
@@ -42,12 +42,11 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
             FileInputStream inputStream = null;
             Scanner scanner = null;
             try {
-                File chunkFile = new File(_dataFolder, fileName);
-                inputStream = new FileInputStream(chunkFile);
+                inputStream = new FileInputStream(new File(_dataFolder, fileName));
                 scanner = new Scanner(inputStream, FileStorageHelper.UTF8_CHARSET);
                 EventsChunk eventsChunk = null;
                 if (scanner.hasNextLine()) {
-                    ChunkHeader chunkHeader = fileStorageHelper.chunkFromLine(scanner.nextLine());
+                    ChunkHeader chunkHeader = _fileStorageHelper.chunkFromLine(scanner.nextLine());
                     eventsChunk = new EventsChunk(chunkHeader.getId(), chunkHeader.getAttempt());
                     while (scanner.hasNextLine()) {
                         Event event = eventFromLine(scanner.nextLine());
@@ -59,12 +58,12 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
                 if(eventsChunk.getEvents().size() > 0) {
                     tracks.put(eventsChunk.getId(), eventsChunk);
                 }
-                fileStorageHelper.logIfScannerException(scanner, "An error occurs parsing track events from JsonL files");
+                _fileStorageHelper.logIfScannerException(scanner, "An error occurs parsing track events from JsonL files");
             } catch (FileNotFoundException e) {
                 Logger.w("No cached track files found");
             } finally {
-                fileStorageHelper.closeFileInputStream(inputStream);
-                fileStorageHelper.closeScanner(scanner);
+                _fileStorageHelper.closeFileInputStream(inputStream);
+                _fileStorageHelper.closeScanner(scanner);
             }
         }
         delete(tracksFiles);
@@ -77,18 +76,16 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
             List<Event> events = chunk.getEvents();
             if (events != null && events.size() > 0) {
                 try {
-                    String fileName = String.format(FILE_NAME_TEMPLATE, chunk.getId());
-                    File file = new File(_dataFolder, fileName);
-                    fileWriter = new FileWriter(file);
+                    fileWriter = _fileStorageHelper.fileWriterFrom(_dataFolder, String.format(FILE_NAME_TEMPLATE, chunk.getId()));
                     ChunkHeader chunkHeader = new ChunkHeader(chunk.getId(), chunk.getAttempt());
-                    fileStorageHelper.writeChunkHeaderLine(chunkHeader, fileWriter);
+                    _fileStorageHelper.writeChunkHeaderLine(chunkHeader, fileWriter);
                     for(Event event : events) {
                         writeEventLine(event, fileWriter);
                     }
                 } catch (IOException ex) {
                     throw new IOException("Error writing track events chunk: " + FILE_NAME_TEMPLATE);
                 } finally {
-                    fileStorageHelper.closeFileWriter(fileWriter);
+                    _fileStorageHelper.closeFileWriter(fileWriter);
                 }
             }
         }

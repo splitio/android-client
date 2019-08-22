@@ -83,4 +83,11 @@ public class MemoryAndFileStorage implements IStorage {
         }
         return  _fileStorage.fileSize(elementId);
     }
+
+    @Override
+    public void delete(List<String> files) {
+        for(String fileName : files) {
+            delete(fileName);
+        }
+    }
 }

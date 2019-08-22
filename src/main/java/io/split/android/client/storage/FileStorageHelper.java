@@ -3,6 +3,7 @@ package io.split.android.client.storage;
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -32,6 +33,11 @@ public class FileStorageHelper {
             chunkHeader = newHeaderChunk();
         }
         return chunkHeader;
+    }
+
+    public FileWriter fileWriterFrom(File dataFolder, String fileName) throws IOException {
+        File file = new File(dataFolder, fileName);
+        return new FileWriter(file);
     }
 
     public void closeFileInputStream(FileInputStream stream) {

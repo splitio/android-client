@@ -73,4 +73,11 @@ public class MemoryStorage implements IStorage {
         }
         return 0L;
     }
+
+    @Override
+    public void delete(List<String> files) {
+        for(String fileName : files) {
+            delete(fileName);
+        }
+    }
 }
