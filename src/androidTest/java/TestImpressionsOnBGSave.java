@@ -53,7 +53,6 @@ public class TestImpressionsOnBGSave {
         ImpressionsManager impManager = ImpressionsManager.instance(new HttpClientStub(), clientConfig, storageManager);
 
         lfRegistry.addObserver(impManager);
-        lfRegistry.addObserver(storageManager);
 
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START);
@@ -77,9 +76,6 @@ public class TestImpressionsOnBGSave {
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE);
 
         List<StoredImpressions> impAfter = new ArrayList(storageManager.getStoredImpressions());
-
-
-        lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP);
 
 
         List<String> files = fileStorage.getAllIds(FILE_PREFIX);

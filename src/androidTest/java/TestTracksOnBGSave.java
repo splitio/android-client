@@ -74,7 +74,6 @@ public class TestTracksOnBGSave {
                 new SplitCacheStub(new ArrayList<>()));
 
         lfRegistry.addObserver(((TrackClientImpl)trackClient)._consumer);
-        lfRegistry.addObserver(storageManager);
 
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START);
@@ -97,10 +96,6 @@ public class TestTracksOnBGSave {
         Thread.sleep(2000);
 
         List<EventsChunk> eventsAfter = new ArrayList(storageManager.getEventsChunks());
-
-
-        lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP);
-
 
         List<String> files = fileStorage.getAllIds(FILE_PREFIX);
 
