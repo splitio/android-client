@@ -20,6 +20,7 @@ import java.util.Map;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.storage.FileStorageHelper;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.MemoryUtils;
@@ -31,9 +32,12 @@ public class TrackStorageManager implements LifecycleObserver {
     private static final String TRACK_FILE_PREFIX = "SPLITIO.events";
     private static final String EVENTS_FILE_PREFIX = TRACK_FILE_PREFIX + "_#";
     private static final String CHUNK_HEADERS_FILE_NAME = TRACK_FILE_PREFIX + "_chunk_headers.json";
-    private static final int MAX_BYTES_PER_CHUNK = 1000000; //1MB
+    private static final Type LEGACY_FILE_TYPE = new TypeToken<Map<String, EventsChunk>>() {
+    }.getType();
+
     private static final int MEMORY_ALLOCATION_TIMES = 2;
     private MemoryUtils mMemoryUtils;
+    private FileStorageHelper mFileStorageHelper;
 
     private final static Type EVENTS_FILE_TYPE = new TypeToken<Map<String, List<Event>>>() {
     }.getType();
@@ -49,6 +53,7 @@ public class TrackStorageManager implements LifecycleObserver {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mMemoryUtils = memoryUtils;
         mFileStorageManager = storage;
+        mFileStorageHelper = new FileStorageHelper();
         mEventsChunks = Collections.synchronizedMap(new HashMap<>());
         loadEventsFromDisk();
     }
@@ -110,63 +115,6 @@ public class TrackStorageManager implements LifecycleObserver {
         }
     }
 
-    private void loadEventsFromChunkFiles() {
-
-        try {
-            String headerContent = mFileStorageManager.read(CHUNK_HEADERS_FILE_NAME);
-            if(headerContent != null) {
-                List<ChunkHeader> headers = Json.fromJson(headerContent, ChunkHeader.CHUNK_HEADER_TYPE);
-                for (ChunkHeader header : headers) {
-                    EventsChunk chunk = new EventsChunk(header.getId(), header.getAttempt());
-                    mEventsChunks.put(chunk.getId(), chunk);
-                }
-            }
-        } catch (IOException ioe) {
-            Logger.e(ioe, "Unable to track chunks headers information from disk: " + ioe.getLocalizedMessage());
-        } catch (JsonSyntaxException syntaxException) {
-            Logger.e(syntaxException, "Unable to parse saved track chunks headers: " + syntaxException.getLocalizedMessage());
-        } catch (Exception e) {
-            Logger.e(e, "Error loading tracks headers from disk: " + e.getLocalizedMessage());
-        }
-
-        List<Map<String, List<Event>>> events = new ArrayList<>();
-
-        List<String> allFileNames = mFileStorageManager.getAllIds(EVENTS_FILE_PREFIX);
-        for (String fileName : allFileNames) {
-            try {
-                long fileSize = mFileStorageManager.fileSize(fileName);
-                if(mMemoryUtils.isMemoryAvailableToAllocate(fileSize, MEMORY_ALLOCATION_TIMES)) {
-                    String file = mFileStorageManager.read(fileName);
-                    Map<String, List<Event>> eventsFile = Json.fromJson(file, EVENTS_FILE_TYPE);
-                    for (Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
-                        String chunkId = eventsChunk.getKey();
-                        EventsChunk chunk = mEventsChunks.get(chunkId);
-                        if (chunk == null) {
-                            chunk = new EventsChunk(chunkId, 0);
-                        }
-                        chunk.addEvents(eventsChunk.getValue());
-                    }
-                } else {
-                    Logger.w("Unable to parse track file " + fileName + ". Memory not available");
-                }
-
-            } catch (IOException ioe) {
-                Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());
-            } catch (JsonSyntaxException syntaxException) {
-                Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
-            } catch (Exception e) {
-                Logger.e(e, "Error loading tracks events from disk: " + e.getLocalizedMessage());
-            }
-        }
-        List<String> chunkIds = new ArrayList(mEventsChunks.keySet());
-        for(String chunkId : chunkIds) {
-            EventsChunk chunk = mEventsChunks.get(chunkId);
-            if(chunk != null && chunk.getEvents() != null && chunk.getEvents().size() == 0) {
-                mEventsChunks.remove(chunkId);
-            }
-        }
-    }
-
     private void loadEventsFromLegacyFile() {
         // Legacy file
         try {
@@ -177,10 +125,8 @@ public class TrackStorageManager implements LifecycleObserver {
                     return;
 
                 }
-                Type dataType = new TypeToken<Map<String, EventsChunk>>() {
-                }.getType();
 
-                Map<String, EventsChunk> chunkTracks = Json.fromJson(storedTracks, dataType);
+                Map<String, EventsChunk> chunkTracks = Json.fromJson(storedTracks, LEGACY_FILE_TYPE);
                 mEventsChunks.putAll(chunkTracks);
             } else {
                 Logger.w("Unable to load track file " + LEGACY_EVENTS_FILE_NAME + ". Memory not available");
@@ -208,47 +154,61 @@ public class TrackStorageManager implements LifecycleObserver {
         }
     }
 
-    private List<ChunkHeader> getChunkHeaders(Map<String, EventsChunk> eventChunks) {
-        List<ChunkHeader> chunkHeaders = new ArrayList<>();
-        for(EventsChunk eventsChunk : eventChunks.values()) {
-            ChunkHeader header = new ChunkHeader(eventsChunk.getId(), eventsChunk.getAttempt());
-            chunkHeaders.add(header);
-        }
-        return chunkHeaders;
+
+    private void loadEventsFromChunkFiles() {
+        createChunksFromHeaders(mFileStorageHelper.readAndParseChunkHeadersFile(mFileStorageManager, CHUNK_HEADERS_FILE_NAME));
+        List<Map<String, List<Event>>> events = new ArrayList<>();
+        createEventsFromChunkFiles();
+        removeChunksWithoutEvents();
     }
 
-    private List<Map<String, List<Event>>> splitChunks(List<EventsChunk> eventChunks) {
+    private void createChunksFromHeaders(List<ChunkHeader> headers) {
+        if(headers != null) {
+            for (ChunkHeader header : headers) {
+                EventsChunk chunk = new EventsChunk(header.getId(), header.getAttempt());
+                mEventsChunks.put(chunk.getId(), chunk);
+            }
+        }
+    }
 
-        List<Map<String, List<Event>>> splitEvents = new ArrayList<>();
-        long bytesCount = 0;
-        List<Event> currentEvents = new ArrayList<>();
-        Map<String, List<Event>> currentChunk = new HashMap<>();
-        for(EventsChunk eventsChunk : eventChunks) {
-            List<Event> events = eventsChunk.getEvents();
-            for(Event event : events) {
-                if(bytesCount + event.getSizeInBytes() > MAX_BYTES_PER_CHUNK) {
-                    currentChunk.put(eventsChunk.getId(), currentEvents);
-                    splitEvents.add(currentChunk);
-                    currentChunk = new HashMap<>();
-                    currentEvents  = new ArrayList<>();
-                    bytesCount = 0;
+    private void createEventsFromChunkFiles() {
+        List<String> allFileNames = mFileStorageManager.getAllIds(EVENTS_FILE_PREFIX);
+        for (String fileName : allFileNames) {
+            try {
+                long fileSize = mFileStorageManager.fileSize(fileName);
+                if(mMemoryUtils.isMemoryAvailableToAllocate(fileSize, MEMORY_ALLOCATION_TIMES)) {
+                    String file = mFileStorageManager.read(fileName);
+                    Map<String, List<Event>> eventsFile = Json.fromJson(file, EVENTS_FILE_TYPE);
+                    for (Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
+                        String chunkId = eventsChunk.getKey();
+                        EventsChunk chunk = mEventsChunks.get(chunkId);
+                        if (chunk == null) {
+                            chunk = new EventsChunk(chunkId, 0);
+                        }
+                        chunk.addEvents(eventsChunk.getValue());
+                    }
+                } else {
+                    Logger.w("Unable to parse track file " + fileName + ". Memory not available");
                 }
-                currentEvents.add(event);
-                bytesCount +=event.getSizeInBytes();
-            }
-            if(currentEvents.size() > 0) {
-                currentChunk.put(eventsChunk.getId(), currentEvents);
-                currentEvents  = new ArrayList<>();
+
+            } catch (IOException ioe) {
+                Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());
+            } catch (JsonSyntaxException syntaxException) {
+                Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
+            } catch (Exception e) {
+                Logger.e(e, "Error loading tracks events from disk: " + e.getLocalizedMessage());
             }
         }
-        splitEvents.add(currentChunk);
-        return splitEvents;
     }
 
-    private Map<String, List<Event>> buildDiskChunk(String chunkId, List<Event> events) {
-        Map<String, List<Event>> chunk = new HashMap<>();
-        chunk.put(chunkId, events);
-        return chunk;
+    private void removeChunksWithoutEvents() {
+        List<String> chunkIds = new ArrayList(mEventsChunks.keySet());
+        for(String chunkId : chunkIds) {
+            EventsChunk chunk = mEventsChunks.get(chunkId);
+            if(chunk != null && chunk.getEvents() != null && chunk.getEvents().size() == 0) {
+                mEventsChunks.remove(chunkId);
+            }
+        }
     }
 
     private void deleteOldChunksFiles() {

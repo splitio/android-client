@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
 
@@ -19,6 +20,23 @@ public class FileStorageHelper {
 
     public static final String LINE_SEPARATOR = System.getProperty("line.separator");
     public static final String UTF8_CHARSET = "UTF-8";
+
+    public List<ChunkHeader> readAndParseChunkHeadersFile(IStorage storage, String fileName) {
+        List<ChunkHeader> headers = null;
+        try {
+            String headerContent = storage.read(fileName);
+            if(headerContent != null) {
+                headers = Json.fromJson(headerContent, ChunkHeader.CHUNK_HEADER_TYPE);
+            }
+        } catch (IOException ioe) {
+            Logger.e(ioe, "Unable chunks headers information from disk: " + ioe.getLocalizedMessage());
+        } catch (JsonSyntaxException syntaxException) {
+            Logger.e(syntaxException, "Unable to parse saved chunks headers: " + syntaxException.getLocalizedMessage());
+        } catch (Exception e) {
+            Logger.e(e, "Error loading chunk headers from disk: " + e.getLocalizedMessage());
+        }
+        return  headers;
+    }
 
     public ChunkHeader chunkFromLine(String jsonChunk) {
 
