@@ -1,11 +1,6 @@
 package io.split.android.client.impressions;
 
 import android.annotation.SuppressLint;
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.OnLifecycleEvent;
-import android.arch.lifecycle.ProcessLifecycleOwner;
-import android.util.Log;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -25,8 +20,6 @@ import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.FileStorageHelper;
-import io.split.android.client.storage.IStorage;
-import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
@@ -34,7 +27,7 @@ import io.split.android.client.utils.Logger;
  * Created by guillermo on 1/18/18.
  */
 
-public class ImpressionsStorageManager implements LifecycleObserver {
+public class ImpressionsStorageManager {
 
     private static final String LEGACY_IMPRESSIONS_FILE_NAME = "SPLITIO.impressions";
     private static final String IMPRESSIONS_FILE_PREFIX = "SPLITIO.impressions";
@@ -66,7 +59,6 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         mConfig = config;
         mFileStorageHelper = fileStorageHelper;
         loadImpressionsFromDisk();
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
     }
 
     @SuppressLint("DefaultLocale")
@@ -117,6 +109,10 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         if (chunkCanBeStored(storedImpression)) {
             chunkSucceeded(storedImpression.id());
         }
+    }
+
+    public void saveToDisk() {
+        mFileStorageManager.write(mImpressionsToSend);
     }
 
     public void close() {
@@ -190,11 +186,6 @@ public class ImpressionsStorageManager implements LifecycleObserver {
         if (loaded != null) {
             mImpressionsToSend.putAll(loaded);
         }
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    private void saveToDisk() {
-        mFileStorageManager.write(mImpressionsToSend);
     }
 
     private void loadEventsFromLegacyFile() {

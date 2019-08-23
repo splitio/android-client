@@ -1,11 +1,6 @@
 package io.split.android.client.track;
 
 
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.OnLifecycleEvent;
-import android.arch.lifecycle.ProcessLifecycleOwner;
-
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
@@ -25,7 +20,7 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.MemoryUtils;
 import io.split.android.client.utils.MemoryUtilsImpl;
 
-public class TrackStorageManager implements LifecycleObserver {
+public class TrackStorageManager {
 
     private static final String LEGACY_EVENTS_FILE_NAME = "SPLITIO.events.json";
     private static final String TRACK_FILE_PREFIX = "SPLITIO.events";
@@ -47,7 +42,6 @@ public class TrackStorageManager implements LifecycleObserver {
     }
 
     public TrackStorageManager(ITrackStorage storage, MemoryUtils memoryUtils) {
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
         mFileStorageHelper = new FileStorageHelper(memoryUtils);
         mEventsChunks = Collections.synchronizedMap(new HashMap<>());
@@ -78,6 +72,10 @@ public class TrackStorageManager implements LifecycleObserver {
 
     public List<EventsChunk> getEventsChunks() {
         return new ArrayList<>(mEventsChunks.values());
+    }
+
+    public void saveToDisk() {
+        mFileStorageManager.write(mEventsChunks);
     }
 
     public void close(){
@@ -113,11 +111,6 @@ public class TrackStorageManager implements LifecycleObserver {
         } catch (JsonSyntaxException syntaxException) {
             Logger.e(syntaxException, "Unable to parse saved tracks: " + syntaxException.getLocalizedMessage());
         }
-    }
-
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    private void saveToDisk() {
-        mFileStorageManager.write(mEventsChunks);
     }
 
     private void loadEventsFromChunkFiles() {

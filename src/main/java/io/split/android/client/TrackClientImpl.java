@@ -309,6 +309,7 @@ public class TrackClientImpl implements TrackClient {
         private void doOnPause(){
             _storageManager.saveEvents(new EventsChunk(events));
             events = newEventList();
+            _storageManager.saveToDisk();
         }
 
 

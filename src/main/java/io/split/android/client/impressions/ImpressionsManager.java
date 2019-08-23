@@ -178,5 +178,6 @@ public class ImpressionsManager implements ImpressionListener, Runnable, Lifecyc
     @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
     private void storeEvents() {
         flushImpressions();
+        _storageManager.saveToDisk();
     }
 }
