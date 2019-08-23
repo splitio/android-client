@@ -9,12 +9,12 @@ import io.split.android.client.track.ITrackStorage;
 
 public class TrackFileStorageStub extends MemoryStorage implements ITrackStorage {
     @Override
-    public Map<String, EventsChunk> read() throws IOException {
+    public Map<String, EventsChunk> read() {
         return null;
     }
 
     @Override
-    public void write(Map<String, EventsChunk> tracks) throws IOException {
+    public void write(Map<String, EventsChunk> tracks) {
 
     }
 }

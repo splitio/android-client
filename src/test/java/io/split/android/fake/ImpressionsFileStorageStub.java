@@ -10,12 +10,12 @@ import io.split.android.client.storage.MemoryStorage;
 public class ImpressionsFileStorageStub extends MemoryStorage implements IImpressionsStorage {
 
     @Override
-    public Map<String, StoredImpressions> read() throws IOException {
+    public Map<String, StoredImpressions> read() {
         return null;
     }
 
     @Override
-    public void write(Map<String, StoredImpressions> impressions) throws IOException {
+    public void write(Map<String, StoredImpressions> impressions) {
 
     }
 }
