@@ -33,7 +33,7 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
         _fileStorageHelper = new FileStorageHelper();
     }
 
-    public Map<String, EventsChunk> read() throws IOException {
+    public Map<String, EventsChunk> read() {
 
         Map<String, EventsChunk> tracks = new HashMap<>();
         List<String> tracksFiles = getAllIds(FILE_NAME_PREFIX);
@@ -70,7 +70,7 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
         return tracks;
     }
 
-    public void write(Map<String, EventsChunk> tracks) throws IOException {
+    public void write(Map<String, EventsChunk> tracks) {
         for (EventsChunk chunk : tracks.values()) {
             FileWriter fileWriter = null;
             List<Event> events = chunk.getEvents();
@@ -82,8 +82,8 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
                     for(Event event : events) {
                         writeEventLine(event, fileWriter);
                     }
-                } catch (IOException ex) {
-                    throw new IOException("Error writing track events chunk: " + FILE_NAME_TEMPLATE);
+                } catch (IOException e) {
+                    Logger.e("Error writing track events chunk: " + FILE_NAME_TEMPLATE + ": " + e.getLocalizedMessage());
                 } finally {
                     _fileStorageHelper.closeFileWriter(fileWriter);
                 }

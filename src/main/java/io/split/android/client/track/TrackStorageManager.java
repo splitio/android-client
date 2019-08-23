@@ -10,7 +10,6 @@ import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,8 +34,6 @@ public class TrackStorageManager implements LifecycleObserver {
     private static final Type LEGACY_FILE_TYPE = new TypeToken<Map<String, EventsChunk>>() {
     }.getType();
 
-    private static final int MEMORY_ALLOCATION_TIMES = 2;
-    private MemoryUtils mMemoryUtils;
     private FileStorageHelper mFileStorageHelper;
 
     private final static Type EVENTS_FILE_TYPE = new TypeToken<Map<String, List<Event>>>() {
@@ -51,9 +48,8 @@ public class TrackStorageManager implements LifecycleObserver {
 
     public TrackStorageManager(ITrackStorage storage, MemoryUtils memoryUtils) {
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
-        mMemoryUtils = memoryUtils;
         mFileStorageManager = storage;
-        mFileStorageHelper = new FileStorageHelper();
+        mFileStorageHelper = new FileStorageHelper(memoryUtils);
         mEventsChunks = Collections.synchronizedMap(new HashMap<>());
         loadEventsFromDisk();
     }
@@ -74,7 +70,7 @@ public class TrackStorageManager implements LifecycleObserver {
 
     synchronized public void saveEvents(EventsChunk chunk){
         if(chunk == null || chunk.getEvents() != null && chunk.getEvents().isEmpty()) {
-            return; // Nothing to write
+            return;
         }
 
         mEventsChunks.put(chunk.getId(), chunk);
@@ -101,62 +97,31 @@ public class TrackStorageManager implements LifecycleObserver {
     }
 
     private void loadEventsFilesByLine() {
-        try {
-            Map<String, EventsChunk> loaded = mFileStorageManager.read();
-            if (loaded != null) {
-                mEventsChunks.putAll(loaded);
-            }
-        } catch (IOException ioe) {
-            Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());
-        } catch (JsonSyntaxException syntaxException) {
-            Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
-        } catch (Exception e) {
-            Logger.e(e, "Error loading tracks events from disk: " + e.getLocalizedMessage());
+        Map<String, EventsChunk> loaded = mFileStorageManager.read();
+        if (loaded != null) {
+            mEventsChunks.putAll(loaded);
         }
     }
 
     private void loadEventsFromLegacyFile() {
-        // Legacy file
         try {
-            long fileSize = mFileStorageManager.fileSize(LEGACY_EVENTS_FILE_NAME);
-            if(mMemoryUtils.isMemoryAvailableToAllocate(fileSize, MEMORY_ALLOCATION_TIMES)) {
-                String storedTracks = mFileStorageManager.read(LEGACY_EVENTS_FILE_NAME);
-                if (Strings.isNullOrEmpty(storedTracks)) {
-                    return;
-
-                }
-
+            String storedTracks = mFileStorageHelper.checkMemoryAndReadFile(LEGACY_EVENTS_FILE_NAME, mFileStorageManager);
+            if (!Strings.isNullOrEmpty(storedTracks)) {
                 Map<String, EventsChunk> chunkTracks = Json.fromJson(storedTracks, LEGACY_FILE_TYPE);
                 mEventsChunks.putAll(chunkTracks);
-            } else {
-                Logger.w("Unable to load track file " + LEGACY_EVENTS_FILE_NAME + ". Memory not available");
             }
-
-        } catch (IOException ioe) {
-            Logger.e(ioe, "Unable to load tracks from disk: " + ioe.getLocalizedMessage());
         } catch (JsonSyntaxException syntaxException) {
             Logger.e(syntaxException, "Unable to parse saved tracks: " + syntaxException.getLocalizedMessage());
-        } catch (Exception e) {
-            Logger.e(e, "Error loading tracks from legacy file from disk: " + e.getLocalizedMessage());
         }
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
     private void saveToDisk() {
-        try {
-            mFileStorageManager.write(mEventsChunks);
-        } catch (IOException ioe) {
-            Logger.e(ioe, "Unable to save tracks to disk: " + ioe.getLocalizedMessage());
-        } catch (JsonSyntaxException syntaxException) {
-            Logger.e(syntaxException, "Unable to parse tracks to save: " + syntaxException.getLocalizedMessage());
-        } catch (Exception e) {
-            Logger.e(e, "Error saving tracks from legacy file from disk: " + e.getLocalizedMessage());
-        }
+        mFileStorageManager.write(mEventsChunks);
     }
 
-
     private void loadEventsFromChunkFiles() {
-        createChunksFromHeaders(mFileStorageHelper.readAndParseChunkHeadersFile(mFileStorageManager, CHUNK_HEADERS_FILE_NAME));
+        createChunksFromHeaders(mFileStorageHelper.readAndParseChunkHeadersFile(CHUNK_HEADERS_FILE_NAME, mFileStorageManager));
         List<Map<String, List<Event>>> events = new ArrayList<>();
         createEventsFromChunkFiles();
         removeChunksWithoutEvents();
@@ -174,30 +139,26 @@ public class TrackStorageManager implements LifecycleObserver {
     private void createEventsFromChunkFiles() {
         List<String> allFileNames = mFileStorageManager.getAllIds(EVENTS_FILE_PREFIX);
         for (String fileName : allFileNames) {
-            try {
-                long fileSize = mFileStorageManager.fileSize(fileName);
-                if(mMemoryUtils.isMemoryAvailableToAllocate(fileSize, MEMORY_ALLOCATION_TIMES)) {
-                    String file = mFileStorageManager.read(fileName);
-                    Map<String, List<Event>> eventsFile = Json.fromJson(file, EVENTS_FILE_TYPE);
-                    for (Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
-                        String chunkId = eventsChunk.getKey();
-                        EventsChunk chunk = mEventsChunks.get(chunkId);
-                        if (chunk == null) {
-                            chunk = new EventsChunk(chunkId, 0);
-                        }
-                        chunk.addEvents(eventsChunk.getValue());
-                    }
-                } else {
-                    Logger.w("Unable to parse track file " + fileName + ". Memory not available");
-                }
-
-            } catch (IOException ioe) {
-                Logger.e(ioe, "Unable to track event file from disk: " + ioe.getLocalizedMessage());
-            } catch (JsonSyntaxException syntaxException) {
-                Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
-            } catch (Exception e) {
-                Logger.e(e, "Error loading tracks events from disk: " + e.getLocalizedMessage());
+            String fileContent = mFileStorageHelper.checkMemoryAndReadFile(fileName, mFileStorageManager);
+            if(fileContent != null) {
+                parseEvents(fileContent);
             }
+        }
+    }
+
+    private void parseEvents(String json) {
+        try {
+            Map<String, List<Event>> eventsFile = Json.fromJson(json, EVENTS_FILE_TYPE);
+            for (Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
+                String chunkId = eventsChunk.getKey();
+                EventsChunk chunk = mEventsChunks.get(chunkId);
+                if (chunk == null) {
+                    chunk = new EventsChunk(chunkId, 0);
+                }
+                chunk.addEvents(eventsChunk.getValue());
+            }
+        } catch (JsonSyntaxException syntaxException) {
+            Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
         }
     }
 

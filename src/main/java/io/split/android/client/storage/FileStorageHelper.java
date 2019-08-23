@@ -5,7 +5,6 @@ import com.google.gson.JsonSyntaxException;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -15,13 +14,26 @@ import java.util.UUID;
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.MemoryUtils;
+import io.split.android.client.utils.MemoryUtilsImpl;
 
 public class FileStorageHelper {
 
     public static final String LINE_SEPARATOR = System.getProperty("line.separator");
     public static final String UTF8_CHARSET = "UTF-8";
+    private static final int MEMORY_ALLOCATION_TIMES = 2;
 
-    public List<ChunkHeader> readAndParseChunkHeadersFile(IStorage storage, String fileName) {
+    private MemoryUtils mMemoryUtils;
+
+    public FileStorageHelper() {
+        this(new MemoryUtilsImpl());
+    }
+
+    public FileStorageHelper(MemoryUtils memoryUtils) {
+        mMemoryUtils = memoryUtils;
+    }
+
+    public List<ChunkHeader> readAndParseChunkHeadersFile(String fileName, IStorage storage) {
         List<ChunkHeader> headers = null;
         try {
             String headerContent = storage.read(fileName);
@@ -96,9 +108,23 @@ public class FileStorageHelper {
         fileWriter.write(LINE_SEPARATOR);
     }
 
+    public String checkMemoryAndReadFile(String name, IStorage storage) {
+        String fileContent = null;
+        long fileSize = storage.fileSize(name);
+        if(fileSize > 0 && mMemoryUtils.isMemoryAvailableToAllocate(fileSize, MEMORY_ALLOCATION_TIMES)) {
+            try {
+                fileContent = storage.read(name);
+            } catch (IOException e) {
+                Logger.e(e, "Unable to load file from disk: " + name + " error: " + e.getLocalizedMessage());
+            }
+        } else {
+            Logger.w("Unable to parse file " + name + ". Memory not available");
+        }
+        return fileContent;
+    }
+
     private ChunkHeader newHeaderChunk() {
         return new ChunkHeader(UUID.randomUUID().toString(), 1);
     }
-
 
 }
