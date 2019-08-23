@@ -7,6 +7,6 @@ import io.split.android.client.storage.IStorage;
 import io.split.android.client.track.EventsChunk;
 
 public interface IImpressionsStorage extends IStorage {
-    Map<String, StoredImpressions> read() throws IOException;
-    void write(Map<String, StoredImpressions> impressions) throws IOException;
+    Map<String, StoredImpressions> read();
+    void write(Map<String, StoredImpressions> impressions);
 }

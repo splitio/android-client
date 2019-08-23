@@ -122,7 +122,6 @@ public class TrackStorageManager implements LifecycleObserver {
 
     private void loadEventsFromChunkFiles() {
         createChunksFromHeaders(mFileStorageHelper.readAndParseChunkHeadersFile(CHUNK_HEADERS_FILE_NAME, mFileStorageManager));
-        List<Map<String, List<Event>>> events = new ArrayList<>();
         createEventsFromChunkFiles();
         removeChunksWithoutEvents();
     }
@@ -146,19 +145,29 @@ public class TrackStorageManager implements LifecycleObserver {
         }
     }
 
-    private void parseEvents(String json) {
+    private Map<String, List<Event>> parseEventsChunkFileContent(String json) {
+        Map<String, List<Event>> impressionsFile = null;
         try {
-            Map<String, List<Event>> eventsFile = Json.fromJson(json, EVENTS_FILE_TYPE);
-            for (Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
-                String chunkId = eventsChunk.getKey();
-                EventsChunk chunk = mEventsChunks.get(chunkId);
-                if (chunk == null) {
-                    chunk = new EventsChunk(chunkId, 0);
-                }
-                chunk.addEvents(eventsChunk.getValue());
+            impressionsFile = Json.fromJson(json, EVENTS_FILE_TYPE);
+        } catch (JsonSyntaxException e) {
+            Logger.e("Unable to parse saved track event: " + e.getLocalizedMessage());
+        }
+        return impressionsFile;
+    }
+
+    private void parseEvents(String json) {
+        Map<String, List<Event>> eventsFile = parseEventsChunkFileContent(json);
+        if(eventsFile == null) {
+            return;
+        };
+
+        for (Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
+            String chunkId = eventsChunk.getKey();
+            EventsChunk chunk = mEventsChunks.get(chunkId);
+            if (chunk == null) {
+                chunk = new EventsChunk(chunkId, 0);
             }
-        } catch (JsonSyntaxException syntaxException) {
-            Logger.e(syntaxException, "Unable to parse saved track event: " + syntaxException.getLocalizedMessage());
+            chunk.addEvents(eventsChunk.getValue());
         }
     }
 

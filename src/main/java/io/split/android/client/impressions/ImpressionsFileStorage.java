@@ -35,7 +35,7 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
         _fileStorageHelper = new FileStorageHelper();
     }
 
-    public Map<String, StoredImpressions> read() throws IOException {
+    public Map<String, StoredImpressions> read() {
 
         Map<String, StoredImpressions> impressions = new HashMap<>();
         List<String> impressionFiles = getAllIds(FILE_NAME_PREFIX);
@@ -88,7 +88,7 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
         return impressions;
     }
 
-    public void write(Map<String, StoredImpressions> impressions) throws IOException {
+    public void write(Map<String, StoredImpressions> impressions) {
 
         for (StoredImpressions chunk : impressions.values()) {
             FileWriter fileWriter = null;
@@ -107,8 +107,8 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
                         }
                     }
                 }
-            } catch (IOException ex) {
-                throw new IOException("Error writing impressions chunk: " + FILE_NAME_TEMPLATE);
+            } catch (IOException e) {
+                Logger.e("Error writing impressions chunk: " + FILE_NAME_TEMPLATE + ": " + e.getLocalizedMessage());
             } finally {
                 _fileStorageHelper.closeFileWriter(fileWriter);
             }
