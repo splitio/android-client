@@ -92,7 +92,6 @@ public class TestImpressionsOnBGSave {
         Assert.assertEquals(4, impLoaded.size());
         Assert.assertEquals(0, afterLoadfiles.size());
 
-
     }
 
     private Impression newImpression(String prefix) {
