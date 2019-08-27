@@ -60,7 +60,7 @@ public class TestImpressionsOnBGSave {
 
         int chunksCount = 3;
         int impCount = 100;
-        for(int c = 0; c<chunksCount; c++) {
+        for(int c = 0; c < chunksCount; c++) {
             for (int i = 0; i < impCount; i++) {
                 impManager.log(newImpression("i" + i));
             }
