@@ -12,8 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.core.app.ApplicationProvider;
+import androidx.test.platform.app.InstrumentationRegistry;
 import io.split.android.client.LocalhostSplitClient;
 import io.split.android.client.LocalhostSplitFactory;
 import io.split.android.client.LocalhostSplitManager;
@@ -29,7 +28,7 @@ public class LocalhostTest {
     @Test
     public void testUsingYamlFile() {
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
 
         LocalhostSplitFactory factory = null;
         LocalhostSplitClient client = null;
@@ -128,7 +127,7 @@ public class LocalhostTest {
     @Test
     public void testUsingPropertiesFile() {
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
 
         LocalhostSplitFactory factory = null;
         LocalhostSplitClient client = null;
@@ -180,7 +179,7 @@ public class LocalhostTest {
     @Test
     public void testNonExistingFile() {
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
 
         LocalhostSplitFactory factory = null;
         LocalhostSplitClient client = null;
@@ -220,7 +219,7 @@ public class LocalhostTest {
     @Test
     public void testLoadYmlFile() {
 
-        Context context = InstrumentationRegistry.getTargetContext();
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         LocalhostSplitFactory factory = null;
         LocalhostSplitClient client = null;
         try {

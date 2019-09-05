@@ -15,6 +15,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.MemoryStorage;
+import io.split.android.fake.ImpressionsFileStorageStub;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -38,7 +39,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage(), storageConfig());
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -72,7 +73,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage(), storageConfig());
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -107,7 +108,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage(), storageConfig());
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 
@@ -144,7 +145,7 @@ public class ImpressionsManagerTest {
                 .build();
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
-        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new MemoryStorage(), storageConfig());
+        ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
 
         ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
 

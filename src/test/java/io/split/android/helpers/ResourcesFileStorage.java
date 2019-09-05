@@ -40,4 +40,15 @@ public class ResourcesFileStorage implements IStorage {
     public boolean exists(String elementId) {
         return false;
     }
+
+    @Override
+    public long fileSize(String elementId) {
+        return 0L;
+    }
+
+    @Override
+    public void delete(List<String> files) {
+    }
+
+
 }

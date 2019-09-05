@@ -1,5 +1,6 @@
 package io.split.android.client.storage;
 
+import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +21,7 @@ import io.split.android.client.utils.Logger;
 
 public class FileStorage implements IStorage {
 
-    private final File _dataFolder;
+    protected final File _dataFolder;
 
     public FileStorage(@NotNull File rootFolder, @NotNull String folderName) {
         _dataFolder = new File(rootFolder, folderName);
@@ -95,6 +96,13 @@ public class FileStorage implements IStorage {
     }
 
     @Override
+    public void delete(List<String> files) {
+        for(String fileName : files) {
+            delete(fileName);
+        }
+    }
+
+    @Override
     public String[] getAllIds() {
         File dataFolder = new File(_dataFolder, ".");
         File[] fileList = dataFolder.listFiles();
@@ -133,5 +141,9 @@ public class FileStorage implements IStorage {
     public boolean exists(String elementId) {
         File file = new File(_dataFolder, elementId);
         return file.exists();
+    }
+
+    public long fileSize(String elementId) {
+        return new File(_dataFolder, elementId).length();
     }
 }

@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -21,15 +22,19 @@ import io.split.android.client.api.Key;
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.impressions.IImpressionsStorage;
+import io.split.android.client.impressions.ImpressionsFileStorage;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
 import io.split.android.client.impressions.StoredImpressions;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.storage.MemoryStorage;
 import io.split.android.client.utils.Json;
+import io.split.android.fake.ImpressionsFileStorageStub;
 
 public class ImpressionsStorageTest {
 
+    IImpressionsStorage mStorage;
     ImpressionsStorageManager mImpStorage = null;
     final long OUTDATED_LIMIT = 3600 * 1000; // One day millis
     final int MAX_ATTEMPTS = 3;
@@ -42,76 +47,33 @@ public class ImpressionsStorageTest {
     }.getType();
     final String CHUNK_HEADERS_FILE_NAME = "SPLITIO.impressions_chunk_headers.json";
     final String IMPRESSIONS_FILE_NAME = "SPLITIO.impressions_#%d.json";
-    final int MAX_FILE_SIZE = 3000000;
 
     @Before
-    public void setUp() {
+    public void setUp()throws IOException {
 
-
-        final String FILE_NAME = "SPLITIO.impressions";
-
-        Map<String, StoredImpressions> storedImpressions = new HashMap<>();
-        IStorage memStorage = new MemoryStorage();
-        final int CHUNK_COUNT = 4;
-        for (int i = 0; i < CHUNK_COUNT; i++) {
-            String chunkId = String.format("chunk-%d", i);
-            List<TestImpressions> testImpressions = new ArrayList<>();
-            for (int j = 0; j < 4; j++) {
-
-                String featureName = String.format("feature-%d-%d", i, j);
-                List<KeyImpression> impressions = new ArrayList<>();
-                for (int k = 0; k < 4; k++) {
-                    KeyImpression impression = new KeyImpression();
-                    impression.feature = featureName;
-                    impression.keyName = String.format("name-%d-%d-%d", i, j, k);
-                    impression.treatment = String.format("treatment-%d-%d-%d", i, j, k);
-                    impressions.add(impression);
-                }
-                TestImpressions testImpressionsDTO = new TestImpressions();
-                testImpressionsDTO.testName = featureName;
-                testImpressionsDTO.keyImpressions = impressions;
-                testImpressions.add(testImpressionsDTO);
+        File rootFolder = new File("./build");
+        File folder = new File(rootFolder, "test_folder");
+        if(folder.exists()) {
+            for(File file : folder.listFiles()){
+                file.delete();
             }
+            folder.delete();
+        }
 
-            long timestamp = System.currentTimeMillis();
-            if (i == CHUNK_COUNT - 1) {
-                timestamp = timestamp - OUTDATED_LIMIT * 2; // Two day millis, chunck is deprecated and should not be loaded
-            }
-            StoredImpressions storedImpressionsItem = StoredImpressions.from(chunkId, testImpressions, timestamp);
-            storedImpressions.put(chunkId, storedImpressionsItem);
-        }
-        try {
-            String allImpressionsJson = Json.toJson(storedImpressions);
-            memStorage.write(FILE_NAME, allImpressionsJson);
-        } catch (IOException e) {
-        }
         ImpressionsStorageManagerConfig config = new ImpressionsStorageManagerConfig();
         config.setImpressionsMaxSentAttempts(MAX_ATTEMPTS);
         config.setImpressionsChunkOudatedTime(OUTDATED_LIMIT);
-        mImpStorage = new ImpressionsStorageManager(memStorage, config);
-    }
-
-    @Test
-    public void getStoredImpressions() {
-
-        List<StoredImpressions> storedImpressions = mImpStorage.getStoredImpressions();
-
-        Assert.assertEquals(3, storedImpressions.size());
-        Assert.assertNotEquals(-1, getIndexForStoredImpression("chunk-0", storedImpressions));
-        Assert.assertNotEquals(-1, getIndexForStoredImpression("chunk-1", storedImpressions));
-        Assert.assertNotEquals(-1, getIndexForStoredImpression("chunk-2", storedImpressions));
-
-        StoredImpressions storedImpression = storedImpressions.get(getIndexForStoredImpression("chunk-0", storedImpressions));
-        Assert.assertEquals(4, storedImpression.impressions().size());
-        List<TestImpressions> testImpressions = storedImpression.impressions();
-        Assert.assertEquals(4, testImpressions.size());
-        Assert.assertEquals("feature-0-0", testImpressions.get(0).testName);
-        Assert.assertEquals(4, testImpressions.get(0).keyImpressions.size());
-        Assert.assertEquals("feature-0-3", testImpressions.get(3).testName);
+        mStorage = new ImpressionsFileStorage(rootFolder, "test_folder");
+        mImpStorage = new ImpressionsStorageManager(mStorage, config);
     }
 
     @Test
     public void storeImpressions() {
+        int chunkCount = 1;
+        populateManager(chunkCount, mImpStorage);
+        List<StoredImpressions> existingImpressions = mImpStorage.getStoredImpressions();
+        String existingChunkId = existingImpressions.get(0).id();
+
         List<KeyImpression> impressions = new ArrayList<>();
         for (int j = 0; j < 2; j++) {
             String featureName = String.format("feature-test-%d", j);
@@ -130,11 +92,16 @@ public class ImpressionsStorageTest {
         }
 
         List<StoredImpressions> storedImpressions = mImpStorage.getStoredImpressions();
-
-        Assert.assertEquals(4, storedImpressions.size());
-        StoredImpressions storedImpression = storedImpressions.get(getIndexForUUIDStoredImpression(storedImpressions));
+        String newChunk = null;
+        for(StoredImpressions imp : storedImpressions) {
+            if(!imp.id().equals(existingChunkId)) {
+                newChunk = imp.id();
+            }
+        }
+        int newChunkIndex = getIndexForStoredImpression(newChunk, storedImpressions);
+        Assert.assertEquals(chunkCount + 1, storedImpressions.size());
+        StoredImpressions storedImpression = storedImpressions.get(newChunkIndex);
         List<TestImpressions> testImpressions = storedImpression.impressions();
-        Assert.assertEquals(2, testImpressions.size());
 
         Set<String> testNames = new HashSet<>();
         testNames.add(testImpressions.get(0).testName);
@@ -145,67 +112,74 @@ public class ImpressionsStorageTest {
         Assert.assertEquals(4, testImpressions.get(1).keyImpressions.size());
     }
 
-
     @Test
     public void impressionsSentSuccess() {
 
+        int chunkCount = 2;
+        populateManager(chunkCount, mImpStorage);
         List<StoredImpressions> storedImpressions = mImpStorage.getStoredImpressions();
 
-        StoredImpressions chunk1 = storedImpressions.get(getIndexForStoredImpression("chunk-1", storedImpressions));
-        mImpStorage.succeededStoredImpression(chunk1);
+        StoredImpressions chunkSent = storedImpressions.get(0);
+        String chunkIdSent = chunkSent.id();
+        mImpStorage.succeededStoredImpression(chunkSent);
         storedImpressions = mImpStorage.getStoredImpressions();
 
-        Assert.assertEquals(2, storedImpressions.size());
-        Assert.assertEquals(-1, getIndexForStoredImpression("chunk-1", storedImpressions));
-        Assert.assertNotEquals(-1, getIndexForStoredImpression("chunk-0", storedImpressions));
-        Assert.assertNotEquals(-1, getIndexForStoredImpression("chunk-2", storedImpressions));
+        Assert.assertEquals(chunkCount - 1, storedImpressions.size());
+        Assert.assertEquals(-1, getIndexForStoredImpression(chunkIdSent, storedImpressions));
+        for(int i = 0; i< storedImpressions.size(); i++) {
+            String curId = storedImpressions.get(i).id();
+            if(!chunkIdSent.equals(curId)) {
+                Assert.assertNotEquals(-1, getIndexForStoredImpression(curId, storedImpressions));
+            }
+        }
     }
 
     @Test
     public void impressionsSentFailure() {
 
+        int chunkCount = 3;
+        populateManager(chunkCount, mImpStorage);
         List<StoredImpressions> storedImpressions = mImpStorage.getStoredImpressions();
-        StoredImpressions chunk1 = storedImpressions.get(getIndexForStoredImpression("chunk-1", storedImpressions));
-        mImpStorage.failedStoredImpression(chunk1);
+
+        StoredImpressions chunkSent = storedImpressions.get(0);
+        String chunkIdSent = chunkSent.id();
+        mImpStorage.failedStoredImpression(chunkSent);
         storedImpressions = mImpStorage.getStoredImpressions();
 
-        int chunk1Index = getIndexForStoredImpression("chunk-1", storedImpressions);
-        Assert.assertTrue(chunk1Index > -1);
-
-        chunk1 = storedImpressions.get(chunk1Index);
-
-        Assert.assertEquals(3, storedImpressions.size());
-        Assert.assertEquals(1, chunk1.getAttempts());
+        Assert.assertEquals(chunkCount, storedImpressions.size());
+        Assert.assertEquals(1, chunkSent.getAttempts());
     }
 
     @Test
     public void impressionsSendMaxAttemptsReached() {
+        int chunkCount = 3;
+        populateManager(chunkCount, mImpStorage);
         List<StoredImpressions> storedImpressions = mImpStorage.getStoredImpressions();
-        StoredImpressions chunk1 = storedImpressions.get(getIndexForStoredImpression("chunk-1", storedImpressions));
+        StoredImpressions chunk1 = storedImpressions.get(0);
+        String chunkId = chunk1.id();
         for (int i = 0; i <= MAX_ATTEMPTS; i++) {
             mImpStorage.failedStoredImpression(chunk1);
         }
         storedImpressions = mImpStorage.getStoredImpressions();
-        Assert.assertEquals(-1, getIndexForStoredImpression("chunk-1", storedImpressions));
+        Assert.assertEquals(-1, getIndexForStoredImpression(chunkId, storedImpressions));
     }
-
 
     @Test
     public void testSaveAndLoadChunkFiles() throws IOException {
 
 
-        IStorage memStorage = new MemoryStorage();
+        //IImpressionsStorage memStorage = new ImpressionsFileStorageStub();
 
         ImpressionsStorageManagerConfig config = new ImpressionsStorageManagerConfig();
         config.setImpressionsChunkOudatedTime(3600 * 1000);
-        ImpressionsStorageManager savingManager = new ImpressionsStorageManager(memStorage, config);
+        ImpressionsStorageManager savingManager = new ImpressionsStorageManager(mStorage, config);
 
         int chunkCount = 5;
-        int[] testData = {1, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6500};
+        //int[] testData = {1, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6500};
+        int[] testData = {1, 5, 10, 1, 20, 1, 30, 40, 50, 65};
 
         int totalImpressionsCount = getSum(testData);
         int totalImpressionsSize = sizeInBytes(totalImpressionsCount);
-        int filesCount = (chunkCount * totalImpressionsSize / MAX_FILE_SIZE) + 1;
 
         List<StoredImpressions> storedImpressionsList = new ArrayList<>();
         for (int c = 0; c < chunkCount; c++) {
@@ -230,27 +204,8 @@ public class ImpressionsStorageTest {
 
         savingManager.close(); // Close saves to disk
 
-        ImpressionsStorageManager loadingManager = new ImpressionsStorageManager(memStorage, config);
+        ImpressionsStorageManager loadingManager = new ImpressionsStorageManager(mStorage, config);
         List<StoredImpressions> loadedChunks = loadingManager.getStoredImpressions();
-
-        String headerContent = memStorage.read(CHUNK_HEADERS_FILE_NAME);
-        List<ChunkHeader> headers = Json.fromJson(headerContent, chunkHeaderType);
-        List<String> allImpressionsFiles = memStorage.getAllIds("SPLITIO.impressions_#");
-        List<Map<String, List<KeyImpression>>> loadedKeyImpressions = new ArrayList<>();
-        int[] sizes = new int[filesCount];
-        for (int i = 0; i < filesCount; i++) {
-            String file = memStorage.read(String.format(IMPRESSIONS_FILE_NAME, i));
-            Map<String, List<KeyImpression>> impressionsFile = Json.fromJson(file, impressionsFileType);
-            loadedKeyImpressions.add(impressionsFile);
-            sizes[i] = sizeInBytes(impressionsFile.size());
-        }
-
-        Assert.assertNotNull(headerContent);
-        Assert.assertEquals(chunkCount, headers.size());
-        Assert.assertEquals(filesCount, allImpressionsFiles.size());
-        for (int i = 0; i < filesCount; i++) {
-            Assert.assertTrue(sizes[i] <= MAX_FILE_SIZE);
-        }
 
         Assert.assertEquals(chunkCount, loadedChunks.size());
         Assert.assertEquals(savedChunks.size(), loadedChunks.size());
@@ -271,7 +226,7 @@ public class ImpressionsStorageTest {
     @Test
     public void testLoadLegacyFromLegacyFile() throws IOException {
 
-        IStorage memStorage = new MemoryStorage();
+        IImpressionsStorage memStorage = mStorage;
 
         int chunkCount = 5;
         int[] testData = {1, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6500};
@@ -326,8 +281,73 @@ public class ImpressionsStorageTest {
     }
 
     @Test
+    public void testLoadLegacyFromLegacyChunkFiles() throws IOException {
+
+        IImpressionsStorage memStorage = mStorage;
+
+        int chunkCount = 5;
+        int testCount = 4;
+        int impCount = 15;
+
+        int lastFileNumber = 0;
+        int fileNumber = 0;
+        List<ChunkHeader> headers = new ArrayList<>();
+        Map<String, List<KeyImpression>> impressionsList = new HashMap<>();
+        for (int c = 0; c < chunkCount; c++) {
+            ChunkHeader header = new ChunkHeader("id-" + c, 0, 111111);
+            headers.add(header);
+            String testName = null;
+            List<KeyImpression> keyImpressions = new ArrayList<>();
+            for (int i = 0; i < testCount; i++) {
+                testName = String.format("FEATURE_%d", i);
+                for (int j = 0; j < impCount; j++) {
+                    KeyImpression keyImpression = new KeyImpression();
+                    keyImpression.bucketingKey = null;
+                    keyImpression.keyName = String.format("CUSTOMER_ID");
+                    keyImpression.feature = testName;
+                    keyImpressions.add(keyImpression);
+                    if((j + 6) % 5 == 0) {
+                        fileNumber++;
+                    }
+                    if(fileNumber != lastFileNumber) {
+                        impressionsList.put(header.getId() + "_" + testName, keyImpressions);
+                        String fileName = String.format(IMPRESSIONS_FILE_NAME, lastFileNumber);
+                        memStorage.write(fileName, Json.toJson(impressionsList));
+                        keyImpressions = new ArrayList<>();
+                        impressionsList = new HashMap<>();
+                        lastFileNumber = fileNumber;
+                    }
+                }
+            }
+            impressionsList.put(header.getId() + "_" + testName, keyImpressions);
+
+        }
+        memStorage.write(CHUNK_HEADERS_FILE_NAME, Json.toJson(headers));
+        String fileName = String.format(IMPRESSIONS_FILE_NAME, lastFileNumber);
+        memStorage.write(fileName, Json.toJson(impressionsList));
+
+        ImpressionsStorageManagerConfig config = new ImpressionsStorageManagerConfig();
+        config.setImpressionsChunkOudatedTime(3600 * 1000);
+        ImpressionsStorageManager loadingManager = new ImpressionsStorageManager(memStorage, config);
+        List<StoredImpressions> loadedChunks = loadingManager.getStoredImpressions();
+
+        Assert.assertEquals(chunkCount, loadedChunks.size());
+
+        for (int i = 0; i < chunkCount; i++) {
+            StoredImpressions loadedChunk = loadedChunks.get(getIndexForStoredImpression("id-" + i, loadedChunks));
+            Assert.assertEquals(0, loadedChunk.getAttempts());
+            List<TestImpressions> loadedTestImpressions = loadedChunk.impressions();
+
+            for (int j = 0; j < testCount; j++) {
+                int index = getImpressionsIndexForTest(String.format("FEATURE_%d", j), loadedTestImpressions);
+                Assert.assertEquals(impCount, loadedTestImpressions.get(index).keyImpressions.size());
+            }
+        }
+    }
+
+    @Test
     public void testMissingImpressionsFile() throws IOException {
-        IStorage memStorage = new MemoryStorage();
+        IImpressionsStorage memStorage = new ImpressionsFileStorageStub();
         List<ChunkHeader> headers = new ArrayList<>();
         for(int i = 0; i < 3; i++) {
             ChunkHeader c = new ChunkHeader("c" + i, 0);
@@ -343,6 +363,25 @@ public class ImpressionsStorageTest {
     }
 
     // Helpers
+    private void populateManager(int chunks, ImpressionsStorageManager manager) {
+        for (int i = 0; i < chunks; i++) {
+            String featureName = String.format("feature-%d", i);
+            List<KeyImpression> impressions = new ArrayList<>();
+            for (int k = 0; k < 4; k++) {
+                KeyImpression impression = new KeyImpression();
+                impression.feature = featureName;
+                impression.keyName = String.format("name-%d-%d", i, k);
+                impression.treatment = String.format("treatment-%d-%d", i, k);
+                impressions.add(impression);
+            }
+            try {
+                manager.storeImpressions(impressions);
+            } catch (IOException e) {
+                // All test should fail
+            }
+        }
+    }
+
     private int getIndexForStoredImpression(String chunkId, List<StoredImpressions> impressions) {
         int index = -1;
         int i = 0;
