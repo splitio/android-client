@@ -3,6 +3,8 @@ package io.split.android.client.storage;
 import java.io.IOException;
 import java.util.List;
 
+import io.split.android.client.dtos.ChunkHeader;
+
 /**
  * Created by guillermo on 11/23/17.
  */
@@ -61,4 +63,19 @@ public interface IStorage {
      * @return Whether the file exists or not
      */
     boolean exists(String elementId);
+
+    /**
+     * Returns file size
+     * @param elementId Element Id
+     * @return File size in bytes
+     */
+    public long fileSize(String elementId);
+
+    /**
+     * Deletes several files
+     *
+     * @param files list of file names to be deleted
+     */
+    public void delete(List<String> files);
+
 }
