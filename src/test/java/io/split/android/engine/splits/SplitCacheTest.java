@@ -37,7 +37,7 @@ public class SplitCacheTest {
 
         final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
         final String FILE_PREFIX = "SPLITIO.split.";
-        final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\"}";
+        final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": " + INITIAL_CHANGE_NUMBER + "}";
 
         IStorage memStorage = new MemoryStorage();
 

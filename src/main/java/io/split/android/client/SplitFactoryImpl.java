@@ -132,7 +132,9 @@ public class SplitFactoryImpl implements SplitFactory {
         ISplitChangeCache splitChangeCache = new SplitChangeCache(splitCache);
 
         SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpClient, rootTarget, uncachedFireAndForget, splitChangeCache);
-        final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(splitChangeFetcher, splitParser, findPollingPeriod(RANDOM, config.featuresRefreshRate()), _eventsManager);
+        final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(
+                splitChangeFetcher, splitParser, findPollingPeriod(RANDOM,
+                config.featuresRefreshRate()), _eventsManager, splitCache.getChangeNumber());
 
         // Impressionss
         ImpressionsStorageManagerConfig impressionsStorageManagerConfig = new ImpressionsStorageManagerConfig();
