@@ -29,7 +29,7 @@ public class SplitCacheTest {
 
     ISplitCache mCache = null;
 
-    final static Long INITIAL_CHANGE_NUMBER = 44L;
+    final static Long INITIAL_CHANGE_NUMBER = 9999L;
 
     @Before
     public void setupUp(){
@@ -37,14 +37,14 @@ public class SplitCacheTest {
 
         final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
         final String FILE_PREFIX = "SPLITIO.split.";
-        final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": " + INITIAL_CHANGE_NUMBER + "}";
+        final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d}";
 
         IStorage memStorage = new MemoryStorage();
 
         for(int i = 0; i < 4; i++) {
             String splitName = "split-" + i;
             try {
-                memStorage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName));
+                memStorage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName, INITIAL_CHANGE_NUMBER - i));
             } catch (IOException e) {
             }
         }
