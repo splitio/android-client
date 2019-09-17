@@ -33,8 +33,10 @@ public class RefreshableSplitFetcherProvider implements Closeable {
 
     private final Object _lock = new Object();
 
+    private final long _initialChangeNumber;
 
-    public RefreshableSplitFetcherProvider(SplitChangeFetcher splitChangeFetcher, SplitParser splitParser, long refreshEveryNSeconds, SplitEventsManager eventsManager) {
+
+    public RefreshableSplitFetcherProvider(SplitChangeFetcher splitChangeFetcher, SplitParser splitParser, long refreshEveryNSeconds, SplitEventsManager eventsManager, long initialChangeNumber) {
         _splitChangeFetcher = splitChangeFetcher;
         checkNotNull(_splitChangeFetcher);
 
@@ -46,6 +48,8 @@ public class RefreshableSplitFetcherProvider implements Closeable {
 
         _eventsManager = eventsManager;
         checkNotNull(_eventsManager);
+
+        _initialChangeNumber = initialChangeNumber;
 
     }
 
@@ -61,7 +65,7 @@ public class RefreshableSplitFetcherProvider implements Closeable {
                 return _splitFetcher.get();
             }
 
-            RefreshableSplitFetcher splitFetcher = new RefreshableSplitFetcher(_splitChangeFetcher, _splitParser, _eventsManager);
+            RefreshableSplitFetcher splitFetcher = new RefreshableSplitFetcher(_splitChangeFetcher, _splitParser, _eventsManager, _initialChangeNumber);
 
             ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
             threadFactoryBuilder.setDaemon(true);
