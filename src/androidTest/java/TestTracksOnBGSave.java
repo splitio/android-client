@@ -17,7 +17,12 @@ import java.util.List;
 import java.util.Map;
 
 import fake.HttpClientStub;
+import fake.ImpressionsManagerStub;
+import fake.MySegmentsCacheStub;
+import fake.RefreshableMySegmentsFetcherProviderStub;
+import fake.RefreshableSplitFetcherProviderStub;
 import fake.SplitCacheStub;
+import fake.TrackClientStub;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.TrackClient;
 import io.split.android.client.TrackClientImpl;
@@ -29,6 +34,7 @@ import io.split.android.client.impressions.ImpressionsManager;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
 import io.split.android.client.impressions.StoredImpressions;
+import io.split.android.client.lifecycle.LifecycleManager;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TrackClientConfig;
@@ -73,7 +79,11 @@ public class TestTracksOnBGSave {
                 storageManager,
                 new SplitCacheStub(new ArrayList<>()));
 
-        lfRegistry.addObserver(((TrackClientImpl)trackClient)._consumer);
+        LifecycleManager lifecycleManager = new LifecycleManager(new ImpressionsManagerStub(), trackClient,
+                new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(),
+                new SplitCacheStub(), new MySegmentsCacheStub());
+
+        lfRegistry.addObserver(lifecycleManager);
 
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START);

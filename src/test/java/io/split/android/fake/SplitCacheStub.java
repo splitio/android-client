@@ -53,4 +53,9 @@ public class SplitCacheStub implements ISplitCache {
     public boolean trafficTypeExists(String trafficType) {
         return true;
     }
+
+    @Override
+    public void saveToDisk() {
+
+    }
 }

@@ -223,6 +223,13 @@ public class TrackClientImpl implements TrackClient {
     }
 
     @Override
+    public void saveToDisk() {
+        if (_consumer != null) {
+            _consumer.saveToDisk();
+        }
+    }
+
+    @Override
     public void close() {
         try {
             _consumerExecutor.shutdownNow();
@@ -266,14 +273,13 @@ public class TrackClientImpl implements TrackClient {
      * - a CENTINEL message has arrived, or
      * - the queue reached a specific size
      */
-    class Consumer implements Runnable, LifecycleObserver {
+    class Consumer implements Runnable {
 
         private final TrackStorageManager _storageManager;
         List<Event> events;
         Consumer(TrackStorageManager storageManager) {
             _storageManager = storageManager;
             events = newEventList();
-            ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         }
 
         @SuppressLint("DefaultLocale")
@@ -320,8 +326,7 @@ public class TrackClientImpl implements TrackClient {
             return Collections.synchronizedList(new ArrayList<>());
         }
 
-        @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-        private void doOnPause(){
+        synchronized public void saveToDisk(){
             _storageManager.saveEvents(new EventsChunk(events));
             events = newEventList();
             _storageManager.saveToDisk();

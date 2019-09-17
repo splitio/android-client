@@ -12,14 +12,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fake.HttpClientStub;
+import fake.MySegmentsCacheStub;
+import fake.RefreshableMySegmentsFetcherProviderStub;
+import fake.RefreshableSplitFetcherProviderStub;
+import fake.SplitCacheStub;
+import fake.TrackClientStub;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionsFileStorage;
-import io.split.android.client.impressions.ImpressionsManager;
+import io.split.android.client.impressions.ImpressionsManagerImpl;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
 import io.split.android.client.impressions.StoredImpressions;
+import io.split.android.client.lifecycle.LifecycleManager;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
+
 import androidx.test.platform.app.InstrumentationRegistry;
 
 public class TestImpressionsOnBGSave {
@@ -50,9 +58,14 @@ public class TestImpressionsOnBGSave {
         IImpressionsStorage fileStorage = new ImpressionsFileStorage(rootFolder, "test_folder");
         ImpressionsStorageManager storageManager = new ImpressionsStorageManager(fileStorage, storageManagerConfig);
         SplitClientConfig clientConfig = SplitClientConfig.builder().impressionsRefreshRate(99999).impressionsQueueSize(9999).impressionsChunkSize(999999) .build();
-        ImpressionsManager impManager = ImpressionsManager.instance(new HttpClientStub(), clientConfig, storageManager);
+        ImpressionsManagerImpl impManager = ImpressionsManagerImpl.instance(new HttpClientStub(), clientConfig, storageManager);
 
-        lfRegistry.addObserver(impManager);
+        LifecycleManager lifecycleManager = new LifecycleManager(impManager, new TrackClientStub(),
+                new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(),
+                new SplitCacheStub(), new MySegmentsCacheStub());
+
+
+        lfRegistry.addObserver(lifecycleManager);
 
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START);

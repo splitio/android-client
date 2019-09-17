@@ -13,4 +13,6 @@ public interface TrackClient {
     void close();
 
     void flush();
+
+    void saveToDisk();
 }
