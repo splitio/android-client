@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -26,7 +28,7 @@ public class RefreshableMySegmentsFetcherProviderImpl implements RefreshableMySe
     private final AtomicLong _refreshEveryNSeconds;
 
     private final Object _lock = new Object();
-    private final ScheduledExecutorService _scheduledExecutorService;
+    private final PausableScheduledThreadPoolExecutor _scheduledExecutorService;
     private RefreshableMySegments _mySegments;
     private String _matchingKey;
     private final SplitEventsManager _eventsManager;
@@ -49,7 +51,7 @@ public class RefreshableMySegmentsFetcherProviderImpl implements RefreshableMySe
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat("split-mySegmentsFetcher-" + "%d");
-        _scheduledExecutorService = Executors.newScheduledThreadPool(1, threadFactoryBuilder.build());
+        _scheduledExecutorService = PausableScheduledThreadPoolExecutorImpl.newSingleThreadScheduledExecutor(threadFactoryBuilder.build());
 
         _mySegments = RefreshableMySegments.create(_matchingKey, _mySegmentsFetcher, _eventsManager);
 
@@ -86,5 +88,18 @@ public class RefreshableMySegmentsFetcherProviderImpl implements RefreshableMySe
             Thread.currentThread().interrupt();
         }
 
+    }
+
+    @Override
+    public void pause() {
+        if (_scheduledExecutorService != null) {
+            _scheduledExecutorService.pause();
+        }
+    }
+    @Override
+    public void resume() {
+        if (_scheduledExecutorService != null) {
+            _scheduledExecutorService.resume();
+        }
     }
 }

@@ -6,6 +6,10 @@ public interface TrackClient {
 
     boolean track(Event event);
 
+    void pause();
+
+    void resume();
+
     void close();
 
     void flush();

@@ -4,12 +4,12 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
-import io.split.android.engine.SDKReadinessGates;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
 
 
 import java.io.Closeable;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -29,7 +29,7 @@ public class RefreshableSplitFetcherProvider implements Closeable {
     private final AtomicLong _refreshEveryNSeconds;
     private final AtomicReference<RefreshableSplitFetcher> _splitFetcher = new AtomicReference<RefreshableSplitFetcher>();
     private final SplitEventsManager _eventsManager;
-    private final AtomicReference<ScheduledExecutorService> _executorService = new AtomicReference<>();
+    private final AtomicReference<PausableScheduledThreadPoolExecutor> _executorService = new AtomicReference<>();
 
     private final Object _lock = new Object();
 
@@ -71,7 +71,7 @@ public class RefreshableSplitFetcherProvider implements Closeable {
             threadFactoryBuilder.setDaemon(true);
             threadFactoryBuilder.setNameFormat("split-splitFetcher-%d");
 
-            ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(threadFactoryBuilder.build());
+            PausableScheduledThreadPoolExecutor scheduledExecutorService = PausableScheduledThreadPoolExecutorImpl.newSingleThreadScheduledExecutor(threadFactoryBuilder.build());
             scheduledExecutorService.scheduleWithFixedDelay(splitFetcher, 0L, _refreshEveryNSeconds.get(), TimeUnit.SECONDS);
             _executorService.set(scheduledExecutorService);
 
@@ -106,6 +106,18 @@ public class RefreshableSplitFetcherProvider implements Closeable {
             // reset the interrupt.
             Logger.w("Shutdown hook for split fetchers has been interrupted");
             Thread.currentThread().interrupt();
+        }
+    }
+
+    public void pause() {
+        if (_executorService != null) {
+            _executorService.get().pause();
+        }
+    }
+
+    public void resume() {
+        if (_executorService != null && _executorService.get() != null) {
+            _executorService.get().resume();
         }
     }
 

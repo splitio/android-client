@@ -25,6 +25,7 @@ import io.split.android.client.impressions.ImpressionsFileStorage;
 import io.split.android.client.impressions.ImpressionsManager;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
+import io.split.android.client.lifecycle.LifecycleManager;
 import io.split.android.client.metrics.CachedMetrics;
 import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
@@ -69,6 +70,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
     private TrackClient _trackClient;
     FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
+    LifecycleManager _lifecyleManager;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
 
@@ -170,6 +172,8 @@ public class SplitFactoryImpl implements SplitFactory {
         _trackClient = TrackClientImpl.create(trackConfig, httpClient, eventsRootTarget, trackStorageManager, splitCache);
 
 
+        _lifecyleManager = new LifecycleManager(splitImpressionListener, _trackClient, splitFetcherProvider, segmentFetcher);
+
         destroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");
@@ -191,6 +195,8 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of httpclient");
                     _manager.destroy();
                     Logger.i("Successful shutdown of manager");
+                    _lifecyleManager.destroy();
+                    Logger.i("Successful shutdown of lifecycle manager");
 
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");

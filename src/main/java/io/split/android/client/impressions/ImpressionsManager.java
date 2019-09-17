@@ -4,7 +4,6 @@ import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
-import android.util.Log;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -15,25 +14,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.Utils;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
 
 public class ImpressionsManager implements ImpressionListener, Runnable, LifecycleObserver {
 
     private final SplitClientConfig _config;
     private final HttpClient _client;
     private final BlockingQueue<KeyImpression> _queue;
-    private final ScheduledExecutorService _scheduler;
+    private final PausableScheduledThreadPoolExecutor _scheduler;
     private final ImpressionsSender _impressionsSender;
 
     private final ImpressionsStorageManager _storageManager;
@@ -51,7 +48,7 @@ public class ImpressionsManager implements ImpressionListener, Runnable, Lifecyc
                 .setDaemon(true)
                 .setNameFormat("Split-ImpressionsManager-%d")
                 .build();
-        _scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
+        _scheduler = PausableScheduledThreadPoolExecutorImpl.newSingleThreadScheduledExecutor(threadFactory);
         _scheduler.scheduleAtFixedRate(this, 10, config.impressionsRefreshRate(), TimeUnit.SECONDS);
 
         _storageManager = impressionsStorageManager;
@@ -105,6 +102,18 @@ public class ImpressionsManager implements ImpressionListener, Runnable, Lifecyc
             Logger.e(e, "Unable to close ImpressionsManager");
         }
 
+    }
+
+    public void pause() {
+        if (_scheduler != null) {
+            _scheduler.pause();
+        }
+    }
+
+    public void resume() {
+        if (_scheduler != null) {
+            _scheduler.resume();
+        }
     }
 
     private KeyImpression keyImpression(Impression impression) {

@@ -3,7 +3,6 @@ package io.split.android.client;
 import android.annotation.SuppressLint;
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.LifecycleRegistry;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.support.annotation.VisibleForTesting;
@@ -43,6 +42,8 @@ import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.client.validators.ValidationConfig;
+import io.split.android.engine.scheduler.PausableThreadPoolExecutor;
+import io.split.android.engine.scheduler.PausableThreadPoolExecutorImpl;
 
 import static java.lang.Thread.MIN_PRIORITY;
 
@@ -68,7 +69,7 @@ public class TrackClientImpl implements TrackClient {
     private final ScheduledExecutorService _cachedflushScheduler;
 
     private final ExecutorService _senderExecutor;
-    private final ExecutorService _consumerExecutor;
+    private final PausableThreadPoolExecutor _consumerExecutor;
 
     private final TrackStorageManager _storageManager;
     private final String validationTag = "track";
@@ -139,7 +140,7 @@ public class TrackClientImpl implements TrackClient {
 
         // Queue consumer
         _consumer = new Consumer(_storageManager);
-        _consumerExecutor = Executors.newSingleThreadExecutor(eventClientThreadFactory("eventclient-consumer"));
+        _consumerExecutor = PausableThreadPoolExecutorImpl.newSingleThreadExecutor(eventClientThreadFactory("eventclient-consumer"));
         _consumerExecutor.submit(_consumer);
 
 
@@ -205,6 +206,20 @@ public class TrackClientImpl implements TrackClient {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public void pause() {
+        if (_consumerExecutor != null) {
+            _consumerExecutor.pause();
+        }
+    }
+
+    @Override
+    public void resume() {
+        if (_consumerExecutor != null) {
+            _consumerExecutor.resume();
+        }
     }
 
     @Override
