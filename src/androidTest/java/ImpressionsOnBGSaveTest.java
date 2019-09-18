@@ -21,6 +21,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionsFileStorage;
+import io.split.android.client.impressions.ImpressionsManagerConfig;
 import io.split.android.client.impressions.ImpressionsManagerImpl;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
@@ -30,7 +31,7 @@ import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-public class TestImpressionsOnBGSave {
+public class ImpressionsOnBGSaveTest {
 
 
     @Before
@@ -57,8 +58,8 @@ public class TestImpressionsOnBGSave {
         storageManagerConfig.setImpressionsChunkOudatedTime(99999);
         IImpressionsStorage fileStorage = new ImpressionsFileStorage(rootFolder, "test_folder");
         ImpressionsStorageManager storageManager = new ImpressionsStorageManager(fileStorage, storageManagerConfig);
-        SplitClientConfig clientConfig = SplitClientConfig.builder().impressionsRefreshRate(99999).impressionsQueueSize(9999).impressionsChunkSize(999999) .build();
-        ImpressionsManagerImpl impManager = ImpressionsManagerImpl.instance(new HttpClientStub(), clientConfig, storageManager);
+        ImpressionsManagerConfig config = new ImpressionsManagerConfig(99999L, 99999, 9999, 9999, "server");
+        ImpressionsManagerImpl impManager = ImpressionsManagerImpl.instance(new HttpClientStub(), config, storageManager);
 
         LifecycleManager lifecycleManager = new LifecycleManager(impManager, new TrackClientStub(),
                 new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(),

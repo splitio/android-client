@@ -23,6 +23,7 @@ import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.impressions.ImpressionsManagerConfig;
 import io.split.android.client.impressions.ImpressionsFileStorage;
 import io.split.android.client.impressions.ImpressionsManagerImpl;
 import io.split.android.client.impressions.ImpressionsStorageManager;
@@ -148,7 +149,13 @@ public class SplitFactoryImpl implements SplitFactory {
         impressionsStorageManagerConfig.setImpressionsChunkOudatedTime(config.impressionsChunkOutdatedTime());
         IImpressionsStorage impressionsStorage = new ImpressionsFileStorage(context.getCacheDir(), dataFolderName);
         final ImpressionsStorageManager impressionsStorageManager = new ImpressionsStorageManager(impressionsStorage, impressionsStorageManagerConfig);
-        final ImpressionsManagerImpl splitImpressionListener = ImpressionsManagerImpl.instance(httpClient, config, impressionsStorageManager);
+
+        ImpressionsManagerConfig impressionsManagerConfig =
+                new ImpressionsManagerConfig(config.impressionsChunkSize(),
+                config.waitBeforeShutdown(),
+                        config.impressionsQueueSize(),
+                        config.impressionsRefreshRate(), config.eventsEndpoint());
+        final ImpressionsManagerImpl splitImpressionListener = ImpressionsManagerImpl.instance(httpClient, impressionsManagerConfig, impressionsStorageManager);
         final ImpressionListener impressionListener;
 
         if (config.impressionListener() != null) {

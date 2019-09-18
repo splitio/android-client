@@ -32,10 +32,7 @@ public class ImpressionsManagerTest {
     @Ignore
     public void works() throws URISyntaxException {
 
-        SplitClientConfig config = SplitClientConfig.builder()
-                .impressionsQueueSize(4)
-                .endpoint("nowhere.com", "nowhere.com")
-                .build();
+        ImpressionsManagerConfig config = new ImpressionsManagerConfig(100, 100, 4, 999, "nowhere.com");
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
         ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
@@ -66,10 +63,7 @@ public class ImpressionsManagerTest {
     @Ignore
     public void worksButDropsImpressions() throws URISyntaxException {
 
-        SplitClientConfig config = SplitClientConfig.builder()
-                .impressionsQueueSize(3)
-                .endpoint("nowhere.com", "nowhere.com")
-                .build();
+        ImpressionsManagerConfig config = new ImpressionsManagerConfig(100, 100, 3, 999, "nowhere.com");
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
         ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
@@ -101,10 +95,7 @@ public class ImpressionsManagerTest {
     @Ignore
     public void works4ImpressionsInOneTest() throws URISyntaxException {
 
-        SplitClientConfig config = SplitClientConfig.builder()
-                .impressionsQueueSize(10)
-                .endpoint("nowhere.com", "nowhere.com")
-                .build();
+        ImpressionsManagerConfig config = new ImpressionsManagerConfig(100, 100, 10, 999, "nowhere.com");
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
         ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
@@ -138,10 +129,7 @@ public class ImpressionsManagerTest {
     @Ignore
     public void worksNoImpressions() throws URISyntaxException {
 
-        SplitClientConfig config = SplitClientConfig.builder()
-                .impressionsQueueSize(10)
-                .endpoint("nowhere.com", "nowhere.com")
-                .build();
+        ImpressionsManagerConfig config = new ImpressionsManagerConfig(100, 100, 10, 999, "nowhere.com");
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
         ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());

@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.utils.Logger;
@@ -31,14 +32,14 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
     private final AtomicLong _changeNumber;
 
     private Map<String, ParsedSplit> _concurrentMap = Maps.newConcurrentMap();
-    private final SplitEventsManager _eventsManager;
+    private final ISplitEventsManager _eventsManager;
 
     private boolean _firstLoad = true;
     private boolean _shouldInitialize = true;
 
     private final Object _lock = new Object();
 
-    public RefreshableSplitFetcher(SplitChangeFetcher splitChangeFetcher, SplitParser parser, SplitEventsManager eventsManager) {
+    public RefreshableSplitFetcher(SplitChangeFetcher splitChangeFetcher, SplitParser parser, ISplitEventsManager eventsManager) {
         this(splitChangeFetcher, parser, eventsManager, -1);
     }
 
@@ -53,7 +54,7 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
      */
     /*package private*/ RefreshableSplitFetcher(SplitChangeFetcher splitChangeFetcher,
                                                 SplitParser parser,
-                                                SplitEventsManager eventsManager,
+                                                ISplitEventsManager eventsManager,
                                                 long startingChangeNumber) {
         _splitChangeFetcher = splitChangeFetcher;
         _parser = parser;

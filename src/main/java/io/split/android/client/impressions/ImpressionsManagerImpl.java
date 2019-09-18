@@ -12,7 +12,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.utils.Json;
@@ -22,7 +21,7 @@ import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl
 
 public class ImpressionsManagerImpl implements ImpressionListener, Runnable, ImpressionsManager {
 
-    private final SplitClientConfig _config;
+    private final ImpressionsManagerConfig _config;
     private final HttpClient _client;
     private final BlockingQueue<KeyImpression> _queue;
     private final PausableScheduledThreadPoolExecutor _scheduler;
@@ -32,11 +31,11 @@ public class ImpressionsManagerImpl implements ImpressionListener, Runnable, Imp
 
     private long _currentChunkSize = 0;
 
-    private ImpressionsManagerImpl(HttpClient client, SplitClientConfig config, ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
+    private ImpressionsManagerImpl(HttpClient client, ImpressionsManagerConfig config, ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
 
         _config = config;
         _client = client;
-        _queue = new ArrayBlockingQueue<KeyImpression>(config.impressionsQueueSize());
+        _queue = new ArrayBlockingQueue<KeyImpression>(config.queueSize());
 
 
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
@@ -44,24 +43,24 @@ public class ImpressionsManagerImpl implements ImpressionListener, Runnable, Imp
                 .setNameFormat("Split-ImpressionsManager-%d")
                 .build();
         _scheduler = PausableScheduledThreadPoolExecutorImpl.newSingleThreadScheduledExecutor(threadFactory);
-        _scheduler.scheduleAtFixedRate(this, 10, config.impressionsRefreshRate(), TimeUnit.SECONDS);
+        _scheduler.scheduleAtFixedRate(this, 10, config.refreshRate(), TimeUnit.SECONDS);
 
         _storageManager = impressionsStorageManager;
 
         if (impressionsSender != null) {
             _impressionsSender = impressionsSender;
         } else {
-            _impressionsSender = new HttpImpressionsSender(_client, new URI(config.eventsEndpoint()), _storageManager);
+            _impressionsSender = new HttpImpressionsSender(_client, new URI(config.endpoint()), _storageManager);
         }
     }
 
     public static ImpressionsManagerImpl instance(HttpClient client,
-                                                  SplitClientConfig config, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
+                                                  ImpressionsManagerConfig config, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
         return new ImpressionsManagerImpl(client, config, null, impressionsStorageManager);
     }
 
     public static ImpressionsManagerImpl instanceForTest(HttpClient client,
-                                                         SplitClientConfig config,
+                                                         ImpressionsManagerConfig config,
                                                          ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
         return new ImpressionsManagerImpl(client, config, impressionsSender, impressionsStorageManager);
     }
@@ -73,7 +72,7 @@ public class ImpressionsManagerImpl implements ImpressionListener, Runnable, Imp
             if (_queue.offer(keyImpression)) {
                 synchronized (this) {
                     accumulateChunkSize(keyImpression);
-                    if (_currentChunkSize >= _config.impressionsChunkSize()) {
+                    if (_currentChunkSize >= _config.chunkSize()) {
                         flushImpressions();
                     }
                 }
@@ -152,10 +151,10 @@ public class ImpressionsManagerImpl implements ImpressionListener, Runnable, Imp
                     }
                 }
 
-            if (_config.debugEnabled()) {
-                Logger.i("Flushing %d Split impressions took %d millis",
+
+                Logger.d("Flushing %d Split impressions took %d millis",
                         impressions.size(), (System.currentTimeMillis() - start));
-            }
+
         }
     }
 

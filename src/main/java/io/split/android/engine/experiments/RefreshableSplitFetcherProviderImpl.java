@@ -2,6 +2,7 @@ package io.split.android.engine.experiments;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
@@ -27,7 +28,7 @@ public class RefreshableSplitFetcherProviderImpl implements RefreshableSplitFetc
     private final SplitChangeFetcher _splitChangeFetcher;
     private final AtomicLong _refreshEveryNSeconds;
     private final AtomicReference<RefreshableSplitFetcher> _splitFetcher = new AtomicReference<RefreshableSplitFetcher>();
-    private final SplitEventsManager _eventsManager;
+    private final ISplitEventsManager _eventsManager;
     private final AtomicReference<PausableScheduledThreadPoolExecutor> _executorService = new AtomicReference<>();
 
     private final Object _lock = new Object();
@@ -35,7 +36,7 @@ public class RefreshableSplitFetcherProviderImpl implements RefreshableSplitFetc
     private final long _initialChangeNumber;
 
 
-    public RefreshableSplitFetcherProviderImpl(SplitChangeFetcher splitChangeFetcher, SplitParser splitParser, long refreshEveryNSeconds, SplitEventsManager eventsManager, long initialChangeNumber) {
+    public RefreshableSplitFetcherProviderImpl(SplitChangeFetcher splitChangeFetcher, SplitParser splitParser, long refreshEveryNSeconds, ISplitEventsManager eventsManager, long initialChangeNumber) {
         _splitChangeFetcher = splitChangeFetcher;
         checkNotNull(_splitChangeFetcher);
 

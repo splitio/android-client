@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.SDKReadinessGates;
@@ -31,10 +32,10 @@ public class RefreshableMySegmentsFetcherProviderImpl implements RefreshableMySe
     private final PausableScheduledThreadPoolExecutor _scheduledExecutorService;
     private RefreshableMySegments _mySegments;
     private String _matchingKey;
-    private final SplitEventsManager _eventsManager;
+    private final ISplitEventsManager _eventsManager;
 
 
-    public RefreshableMySegmentsFetcherProviderImpl(MySegmentsFetcher mySegmentsFetcher, long refreshEveryNSeconds, String matchingKey, SplitEventsManager eventsManager) {
+    public RefreshableMySegmentsFetcherProviderImpl(MySegmentsFetcher mySegmentsFetcher, long refreshEveryNSeconds, String matchingKey, ISplitEventsManager eventsManager) {
         _mySegmentsFetcher = mySegmentsFetcher;
         checkNotNull(_mySegmentsFetcher);
 
