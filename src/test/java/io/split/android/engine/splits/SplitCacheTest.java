@@ -129,7 +129,7 @@ public class SplitCacheTest {
             @Override
             public void run() {
                 //System.out.println("TEST SPLIT CACHE: write start ");
-                cache.fireWriteToDisk();
+                cache.saveToDisk();
                 latch.countDown();
             }
         }).start();

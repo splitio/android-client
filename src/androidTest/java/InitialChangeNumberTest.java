@@ -107,10 +107,16 @@ public class InitialChangeNumberTest {
 
         File dataFolder = new File(cacheDir, dataFolderName);
         if(dataFolder.exists()) {
+            File[] files = dataFolder.listFiles();
+            if(files != null) {
+                for (File file : files) {
+                    file.delete();
+                }
+            }
             boolean isDataFolderDelete = dataFolder.delete();
             log("Data folder exists and deleted: " + isDataFolderDelete);
         }
-        dataFolder.createNewFile();
+        dataFolder.mkdir();
 
 
         for(int i=0; i<10; i++) {
@@ -149,7 +155,7 @@ public class InitialChangeNumberTest {
         latch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived);
+        Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived); // Checks that change number is the bigger number from cached splits
 
     }
 

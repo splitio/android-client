@@ -17,6 +17,7 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
 
     private final ExecutorService _executorService;
     private final Metrics _delegate;
+    private volatile boolean isPaused = false;
 
     public static FireAndForgetMetrics instance(Metrics delegate, int numberOfThreads, int queueSize) {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();

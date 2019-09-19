@@ -30,7 +30,7 @@ import io.split.android.client.utils.Utils;
  * Created by guillermo on 12/28/17.
  */
 
-public class MySegmentsCache implements IMySegmentsCache, LifecycleObserver {
+public class MySegmentsCache implements IMySegmentsCache {
 
     private static final String MY_SEGMENTS_FILE_NAME = "SPLITIO.mysegments";
 
@@ -38,7 +38,6 @@ public class MySegmentsCache implements IMySegmentsCache, LifecycleObserver {
     private Map<String, List<MySegment>> mSegments = null;
 
     public MySegmentsCache(IStorage storage) {
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorage = storage;
         mSegments = Collections.synchronizedMap(new HashMap<String, List<MySegment>>());
         loadSegmentsFromDisk();
@@ -87,9 +86,7 @@ public class MySegmentsCache implements IMySegmentsCache, LifecycleObserver {
         }
     }
 
-    // Lifecyle observer
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    private void saveToDisk() {
+    public void saveToDisk() {
         try {
             String json = Json.toJson(mSegments);
             mFileStorage.write(getMySegmentsFileName(), json);
