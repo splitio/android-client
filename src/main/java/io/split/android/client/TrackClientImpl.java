@@ -42,6 +42,8 @@ import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.client.validators.ValidationConfig;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutorImpl;
 
@@ -65,8 +67,8 @@ public class TrackClientImpl implements TrackClient {
     private final HttpClient _httpclient;
     private final URI _eventsTarget;
     private final TrackClientConfig _config;
-    private final ScheduledExecutorService _flushScheduler;
-    private final ScheduledExecutorService _cachedflushScheduler;
+    private final PausableScheduledThreadPoolExecutor _flushScheduler;
+    private final PausableScheduledThreadPoolExecutor _cachedflushScheduler;
 
     private final ExecutorService _senderExecutor;
     private final PausableThreadPoolExecutor _consumerExecutor;
@@ -145,7 +147,7 @@ public class TrackClientImpl implements TrackClient {
 
 
         // Events flusher
-        _flushScheduler = Executors.newScheduledThreadPool(1, eventClientThreadFactory("eventclient-flush"));
+        _flushScheduler = PausableScheduledThreadPoolExecutorImpl.newSingleThreadScheduledExecutor(eventClientThreadFactory("eventclient-flush"));
         _flushScheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -154,7 +156,7 @@ public class TrackClientImpl implements TrackClient {
         }, config.getFlushIntervalMillis(), config.getFlushIntervalMillis(), TimeUnit.SECONDS);
 
         // Cached events flusher
-        _cachedflushScheduler = Executors.newScheduledThreadPool(1, eventClientThreadFactory("eventclient-cache-flush"));
+        _cachedflushScheduler = PausableScheduledThreadPoolExecutorImpl.newSingleThreadScheduledExecutor(eventClientThreadFactory("eventclient-cache-flush"));
         _cachedflushScheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -213,12 +215,28 @@ public class TrackClientImpl implements TrackClient {
         if (_consumerExecutor != null) {
             _consumerExecutor.pause();
         }
+
+        if (_flushScheduler != null) {
+            _flushScheduler.pause();
+        }
+
+        if (_cachedflushScheduler != null) {
+            _cachedflushScheduler.pause();
+        }
     }
 
     @Override
     public void resume() {
         if (_consumerExecutor != null) {
             _consumerExecutor.resume();
+        }
+
+        if (_flushScheduler != null) {
+            _flushScheduler.resume();
+        }
+
+        if (_cachedflushScheduler != null) {
+            _cachedflushScheduler.resume();
         }
     }
 
