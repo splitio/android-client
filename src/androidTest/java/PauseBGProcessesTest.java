@@ -201,8 +201,12 @@ public class PauseBGProcessesTest {
 
         for(int i=0; i<TEST_COUNT; i++) {
             if(isEven(i)) {
+                // On Even indexes the sdk was polling and sending data
+                // so server should be hit
                 Assert.assertTrue(hitsResults.get(i).booleanValue());
             } else {
+                // On odd indexes the sdk was paused
+                // so no server hit should happen
                 Assert.assertFalse(hitsResults.get(i).booleanValue());
             }
         }

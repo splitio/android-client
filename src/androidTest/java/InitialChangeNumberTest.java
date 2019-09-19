@@ -155,7 +155,7 @@ public class InitialChangeNumberTest {
         latch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived);
+        Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived); // Checks that change number is the bigger number from cached splits
 
     }
 

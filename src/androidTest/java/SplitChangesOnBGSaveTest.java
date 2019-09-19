@@ -83,6 +83,8 @@ public class SplitChangesOnBGSaveTest {
 
         Thread.sleep(2000);
 
+        // A file per split is created on disk on ON_Pause event
+        // Here we check that all file exists on disk
         List<String> files = fileStorage.getAllIds(FILE_PREFIX);
         for (int i = 0; i < 10; ++i) {
             String name = splitNames.get(i);

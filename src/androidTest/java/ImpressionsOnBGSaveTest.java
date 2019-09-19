@@ -100,11 +100,11 @@ public class ImpressionsOnBGSaveTest {
         List<String> afterLoadfiles = fileStorage.getAllIds(FILE_PREFIX);
 
 
-        Assert.assertEquals(3, impBefore.size());
-        Assert.assertEquals(4, impAfter.size());
-        Assert.assertEquals(4, files.size());
-        Assert.assertEquals(4, impLoaded.size());
-        Assert.assertEquals(0, afterLoadfiles.size());
+        Assert.assertEquals(3, impBefore.size()); // Checks impressions on cache
+        Assert.assertEquals(4, impAfter.size()); // Checks that impressions were flushed from queue to cache on app pause
+        Assert.assertEquals(4, files.size()); // Checks numbers of disk files created on app pause
+        Assert.assertEquals(4, impLoaded.size()); // Checks that files created were loaded correctly
+        Assert.assertEquals(0, afterLoadfiles.size()); // Checks that old files were removed
 
     }
 

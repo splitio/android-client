@@ -69,7 +69,7 @@ public class MySegmentsOnBGSaveTest {
 
         Thread.sleep(2000);
 
-        Assert.assertNotNull(fileStorage.read(FILE_NAME));
+        Assert.assertNotNull(fileStorage.read(FILE_NAME)); // Checks that my segments file is created on app bg
 
     }
 }
