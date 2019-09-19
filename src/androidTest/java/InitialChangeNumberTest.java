@@ -107,10 +107,16 @@ public class InitialChangeNumberTest {
 
         File dataFolder = new File(cacheDir, dataFolderName);
         if(dataFolder.exists()) {
+            File[] files = dataFolder.listFiles();
+            if(files != null) {
+                for (File file : files) {
+                    file.delete();
+                }
+            }
             boolean isDataFolderDelete = dataFolder.delete();
             log("Data folder exists and deleted: " + isDataFolderDelete);
         }
-        dataFolder.createNewFile();
+        dataFolder.mkdir();
 
 
         for(int i=0; i<10; i++) {
