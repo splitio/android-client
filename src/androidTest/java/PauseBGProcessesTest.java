@@ -10,9 +10,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,13 +20,8 @@ import java.util.concurrent.TimeUnit;
 
 import fake.EventsManagerMock;
 import fake.MetricsMock;
-import helper.SplitEventTaskHelper;
 import io.split.android.client.HttpMySegmentsFetcher;
 import io.split.android.client.HttpSplitChangeFetcher;
-import io.split.android.client.SplitClient;
-import io.split.android.client.SplitClientConfig;
-import io.split.android.client.SplitFactory;
-import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.TrackClient;
 import io.split.android.client.TrackClientImpl;
 import io.split.android.client.api.Key;
@@ -40,19 +32,15 @@ import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsFileStorage;
-import io.split.android.client.impressions.ImpressionsManager;
 import io.split.android.client.impressions.ImpressionsManagerConfig;
 import io.split.android.client.impressions.ImpressionsManagerImpl;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
 import io.split.android.client.lifecycle.LifecycleManager;
-import io.split.android.client.metrics.CachedMetrics;
-import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
@@ -62,7 +50,6 @@ import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.track.TracksFileStorage;
-import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProviderImpl;
@@ -78,23 +65,36 @@ import okhttp3.mockwebserver.RecordedRequest;
 
 public class PauseBGProcessesTest {
 
-    final int SERVER_HIT_RATE = 3000;
-    final int PAUSE_WAIT_SECS = SERVER_HIT_RATE / 1000 * 3;
-    final int HIT_WAIT_SECS = SERVER_HIT_RATE / 1000 * 3;
+    final int SERVER_HIT_RATE_SECS = 3;
+    final int PAUSE_WAIT_MILLIS = SERVER_HIT_RATE_SECS * 5 * 1000;
+    final int HIT_WAIT_SECS = SERVER_HIT_RATE_SECS * 5;
     Context mContext;
     MockWebServer mWebServer;
-    volatile boolean  mIsServerHitDone = false;
     ImpressionListener mImpressionsManager;
     TrackClient mTrackClient;
     SplitFetcher mSplitFetcher;
-    CountDownLatch mLatch;
+    List<CountDownLatch> mLatchs;
+
+    boolean mMySegmentsHitDone = false;
+    boolean mSplitsHitDone = false;
+    boolean mImpressionsHitDone = false;
+    boolean mTracksHitDone = false;
+
+    boolean mFullHitDone = false;
+    int fullHitsLatchIndex = 0;
+
 
 
     @Before
     public void setup() {
         setupServer();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mIsServerHitDone = false;
+        mMySegmentsHitDone = false;
+        mSplitsHitDone = false;
+        mImpressionsHitDone = false;
+        mTracksHitDone = false;
+        mLatchs = new ArrayList<>();
+
     }
 
     @After
@@ -112,16 +112,32 @@ public class PauseBGProcessesTest {
 
                 MockResponse response;
                 if (request.getPath().contains("/mySegments")) {
+                    mMySegmentsHitDone = true;
                     response = new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[]}");
+                    log("my segments HIT!!!");
                 } else if (request.getPath().contains("/splitChanges")) {
+                    mSplitsHitDone = true;
                     response = new MockResponse().setResponseCode(200)
                             .setBody("{\"splits\":[], \"since\":1, \"till\":2}");
-                } else {
+                    log("split changes HIT!!!");
+                } else if (request.getPath().contains("/events/bulk")) {
+                    mTracksHitDone = true;
                     response = new MockResponse().setResponseCode(200);
+                    log("events HIT!!!");
+                } else {
+                    mImpressionsHitDone = true;
+                    response = new MockResponse().setResponseCode(200);
+                    log("impressions HIT!!!");
                 }
-                mIsServerHitDone = true;
-                log("HIT!!!");
-                mLatch.countDown();
+
+                if (mImpressionsHitDone && mTracksHitDone && mMySegmentsHitDone && mSplitsHitDone) {
+                    mFullHitDone = true;
+                    cleanHitVars();
+                    mLatchs.get(fullHitsLatchIndex).countDown();
+                    fullHitsLatchIndex++;
+                    log("4 HIT!!!");
+                }
+
                 return response;
             }
         };
@@ -129,9 +145,17 @@ public class PauseBGProcessesTest {
     }
 
     @Test
-    public void pausing() throws Exception {
+    public void pausing1() throws Exception {
+        final int TEST_COUNT = 15;
 
-        mLatch = new CountDownLatch(3);
+        int latchCount = TEST_COUNT / 2;
+
+        if(!isEven(TEST_COUNT)){
+            latchCount++;
+        }
+        for(int i=0; i<latchCount; i++) {
+            mLatchs.add(new CountDownLatch(1));
+        }
 
         LifecycleManager lifecycleManager = createLifecycleManager();
 
@@ -142,7 +166,6 @@ public class PauseBGProcessesTest {
 
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START);
-        lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME);
 
         Impression impression = new Impression("key", null, "feature",
                 "on", 1111, "default rule",
@@ -154,48 +177,39 @@ public class PauseBGProcessesTest {
         event.timestamp = 999L;
 
 
-        mIsServerHitDone = false;
-        mImpressionsManager.log(impression);
-        mTrackClient.track(event);
+        List<Boolean> hitsResults = new ArrayList<>();
 
-        mLatch.await(HIT_WAIT_SECS, TimeUnit.SECONDS);
-        boolean hit1 = mIsServerHitDone;
+        for(int i=0; i<TEST_COUNT; i++) {
+            mImpressionsManager.log(impression);
+            mTrackClient.track(event);
+            if (isEven(i)) {
+                lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME);
+                log("Wait " + i);
+                int latchIndex = i / 2;
+                mLatchs.get(latchIndex).await(HIT_WAIT_SECS * 10, TimeUnit.SECONDS);
+                hitsResults.add(new Boolean(mFullHitDone));
+                mFullHitDone = false;
+            } else {
 
-        mImpressionsManager.log(impression);
-        mTrackClient.track(event);
-        lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE);
+                lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE);
+                cleanHitVars();
+                log("Wait " + i);
+                Thread.sleep(PAUSE_WAIT_MILLIS);
+                hitsResults.add(new Boolean(isHitServerDone()));
+            }
+        }
 
-        mIsServerHitDone = false;
-        mLatch.await(PAUSE_WAIT_SECS, TimeUnit.SECONDS);
-        boolean hit2 = mIsServerHitDone;
+        for(int i=0; i<TEST_COUNT; i++) {
+            if(isEven(i)) {
+                Assert.assertTrue(hitsResults.get(i).booleanValue());
+            } else {
+                Assert.assertFalse(hitsResults.get(i).booleanValue());
+            }
+        }
+    }
 
-        lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME);
-        mIsServerHitDone = false;
-        mImpressionsManager.log(impression);
-        mTrackClient.track(event);
-        mLatch.await(HIT_WAIT_SECS, TimeUnit.SECONDS);
-        boolean hit3 = mIsServerHitDone;
-
-        mImpressionsManager.log(impression);
-        mTrackClient.track(event);
-        lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE);
-        mIsServerHitDone = false;
-        mLatch.await(PAUSE_WAIT_SECS, TimeUnit.SECONDS);
-        boolean hit4 = mIsServerHitDone;
-
-        lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME);
-        mIsServerHitDone = false;
-        mImpressionsManager.log(impression);
-        mTrackClient.track(event);
-        Thread.sleep(HIT_WAIT_SECS);
-        boolean hit5 = mIsServerHitDone;
-
-        Assert.assertTrue(hit1);
-        Assert.assertFalse(hit2);
-        Assert.assertTrue(hit3);
-        Assert.assertFalse(hit4);
-        Assert.assertTrue(hit5);
-
+    private boolean isEven(int index) {
+        return (index % 2) == 0;
     }
 
 
@@ -228,7 +242,7 @@ public class PauseBGProcessesTest {
         MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpClient, rootTarget,
                 mySegmentsCache);
         final RefreshableMySegmentsFetcherProviderImpl segmentFetcher =
-                new RefreshableMySegmentsFetcherProviderImpl(mySegmentsFetcher, SERVER_HIT_RATE,
+                new RefreshableMySegmentsFetcherProviderImpl(mySegmentsFetcher, SERVER_HIT_RATE_SECS,
                         key.matchingKey(), new EventsManagerMock());
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
@@ -240,7 +254,7 @@ public class PauseBGProcessesTest {
 
         SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpClient, rootTarget, new MetricsMock(), splitChangeCache);
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProviderImpl(
-                splitChangeFetcher, splitParser, SERVER_HIT_RATE, new EventsManagerMock(), splitCache.getChangeNumber());
+                splitChangeFetcher, splitParser, SERVER_HIT_RATE_SECS, new EventsManagerMock(), splitCache.getChangeNumber());
 
 
         // Impressionss
@@ -250,12 +264,12 @@ public class PauseBGProcessesTest {
         IImpressionsStorage impressionsStorage = new ImpressionsFileStorage(mContext.getCacheDir(), dataFolderName);
         final ImpressionsStorageManager impressionsStorageManager = new ImpressionsStorageManager(impressionsStorage, impressionsStorageManagerConfig);
         ImpressionsManagerConfig impressionsManagerConfig =
-                new ImpressionsManagerConfig(9999, 9999, 9999, SERVER_HIT_RATE, url);
+                new ImpressionsManagerConfig(9999, 9999, 9999, SERVER_HIT_RATE_SECS, url);
         final ImpressionsManagerImpl impressionsManager = ImpressionsManagerImpl.instance(httpClient, impressionsManagerConfig, impressionsStorageManager);
         final ImpressionListener impressionListener;
 
         TrackClientConfig trackConfig = new TrackClientConfig();
-        trackConfig.setFlushIntervalMillis(SERVER_HIT_RATE);
+        trackConfig.setFlushIntervalMillis(SERVER_HIT_RATE_SECS);
         trackConfig.setMaxEventsPerPost(9);
         trackConfig.setMaxQueueSize(10);
         trackConfig.setWaitBeforeShutdown(1);
@@ -271,11 +285,21 @@ public class PauseBGProcessesTest {
 
         return new LifecycleManager(impressionsManager, trackClient, splitFetcherProvider, segmentFetcher, splitCache, mySegmentsCache);
 
+    }
 
+    private void cleanHitVars() {
+        mImpressionsHitDone = false;
+        mSplitsHitDone = false;
+        mTracksHitDone = false;
+        mMySegmentsHitDone = false;
+    }
+
+    private boolean isHitServerDone() {
+        return mImpressionsHitDone && mTracksHitDone && mMySegmentsHitDone && mSplitsHitDone;
     }
 
     private void log(String m) {
-        System.out.println("FACTORY_TEST: " + m);
+        System.out.println("PauseBGProcessesTest: " + m);
     }
 
 }
