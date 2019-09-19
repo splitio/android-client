@@ -1,5 +1,6 @@
 2.4.3: (Sep 27, 2019)
 - Improved SDK readiness from cache
+- Improved thread pausing on background
 2.4.2: (Sep 5, 2019)
 - Using JsonL to save cache files
 - Fixing minor issue when saving tracks and impressions on disk
