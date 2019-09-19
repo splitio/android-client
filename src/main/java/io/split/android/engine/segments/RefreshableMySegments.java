@@ -3,6 +3,7 @@ package io.split.android.engine.segments;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.utils.Logger;
@@ -18,9 +19,9 @@ public class RefreshableMySegments implements Runnable, MySegments {
     private MySegmentsFetcher _mySegmentsFetcher;
     private String _matchingKey;
     private boolean _firstLoad = true;
-    private final SplitEventsManager _eventsManager;
+    private final ISplitEventsManager _eventsManager;
 
-    public RefreshableMySegments(String matchingKey, MySegmentsFetcher mySegmentsFetcher, SplitEventsManager eventsManager) {
+    public RefreshableMySegments(String matchingKey, MySegmentsFetcher mySegmentsFetcher, ISplitEventsManager eventsManager) {
         _mySegmentsFetcher = mySegmentsFetcher;
         _matchingKey = matchingKey;
         _eventsManager = eventsManager;
@@ -39,7 +40,7 @@ public class RefreshableMySegments implements Runnable, MySegments {
         }
     }
 
-    public static RefreshableMySegments create(String matchingKey, MySegmentsFetcher mySegmentsFetcher, SplitEventsManager eventsManager) {
+    public static RefreshableMySegments create(String matchingKey, MySegmentsFetcher mySegmentsFetcher, ISplitEventsManager eventsManager) {
         return new RefreshableMySegments(matchingKey, mySegmentsFetcher, eventsManager);
     }
 

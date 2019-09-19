@@ -12,8 +12,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.cache.IMySegmentsCache;
 import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.ISplitChangeCache;
+import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.events.SplitEventsManager;
@@ -21,10 +23,12 @@ import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.impressions.ImpressionsManagerConfig;
 import io.split.android.client.impressions.ImpressionsFileStorage;
-import io.split.android.client.impressions.ImpressionsManager;
+import io.split.android.client.impressions.ImpressionsManagerImpl;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
+import io.split.android.client.lifecycle.LifecycleManager;
 import io.split.android.client.metrics.CachedMetrics;
 import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
@@ -47,6 +51,7 @@ import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
+import io.split.android.engine.experiments.RefreshableSplitFetcherProviderImpl;
 import io.split.android.engine.experiments.SplitChangeFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.segments.MySegmentsFetcher;
@@ -68,7 +73,8 @@ public class SplitFactoryImpl implements SplitFactory {
     private SDKReadinessGates gates;
 
     private TrackClient _trackClient;
-    FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
+    private FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
+    private LifecycleManager _lifecyleManager;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
 
@@ -121,7 +127,8 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Segments
         IStorage mySegmentsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
-        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpClient, rootTarget, mySegmentsStorage);
+        IMySegmentsCache mySegmentsCache = new MySegmentsCache(mySegmentsStorage);
+        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpClient, rootTarget, mySegmentsCache);
         final RefreshableMySegmentsFetcherProviderImpl segmentFetcher = new RefreshableMySegmentsFetcherProviderImpl(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
 
         SplitParser splitParser = new SplitParser(segmentFetcher);
@@ -132,7 +139,7 @@ public class SplitFactoryImpl implements SplitFactory {
         ISplitChangeCache splitChangeCache = new SplitChangeCache(splitCache);
 
         SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpClient, rootTarget, uncachedFireAndForget, splitChangeCache);
-        final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProvider(
+        final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProviderImpl(
                 splitChangeFetcher, splitParser, findPollingPeriod(RANDOM,
                 config.featuresRefreshRate()), _eventsManager, splitCache.getChangeNumber());
 
@@ -142,7 +149,13 @@ public class SplitFactoryImpl implements SplitFactory {
         impressionsStorageManagerConfig.setImpressionsChunkOudatedTime(config.impressionsChunkOutdatedTime());
         IImpressionsStorage impressionsStorage = new ImpressionsFileStorage(context.getCacheDir(), dataFolderName);
         final ImpressionsStorageManager impressionsStorageManager = new ImpressionsStorageManager(impressionsStorage, impressionsStorageManagerConfig);
-        final ImpressionsManager splitImpressionListener = ImpressionsManager.instance(httpClient, config, impressionsStorageManager);
+
+        ImpressionsManagerConfig impressionsManagerConfig =
+                new ImpressionsManagerConfig(config.impressionsChunkSize(),
+                config.waitBeforeShutdown(),
+                        config.impressionsQueueSize(),
+                        config.impressionsRefreshRate(), config.eventsEndpoint());
+        final ImpressionsManagerImpl splitImpressionListener = ImpressionsManagerImpl.instance(httpClient, impressionsManagerConfig, impressionsStorageManager);
         final ImpressionListener impressionListener;
 
         if (config.impressionListener() != null) {
@@ -170,10 +183,14 @@ public class SplitFactoryImpl implements SplitFactory {
         _trackClient = TrackClientImpl.create(trackConfig, httpClient, eventsRootTarget, trackStorageManager, splitCache);
 
 
+        _lifecyleManager = new LifecycleManager(splitImpressionListener, _trackClient, splitFetcherProvider, segmentFetcher, splitCache, mySegmentsCache);
+
         destroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");
                 try {
+                    _lifecyleManager.destroy();
+                    Logger.i("Successful shutdown of lifecycle manager");
                     _factoryMonitor.remove(_apiKey);
                     _trackClient.close();
                     Logger.i("Successful shutdown of Track client");

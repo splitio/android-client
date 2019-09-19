@@ -14,7 +14,6 @@ import java.util.List;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
-import io.split.android.client.storage.MemoryStorage;
 import io.split.android.fake.ImpressionsFileStorageStub;
 
 import static org.hamcrest.Matchers.equalTo;
@@ -33,15 +32,12 @@ public class ImpressionsManagerTest {
     @Ignore
     public void works() throws URISyntaxException {
 
-        SplitClientConfig config = SplitClientConfig.builder()
-                .impressionsQueueSize(4)
-                .endpoint("nowhere.com", "nowhere.com")
-                .build();
+        ImpressionsManagerConfig config = new ImpressionsManagerConfig(100, 100, 4, 999, "nowhere.com");
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
         ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
 
-        ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
+        ImpressionsManagerImpl treatmentLog = ImpressionsManagerImpl.instanceForTest(null, config, senderMock, storageMock);
 
         KeyImpression ki1 = keyImpression("test1", "adil", "on", 1L, null);
         KeyImpression ki2 = keyImpression("test1", "adil", "on", 2L, 1L);
@@ -67,15 +63,12 @@ public class ImpressionsManagerTest {
     @Ignore
     public void worksButDropsImpressions() throws URISyntaxException {
 
-        SplitClientConfig config = SplitClientConfig.builder()
-                .impressionsQueueSize(3)
-                .endpoint("nowhere.com", "nowhere.com")
-                .build();
+        ImpressionsManagerConfig config = new ImpressionsManagerConfig(100, 100, 3, 999, "nowhere.com");
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
         ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
 
-        ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
+        ImpressionsManagerImpl treatmentLog = ImpressionsManagerImpl.instanceForTest(null, config, senderMock, storageMock);
 
         // These 4 unique test name will cause 4 entries but we are caping at the first 3.
         KeyImpression ki1 = keyImpression("test1", "adil", "on", 1L, null);
@@ -102,15 +95,12 @@ public class ImpressionsManagerTest {
     @Ignore
     public void works4ImpressionsInOneTest() throws URISyntaxException {
 
-        SplitClientConfig config = SplitClientConfig.builder()
-                .impressionsQueueSize(10)
-                .endpoint("nowhere.com", "nowhere.com")
-                .build();
+        ImpressionsManagerConfig config = new ImpressionsManagerConfig(100, 100, 10, 999, "nowhere.com");
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
         ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
 
-        ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
+        ImpressionsManagerImpl treatmentLog = ImpressionsManagerImpl.instanceForTest(null, config, senderMock, storageMock);
 
         // These 4 unique test name will cause 4 entries but we are caping at the first 3.
         KeyImpression ki1 = keyImpression("test1", "adil", "on", 1L, 1L);
@@ -139,15 +129,12 @@ public class ImpressionsManagerTest {
     @Ignore
     public void worksNoImpressions() throws URISyntaxException {
 
-        SplitClientConfig config = SplitClientConfig.builder()
-                .impressionsQueueSize(10)
-                .endpoint("nowhere.com", "nowhere.com")
-                .build();
+        ImpressionsManagerConfig config = new ImpressionsManagerConfig(100, 100, 10, 999, "nowhere.com");
 
         ImpressionsSender senderMock = Mockito.mock(ImpressionsSender.class);
         ImpressionsStorageManager storageMock = new ImpressionsStorageManager(new ImpressionsFileStorageStub(), storageConfig());
 
-        ImpressionsManager treatmentLog = ImpressionsManager.instanceForTest(null, config, senderMock, storageMock);
+        ImpressionsManagerImpl treatmentLog = ImpressionsManagerImpl.instanceForTest(null, config, senderMock, storageMock);
 
         // There are no impressions to post.
 
