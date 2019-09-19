@@ -3,7 +3,6 @@ package io.split.android.client;
 import android.annotation.SuppressLint;
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.LifecycleRegistry;
 import android.arch.lifecycle.OnLifecycleEvent;
 import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.support.annotation.VisibleForTesting;
@@ -43,6 +42,10 @@ import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.client.validators.ValidationConfig;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
+import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
+import io.split.android.engine.scheduler.PausableThreadPoolExecutor;
+import io.split.android.engine.scheduler.PausableThreadPoolExecutorImpl;
 
 import static java.lang.Thread.MIN_PRIORITY;
 
@@ -64,11 +67,11 @@ public class TrackClientImpl implements TrackClient {
     private final HttpClient _httpclient;
     private final URI _eventsTarget;
     private final TrackClientConfig _config;
-    private final ScheduledExecutorService _flushScheduler;
-    private final ScheduledExecutorService _cachedflushScheduler;
+    private final PausableScheduledThreadPoolExecutor _flushScheduler;
+    private final PausableScheduledThreadPoolExecutor _cachedflushScheduler;
 
     private final ExecutorService _senderExecutor;
-    private final ExecutorService _consumerExecutor;
+    private final PausableThreadPoolExecutor _consumerExecutor;
 
     private final TrackStorageManager _storageManager;
     private final String validationTag = "track";
@@ -139,12 +142,12 @@ public class TrackClientImpl implements TrackClient {
 
         // Queue consumer
         _consumer = new Consumer(_storageManager);
-        _consumerExecutor = Executors.newSingleThreadExecutor(eventClientThreadFactory("eventclient-consumer"));
+        _consumerExecutor = PausableThreadPoolExecutorImpl.newSingleThreadExecutor(eventClientThreadFactory("eventclient-consumer"));
         _consumerExecutor.submit(_consumer);
 
 
         // Events flusher
-        _flushScheduler = Executors.newScheduledThreadPool(1, eventClientThreadFactory("eventclient-flush"));
+        _flushScheduler = PausableScheduledThreadPoolExecutorImpl.newSingleThreadScheduledExecutor(eventClientThreadFactory("eventclient-flush"));
         _flushScheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -153,7 +156,7 @@ public class TrackClientImpl implements TrackClient {
         }, config.getFlushIntervalMillis(), config.getFlushIntervalMillis(), TimeUnit.SECONDS);
 
         // Cached events flusher
-        _cachedflushScheduler = Executors.newScheduledThreadPool(1, eventClientThreadFactory("eventclient-cache-flush"));
+        _cachedflushScheduler = PausableScheduledThreadPoolExecutorImpl.newSingleThreadScheduledExecutor(eventClientThreadFactory("eventclient-cache-flush"));
         _cachedflushScheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
@@ -208,6 +211,43 @@ public class TrackClientImpl implements TrackClient {
     }
 
     @Override
+    public void pause() {
+        if (_consumerExecutor != null) {
+            _consumerExecutor.pause();
+        }
+
+        if (_flushScheduler != null) {
+            _flushScheduler.pause();
+        }
+
+        if (_cachedflushScheduler != null) {
+            _cachedflushScheduler.pause();
+        }
+    }
+
+    @Override
+    public void resume() {
+        if (_consumerExecutor != null) {
+            _consumerExecutor.resume();
+        }
+
+        if (_flushScheduler != null) {
+            _flushScheduler.resume();
+        }
+
+        if (_cachedflushScheduler != null) {
+            _cachedflushScheduler.resume();
+        }
+    }
+
+    @Override
+    public void saveToDisk() {
+        if (_consumer != null) {
+            _consumer.saveToDisk();
+        }
+    }
+
+    @Override
     public void close() {
         try {
             _consumerExecutor.shutdownNow();
@@ -251,14 +291,13 @@ public class TrackClientImpl implements TrackClient {
      * - a CENTINEL message has arrived, or
      * - the queue reached a specific size
      */
-    class Consumer implements Runnable, LifecycleObserver {
+    class Consumer implements Runnable {
 
         private final TrackStorageManager _storageManager;
         List<Event> events;
         Consumer(TrackStorageManager storageManager) {
             _storageManager = storageManager;
             events = newEventList();
-            ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         }
 
         @SuppressLint("DefaultLocale")
@@ -305,8 +344,7 @@ public class TrackClientImpl implements TrackClient {
             return Collections.synchronizedList(new ArrayList<>());
         }
 
-        @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-        private void doOnPause(){
+        synchronized public void saveToDisk(){
             _storageManager.saveEvents(new EventsChunk(events));
             events = newEventList();
             _storageManager.saveToDisk();

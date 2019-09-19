@@ -36,20 +36,20 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
     private final IMySegmentsCache _mySegmentsCache;
     static final private Type _mySegmentsJsonMapType = new TypeToken<Map<String, List<MySegment>>>() {}.getType();
 
-    public HttpMySegmentsFetcher(HttpClient client, URI uri, Metrics metrics, IStorage storage) {
+    public HttpMySegmentsFetcher(HttpClient client, URI uri, Metrics metrics, IMySegmentsCache mySegmentsCache) {
         _client = client;
         _target = uri;
         _metrics = metrics;
-        _mySegmentsCache = new MySegmentsCache(storage);
+        _mySegmentsCache = mySegmentsCache;
         checkNotNull(_target);
     }
 
-    public static HttpMySegmentsFetcher create(HttpClient client, URI root, IStorage storage) throws URISyntaxException {
-        return create(client, root, new Metrics.NoopMetrics(), storage);
+    public static HttpMySegmentsFetcher create(HttpClient client, URI root, IMySegmentsCache mySegmentsCache) throws URISyntaxException {
+        return create(client, root, new Metrics.NoopMetrics(), mySegmentsCache);
     }
 
-    public static HttpMySegmentsFetcher create(HttpClient client, URI root, Metrics metrics, IStorage storage) throws URISyntaxException {
-        return new HttpMySegmentsFetcher(client, new URIBuilder(root, "/mySegments").build(), metrics, storage);
+    public static HttpMySegmentsFetcher create(HttpClient client, URI root, Metrics metrics, IMySegmentsCache mySegmentsCache) throws URISyntaxException {
+        return new HttpMySegmentsFetcher(client, new URIBuilder(root, "/mySegments").build(), metrics, mySegmentsCache);
     }
 
     @Override

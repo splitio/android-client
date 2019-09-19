@@ -32,7 +32,7 @@ import io.split.android.client.utils.Logger;
  * Created by guillermo on 11/23/17.
  */
 
-public class SplitCache implements ISplitCache, LifecycleObserver {
+public class SplitCache implements ISplitCache {
 
     private static final String SPLIT_FILE_PREFIX = "SPLITIO.split.";
     private static final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
@@ -45,7 +45,6 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     private Map<String, Integer> mTrafficTypes = null;
 
     public SplitCache(IStorage storage) {
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
         mInMemorySplits = new ConcurrentHashMap<String, Split>();
         mRemovedSplits = Collections.synchronizedSet(new HashSet<>());
@@ -176,9 +175,8 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
         return split;
     }
 
-    // Lifecyle observer
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    synchronized private void writeSplitsToDisk() {
+    @Override
+    synchronized public void saveToDisk() {
 
         // Save splits
         Set<String> splitNames = mInMemorySplits.keySet();
@@ -220,8 +218,4 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
         mChangeNumber = maxChangeNumber;
     }
 
-    @VisibleForTesting
-    public void fireWriteToDisk() {
-        writeSplitsToDisk();
-    }
 }

@@ -15,9 +15,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.FileStorageHelper;
 import io.split.android.client.utils.Json;
@@ -55,7 +57,7 @@ public class ImpressionsStorageManager {
 
     public ImpressionsStorageManager(IImpressionsStorage storage, ImpressionsStorageManagerConfig config, FileStorageHelper fileStorageHelper) {
         mFileStorageManager = storage;
-        mImpressionsToSend = Collections.synchronizedMap(new HashMap<>());
+        mImpressionsToSend = new ConcurrentHashMap<String, StoredImpressions>();
         mConfig = config;
         mFileStorageHelper = fileStorageHelper;
         loadImpressionsFromDisk();
