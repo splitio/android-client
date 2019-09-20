@@ -29,30 +29,24 @@ public class SplitCacheTest {
 
     ISplitCache mCache = null;
 
-    final static Long INITIAL_CHANGE_NUMBER = 44L;
+    final static Long INITIAL_CHANGE_NUMBER = 9999L;
 
     @Before
     public void setupUp(){
 
-
-        final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
         final String FILE_PREFIX = "SPLITIO.split.";
-        final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\"}";
+        final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d}";
 
         IStorage memStorage = new MemoryStorage();
 
         for(int i = 0; i < 4; i++) {
             String splitName = "split-" + i;
             try {
-                memStorage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName));
+                memStorage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName, INITIAL_CHANGE_NUMBER - i));
             } catch (IOException e) {
             }
         }
 
-        try {
-            memStorage.write(CHANGE_NUMBER_FILE, String.valueOf(INITIAL_CHANGE_NUMBER));
-        } catch (IOException e) {
-        }
         mCache = new SplitCache(memStorage);
     }
 
@@ -116,7 +110,6 @@ public class SplitCacheTest {
     public void testWriteToDiskConcurrency() throws Exception {
         final String ROOT_FOLDER = "./build";
         final String FOLDER = "thefolder";
-        final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
         final String FILE_PREFIX = "SPLITIO.split.";
         final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\"}";
 
@@ -130,17 +123,13 @@ public class SplitCacheTest {
             storage.write(FILE_PREFIX + splitName, String.format(JSON_SPLIT_TEMPLATE, splitName));
         }
 
-        try {
-            storage.write(CHANGE_NUMBER_FILE, String.valueOf(INITIAL_CHANGE_NUMBER));
-        } catch (IOException e) {
-        }
         SplitCache cache = new SplitCache(storage);
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 //System.out.println("TEST SPLIT CACHE: write start ");
-                cache.fireWriteToDisk();
+                cache.saveToDisk();
                 latch.countDown();
             }
         }).start();

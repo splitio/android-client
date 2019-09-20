@@ -6,8 +6,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -110,6 +109,12 @@ public class IntegrationTest {
 
         File dataFolder = new File(cacheDir, dataFolderName);
         if(dataFolder.exists()) {
+            File[] files = dataFolder.listFiles();
+            if(files != null) {
+                for (File file : files) {
+                    file.delete();
+                }
+            }
             boolean isDataFolderDelete = dataFolder.delete();
             log("Data folder exists and deleted: " + isDataFolderDelete);
         }

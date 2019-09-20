@@ -8,6 +8,8 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.track.TracksFileStorage;
+import io.split.android.client.utils.Logger;
+import io.split.android.client.validators.ValidationConfig;
 import io.split.android.fake.ExecutorServiceMock;
 import io.split.android.fake.HttpClientMock;
 import io.split.android.fake.SplitCacheStub;
@@ -54,14 +56,14 @@ public class TrackClientImplTest {
                 URI.create("https://kubernetesturl.com/split"),
                 new TrackStorageManager(new TracksFileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 
-        for (int i = 0; i < 175; ++i) {
+        for (int i = 0; i < 165; ++i) {
             eventClient.track(create32kbEvent());
         }
 
         ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
         int prevSubmitCount = ex.getSubmitCount();
 
-        eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
+        eventClient.track(create32kbEvent());
 
         latch.await(15, TimeUnit.SECONDS);
 
@@ -89,10 +91,8 @@ public class TrackClientImplTest {
             eventClient.track(create32kbEvent());
         }
 
-        latch.await(5, TimeUnit.SECONDS);
-
+        Thread.sleep(5000);
         ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
-
         int prevSubmitCount = ex.getSubmitCount();
 
         eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
@@ -127,6 +127,9 @@ public class TrackClientImplTest {
         ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
 
         latch.await(5, TimeUnit.SECONDS);
+        latch = new CountDownLatch(1);
+        ex.setLatch(latch);
+
         int prevSubmitCount = ex.getSubmitCount();
 
         eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
@@ -145,9 +148,9 @@ public class TrackClientImplTest {
         event.key = "validkey";
         Map<String, Object> props = new HashMap<>();
         props.put("key", Strings.repeat("a", 1024 * 30));
-
         event.properties = props;
         return event;
     }
+
 }
 

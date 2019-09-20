@@ -47,4 +47,9 @@ public interface ISplitCache {
      * @return true if it exists, false otherwise
      */
     boolean trafficTypeExists(String trafficType);
+
+    /**
+     * Saves in memory cash to disk
+     */
+    void saveToDisk();
 }

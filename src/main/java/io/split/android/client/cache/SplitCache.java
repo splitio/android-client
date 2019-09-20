@@ -32,7 +32,7 @@ import io.split.android.client.utils.Logger;
  * Created by guillermo on 11/23/17.
  */
 
-public class SplitCache implements ISplitCache, LifecycleObserver {
+public class SplitCache implements ISplitCache {
 
     private static final String SPLIT_FILE_PREFIX = "SPLITIO.split.";
     private static final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
@@ -45,12 +45,10 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     private Map<String, Integer> mTrafficTypes = null;
 
     public SplitCache(IStorage storage) {
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         mFileStorageManager = storage;
         mInMemorySplits = new ConcurrentHashMap<String, Split>();
         mRemovedSplits = Collections.synchronizedSet(new HashSet<>());
         mTrafficTypes = new ConcurrentHashMap<String, Integer>();
-        loadChangeNumberFromDisk();
         loadSplitsFromDisk();
     }
 
@@ -95,13 +93,7 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     @Override
     public boolean setChangeNumber(long changeNumber) {
         mChangeNumber = changeNumber;
-        try {
-            mFileStorageManager.write(getChangeNumberFileName(),String.valueOf(changeNumber));
-            return true;
-        } catch (IOException e) {
-            Logger.e(e, "Failed to set changeNumber");
-            return false;
-        }
+        return true;
     }
 
     @Override
@@ -183,24 +175,8 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
         return split;
     }
 
-    private void loadChangeNumberFromDisk(){
-        try {
-            mChangeNumber = Long.parseLong(mFileStorageManager.read(getChangeNumberFileName()));
-        } catch (Exception e) {
-            Logger.d("Failed to get changeNumber", e);
-            mChangeNumber = -1;
-        }
-    }
-
-    // Lifecyle observer
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    synchronized private void writeSplitsToDisk() {
-        // Save change number
-        try {
-            mFileStorageManager.write(getChangeNumberFileName(), String.valueOf(mChangeNumber));
-        } catch (IOException e) {
-            Logger.e(e, "Could not save splits change number: " + e.getLocalizedMessage());
-        }
+    @Override
+    synchronized public void saveToDisk() {
 
         // Save splits
         Set<String> splitNames = mInMemorySplits.keySet();
@@ -224,18 +200,22 @@ public class SplitCache implements ISplitCache, LifecycleObserver {
     }
 
     void loadSplitsFromDisk() {
+        long maxChangeNumber = -1;
         List<String> fileIds = mFileStorageManager.getAllIds(SPLIT_FILE_PREFIX);
         for(String fileId : fileIds) {
             Split split = getSplitFromDisk(fileId);
-            if(split != null && split.name != null) {
-                mInMemorySplits.put(split.name, split);
-                addTrafficType(split.trafficTypeName);
+            if(split != null) {
+                if (split.name != null) {
+                    mInMemorySplits.put(split.name, split);
+                    addTrafficType(split.trafficTypeName);
+                }
+
+                if (split.changeNumber > maxChangeNumber) {
+                    maxChangeNumber = split.changeNumber;
+                }
             }
         }
+        mChangeNumber = maxChangeNumber;
     }
 
-    @VisibleForTesting
-    public void fireWriteToDisk() {
-        writeSplitsToDisk();
-    }
 }

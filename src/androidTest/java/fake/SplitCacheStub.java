@@ -18,6 +18,10 @@ public class SplitCacheStub implements ISplitCache {
         }
     }
 
+    public SplitCacheStub() {
+        this(new ArrayList<Split>());
+    }
+
     @Override
     public boolean addSplit(Split split) {
         mSplits.put(split.name, split);
@@ -51,5 +55,9 @@ public class SplitCacheStub implements ISplitCache {
     @Override
     public boolean trafficTypeExists(String trafficType) {
         return true;
+    }
+
+    @Override
+    public void saveToDisk() {
     }
 }
