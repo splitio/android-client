@@ -1,3 +1,9 @@
+2.4.3: (Sep 20, 2019)
+- Improved SDK readiness from cache
+- Improved thread pausing on background
+2.4.2: (Sep 5, 2019)
+- Using JsonL to save cache files
+- Fixing minor issue when saving tracks and impressions on disk
 2.4.1: (Jul 26, 2019)
 - Replaced http client by HttpURLConnection
 - Split some cache files in chunks when saving to disk
