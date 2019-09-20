@@ -20,6 +20,10 @@ public class ExecutorServiceMock implements ExecutorService {
         mLatch = latch;
     }
 
+    public void setLatch(CountDownLatch latch) {
+        mLatch = latch;
+    }
+
     @Override
     public void shutdown() {
 
