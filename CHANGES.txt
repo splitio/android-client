@@ -1,3 +1,5 @@
+2.4.4: (Sep 25, 2019)
+- Fixed issue when load events from disk
 2.4.3: (Sep 20, 2019)
 - Improved SDK readiness from cache
 - Improved thread pausing on background
