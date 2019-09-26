@@ -55,7 +55,7 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
                         }
                     }
                 }
-                if(eventsChunk.getEvents().size() > 0) {
+                if(eventsChunk != null && eventsChunk.getEvents() != null && eventsChunk.getEvents().size() > 0) {
                     tracks.put(eventsChunk.getId(), eventsChunk);
                 }
                 _fileStorageHelper.logIfScannerException(scanner, "An error occurs parsing track events from JsonL files");
