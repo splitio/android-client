@@ -29,6 +29,7 @@ import io.split.android.client.lifecycle.LifecycleManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class ImpressionsOnBGSaveTest {
 
 

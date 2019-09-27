@@ -23,6 +23,7 @@ import io.split.android.client.lifecycle.LifecycleManager;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TracksFileStorage;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class MySegmentsOnBGSaveTest {
 
 

@@ -18,6 +18,7 @@ public class WhitelistMatcher implements Matcher {
         _whitelist.addAll(whitelist);
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @Override
     public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, Evaluator evaluator) {
         return _whitelist.contains(matchValue);

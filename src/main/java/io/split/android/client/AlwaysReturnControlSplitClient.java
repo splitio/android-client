@@ -72,7 +72,6 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
 
     @Override
     public void on(SplitEvent event, SplitEventTask task) {
-        return;
     }
 
     @Override

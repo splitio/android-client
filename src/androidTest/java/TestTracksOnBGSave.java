@@ -32,6 +32,7 @@ import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.track.TracksFileStorage;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class TestTracksOnBGSave {
 
 

@@ -39,7 +39,7 @@ public class TrackClientImplTest {
     public void testEventsFlushedWhenSizeLimitReached() throws URISyntaxException, InterruptedException, IOException {
 
         CountDownLatch latch = new CountDownLatch(1);
-        ExecutorService senderExecutor = new ExecutorServiceMock(latch);
+        ExecutorServiceMock senderExecutor = new ExecutorServiceMock(latch);
 
         TrackClientConfig config = new TrackClientConfig();
         config.setMaxQueueSize(10000);
@@ -55,7 +55,7 @@ public class TrackClientImplTest {
             eventClient.track(create32kbEvent());
         }
 
-        ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
+        ExecutorServiceMock ex = senderExecutor;
         int prevSubmitCount = ex.getSubmitCount();
 
         eventClient.track(create32kbEvent());
@@ -70,7 +70,7 @@ public class TrackClientImplTest {
     public void testEventsFlushedWhenCountLimitReached() throws URISyntaxException, InterruptedException, IOException {
 
         CountDownLatch latch = new CountDownLatch(5);
-        ExecutorService senderExecutor = new ExecutorServiceMock(latch);
+        ExecutorServiceMock senderExecutor = new ExecutorServiceMock(latch);
 
         TrackClientConfig config = new TrackClientConfig();
         config.setMaxQueueSize(10);
@@ -87,7 +87,7 @@ public class TrackClientImplTest {
         }
 
         Thread.sleep(5000);
-        ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
+        ExecutorServiceMock ex = senderExecutor;
         int prevSubmitCount = ex.getSubmitCount();
 
         eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
@@ -103,7 +103,7 @@ public class TrackClientImplTest {
     public void testEventsFlushedWhenCountLimitExceded() throws URISyntaxException, InterruptedException, IOException {
 
         CountDownLatch latch = new CountDownLatch(6);
-        ExecutorService senderExecutor = new ExecutorServiceMock(latch);
+        ExecutorServiceMock senderExecutor = new ExecutorServiceMock(latch);
 
         TrackClientConfig config = new TrackClientConfig();
         config.setMaxQueueSize(10);
@@ -119,7 +119,7 @@ public class TrackClientImplTest {
             eventClient.track(create32kbEvent());
         }
 
-        ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
+        ExecutorServiceMock ex = senderExecutor;
 
         latch.await(5, TimeUnit.SECONDS);
         latch = new CountDownLatch(1);

@@ -16,6 +16,7 @@ import io.split.android.client.utils.Logger;
  * Created by guillermo on 11/22/17.
  */
 
+
 public class FileStorage implements IStorage {
 
     protected final File _dataFolder;

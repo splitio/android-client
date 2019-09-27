@@ -44,6 +44,7 @@ public class ImpressionsStorageTest {
     final String CHUNK_HEADERS_FILE_NAME = "SPLITIO.impressions_chunk_headers.json";
     final String IMPRESSIONS_FILE_NAME = "SPLITIO.impressions_#%d.json";
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Before
     public void setUp()throws IOException {
 

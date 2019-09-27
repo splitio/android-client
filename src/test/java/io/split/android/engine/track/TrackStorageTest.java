@@ -27,6 +27,7 @@ import io.split.android.client.utils.Json;
 import io.split.android.fake.MemoryUtilsNoMemoryStub;
 import io.split.android.fake.TrackFileStorageStub;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class TrackStorageTest {
 
     TrackStorageManager mTrackStorage = null;

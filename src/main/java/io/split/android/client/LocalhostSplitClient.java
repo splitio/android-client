@@ -106,7 +106,6 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public void flush() {
-        return;
     }
 
     @Override
@@ -115,7 +114,6 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     public void on(SplitEvent event, SplitEventTask task) {
-        return;
     }
 
     void updateSplitsMap(ImmutableMap<String, Split> splits) {
