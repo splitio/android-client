@@ -37,6 +37,7 @@ public class CachedMetrics implements Metrics {
      * @param httpMetrics
      * @param queueForTheseManyCalls
      */
+    @SuppressWarnings("SameParameterValue")
     CachedMetrics(DTOMetrics httpMetrics, int queueForTheseManyCalls) {
         this(httpMetrics, queueForTheseManyCalls, TimeUnit.MINUTES.toMillis(1));
     }
@@ -123,12 +124,12 @@ public class CachedMetrics implements Metrics {
         private int _count = 0;
         private long _sum = 0L;
 
-        public void addDelta(long delta) {
+        void addDelta(long delta) {
             _count++;
             _sum += delta;
         }
 
-        public void clear() {
+        void clear() {
             _count = 0;
             _sum = 0L;
         }

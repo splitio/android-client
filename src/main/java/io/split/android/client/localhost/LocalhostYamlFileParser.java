@@ -39,7 +39,7 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
 
         YamlParser parser = new YamlParser();
         try {
-            List<Object> loadedSplits = (List<Object>) parser.parse(content);
+            List<Object> loadedSplits = parser.parse(content);
             if(loadedSplits == null) {
                 Logger.e("Split file could not be parser because it is not in the correct format.");
                 return null;

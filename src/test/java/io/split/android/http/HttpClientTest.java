@@ -33,7 +33,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 
 public class HttpClientTest {
 
-    MockWebServer mWebServer;
+    private MockWebServer mWebServer;
     String mTrackRequestBody = null;
 
     @Before

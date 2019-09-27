@@ -27,7 +27,7 @@ public class FileUtils {
         return content;
     }
 
-    String convertStreamToString(InputStream is) throws IOException {
+    private String convertStreamToString(InputStream is) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
         String line;

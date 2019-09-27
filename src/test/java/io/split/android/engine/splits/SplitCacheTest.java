@@ -86,7 +86,7 @@ public class SplitCacheTest {
     public void updateChangeNumber() {
         final long NEW_CHANGE_NUMBER = 70000L;
         mCache.setChangeNumber(NEW_CHANGE_NUMBER);
-        Assert.assertEquals((long) NEW_CHANGE_NUMBER, mCache.getChangeNumber());
+        Assert.assertEquals(NEW_CHANGE_NUMBER, mCache.getChangeNumber());
     }
 
     @Test

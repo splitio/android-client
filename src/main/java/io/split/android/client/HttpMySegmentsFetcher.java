@@ -1,7 +1,5 @@
 package io.split.android.client;
 
-import android.annotation.SuppressLint;
-
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -36,7 +34,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
     private final IMySegmentsCache _mySegmentsCache;
     static final private Type _mySegmentsJsonMapType = new TypeToken<Map<String, List<MySegment>>>() {}.getType();
 
-    public HttpMySegmentsFetcher(HttpClient client, URI uri, Metrics metrics, IMySegmentsCache mySegmentsCache) {
+    private HttpMySegmentsFetcher(HttpClient client, URI uri, Metrics metrics, IMySegmentsCache mySegmentsCache) {
         _client = client;
         _target = uri;
         _metrics = metrics;
@@ -48,7 +46,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
         return create(client, root, new Metrics.NoopMetrics(), mySegmentsCache);
     }
 
-    public static HttpMySegmentsFetcher create(HttpClient client, URI root, Metrics metrics, IMySegmentsCache mySegmentsCache) throws URISyntaxException {
+    private static HttpMySegmentsFetcher create(HttpClient client, URI root, Metrics metrics, IMySegmentsCache mySegmentsCache) throws URISyntaxException {
         return new HttpMySegmentsFetcher(client, new URIBuilder(root, "/mySegments").build(), metrics, mySegmentsCache);
     }
 

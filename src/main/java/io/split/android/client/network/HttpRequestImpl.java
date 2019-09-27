@@ -13,10 +13,10 @@ import java.util.Map;
 
 public class HttpRequestImpl implements HttpRequest {
 
-    URI mUri;
-    String mBody;
-    HttpMethod mHttpMethod;
-    Map<String, String> mHeaders;
+    private URI mUri;
+    private String mBody;
+    private HttpMethod mHttpMethod;
+    private Map<String, String> mHeaders;
 
     HttpRequestImpl(URI uri, HttpMethod httpMethod, String body, Map<String, String> headers) {
         mUri = uri;
@@ -79,8 +79,6 @@ public class HttpRequestImpl implements HttpRequest {
                 bodyStream = connection.getOutputStream();
                 bodyStream.write(mBody.getBytes());
                 bodyStream.flush();
-            } catch (IOException e) {
-                throw (e);
             } finally {
                 if(bodyStream != null) {
                     bodyStream.close();

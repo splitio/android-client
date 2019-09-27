@@ -61,7 +61,7 @@ public class SplitParserTest {
 
         Map<String, String> configs = SplitHelper.createConfigs(Arrays.asList("t1","t2"), Arrays.asList("{\"f1\":\"v1\"}", "{\"f2\":\"v2\"}"));
 
-        Split split = makeSplit("first.name", 123, conditions, 1, configs);
+        Split split = makeSplit("first.name", conditions, 1, configs);
 
         ParsedSplit actual = parser.parse(split);
 
@@ -90,7 +90,7 @@ public class SplitParserTest {
 
         List<Condition> conditions = Lists.newArrayList(c);
 
-        Split split = makeSplit("first.name", conditions, 1);
+        Split split = makeSplit("first.name", conditions);
 
         ParsedSplit actual = parser.parse(split);
 
@@ -117,7 +117,7 @@ public class SplitParserTest {
 
         List<Condition> conditions = Lists.newArrayList(c);
 
-        Split split = makeSplit("first.name", conditions, 1);
+        Split split = makeSplit("first.name", conditions);
 
         ParsedSplit actual = parser.parse(split);
 
@@ -149,7 +149,7 @@ public class SplitParserTest {
 
         List<Condition> conditions = Lists.newArrayList(c);
 
-        Split split = makeSplit("first.name", conditions, 1);
+        Split split = makeSplit("first.name", conditions);
 
         ParsedSplit actual = parser.parse(split);
 
@@ -306,7 +306,7 @@ public class SplitParserTest {
 
         List<Condition> conditions = Lists.newArrayList(c);
 
-        Split split = makeSplit("splitName", conditions, 1);
+        Split split = makeSplit("splitName", conditions);
 
         ParsedSplit actual = parser.parse(split);
 
@@ -320,16 +320,16 @@ public class SplitParserTest {
         assertThat(actual, is(equalTo(expected)));
     }
 
-    private Split makeSplit(String name, List<Condition> conditions, long changeNumber) {
-        return makeSplit(name, 123, conditions, changeNumber,null);
+    private Split makeSplit(String name, List<Condition> conditions) {
+        return makeSplit(name, conditions, (long) 1,null);
     }
 
-    private Split makeSplit(String name, int seed, List<Condition> conditions, long changeNumber, Map<String, String> configurations) {
+    private Split makeSplit(String name, List<Condition> conditions, long changeNumber, Map<String, String> configurations) {
         Split split = new Split();
         split.name = name;
-        split.seed = seed;
+        split.seed = 123;
         split.trafficAllocation = 100;
-        split.trafficAllocationSeed = seed;
+        split.trafficAllocationSeed = 123;
         split.status = Status.ACTIVE;
         split.conditions = conditions;
         split.defaultTreatment = Treatments.OFF;

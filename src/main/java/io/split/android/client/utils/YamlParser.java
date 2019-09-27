@@ -15,7 +15,7 @@ public class YamlParser {
         T parsedContent = null;
 
         try {
-            parsedContent = (T) yaml.load(yamlContent);
+            parsedContent = yaml.load(yamlContent);
         } catch (YAMLException ye) {
             Logger.e("Error parsing yaml file: " + ye.getLocalizedMessage());
         } catch (Exception e) {

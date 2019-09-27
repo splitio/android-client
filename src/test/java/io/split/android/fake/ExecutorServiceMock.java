@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class ExecutorServiceMock implements ExecutorService {
-    int mSubmitCount = 0;
-    CountDownLatch mLatch;
+    private int mSubmitCount = 0;
+    private CountDownLatch mLatch;
 
     public ExecutorServiceMock(CountDownLatch latch) {
         mLatch = latch;

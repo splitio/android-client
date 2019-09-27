@@ -12,6 +12,7 @@ import java.util.Map;
  * can easily cache this object.
  *
  */
+@SuppressWarnings("RedundantCast")
 public class ParsedSplit {
 
     private final String _split;

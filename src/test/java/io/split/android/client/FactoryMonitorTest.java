@@ -10,7 +10,7 @@ import io.split.android.client.factory.FactoryMonitorImpl;
 
 public class FactoryMonitorTest {
 
-    FactoryMonitor monitor;
+    private FactoryMonitor monitor;
 
     @Before
     public void setup() {

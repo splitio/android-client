@@ -39,7 +39,7 @@ public class ConditionsTestUtil {
         return makeWhitelistCondition(conditionType, whitelist, partitions, false);
     }
 
-    public static Condition makeWhitelistCondition(ConditionType conditionType, List<String> whitelist, List<Partition> partitions, boolean negate) {
+    private static Condition makeWhitelistCondition(ConditionType conditionType, List<String> whitelist, List<Partition> partitions, boolean negate) {
         Matcher matcher = whitelistMatcher(whitelist, negate);
 
         MatcherGroup matcherGroup = new MatcherGroup();
@@ -54,11 +54,11 @@ public class ConditionsTestUtil {
         return c;
     }
 
-    public static Matcher whitelistMatcher(List<String> whitelist, boolean negate) {
+    private static Matcher whitelistMatcher(List<String> whitelist, boolean negate) {
         return whitelistMatcher(null, null, whitelist, negate, MatcherType.WHITELIST);
     }
 
-    public static Matcher whitelistMatcher(String trafficType, String attribute, List<String> whitelist, boolean negate, MatcherType matcherType) {
+    private static Matcher whitelistMatcher(String trafficType, String attribute, List<String> whitelist, boolean negate, MatcherType matcherType) {
         WhitelistMatcherData whitelistMatcherData = new WhitelistMatcherData();
         whitelistMatcherData.whitelist = whitelist;
 
@@ -81,7 +81,7 @@ public class ConditionsTestUtil {
         return makeUserDefinedSegmentCondition(conditionType, segment, partitions, false);
     }
 
-    public static Condition makeUserDefinedSegmentCondition(ConditionType conditionType, String segment, List<Partition> partitions, boolean negate) {
+    private static Condition makeUserDefinedSegmentCondition(ConditionType conditionType, String segment, List<Partition> partitions, boolean negate) {
         Matcher matcher = userDefinedSegmentMatcher(segment, negate);
 
         MatcherGroup matcherGroup = new MatcherGroup();
@@ -96,11 +96,11 @@ public class ConditionsTestUtil {
         return c;
     }
 
-    public static Matcher userDefinedSegmentMatcher(String segment, boolean negate) {
+    private static Matcher userDefinedSegmentMatcher(String segment, boolean negate) {
         return userDefinedSegmentMatcher(null, null, segment, negate);
     }
 
-    public static Matcher userDefinedSegmentMatcher(String trafficType, String attribute, String segment, boolean negate) {
+    private static Matcher userDefinedSegmentMatcher(String trafficType, String attribute, String segment, boolean negate) {
         UserDefinedSegmentMatcherData userDefinedSegment = new UserDefinedSegmentMatcherData();
         userDefinedSegment.segmentName = segment;
 
@@ -123,7 +123,7 @@ public class ConditionsTestUtil {
         return makeAllKeysCondition(partitions, false);
     }
 
-    public static Condition makeAllKeysCondition(List<Partition> partitions, boolean negate) {
+    private static Condition makeAllKeysCondition(List<Partition> partitions, boolean negate) {
         Matcher matcher = allKeysMatcher(negate);
 
         MatcherGroup matcherGroup = new MatcherGroup();
@@ -138,7 +138,7 @@ public class ConditionsTestUtil {
         return c;
     }
 
-    public static Matcher allKeysMatcher(boolean negate) {
+    private static Matcher allKeysMatcher(boolean negate) {
         Matcher matcher = new Matcher();
         matcher.matcherType = MatcherType.ALL_KEYS;
         matcher.negate = negate;

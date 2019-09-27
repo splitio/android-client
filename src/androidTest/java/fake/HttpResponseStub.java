@@ -4,15 +4,15 @@ import io.split.android.client.network.HttpResponse;
 
 public class HttpResponseStub implements HttpResponse {
 
-    public boolean isSuccess;
-    public int code = 200;
-    public String data;
+    private boolean isSuccess;
+    private int code = 200;
+    private String data;
 
     public HttpResponseStub(int status, boolean isSuccess) {
        this(status, isSuccess, null);
     }
 
-    public HttpResponseStub(int status, boolean isSuccess, String data) {
+    private HttpResponseStub(int status, boolean isSuccess, String data) {
         this.code = code;
         this.isSuccess = isSuccess;
         this.data = data;

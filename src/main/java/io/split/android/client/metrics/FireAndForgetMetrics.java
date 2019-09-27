@@ -87,7 +87,7 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         private final String _name;
         private final long _delta;
 
-        public CountRunnable(Metrics delegate, String name, long delta) {
+        CountRunnable(Metrics delegate, String name, long delta) {
             _delegate = delegate;
             _name = name;
             _delta = delta;
@@ -105,7 +105,7 @@ public class FireAndForgetMetrics implements Metrics, Closeable {
         private final String _name;
         private final long _timeInMs;
 
-        public TimeRunnable(Metrics delegate, String name, long timeInMs) {
+        TimeRunnable(Metrics delegate, String name, long timeInMs) {
             _delegate = delegate;
             _name = name;
             _timeInMs = timeInMs;

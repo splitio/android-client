@@ -20,8 +20,8 @@ import io.split.android.helpers.FileHelper;
 
 public class EvaluatorTest {
 
-    SplitFetcher splitFetcher;
-    Evaluator evaluator;
+    private SplitFetcher splitFetcher;
+    private Evaluator evaluator;
 
     @Before
     public void loadSplitsFromFile(){

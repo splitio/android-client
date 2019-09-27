@@ -104,7 +104,7 @@ public class RefreshableSplitFetcherTest {
         RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key", eventManager);
         Split validSplit = new Split();
         validSplit.status = Status.ACTIVE;
-        validSplit.seed = (int) -1;
+        validSplit.seed = -1;
         validSplit.conditions = Lists.newArrayList(ConditionsTestUtil.makeAllKeysCondition(Lists.newArrayList(ConditionsTestUtil.partition("on", 10))));
         validSplit.defaultTreatment = Treatments.OFF;
         validSplit.name = "-1";
@@ -123,7 +123,7 @@ public class RefreshableSplitFetcherTest {
 
         Split invalidSplit = new Split();
         invalidSplit.status = Status.ACTIVE;
-        invalidSplit.seed = (int) -1;
+        invalidSplit.seed = -1;
         invalidSplit.conditions = Lists.newArrayList(invalidCondition);
         invalidSplit.defaultTreatment = Treatments.OFF;
         invalidSplit.name = "-1";

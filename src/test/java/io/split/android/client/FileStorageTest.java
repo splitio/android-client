@@ -22,7 +22,7 @@ public class FileStorageTest {
     private static final String PREFIX = "the-prefix.";
     private static final String CONTENT = "{\"value\": 1}";
 
-    IStorage storage;
+    private IStorage storage;
 
     @Before
     public void setup(){

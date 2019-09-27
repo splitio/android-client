@@ -37,7 +37,7 @@ public class BCryptTest {
         }
     }
 
-    List<String> StringList() {
+    private List<String> StringList() {
         return new ArrayList<>(Arrays.asList(
                 "b1ca0fe5cee94f6599948a005c10fbf1",
                 "b85c9a8d173c4f4196dd5bb38cf2c875",
@@ -82,7 +82,7 @@ public class BCryptTest {
         ));
     }
 
-    List<String> ResultList(){
+    private List<String> ResultList(){
         return new ArrayList<>(Arrays.asList(
                 "$2a$10$rOSPFvf8MKrq6YEsP.zVJu/ahGvcmhmkbMHaHBXQHXLhTU.Tp0.Mu",
                 "$2a$10$rOSPFvf8MKrq6YEsP.zVJuxZXmNeqVWDshoJc767.IiswtTO.k2Da",
@@ -287,7 +287,7 @@ public class BCryptTest {
         ));
     }
 
-    List<String> SaltList() {
+    private List<String> SaltList() {
         return new ArrayList<>(Arrays.asList(
                 "$2a$10$rOSPFvf8MKrq6YEsP.zVJu",
                 "$2a$10$6wvKvWps59VEQHIQhTRA0u",

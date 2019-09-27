@@ -9,7 +9,7 @@ import static org.junit.Assert.*;
 
 public class BinarySearchLatencyTrackerTest {
 
-    BinarySearchLatencyTracker tracker;
+    private BinarySearchLatencyTracker tracker;
 
     @Before
     public void before() {
