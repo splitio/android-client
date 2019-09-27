@@ -313,7 +313,7 @@ public class ImpressionsStorageManager {
     private String getTestNameFromRecordKey(String recordKey) {
         String testName = "";
         try {
-            testName = recordKey.substring(recordKey.indexOf(RECORD_KEY_SEPARATOR) + 1, recordKey.length());
+            testName = recordKey.substring(recordKey.indexOf(RECORD_KEY_SEPARATOR) + 1);
         } catch (IndexOutOfBoundsException e) {
             Logger.e("Record key not valid loading impressions from disk: " + e.getLocalizedMessage());
         }

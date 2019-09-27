@@ -62,7 +62,7 @@ public class InitialChangeNumberTest {
                     long changeNumber = -1;
                     if(mIsFirstChangeNumber) {
                         String path = request.getPath();
-                        changeNumber = Long.valueOf(path.substring(path.indexOf("=") + 1, path.length())).longValue();
+                        changeNumber = Long.valueOf(path.substring(path.indexOf("=") + 1)).longValue();
                         mFirstChangeNumberReceived = changeNumber;
                         mIsFirstChangeNumber = false;
                     }
