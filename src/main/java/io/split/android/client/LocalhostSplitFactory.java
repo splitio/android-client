@@ -8,9 +8,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.Localhost.LocalhostFileParser;
-import io.split.android.client.Localhost.LocalhostPropertiesFileParser;
-import io.split.android.client.Localhost.LocalhostYamlFileParser;
+import io.split.android.client.localhost.LocalhostFileParser;
+import io.split.android.client.localhost.LocalhostPropertiesFileParser;
+import io.split.android.client.localhost.LocalhostYamlFileParser;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.utils.FileUtils;
