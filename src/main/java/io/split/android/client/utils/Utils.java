@@ -61,7 +61,7 @@ public class Utils {
         if(string == null) {
             return "";
         }
-        return string.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        return string.replaceAll("[^a-zA-Z0-9.\\-]", "_");
     }
 
     private static String sanitizeForFolderName(String string) {
