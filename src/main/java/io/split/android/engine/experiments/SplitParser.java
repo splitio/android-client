@@ -102,7 +102,7 @@ public final class SplitParser {
 
 
     private AttributeMatcher toMatcher(Matcher matcher) {
-        io.split.android.engine.matchers.Matcher delegate = null;
+        io.split.android.engine.matchers.Matcher delegate;
         switch (matcher.matcherType) {
             case ALL_KEYS:
                 delegate = new AllKeysMatcher();

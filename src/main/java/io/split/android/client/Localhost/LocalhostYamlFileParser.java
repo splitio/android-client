@@ -28,7 +28,7 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
     @Override
     public Map<String, Split> parse(String fileName) {
          Map<String, Split> splits = null;
-        String content = null;
+        String content;
 
         try {
             content = mFileStorage.read(fileName);

@@ -41,6 +41,7 @@ public class HttpClientTest {
         setupServer();
     }
 
+    @SuppressWarnings("UnusedAssignment")
     @Test
     public void severalRequest() throws Exception {
         RecordedRequest recReq;

@@ -7,7 +7,7 @@ public class LocalhostGrammar {
     private static final String SPLIT_KEY_SEPARATOR = ":";
 
     public String buildSplitKeyName(String splitName, String matchingKey) {
-        String newName = null;
+        String newName;
         if(Strings.isNullOrEmpty(splitName) ) {
             return null;
         }

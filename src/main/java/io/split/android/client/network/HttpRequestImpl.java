@@ -44,9 +44,9 @@ public class HttpRequestImpl implements HttpRequest {
     }
 
     private HttpResponse getRequest() throws HttpException {
-        URL url = null;
-        HttpURLConnection connection = null;
-        HttpResponse response = null;
+        URL url;
+        HttpURLConnection connection;
+        HttpResponse response;
         try {
             url = mUri.toURL();
             connection = (HttpURLConnection) url.openConnection();

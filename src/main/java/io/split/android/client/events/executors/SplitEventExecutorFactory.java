@@ -13,7 +13,7 @@ public class SplitEventExecutorFactory {
 
     public static SplitEventExecutorAbstract factory(SplitEvent event, SplitEventTask task, SplitEventExecutorResources resources){
 
-        SplitEventExecutorAbstract executor = null;
+        SplitEventExecutorAbstract executor;
 
         switch(event){
             case SDK_READY:

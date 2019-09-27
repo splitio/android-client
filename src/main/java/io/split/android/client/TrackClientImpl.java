@@ -374,7 +374,7 @@ public class TrackClientImpl implements TrackClient {
         public void run() {
             boolean shouldSaveEvents = false;
             if (Utils.isSplitServiceReachable(mEndpoint)) {
-                HttpResponse response = null;
+                HttpResponse response;
                 try {
 
                     String jsonEvents = (mChunk != null ? Json.toJson(mChunk.getEvents()) : null);

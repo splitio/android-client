@@ -17,6 +17,7 @@ package io.split.android.client.utils;
  * <p>
  * See http://github.com/yonik/java_util for future updates to this file.
  */
+@SuppressWarnings("ALL")
 public final class MurmurHash3 {
 
     /**

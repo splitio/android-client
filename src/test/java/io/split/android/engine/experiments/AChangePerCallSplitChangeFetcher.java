@@ -34,7 +34,7 @@ public class AChangePerCallSplitChangeFetcher implements SplitChangeFetcher {
     @Override
     public SplitChange fetch(long since) {
         long latestChangeNumber = since + 1;
-        Condition condition = null;
+        Condition condition;
 
         if (_segmentName != null) {
             condition = ConditionsTestUtil.makeUserDefinedSegmentCondition(ConditionType.ROLLOUT, _segmentName, Lists.newArrayList(ConditionsTestUtil.partition("on", 10)));

@@ -11,7 +11,7 @@ import java.io.InputStreamReader;
 public class FileUtils {
 
     public String loadFileContent(String name, Context context) throws IOException {
-        String content = null;
+        String content;
 
         try {
             InputStream fin = context.getAssets().open(name);
@@ -30,7 +30,7 @@ public class FileUtils {
     String convertStreamToString(InputStream is) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
-        String line = null;
+        String line;
 
         if (reader != null) {
             while ((line = reader.readLine()) != null) {

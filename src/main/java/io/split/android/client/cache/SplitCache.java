@@ -32,9 +32,9 @@ public class SplitCache implements ISplitCache {
     private final IStorage mFileStorageManager;
 
     private long mChangeNumber = -1;
-    private Set<String> mRemovedSplits = null;
-    private Map<String, Split> mInMemorySplits = null;
-    private Map<String, Integer> mTrafficTypes = null;
+    private Set<String> mRemovedSplits;
+    private Map<String, Split> mInMemorySplits;
+    private Map<String, Integer> mTrafficTypes;
 
     public SplitCache(IStorage storage) {
         mFileStorageManager = storage;

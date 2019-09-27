@@ -4,9 +4,9 @@ import io.split.android.client.network.HttpResponse;
 
 public class HttpResponseStub implements HttpResponse {
 
-    public boolean isSuccess = true;
+    public boolean isSuccess;
     public int code = 200;
-    public String data = null;
+    public String data;
 
     public HttpResponseStub(int status, boolean isSuccess) {
        this(status, isSuccess, null);

@@ -27,7 +27,7 @@ public class MySegmentsCache implements IMySegmentsCache {
     private static final String MY_SEGMENTS_FILE_NAME = "SPLITIO.mysegments";
 
     private final IStorage mFileStorage;
-    private Map<String, List<MySegment>> mSegments = null;
+    private Map<String, List<MySegment>> mSegments;
 
     public MySegmentsCache(IStorage storage) {
         mFileStorage = storage;
