@@ -22,6 +22,7 @@ public interface MyHash {
 
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     class GuavaMurmur32Hash implements MyHash {
 
         private final Charset UTF_8 = Charset.forName("UTF-8");

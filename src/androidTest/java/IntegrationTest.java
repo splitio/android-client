@@ -42,6 +42,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 
+@SuppressWarnings("UnstableApiUsage")
 public class IntegrationTest {
 
     Context mContext;

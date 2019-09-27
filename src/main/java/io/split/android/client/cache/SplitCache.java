@@ -66,7 +66,7 @@ public class SplitCache implements ISplitCache {
             return false;
         }
 
-        if(split.status != null && split.status == Status.ACTIVE) {
+        if(split.status == Status.ACTIVE) {
             Split loadedSplit = mInMemorySplits.get(split.name);
             if(loadedSplit != null && loadedSplit.trafficTypeName != null) {
                 removeTrafficType(loadedSplit.trafficTypeName);

@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import android.annotation.SuppressLint;
+
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
@@ -73,7 +75,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
 
             if (!response.isSuccess()) {
                 int statusCode = response.getHttpStatus();
-                Logger.e(String.format("Response status was: %d", statusCode));
+                Logger.e("Response status was: " + statusCode);
                 _metrics.count(PREFIX + ".status." + statusCode, 1);
                 throw new IllegalStateException("Could not retrieve mySegments for " + matchingKey + "; http return code " + statusCode);
             }
