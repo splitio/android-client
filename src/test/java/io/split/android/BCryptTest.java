@@ -8,8 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.split.android.client.utils.BCrypt;
-import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.Utils;
 
 /**
  * Example local unit test, which will execute on the development machine (host).

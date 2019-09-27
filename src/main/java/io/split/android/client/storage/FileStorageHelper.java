@@ -104,7 +104,7 @@ public class FileStorageHelper {
 
     public void writeChunkHeaderLine(ChunkHeader chunkHeader, FileWriter fileWriter) throws IOException {
         String jsonChunkHeader = Json.toJson(chunkHeader);
-        fileWriter.write(String.format(jsonChunkHeader));
+        fileWriter.write(jsonChunkHeader);
         fileWriter.write(LINE_SEPARATOR);
     }
 

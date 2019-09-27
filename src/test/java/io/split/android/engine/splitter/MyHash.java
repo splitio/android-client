@@ -9,7 +9,7 @@ public interface MyHash {
 
     long hash(int seed, String key);
 
-    public static class Murmur32Hash implements MyHash {
+    class Murmur32Hash implements MyHash {
         @Override
         public long hash(int seed, String key) {
             return MurmurHash3.murmurhash3_x86_32(key, 0, key.length(), seed);
@@ -22,7 +22,7 @@ public interface MyHash {
 
     }
 
-    public static class GuavaMurmur32Hash implements MyHash {
+    class GuavaMurmur32Hash implements MyHash {
 
         private final Charset UTF_8 = Charset.forName("UTF-8");
 
@@ -38,7 +38,7 @@ public interface MyHash {
 
     }
 
-    public static class SeededNaturalHash implements MyHash {
+    class SeededNaturalHash implements MyHash {
 
         @Override
         public long hash(int seed, String key) {
@@ -54,7 +54,7 @@ public interface MyHash {
         }
     }
 
-    public static class XorNaturalHash implements MyHash {
+    class XorNaturalHash implements MyHash {
 
         @Override
         public long hash(int seed, String key) {
@@ -70,7 +70,7 @@ public interface MyHash {
         }
     }
 
-    public static class LoseLoseHash implements MyHash {
+    class LoseLoseHash implements MyHash {
 
         @Override
         public long hash(int seed, String key) {

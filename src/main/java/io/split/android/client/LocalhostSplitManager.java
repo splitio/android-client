@@ -1,9 +1,7 @@
 package io.split.android.client;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 
 import io.split.android.client.Localhost.LocalhostGrammar;
 import io.split.android.client.api.SplitView;
@@ -11,15 +9,11 @@ import io.split.android.client.dtos.Split;
 import io.split.android.grammar.Treatments;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An implementation of SplitClient that considers all partitions

@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * An implementation of SplitClient that considers all partitions
  * passed in the constructor to be 100% on for all users, and

@@ -2,7 +2,6 @@ package io.split.android.client;
 
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Partition;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;

@@ -1,7 +1,5 @@
 package io.split.android.client.validators;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +11,6 @@ import io.split.android.client.SplitResult;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.Logger;
@@ -247,6 +244,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         return results;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private Map<String, String> controlTreatmentsForSplits(List<String> splits, String validationTag) {
         Map<String, String> results = new HashMap<>();
         for(String split : splits) {

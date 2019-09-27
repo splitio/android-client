@@ -1,7 +1,6 @@
 package io.split.android.engine.matchers;
 
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientImpl;
 import io.split.android.client.dtos.DataType;
 
 import java.util.Map;
@@ -41,10 +40,8 @@ public class LessThanOrEqualToMatcher implements Matcher {
 
     @Override
     public String toString() {
-        StringBuilder bldr = new StringBuilder();
-        bldr.append("<= ");
-        bldr.append(_compareTo);
-        return bldr.toString();
+        return "<= " +
+                _compareTo;
     }
 
     @Override

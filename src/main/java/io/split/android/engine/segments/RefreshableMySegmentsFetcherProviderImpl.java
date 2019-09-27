@@ -2,17 +2,12 @@ package io.split.android.engine.segments;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.io.Closeable;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.events.ISplitEventsManager;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
-import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
 

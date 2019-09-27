@@ -2,7 +2,6 @@ package io.split.android.client.storage;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,7 @@ public class MemoryStorage implements IStorage {
     @Override
     public String[] getAllIds() {
         Set<String> allIds = _storage.keySet();
-        return allIds.toArray(new String[allIds.size()]);
+        return allIds.toArray(new String[0]);
     }
 
     @Override

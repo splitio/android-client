@@ -1,6 +1,5 @@
 package io.split.android.client.network;
 
-import android.net.Uri;
 import android.support.annotation.NonNull;
 
 import java.net.URI;
@@ -48,9 +47,9 @@ public class URIBuilder {
         if (mParams.size() > 0) {
             StringBuilder query = new StringBuilder();
             for (Map.Entry<String, String> param : mParams.entrySet()) {
-                query.append(param.getKey() + "=" + param.getValue() + "&");
+                query.append(param.getKey()).append("=").append(param.getValue()).append("&");
             }
-            params = query.substring(0, query.length() - 1).toString();
+            params = query.substring(0, query.length() - 1);
         }
 
         return new URI(mRootURI.getScheme(),

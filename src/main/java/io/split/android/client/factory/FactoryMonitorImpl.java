@@ -2,11 +2,8 @@ package io.split.android.client.factory;
 
 import android.support.annotation.VisibleForTesting;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import io.split.android.client.SplitFactory;
 
 public class FactoryMonitorImpl implements FactoryMonitor {
 

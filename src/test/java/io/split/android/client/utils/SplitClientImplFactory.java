@@ -7,7 +7,6 @@ import io.split.android.client.SplitClientImpl;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.TrackClient;
 import io.split.android.client.api.Key;
-import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.ImpressionListener;

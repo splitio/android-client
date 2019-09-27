@@ -2,7 +2,6 @@ package io.split.android.engine.matchers.strings;
 
 import io.split.android.client.Evaluator;
 import io.split.android.engine.matchers.Matcher;
-import io.split.android.client.SplitClientImpl;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -54,10 +53,8 @@ public class EndsWithAnyOfMatcher implements Matcher {
 
     @Override
     public String toString() {
-        StringBuilder bldr = new StringBuilder();
-        bldr.append("ends with ");
-        bldr.append(_compareTo);
-        return bldr.toString();
+        return "ends with " +
+                _compareTo;
     }
 
     @Override

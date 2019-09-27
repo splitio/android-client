@@ -1,6 +1,6 @@
 package io.split.android.http;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.After;
 import org.junit.Before;

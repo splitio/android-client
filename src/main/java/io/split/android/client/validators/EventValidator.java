@@ -12,6 +12,6 @@ public interface EventValidator {
      * @param event: Event instance
      * @return true when the key is valid, false when it is not
      */
-    public ValidationErrorInfo validate(Event event, boolean validateTrafficType);
+    ValidationErrorInfo validate(Event event, boolean validateTrafficType);
 
 }

@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.dtos.SplitChange;
-
 public class SplitHelper {
     public static Map<String, String> createConfigs(List<String> treatments, List<String> configs) {
         Map<String, String> config = new HashMap<>();

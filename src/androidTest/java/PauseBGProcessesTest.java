@@ -187,7 +187,7 @@ public class PauseBGProcessesTest {
                 log("Wait " + i);
                 int latchIndex = i / 2;
                 mLatchs.get(latchIndex).await(HIT_WAIT_SECS * 10, TimeUnit.SECONDS);
-                hitsResults.add(new Boolean(mFullHitDone));
+                hitsResults.add(Boolean.valueOf(mFullHitDone));
                 mFullHitDone = false;
             } else {
 
@@ -195,7 +195,7 @@ public class PauseBGProcessesTest {
                 cleanHitVars();
                 log("Wait " + i);
                 Thread.sleep(PAUSE_WAIT_MILLIS);
-                hitsResults.add(new Boolean(isHitServerDone()));
+                hitsResults.add(Boolean.valueOf(isHitServerDone()));
             }
         }
 

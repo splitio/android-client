@@ -10,7 +10,6 @@ import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.FileStorageHelper;
 import io.split.android.client.utils.Json;
@@ -198,7 +196,7 @@ public class ImpressionsStorageManager {
                 if (!isChunkOutdated(entry.getValue())) {
                     mImpressionsToSend.put(entry.getKey(), entry.getValue());
                 }
-            };
+            }
         }
     }
 

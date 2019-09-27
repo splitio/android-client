@@ -155,26 +155,24 @@ public class ParsedSplit {
 
     @Override
     public String toString() {
-        StringBuilder bldr = new StringBuilder();
-        bldr.append("name:");
-        bldr.append(_split);
-        bldr.append(", seed:");
-        bldr.append(_seed);
-        bldr.append(", killed:");
-        bldr.append(_killed);
-        bldr.append(", default treatment:");
-        bldr.append(_defaultTreatment);
-        bldr.append(", parsedConditions:");
-        bldr.append(_parsedCondition);
-        bldr.append(", trafficTypeName:");
-        bldr.append(_trafficTypeName);
-        bldr.append(", changeNumber:");
-        bldr.append(_changeNumber);
-        bldr.append(", algo:");
-        bldr.append(_algo);
-        bldr.append(", config:");
-        bldr.append(_configurations);
-        return bldr.toString();
+        return "name:" +
+                _split +
+                ", seed:" +
+                _seed +
+                ", killed:" +
+                _killed +
+                ", default treatment:" +
+                _defaultTreatment +
+                ", parsedConditions:" +
+                _parsedCondition +
+                ", trafficTypeName:" +
+                _trafficTypeName +
+                ", changeNumber:" +
+                _changeNumber +
+                ", algo:" +
+                _algo +
+                ", config:" +
+                _configurations;
 
     }
 }

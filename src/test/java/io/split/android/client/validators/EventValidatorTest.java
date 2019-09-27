@@ -2,7 +2,7 @@ package io.split.android.client.validators;
 
 import com.google.common.base.Strings;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -23,9 +23,9 @@ public class EventValidatorTest {
     @Before
     public void setUp() {
         ISplitCache splitCache = new SplitCache(new FileStorage(new File("./build", "."), "folder"));
-        splitCache.addSplit(newSplit("s0", "traffic1", Status.ACTIVE));
-        splitCache.addSplit(newSplit("s1", "trafficType1", Status.ACTIVE));
-        splitCache.addSplit(newSplit("s2", "custom", Status.ACTIVE));
+        splitCache.addSplit(newSplit("s0", "traffic1"));
+        splitCache.addSplit(newSplit("s1", "trafficType1"));
+        splitCache.addSplit(newSplit("s2", "custom"));
 
         validator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
     }
@@ -296,11 +296,11 @@ public class EventValidatorTest {
                 + " underscore, period, or colon as separators of alphanumeric characters.";
     }
 
-    private Split newSplit(String name, String trafficType, Status status) {
+    private Split newSplit(String name, String trafficType) {
         Split split = new Split();
         split.name = name;
         split.trafficTypeName = trafficType;
-        split.status = status;
+        split.status = Status.ACTIVE;
         return split;
     }
 }

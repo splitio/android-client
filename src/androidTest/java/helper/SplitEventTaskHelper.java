@@ -29,4 +29,4 @@ public class SplitEventTaskHelper extends SplitEventTask {
     public void onPostExecutionView(SplitClient client) {
 
     }
-};
+}

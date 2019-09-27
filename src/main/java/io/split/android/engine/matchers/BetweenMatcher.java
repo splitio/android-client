@@ -1,7 +1,6 @@
 package io.split.android.engine.matchers;
 
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientImpl;
 import io.split.android.client.dtos.DataType;
 
 import java.util.Map;
@@ -51,12 +50,10 @@ public class BetweenMatcher implements Matcher {
 
     @Override
     public String toString() {
-        StringBuilder bldr = new StringBuilder();
-        bldr.append("between ");
-        bldr.append(_start);
-        bldr.append(" and ");
-        bldr.append(_end);
-        return bldr.toString();
+        return "between " +
+                _start +
+                " and " +
+                _end;
     }
 
     @Override

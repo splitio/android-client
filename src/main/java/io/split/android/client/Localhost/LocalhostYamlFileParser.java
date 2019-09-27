@@ -95,7 +95,7 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
                 keys = new ArrayList<>();
                 keys.add((String) keysContent);
             }
-        } catch (ClassCastException e) {
+        } catch (ClassCastException ignored) {
         }
         return keys;
     }

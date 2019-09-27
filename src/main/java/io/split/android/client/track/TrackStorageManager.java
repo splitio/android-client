@@ -152,7 +152,7 @@ public class TrackStorageManager {
         Map<String, List<Event>> eventsFile = parseEventsChunkFileContent(json);
         if(eventsFile == null) {
             return;
-        };
+        }
 
         for (Map.Entry<String, List<Event>> eventsChunk : eventsFile.entrySet()) {
             String chunkId = eventsChunk.getKey();

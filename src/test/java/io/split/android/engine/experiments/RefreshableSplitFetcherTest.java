@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Condition;
-import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
@@ -116,7 +115,7 @@ public class RefreshableSplitFetcherTest {
         validReturn.till = 0L;
 
         MatcherGroup invalidMatcherGroup = new MatcherGroup();
-        invalidMatcherGroup.matchers = Lists.<Matcher>newArrayList();
+        invalidMatcherGroup.matchers = Lists.newArrayList();
 
         Condition invalidCondition = new Condition();
         invalidCondition.matcherGroup = invalidMatcherGroup;
@@ -135,7 +134,7 @@ public class RefreshableSplitFetcherTest {
         invalidReturn.till = 1L;
 
         SplitChange noReturn = new SplitChange();
-        noReturn.splits = Lists.<Split>newArrayList();
+        noReturn.splits = Lists.newArrayList();
         noReturn.since = 1L;
         noReturn.till = 1L;
 

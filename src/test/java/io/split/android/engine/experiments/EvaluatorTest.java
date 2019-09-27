@@ -1,33 +1,17 @@
 package io.split.android.engine.experiments;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.utils.Json;
-import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
 import io.split.android.fake.SplitFetcherStub;

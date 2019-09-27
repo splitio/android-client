@@ -3,7 +3,6 @@ package io.split.android.engine.matchers.collections;
 import io.split.android.client.Evaluator;
 import io.split.android.engine.matchers.Matcher;
 import io.split.android.engine.matchers.Transformers;
-import io.split.android.client.SplitClientImpl;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -42,10 +41,8 @@ public class PartOfSetMatcher implements Matcher {
 
     @Override
     public String toString() {
-        StringBuilder bldr = new StringBuilder();
-        bldr.append("is part of ");
-        bldr.append(_compareTo);
-        return bldr.toString();
+        return "is part of " +
+                _compareTo;
     }
 
     @Override

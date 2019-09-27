@@ -17,7 +17,6 @@ import fake.RefreshableMySegmentsFetcherProviderStub;
 import fake.RefreshableSplitFetcherProviderStub;
 import fake.SplitCacheStub;
 import fake.TrackClientStub;
-import io.split.android.client.SplitClientConfig;
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionsFileStorage;
@@ -27,7 +26,6 @@ import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
 import io.split.android.client.impressions.StoredImpressions;
 import io.split.android.client.lifecycle.LifecycleManager;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 

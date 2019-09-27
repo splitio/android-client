@@ -1,6 +1,6 @@
 package io.split.android.client.events;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
 

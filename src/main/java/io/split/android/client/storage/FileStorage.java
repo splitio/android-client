@@ -1,8 +1,5 @@
 package io.split.android.client.storage;
 
-import android.arch.lifecycle.OnLifecycleEvent;
-import android.content.Context;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -48,7 +45,7 @@ public class FileStorage implements IStorage {
             return null;
         }
 
-        StringBuilder fileContent = new StringBuilder("");
+        StringBuilder fileContent = new StringBuilder();
 
         byte[] buffer = new byte[1024];
         int n;

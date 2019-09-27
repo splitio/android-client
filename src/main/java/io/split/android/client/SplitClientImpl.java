@@ -2,7 +2,6 @@ package io.split.android.client;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.cache.ISplitCache;
-import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
@@ -23,7 +22,6 @@ import io.split.android.engine.metrics.Metrics;
 
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -103,7 +101,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public String getTreatment(String split) {
-        return getTreatment(split, Collections.<String, Object>emptyMap());
+        return getTreatment(split, Collections.emptyMap());
     }
 
     @Override

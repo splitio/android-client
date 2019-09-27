@@ -27,7 +27,7 @@ public final class MurmurHash3 {
         public long val2;
     }
 
-    public static final int fmix32(int h) {
+    public static int fmix32(int h) {
         h ^= h >>> 16;
         h *= 0x85ebca6b;
         h ^= h >>> 13;
@@ -36,7 +36,7 @@ public final class MurmurHash3 {
         return h;
     }
 
-    public static final long fmix64(long k) {
+    public static long fmix64(long k) {
         k ^= k >>> 33;
         k *= 0xff51afd7ed558ccdL;
         k ^= k >>> 33;
@@ -48,7 +48,7 @@ public final class MurmurHash3 {
     /**
      * Gets a long from a byte buffer in little endian byte order.
      */
-    public static final long getLongLittleEndian(byte[] buf, int offset) {
+    public static long getLongLittleEndian(byte[] buf, int offset) {
         return ((long) buf[offset + 7] << 56)   // no mask needed
                 | ((buf[offset + 6] & 0xffL) << 48)
                 | ((buf[offset + 5] & 0xffL) << 40)

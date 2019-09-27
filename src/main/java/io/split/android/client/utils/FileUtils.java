@@ -3,13 +3,10 @@ package io.split.android.client.utils;
 import android.content.Context;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 
 public class FileUtils {
 
@@ -48,7 +45,7 @@ public class FileUtils {
         String content = null;
         try {
             content = loadFileContent(fileName, context);
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         return content != null;
     }

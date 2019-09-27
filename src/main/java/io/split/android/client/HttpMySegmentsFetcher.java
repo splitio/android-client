@@ -9,13 +9,11 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.cache.IMySegmentsCache;
-import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
-import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
@@ -78,7 +76,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
                 Logger.e(String.format("Response status was: %d", statusCode));
                 _metrics.count(PREFIX + ".status." + statusCode, 1);
                 throw new IllegalStateException("Could not retrieve mySegments for " + matchingKey + "; http return code " + statusCode);
-            };
+            }
 
             Logger.d("Received json: %s", response.getData());
             Map<String, List<MySegment>> mySegmentsMap = Json.fromJson(response.getData(), _mySegmentsJsonMapType);

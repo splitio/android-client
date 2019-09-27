@@ -12,14 +12,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import io.split.android.engine.splitter.Splitter;
-
 public class HashingTest {
     @Test
     public void numberOverflow() {
         int seed = (int) System.currentTimeMillis();
 
-        List<String> keys = reallyLargeKeys(2000000, 10);
+        List<String> keys = reallyLargeKeys();
 
         MyHash hash = new MyHash.SeededNaturalHash();
         for (String key : keys) {
@@ -41,7 +39,7 @@ public class HashingTest {
     public void collisionTestForSequential() {
         int seed = (int) System.currentTimeMillis();
 
-        List<String> sequentialKeys = sequentialIds(200000);
+        List<String> sequentialKeys = sequentialIds();
         collisionTest(seed, new MyHash.Murmur32Hash(), sequentialKeys);
         collisionTest(seed, new MyHash.GuavaMurmur32Hash(), sequentialKeys);
         collisionTest(seed, new MyHash.SeededNaturalHash(), sequentialKeys);
@@ -103,9 +101,9 @@ public class HashingTest {
         return bldr;
     }
 
-    private List<String> sequentialIds(int size) {
+    private List<String> sequentialIds() {
         List<String> bldr = Lists.newArrayList();
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < 200000; i++) {
             bldr.add("" + i);
         }
         return bldr;
@@ -119,11 +117,11 @@ public class HashingTest {
         return bldr;
     }
 
-    private List<String> reallyLargeKeys(int keySize, int numKeys) {
+    private List<String> reallyLargeKeys() {
         List<String> bldr = Lists.newArrayList();
 
-        for (int i = 0; i < numKeys; i++) {
-            bldr.add(RandomStringUtils.randomAlphanumeric(keySize));
+        for (int i = 0; i < 10; i++) {
+            bldr.add(RandomStringUtils.randomAlphanumeric(2000000));
         }
 
         return bldr;

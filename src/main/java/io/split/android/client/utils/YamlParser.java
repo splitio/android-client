@@ -3,8 +3,6 @@ package io.split.android.client.utils;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.List;
-
 public class YamlParser {
 
     Yaml yaml;

@@ -37,7 +37,7 @@ public class CachedMetrics implements Metrics {
      * @param httpMetrics
      * @param queueForTheseManyCalls
      */
-    /*package private*/ CachedMetrics(DTOMetrics httpMetrics, int queueForTheseManyCalls) {
+    CachedMetrics(DTOMetrics httpMetrics, int queueForTheseManyCalls) {
         this(httpMetrics, queueForTheseManyCalls, TimeUnit.MINUTES.toMillis(1));
     }
 

@@ -1,7 +1,6 @@
 package io.split.android.client.impressions;
 
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;

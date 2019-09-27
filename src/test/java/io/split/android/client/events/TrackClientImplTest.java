@@ -8,17 +8,13 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.track.TracksFileStorage;
-import io.split.android.client.utils.Logger;
-import io.split.android.client.validators.ValidationConfig;
 import io.split.android.fake.ExecutorServiceMock;
 import io.split.android.fake.HttpClientMock;
 import io.split.android.fake.SplitCacheStub;
 
-import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,7 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class TrackClientImplTest {

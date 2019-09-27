@@ -4,9 +4,6 @@ package io.split.android.client;
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import io.split.android.client.utils.Logger;
 
 /**

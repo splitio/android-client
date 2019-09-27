@@ -12,7 +12,7 @@ public class LocalhostGrammar {
             return null;
         }
 
-        if(!Strings.isNullOrEmpty(matchingKey) && matchingKey.equals(matchingKey)) {
+        if(!Strings.isNullOrEmpty(matchingKey)) {
             newName = splitName + SPLIT_KEY_SEPARATOR + matchingKey;
         } else {
             newName = splitName;

@@ -200,14 +200,12 @@ public class SplitConfigurationsParsingTests {
             jsonSplit = jsonSplit + ", \"configurations\": " + config;
         }
         jsonSplit = "{" + jsonSplit + "}";
-        Split split = Json.fromJson(jsonSplit, Split.class);
-        return split;
+        return Json.fromJson(jsonSplit, Split.class);
     }
 
     private Map<String, Object> jsonObj(String json) {
-        Map<String, Object> res = fromJsonMap(json);
 
-        return res;
+        return fromJsonMap(json);
     }
 
     private Map<String, Object> fromJsonMap(String json) {

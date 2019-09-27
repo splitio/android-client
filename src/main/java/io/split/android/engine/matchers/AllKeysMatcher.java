@@ -1,7 +1,6 @@
 package io.split.android.engine.matchers;
 
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientImpl;
 
 import java.util.Map;
 

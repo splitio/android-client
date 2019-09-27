@@ -3,8 +3,6 @@ package io.split.android.client.validators;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.utils.Logger;
-
 public class ValidationErrorInfo {
     public static final int WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED = 100;
     public static final int WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS = 101;
@@ -20,6 +18,7 @@ public class ValidationErrorInfo {
     private String mErrorMessage;
     private Map<Integer, String> mWarnings = new HashMap<>();
 
+    @SuppressWarnings("SameParameterValue")
     ValidationErrorInfo(int code, String message) {
         this(code, message, false);
     }

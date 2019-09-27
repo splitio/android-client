@@ -72,7 +72,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
             splits = ImmutableMap.copyOf(featureToTreatmentMap);
         } else {
             mIsSdkReady = false;
-            splits = ImmutableMap.<String, Split>of();
+            splits = ImmutableMap.of();
             Logger.w("Neither yaml file nor properties were found. Localhost feature map is empty.");
         }
 
@@ -94,7 +94,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
 
     @Override
     public void destroy() {
-        mClient.updateSplitsMap(ImmutableMap.<String, Split>of());
+        mClient.updateSplitsMap(ImmutableMap.of());
     }
 
     @Override

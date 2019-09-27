@@ -11,7 +11,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.fake.ImpressionsFileStorageStub;
@@ -39,10 +38,10 @@ public class ImpressionsManagerTest {
 
         ImpressionsManagerImpl treatmentLog = ImpressionsManagerImpl.instanceForTest(null, config, senderMock, storageMock);
 
-        KeyImpression ki1 = keyImpression("test1", "adil", "on", 1L, null);
-        KeyImpression ki2 = keyImpression("test1", "adil", "on", 2L, 1L);
-        KeyImpression ki3 = keyImpression("test1", "pato", "on", 3L, 2L);
-        KeyImpression ki4 = keyImpression("test2", "pato", "on", 4L, 3L);
+        KeyImpression ki1 = keyImpression("test1", "adil", 1L, null);
+        KeyImpression ki2 = keyImpression("test1", "adil", 2L, 1L);
+        KeyImpression ki3 = keyImpression("test1", "pato", 3L, 2L);
+        KeyImpression ki4 = keyImpression("test2", "pato", 4L, 3L);
 
         treatmentLog.log(new Impression(ki1.keyName, null, ki1.feature, ki1.treatment, ki1.time, null, ki1.changeNumber, null));
         treatmentLog.log(new Impression(ki2.keyName, null, ki2.feature, ki2.treatment, ki2.time, null, ki2.changeNumber, null));
@@ -71,10 +70,10 @@ public class ImpressionsManagerTest {
         ImpressionsManagerImpl treatmentLog = ImpressionsManagerImpl.instanceForTest(null, config, senderMock, storageMock);
 
         // These 4 unique test name will cause 4 entries but we are caping at the first 3.
-        KeyImpression ki1 = keyImpression("test1", "adil", "on", 1L, null);
-        KeyImpression ki2 = keyImpression("test2", "adil", "on", 2L, null);
-        KeyImpression ki3 = keyImpression("test3", "pato", "on", 3L, null);
-        KeyImpression ki4 = keyImpression("test4", "pato", "on", 4L, null);
+        KeyImpression ki1 = keyImpression("test1", "adil", 1L, null);
+        KeyImpression ki2 = keyImpression("test2", "adil", 2L, null);
+        KeyImpression ki3 = keyImpression("test3", "pato", 3L, null);
+        KeyImpression ki4 = keyImpression("test4", "pato", 4L, null);
 
         treatmentLog.log(new Impression(ki1.keyName, null, ki1.feature, ki1.treatment, ki1.time, null, null, null));
         treatmentLog.log(new Impression(ki2.keyName, null, ki2.feature, ki2.treatment, ki2.time, null, null, null));
@@ -103,10 +102,10 @@ public class ImpressionsManagerTest {
         ImpressionsManagerImpl treatmentLog = ImpressionsManagerImpl.instanceForTest(null, config, senderMock, storageMock);
 
         // These 4 unique test name will cause 4 entries but we are caping at the first 3.
-        KeyImpression ki1 = keyImpression("test1", "adil", "on", 1L, 1L);
-        KeyImpression ki2 = keyImpression("test1", "adil", "on", 2L, 1L);
-        KeyImpression ki3 = keyImpression("test1", "pato", "on", 3L, 1L);
-        KeyImpression ki4 = keyImpression("test1", "pato", "on", 4L, 1L);
+        KeyImpression ki1 = keyImpression("test1", "adil", 1L, 1L);
+        KeyImpression ki2 = keyImpression("test1", "adil", 2L, 1L);
+        KeyImpression ki3 = keyImpression("test1", "pato", 3L, 1L);
+        KeyImpression ki4 = keyImpression("test1", "pato", 4L, 1L);
 
         treatmentLog.log(new Impression(ki1.keyName, null, ki1.feature, ki1.treatment, ki1.time, null, 1L, null));
         treatmentLog.log(new Impression(ki2.keyName, null, ki2.feature, ki2.treatment, ki2.time, null, 1L, null));
@@ -144,11 +143,11 @@ public class ImpressionsManagerTest {
         verify(senderMock, never()).post(impressionsCaptor.capture());
     }
 
-    private KeyImpression keyImpression(String feature, String key, String treatment, long time, Long changeNumber) {
+    private KeyImpression keyImpression(String feature, String key, long time, Long changeNumber) {
         KeyImpression result = new KeyImpression();
         result.feature = feature;
         result.keyName = key;
-        result.treatment = treatment;
+        result.treatment = "on";
         result.time = time;
         result.changeNumber = changeNumber;
         return result;

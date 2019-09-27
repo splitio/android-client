@@ -17,10 +17,9 @@ public class FileHelper {
 
     public List<Split> loadAndParseSplitChangeFile (String name) {
         try {
-            String content = loadFileContent(name);;
+            String content = loadFileContent(name);
             SplitChange change = Json.fromJson(content, SplitChange.class);
-            List<Split> splits = change.splits;
-            return splits;
+            return change.splits;
         } catch (Exception e) {
         }
         return null;
