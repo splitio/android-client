@@ -359,6 +359,21 @@ public class ImpressionsStorageTest {
 
     }
 
+    @Test
+    public void loadEmptyJsonLFile() throws IOException {
+        ImpressionsStorageManagerConfig config = new ImpressionsStorageManagerConfig();
+        config.setImpressionsMaxSentAttempts(MAX_ATTEMPTS);
+        config.setImpressionsChunkOudatedTime(OUTDATED_LIMIT);
+        mStorage.write("SPLITIO.impressions_chunk_id_1.jsonl", "");
+        ImpressionsStorageManager manager = new ImpressionsStorageManager(mStorage, config);
+        List<StoredImpressions> imp = manager.getStoredImpressions();
+
+        Assert.assertNotNull(imp);
+        Assert.assertEquals(0, imp.size());
+
+
+    }
+
     // Helpers
     private void populateManager(int chunks, ImpressionsStorageManager manager) {
         for (int i = 0; i < chunks; i++) {

@@ -257,6 +257,17 @@ public class TrackStorageTest {
         Assert.assertEquals(0, memStorage.getAllIds().length);
     }
 
+    @Test
+    public void loadEmptyJsonLFile() throws IOException {
+        mStorage.write("SPLITIO.events_chunk_id_1.jsonl","");
+        TrackStorageManager manager = new TrackStorageManager(mStorage);
+        List<EventsChunk> chunk = manager.getEventsChunks();
+
+        Assert.assertNotNull(chunk);
+        Assert.assertEquals(0, chunk.size());
+
+    }
+
     // Helpers
     private void populateStorageWithLegacyFile(int[][] chunksData, ITrackStorage storage) throws IOException {
 

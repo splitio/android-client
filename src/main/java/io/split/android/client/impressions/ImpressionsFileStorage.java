@@ -72,7 +72,7 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
                     impressionsChunk.addImpressions(testImpressions);
                 }
 
-                if(impressionsChunk.impressions().size() > 0) {
+                if(impressionsChunk != null && impressionsChunk.impressions() != null && impressionsChunk.impressions().size() > 0) {
                     impressions.put(impressionsChunk.id(), impressionsChunk);
                 }
                 _fileStorageHelper.logIfScannerException(scanner, "An error occurs parsing track events from JsonL files");
