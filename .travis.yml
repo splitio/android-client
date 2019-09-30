@@ -15,4 +15,4 @@ android:
     - google-gdk-license-.+
 
 script:
-  - ./gradlew build connectedCheck
+  - ./gradlew test
