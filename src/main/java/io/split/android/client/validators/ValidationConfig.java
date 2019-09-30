@@ -10,7 +10,7 @@ public class ValidationConfig {
 
     private int mMaximumKeyLength = 250;
     private String mTrackEventNamePattern = "^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$";
-    private int maximumEventPropertyBytes = 32768;
+    private  static final int maximumEventPropertyBytes = 32768;
 
     public static ValidationConfig getInstance() {
         return mInstance;

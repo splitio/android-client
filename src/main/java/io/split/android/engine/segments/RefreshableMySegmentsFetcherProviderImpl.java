@@ -4,7 +4,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.utils.Logger;
@@ -20,28 +19,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class RefreshableMySegmentsFetcherProviderImpl implements RefreshableMySegmentsFetcherProvider {
 
-    private final MySegmentsFetcher _mySegmentsFetcher;
-    private final AtomicLong _refreshEveryNSeconds;
-
     private final Object _lock = new Object();
     private final PausableScheduledThreadPoolExecutor _scheduledExecutorService;
     private RefreshableMySegments _mySegments;
-    private String _matchingKey;
-    private final ISplitEventsManager _eventsManager;
 
 
     public RefreshableMySegmentsFetcherProviderImpl(MySegmentsFetcher mySegmentsFetcher, long refreshEveryNSeconds, String matchingKey, ISplitEventsManager eventsManager) {
-        _mySegmentsFetcher = mySegmentsFetcher;
-        checkNotNull(_mySegmentsFetcher);
 
-        _matchingKey = matchingKey;
-        checkNotNull(_matchingKey);
+        checkNotNull(mySegmentsFetcher);
+        checkNotNull(matchingKey);
 
-        _eventsManager = eventsManager;
-        checkNotNull(_eventsManager);
+        checkNotNull(eventsManager);
 
         checkArgument(refreshEveryNSeconds >= 0L);
-        _refreshEveryNSeconds = new AtomicLong(refreshEveryNSeconds);
         Logger.d("RefreshableMySegmentsFetcherProviderImpl: refreshEveryNSeconds %d", refreshEveryNSeconds);
 
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
@@ -49,9 +39,9 @@ public class RefreshableMySegmentsFetcherProviderImpl implements RefreshableMySe
         threadFactoryBuilder.setNameFormat("split-mySegmentsFetcher-" + "%d");
         _scheduledExecutorService = PausableScheduledThreadPoolExecutorImpl.newSingleThreadScheduledExecutor(threadFactoryBuilder.build());
 
-        _mySegments = RefreshableMySegments.create(_matchingKey, _mySegmentsFetcher, _eventsManager);
+        _mySegments = RefreshableMySegments.create(matchingKey, mySegmentsFetcher, eventsManager);
 
-        _scheduledExecutorService.scheduleWithFixedDelay(_mySegments, 0L, _refreshEveryNSeconds.get(), TimeUnit.SECONDS);
+        _scheduledExecutorService.scheduleWithFixedDelay(_mySegments, 0L, refreshEveryNSeconds, TimeUnit.SECONDS);
 
     }
 

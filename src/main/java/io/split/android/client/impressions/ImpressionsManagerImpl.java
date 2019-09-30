@@ -22,7 +22,6 @@ import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl
 public class ImpressionsManagerImpl implements ImpressionListener, Runnable, ImpressionsManager {
 
     private final ImpressionsManagerConfig _config;
-    private final HttpClient _client;
     private final BlockingQueue<KeyImpression> _queue;
     private final PausableScheduledThreadPoolExecutor _scheduler;
     private final ImpressionsSender _impressionsSender;
@@ -34,7 +33,6 @@ public class ImpressionsManagerImpl implements ImpressionListener, Runnable, Imp
     private ImpressionsManagerImpl(HttpClient client, ImpressionsManagerConfig config, ImpressionsSender impressionsSender, ImpressionsStorageManager impressionsStorageManager) throws URISyntaxException {
 
         _config = config;
-        _client = client;
         _queue = new ArrayBlockingQueue<KeyImpression>(config.queueSize());
 
 
@@ -50,7 +48,7 @@ public class ImpressionsManagerImpl implements ImpressionListener, Runnable, Imp
         if (impressionsSender != null) {
             _impressionsSender = impressionsSender;
         } else {
-            _impressionsSender = new HttpImpressionsSender(_client, new URI(config.endpoint()), _storageManager);
+            _impressionsSender = new HttpImpressionsSender(client, new URI(config.endpoint()), _storageManager);
         }
     }
 

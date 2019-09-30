@@ -69,7 +69,6 @@ public class SplitFactoryImpl implements SplitFactory {
     private final String _apiKey;
 
 
-    private SplitEventsManager _eventsManager;
     private SDKReadinessGates gates;
 
     private TrackClient _trackClient;
@@ -117,7 +116,7 @@ public class SplitFactoryImpl implements SplitFactory {
         HttpMetrics httpMetrics = HttpMetrics.create(httpClient, eventsRootTarget);
         final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
 
-        _eventsManager = new SplitEventsManager(config);
+        SplitEventsManager _eventsManager = new SplitEventsManager(config);
         gates = new SDKReadinessGates();
 
         String dataFolderName = Utils.convertApiKeyToFolder(apiToken);

@@ -25,10 +25,10 @@ public class ValidationErrorInfo {
 
     ValidationErrorInfo(int code, String message, boolean isWarning) {
         if(!isWarning){
-            mError = new Integer(code);
+            mError = Integer.valueOf(code);
             mErrorMessage = message;
         } else {
-            mWarnings.put(new Integer(code), message);
+            mWarnings.put(Integer.valueOf(code), message);
         }
     }
 
@@ -50,12 +50,12 @@ public class ValidationErrorInfo {
 
     public void addWarning(int code, String message) {
         if(message != null) {
-            mWarnings.put(new Integer(code), message);
+            mWarnings.put(Integer.valueOf(code), message);
         }
     }
 
     public boolean hasWarning(int code) {
-        return mWarnings.get(new Integer(code)) != null;
+        return mWarnings.get(Integer.valueOf(code)) != null;
     }
 
 }

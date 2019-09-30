@@ -42,7 +42,7 @@ public class FactoryMonitorImpl implements FactoryMonitor {
     public synchronized void add(String apiKey) {
         Integer count = factories.get(apiKey);
         int newCount = (count != null ? count.intValue() : 0) + 1;
-        factories.put(apiKey, new Integer(newCount));
+        factories.put(apiKey, Integer.valueOf(newCount));
     }
 
     @Override
@@ -50,7 +50,7 @@ public class FactoryMonitorImpl implements FactoryMonitor {
         Integer count = factories.get(apiKey);
         int newCount = (count != null ? count.intValue() : 0) - 1;
         if(newCount > 0) {
-            factories.put(apiKey, new Integer(newCount));
+            factories.put(apiKey, Integer.valueOf(newCount));
         } else {
             factories.remove(apiKey);
         }

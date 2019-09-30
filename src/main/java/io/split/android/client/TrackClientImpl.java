@@ -33,7 +33,6 @@ import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
-import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.client.validators.ValidationConfig;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
@@ -68,9 +67,7 @@ public class TrackClientImpl implements TrackClient {
     private final PausableThreadPoolExecutor _consumerExecutor;
 
     private final TrackStorageManager _storageManager;
-    private final String validationTag = "track";
-
-    private final ValidationMessageLogger _validationLogger;
+    private static final String validationTag = "track";
 
     @VisibleForTesting
     public Consumer _consumer;
@@ -112,8 +109,6 @@ public class TrackClientImpl implements TrackClient {
 
         _eventQueue = eventQueue;
         _config = config;
-
-        _validationLogger = new ValidationMessageLoggerImpl();
 
         if (senderExecutor == null) {
             // Thread to send events to backend

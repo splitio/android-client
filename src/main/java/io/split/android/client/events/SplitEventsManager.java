@@ -25,10 +25,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
-    private final int QUEUE_CAPACITY = 10;
+    private final static int QUEUE_CAPACITY = 10;
 
     private SplitClientConfig _config;
 
+    // TODO: Analyze removing this annotation
+    @SuppressWarnings("FieldCanBeLocal")
     private final ScheduledExecutorService _scheduler;
 
     private ArrayBlockingQueue<SplitInternalEvent> _queue;

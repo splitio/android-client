@@ -30,6 +30,6 @@ public class HttpResponseStub implements HttpResponse {
 
     @Override
     public String getData() {
-        return null;
+        return data;
     }
 }
