@@ -54,15 +54,14 @@ public class TrackClientImplTest {
             eventClient.track(create32kbEvent());
         }
 
-        ExecutorServiceMock ex = senderExecutor;
-        int prevSubmitCount = ex.getSubmitCount();
+        int prevSubmitCount = senderExecutor.getSubmitCount();
 
         eventClient.track(create32kbEvent());
 
         latch.await(15, TimeUnit.SECONDS);
 
         Assert.assertEquals(0, prevSubmitCount);
-        Assert.assertEquals(1, ex.getSubmitCount());
+        Assert.assertEquals(1, senderExecutor.getSubmitCount());
     }
 
     @Test
@@ -86,15 +85,14 @@ public class TrackClientImplTest {
         }
 
         Thread.sleep(5000);
-        ExecutorServiceMock ex = senderExecutor;
-        int prevSubmitCount = ex.getSubmitCount();
+        int prevSubmitCount = senderExecutor.getSubmitCount();
 
         eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
 
         latch.await(5, TimeUnit.SECONDS);
 
         Assert.assertEquals(0, prevSubmitCount);
-        Assert.assertEquals(5, ex.getSubmitCount());
+        Assert.assertEquals(5, senderExecutor.getSubmitCount());
     }
 
 
@@ -118,20 +116,18 @@ public class TrackClientImplTest {
             eventClient.track(create32kbEvent());
         }
 
-        ExecutorServiceMock ex = senderExecutor;
-
         latch.await(5, TimeUnit.SECONDS);
         latch = new CountDownLatch(1);
-        ex.setLatch(latch);
+        senderExecutor.setLatch(latch);
 
-        int prevSubmitCount = ex.getSubmitCount();
+        int prevSubmitCount = senderExecutor.getSubmitCount();
 
         eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
 
         latch.await(5, TimeUnit.SECONDS);
 
         Assert.assertEquals(5, prevSubmitCount);
-        Assert.assertEquals(5, ex.getSubmitCount());
+        Assert.assertEquals(5, senderExecutor.getSubmitCount());
     }
 
     private Event create32kbEvent() {

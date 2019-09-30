@@ -94,7 +94,7 @@ public final class AttributeMatcher {
         @Override
         public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, Evaluator evaluator) {
             boolean result = _delegate.match(matchValue, bucketingKey, attributes, evaluator);
-            return (_negate) ? !result : result;
+            return _negate != result;
         }
 
         @Override

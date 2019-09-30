@@ -1,5 +1,7 @@
 package io.split.android.client.storage;
 
+import android.util.Log;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -24,7 +26,9 @@ public class FileStorage implements IStorage {
     public FileStorage(@NotNull File rootFolder, @NotNull String folderName) {
         _dataFolder = new File(rootFolder, folderName);
         if(!_dataFolder.exists()) {
-            _dataFolder.mkdir();
+            if(!_dataFolder.mkdir()) {
+                Logger.e("There was a problem creating Split cache folder");
+            }
         }
     }
 
@@ -90,7 +94,9 @@ public class FileStorage implements IStorage {
     @Override
     public void delete(String elementId) {
         File fileToDelete = new File(_dataFolder, elementId);
-        fileToDelete.delete();
+        if(!fileToDelete.delete()) {
+            Logger.e("There was a problem removing Split cache file");
+        }
     }
 
     @Override

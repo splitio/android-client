@@ -42,12 +42,10 @@ public class CombiningMatcher {
             return false;
         }
 
-        switch (_combiner) {
-            case AND:
-                return and(key, bucketingKey, attributes, evaluator);
-            default:
-                throw new IllegalArgumentException("Unknown combiner: " + _combiner);
+        if (_combiner == MatcherCombiner.AND) {
+            return and(key, bucketingKey, attributes, evaluator);
         }
+        throw new IllegalArgumentException("Unknown combiner: " + _combiner);
 
     }
 

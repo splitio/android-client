@@ -15,6 +15,7 @@ import java.util.Set;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class FileStorageTest {
 
     private static final String ROOT_FOLDER = "./build";

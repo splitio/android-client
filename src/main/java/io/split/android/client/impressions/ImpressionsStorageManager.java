@@ -126,10 +126,7 @@ public class ImpressionsStorageManager {
         if (storedImpressions.id() == null || storedImpressions.id().isEmpty()) {
             return false;
         }
-        if (storedImpressions.impressions() == null || storedImpressions.impressions().isEmpty()) {
-            return false;
-        }
-        return true;
+        return storedImpressions.impressions() != null && !storedImpressions.impressions().isEmpty();
     }
 
     private String readStringChunk(String chunkId) {
@@ -163,10 +160,7 @@ public class ImpressionsStorageManager {
     private boolean isChunkOutdated(StoredImpressions chunk) {
         long diff = System.currentTimeMillis() - chunk.getTimestamp();
 
-        if (diff > mConfig.getImpressionsChunkOudatedTime()) {
-            return true;
-        }
-        return false;
+        return diff > mConfig.getImpressionsChunkOudatedTime();
     }
 
     private void loadImpressionsFromDisk() {

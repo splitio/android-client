@@ -135,6 +135,9 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
     @Override
     public void run(){
+        // This code was intentionally designed this way
+        // TODO: Analize refactor
+        //noinspection InfiniteLoopStatement,InfiniteLoopStatement
         while(true){
             triggerEventsWhenAreAvailable();
         }

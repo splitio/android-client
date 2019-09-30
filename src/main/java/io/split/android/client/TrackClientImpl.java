@@ -295,6 +295,9 @@ public class TrackClientImpl implements TrackClient {
 
             long totalSizeInBytes = 0;
             try {
+                // This code was intentionally designed this way
+                // TODO: Analize refactor
+                //noinspection InfiniteLoopStatement,InfiniteLoopStatement
                 while (true) {
                     Event event = _eventQueue.take();
 
