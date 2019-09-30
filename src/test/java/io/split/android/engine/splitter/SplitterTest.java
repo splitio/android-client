@@ -124,8 +124,8 @@ public class SplitterTest {
         int min = (int) (mean - 4 * stddev);
         int max = (int) (mean + 4 * stddev);
 
-        for (int i = 0; i < treatments.length; i++) {
-            assertThat(String.format("Value: " + treatments[i] + " is out of range [%s, %s]", min, max), treatments[i] >= min && treatments[i] <= max, is(true));
+        for (int treatment : treatments) {
+            assertThat(String.format("Value: " + treatment + " is out of range [%s, %s]", min, max), treatment >= min && treatment <= max, is(true));
         }
     }
 

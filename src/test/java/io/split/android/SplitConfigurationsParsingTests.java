@@ -103,7 +103,7 @@ public class SplitConfigurationsParsingTests {
         Map<String, Object> booleanValue = jsonObj(split.configurations.get("boolean"));
 
         Assert.assertNotNull(split);
-        Assert.assertEquals(Double.valueOf(20576.85), doubleValue.get("c1"));
+        Assert.assertEquals(20576.85, doubleValue.get("c1"));
         Assert.assertEquals("v1", stringValue.get("c1"));
         Assert.assertEquals(123456, ((Double) intValue.get("c1")).intValue());
         Assert.assertEquals(false, booleanValue.get("c1"));
@@ -122,7 +122,7 @@ public class SplitConfigurationsParsingTests {
         Map<String, Object> nested4 = (Map<String, Object>) nested3.get("nested4");
 
         Assert.assertNotNull(split);
-        Assert.assertEquals(Double.valueOf(10), config1.get("f1"));
+        Assert.assertEquals(10d, config1.get("f1"));
         Assert.assertEquals("v2", config1.get("f2"));
 
         Assert.assertNotNull(nested1);
@@ -135,7 +135,7 @@ public class SplitConfigurationsParsingTests {
         Assert.assertEquals("nval2", nested2.get("nv2"));
         Assert.assertEquals("nval3", nested4.get("nv2"));
 
-        Assert.assertEquals(Double.valueOf(10.20), config2.get("f1"));
+        Assert.assertEquals(10.20, config2.get("f1"));
         Assert.assertEquals(true, config2.get("f2"));
     }
 

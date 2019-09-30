@@ -1,7 +1,5 @@
 package io.split.android.client.storage;
 
-import android.util.Log;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

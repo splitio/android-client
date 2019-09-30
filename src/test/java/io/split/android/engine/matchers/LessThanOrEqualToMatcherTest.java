@@ -17,9 +17,9 @@ public class LessThanOrEqualToMatcherTest {
         LessThanOrEqualToMatcher matcher = new LessThanOrEqualToMatcher(10, DataType.NUMBER);
         assertThat(matcher.match(null, null, null, null), is(false));
         assertThat(matcher.match(1, null, null, null), is(true));
-        assertThat(matcher.match(new Long(-1), null, null, null), is(true));
+        assertThat(matcher.match((long) -1, null, null, null), is(true));
         assertThat(matcher.match(9, null, null, null), is(true));
-        assertThat(matcher.match(new Long(10), null, null, null), is(true));
+        assertThat(matcher.match(10L, null, null, null), is(true));
         assertThat(matcher.match(11, null, null, null), is(false));
         assertThat(matcher.match(100, null, null, null), is(false));
     }
@@ -29,9 +29,9 @@ public class LessThanOrEqualToMatcherTest {
         LessThanOrEqualToMatcher matcher = new LessThanOrEqualToMatcher(-10, DataType.NUMBER);
         assertThat(matcher.match(null, null, null, null), is(false));
         assertThat(matcher.match(1, null, null, null), is(false));
-        assertThat(matcher.match(new Long(-1), null, null, null), is(false));
+        assertThat(matcher.match((long) -1, null, null, null), is(false));
         assertThat(matcher.match(9, null, null, null), is(false));
-        assertThat(matcher.match(new Long(10), null, null, null), is(false));
+        assertThat(matcher.match(10L, null, null, null), is(false));
         assertThat(matcher.match(11, null, null, null), is(false));
         assertThat(matcher.match(-9, null, null, null), is(false));
         assertThat(matcher.match(-10, null, null, null), is(true));

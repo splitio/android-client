@@ -33,7 +33,6 @@ import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
-import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.client.validators.ValidationConfig;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;

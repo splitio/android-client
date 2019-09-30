@@ -118,7 +118,7 @@ public class SplitCache implements ISplitCache {
 
         String lowercaseName = name.toLowerCase();
         int count = countForTrafficType(lowercaseName);
-        mTrafficTypes.put(lowercaseName, Integer.valueOf(++count));
+        mTrafficTypes.put(lowercaseName, ++count);
     }
 
     private void removeTrafficType(@NotNull String name) {
@@ -129,7 +129,7 @@ public class SplitCache implements ISplitCache {
 
         int count = countForTrafficType(lowercaseName);
         if(count > 1) {
-            mTrafficTypes.put(lowercaseName, Integer.valueOf(--count));
+            mTrafficTypes.put(lowercaseName, --count);
         } else {
             mTrafficTypes.remove(lowercaseName);
         }
@@ -139,7 +139,7 @@ public class SplitCache implements ISplitCache {
         int count = 0;
         Integer countValue = mTrafficTypes.get(name);
         if(countValue != null) {
-            count = countValue.intValue();
+            count = countValue;
         }
         return count;
     }

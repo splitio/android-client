@@ -430,8 +430,8 @@ public class ImpressionsStorageTest {
 
     private int getSum(int[] values) {
         int sum = 0;
-        for (int i = 0; i < values.length; i++) {
-            sum += values[i];
+        for (int value : values) {
+            sum += value;
         }
         return sum;
     }

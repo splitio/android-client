@@ -101,7 +101,7 @@ public class HttpRequestImpl implements HttpRequest {
                     connection.getInputStream()));
 
             String inputLine;
-            StringBuffer responseData = new StringBuffer();
+            StringBuilder responseData = new StringBuilder();
             while ((inputLine = in.readLine()) != null) {
                 responseData.append(inputLine);
             }

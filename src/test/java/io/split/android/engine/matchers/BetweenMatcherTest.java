@@ -24,7 +24,7 @@ public class BetweenMatcherTest {
         for (int i = start; i <= end; i++) {
             assertThat(matcher.match(i, null, null, null), is(true));
         }
-        assertThat(matcher.match(new Long(start - 1), null, null, null), is(false));
+        assertThat(matcher.match((long) (start - 1), null, null, null), is(false));
         assertThat(matcher.match(end + 1, null, null, null), is(false));
     }
 

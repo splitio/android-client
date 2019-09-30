@@ -7,7 +7,6 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -170,10 +169,7 @@ public class HashingTest {
         BitSet bitset = new BitSet();
 
         int i = 0;
-        Iterator<String> iter = keys.iterator();
-        while (iter.hasNext()) {
-            String key = iter.next();
-
+        for (String key : keys) {
             if (hash.hash(seed1, key) == hash.hash(seed2, key)) {
                 bitset.set(i);
             }
