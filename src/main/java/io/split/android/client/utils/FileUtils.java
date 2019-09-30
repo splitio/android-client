@@ -32,6 +32,7 @@ public class FileUtils {
         StringBuilder sb = new StringBuilder();
         String line;
 
+        //noinspection ConstantConditions
         if (reader != null) {
             while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");

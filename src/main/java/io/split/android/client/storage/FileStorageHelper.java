@@ -19,11 +19,11 @@ import io.split.android.client.utils.MemoryUtilsImpl;
 
 public class FileStorageHelper {
 
-    public static final String LINE_SEPARATOR = System.getProperty("line.separator");
+    public static final String LINE_SEPARATOR = System.getProperty("line.separator") != null ? System.getProperty("line.separator") : "\n";
     public static final String UTF8_CHARSET = "UTF-8";
     private static final int MEMORY_ALLOCATION_TIMES = 2;
 
-    private MemoryUtils mMemoryUtils;
+    private final MemoryUtils mMemoryUtils;
 
     public FileStorageHelper() {
         this(new MemoryUtilsImpl());

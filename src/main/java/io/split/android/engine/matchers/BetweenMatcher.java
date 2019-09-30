@@ -17,6 +17,7 @@ public class BetweenMatcher implements Matcher {
 
     private final DataType _dataType;
 
+    @SuppressWarnings("ConstantConditions")
     public BetweenMatcher(long start, long end, DataType dataType) {
         _start = start;
         _end = end;

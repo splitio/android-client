@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@SuppressWarnings("ConstantConditions")
 public class ExecutorServiceMock implements ExecutorService {
     private int mSubmitCount = 0;
     private CountDownLatch mLatch;

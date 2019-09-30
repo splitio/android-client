@@ -15,6 +15,7 @@ public class LessThanOrEqualToMatcher implements Matcher {
         _dataType = dataType;
 
         if (_dataType == DataType.DATETIME) {
+            //noinspection ConstantConditions
             _normalizedCompareTo = Transformers.asDateHourMinute(_compareTo);
         } else {
             _normalizedCompareTo = _compareTo;

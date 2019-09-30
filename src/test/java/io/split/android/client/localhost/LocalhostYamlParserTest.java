@@ -7,6 +7,7 @@ import java.util.Map;
 import io.split.android.client.dtos.Split;
 import io.split.android.helpers.ResourcesFileStorage;
 
+@SuppressWarnings("ConstantConditions")
 public class LocalhostYamlParserTest {
 
     LocalhostFileParser parser;

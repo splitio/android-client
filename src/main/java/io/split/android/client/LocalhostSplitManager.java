@@ -88,7 +88,7 @@ public final class LocalhostSplitManager implements SplitManager {
         Map<String, Split> splits = new HashMap<>();
         for (Map.Entry<String, Split> entry : mFeatureToTreatmentMap.entrySet()) {
             String splitNameOnly = mLocalhostGrammar.getSplitName(entry.getKey());
-            if(splitNameOnly != null && (splitName == null || (splitName != null && splitName.equals(splitNameOnly)))) {
+            if(splitNameOnly != null && (splitName == null || splitName.equals(splitNameOnly))) {
                 List<String> treatments = treatmentsForSplit.get(splitNameOnly);
                 if(treatments == null) {
                     Split split = new Split();
@@ -103,7 +103,7 @@ public final class LocalhostSplitManager implements SplitManager {
                     Split split = splits.get(splitNameOnly);
                     Split entrySplit = entry.getValue();
                     if(entrySplit.configurations != null) {
-                        if(split.configurations == null) {
+                        if(split != null && split.configurations == null) {
                             split.configurations = new HashMap<>();
                         }
                         split.configurations.putAll(entrySplit.configurations);

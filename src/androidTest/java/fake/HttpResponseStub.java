@@ -2,6 +2,7 @@ package fake;
 
 import io.split.android.client.network.HttpResponse;
 
+@SuppressWarnings("ConstantConditions")
 public class HttpResponseStub implements HttpResponse {
 
     private boolean isSuccess;

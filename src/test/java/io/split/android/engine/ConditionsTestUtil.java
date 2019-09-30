@@ -73,7 +73,6 @@ public class ConditionsTestUtil {
         matcher.matcherType = matcherType;
         matcher.negate = negate;
         matcher.whitelistMatcherData = whitelistMatcherData;
-        matcher.negate = negate;
         return matcher;
     }
 

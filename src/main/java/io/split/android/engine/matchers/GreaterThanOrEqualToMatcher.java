@@ -19,6 +19,7 @@ public class GreaterThanOrEqualToMatcher implements Matcher {
         _dataType = dataType;
 
         if (_dataType == DataType.DATETIME) {
+            //noinspection ConstantConditions
             _normalizedCompareTo = asDateHourMinute(_compareTo);
         } else {
             _normalizedCompareTo = _compareTo;

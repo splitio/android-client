@@ -11,6 +11,7 @@ public class EqualToMatcher implements Matcher {
     private final long _normalizedCompareTo;
     private final DataType _dataType;
 
+    @SuppressWarnings("ConstantConditions")
     public EqualToMatcher(long compareTo, DataType dataType) {
         _compareTo = compareTo;
         _dataType = dataType;

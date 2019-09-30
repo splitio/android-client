@@ -72,7 +72,7 @@ public final class ParsedCondition {
         boolean result = _matcher.equals(other._matcher);
 
         if (!result) {
-            return result;
+            return false;
         }
 
         if (_partitions.size() != other._partitions.size()) {

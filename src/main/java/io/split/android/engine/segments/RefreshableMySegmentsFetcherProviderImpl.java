@@ -48,10 +48,6 @@ public class RefreshableMySegmentsFetcherProviderImpl implements RefreshableMySe
     @Override
     public MySegments mySegments() {
         synchronized (_lock) {
-            if (_mySegments != null) {
-                return _mySegments;
-            }
-
             return _mySegments;
         }
     }

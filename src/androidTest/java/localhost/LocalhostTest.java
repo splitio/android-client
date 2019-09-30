@@ -19,6 +19,7 @@ import io.split.android.client.LocalhostSplitManager;
 import io.split.android.client.SplitResult;
 import io.split.android.client.api.SplitView;
 
+@SuppressWarnings("ConstantConditions")
 public class LocalhostTest {
 
     @Before

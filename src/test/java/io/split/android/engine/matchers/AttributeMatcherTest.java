@@ -114,6 +114,7 @@ public class AttributeMatcherTest {
         AttributeMatcher matcher = new AttributeMatcher(null, new WhitelistMatcher(Lists.newArrayList("trial")), false);
 
         Map<String, Object> nullMap = Maps.newHashMap();
+        //noinspection ConstantConditions
         nullMap.put("planType", null);
 
         assertThat(matcher.match("trial", null, ImmutableMap.of("planType", "trial"), null), is(true));

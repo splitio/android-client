@@ -381,9 +381,11 @@ public class TrackClientImpl implements TrackClient {
                         Logger.d("Caching events to next iteration");
 
                         //Saving events to disk
-                        mChunk.addAtempt();
-                        if (mChunk.getAttempt() < mMaxSentAttempts) {
-                            shouldSaveEvents = true;
+                        if(mChunk != null) {
+                            mChunk.addAtempt();
+                            if (mChunk.getAttempt() < mMaxSentAttempts) {
+                                shouldSaveEvents = true;
+                            }
                         }
                     }
                 } catch (HttpException e) {

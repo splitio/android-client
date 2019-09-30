@@ -13,6 +13,7 @@ import java.util.Map;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.utils.Json;
 
+@SuppressWarnings("ConstantConditions")
 public class SplitConfigurationsParsingTests {
 
     @Test

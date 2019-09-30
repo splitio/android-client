@@ -29,6 +29,7 @@ import io.split.android.fake.SplitFetcherStub;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 
+@SuppressWarnings("ConstantConditions")
 public class TreatmentManagerTest {
 
     SplitFetcher splitFetcher;

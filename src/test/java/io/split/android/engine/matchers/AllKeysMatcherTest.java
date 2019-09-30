@@ -13,6 +13,7 @@ import static org.junit.Assert.assertThat;
  */
 public class AllKeysMatcherTest {
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void works() {
         AllKeysMatcher matcher = new AllKeysMatcher();

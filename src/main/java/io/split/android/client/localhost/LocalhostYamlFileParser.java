@@ -49,29 +49,30 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
             for (Object loadedSplit : loadedSplits) {
                 Map<String, Object> parsedSplit = (Map<String, Object>) loadedSplit;
                 Object[] splitNameContainer = parsedSplit.keySet().toArray();
-                if (splitNameContainer.length > 0) {
+                if (splitNameContainer != null && splitNameContainer.length > 0) {
                     String splitName = (String) splitNameContainer[0];
                     Map<String, String> splitMap = (Map<String, String>) parsedSplit.get(splitName);
+                    if (splitMap != null) {
+                        List<String> keys = parseKeys(splitMap.get(KEYS_FIELD));
+                        int count = (keys != null ? keys.size() : 1);
+                        for (int i = 0; i < count; i++) {
+                            Split split = new Split();
+                            String key = (keys != null ? keys.get(i) : null);
+                            split.name = mLocalhostGrammar.buildSplitKeyName(splitName, key);
+                            split.defaultTreatment = splitMap.get(TREATMENT_FIELD);
 
-                    List<String> keys = parseKeys(splitMap.get(KEYS_FIELD));
-                    int count = (keys != null ? keys.size() : 1);
-                    for(int i = 0; i < count; i++) {
-                        Split split = new Split();
-                        String key = (keys != null ? keys.get(i) : null);
-                        split.name = mLocalhostGrammar.buildSplitKeyName(splitName, key);
-                        split.defaultTreatment = splitMap.get(TREATMENT_FIELD);
-
-                        if (split.defaultTreatment == null) {
-                            Logger.e("Parsing Localhost Split " + split.name + "does not have a treatment value. Using control");
-                            split.defaultTreatment = Treatments.CONTROL;
+                            if (split.defaultTreatment == null) {
+                                Logger.e("Parsing Localhost Split " + split.name + "does not have a treatment value. Using control");
+                                split.defaultTreatment = Treatments.CONTROL;
+                            }
+                            String config = splitMap.get(CONFIG_FIELD);
+                            if (config != null) {
+                                Map<String, String> configs = new HashMap<>();
+                                configs.put(split.defaultTreatment, config);
+                                split.configurations = configs;
+                            }
+                            splits.put(split.name, split);
                         }
-                        String config = splitMap.get(CONFIG_FIELD);
-                        if (config != null) {
-                            Map<String, String> configs = new HashMap<>();
-                            configs.put(split.defaultTreatment, config);
-                            split.configurations = configs;
-                        }
-                        splits.put(split.name, split);
                     }
                 }
             }

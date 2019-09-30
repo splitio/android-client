@@ -150,7 +150,7 @@ public class ImpressionsStorageManager {
         }
 
         StoredImpressions failedChunk = mImpressionsToSend.get(chunkId);
-        if (failedChunk.getAttempts() >= mConfig.getImpressionsMaxSentAttempts() || isChunkOutdated(failedChunk)) {
+        if (failedChunk != null && failedChunk.getAttempts() >= mConfig.getImpressionsMaxSentAttempts() || isChunkOutdated(failedChunk)) {
             mImpressionsToSend.remove(chunkId);
         } else {
             failedChunk.addAttempt();

@@ -14,7 +14,7 @@ import java.nio.charset.Charset;
 
 import io.split.android.engine.splitter.Splitter;
 
-@SuppressWarnings("UnstableApiUsage")
+@SuppressWarnings({"UnstableApiUsage", "ConstantConditions"})
 public class HashConsistencyTest {
     @Test
     public void testLegacyHashAlphaNum() throws IOException {
