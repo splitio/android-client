@@ -36,7 +36,7 @@ public class MemoryStorage implements IStorage {
     @Override
     public String[] getAllIds() {
         Set<String> allIds = _storage.keySet();
-        return allIds.toArray(new String[0]);
+        return (String[]) allIds.toArray();
     }
 
     @Override
