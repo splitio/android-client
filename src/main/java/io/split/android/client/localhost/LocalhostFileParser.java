@@ -1,4 +1,4 @@
-package io.split.android.client.Localhost;
+package io.split.android.client.localhost;
 import java.util.Map;
 import io.split.android.client.dtos.Split;
 

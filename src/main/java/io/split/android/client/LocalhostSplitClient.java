@@ -3,7 +3,7 @@ package io.split.android.client;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 
-import io.split.android.client.Localhost.LocalhostGrammar;
+import io.split.android.client.localhost.LocalhostGrammar;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;

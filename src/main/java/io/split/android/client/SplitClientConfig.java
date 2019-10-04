@@ -592,20 +592,22 @@ public class SplitClientConfig {
         }
 
         public SplitClientConfig build() {
-            if (_featuresRefreshRate < 30 ) {
-                throw new IllegalArgumentException("featuresRefreshRate must be >= 30: " + _featuresRefreshRate);
-            }
+            if(!BuildConfig.DEBUG) {
+                if (_featuresRefreshRate < 30) {
+                    throw new IllegalArgumentException("featuresRefreshRate must be >= 30: " + _featuresRefreshRate);
+                }
 
-            if (_segmentsRefreshRate < 30) {
-                throw new IllegalArgumentException("segmentsRefreshRate must be >= 30: " + _segmentsRefreshRate);
-            }
+                if (_segmentsRefreshRate < 30) {
+                    throw new IllegalArgumentException("segmentsRefreshRate must be >= 30: " + _segmentsRefreshRate);
+                }
 
-            if (_impressionsRefreshRate < 30) {
-                throw new IllegalArgumentException("impressionsRefreshRate must be >= 30: " + _impressionsRefreshRate);
-            }
+                if (_impressionsRefreshRate < 30) {
+                    throw new IllegalArgumentException("impressionsRefreshRate must be >= 30: " + _impressionsRefreshRate);
+                }
 
-            if (_metricsRefreshRate < 30) {
-                throw new IllegalArgumentException("metricsRefreshRate must be >= 30: " + _metricsRefreshRate);
+                if (_metricsRefreshRate < 30) {
+                    throw new IllegalArgumentException("metricsRefreshRate must be >= 30: " + _metricsRefreshRate);
+                }
             }
 
             if (_impressionsQueueSize <=0 ) {

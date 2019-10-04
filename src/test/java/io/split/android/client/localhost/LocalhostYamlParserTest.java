@@ -1,4 +1,4 @@
-package io.split.android.client.Localhost;
+package io.split.android.client.localhost;
 
 import junit.framework.Assert;
 import org.junit.Before;
