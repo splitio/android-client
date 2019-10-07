@@ -28,7 +28,7 @@ To run tests, select the Split android-client on Android Studio project, click w
 
 ### Linting and other useful checks
 
-To run Android Linter, go to Analyze menu in Android Studio and select Inspect Code option. Select your preferred linter options and the click on Ok button.
+To run Android Linter, go to Analyze menu in Android Studio and select Inspect Code option. Select your preferred linter options and then click on Ok button.
 
 # Contact
 
