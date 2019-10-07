@@ -52,11 +52,9 @@ public class TrackTest {
     ArrayList<String> mJsonChanges = null;
     ArrayList<CountDownLatch> mLatchs;
     ArrayList<List<Event>> mEventsHits;
-    boolean isFirstChangesReq;
 
     @Before
     public void setup() {
-        isFirstChangesReq = true;
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mCurReqId = 0;
         mLatchs = new ArrayList<>();
@@ -83,12 +81,6 @@ public class TrackTest {
                     return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[]}");
 
                 } else if (request.getPath().contains("/splitChanges")) {
-                    if(isFirstChangesReq) {
-                        isFirstChangesReq = false;
-                        String change = mJsonChanges.get(0);
-                        return new MockResponse().setResponseCode(200)
-                                .setBody(change);
-                    }
                     return new MockResponse().setResponseCode(200)
                             .setBody(emptyChanges());
 
