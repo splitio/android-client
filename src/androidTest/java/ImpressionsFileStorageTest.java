@@ -57,11 +57,6 @@ public class ImpressionsFileStorageTest {
 
         AtomicBoolean saved = new AtomicBoolean(false);
         AtomicBoolean generate = new AtomicBoolean(true);
-        TrackClientConfig config = new TrackClientConfig();
-        config.setMaxQueueSize(100000);
-        config.setFlushIntervalMillis(100000);
-        config.setWaitBeforeShutdown(100000);
-        config.setMaxEventsPerPost(200000);
 
         final ImpressionsManagerImpl impressionsManager = ImpressionsManagerImpl.instance(
                 new HttpClientStub(),
