@@ -9,7 +9,7 @@ public class SplitHelper {
         Map<String, String> config = new HashMap<>();
         int i = 0;
         for(String treatment : treatments) {
-            if(i > config.size() - 1) {
+            if(i > configs.size() - 1) {
                 return config;
             }
             config.put(treatment, configs.get(i));
