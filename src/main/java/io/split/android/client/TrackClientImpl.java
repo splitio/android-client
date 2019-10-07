@@ -345,11 +345,9 @@ public class TrackClientImpl implements TrackClient {
         }
 
         private List<Event> eventsCopy() {
-            List<Event> newList;
             synchronized (events) {
-                newList = new ArrayList<>(events);
+                return new ArrayList<>(events);
             }
-            return newList;
         }
 
         synchronized public void saveToDisk(){
