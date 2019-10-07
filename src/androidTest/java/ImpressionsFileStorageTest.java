@@ -87,7 +87,7 @@ public class ImpressionsFileStorageTest {
                             Thread.sleep(250);
                         } catch (InterruptedException e) {
                         }
-                        storageManager.saveToDisk();
+                        impressionsManager.saveToDisk();
                     }
                     saved.set(true);
                     generate.set(false);

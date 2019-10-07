@@ -74,9 +74,7 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
 
     public void write(Map<String, EventsChunk> tracks) {
         ArrayList<EventsChunk> savingTracks;
-        synchronized (tracks) {
-            savingTracks = new ArrayList<>(tracks.values());
-        }
+        savingTracks = new ArrayList<>(tracks.values());
         for (EventsChunk chunk : savingTracks) {
             FileWriter fileWriter = null;
             List<Event> events = chunk.getEvents();
