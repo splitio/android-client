@@ -19,17 +19,14 @@ Split SDK is an open source project and we welcome feedback and contribution. Th
 11. Keep an eye out for any feedback or comments from Split's SDK team.
 
 ### Building the SDK
-Instructions on how to build this library  
 
 In Android Studio select Build menu and choose Make Project option.
 
 ### Running tests
-Instructions on how to run automated tests
 
 To run tests, select the Split android-client on Android Studio project, click with two fingers and choose Run all option.
 
 ### Linting and other useful checks
-Instructions on how to run the static code analysis tool of the project, as well as any other checks you may have available.
 
 To run Android Linter, go to Analyze menu in Android Studio and select Inspect Code option. Select your preferred linter options and the click on Ok button.
 
