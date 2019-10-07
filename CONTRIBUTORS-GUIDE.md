@@ -21,56 +21,17 @@ Split SDK is an open source project and we welcome feedback and contribution. Th
 ### Building the SDK
 Instructions on how to build this library  
 
-```
-String apikey = "API_KEY";
-SplitClientConfig config = SplitClientConfig.builder()
-        .build();
-// User Key
-String matchingKey = "CUSTOMER_ID";
-Key key = new Key(matchingKey, null);
-
-SplitClient splitClient = null;
-try {
-    // Create a Split factory
-    SplitFactory splitFactory = SplitFactoryBuilder.build(apikey, key, config, getApplicationContext());
-    // Get Split Client instance
-    splitClient = splitFactory.client();
-} catch (Exception e) {
-    e.printStackTrace();
-}
-
-final SplitClient client = splitClient;
-splitClient.on(SplitEvent.SDK_READY, new SplitEventTask(){
-
-    public void onPostExecution(SplitClient client) {
-        Log.i("TAG", "Do some NO UI work");
-        String treatment = client.getTreatment("SPLIT_NAME");
-
-        if (treatment.equals("on")) {
-            Log.i("TAG", "I'm ON    ");
-        } else if (treatment.equals("off")) {
-            Log.i("TAG", "I'm OFF");
-        } else {
-            Log.i("TAG", "CONTROL was returned, there was an error");
-        }
-    }
-
-    public void onPostExecutionView(SplitClient client) {
-        Log.i("TAG", "Do some UI work");
-    }
-
-});
-```
+In Android Studio select Build menu and choose Make Project option.
 
 ### Running tests
 Instructions on how to run automated tests
 
-To run tests, select the Split android-client project, click with two fingers and choose "Run all" option.
+To run tests, select the Split android-client on Android Studio project, click with two fingers and choose Run all option.
 
 ### Linting and other useful checks
 Instructions on how to run the static code analysis tool of the project, as well as any other checks you may have available.
 
-ADD CONTENT
+To run Android Linter, go to Analyze menu in Android Studio and select Inspect Code option. Select your preferred linter options and the click on Ok button.
 
 # Contact
 
