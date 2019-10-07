@@ -47,7 +47,6 @@ public class TracksFileStorageTest {
     public void test() throws URISyntaxException, InterruptedException {
 
         CountDownLatch endLatch = new CountDownLatch(1);
-        final String FILE_PREFIX = "SPLITIO.events_chunk_id_";
         File rootFolder = InstrumentationRegistry.getInstrumentation().getContext().getCacheDir();
         File folder = new File(rootFolder, "test_folder");
         if(folder.exists()) {
