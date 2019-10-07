@@ -10,6 +10,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,23 +73,25 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
     }
 
     public void write(Map<String, EventsChunk> tracks) {
+        ArrayList<EventsChunk> savingTracks;
         synchronized (tracks) {
-            for (EventsChunk chunk : tracks.values()) {
-                FileWriter fileWriter = null;
-                List<Event> events = chunk.getEvents();
-                if (events != null && events.size() > 0) {
-                    try {
-                        fileWriter = _fileStorageHelper.fileWriterFrom(_dataFolder, String.format(FILE_NAME_TEMPLATE, chunk.getId()));
-                        ChunkHeader chunkHeader = new ChunkHeader(chunk.getId(), chunk.getAttempt());
-                        _fileStorageHelper.writeChunkHeaderLine(chunkHeader, fileWriter);
-                        for (Event event : events) {
-                            writeEventLine(event, fileWriter);
-                        }
-                    } catch (IOException e) {
-                        Logger.e("Error writing track events chunk: " + FILE_NAME_TEMPLATE + ": " + e.getLocalizedMessage());
-                    } finally {
-                        _fileStorageHelper.closeFileWriter(fileWriter);
+            savingTracks = new ArrayList<>(tracks.values());
+        }
+        for (EventsChunk chunk : savingTracks) {
+            FileWriter fileWriter = null;
+            List<Event> events = chunk.getEvents();
+            if (events != null && events.size() > 0) {
+                try {
+                    fileWriter = _fileStorageHelper.fileWriterFrom(_dataFolder, String.format(FILE_NAME_TEMPLATE, chunk.getId()));
+                    ChunkHeader chunkHeader = new ChunkHeader(chunk.getId(), chunk.getAttempt());
+                    _fileStorageHelper.writeChunkHeaderLine(chunkHeader, fileWriter);
+                    for (Event event : events) {
+                        writeEventLine(event, fileWriter);
                     }
+                } catch (IOException e) {
+                    Logger.e("Error writing track events chunk: " + FILE_NAME_TEMPLATE + ": " + e.getLocalizedMessage());
+                } finally {
+                    _fileStorageHelper.closeFileWriter(fileWriter);
                 }
             }
         }

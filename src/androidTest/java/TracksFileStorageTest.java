@@ -61,11 +61,8 @@ public class TracksFileStorageTest {
 
         AtomicBoolean saved = new AtomicBoolean(false);
         AtomicBoolean generate = new AtomicBoolean(true);
-        int chunksCount = 3;
-        int maxQueueSize = 100;
-        int eventsCount = chunksCount * maxQueueSize;
         TrackClientConfig config = new TrackClientConfig();
-        config.setMaxQueueSize(maxQueueSize);
+        config.setMaxQueueSize(100000);
         config.setFlushIntervalMillis(100000);
         config.setWaitBeforeShutdown(100000);
         config.setMaxEventsPerPost(200000);
