@@ -10,6 +10,8 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +58,7 @@ public class MySegmentUpdatedTest {
         isFirstChangesReq = true;
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mCurReqId = 0;
-        mImpLatch = new CountDownLatch(1);
+        mImpLatch = new CountDownLatch(2);
         mLatchs = new ArrayList<>();
         mImpHits = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
@@ -159,6 +161,7 @@ public class MySegmentUpdatedTest {
                 .featuresRefreshRate(5)
                 .segmentsRefreshRate(5)
                 .impressionsRefreshRate(21)
+                .impressionsChunkSize(999999)
                 .enableDebug()
                 .trafficType("client")
                 .impressionListener(impListener)
@@ -188,17 +191,15 @@ public class MySegmentUpdatedTest {
         Assert.assertEquals("on_s2", treatments.get(2));
         Assert.assertEquals("no", treatments.get(3));
 
-        Assert.assertEquals(1, mImpHits.size());
-        Assert.assertEquals(4, mImpHits.get(0).keyImpressions.size());
-        KeyImpression imp0 = mImpHits.get(0).keyImpressions.get(0);
-        KeyImpression imp1 = mImpHits.get(0).keyImpressions.get(1);
-        KeyImpression imp2 = mImpHits.get(0).keyImpressions.get(2);
-        KeyImpression imp3 = mImpHits.get(0).keyImpressions.get(3);
+        List<KeyImpression> impressions = allImpressions();
+        Assert.assertEquals(4, impressions.size());
+        KeyImpression imp0 = findImpression("no");
+        KeyImpression imp1 = findImpression("on_s1");
+        KeyImpression imp2 = findImpression("on_s2");
 
-        Assert.assertEquals("no", imp0.treatment);
-        Assert.assertEquals("on_s1", imp1.treatment);
-        Assert.assertEquals("on_s2", imp2.treatment);
-        Assert.assertEquals("no", imp3.treatment);
+        Assert.assertNotNull(imp0);
+        Assert.assertNotNull(imp1);
+        Assert.assertNotNull(imp2);
     }
 
     private void loadSplitChanges() {
@@ -263,6 +264,31 @@ public class MySegmentUpdatedTest {
 
     private String emptyChanges() {
         return "{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }";
+    }
+
+    private List<KeyImpression> allImpressions() {
+        List<KeyImpression> impressions = new ArrayList<>();
+        int hitCount = mImpHits.size();
+        for (TestImpressions timp : mImpHits) {
+            for (KeyImpression imp : timp.keyImpressions) {
+                impressions.add(imp);
+            }
+        }
+        return impressions;
+    }
+
+    private KeyImpression findImpression(String treatment) {
+        List<KeyImpression> impressions = allImpressions();
+        KeyImpression imp = null;
+
+        if (impressions != null) {
+            Optional<KeyImpression> oe = impressions.stream()
+                    .filter(impression -> impression.treatment.equals(treatment)).findFirst();
+            if (oe.isPresent()) {
+                imp = oe.get();
+            }
+        }
+        return imp;
     }
 
 }

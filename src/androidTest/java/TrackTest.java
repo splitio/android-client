@@ -93,7 +93,7 @@ public class TrackTest {
                             code = 500;
                         } else {
                             List<Event> data = IntegrationHelper.buildEventsFromJson(request.getBody().readUtf8());
-                            mEventsHits.add(IntegrationHelper.buildEventsFromJson(request.getBody().readUtf8()));
+                            mEventsHits.add(data);
                             code = 200;
                         }
 
@@ -102,8 +102,8 @@ public class TrackTest {
                             mLatchs.get(index).countDown();
                         }
                     }
-
-                    return new MockResponse().setResponseCode(200);
+                    Thread.sleep(300);
+                    return new MockResponse().setResponseCode(code);
 
                 } else if (request.getPath().contains("/testImpressions/bulk")) {
                     return new MockResponse().setResponseCode(200);
@@ -210,17 +210,17 @@ public class TrackTest {
         Assert.assertEquals("custom", e1.trafficTypeName);
         Assert.assertEquals(0.0, e1.value, 0.0);
         Assert.assertEquals("event1", e1.eventTypeId);
-        Assert.assertEquals(0, e1.properties.get("value"));
+        Assert.assertEquals(0, ((Double) e1.properties.get("value")).intValue());
 
         Assert.assertEquals("custom", e2.trafficTypeName);
         Assert.assertEquals(2.0, e2.value, 0.0);
         Assert.assertEquals("event2", e2.eventTypeId);
-        Assert.assertEquals(2, e2.properties.get("value"));
+        Assert.assertEquals(2, ((Double) e2.properties.get("value")).intValue());
 
         Assert.assertEquals("custom", e3.trafficTypeName);
         Assert.assertEquals(3.0, e3.value, 0.0);
         Assert.assertEquals("event3", e3.eventTypeId);
-        Assert.assertEquals(3, e3.properties.get("value"));
+        Assert.assertEquals(3, ((Double) e3.properties.get("value")).intValue());
     }
 
     private void log(String m) {
@@ -239,9 +239,14 @@ public class TrackTest {
         Event e = null;
         int i = 0;
         while (e == null && i < 3) {
-            Optional<Event> oe = mEventsHits.get(i).stream()
-                    .filter(event -> event.eventTypeId.equals(type) && event.value == value).findFirst();
-            e = oe.get();
+            List<Event> events = mEventsHits.get(i);
+            if(events != null) {
+                Optional<Event> oe = events.stream()
+                        .filter(event -> event.eventTypeId.equals(type) && event.value == value).findFirst();
+                if(oe.isPresent()) {
+                    e = oe.get();
+                }
+            }
             i++;
         }
         return e;
