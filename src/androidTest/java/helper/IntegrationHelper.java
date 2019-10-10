@@ -17,8 +17,7 @@ public class IntegrationHelper {
 
     private final static Type EVENT_LIST_TYPE = new TypeToken<List<Event>>(){}.getType();
     private final static Type IMPRESSIONS_LIST_TYPE = new TypeToken<List<TestImpressions>>(){}.getType();
-    private final static GsonBuilder gsonBuilder = new GsonBuilder();
-    private final static Gson mGson = gsonBuilder.create();
+    private final static Gson mGson = new GsonBuilder().create();
 
     public static List<Event> buildEventsFromJson(String attributesJson) {
 
