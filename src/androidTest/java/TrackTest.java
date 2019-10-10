@@ -227,28 +227,23 @@ public class TrackTest {
         System.out.println("FACTORY_TEST: " + m);
     }
 
-    private boolean isEven(int i) {
-        return ((i + 2) % 2) == 0;
-    }
-
     private String emptyChanges() {
         return "{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }";
     }
 
     private Event findEvent(String type, Double value) {
-        Event e = null;
         int i = 0;
-        while (e == null && i < 3) {
+        while (i < 3) {
             List<Event> events = mEventsHits.get(i);
             if(events != null) {
                 Optional<Event> oe = events.stream()
                         .filter(event -> event.eventTypeId.equals(type) && event.value == value).findFirst();
                 if(oe.isPresent()) {
-                    e = oe.get();
+                    return oe.get();
                 }
             }
             i++;
         }
-        return e;
+        return null;
     }
 }

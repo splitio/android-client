@@ -6,21 +6,23 @@ import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.TestImpressions;
 
 public class IntegrationHelper {
     public static final int NEVER_REFRESH_RATE = 999999;
 
+    private final static Type EVENT_LIST_TYPE = new TypeToken<List<Event>>(){}.getType();
+    private final static Type IMPRESSIONS_LIST_TYPE = new TypeToken<List<TestImpressions>>(){}.getType();
+    private final static GsonBuilder gsonBuilder = new GsonBuilder();
+    private final static Gson mGson = gsonBuilder.create();
+
     public static List<Event> buildEventsFromJson(String attributesJson) {
 
-        GsonBuilder gsonBuilder = new GsonBuilder();
-
-        Type mapType = new TypeToken<List<Event>>(){}.getType();
-        Gson gson = gsonBuilder.create();
         List<Event> events;
         try {
-            events = gson.fromJson(attributesJson, mapType);
+            events = mGson.fromJson(attributesJson, EVENT_LIST_TYPE);
         } catch (Exception e) {
             events =  Collections.emptyList();
         }
@@ -30,17 +32,17 @@ public class IntegrationHelper {
 
     public static List<TestImpressions> buildImpressionsFromJson(String attributesJson) {
 
-        GsonBuilder gsonBuilder = new GsonBuilder();
-
-        Type mapType = new TypeToken<List<TestImpressions>>(){}.getType();
-        Gson gson = gsonBuilder.create();
         List<TestImpressions> impressions;
         try {
-            impressions = gson.fromJson(attributesJson, mapType);
+            impressions = mGson.fromJson(attributesJson, IMPRESSIONS_LIST_TYPE);
         } catch (Exception e) {
             impressions =  Collections.emptyList();
         }
 
         return impressions;
+    }
+
+    public static boolean isEven(int i) {
+        return ((i + 2) % 2) == 0;
     }
 }

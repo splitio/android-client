@@ -196,7 +196,7 @@ public class SplitChangesTest {
                 "CUSTOMER_ID", "test_feature", "on_2")));
 
         for (int i = 0; i < 4; i++) {
-            Assert.assertEquals(isEven(i) ? "on_" + i : "off_" + i, treatments.get(i));
+            Assert.assertEquals(IntegrationHelper.isEven(i) ? "on_" + i : "off_" + i, treatments.get(i));
         }
         Assert.assertEquals(3, impLis.size());
         Assert.assertEquals(1567456937865L, impLis.get(0).changeNumber().longValue());
@@ -225,7 +225,7 @@ public class SplitChangesTest {
                 change.till = prevChangeNumber + CHANGE_INTERVAL;
             }
             prevChangeNumber = change.till;
-            boolean even = isEven(i);
+            boolean even = IntegrationHelper.isEven(i);
             Split split = change.splits.get(0);
             split.changeNumber = prevChangeNumber;
             Partition p1 = split.conditions.get(0).partitions.get(0);
@@ -242,10 +242,6 @@ public class SplitChangesTest {
         System.out.println("FACTORY_TEST: " + m);
     }
 
-    private boolean isEven(int i) {
-        return ((i + 2) % 2) == 0;
-    }
-
     private List<KeyImpression> allImpressions() {
         List<KeyImpression> impressions = new ArrayList<>();
         int hitCount = mImpHits.size();
@@ -259,15 +255,13 @@ public class SplitChangesTest {
 
     private KeyImpression findImpression(String treatment) {
         List<KeyImpression> impressions = allImpressions();
-        KeyImpression imp = null;
-
         if (impressions != null) {
             Optional<KeyImpression> oe = impressions.stream()
                     .filter(impression -> impression.treatment.equals(treatment)).findFirst();
             if (oe.isPresent()) {
-                imp = oe.get();
+                return oe.get();
             }
         }
-        return imp;
+        return null;
     }
 }

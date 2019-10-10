@@ -183,7 +183,7 @@ public class SplitChangesServerErrorTest {
                 change.till = prevChangeNumber + CHANGE_INTERVAL;
             }
             prevChangeNumber = change.till;
-            boolean even = isEven(i);
+            boolean even = IntegrationHelper.isEven(i);
             Split split = change.splits.get(0);
             split.changeNumber = prevChangeNumber;
             Partition p1 = split.conditions.get(0).partitions.get(0);
@@ -198,10 +198,6 @@ public class SplitChangesServerErrorTest {
 
     private void log(String m) {
         System.out.println("FACTORY_TEST: " + m);
-    }
-
-    private boolean isEven(int i) {
-        return ((i + 2) % 2) == 0;
     }
 
     private String emptyChanges() {

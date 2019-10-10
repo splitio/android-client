@@ -248,10 +248,6 @@ public class MySegmentsServerErrorTest {
         System.out.println("FACTORY_TEST: " + m);
     }
 
-    private boolean isEven(int i) {
-        return ((i + 2) % 2) == 0;
-    }
-
     private String emptyChanges() {
         return "{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }";
     }
