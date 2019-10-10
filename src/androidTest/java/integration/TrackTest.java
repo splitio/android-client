@@ -160,6 +160,10 @@ public class TrackTest {
 
         Map<String,Object> prop = new HashMap<>();
 
+        client.track("custom", "e%%%%%");
+        client.track("custom", "");
+        client.track("custom", "e^^^^");
+
         for (int i = 0; i < 5; i++) {
             prop.put("value", i);
             client.track("custom", "event1", i, prop);
