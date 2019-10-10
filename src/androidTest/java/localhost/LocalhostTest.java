@@ -1,4 +1,4 @@
-package Localhost;
+package localhost;
 
 import android.content.Context;
 

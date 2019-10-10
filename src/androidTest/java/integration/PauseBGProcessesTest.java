@@ -1,3 +1,5 @@
+package integration;
+
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleRegistry;
 import android.arch.lifecycle.ProcessLifecycleOwner;
@@ -303,7 +305,7 @@ public class PauseBGProcessesTest {
     }
 
     private void log(String m) {
-        System.out.println("PauseBGProcessesTest: " + m);
+        System.out.println("integration.PauseBGProcessesTest: " + m);
     }
 
 }
