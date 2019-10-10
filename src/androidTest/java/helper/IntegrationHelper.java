@@ -1,3 +1,5 @@
+package helper;
+
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -44,15 +46,5 @@ public class IntegrationHelper {
 
     public static boolean isEven(int i) {
         return ((i + 2) % 2) == 0;
-    }
-
-    static public SplitClientConfig createInstance() {
-        try {
-            SplitClientConfig config = SplitClientConfig.class.newInstance();
-            return config;
-        } catch (Exception e) {
-            System.out.println(e.getLocalizedMessage());
-        }
-        return null;
     }
 }

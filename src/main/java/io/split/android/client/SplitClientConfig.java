@@ -59,6 +59,7 @@ public class SplitClientConfig {
         return new Builder();
     }
 
+
     private SplitClientConfig(String endpoint,
                               String eventsEndpoint,
                               int pollForFeatureChangesEveryNSeconds,
