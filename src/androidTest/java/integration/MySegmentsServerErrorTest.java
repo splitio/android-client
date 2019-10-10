@@ -10,21 +10,21 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import helper.FileHelper;
 import helper.ImpressionListenerHelper;
+import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
+import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.ConditionType;
-import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherCombiner;
 import io.split.android.client.dtos.MatcherGroup;
@@ -34,7 +34,6 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
-import io.split.android.client.dtos.Condition;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.utils.Json;
 import okhttp3.mockwebserver.Dispatcher;
@@ -42,7 +41,7 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 
-public class MySegmentUpdatedTest {
+public class MySegmentsServerErrorTest {
 
     Context mContext;
     MockWebServer mWebServer;
@@ -58,7 +57,7 @@ public class MySegmentUpdatedTest {
         isFirstChangesReq = true;
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mCurReqId = 0;
-        mImpLatch = new CountDownLatch(2);
+        mImpLatch = new CountDownLatch(1);
         mLatchs = new ArrayList<>();
         mImpHits = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
@@ -84,17 +83,20 @@ public class MySegmentUpdatedTest {
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 if (request.getPath().contains("/mySegments")) {
 
-                    String data;
+                    int code = 200;
+                    String data = null;
                     int index = mCurReqId;
                     switch (index) {
-                        case 1:
+                        case 0:
                             data = "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}]}";
                             break;
+                        case 1:
                         case 2:
-                            data = "{\"mySegments\":[{ \"id\":\"id2\", \"name\":\"segment2\"}]}";
+                            code = 500;
+                            data = "";
                             break;
-                        default:
-                            data = "{\"mySegments\":[]}";
+                        case 3:
+                            data = "{\"mySegments\":[{ \"id\":\"id2\", \"name\":\"segment2\"}]}";
                     }
 
                     if(index > 0 && index <= mLatchs.size()) {
@@ -102,7 +104,7 @@ public class MySegmentUpdatedTest {
                         Thread.sleep(1000);
                     }
                     mCurReqId++;
-                    return new MockResponse().setResponseCode(200).setBody(data);
+                    return new MockResponse().setResponseCode(code).setBody(data);
 
                 } else if (request.getPath().contains("/splitChanges")) {
                     if(isFirstChangesReq) {
@@ -155,13 +157,11 @@ public class MySegmentUpdatedTest {
         final String url = mWebServer.url("/").url().toString();
 
         Key key = new Key("CUSTOMER_ID", null);
-        SplitClientConfig config = SplitClientConfig.builder()
+        SplitClientConfig config = new TestableSplitConfigBuilder()
                 .endpoint(url, url)
                 .ready(30000)
                 .featuresRefreshRate(5)
                 .segmentsRefreshRate(5)
-                .impressionsRefreshRate(21)
-                .impressionsChunkSize(999999)
                 .enableDebug()
                 .trafficType("client")
                 .impressionListener(impListener)
@@ -186,20 +186,11 @@ public class MySegmentUpdatedTest {
         mImpLatch.await(30, TimeUnit.SECONDS);
         client.destroy();
 
-        Assert.assertEquals("no", treatments.get(0));
+        Assert.assertEquals("on_s1", treatments.get(0));
         Assert.assertEquals("on_s1", treatments.get(1));
-        Assert.assertEquals("on_s2", treatments.get(2));
-        Assert.assertEquals("no", treatments.get(3));
+        Assert.assertEquals("on_s1", treatments.get(2));
+        Assert.assertEquals("on_s2", treatments.get(3));
 
-        List<KeyImpression> impressions = allImpressions();
-        Assert.assertEquals(4, impressions.size());
-        KeyImpression imp0 = findImpression("no");
-        KeyImpression imp1 = findImpression("on_s1");
-        KeyImpression imp2 = findImpression("on_s2");
-
-        Assert.assertNotNull(imp0);
-        Assert.assertNotNull(imp1);
-        Assert.assertNotNull(imp2);
     }
 
     private void loadSplitChanges() {
@@ -260,31 +251,6 @@ public class MySegmentUpdatedTest {
 
     private String emptyChanges() {
         return "{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }";
-    }
-
-    private List<KeyImpression> allImpressions() {
-        List<KeyImpression> impressions = new ArrayList<>();
-        int hitCount = mImpHits.size();
-        for (TestImpressions timp : mImpHits) {
-            for (KeyImpression imp : timp.keyImpressions) {
-                impressions.add(imp);
-            }
-        }
-        return impressions;
-    }
-
-    private KeyImpression findImpression(String treatment) {
-        List<KeyImpression> impressions = allImpressions();
-        KeyImpression imp = null;
-
-        if (impressions != null) {
-            Optional<KeyImpression> oe = impressions.stream()
-                    .filter(impression -> impression.treatment.equals(treatment)).findFirst();
-            if (oe.isPresent()) {
-                imp = oe.get();
-            }
-        }
-        return imp;
     }
 
 }

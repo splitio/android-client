@@ -17,28 +17,17 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import helper.FileHelper;
 import helper.ImpressionListenerHelper;
+import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
+import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
-import io.split.android.client.dtos.Condition;
-import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.Matcher;
-import io.split.android.client.dtos.MatcherCombiner;
-import io.split.android.client.dtos.MatcherGroup;
-import io.split.android.client.dtos.MatcherType;
-import io.split.android.client.dtos.Partition;
-import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.utils.Json;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -144,7 +133,7 @@ public class TrackTest {
         final String url = mWebServer.url("/").url().toString();
 
         Key key = new Key("CUSTOMER_ID", null);
-        SplitClientConfig config = SplitClientConfig.builder()
+        SplitClientConfig config = new TestableSplitConfigBuilder()
                 .endpoint(url, url)
                 .ready(30000)
                 .eventFlushInterval(5)

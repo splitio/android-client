@@ -10,12 +10,16 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import helper.FileHelper;
 import helper.ImpressionListenerHelper;
+import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
+import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -34,13 +38,15 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 
-public class SplitChangesServerErrorTest {
+public class SplitChangesTest {
 
     Context mContext;
     MockWebServer mWebServer;
     int mCurSplitReqId = 0;
     ArrayList<String> mJsonChanges = null;
     ArrayList<CountDownLatch> mLatchs;
+    CountDownLatch mImpLatch;
+    ArrayList<TestImpressions> mImpHits;
     private static final int CHANGE_INTERVAL = 100000;
 
     @Before
@@ -48,11 +54,13 @@ public class SplitChangesServerErrorTest {
 
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mCurSplitReqId = 0;
+        mImpLatch = new CountDownLatch(2);
         mLatchs = new ArrayList<>();
-        for(int i = 0; i<4; i++) {
+        mImpHits = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
             mLatchs.add(new CountDownLatch(1));
         }
-        if(mJsonChanges == null) {
+        if (mJsonChanges == null) {
             loadSplitChanges();
         }
         setupServer();
@@ -66,16 +74,10 @@ public class SplitChangesServerErrorTest {
     private void setupServer() {
         mWebServer = new MockWebServer();
 
-        final ArrayList<MockResponse> responses = new ArrayList<>();
-        responses.add(new MockResponse().setResponseCode(200).setBody(mJsonChanges.get(0)));
-        responses.add(new MockResponse().setResponseCode(500));
-        responses.add(new MockResponse().setResponseCode(500));
-        responses.add(new MockResponse().setResponseCode(200).setBody(mJsonChanges.get(1)));
-
         final Dispatcher dispatcher = new Dispatcher() {
 
             @Override
-            public MockResponse dispatch (RecordedRequest request) throws InterruptedException {
+            public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 if (request.getPath().contains("/mySegments")) {
                     return new MockResponse()
                             .setResponseCode(200)
@@ -85,19 +87,23 @@ public class SplitChangesServerErrorTest {
                 } else if (request.getPath().contains("/splitChanges")) {
                     int currReq = mCurSplitReqId;
                     mCurSplitReqId++;
-                    if(currReq < mLatchs.size()) {
-                        if(currReq > 0) {
+                    if (currReq < mLatchs.size()) {
+                        if (currReq > 0) {
                             mLatchs.get(currReq - 1).countDown();
                         }
-                        return responses.get(currReq);
-                    } else if(currReq == mLatchs.size()) {
+                        String changes = mJsonChanges.get(currReq);
+                        return new MockResponse().setResponseCode(200).setBody(changes);
+                    } else if (currReq == mLatchs.size()) {
                         mLatchs.get(currReq - 1).countDown();
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody(emptyChanges());
+                            .setBody("{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }");
 
 
                 } else if (request.getPath().contains("/testImpressions/bulk")) {
+                    List<TestImpressions> data = IntegrationHelper.buildImpressionsFromJson(request.getBody().readUtf8());
+                    mImpHits.addAll(data);
+                    mImpLatch.countDown();
                     return new MockResponse().setResponseCode(200);
                 } else {
                     return new MockResponse().setResponseCode(404);
@@ -119,9 +125,9 @@ public class SplitChangesServerErrorTest {
         File cacheDir = mContext.getCacheDir();
 
         File dataFolder = new File(cacheDir, dataFolderName);
-        if(dataFolder.exists()) {
+        if (dataFolder.exists()) {
             File[] files = dataFolder.listFiles();
-            if(files != null) {
+            if (files != null) {
                 for (File file : files) {
                     file.delete();
                 }
@@ -134,11 +140,15 @@ public class SplitChangesServerErrorTest {
 
         final String url = mWebServer.url("/").url().toString();
 
-        Key key = new Key("CUSTOMER_ID",null);
-        SplitClientConfig config = SplitClientConfig.builder()
+        Key key = new Key("CUSTOMER_ID", null);
+        SplitClientConfig config = new TestableSplitConfigBuilder()
                 .endpoint(url, url)
                 .ready(30000)
                 .featuresRefreshRate(5)
+                .segmentsRefreshRate(5)
+                .impressionsRefreshRate(25)
+                .impressionsQueueSize(1000)
+                .impressionsChunkSize(9999999)
                 .enableDebug()
                 .trafficType("client")
                 .impressionListener(impListener)
@@ -157,28 +167,47 @@ public class SplitChangesServerErrorTest {
 
         latch.await(20, TimeUnit.SECONDS);
 
-        for(int i=0; i<4; i++) {
+        for (int i = 0; i < 4; i++) {
             mLatchs.get(i).await(20, TimeUnit.SECONDS);
             treatments.add(client.getTreatment("test_feature"));
         }
-
+        mImpLatch.await(40, TimeUnit.SECONDS);
         client.destroy();
 
-        Assert.assertEquals("on_0", treatments.get(0));
-        Assert.assertEquals("on_0", treatments.get(1));
-        Assert.assertEquals("on_0", treatments.get(2));
-        Assert.assertEquals("off_1", treatments.get(3));
+        ArrayList<Impression> impLis = new ArrayList<>();
+        impLis.add(impListener.getImpression(impListener.buildKey(
+                "CUSTOMER_ID", "test_feature", "on_0")));
+        impLis.add(impListener.getImpression(impListener.buildKey(
+                "CUSTOMER_ID", "test_feature", "off_1")));
+        impLis.add(impListener.getImpression(impListener.buildKey(
+                "CUSTOMER_ID", "test_feature", "on_2")));
 
+        for (int i = 0; i < 4; i++) {
+            Assert.assertEquals(IntegrationHelper.isEven(i) ? "on_" + i : "off_" + i, treatments.get(i));
+        }
+        Assert.assertEquals(3, impLis.size());
+        Assert.assertEquals(1567456937865L, impLis.get(0).changeNumber().longValue());
+        Assert.assertEquals((1567456937865L + CHANGE_INTERVAL), impLis.get(1).changeNumber().longValue());
+        Assert.assertEquals((1567456937865L + CHANGE_INTERVAL * 2), impLis.get(2).changeNumber().longValue());
+        List<KeyImpression> impressions = allImpressions();
+        Assert.assertEquals(4, impressions.size());
+        KeyImpression imp0 = findImpression("on_0");
+        KeyImpression imp3 = findImpression("off_3");
+        Assert.assertEquals("on_0", imp0.treatment);
+        Assert.assertEquals(1567456937865L, imp0.changeNumber.longValue());
+
+        Assert.assertEquals("off_3", imp3.treatment);
+        Assert.assertEquals(1567456937865L + CHANGE_INTERVAL * 3, imp3.changeNumber.longValue());
     }
 
     private void loadSplitChanges() {
         FileHelper fileHelper = new FileHelper();
         mJsonChanges = new ArrayList<>();
-        String jsonChange = fileHelper.loadFileContent(mContext,"splitchanges_int_test.json");
+        String jsonChange = fileHelper.loadFileContent(mContext, "splitchanges_int_test.json");
         long prevChangeNumber = 0;
-        for(int i=0; i<4; i++) {
+        for (int i = 0; i < 4; i++) {
             SplitChange change = Json.fromJson(jsonChange, SplitChange.class);
-            if(prevChangeNumber != 0) {
+            if (prevChangeNumber != 0) {
                 change.since = prevChangeNumber;
                 change.till = prevChangeNumber + CHANGE_INTERVAL;
             }
@@ -200,8 +229,26 @@ public class SplitChangesServerErrorTest {
         System.out.println("FACTORY_TEST: " + m);
     }
 
-    private String emptyChanges() {
-        return "{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }";
+    private List<KeyImpression> allImpressions() {
+        List<KeyImpression> impressions = new ArrayList<>();
+        int hitCount = mImpHits.size();
+        for (TestImpressions timp : mImpHits) {
+            for (KeyImpression imp : timp.keyImpressions) {
+                impressions.add(imp);
+            }
+        }
+        return impressions;
     }
 
+    private KeyImpression findImpression(String treatment) {
+        List<KeyImpression> impressions = allImpressions();
+        if (impressions != null) {
+            Optional<KeyImpression> oe = impressions.stream()
+                    .filter(impression -> impression.treatment.equals(treatment)).findFirst();
+            if (oe.isPresent()) {
+                return oe.get();
+            }
+        }
+        return null;
+    }
 }
