@@ -1,5 +1,5 @@
-2.4.4: (Sep 25, 2019)
- - Bugfixing - issue when load events from disk
+2.4.4: (Sep 26, 2019)
+- Fixed issue when load events from disk
 
 2.4.3: (Sep 20, 2019)
  - Updated SDK readiness from cache
