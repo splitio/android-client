@@ -41,8 +41,7 @@ public class LessThanOrEqualToMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "<= " +
-                _compareTo;
+        return "<= " + _compareTo;
     }
 
     @Override

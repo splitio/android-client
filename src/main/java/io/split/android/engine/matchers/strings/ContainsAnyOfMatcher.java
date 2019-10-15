@@ -53,8 +53,7 @@ public class ContainsAnyOfMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "contains " +
-                _compareTo;
+        return "contains " + _compareTo;
     }
 
     @Override

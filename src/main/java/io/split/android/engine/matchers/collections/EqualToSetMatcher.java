@@ -37,8 +37,7 @@ public class EqualToSetMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "is equal to  " +
-                _compareTo;
+        return "is equal to  " + _compareTo;
     }
 
     @Override

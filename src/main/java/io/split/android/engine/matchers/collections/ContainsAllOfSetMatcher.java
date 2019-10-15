@@ -39,8 +39,7 @@ public class ContainsAllOfSetMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "contains all of " +
-                _compareTo;
+        return "contains all of " + _compareTo;
     }
 
     @Override

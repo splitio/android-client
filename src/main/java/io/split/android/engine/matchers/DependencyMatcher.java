@@ -40,10 +40,7 @@ public class DependencyMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "in split \"" +
-                this._split +
-                "\" treatment " +
-                this._treatments;
+        return "in split \"" + this._split + "\" treatment " + this._treatments;
     }
 
     @Override

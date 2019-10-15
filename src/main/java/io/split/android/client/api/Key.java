@@ -60,8 +60,6 @@ public final class Key {
 
     @Override
     public String toString() {
-        return _matchingKey +
-                ", " +
-                _bucketingKey;
+        return _matchingKey + ", " + _bucketingKey;
     }
 }

@@ -41,8 +41,7 @@ public class PartOfSetMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "is part of " +
-                _compareTo;
+        return "is part of " + _compareTo;
     }
 
     @Override

@@ -53,8 +53,7 @@ public class EndsWithAnyOfMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "ends with " +
-                _compareTo;
+        return "ends with " + _compareTo;
     }
 
     @Override

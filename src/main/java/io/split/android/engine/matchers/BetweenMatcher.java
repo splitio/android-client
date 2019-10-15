@@ -51,10 +51,7 @@ public class BetweenMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "between " +
-                _start +
-                " and " +
-                _end;
+        return "between " + _start + " and " + _end;
     }
 
     @Override

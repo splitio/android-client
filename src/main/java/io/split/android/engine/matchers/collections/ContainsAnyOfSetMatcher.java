@@ -45,8 +45,7 @@ public class ContainsAnyOfSetMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "contains any of " +
-                _compareTo;
+        return "contains any of " + _compareTo;
     }
 
     @Override

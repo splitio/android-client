@@ -53,8 +53,7 @@ public class StartsWithAnyOfMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "starts with " +
-                _compareTo;
+        return "starts with " + _compareTo;
     }
 
     @Override

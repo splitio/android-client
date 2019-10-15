@@ -156,24 +156,11 @@ public class ParsedSplit {
 
     @Override
     public String toString() {
-        return "name:" +
-                _split +
-                ", seed:" +
-                _seed +
-                ", killed:" +
-                _killed +
-                ", default treatment:" +
-                _defaultTreatment +
-                ", parsedConditions:" +
-                _parsedCondition +
-                ", trafficTypeName:" +
-                _trafficTypeName +
-                ", changeNumber:" +
-                _changeNumber +
-                ", algo:" +
-                _algo +
-                ", config:" +
-                _configurations;
+        return "name:" + _split + ", seed:" + _seed + ", killed:" + _killed +
+                ", default treatment:" + _defaultTreatment +
+                ", parsedConditions:" +  _parsedCondition +
+                ", trafficTypeName:" + _trafficTypeName + ", changeNumber:" + _changeNumber +
+                ", algo:" + _algo + ", config:" + _configurations;
 
     }
 }

@@ -39,8 +39,7 @@ public class EqualToMatcher implements Matcher {
 
     @Override
     public String toString() {
-        return "== " +
-                _compareTo;
+        return "== " + _compareTo;
     }
 
     @Override
