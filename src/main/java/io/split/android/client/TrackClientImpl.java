@@ -311,14 +311,14 @@ public class TrackClientImpl implements TrackClient {
                     if (events.size() >= _config.getMaxQueueSize() || totalSizeInBytes >= MAX_SIZE_BYTES || event == CENTINEL) {
                         Logger.d(String.format("Sending %d events", events.size()));
                         if (events.size() > _config.getMaxEventsPerPost()) {
-                            List<List<Event>> eventsChunks = Lists.partition(events, _config.getMaxEventsPerPost());
+                            List<List<Event>> eventsChunks = Lists.partition(eventsCopy(), _config.getMaxEventsPerPost());
                             for (List<Event> eventsChunk : eventsChunks) {
                                 // Dispatch
                                 _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(eventsChunk), _storageManager, _config.getMaxSentAttempts()));
                             }
                         } else {
                             // Dispatch
-                            _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(events), _storageManager, _config.getMaxSentAttempts()));
+                            _senderExecutor.submit(EventSenderTask.create(_httpclient, _eventsTarget, new EventsChunk(eventsCopy()), _storageManager, _config.getMaxSentAttempts()));
                         }
                         // Clear the queue of events for the next batch.
                         events = newEventList();
@@ -327,12 +327,18 @@ public class TrackClientImpl implements TrackClient {
             } catch (InterruptedException e) {
                 Logger.w("Consumer thread was interrupted. Exiting...");
                 //Saving event due to consumer interruption
-                _storageManager.saveEvents(new EventsChunk(events));
+                _storageManager.saveEvents(new EventsChunk(eventsCopy()));
             }
         }
 
         private List<Event> newEventList() {
             return Collections.synchronizedList(new ArrayList<>());
+        }
+
+        private List<Event> eventsCopy() {
+            synchronized (events) {
+                return new ArrayList<>(events);
+            }
         }
 
         synchronized public void saveToDisk(){

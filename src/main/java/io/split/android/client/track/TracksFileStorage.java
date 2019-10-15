@@ -10,6 +10,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,12 +52,12 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
                     eventsChunk = new EventsChunk(chunkHeader.getId(), chunkHeader.getAttempt());
                     while (scanner.hasNextLine()) {
                         Event event = eventFromLine(scanner.nextLine());
-                        if(event != null) {
+                        if (event != null) {
                             eventsChunk.addEvent(event);
                         }
                     }
                 }
-                if(eventsChunk != null && eventsChunk.getEvents() != null && eventsChunk.getEvents().size() > 0) {
+                if (eventsChunk != null && eventsChunk.getEvents() != null && eventsChunk.getEvents().size() > 0) {
                     tracks.put(eventsChunk.getId(), eventsChunk);
                 }
                 _fileStorageHelper.logIfScannerException(scanner, "An error occurs parsing track events from JsonL files");
@@ -71,7 +73,8 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
     }
 
     public void write(Map<String, EventsChunk> tracks) {
-        for (EventsChunk chunk : tracks.values()) {
+        List<EventsChunk> savingTracks = new ArrayList<>(tracks.values());
+        for (EventsChunk chunk : savingTracks) {
             FileWriter fileWriter = null;
             List<Event> events = chunk.getEvents();
             if (events != null && events.size() > 0) {
@@ -79,7 +82,7 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
                     fileWriter = _fileStorageHelper.fileWriterFrom(_dataFolder, String.format(FILE_NAME_TEMPLATE, chunk.getId()));
                     ChunkHeader chunkHeader = new ChunkHeader(chunk.getId(), chunk.getAttempt());
                     _fileStorageHelper.writeChunkHeaderLine(chunkHeader, fileWriter);
-                    for(Event event : events) {
+                    for (Event event : events) {
                         writeEventLine(event, fileWriter);
                     }
                 } catch (IOException e) {
@@ -99,18 +102,16 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
 
     private Event eventFromLine(String jsonEvent) {
 
-        if(Strings.isNullOrEmpty(jsonEvent)) {
+        if (Strings.isNullOrEmpty(jsonEvent)) {
             return null;
         }
 
         Event event = null;
         try {
             event = Json.fromJson(jsonEvent, Event.class);
-        } catch (JsonSyntaxException e){
+        } catch (JsonSyntaxException e) {
             Logger.e("Could not parse event: " + jsonEvent);
         }
         return event;
     }
-
-
 }

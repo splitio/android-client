@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.storage.IStorage;
@@ -31,7 +32,7 @@ public class MySegmentsCache implements IMySegmentsCache {
 
     public MySegmentsCache(IStorage storage) {
         mFileStorage = storage;
-        mSegments = Collections.synchronizedMap(new HashMap<String, List<MySegment>>());
+        mSegments = new ConcurrentHashMap<>(new HashMap<String, List<MySegment>>());
         loadSegmentsFromDisk();
     }
 

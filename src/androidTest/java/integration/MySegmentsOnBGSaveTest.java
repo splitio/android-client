@@ -1,3 +1,5 @@
+package integration;
+
 import android.arch.lifecycle.Lifecycle;
 import android.arch.lifecycle.LifecycleRegistry;
 import android.arch.lifecycle.ProcessLifecycleOwner;
@@ -9,24 +11,22 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.List;
 
 import fake.ImpressionsManagerStub;
-import fake.MySegmentsCacheStub;
 import fake.RefreshableMySegmentsFetcherProviderStub;
 import fake.RefreshableSplitFetcherProviderStub;
+import fake.SplitCacheStub;
 import fake.TrackClientStub;
-import io.split.android.client.cache.SplitCache;
-import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.Status;
+import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.lifecycle.LifecycleManager;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TracksFileStorage;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
-public class SplitChangesOnBGSaveTest {
+public class MySegmentsOnBGSaveTest {
 
 
     @Before
@@ -34,9 +34,9 @@ public class SplitChangesOnBGSaveTest {
     }
 
     @Test
-    public void test() throws URISyntaxException, InterruptedException {
+    public void test() throws URISyntaxException, InterruptedException, IOException {
 
-        final String FILE_PREFIX = "SPLITIO.split.";
+        final String FILE_NAME = "SPLITIO.mysegments";
         File rootFolder = InstrumentationRegistry.getInstrumentation().getContext().getCacheDir();
         File folder = new File(rootFolder, "test_folder");
         if(folder.exists()) {
@@ -46,14 +46,14 @@ public class SplitChangesOnBGSaveTest {
             folder.delete();
         }
 
-        ITrackStorage fileStorage = new TracksFileStorage(rootFolder, "split_folder_test");
-        SplitCache splitCache = new SplitCache(fileStorage);
+        ITrackStorage fileStorage = new TracksFileStorage(rootFolder, "myseg_folder_test");
+        MySegmentsCache mySegmentsCache = new MySegmentsCache(fileStorage);
 
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());
 
         LifecycleManager lifecycleManager = new LifecycleManager(new ImpressionsManagerStub(), new TrackClientStub(),
                 new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(),
-                splitCache, new MySegmentsCacheStub());
+                new SplitCacheStub(), mySegmentsCache);
 
         lfRegistry.addObserver(lifecycleManager);
 
@@ -61,32 +61,13 @@ public class SplitChangesOnBGSaveTest {
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME);
 
-
-        for (int i = 0; i < 10; ++i) {
-            splitCache.addSplit(newSplit("split" + i));
-        }
-
-        List<String> splitNames = new ArrayList(splitCache.getSplitNames());
-
+        mySegmentsCache.setMySegments("mkey", new ArrayList<>());
 
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE);
 
         Thread.sleep(2000);
 
-        // A file per split is created on disk on ON_Pause event
-        // Here we check that all file exists on disk
-        List<String> files = fileStorage.getAllIds(FILE_PREFIX);
-        for (int i = 0; i < 10; ++i) {
-            String name = splitNames.get(i);
-            Assert.assertNotNull(files.stream().filter(file -> name.equals(file)));
-        }
-    }
+        Assert.assertNotNull(fileStorage.read(FILE_NAME)); // Checks that my segments file is created on app bg
 
-    private Split newSplit(String name) {
-        Split split = new Split();
-        split.name = name;
-        split.status = Status.ACTIVE;
-        split.trafficTypeName = "custom";
-        return split;
     }
 }

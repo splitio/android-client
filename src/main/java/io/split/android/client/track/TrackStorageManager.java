@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
@@ -44,7 +45,7 @@ public class TrackStorageManager {
     public TrackStorageManager(ITrackStorage storage, MemoryUtils memoryUtils) {
         mFileStorageManager = storage;
         mFileStorageHelper = new FileStorageHelper(memoryUtils);
-        mEventsChunks = Collections.synchronizedMap(new HashMap<>());
+        mEventsChunks = new ConcurrentHashMap<>();
         loadEventsFromDisk();
     }
 
