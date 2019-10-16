@@ -4,13 +4,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.split.android.client.cache.ISplitChangeCache;
-import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
-import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;

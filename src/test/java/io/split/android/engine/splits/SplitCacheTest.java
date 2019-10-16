@@ -7,23 +7,18 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import io.split.android.client.cache.IMySegmentsCache;
 import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.SplitCache;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 import io.split.android.client.storage.MemoryStorage;
-import io.split.android.client.utils.Utils;
 
 public class SplitCacheTest {
 
@@ -84,14 +79,14 @@ public class SplitCacheTest {
 
     @Test
     public void initialChangeNumber() {
-        Assert.assertTrue(INITIAL_CHANGE_NUMBER == mCache.getChangeNumber());
+        Assert.assertEquals((long) INITIAL_CHANGE_NUMBER, mCache.getChangeNumber());
     }
 
     @Test
     public void updateChangeNumber() {
-        final Long NEW_CHANGE_NUMBER = 70000L;
+        final long NEW_CHANGE_NUMBER = 70000L;
         mCache.setChangeNumber(NEW_CHANGE_NUMBER);
-        Assert.assertTrue(NEW_CHANGE_NUMBER == mCache.getChangeNumber());
+        Assert.assertEquals(NEW_CHANGE_NUMBER, mCache.getChangeNumber());
     }
 
     @Test
@@ -166,7 +161,7 @@ public class SplitCacheTest {
             }
         }).start();
         latch.await(10, TimeUnit.SECONDS);
-        Assert.assertTrue(latch.getCount() == 0);
+        Assert.assertEquals(0, latch.getCount());
         Assert.assertEquals(9903, cache.getSplitNames().size());
         Assert.assertNotNull(cache.getSplit("split-11"));
         Assert.assertNotNull(cache.getSplit("split-9901"));

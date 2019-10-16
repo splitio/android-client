@@ -24,8 +24,6 @@ import fake.MySegmentsCacheStub;
 import fake.RefreshableMySegmentsFetcherProviderStub;
 import fake.RefreshableSplitFetcherProviderStub;
 import fake.SplitCacheStub;
-import fake.TrackClientStub;
-import io.split.android.client.SplitClientConfig;
 import io.split.android.client.TrackClient;
 import io.split.android.client.TrackClientImpl;
 import io.split.android.client.dtos.Event;
@@ -36,6 +34,7 @@ import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.track.TracksFileStorage;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class TestTracksOnBGSave {
 
 

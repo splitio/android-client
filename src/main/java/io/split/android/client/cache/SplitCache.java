@@ -1,13 +1,6 @@
 package io.split.android.client.cache;
 
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.OnLifecycleEvent;
-import android.arch.lifecycle.ProcessLifecycleOwner;
-import android.support.annotation.VisibleForTesting;
-
 import com.google.common.base.Strings;
-import com.google.common.collect.ConcurrentHashMultiset;
 import com.google.gson.JsonSyntaxException;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +32,9 @@ public class SplitCache implements ISplitCache {
     private final IStorage mFileStorageManager;
 
     private long mChangeNumber = -1;
-    private Set<String> mRemovedSplits = null;
-    private Map<String, Split> mInMemorySplits = null;
-    private Map<String, Integer> mTrafficTypes = null;
+    private Set<String> mRemovedSplits;
+    private Map<String, Split> mInMemorySplits;
+    private Map<String, Integer> mTrafficTypes;
 
     public SplitCache(IStorage storage) {
         mFileStorageManager = storage;
@@ -74,7 +66,7 @@ public class SplitCache implements ISplitCache {
             return false;
         }
 
-        if(split.status != null && split.status == Status.ACTIVE) {
+        if(split.status == Status.ACTIVE) {
             Split loadedSplit = mInMemorySplits.get(split.name);
             if(loadedSplit != null && loadedSplit.trafficTypeName != null) {
                 removeTrafficType(loadedSplit.trafficTypeName);
@@ -126,7 +118,7 @@ public class SplitCache implements ISplitCache {
 
         String lowercaseName = name.toLowerCase();
         int count = countForTrafficType(lowercaseName);
-        mTrafficTypes.put(lowercaseName, Integer.valueOf(++count));
+        mTrafficTypes.put(lowercaseName, ++count);
     }
 
     private void removeTrafficType(@NotNull String name) {
@@ -137,7 +129,7 @@ public class SplitCache implements ISplitCache {
 
         int count = countForTrafficType(lowercaseName);
         if(count > 1) {
-            mTrafficTypes.put(lowercaseName, Integer.valueOf(--count));
+            mTrafficTypes.put(lowercaseName, --count);
         } else {
             mTrafficTypes.remove(lowercaseName);
         }
@@ -147,7 +139,7 @@ public class SplitCache implements ISplitCache {
         int count = 0;
         Integer countValue = mTrafficTypes.get(name);
         if(countValue != null) {
-            count = countValue.intValue();
+            count = countValue;
         }
         return count;
     }

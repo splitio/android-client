@@ -4,10 +4,6 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import org.junit.Assert;
 import org.junit.After;
 import org.junit.Before;
@@ -17,36 +13,23 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import helper.FileHelper;
-import helper.ImpressionListenerHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryBuilder;
-import io.split.android.client.SplitManager;
-import io.split.android.client.SplitResult;
 import io.split.android.client.api.Key;
-import io.split.android.client.api.SplitView;
-import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.impressions.Impression;
 import io.split.android.client.utils.Logger;
-import io.split.android.grammar.Treatments;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class InitialChangeNumberTest {
 
     Context mContext;
@@ -82,7 +65,7 @@ public class InitialChangeNumberTest {
                     long changeNumber = -1;
                     if(mIsFirstChangeNumber) {
                         String path = request.getPath();
-                        changeNumber = Long.valueOf(path.substring(path.indexOf("=") + 1, path.length())).longValue();
+                        changeNumber = Long.valueOf(path.substring(path.indexOf("=") + 1));
                         mFirstChangeNumberReceived = changeNumber;
                         mIsFirstChangeNumber = false;
                     }

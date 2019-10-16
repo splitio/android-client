@@ -1,6 +1,6 @@
 package io.split.android.client.validators;
 
-public class EventTypeNameHelper {
+class EventTypeNameHelper {
 
     public String getValidAllValidChars() {
         return "Abcdefghij:klmnopkrstuvwxyz_-12345.6789:";

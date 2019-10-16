@@ -8,17 +8,13 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.track.TracksFileStorage;
-import io.split.android.client.utils.Logger;
-import io.split.android.client.validators.ValidationConfig;
 import io.split.android.fake.ExecutorServiceMock;
 import io.split.android.fake.HttpClientMock;
 import io.split.android.fake.SplitCacheStub;
 
-import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class TrackClientImplTest {
@@ -44,7 +38,7 @@ public class TrackClientImplTest {
     public void testEventsFlushedWhenSizeLimitReached() throws URISyntaxException, InterruptedException, IOException {
 
         CountDownLatch latch = new CountDownLatch(1);
-        ExecutorService senderExecutor = new ExecutorServiceMock(latch);
+        ExecutorServiceMock senderExecutor = new ExecutorServiceMock(latch);
 
         TrackClientConfig config = new TrackClientConfig();
         config.setMaxQueueSize(10000);
@@ -60,22 +54,21 @@ public class TrackClientImplTest {
             eventClient.track(create32kbEvent());
         }
 
-        ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
-        int prevSubmitCount = ex.getSubmitCount();
+        int prevSubmitCount = senderExecutor.getSubmitCount();
 
         eventClient.track(create32kbEvent());
 
         latch.await(15, TimeUnit.SECONDS);
 
         Assert.assertEquals(0, prevSubmitCount);
-        Assert.assertEquals(1, ex.getSubmitCount());
+        Assert.assertEquals(1, senderExecutor.getSubmitCount());
     }
 
     @Test
     public void testEventsFlushedWhenCountLimitReached() throws URISyntaxException, InterruptedException, IOException {
 
         CountDownLatch latch = new CountDownLatch(5);
-        ExecutorService senderExecutor = new ExecutorServiceMock(latch);
+        ExecutorServiceMock senderExecutor = new ExecutorServiceMock(latch);
 
         TrackClientConfig config = new TrackClientConfig();
         config.setMaxQueueSize(10);
@@ -92,15 +85,14 @@ public class TrackClientImplTest {
         }
 
         Thread.sleep(5000);
-        ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
-        int prevSubmitCount = ex.getSubmitCount();
+        int prevSubmitCount = senderExecutor.getSubmitCount();
 
         eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
 
         latch.await(5, TimeUnit.SECONDS);
 
         Assert.assertEquals(0, prevSubmitCount);
-        Assert.assertEquals(5, ex.getSubmitCount());
+        Assert.assertEquals(5, senderExecutor.getSubmitCount());
     }
 
 
@@ -108,7 +100,7 @@ public class TrackClientImplTest {
     public void testEventsFlushedWhenCountLimitExceded() throws URISyntaxException, InterruptedException, IOException {
 
         CountDownLatch latch = new CountDownLatch(6);
-        ExecutorService senderExecutor = new ExecutorServiceMock(latch);
+        ExecutorServiceMock senderExecutor = new ExecutorServiceMock(latch);
 
         TrackClientConfig config = new TrackClientConfig();
         config.setMaxQueueSize(10);
@@ -124,20 +116,18 @@ public class TrackClientImplTest {
             eventClient.track(create32kbEvent());
         }
 
-        ExecutorServiceMock ex = (ExecutorServiceMock) senderExecutor;
-
         latch.await(5, TimeUnit.SECONDS);
         latch = new CountDownLatch(1);
-        ex.setLatch(latch);
+        senderExecutor.setLatch(latch);
 
-        int prevSubmitCount = ex.getSubmitCount();
+        int prevSubmitCount = senderExecutor.getSubmitCount();
 
         eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
 
         latch.await(5, TimeUnit.SECONDS);
 
         Assert.assertEquals(5, prevSubmitCount);
-        Assert.assertEquals(5, ex.getSubmitCount());
+        Assert.assertEquals(5, senderExecutor.getSubmitCount());
     }
 
     private Event create32kbEvent() {

@@ -36,9 +36,7 @@ import static io.split.android.engine.ConditionsTestUtil.partition;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -333,7 +331,7 @@ public class SplitClientImplTest {
             public void onPostExecution(SplitClient client) {
                 assertThat(client.getTreatment(test), is(equalTo("on")));
                 assertThat(client.getTreatment(test, null), is(equalTo("on")));
-                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of()), is(equalTo("on")));
+                assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("on")));
             }
         });
 
@@ -343,8 +341,8 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("on")));
-                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 9)), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("age", 10)), is(equalTo("on")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("age", 9)), is(equalTo("off")));
 
             }
         });
@@ -370,7 +368,7 @@ public class SplitClientImplTest {
             public void onPostExecution(SplitClient client) {
                 assertThat(client.getTreatment(test), is(equalTo("off")));
                 assertThat(client.getTreatment(test, null), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of()), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
             }
         });
 
@@ -380,8 +378,8 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 10)), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.<String, Object>of("age", 0)), is(equalTo("on")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("age", 10)), is(equalTo("off")));
+                assertThat(client.getTreatment(test, ImmutableMap.of("age", 0)), is(equalTo("on")));
             }
         });
     }
@@ -434,7 +432,7 @@ public class SplitClientImplTest {
     public void attributes_for_sets() {
         String test = "test1";
 
-        ParsedCondition any_of_set = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of("products", new ContainsAnyOfSetMatcher(Lists.<String>newArrayList("sms", "video"))), Lists.newArrayList(partition("on", 100)));
+        ParsedCondition any_of_set = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of("products", new ContainsAnyOfSetMatcher(Lists.newArrayList("sms", "video"))), Lists.newArrayList(partition("on", 100)));
 
         List<ParsedCondition> conditions = Lists.newArrayList(any_of_set);
         ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
@@ -487,7 +485,7 @@ public class SplitClientImplTest {
         when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
         ImpressionListener impressionListener = mock(ImpressionListener.class);
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher, impressionListener);
-        Map<String, Object> attributes = ImmutableMap.<String, Object>of("age", -20, "acv", "1000000");
+        Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
 
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
@@ -506,7 +504,7 @@ public class SplitClientImplTest {
 
     @Test
     public void not_in_split_if_no_allocation() {
-        traffic_allocation(Key.withMatchingKey("pato@split.io"), 0, 123, "off", "not in split");
+        traffic_allocation(Key.withMatchingKey("pato@split.io"), 0, "off", "not in split");
     }
 
     /**
@@ -522,17 +520,17 @@ public class SplitClientImplTest {
         Key key = Key.withMatchingKey("pato@split.io");
         int i = 0;
         for (; i <= 9; i++) {
-            traffic_allocation(key, i, 123, "off", "not in split");
+            traffic_allocation(key, i, "off", "not in split");
         }
 
         for (; i <= 100; i++) {
-            traffic_allocation(key, i, 123, "on", "in segment all");
+            traffic_allocation(key, i, "on", "in segment all");
         }
     }
 
     @Test
     public void in_split_if_100_percent_allocation() {
-        traffic_allocation(Key.withMatchingKey("pato@split.io"), 100, 123, "on", "in segment all");
+        traffic_allocation(Key.withMatchingKey("pato@split.io"), 100, "on", "in segment all");
     }
 
     @Test
@@ -542,11 +540,11 @@ public class SplitClientImplTest {
 
     @Test
     public void whitelist_overrides_traffic_allocation() {
-        traffic_allocation(Key.withMatchingKey("adil@split.io"), 0, 123, "on", "whitelisted user");
+        traffic_allocation(Key.withMatchingKey("adil@split.io"), 0, "on", "whitelisted user");
     }
 
-    private void traffic_allocation(Key key, int trafficAllocation, int trafficAllocationSeed, String expected_treatment_on_or_off, String label) {
-        traffic_allocation(key, trafficAllocation, trafficAllocationSeed, expected_treatment_on_or_off, label, 1);
+    private void traffic_allocation(Key key, int trafficAllocation, String expected_treatment_on_or_off, String label) {
+        traffic_allocation(key, trafficAllocation, 123, expected_treatment_on_or_off, label, 1);
     }
 
     private void traffic_allocation(Key key, int trafficAllocation, int trafficAllocationSeed, String expected_treatment_on_or_off, String label, int algo) {
@@ -606,7 +604,7 @@ public class SplitClientImplTest {
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, Collections.<String, Object>emptyMap()), is(equalTo("off")));
+                assertThat(client.getTreatment(test, Collections.emptyMap()), is(equalTo("off")));
             }
         });
 
@@ -617,7 +615,7 @@ public class SplitClientImplTest {
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, Collections.<String, Object>emptyMap()), is(equalTo("on")));
+                assertThat(client.getTreatment(test, Collections.emptyMap()), is(equalTo("on")));
             }
         });
 
@@ -644,7 +642,7 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher, impressionListener);
 
-        Map<String, Object> attributes = ImmutableMap.<String, Object>of("age", -20, "acv", "1000000");
+        Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override

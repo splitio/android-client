@@ -4,9 +4,6 @@ package io.split.android.client;
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import io.split.android.client.utils.Logger;
 
 /**
@@ -23,8 +20,8 @@ public class SplitClientConfig {
     private final int _segmentsRefreshRate;
     private final int _impressionsRefreshRate;
     private final int _impressionsQueueSize;
-    private final int _impressionsMaxSentAttempts = 3;
-    private final long _impressionsChunkOudatedTime = 3600 * 1000; // One day millis
+    private final static int _impressionsMaxSentAttempts = 3;
+    private final static long _impressionsChunkOudatedTime = 3600 * 1000; // One day millis
 
     private final int _metricsRefreshRate;
     private final int _connectionTimeout;
@@ -42,8 +39,8 @@ public class SplitClientConfig {
     private final int _eventsPerPush;
     private final long _eventFlushInterval;
     private final String _trafficType;
-    private final int _eventsMaxSentAttemps = 3;
-    private final int _maxQueueSizeInBytes = 5242880; // 5mb
+    private final static int _eventsMaxSentAttemps = 3;
+    private final static int _maxQueueSizeInBytes = 5242880; // 5mb
 
     // Validation settings
     private static final int _maximumKeyLength = 250;

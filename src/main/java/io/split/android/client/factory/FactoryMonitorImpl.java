@@ -2,11 +2,8 @@ package io.split.android.client.factory;
 
 import android.support.annotation.VisibleForTesting;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import io.split.android.client.SplitFactory;
 
 public class FactoryMonitorImpl implements FactoryMonitor {
 
@@ -30,7 +27,7 @@ public class FactoryMonitorImpl implements FactoryMonitor {
     public synchronized int count() {
         int totalCount = 0;
         for(Integer count : factories.values()) {
-            totalCount += count.intValue();
+            totalCount += count;
         }
         return totalCount;
     }
@@ -38,22 +35,22 @@ public class FactoryMonitorImpl implements FactoryMonitor {
     @Override
     public synchronized int count(String apiKey) {
         Integer count = factories.get(apiKey);
-        return (count != null ? count.intValue() : 0);
+        return (count != null ? count : 0);
     }
 
     @Override
     public synchronized void add(String apiKey) {
         Integer count = factories.get(apiKey);
-        int newCount = (count != null ? count.intValue() : 0) + 1;
-        factories.put(apiKey, new Integer(newCount));
+        int newCount = (count != null ? count : 0) + 1;
+        factories.put(apiKey, newCount);
     }
 
     @Override
     public synchronized void remove(String apiKey) {
         Integer count = factories.get(apiKey);
-        int newCount = (count != null ? count.intValue() : 0) - 1;
+        int newCount = (count != null ? count : 0) - 1;
         if(newCount > 0) {
-            factories.put(apiKey, new Integer(newCount));
+            factories.put(apiKey, newCount);
         } else {
             factories.remove(apiKey);
         }

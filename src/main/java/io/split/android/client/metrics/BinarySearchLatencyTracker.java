@@ -37,7 +37,7 @@ import java.util.Arrays;
  */
 public class BinarySearchLatencyTracker implements ILatencyTracker {
 
-    static final long[] BUCKETS = {
+    private static final long[] BUCKETS = {
             1000, 1500, 2250, 3375, 5063,
             7594, 11391, 17086, 25629, 38443,
             57665, 86498, 129746, 194620, 291929,
@@ -45,9 +45,9 @@ public class BinarySearchLatencyTracker implements ILatencyTracker {
             3325257, 4987885, 7481828
     };
 
-    static final long MAX_LATENCY = 7481828;
+    private static final long MAX_LATENCY = 7481828;
 
-    long[] latencies = new long[BUCKETS.length];
+    private long[] latencies = new long[BUCKETS.length];
 
     /**
      * Increment the internal counter for the bucket this latency falls into.

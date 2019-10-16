@@ -1,6 +1,5 @@
 package io.split.android.client;
 
-import io.split.android.client.impressions.ImpressionListener;
 import org.junit.Test;
 
 public class SplitClientConfigTest {

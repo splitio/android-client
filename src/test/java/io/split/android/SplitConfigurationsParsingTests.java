@@ -13,6 +13,7 @@ import java.util.Map;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.utils.Json;
 
+@SuppressWarnings("ConstantConditions")
 public class SplitConfigurationsParsingTests {
 
     @Test
@@ -21,7 +22,7 @@ public class SplitConfigurationsParsingTests {
         Split split = createAndParseSplit(config);
         Map<String, Object> configData = jsonObj(split.configurations.get("treatment1"));
         Assert.assertNotNull(split);
-        Assert.assertEquals("v1", (String) configData.get("c1"));
+        Assert.assertEquals("v1", configData.get("c1"));
     }
 
     @Test
@@ -33,10 +34,10 @@ public class SplitConfigurationsParsingTests {
         List<Double> array = (List<Double>) configData.get("c1");
         Assert.assertNotNull(split);
         Assert.assertEquals(4, array.size());
-        Assert.assertEquals(Double.valueOf(1), (Double) array.get(0));
-        Assert.assertEquals(Double.valueOf(2.0), (Double) array.get(1));
-        Assert.assertEquals(Double.valueOf(3), (Double) array.get(2));
-        Assert.assertEquals(Double.valueOf(4.0), (Double) array.get(3));
+        Assert.assertEquals(Double.valueOf(1), array.get(0));
+        Assert.assertEquals(Double.valueOf(2.0), array.get(1));
+        Assert.assertEquals(Double.valueOf(3), array.get(2));
+        Assert.assertEquals(Double.valueOf(4.0), array.get(3));
     }
 
     @Test
@@ -67,12 +68,12 @@ public class SplitConfigurationsParsingTests {
         Assert.assertEquals("v2", obj12.get("f"));
         Assert.assertEquals("v3", obj13.get("f"));
 
-        Assert.assertEquals(Double.valueOf(1), (Double) obj21.get("f1"));
-        Assert.assertEquals(Double.valueOf(2), (Double) obj21.get("f2"));
-        Assert.assertEquals(Double.valueOf(3), (Double) obj21.get("f3"));
-        Assert.assertEquals(Double.valueOf(11), (Double) obj22.get("f1"));
-        Assert.assertEquals(Double.valueOf(12), (Double) obj22.get("f2"));
-        Assert.assertEquals(Double.valueOf(13), (Double) obj22.get("f3"));
+        Assert.assertEquals(Double.valueOf(1), obj21.get("f1"));
+        Assert.assertEquals(Double.valueOf(2), obj21.get("f2"));
+        Assert.assertEquals(Double.valueOf(3), obj21.get("f3"));
+        Assert.assertEquals(Double.valueOf(11), obj22.get("f1"));
+        Assert.assertEquals(Double.valueOf(12), obj22.get("f2"));
+        Assert.assertEquals(Double.valueOf(13), obj22.get("f3"));
 
         Assert.assertEquals("v1", config2Data.get("f1"));
     }
@@ -103,7 +104,7 @@ public class SplitConfigurationsParsingTests {
         Map<String, Object> booleanValue = jsonObj(split.configurations.get("boolean"));
 
         Assert.assertNotNull(split);
-        Assert.assertEquals(Double.valueOf(20576.85), (Double) doubleValue.get("c1"));
+        Assert.assertEquals(20576.85, doubleValue.get("c1"));
         Assert.assertEquals("v1", stringValue.get("c1"));
         Assert.assertEquals(123456, ((Double) intValue.get("c1")).intValue());
         Assert.assertEquals(false, booleanValue.get("c1"));
@@ -122,7 +123,7 @@ public class SplitConfigurationsParsingTests {
         Map<String, Object> nested4 = (Map<String, Object>) nested3.get("nested4");
 
         Assert.assertNotNull(split);
-        Assert.assertEquals(Double.valueOf(10), (Double) config1.get("f1"));
+        Assert.assertEquals(10d, config1.get("f1"));
         Assert.assertEquals("v2", config1.get("f2"));
 
         Assert.assertNotNull(nested1);
@@ -135,7 +136,7 @@ public class SplitConfigurationsParsingTests {
         Assert.assertEquals("nval2", nested2.get("nv2"));
         Assert.assertEquals("nval3", nested4.get("nv2"));
 
-        Assert.assertEquals(Double.valueOf(10.20), (Double) config2.get("f1"));
+        Assert.assertEquals(10.20, config2.get("f1"));
         Assert.assertEquals(true, config2.get("f2"));
     }
 
@@ -157,8 +158,8 @@ public class SplitConfigurationsParsingTests {
         if (jsonSplit != null) {
             split = Json.fromJson(jsonSplit, Split.class);
         }
-        Map<String, Object> t1Config = (Map<String, Object>) jsonObj(split.configurations.get("treatment1"));
-        Map<String, Object> t2Config = (Map<String, Object>) jsonObj(split.configurations.get("treatment2"));
+        Map<String, Object> t1Config = jsonObj(split.configurations.get("treatment1"));
+        Map<String, Object> t2Config = jsonObj(split.configurations.get("treatment2"));
 
         Assert.assertNotNull(split);
         Assert.assertNotNull(split.configurations);
@@ -188,8 +189,8 @@ public class SplitConfigurationsParsingTests {
         Assert.assertNotNull(map);
         Assert.assertEquals("v1", t1Config.get("c1"));
         Assert.assertEquals(4, array.size());
-        Assert.assertEquals(Double.valueOf(1), (Double) array.get(0));
-        Assert.assertEquals(Double.valueOf(4), (Double) array.get(3));
+        Assert.assertEquals(Double.valueOf(1), array.get(0));
+        Assert.assertEquals(Double.valueOf(4), array.get(3));
         Assert.assertEquals("v1", map.get("c1"));
     }
 
@@ -200,14 +201,12 @@ public class SplitConfigurationsParsingTests {
             jsonSplit = jsonSplit + ", \"configurations\": " + config;
         }
         jsonSplit = "{" + jsonSplit + "}";
-        Split split = Json.fromJson(jsonSplit, Split.class);
-        return split;
+        return Json.fromJson(jsonSplit, Split.class);
     }
 
     private Map<String, Object> jsonObj(String json) {
-        Map<String, Object> res = fromJsonMap(json);
 
-        return res;
+        return fromJsonMap(json);
     }
 
     private Map<String, Object> fromJsonMap(String json) {

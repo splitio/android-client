@@ -14,22 +14,18 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.List;
 
 import fake.ImpressionsManagerStub;
-import fake.MySegmentsCacheStub;
 import fake.RefreshableMySegmentsFetcherProviderStub;
 import fake.RefreshableSplitFetcherProviderStub;
 import fake.SplitCacheStub;
 import fake.TrackClientStub;
 import io.split.android.client.cache.MySegmentsCache;
-import io.split.android.client.cache.SplitCache;
-import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.Status;
 import io.split.android.client.lifecycle.LifecycleManager;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TracksFileStorage;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class MySegmentsOnBGSaveTest {
 
 

@@ -62,8 +62,9 @@ public class CachedMetricsTest {
         cachedMetrics.time("foo", 5);
         cachedMetrics.time("foo", 6);
         cachedMetrics.time("foo", 7);
-        Thread.sleep(30);
+        Thread.sleep(20);
         cachedMetrics.time("foo", 8);
+
 
         List<Long> latencies = Lists.newArrayList(0L, 0L, 0L, 0L, 2L, 2L, 1L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
 

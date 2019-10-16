@@ -13,8 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 /**
  * An implementation of SplitClient that considers all partitions
  * passed in the constructor to be 100% on for all users, and
@@ -108,7 +106,6 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public void flush() {
-        return;
     }
 
     @Override
@@ -117,7 +114,6 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     public void on(SplitEvent event, SplitEventTask task) {
-        return;
     }
 
     void updateSplitsMap(ImmutableMap<String, Split> splits) {

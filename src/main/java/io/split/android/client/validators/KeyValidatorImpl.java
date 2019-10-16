@@ -2,11 +2,6 @@ package io.split.android.client.validators;
 
 import com.google.common.base.Strings;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import io.split.android.client.api.Key;
-
 /**
  * Validates an instance of Key class.
  */

@@ -11,33 +11,23 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import fake.HttpClientStub;
 import fake.ImpressionsManagerStub;
 import fake.MySegmentsCacheStub;
 import fake.RefreshableMySegmentsFetcherProviderStub;
 import fake.RefreshableSplitFetcherProviderStub;
-import fake.SplitCacheStub;
 import fake.TrackClientStub;
-import io.split.android.client.TrackClient;
-import io.split.android.client.TrackClientImpl;
 import io.split.android.client.cache.SplitCache;
-import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.lifecycle.LifecycleManager;
-import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
-import io.split.android.client.track.TrackClientConfig;
-import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.track.TracksFileStorage;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class SplitChangesOnBGSaveTest {
 
 

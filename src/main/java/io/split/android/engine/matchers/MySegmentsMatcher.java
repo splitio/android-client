@@ -3,7 +3,6 @@ package io.split.android.engine.matchers;
 import java.util.Map;
 
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientImpl;
 import io.split.android.engine.segments.MySegments;
 
 /**

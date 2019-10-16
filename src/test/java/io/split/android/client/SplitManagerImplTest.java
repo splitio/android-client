@@ -8,12 +8,10 @@ import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.CombiningMatcher;
-import io.split.android.helpers.SplitHelper;
 
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +42,7 @@ public class SplitManagerImplTest {
         Map<String, String> configs = new HashMap<>();
         configs.put("off", "{\"f\":\"v\"}");
         configs.put("on", "{\"f1\":\"v1\"}");
-        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition("off")), "traffic", 456L, 1, configs);
+        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition()), "traffic", 456L, 1, configs);
         Mockito.when(splitFetcher.fetch(existent)).thenReturn(response);
 
         SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
@@ -66,7 +64,7 @@ public class SplitManagerImplTest {
     @Test
     public void splitsCallWithNoSplit() {
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
-        Mockito.when(splitFetcher.fetchAll()).thenReturn(Lists.<ParsedSplit>newArrayList());
+        Mockito.when(splitFetcher.fetchAll()).thenReturn(Lists.newArrayList());
         SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
         assertThat(splitManager.splits(), is(empty()));
     }
@@ -75,7 +73,7 @@ public class SplitManagerImplTest {
     public void splitsCallWithSplit() {
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
         List<ParsedSplit> parsedSplits = Lists.newArrayList();
-        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition("off")), "traffic", 456L, 1, null);
+        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition()), "traffic", 456L, 1, null);
         parsedSplits.add(response);
 
         Mockito.when(splitFetcher.fetchAll()).thenReturn(parsedSplits);
@@ -94,7 +92,7 @@ public class SplitManagerImplTest {
     @Test
     public void splitNamesCallWithNoSplit() {
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
-        Mockito.when(splitFetcher.fetchAll()).thenReturn(Lists.<ParsedSplit>newArrayList());
+        Mockito.when(splitFetcher.fetchAll()).thenReturn(Lists.newArrayList());
         SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
         assertThat(splitManager.splitNames(), is(empty()));
     }
@@ -103,7 +101,7 @@ public class SplitManagerImplTest {
     public void splitNamesCallWithSplit() {
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
         List<ParsedSplit> parsedSplits = Lists.newArrayList();
-        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition("off")), "traffic", 456L, 1, null);
+        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition()), "traffic", 456L, 1, null);
         parsedSplits.add(response);
 
         Mockito.when(splitFetcher.fetchAll()).thenReturn(parsedSplits);
@@ -113,8 +111,8 @@ public class SplitManagerImplTest {
         assertThat(splitNames.get(0), is(equalTo(response.feature())));
     }
 
-    private ParsedCondition getTestCondition(String treatment) {
-        return ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(ConditionsTestUtil.partition(treatment, 10)));
+    private ParsedCondition getTestCondition() {
+        return ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(ConditionsTestUtil.partition("off", 10)));
     }
 
 }

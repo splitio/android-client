@@ -10,6 +10,7 @@ import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 
+@SuppressWarnings("ConstantConditions")
 public class SplitFetcherStub implements SplitFetcher {
 
     Map<String, ParsedSplit> mSplits;

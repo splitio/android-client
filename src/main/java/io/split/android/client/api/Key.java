@@ -60,10 +60,6 @@ public final class Key {
 
     @Override
     public String toString() {
-        StringBuilder bldr = new StringBuilder();
-        bldr.append(_matchingKey);
-        bldr.append(", ");
-        bldr.append(_bucketingKey);
-        return bldr.toString();
+        return _matchingKey + ", " + _bucketingKey;
     }
 }

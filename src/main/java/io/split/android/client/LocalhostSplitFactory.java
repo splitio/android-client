@@ -53,8 +53,8 @@ public final class LocalhostSplitFactory implements SplitFactory {
             mLocalhostFileName = localhostFileName;
         }
 
-        Map<String, Split> featureToTreatmentMap = null;
-        LocalhostFileParser parser = null;
+        Map<String, Split> featureToTreatmentMap;
+        LocalhostFileParser parser;
         String yamlName = getYamlFileName(context);
         if(yamlName != null) {
             FileStorage fileStorage = new FileStorage(context.getCacheDir(), LOCALHOST_FOLDER);
@@ -72,7 +72,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
             splits = ImmutableMap.copyOf(featureToTreatmentMap);
         } else {
             mIsSdkReady = false;
-            splits = ImmutableMap.<String, Split>of();
+            splits = ImmutableMap.of();
             Logger.w("Neither yaml file nor properties were found. Localhost feature map is empty.");
         }
 
@@ -94,7 +94,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
 
     @Override
     public void destroy() {
-        mClient.updateSplitsMap(ImmutableMap.<String, Split>of());
+        mClient.updateSplitsMap(ImmutableMap.of());
     }
 
     @Override
@@ -138,7 +138,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
 
     private void copyYamlFileResourceToDataFolder(String fileName, FileStorage fileStorage, Context context) {
         FileUtils fileUtils = new FileUtils();
-        String yamlContent = null;
+        String yamlContent;
         try {
             yamlContent = fileUtils.loadFileContent(fileName, context);
             if(yamlContent != null) {

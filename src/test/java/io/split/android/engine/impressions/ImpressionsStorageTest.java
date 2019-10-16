@@ -17,8 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.split.android.client.SplitClientConfig;
-import io.split.android.client.api.Key;
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
@@ -27,8 +25,6 @@ import io.split.android.client.impressions.ImpressionsFileStorage;
 import io.split.android.client.impressions.ImpressionsStorageManager;
 import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
 import io.split.android.client.impressions.StoredImpressions;
-import io.split.android.client.storage.IStorage;
-import io.split.android.client.storage.MemoryStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.fake.ImpressionsFileStorageStub;
 
@@ -48,6 +44,7 @@ public class ImpressionsStorageTest {
     final String CHUNK_HEADERS_FILE_NAME = "SPLITIO.impressions_chunk_headers.json";
     final String IMPRESSIONS_FILE_NAME = "SPLITIO.impressions_#%d.json";
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Before
     public void setUp()throws IOException {
 
@@ -190,7 +187,7 @@ public class ImpressionsStorageTest {
                 for (int j = 0; j < impressionsCount; j++) {
                     KeyImpression keyImpression = new KeyImpression();
                     keyImpression.bucketingKey = null;
-                    keyImpression.keyName = String.format("CUSTOMER_ID");
+                    keyImpression.keyName = "CUSTOMER_ID";
                     keyImpression.feature = testName;
                     keyImpression.time = System.currentTimeMillis();
                     keyImpression.treatment = "off";
@@ -242,7 +239,7 @@ public class ImpressionsStorageTest {
                 for (int j = 0; j < impressionsCount; j++) {
                     KeyImpression keyImpression = new KeyImpression();
                     keyImpression.bucketingKey = null;
-                    keyImpression.keyName = String.format("CUSTOMER_ID");
+                    keyImpression.keyName = "CUSTOMER_ID";
                     keyImpression.feature = testName;
                     keyImpressions.add(keyImpression);
                 }
@@ -303,7 +300,7 @@ public class ImpressionsStorageTest {
                 for (int j = 0; j < impCount; j++) {
                     KeyImpression keyImpression = new KeyImpression();
                     keyImpression.bucketingKey = null;
-                    keyImpression.keyName = String.format("CUSTOMER_ID");
+                    keyImpression.keyName = "CUSTOMER_ID";
                     keyImpression.feature = testName;
                     keyImpressions.add(keyImpression);
                     if((j + 6) % 5 == 0) {
@@ -448,8 +445,8 @@ public class ImpressionsStorageTest {
 
     private int getSum(int[] values) {
         int sum = 0;
-        for (int i = 0; i < values.length; i++) {
-            sum += values[i];
+        for (int value : values) {
+            sum += value;
         }
         return sum;
     }

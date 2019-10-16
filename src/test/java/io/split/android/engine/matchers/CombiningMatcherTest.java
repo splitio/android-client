@@ -27,7 +27,7 @@ public class CombiningMatcherTest {
         CombiningMatcher combiner = new CombiningMatcher(MatcherCombiner.AND, Lists.newArrayList(matcher1, matcher2));
 
         assertThat(combiner.match("a", null, null, null), is(true));
-        assertThat(combiner.match("b", null, Collections.<String, Object>emptyMap(), null), is(true));
+        assertThat(combiner.match("b", null, Collections.emptyMap(), null), is(true));
         assertThat(combiner.match("c", null, null, null), is(false));
     }
 

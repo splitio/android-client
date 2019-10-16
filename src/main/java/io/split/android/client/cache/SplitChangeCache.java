@@ -1,15 +1,10 @@
 package io.split.android.client.cache;
 
-import com.google.gson.JsonSyntaxException;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.storage.IStorage;
-import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
 
 /**
  * Created by guillermo on 11/23/17.

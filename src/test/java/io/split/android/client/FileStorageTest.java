@@ -1,13 +1,12 @@
 package io.split.android.client;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +15,7 @@ import java.util.Set;
 import io.split.android.client.storage.FileStorage;
 import io.split.android.client.storage.IStorage;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class FileStorageTest {
 
     private static final String ROOT_FOLDER = "./build";
@@ -23,7 +23,7 @@ public class FileStorageTest {
     private static final String PREFIX = "the-prefix.";
     private static final String CONTENT = "{\"value\": 1}";
 
-    IStorage storage;
+    private IStorage storage;
 
     @Before
     public void setup(){

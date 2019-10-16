@@ -23,7 +23,7 @@ public class Transformers {
         }
 
         if (obj instanceof Long) {
-            return ((Long) obj).longValue();
+            return (Long) obj;
         }
 
         return null;
@@ -85,7 +85,7 @@ public class Transformers {
 
         Calendar c = Calendar.getInstance();
         c.setTimeZone(UTC);
-        c.setTimeInMillis(millisecondsSinceEpoch.longValue());
+        c.setTimeInMillis(millisecondsSinceEpoch);
 
         return c;
     }

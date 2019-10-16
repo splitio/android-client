@@ -3,8 +3,6 @@ package io.split.android.client.utils;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.List;
-
 public class YamlParser {
 
     Yaml yaml;
@@ -17,7 +15,7 @@ public class YamlParser {
         T parsedContent = null;
 
         try {
-            parsedContent = (T) yaml.load(yamlContent);
+            parsedContent = yaml.load(yamlContent);
         } catch (YAMLException ye) {
             Logger.e("Error parsing yaml file: " + ye.getLocalizedMessage());
         } catch (Exception e) {

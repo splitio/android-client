@@ -2,7 +2,6 @@ package io.split.android.engine.matchers.strings;
 
 import io.split.android.client.Evaluator;
 import io.split.android.engine.matchers.Matcher;
-import io.split.android.client.SplitClientImpl;
 
 import java.util.Map;
 import java.util.regex.Pattern;

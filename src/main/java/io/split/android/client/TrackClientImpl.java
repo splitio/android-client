@@ -1,10 +1,6 @@
 package io.split.android.client;
 
 import android.annotation.SuppressLint;
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LifecycleObserver;
-import android.arch.lifecycle.OnLifecycleEvent;
-import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.support.annotation.VisibleForTesting;
 
 import com.google.common.collect.Lists;
@@ -18,10 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -39,8 +33,6 @@ import io.split.android.client.track.TrackStorageManager;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
-import io.split.android.client.validators.ValidationMessageLogger;
-import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.client.validators.ValidationConfig;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
@@ -74,9 +66,7 @@ public class TrackClientImpl implements TrackClient {
     private final PausableThreadPoolExecutor _consumerExecutor;
 
     private final TrackStorageManager _storageManager;
-    private final String validationTag = "track";
-
-    private final ValidationMessageLogger _validationLogger;
+    private static final String validationTag = "track";
 
     @VisibleForTesting
     public Consumer _consumer;
@@ -118,8 +108,6 @@ public class TrackClientImpl implements TrackClient {
 
         _eventQueue = eventQueue;
         _config = config;
-
-        _validationLogger = new ValidationMessageLoggerImpl();
 
         if (senderExecutor == null) {
             // Thread to send events to backend
@@ -306,6 +294,9 @@ public class TrackClientImpl implements TrackClient {
 
             long totalSizeInBytes = 0;
             try {
+                // This code was intentionally designed this way
+                // TODO: Analize refactor
+                //noinspection InfiniteLoopStatement,InfiniteLoopStatement
                 while (true) {
                     Event event = _eventQueue.take();
 
@@ -386,7 +377,7 @@ public class TrackClientImpl implements TrackClient {
         public void run() {
             boolean shouldSaveEvents = false;
             if (Utils.isSplitServiceReachable(mEndpoint)) {
-                HttpResponse response = null;
+                HttpResponse response;
                 try {
 
                     String jsonEvents = (mChunk != null ? Json.toJson(mChunk.getEvents()) : null);
@@ -396,9 +387,11 @@ public class TrackClientImpl implements TrackClient {
                         Logger.d("Caching events to next iteration");
 
                         //Saving events to disk
-                        mChunk.addAtempt();
-                        if (mChunk.getAttempt() < mMaxSentAttempts) {
-                            shouldSaveEvents = true;
+                        if(mChunk != null) {
+                            mChunk.addAtempt();
+                            if (mChunk.getAttempt() < mMaxSentAttempts) {
+                                shouldSaveEvents = true;
+                            }
                         }
                     }
                 } catch (HttpException e) {

@@ -2,7 +2,7 @@ package io.split.android.http;
 
 import com.google.gson.reflect.TypeToken;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.After;
 import org.junit.Before;
@@ -33,7 +33,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 
 public class HttpClientTest {
 
-    MockWebServer mWebServer;
+    private MockWebServer mWebServer;
     String mTrackRequestBody = null;
 
     @Before
@@ -41,6 +41,7 @@ public class HttpClientTest {
         setupServer();
     }
 
+    @SuppressWarnings("UnusedAssignment")
     @Test
     public void severalRequest() throws Exception {
         RecordedRequest recReq;
@@ -157,7 +158,7 @@ public class HttpClientTest {
         Assert.assertEquals(10, trackEventsSent.size());
         Assert.assertEquals("open_web", trackEventsSent.get(0).eventTypeId);
         Assert.assertEquals("CUSTOMER_ID", trackEventsSent.get(0).key);
-        Assert.assertEquals(1.0, trackEventsSent.get(0).value);
+        Assert.assertEquals(1.0, trackEventsSent.get(0).value, 0.0);
         Assert.assertEquals("by_shirt", trackEventsSent.get(9).eventTypeId);
 
         // Assert impressions

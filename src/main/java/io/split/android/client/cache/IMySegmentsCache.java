@@ -2,7 +2,6 @@ package io.split.android.client.cache;
 
 import java.util.List;
 
-import io.split.android.client.api.Key;
 import io.split.android.client.dtos.MySegment;
 
 /**

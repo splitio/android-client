@@ -1,26 +1,19 @@
 package io.split.android.client.validators;
 
-import com.google.common.base.Strings;
-
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.dtos.Split;
 import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
-import io.split.android.fake.SplitCacheStub;
 import io.split.android.fake.SplitFetcherStub;
 import io.split.android.helpers.FileHelper;
-import io.split.android.helpers.SplitHelper;
 
 public class SplitValidatorTest {
 

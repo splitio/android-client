@@ -9,13 +9,11 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.cache.IMySegmentsCache;
-import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
-import io.split.android.client.storage.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
@@ -36,7 +34,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
     private final IMySegmentsCache _mySegmentsCache;
     static final private Type _mySegmentsJsonMapType = new TypeToken<Map<String, List<MySegment>>>() {}.getType();
 
-    public HttpMySegmentsFetcher(HttpClient client, URI uri, Metrics metrics, IMySegmentsCache mySegmentsCache) {
+    private HttpMySegmentsFetcher(HttpClient client, URI uri, Metrics metrics, IMySegmentsCache mySegmentsCache) {
         _client = client;
         _target = uri;
         _metrics = metrics;
@@ -48,7 +46,7 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
         return create(client, root, new Metrics.NoopMetrics(), mySegmentsCache);
     }
 
-    public static HttpMySegmentsFetcher create(HttpClient client, URI root, Metrics metrics, IMySegmentsCache mySegmentsCache) throws URISyntaxException {
+    private static HttpMySegmentsFetcher create(HttpClient client, URI root, Metrics metrics, IMySegmentsCache mySegmentsCache) throws URISyntaxException {
         return new HttpMySegmentsFetcher(client, new URIBuilder(root, "/mySegments").build(), metrics, mySegmentsCache);
     }
 
@@ -75,10 +73,10 @@ public final class HttpMySegmentsFetcher implements MySegmentsFetcher {
 
             if (!response.isSuccess()) {
                 int statusCode = response.getHttpStatus();
-                Logger.e(String.format("Response status was: %d", statusCode));
+                Logger.e("Response status was: " + statusCode);
                 _metrics.count(PREFIX + ".status." + statusCode, 1);
                 throw new IllegalStateException("Could not retrieve mySegments for " + matchingKey + "; http return code " + statusCode);
-            };
+            }
 
             Logger.d("Received json: %s", response.getData());
             Map<String, List<MySegment>> mySegmentsMap = Json.fromJson(response.getData(), _mySegmentsJsonMapType);

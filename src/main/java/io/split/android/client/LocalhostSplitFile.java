@@ -14,14 +14,12 @@ import java.util.Map;
 
 public class LocalhostSplitFile {
 
-    private final LocalhostSplitFactory _splitFactory;
     private final File _file;
 
-    public LocalhostSplitFile(LocalhostSplitFactory splitFactory, String directory, String fileName) throws IOException {
+    public LocalhostSplitFile(String directory, String fileName) throws IOException {
         Preconditions.checkNotNull(directory);
         Preconditions.checkNotNull(fileName);
 
-        _splitFactory = Preconditions.checkNotNull(splitFactory);
         _file = new File(directory, fileName);
     }
 

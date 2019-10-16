@@ -1,7 +1,6 @@
 package io.split.android.engine.matchers.collections;
 
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientImpl;
 import io.split.android.engine.matchers.Matcher;
 
 import java.util.Collection;
@@ -46,10 +45,7 @@ public class ContainsAnyOfSetMatcher implements Matcher {
 
     @Override
     public String toString() {
-        StringBuilder bldr = new StringBuilder();
-        bldr.append("contains any of ");
-        bldr.append(_compareTo);
-        return bldr.toString();
+        return "contains any of " + _compareTo;
     }
 
     @Override

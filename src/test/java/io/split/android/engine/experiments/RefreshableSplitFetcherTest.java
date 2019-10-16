@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Condition;
-import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
@@ -105,7 +104,7 @@ public class RefreshableSplitFetcherTest {
         RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key", eventManager);
         Split validSplit = new Split();
         validSplit.status = Status.ACTIVE;
-        validSplit.seed = (int) -1;
+        validSplit.seed = -1;
         validSplit.conditions = Lists.newArrayList(ConditionsTestUtil.makeAllKeysCondition(Lists.newArrayList(ConditionsTestUtil.partition("on", 10))));
         validSplit.defaultTreatment = Treatments.OFF;
         validSplit.name = "-1";
@@ -116,7 +115,7 @@ public class RefreshableSplitFetcherTest {
         validReturn.till = 0L;
 
         MatcherGroup invalidMatcherGroup = new MatcherGroup();
-        invalidMatcherGroup.matchers = Lists.<Matcher>newArrayList();
+        invalidMatcherGroup.matchers = Lists.newArrayList();
 
         Condition invalidCondition = new Condition();
         invalidCondition.matcherGroup = invalidMatcherGroup;
@@ -124,7 +123,7 @@ public class RefreshableSplitFetcherTest {
 
         Split invalidSplit = new Split();
         invalidSplit.status = Status.ACTIVE;
-        invalidSplit.seed = (int) -1;
+        invalidSplit.seed = -1;
         invalidSplit.conditions = Lists.newArrayList(invalidCondition);
         invalidSplit.defaultTreatment = Treatments.OFF;
         invalidSplit.name = "-1";
@@ -135,7 +134,7 @@ public class RefreshableSplitFetcherTest {
         invalidReturn.till = 1L;
 
         SplitChange noReturn = new SplitChange();
-        noReturn.splits = Lists.<Split>newArrayList();
+        noReturn.splits = Lists.newArrayList();
         noReturn.since = 1L;
         noReturn.till = 1L;
 

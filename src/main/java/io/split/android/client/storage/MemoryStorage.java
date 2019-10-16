@@ -2,7 +2,6 @@ package io.split.android.client.storage;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,11 +15,13 @@ public class MemoryStorage implements IStorage {
 
     private final Map<String, String> _storage = new HashMap<>();
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public String read(String elementId) throws IOException {
         return _storage.get(elementId);
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Override
     public boolean write(String elementId, String content) throws IOException {
         _storage.put(elementId, content);
@@ -35,7 +36,7 @@ public class MemoryStorage implements IStorage {
     @Override
     public String[] getAllIds() {
         Set<String> allIds = _storage.keySet();
-        return allIds.toArray(new String[allIds.size()]);
+        return allIds.toArray(new String[0]);
     }
 
     @Override
@@ -51,8 +52,9 @@ public class MemoryStorage implements IStorage {
 
     @Override
     public boolean rename(String currentId, String newId) {
-        if (_storage.containsKey(currentId)) {
-            _storage.put(newId, _storage.get(currentId));
+        String current = _storage.get(currentId);
+        if (current != null) {
+            _storage.put(newId, current);
             _storage.remove(currentId);
             return true;
         }

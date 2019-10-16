@@ -1,10 +1,8 @@
 package io.split.android.engine.matchers;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
-import io.split.android.engine.segments.StaticMySegments;
 
 import org.junit.Test;
 

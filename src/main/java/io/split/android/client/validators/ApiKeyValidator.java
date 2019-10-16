@@ -11,6 +11,6 @@ public interface ApiKeyValidator {
      * @param apiKey: ApiKey string
      * @return true when the api key is valid, false when it is not
      */
-    public ValidationErrorInfo validate(String apiKey);
+    ValidationErrorInfo validate(String apiKey);
 
 }

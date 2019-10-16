@@ -8,10 +8,8 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.events.ISplitEventsManager;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.utils.Logger;
-import io.split.android.engine.SDKReadinessGates;
 
 
 import java.util.Collection;

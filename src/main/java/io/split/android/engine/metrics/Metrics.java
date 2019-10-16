@@ -6,10 +6,10 @@ package io.split.android.engine.metrics;
  */
 public interface Metrics {
 
-    public static String GET_TREATMENT_TIME = "sdk.getTreatment";
-    public static String GET_TREATMENTS_TIME = "sdk.getTreatments";
-    public static String GET_TREATMENT_WITH_CONFIG_TIME = "sdk.getTreatmentWithConfig";
-    public static String GET_TREATMENTS_WITH_CONFIG_TIME = "sdk.getTreatmentsWithConfig";
+    String GET_TREATMENT_TIME = "sdk.getTreatment";
+    String GET_TREATMENTS_TIME = "sdk.getTreatments";
+    String GET_TREATMENT_WITH_CONFIG_TIME = "sdk.getTreatmentWithConfig";
+    String GET_TREATMENTS_WITH_CONFIG_TIME = "sdk.getTreatmentsWithConfig";
 
     /**
      * Adjusts the specified counter by a given delta.
@@ -31,7 +31,7 @@ public interface Metrics {
      */
     void time(String operation, long timeInMs);
 
-    public static final class NoopMetrics implements Metrics {
+    final class NoopMetrics implements Metrics {
 
         @Override
         public void count(String counter, long delta) {

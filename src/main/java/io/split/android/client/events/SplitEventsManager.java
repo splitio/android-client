@@ -3,7 +3,6 @@ package io.split.android.client.events;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -26,10 +25,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
-    private final int QUEUE_CAPACITY = 10;
+    private final static int QUEUE_CAPACITY = 10;
 
     private SplitClientConfig _config;
 
+    // TODO: Analyze removing this annotation
+    @SuppressWarnings("FieldCanBeLocal")
     private final ScheduledExecutorService _scheduler;
 
     private ArrayBlockingQueue<SplitInternalEvent> _queue;
@@ -134,6 +135,9 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
     @Override
     public void run(){
+        // This code was intentionally designed this way
+        // TODO: Analize refactor
+        //noinspection InfiniteLoopStatement,InfiniteLoopStatement
         while(true){
             triggerEventsWhenAreAvailable();
         }

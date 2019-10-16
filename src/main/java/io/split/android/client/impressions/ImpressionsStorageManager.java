@@ -10,7 +10,6 @@ import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.storage.FileStorageHelper;
 import io.split.android.client.utils.Json;
@@ -128,10 +126,7 @@ public class ImpressionsStorageManager {
         if (storedImpressions.id() == null || storedImpressions.id().isEmpty()) {
             return false;
         }
-        if (storedImpressions.impressions() == null || storedImpressions.impressions().isEmpty()) {
-            return false;
-        }
-        return true;
+        return storedImpressions.impressions() != null && !storedImpressions.impressions().isEmpty();
     }
 
     private String readStringChunk(String chunkId) {
@@ -155,7 +150,7 @@ public class ImpressionsStorageManager {
         }
 
         StoredImpressions failedChunk = mImpressionsToSend.get(chunkId);
-        if (failedChunk.getAttempts() >= mConfig.getImpressionsMaxSentAttempts() || isChunkOutdated(failedChunk)) {
+        if (failedChunk != null && failedChunk.getAttempts() >= mConfig.getImpressionsMaxSentAttempts() || isChunkOutdated(failedChunk)) {
             mImpressionsToSend.remove(chunkId);
         } else {
             failedChunk.addAttempt();
@@ -165,10 +160,7 @@ public class ImpressionsStorageManager {
     private boolean isChunkOutdated(StoredImpressions chunk) {
         long diff = System.currentTimeMillis() - chunk.getTimestamp();
 
-        if (diff > mConfig.getImpressionsChunkOudatedTime()) {
-            return true;
-        }
-        return false;
+        return diff > mConfig.getImpressionsChunkOudatedTime();
     }
 
     private void loadImpressionsFromDisk() {
@@ -198,7 +190,7 @@ public class ImpressionsStorageManager {
                 if (!isChunkOutdated(entry.getValue())) {
                     mImpressionsToSend.put(entry.getKey(), entry.getValue());
                 }
-            };
+            }
         }
     }
 
@@ -315,7 +307,7 @@ public class ImpressionsStorageManager {
     private String getTestNameFromRecordKey(String recordKey) {
         String testName = "";
         try {
-            testName = recordKey.substring(recordKey.indexOf(RECORD_KEY_SEPARATOR) + 1, recordKey.length());
+            testName = recordKey.substring(recordKey.indexOf(RECORD_KEY_SEPARATOR) + 1);
         } catch (IndexOutOfBoundsException e) {
             Logger.e("Record key not valid loading impressions from disk: " + e.getLocalizedMessage());
         }

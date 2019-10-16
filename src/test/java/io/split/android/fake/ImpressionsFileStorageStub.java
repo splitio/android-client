@@ -1,6 +1,5 @@
 package io.split.android.fake;
 
-import java.io.IOException;
 import java.util.Map;
 
 import io.split.android.client.impressions.IImpressionsStorage;
