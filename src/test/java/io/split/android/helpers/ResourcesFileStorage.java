@@ -3,7 +3,7 @@ package io.split.android.helpers;
 import java.io.IOException;
 import java.util.List;
 
-import io.split.android.client.storage.IStorage;
+import io.split.android.client.storage.legacy.IStorage;
 
 public class ResourcesFileStorage implements IStorage {
     @Override

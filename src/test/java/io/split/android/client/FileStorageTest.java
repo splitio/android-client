@@ -12,8 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import io.split.android.client.storage.FileStorage;
-import io.split.android.client.storage.IStorage;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.storage.legacy.IStorage;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class FileStorageTest {

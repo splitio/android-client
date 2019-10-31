@@ -7,15 +7,13 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.storage.FileStorageHelper;
+import io.split.android.client.storage.legacy.FileStorageHelper;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.MemoryUtils;

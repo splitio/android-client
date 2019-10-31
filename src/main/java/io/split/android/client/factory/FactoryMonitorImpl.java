@@ -1,6 +1,6 @@
 package io.split.android.client.factory;
 
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.HashMap;
 import java.util.Map;

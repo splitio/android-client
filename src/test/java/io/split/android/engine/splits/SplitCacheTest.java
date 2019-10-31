@@ -16,9 +16,9 @@ import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.storage.FileStorage;
-import io.split.android.client.storage.IStorage;
-import io.split.android.client.storage.MemoryStorage;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.storage.legacy.IStorage;
+import io.split.android.client.storage.legacy.MemoryStorage;
 
 public class SplitCacheTest {
 

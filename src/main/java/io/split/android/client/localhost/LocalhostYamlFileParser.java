@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.storage.IStorage;
+import io.split.android.client.storage.legacy.IStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.YamlParser;
 import io.split.android.grammar.Treatments;

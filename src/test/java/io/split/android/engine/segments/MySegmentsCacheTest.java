@@ -14,8 +14,8 @@ import java.util.Map;
 import io.split.android.client.cache.IMySegmentsCache;
 import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.storage.IStorage;
-import io.split.android.client.storage.MemoryStorage;
+import io.split.android.client.storage.legacy.IStorage;
+import io.split.android.client.storage.legacy.MemoryStorage;
 import io.split.android.client.utils.Json;
 
 public class MySegmentsCacheTest {

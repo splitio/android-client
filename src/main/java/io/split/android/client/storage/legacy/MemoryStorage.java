@@ -1,4 +1,4 @@
-package io.split.android.client.storage;
+package io.split.android.client.storage.legacy;
 
 import java.io.IOException;
 import java.util.ArrayList;
