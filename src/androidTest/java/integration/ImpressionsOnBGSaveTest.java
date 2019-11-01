@@ -21,11 +21,11 @@ import fake.SplitCacheStub;
 import fake.TrackClientStub;
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.Impression;
-import io.split.android.client.impressions.ImpressionsFileStorage;
+import io.split.android.client.storage.legacy.ImpressionsFileStorage;
 import io.split.android.client.impressions.ImpressionsManagerConfig;
 import io.split.android.client.impressions.ImpressionsManagerImpl;
-import io.split.android.client.impressions.ImpressionsStorageManager;
-import io.split.android.client.impressions.ImpressionsStorageManagerConfig;
+import io.split.android.client.storage.legacy.ImpressionsStorageManager;
+import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
 import io.split.android.client.impressions.StoredImpressions;
 import io.split.android.client.lifecycle.LifecycleManager;
 

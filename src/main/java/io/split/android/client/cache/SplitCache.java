@@ -168,6 +168,7 @@ public class SplitCache implements ISplitCache {
     }
 
     @Override
+    // TODO: This methods should use new db storage implementation
     synchronized public void saveToDisk() {
 
         // Save splits
@@ -191,6 +192,7 @@ public class SplitCache implements ISplitCache {
         }
     }
 
+    // TODO: This methods should use new db storage implementation
     void loadSplitsFromDisk() {
         long maxChangeNumber = -1;
         List<String> fileIds = mFileStorageManager.getAllIds(SPLIT_FILE_PREFIX);

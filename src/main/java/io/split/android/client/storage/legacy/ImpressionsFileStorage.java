@@ -1,4 +1,4 @@
-package io.split.android.client.impressions;
+package io.split.android.client.storage.legacy;
 
 import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
@@ -19,11 +19,14 @@ import java.util.Scanner;
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.impressions.IImpressionsStorage;
+import io.split.android.client.impressions.StoredImpressions;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.FileStorageHelper;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
+@Deprecated
 public class ImpressionsFileStorage extends FileStorage implements IImpressionsStorage {
 
     private static final String FILE_NAME_PREFIX = "SPLITIO.impressions_chunk_id_";
@@ -35,6 +38,7 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
         _fileStorageHelper = new FileStorageHelper();
     }
 
+    @Deprecated
     public Map<String, StoredImpressions> read() {
 
         Map<String, StoredImpressions> impressions = new HashMap<>();
@@ -88,6 +92,7 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
         return impressions;
     }
 
+    @Deprecated
     public void write(Map<String, StoredImpressions> impressions) {
 
         for (StoredImpressions chunk : impressions.values()) {

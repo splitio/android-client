@@ -24,8 +24,8 @@ import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.lifecycle.LifecycleManager;
+import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.track.ITrackStorage;
-import io.split.android.client.track.TracksFileStorage;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class SplitChangesOnBGSaveTest {
@@ -48,7 +48,7 @@ public class SplitChangesOnBGSaveTest {
             folder.delete();
         }
 
-        ITrackStorage fileStorage = new TracksFileStorage(rootFolder, "split_folder_test");
+        ITrackStorage fileStorage = new FileStorage.TracksFileStorage(rootFolder, "split_folder_test");
         SplitCache splitCache = new SplitCache(fileStorage);
 
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());

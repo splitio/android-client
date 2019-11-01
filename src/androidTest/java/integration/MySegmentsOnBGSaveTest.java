@@ -22,8 +22,8 @@ import fake.SplitCacheStub;
 import fake.TrackClientStub;
 import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.lifecycle.LifecycleManager;
+import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.track.ITrackStorage;
-import io.split.android.client.track.TracksFileStorage;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class MySegmentsOnBGSaveTest {
@@ -46,7 +46,7 @@ public class MySegmentsOnBGSaveTest {
             folder.delete();
         }
 
-        ITrackStorage fileStorage = new TracksFileStorage(rootFolder, "myseg_folder_test");
+        ITrackStorage fileStorage = new FileStorage.TracksFileStorage(rootFolder, "myseg_folder_test");
         MySegmentsCache mySegmentsCache = new MySegmentsCache(fileStorage);
 
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());

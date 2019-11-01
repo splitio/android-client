@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * Created by guillermo on 11/23/17.
  */
-
+@Deprecated
 public class MemoryStorage implements IStorage {
 
     private final Map<String, String> _storage = new HashMap<>();
