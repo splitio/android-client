@@ -21,11 +21,6 @@ public class GeneralInfoDaoTest {
 
     @Before
     public void setup() {
-        //File databases = new File(InstrumentationRegistry.getInstrumentation().getContext().getApplicationInfo().dataDir + "/databases");
-        //File db = new File(databases, "encripted_api_key");
-//        if (db.delete())
-//            System.out.println("Database deleted");
-
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
         mRoomDb.clearAllTables();
