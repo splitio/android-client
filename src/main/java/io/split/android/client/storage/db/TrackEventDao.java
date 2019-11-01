@@ -17,9 +17,9 @@ public interface TrackEventDao {
             "AND status = :status ORDER BY timestamp")
     List<TrackEventEntity> getBy(long timestamp, int status);
 
-    @Query("UPDATE track_events SET status = " + ImpressionEntity.STATUS_DELETED +
+    @Query("UPDATE track_events SET status = :status "  +
             " WHERE id IN (:ids)")
-    void markAsDeleted(List<Long> ids);
+    void updateStatus(List<Long> ids, int status);
 
     @Query("DELETE FROM track_events WHERE id IN (:ids)")
     void delete(List<Long> ids);

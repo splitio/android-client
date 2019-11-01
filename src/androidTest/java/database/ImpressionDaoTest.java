@@ -64,7 +64,7 @@ public class ImpressionDaoTest {
         List<Long> idsToSoftDelete = ids.subList(15, 20);
         List<Long> idsToDelete = ids.subList(10, 15);
 
-        mRoomDb.impressionDao().markAsDeleted(idsToSoftDelete);
+        mRoomDb.impressionDao().updateStatus(idsToSoftDelete, ImpressionEntity.STATUS_DELETED);
         List<ImpressionEntity> afterSoftDelete = mRoomDb.impressionDao().getBy(0, ImpressionEntity.STATUS_ACTIVE);
 
         mRoomDb.impressionDao().delete(idsToDelete);

@@ -20,9 +20,9 @@ public interface ImpressionDao {
             "AND status = :status ORDER BY timestamp, test_name")
     List<ImpressionEntity> getBy(long timestamp, int status);
 
-    @Query("UPDATE impressions SET status = " + ImpressionEntity.STATUS_DELETED +
+    @Query("UPDATE impressions SET status = :status " +
             " WHERE id IN (:ids)")
-    void markAsDeleted(List<Long> ids);
+    void updateStatus(List<Long> ids, int status);
 
     @Query("DELETE FROM impressions WHERE id IN (:ids)")
     void delete(List<Long> ids);

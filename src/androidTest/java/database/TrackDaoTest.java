@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import helper.FileHelper;
 import helper.IntegrationHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.db.TrackEventEntity;
@@ -61,7 +60,7 @@ public class TrackDaoTest {
         List<Long> idsToSoftDelete = ids.subList(15, 20);
         List<Long> idsToDelete = ids.subList(10, 15);
 
-        mRoomDb.trackEventDao().markAsDeleted(idsToSoftDelete);
+        mRoomDb.trackEventDao().updateStatus(idsToSoftDelete, TrackEventEntity.STATUS_DELETED);
         List<TrackEventEntity> afterSoftDelete = mRoomDb.trackEventDao().getBy(0, TrackEventEntity.STATUS_ACTIVE);
 
         mRoomDb.trackEventDao().delete(idsToDelete);
