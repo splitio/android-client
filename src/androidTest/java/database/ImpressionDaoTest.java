@@ -86,8 +86,8 @@ public class ImpressionDaoTest {
     @Test
     public void dataIntegrity() {
         long timestamp = System.currentTimeMillis();
-        mRoomDb.impressionDao().insert(generateData(1, 1, timestamp, true).get(0));
-        mRoomDb.impressionDao().insert(generateData(2, 2, timestamp, false).get(0));
+        mRoomDb.impressionDao().insert(generateData(1, 1, timestamp, false).get(0));
+        mRoomDb.impressionDao().insert(generateData(2, 2, timestamp, true).get(0));
 
         ImpressionEntity activeImpressionEntity = mRoomDb.impressionDao().getBy(timestamp, ImpressionEntity.STATUS_ACTIVE).get(0);
         ImpressionEntity deletedImpressionEntity = mRoomDb.impressionDao().getBy(timestamp, ImpressionEntity.STATUS_DELETED).get(0);
@@ -179,15 +179,5 @@ public class ImpressionDaoTest {
             impressionList.add(impressionEntity);
         }
         return impressionList;
-    }
-
-//    private Map<String, ImpressionEntity> convertToMap(List<ImpressionEntity> list) {
-//        Map<String, ImpressionEntity> map = list.stream()
-//                .collect(Collectors.toMap(ImpressionEntity::getName, impression -> impression));
-//        return map;
-//    }
-
-    private String loadImpression() {
-        return new FileHelper().loadFileContent(mContext,"impression.json");
     }
 }

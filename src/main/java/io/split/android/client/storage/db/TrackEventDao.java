@@ -14,15 +14,15 @@ public interface TrackEventDao {
 
     @Query("SELECT id, body, timestamp, status FROM track_events " +
             "WHERE timestamp >= :timestamp " +
-            "AND status = " + TrackEventEntity.STATUS_ACTIVE  + " ORDER BY timestamp")
-    List<TrackEventEntity> getToSend(long timestamp);
+            "AND status = :status ORDER BY timestamp")
+    List<TrackEventEntity> getBy(long timestamp, int status);
 
     @Query("UPDATE track_events SET status = " + ImpressionEntity.STATUS_DELETED +
             " WHERE id IN (:ids)")
-    void markAsDeleted(List<Integer> ids);
+    void markAsDeleted(List<Long> ids);
 
-    @Query("DELETE FROM track_events WHERE status = " + ImpressionEntity.STATUS_DELETED)
-    void delete();
+    @Query("DELETE FROM track_events WHERE id IN (:ids)")
+    void delete(List<Long> ids);
 
     @Query("DELETE FROM track_events WHERE timestamp < :timestamp")
     void deleteOutdated(long timestamp);
