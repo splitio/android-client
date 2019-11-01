@@ -30,6 +30,12 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'split-proguard-rules.pro'
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
     }
 
     configurations {
@@ -54,9 +60,6 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:$roomVersion"
     androidTestImplementation "androidx.room:room-testing:$roomVersion"
 
-    // Live data
-    //implementation "androidx.lifecycle:lifecycle-livedata:$lifeCycleVersion"
-    //implementation "androidx.lifecycle:lifecycle-runtime:$lifeCycleVersion"
     implementation "androidx.lifecycle:lifecycle-extensions:$lifeCycleVersion"
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
