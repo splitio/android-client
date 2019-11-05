@@ -3,6 +3,7 @@ package io.split.android.client.storage.db;
 import androidx.lifecycle.LiveData;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
@@ -14,6 +15,9 @@ import java.util.List;
 public interface SplitDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(List<SplitEntity> splits);
+
+    @Query("DELETE FROM splits WHERE name IN (:names)")
+    void delete(List<String> names);
 
     @Query("SELECT name, body, timestamp FROM splits")
     List<SplitEntity> getAll();

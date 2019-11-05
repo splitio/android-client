@@ -37,7 +37,7 @@ public class SplitDaoTest {
     }
 
     @Test
-    public void insertRetrieve() throws InterruptedException {
+    public void insertRetrieve() {
         long timestamp = System.currentTimeMillis();
         mRoomDb.splitDao().insert(generateData(1, 100, timestamp));
         mRoomDb.splitDao().insert(generateData(101, 200, timestamp));
@@ -61,6 +61,18 @@ public class SplitDaoTest {
         Assert.assertEquals("split_1", split.name);
         Assert.assertEquals("split_1", splitEntity.getName());
         Assert.assertEquals(timestamp + 1, splitEntity.getTimestamp());
+    }
+
+    @Test
+    public void insertDelete() {
+        long timestamp = System.currentTimeMillis();
+        mRoomDb.splitDao().insert(generateData(1, 100, timestamp));
+        List<SplitEntity> splits = mRoomDb.splitDao().getAll();
+        mRoomDb.splitDao().delete(splits.stream().map(split -> split.getName()).collect(Collectors.toList()));
+        List<SplitEntity> splitsAfterDelete = mRoomDb.splitDao().getAll();
+
+        Assert.assertEquals(100, splits.size());
+        Assert.assertEquals(0, splitsAfterDelete.size());
     }
 
     @Test
