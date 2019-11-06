@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase;
 
 @Database(
         entities = {
-                MySegmentEntity.class, SplitEntity.class, TrackEventEntity.class,
+                MySegmentEntity.class, SplitEntity.class, EventEntity.class,
                 ImpressionEntity.class, GeneralInfoEntity.class
         },
         version = 1
@@ -17,7 +17,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
 
     public abstract MySegmentDao mySegmentDao();
     public abstract SplitDao splitDao();
-    public abstract TrackEventDao trackEventDao();
+    public abstract EventDao trackEventDao();
     public abstract ImpressionDao impressionDao();
     public abstract GeneralInfoDao generalInfoDao();
 
