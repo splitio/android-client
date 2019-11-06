@@ -17,12 +17,9 @@ import java.util.stream.Collectors;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.storage.db.SplitDao;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
 
 public class SplitDaoTest {
 

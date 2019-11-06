@@ -1,4 +1,4 @@
-package io.split.android.client.storage.cache;
+package io.split.android.client.storage.splits;
 
 import androidx.core.util.Pair;
 
@@ -7,8 +7,7 @@ import java.util.List;
 import io.split.android.client.dtos.Split;
 
 public interface PersistentSplitsStorage {
-    boolean add(List<Split> splits);
-    boolean remove(List<Split> splits);
+    boolean update(List<Split> splits, long changeNumber);
     Pair<List<Split>, Long> getSnapshot();
     void close();
 }
