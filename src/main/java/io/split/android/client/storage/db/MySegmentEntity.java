@@ -17,8 +17,8 @@ public class MySegmentEntity {
     @ColumnInfo(name = "segment_list")
     private String segmentList;
 
-    @NonNull
-    private long timestamp;
+    @ColumnInfo(name = "updated_at")
+    private long updatedAt;
 
     @NonNull
     public String getUserKey() {
@@ -38,11 +38,11 @@ public class MySegmentEntity {
         this.segmentList = segmentList;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setUpdatedAt(long updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

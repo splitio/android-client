@@ -17,6 +17,6 @@ public interface MySegmentDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void update(MySegmentEntity mySegment);
 
-    @Query("SELECT user_key, segment_list, timestamp FROM my_segments WHERE user_key = :userKey")
+    @Query("SELECT user_key, segment_list, updated_at FROM my_segments WHERE user_key = :userKey")
     MySegmentEntity getByUserKeys(String userKey);
 }

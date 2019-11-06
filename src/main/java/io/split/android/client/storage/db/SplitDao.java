@@ -15,6 +15,6 @@ public interface SplitDao {
     @Query("DELETE FROM splits WHERE name IN (:names)")
     void delete(List<String> names);
 
-    @Query("SELECT name, body, timestamp FROM splits")
+    @Query("SELECT name, body, updated_at FROM splits")
     List<SplitEntity> getAll();
 }
