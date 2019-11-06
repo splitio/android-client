@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "track_events")
-public class TrackEventEntity {
+@Entity(tableName = "events")
+public class EventEntity {
     public final static int STATUS_ACTIVE = 0;
     public final static int STATUS_DELETED = 1;
 
@@ -15,7 +15,6 @@ public class TrackEventEntity {
     @NonNull
     private String body;
 
-    @NonNull
     private long timestamp;
     private int status;
 

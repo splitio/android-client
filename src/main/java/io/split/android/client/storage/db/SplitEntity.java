@@ -1,6 +1,7 @@
 package io.split.android.client.storage.db;
 
 import androidx.annotation.NonNull;
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -13,8 +14,8 @@ public class SplitEntity {
     @NonNull
     public String body;
 
-    @NonNull
-    public long timestamp;
+    @ColumnInfo(name = "updated_at")
+    public long updatedAt;
 
     @NonNull
     public String getName() {
@@ -34,11 +35,11 @@ public class SplitEntity {
         this.body = body;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setUpdatedAt(long updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

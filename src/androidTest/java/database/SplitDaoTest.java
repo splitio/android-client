@@ -17,12 +17,9 @@ import java.util.stream.Collectors;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.storage.db.SplitDao;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
 
 public class SplitDaoTest {
 
@@ -46,9 +43,9 @@ public class SplitDaoTest {
         Map<String, SplitEntity> splits = convertToMap(mRoomDb.splitDao().getAll());
 
         Assert.assertEquals(300, splits.size());
-        Assert.assertEquals(timestamp + 1, splits.get("split_1").getTimestamp());
-        Assert.assertEquals(timestamp + 150, splits.get("split_150").getTimestamp());
-        Assert.assertEquals(timestamp + 300, splits.get("split_300").getTimestamp());
+        Assert.assertEquals(timestamp + 1, splits.get("split_1").getUpdatedAt());
+        Assert.assertEquals(timestamp + 150, splits.get("split_150").getUpdatedAt());
+        Assert.assertEquals(timestamp + 300, splits.get("split_300").getUpdatedAt());
     }
 
     @Test
@@ -60,7 +57,7 @@ public class SplitDaoTest {
         Split split = Json.fromJson(splitEntity.getBody(), Split.class);
         Assert.assertEquals("split_1", split.name);
         Assert.assertEquals("split_1", splitEntity.getName());
-        Assert.assertEquals(timestamp + 1, splitEntity.getTimestamp());
+        Assert.assertEquals(timestamp + 1, splitEntity.getUpdatedAt());
     }
 
     @Test
@@ -124,7 +121,7 @@ public class SplitDaoTest {
             String splitName = "split_" + i;
             split.setName(splitName);
             split.setBody(loadSplit().replace("feature_xx", splitName));
-            split.setTimestamp(timestamp + i);
+            split.setUpdatedAt(timestamp + i);
             splitList.add(split);
         }
         return splitList;

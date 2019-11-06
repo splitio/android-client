@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import helper.DatabaseHelper;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 
@@ -44,9 +45,9 @@ public class MySegmentDaoTest {
         Assert.assertEquals("key2", msKey2.getUserKey());
         Assert.assertEquals("key3", msKey3.getUserKey());
 
-        Assert.assertEquals(timestamp + 1, msKey1.getTimestamp());
-        Assert.assertEquals(timestamp + 101, msKey2.getTimestamp());
-        Assert.assertEquals(timestamp + 201, msKey3.getTimestamp());
+        Assert.assertEquals(timestamp + 1, msKey1.getUpdatedAt());
+        Assert.assertEquals(timestamp + 101, msKey2.getUpdatedAt());
+        Assert.assertEquals(timestamp + 201, msKey3.getUpdatedAt());
     }
 
     @Test
@@ -59,7 +60,7 @@ public class MySegmentDaoTest {
         Set<String> segments = new HashSet<String>(Arrays.asList(msKey1.getSegmentList().split(",")));
 
         Assert.assertEquals("key1", msKey1.getUserKey());
-        Assert.assertEquals(timestamp + 500, msKey1.getTimestamp());
+        Assert.assertEquals(timestamp + 500, msKey1.getUpdatedAt());
         Assert.assertFalse(segments.contains("segment1"));
         Assert.assertTrue(segments.contains("segment500"));
         Assert.assertTrue(segments.contains("segment505"));
@@ -74,7 +75,7 @@ public class MySegmentDaoTest {
         Set<String> segments = new HashSet<String>(Arrays.asList(mySegmentEntity.getSegmentList().split(",")));
 
         Assert.assertEquals("key1", mySegmentEntity.getUserKey());
-        Assert.assertEquals(timestamp + 1, mySegmentEntity.getTimestamp());
+        Assert.assertEquals(timestamp + 1, mySegmentEntity.getUpdatedAt());
         Assert.assertEquals(10, segments.size());
         Assert.assertTrue(segments.contains("segment1"));
         Assert.assertTrue(segments.contains("segment5"));
@@ -89,7 +90,7 @@ public class MySegmentDaoTest {
         }
         segmentEntity.setUserKey(key);
         segmentEntity.setSegmentList(String.join(",", mySegmentList));
-        segmentEntity.setTimestamp(timestamp + from);
+        segmentEntity.setUpdatedAt(timestamp + from);
         return segmentEntity;
     }
 }
