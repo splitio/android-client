@@ -14,7 +14,7 @@ import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.storage.FileStorage;
+import io.split.android.client.storage.legacy.FileStorage;
 
 public class EventValidatorTest {
 

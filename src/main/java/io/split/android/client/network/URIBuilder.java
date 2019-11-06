@@ -1,6 +1,6 @@
 package io.split.android.client.network;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.net.URI;
 import java.net.URISyntaxException;

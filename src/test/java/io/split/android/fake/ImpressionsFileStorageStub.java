@@ -4,7 +4,7 @@ import java.util.Map;
 
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.StoredImpressions;
-import io.split.android.client.storage.MemoryStorage;
+import io.split.android.client.storage.legacy.MemoryStorage;
 
 public class ImpressionsFileStorageStub extends MemoryStorage implements IImpressionsStorage {
 

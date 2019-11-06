@@ -1,7 +1,7 @@
 package io.split.android.client;
 
 import android.content.Context;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import io.split.android.client.localhost.LocalhostFileParser;
 import io.split.android.client.localhost.LocalhostPropertiesFileParser;
 import io.split.android.client.localhost.LocalhostYamlFileParser;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.storage.FileStorage;
+import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.utils.FileUtils;
 import io.split.android.client.utils.Logger;
 

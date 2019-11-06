@@ -17,8 +17,8 @@ import java.util.Set;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.storage.IStorage;
-import io.split.android.client.storage.MemoryStorage;
+import io.split.android.client.storage.legacy.IStorage;
+import io.split.android.client.storage.legacy.MemoryStorage;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TrackStorageManager;

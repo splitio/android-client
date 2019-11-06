@@ -1,5 +1,8 @@
 package helper;
 
+import android.util.Log;
+
+import com.google.common.base.Strings;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -45,5 +48,9 @@ public class IntegrationHelper {
 
     public static boolean isEven(int i) {
         return (i % 2) == 0;
+    }
+
+    public static void logSeparator(String tag) {
+        Log.i(tag, Strings.repeat("-", 200) );
     }
 }

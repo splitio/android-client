@@ -1,8 +1,8 @@
 package integration;
 
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LifecycleRegistry;
-import android.arch.lifecycle.ProcessLifecycleOwner;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleRegistry;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -46,8 +46,8 @@ import io.split.android.client.lifecycle.LifecycleManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
-import io.split.android.client.storage.FileStorage;
-import io.split.android.client.storage.IStorage;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.storage.legacy.IStorage;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.track.TrackStorageManager;

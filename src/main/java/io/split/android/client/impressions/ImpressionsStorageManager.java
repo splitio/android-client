@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
-import io.split.android.client.storage.FileStorageHelper;
+import io.split.android.client.storage.legacy.FileStorageHelper;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 

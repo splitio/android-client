@@ -1,7 +1,7 @@
 package io.split.android.client;
 
 import android.annotation.SuppressLint;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.VisibleForTesting;
 
 import com.google.common.collect.Lists;
 
