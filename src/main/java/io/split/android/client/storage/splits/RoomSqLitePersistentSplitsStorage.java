@@ -27,10 +27,16 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
     @Override
     public boolean update(@NonNull List<Split> splits, long changeNumber) {
 
+        if(splits == null) {
+            return false;
+        }
         List<String> removedSplits = new ArrayList<>();
         List<Split> newOrUpdatedSplits = new ArrayList<>();
 
         for (Split split : splits) {
+            if(split.name == null) {
+                continue;
+            }
             if(split.status == Status.ACTIVE) {
                 newOrUpdatedSplits.add(split);
             } else {
@@ -73,7 +79,7 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
             SplitEntity entity = new SplitEntity();
             entity.setName(split.name);
             entity.setBody(Json.toJson(split));
-            entity.setTimestamp(split.changeNumber);
+            entity.setUpdatedAt(split.changeNumber);
             splitEntities.add(entity);
         }
         return splitEntities;

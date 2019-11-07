@@ -90,6 +90,68 @@ public class PersistentSplitsStorageTest {
     }
 
     @Test
+    public void addEmptySplit() {
+        List<Split> splits = new ArrayList<>();
+        mPersistentSplitsStorage.update(splits, 1L);
+
+        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splitMap = listToMap(snapshot.first);
+        long changeNumber = snapshot.second;
+
+        for (int i = 0; i < 10; i++) {
+            String splitName = "split-" + i;
+            Split splitTest = splitMap.get(splitName);
+            Assert.assertNotNull(splitTest);
+            Assert.assertEquals(splitName, splitTest.name);
+        }
+        Assert.assertEquals(1L, changeNumber);
+    }
+
+    @Test
+    public void addNullSplitList() {
+        List<Split> splits = new ArrayList<>();
+        boolean res = mPersistentSplitsStorage.update(null, 1L);
+
+        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splitMap = listToMap(snapshot.first);
+        Long changeNumber = snapshot.second;
+
+        for (int i = 0; i < 10; i++) {
+            String splitName = "split-" + i;
+            Split splitTest = splitMap.get(splitName);
+            Assert.assertNotNull(splitTest);
+            Assert.assertEquals(splitName, splitTest.name);
+        }
+        Assert.assertFalse(res);
+        Assert.assertEquals(INITIAL_CHANGE_NUMBER, changeNumber);
+    }
+
+    @Test
+    public void addNullNameSplit() {
+        List<Split> splits = new ArrayList<>();
+        Split split = new Split();
+        split.name = null;
+        split.status = Status.ACTIVE;
+        splits.add(split);
+
+        Split splitOk = new Split();
+        splitOk.name = "test";
+        splitOk.status = Status.ACTIVE;
+        splits.add(splitOk);
+
+        boolean res = mPersistentSplitsStorage.update(splits, 1L);
+
+        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splitMap = listToMap(snapshot.first);
+        long changeNumber = snapshot.second;
+
+        Assert.assertEquals(11, splitMap.size());
+        Assert.assertNotNull(splitMap.get("test"));
+        Assert.assertTrue(res);
+        Assert.assertEquals(1, changeNumber);
+    }
+
+    @Test
     public void deleteSplits() {
         List<Split> splits = new ArrayList<>();
         for (int i = 1; i < 10; i+=2) {
@@ -122,6 +184,26 @@ public class PersistentSplitsStorageTest {
     public void initialChangeNumber() {
         Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
         Assert.assertEquals(INITIAL_CHANGE_NUMBER,snapshot.second);
+    }
+
+    @Test
+    public void deleteAllSplits() {
+        List<Split> splits = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            String splitName = "split-" + i;
+            Split split = new Split();
+            split.name = splitName;
+            split.status = Status.ARCHIVED;
+            splits.add(split);
+        }
+        mPersistentSplitsStorage.update(splits, 1L);
+
+        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
+        List<Split> loadedSlits = snapshot.first;
+        long changeNumber = snapshot.second;
+
+        Assert.assertEquals(0, loadedSlits.size());
+        Assert.assertEquals(1L, changeNumber);
     }
 
     private Split newSplit(String name, Status status, String trafficType) {

@@ -3,6 +3,8 @@ package io.split.android.client.storage.splits;
 import androidx.annotation.NonNull;
 import androidx.core.util.Pair;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,12 +34,36 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Override
     public Map<String, Split> getMany(@NonNull List<String> splitNames) {
-        return null;
+        Map<String, Split> splits = new HashMap<>();
+        if(splitNames == null || splitNames.isEmpty()) {
+            splits.putAll(mInMemorySplits);
+            return splits;
+        }
+
+        for(String name : splitNames) {
+            Split split = mInMemorySplits.get(name);
+            if(split != null) {
+                splits.put(name, split);
+            }
+        }
+        return splits;
+    }
+
+    @Override
+    public Map<String, Split> getAll() {
+        return getMany(null);
     }
 
     @Override
     public void update(@NonNull List<Split> splits, long changeNumber) {
+        if(splits == null) {
+            return;
+        }
+        List<Split> validatedSplits = new ArrayList<>();
         for (Split split : splits) {
+            if(split.name == null) {
+                continue;
+            }
             if(split.status == Status.ACTIVE) {
                 Split loadedSplit = mInMemorySplits.get(split.name);
                 if(loadedSplit != null && loadedSplit.trafficTypeName != null) {
@@ -49,9 +75,10 @@ public class SplitsStorageImpl implements SplitsStorage {
                 mInMemorySplits.remove(split.name);
                 removeTrafficType(split.trafficTypeName);
             }
+            validatedSplits.add(split);
         }
         mChangeNumber = changeNumber;
-        mStorage.update(splits, changeNumber);
+        mStorage.update(validatedSplits, changeNumber);
     }
 
     @Override

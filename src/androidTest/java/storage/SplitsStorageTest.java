@@ -14,6 +14,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -102,6 +103,73 @@ public class SplitsStorageTest {
         Long updatedChangeNumber = mSplitsStorage.getTill();
         Assert.assertEquals(INITIAL_CHANGE_NUMBER, initialChangeNumber);
         Assert.assertEquals(newChangeNumber, updatedChangeNumber);
+    }
+
+    @Test
+    public void addEmptySplit() {
+        mSplitsStorage.update(new ArrayList<>(), 1L);
+
+        Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
+        long changeNumber = mSplitsStorage.getTill();
+
+        Assert.assertEquals(4, loadedSplits.size());
+        Assert.assertEquals(1L, changeNumber);
+    }
+
+    @Test
+    public void addNullSplitList() {
+        mSplitsStorage.update(null, 1L);
+
+        Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
+        Long changeNumber = mSplitsStorage.getTill();
+
+       Assert.assertEquals(4, loadedSplits.size());
+        Assert.assertEquals(INITIAL_CHANGE_NUMBER, changeNumber);
+    }
+
+    @Test
+    public void addNullNameSplit() {
+        List<Split> splits = new ArrayList<>();
+        Split split = new Split();
+        split.name = null;
+        split.status = Status.ACTIVE;
+        splits.add(split);
+
+        Split splitOk = new Split();
+        splitOk.name = "test";
+        splitOk.status = Status.ACTIVE;
+        splits.add(splitOk);
+
+        mSplitsStorage.update(splits, 1L);
+
+        Map<String, Split> loadedSplits = mSplitsStorage.getAll();
+        long changeNumber = mSplitsStorage.getTill();
+
+        Assert.assertEquals(5, loadedSplits.size());
+        Assert.assertEquals(1L, changeNumber);
+    }
+
+    @Test
+    public void getManyNullArgs() {
+        Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
+
+        Assert.assertEquals(4, loadedSplits.size());
+    }
+
+    @Test
+    public void getManyEmptyArgs() {
+        Map<String, Split> loadedSplits = mSplitsStorage.getMany(new ArrayList<>());
+
+        Assert.assertEquals(4, loadedSplits.size());
+    }
+
+    @Test
+    public void getMany() {
+        Map<String, Split> loadedSplits = mSplitsStorage.getMany(Arrays.asList("split-0", "split-3", "non-existing"));
+
+        Assert.assertEquals(2, loadedSplits.size());
+        Assert.assertNotNull(loadedSplits.get("split-0"));
+        Assert.assertNotNull(loadedSplits.get("split-3"));
     }
 
     @Test

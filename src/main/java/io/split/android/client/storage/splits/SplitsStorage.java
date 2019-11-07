@@ -10,6 +10,7 @@ import io.split.android.client.dtos.Split;
 public interface SplitsStorage {
     Split get(@NonNull String name);
     Map<String, Split> getMany(@NonNull List<String> splits);
+    Map<String, Split> getAll();
     void update(@NonNull List<Split> splits, long changeNumber);
     boolean isValidTrafficType(@NonNull String name);
     long getTill();
