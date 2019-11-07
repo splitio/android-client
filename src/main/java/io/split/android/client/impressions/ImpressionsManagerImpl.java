@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.storage.legacy.ImpressionsStorageManager;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;

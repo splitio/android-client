@@ -1,4 +1,4 @@
-package io.split.android.client.impressions;
+package io.split.android.client.storage.legacy;
 
 import android.annotation.SuppressLint;
 
@@ -19,14 +19,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
-import io.split.android.client.storage.legacy.FileStorageHelper;
+import io.split.android.client.impressions.IImpressionsStorage;
+import io.split.android.client.impressions.StoredImpressions;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
 /**
  * Created by guillermo on 1/18/18.
  */
-
+@Deprecated
 public class ImpressionsStorageManager {
 
     private static final String LEGACY_IMPRESSIONS_FILE_NAME = "SPLITIO.impressions";

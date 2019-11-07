@@ -1,5 +1,6 @@
-package io.split.android.client.impressions;
+package io.split.android.client.storage.legacy;
 
+@Deprecated
 public class ImpressionsStorageManagerConfig {
     private int _impressionsMaxSentAttempts = 0;
     private long _impressionsChunkOudatedTime = 0;

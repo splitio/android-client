@@ -29,7 +29,7 @@ import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.TrackClientConfig;
-import io.split.android.client.track.TrackStorageManager;
+import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;

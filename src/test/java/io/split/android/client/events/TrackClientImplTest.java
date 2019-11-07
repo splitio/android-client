@@ -5,9 +5,9 @@ import com.google.common.base.Strings;
 import io.split.android.client.TrackClient;
 import io.split.android.client.TrackClientImpl;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.track.TrackClientConfig;
-import io.split.android.client.track.TrackStorageManager;
-import io.split.android.client.track.TracksFileStorage;
+import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.fake.ExecutorServiceMock;
 import io.split.android.fake.HttpClientMock;
 import io.split.android.fake.SplitCacheStub;
@@ -48,7 +48,7 @@ public class TrackClientImplTest {
         TrackClient eventClient = TrackClientImpl.create(
                 config, new HttpClientMock(),
                 URI.create("https://kubernetesturl.com/split"),
-                new TrackStorageManager(new TracksFileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
+                new TrackStorageManager(new FileStorage.TracksFileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 
         for (int i = 0; i < 165; ++i) {
             eventClient.track(create32kbEvent());
@@ -78,7 +78,7 @@ public class TrackClientImplTest {
         TrackClient eventClient = TrackClientImpl.create(
                 config, new HttpClientMock(),
                 URI.create("https://kubernetesturl.com/split"),
-                new TrackStorageManager(new TracksFileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
+                new TrackStorageManager(new FileStorage.TracksFileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 
         for (int i = 0; i < 9; ++i) {
             eventClient.track(create32kbEvent());
@@ -110,7 +110,7 @@ public class TrackClientImplTest {
         TrackClient eventClient = TrackClientImpl.create(
                 config, new HttpClientMock(),
                 URI.create("https://kubernetesturl.com/split"),
-                new TrackStorageManager(new TracksFileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
+                new TrackStorageManager(new FileStorage.TracksFileStorage(new File("./build"), "thefoldertest")), new SplitCacheStub(new ArrayList<>()), senderExecutor);
 
         for (int i = 0; i < 10; ++i) {
             eventClient.track(create32kbEvent());

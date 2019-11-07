@@ -1,4 +1,4 @@
-package io.split.android.client.track;
+package io.split.android.client.storage.legacy;
 
 
 import com.google.common.base.Strings;
@@ -14,11 +14,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.legacy.FileStorageHelper;
+import io.split.android.client.track.EventsChunk;
+import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.MemoryUtils;
 import io.split.android.client.utils.MemoryUtilsImpl;
 
+@Deprecated
 public class TrackStorageManager {
 
     private static final String LEGACY_EVENTS_FILE_NAME = "SPLITIO.events.json";

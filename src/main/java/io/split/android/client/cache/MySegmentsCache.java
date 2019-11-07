@@ -55,6 +55,7 @@ public class MySegmentsCache implements IMySegmentsCache {
         mSegments.remove(key);
     }
 
+    // TODO: This methods should use new db storage implementation
     private void loadSegmentsFromDisk(){
 
         try {
@@ -79,6 +80,7 @@ public class MySegmentsCache implements IMySegmentsCache {
         }
     }
 
+    // TODO: This methods should use new db storage implementation
     public void saveToDisk() {
         try {
             String json = Json.toJson(mSegments);

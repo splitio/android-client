@@ -13,6 +13,8 @@ import java.util.List;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.storage.legacy.ImpressionsStorageManager;
+import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
 import io.split.android.fake.ImpressionsFileStorageStub;
 
 import static org.hamcrest.Matchers.equalTo;

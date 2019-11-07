@@ -1,8 +1,3 @@
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleRegistry;
-import androidx.lifecycle.ProcessLifecycleOwner;
-import android.util.Log;
-
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
@@ -14,27 +9,20 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import fake.HttpClientStub;
-import fake.ImpressionsManagerStub;
-import fake.MySegmentsCacheStub;
-import fake.RefreshableMySegmentsFetcherProviderStub;
-import fake.RefreshableSplitFetcherProviderStub;
 import fake.SplitCacheStub;
 import io.split.android.client.TrackClient;
 import io.split.android.client.TrackClientImpl;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.lifecycle.LifecycleManager;
-import io.split.android.client.track.EventsChunk;
+import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TrackClientConfig;
-import io.split.android.client.track.TrackStorageManager;
-import io.split.android.client.track.TracksFileStorage;
+import io.split.android.client.storage.legacy.TrackStorageManager;
 
 public class TracksFileStorageTest {
 
@@ -56,7 +44,7 @@ public class TracksFileStorageTest {
             folder.delete();
         }
 
-        ITrackStorage fileStorage = new TracksFileStorage(rootFolder, "track_folder_test");
+        ITrackStorage fileStorage = new FileStorage.TracksFileStorage(rootFolder, "track_folder_test");
         TrackStorageManager storageManager = new TrackStorageManager(fileStorage);
 
         AtomicBoolean saved = new AtomicBoolean(false);

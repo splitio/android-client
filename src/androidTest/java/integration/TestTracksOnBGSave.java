@@ -28,11 +28,11 @@ import io.split.android.client.TrackClient;
 import io.split.android.client.TrackClientImpl;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.lifecycle.LifecycleManager;
+import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TrackClientConfig;
-import io.split.android.client.track.TrackStorageManager;
-import io.split.android.client.track.TracksFileStorage;
+import io.split.android.client.storage.legacy.TrackStorageManager;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class TestTracksOnBGSave {
@@ -55,7 +55,7 @@ public class TestTracksOnBGSave {
             folder.delete();
         }
 
-        ITrackStorage fileStorage = new TracksFileStorage(rootFolder, "track_folder_test");
+        ITrackStorage fileStorage = new FileStorage.TracksFileStorage(rootFolder, "track_folder_test");
         TrackStorageManager storageManager = new TrackStorageManager(fileStorage);
 
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());

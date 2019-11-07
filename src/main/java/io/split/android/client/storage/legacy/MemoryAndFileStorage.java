@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Created by guillermo on 11/24/17.
  */
-
+@Deprecated
 public class MemoryAndFileStorage implements IStorage {
 
     private final MemoryStorage _memoryStorage;
