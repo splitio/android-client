@@ -9,7 +9,7 @@ public class HttpResponseImpl implements HttpResponse {
         mHttpStatus = httpStatus;
     }
 
-    HttpResponseImpl(int httpStatus, String data) {
+    public HttpResponseImpl(int httpStatus, String data) {
         mHttpStatus = httpStatus;
         mData = data;
     }
