@@ -9,7 +9,7 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "general_info")
 public class GeneralInfoEntity {
 
-    public static final String CHANGE_NUMBER_INFO = "changeNumber";
+    public static final String CHANGE_NUMBER_INFO = "splitChangesChangeNumber";
 
     @PrimaryKey()
     @NonNull
