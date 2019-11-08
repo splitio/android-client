@@ -4,10 +4,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;

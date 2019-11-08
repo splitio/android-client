@@ -1,7 +1,6 @@
 package io.split.android.client.storage.splits;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,12 +13,11 @@ import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.NetworkHelper;
-import io.split.android.client.utils.Utils;
 import io.split.android.engine.metrics.Metrics;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public final class HttpSplitFetcher implements NewSplitFetcher {
+public final class HttpSplitFetcher implements SplitFetcherV2 {
 
     private static final String SINCE_PARAMETER = "since";
 
