@@ -58,15 +58,17 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
     }
 
     @Override
-    public Pair<List<Split>, Long> getSnapshot() {
+    public SplitsSnapshot getSnapshot() {
         Long changeNumber = -1L;
         GeneralInfoEntity info = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
         if(info != null) {
             changeNumber = info.getLongValue();
         }
-        List<Split> splits = convertEntitiesToSplitList(mDatabase.splitDao().getAll());
 
-        return new Pair(splits, changeNumber);
+        SplitsSnapshot snapshot = new SplitsSnapshot();
+        snapshot.setChangeNumber(changeNumber);
+        snapshot.setSplits(convertEntitiesToSplitList(mDatabase.splitDao().getAll()));
+        return snapshot;
     }
 
     @Override

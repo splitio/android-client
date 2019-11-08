@@ -134,9 +134,9 @@ public class SplitsStorageImpl implements SplitsStorage {
 
 
     private void loadFromDb() {
-        Pair<List<Split>, Long> snapshot = mStorage.getSnapshot();
-        List<Split> splits = snapshot.first;
-        mChangeNumber = snapshot.second;
+        SplitsSnapshot snapshot = mStorage.getSnapshot();
+        List<Split> splits = snapshot.getSplits();
+        mChangeNumber = snapshot.getChangeNumber();
         for (Split split : splits) {
             mInMemorySplits.put(split.name, split);
         }

@@ -25,6 +25,7 @@ import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.RoomSqLitePersistentSplitsStorage;
+import io.split.android.client.storage.splits.SplitsSnapshot;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
 
 public class PersistentSplitsStorageTest {
@@ -55,8 +56,8 @@ public class PersistentSplitsStorageTest {
 
     @Test
     public void getSplits() {
-        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
-        Map<String, Split> splits = listToMap(snapshot.first);
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splits = listToMap(snapshot.getSplits());
 
         Assert.assertNotNull(splits.get("split-0"));
         Assert.assertNotNull(splits.get("split-1"));
@@ -76,9 +77,9 @@ public class PersistentSplitsStorageTest {
         }
         mPersistentSplitsStorage.update(splits, 1L);
 
-        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
-        Map<String, Split> splitMap = listToMap(snapshot.first);
-        long changeNumber = snapshot.second;
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splitMap = listToMap(snapshot.getSplits());
+        long changeNumber = snapshot.getChangeNumber();
 
         for (int i = 0; i < 10; i++) {
             String splitName = "split-test-" + i;
@@ -94,9 +95,9 @@ public class PersistentSplitsStorageTest {
         List<Split> splits = new ArrayList<>();
         mPersistentSplitsStorage.update(splits, 1L);
 
-        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
-        Map<String, Split> splitMap = listToMap(snapshot.first);
-        long changeNumber = snapshot.second;
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splitMap = listToMap(snapshot.getSplits());
+        long changeNumber = snapshot.getChangeNumber();
 
         for (int i = 0; i < 10; i++) {
             String splitName = "split-" + i;
@@ -112,9 +113,9 @@ public class PersistentSplitsStorageTest {
         List<Split> splits = new ArrayList<>();
         boolean res = mPersistentSplitsStorage.update(null, 1L);
 
-        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
-        Map<String, Split> splitMap = listToMap(snapshot.first);
-        Long changeNumber = snapshot.second;
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splitMap = listToMap(snapshot.getSplits());
+        Long changeNumber = snapshot.getChangeNumber();
 
         for (int i = 0; i < 10; i++) {
             String splitName = "split-" + i;
@@ -141,9 +142,9 @@ public class PersistentSplitsStorageTest {
 
         boolean res = mPersistentSplitsStorage.update(splits, 1L);
 
-        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
-        Map<String, Split> splitMap = listToMap(snapshot.first);
-        long changeNumber = snapshot.second;
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splitMap = listToMap(snapshot.getSplits());
+        long changeNumber = snapshot.getChangeNumber();
 
         Assert.assertEquals(11, splitMap.size());
         Assert.assertNotNull(splitMap.get("test"));
@@ -163,9 +164,9 @@ public class PersistentSplitsStorageTest {
         }
         mPersistentSplitsStorage.update(splits, 1L);
 
-        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
-        Map<String, Split> splitMap = listToMap(snapshot.first);
-        long changeNumber = snapshot.second;
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splitMap = listToMap(snapshot.getSplits());
+        long changeNumber = snapshot.getChangeNumber();
 
         for (int i = 0; i < 4; i++) {
             String splitName = "split-" + i;
@@ -182,8 +183,8 @@ public class PersistentSplitsStorageTest {
 
     @Test
     public void initialChangeNumber() {
-        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
-        Assert.assertEquals(INITIAL_CHANGE_NUMBER,snapshot.second);
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+        Assert.assertEquals(INITIAL_CHANGE_NUMBER, (Long)snapshot.getChangeNumber());
     }
 
     @Test
@@ -198,9 +199,9 @@ public class PersistentSplitsStorageTest {
         }
         mPersistentSplitsStorage.update(splits, 1L);
 
-        Pair<List<Split>, Long> snapshot = mPersistentSplitsStorage.getSnapshot();
-        List<Split> loadedSlits = snapshot.first;
-        long changeNumber = snapshot.second;
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+        List<Split> loadedSlits = snapshot.getSplits();
+        long changeNumber = snapshot.getChangeNumber();
 
         Assert.assertEquals(0, loadedSlits.size());
         Assert.assertEquals(1L, changeNumber);
