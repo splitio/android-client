@@ -28,17 +28,8 @@ public final class HttpSplitFetcher implements NewSplitFetcher {
     private final Metrics mMetrics;
     private final NetworkHelper mNetworkHelper;
 
-    @VisibleForTesting
     public static HttpSplitFetcher create(HttpClient client, URI root, Metrics metrics, NetworkHelper networkHelper) throws URISyntaxException {
         return new HttpSplitFetcher(client, new URIBuilder(root, SdkTargetPath.SPLIT_CHANGES).build(), metrics, networkHelper);
-    }
-
-    public static HttpSplitFetcher create(HttpClient client, URI root) throws URISyntaxException {
-        return create(client, root, new Metrics.NoopMetrics());
-    }
-
-    public static HttpSplitFetcher create(HttpClient client, URI root, Metrics metrics) throws URISyntaxException {
-        return new HttpSplitFetcher(client, new URIBuilder(root, SdkTargetPath.SPLIT_CHANGES).build(), metrics, new NetworkHelper());
     }
 
     private HttpSplitFetcher(@NonNull HttpClient client, @NonNull URI target, Metrics metrics, NetworkHelper networkHelper) {
