@@ -25,25 +25,10 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
     }
 
     @Override
-    public boolean update(@NonNull List<Split> splits, long changeNumber) {
+    public boolean update(List<Split> activeSplits, List<Split> archivedSplits, long changeNumber) {
 
-        if(splits == null) {
-            return false;
-        }
-        List<String> removedSplits = new ArrayList<>();
-        List<Split> newOrUpdatedSplits = new ArrayList<>();
-
-        for (Split split : splits) {
-            if(split.name == null) {
-                continue;
-            }
-            if(split.status == Status.ACTIVE) {
-                newOrUpdatedSplits.add(split);
-            } else {
-                removedSplits.add(split.name);
-            }
-        }
-        List<SplitEntity> splitEntities = convertSplitListToEntities(newOrUpdatedSplits);
+        List<String> removedSplits = splitNameList(archivedSplits);
+        List<SplitEntity> splitEntities = convertSplitListToEntities(activeSplits);
 
         mDatabase.runInTransaction(new Runnable() {
             @Override
@@ -61,7 +46,7 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
     public SplitsSnapshot getSnapshot() {
         Long changeNumber = -1L;
         GeneralInfoEntity info = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
-        if(info != null) {
+        if (info != null) {
             changeNumber = info.getLongValue();
         }
 
@@ -77,7 +62,10 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
         List<SplitEntity> splitEntities = new ArrayList<>();
-        for(Split split : splits) {
+        if (splits == null) {
+            return splitEntities;
+        }
+        for (Split split : splits) {
             SplitEntity entity = new SplitEntity();
             entity.setName(split.name);
             entity.setBody(Json.toJson(split));
@@ -89,7 +77,7 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
 
     private List<Split> convertEntitiesToSplitList(List<SplitEntity> entities) {
         List<Split> splits = new ArrayList<>();
-        for(SplitEntity entity : entities) {
+        for (SplitEntity entity : entities) {
             try {
                 splits.add(Json.fromJson(entity.getBody(), Split.class));
             } catch (JsonSyntaxException e) {
@@ -99,4 +87,14 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
         return splits;
     }
 
+    private List<String> splitNameList(List<Split> splits) {
+        List<String> names = new ArrayList<>();
+        if (splits == null) {
+            return names;
+        }
+        for (Split split : splits) {
+            names.add(split.name);
+        }
+        return names;
+    }
 }

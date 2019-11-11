@@ -1,27 +1,23 @@
 package io.split.android.client.storage.splits;
 
 import androidx.annotation.NonNull;
-import androidx.core.util.Pair;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.Status;
-import io.split.android.client.utils.Logger;
 
 public class SplitsStorageImpl implements SplitsStorage {
 
-    private PersistentSplitsStorage mStorage;
+    private PersistentSplitsStorage mPersistentStorage;
     private Map<String, Split> mInMemorySplits;
     private long mChangeNumber;
     private Map<String, Integer> mTrafficTypes;
 
-    public SplitsStorageImpl(PersistentSplitsStorage storage) {
-        mStorage = storage;
+    public SplitsStorageImpl(PersistentSplitsStorage persistentStorage) {
+        mPersistentStorage = persistentStorage;
         mInMemorySplits = new ConcurrentHashMap<String, Split>();
         mTrafficTypes = new ConcurrentHashMap<String, Integer>();
         loadFromDb();
@@ -55,30 +51,27 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
-    public void update(@NonNull List<Split> splits, long changeNumber) {
-        if(splits == null) {
-            return;
-        }
-        List<Split> validatedSplits = new ArrayList<>();
-        for (Split split : splits) {
-            if(split.name == null) {
-                continue;
-            }
-            if(split.status == Status.ACTIVE) {
+    public void update(List<Split> activeSplits, List<Split> archivedSplits, long changeNumber) {
+        if(activeSplits != null) {
+            for (Split split : activeSplits) {
                 Split loadedSplit = mInMemorySplits.get(split.name);
-                if(loadedSplit != null && loadedSplit.trafficTypeName != null) {
+                if (loadedSplit != null && loadedSplit.trafficTypeName != null) {
                     removeTrafficType(loadedSplit.trafficTypeName);
                 }
                 addTrafficType(split.trafficTypeName);
                 mInMemorySplits.put(split.name, split);
-            } else {
+            }
+        }
+
+        if(archivedSplits != null) {
+            for (Split split : archivedSplits) {
                 mInMemorySplits.remove(split.name);
                 removeTrafficType(split.trafficTypeName);
             }
-            validatedSplits.add(split);
         }
+
         mChangeNumber = changeNumber;
-        mStorage.update(validatedSplits, changeNumber);
+        mPersistentStorage.update(activeSplits, archivedSplits, changeNumber);
     }
 
     @Override
@@ -134,7 +127,7 @@ public class SplitsStorageImpl implements SplitsStorage {
 
 
     private void loadFromDb() {
-        SplitsSnapshot snapshot = mStorage.getSnapshot();
+        SplitsSnapshot snapshot = mPersistentStorage.getSnapshot();
         List<Split> splits = snapshot.getSplits();
         mChangeNumber = snapshot.getChangeNumber();
         for (Split split : splits) {

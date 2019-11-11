@@ -7,7 +7,7 @@ import java.util.List;
 import io.split.android.client.dtos.Split;
 
 public interface PersistentSplitsStorage {
-    boolean update(List<Split> splits, long changeNumber);
+    boolean update(List<Split> activeSplits, List<Split> archivedSplits, long changeNumber);
     SplitsSnapshot getSnapshot();
     void close();
 }

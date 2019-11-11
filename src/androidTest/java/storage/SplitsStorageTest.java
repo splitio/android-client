@@ -80,7 +80,7 @@ public class SplitsStorageTest {
             split.status = Status.ACTIVE;
             splits.add(split);
         }
-        mSplitsStorage.update(splits, 1L);
+        mSplitsStorage.update(splits, new ArrayList<>(), 1L);
 
         for (int i = 0; i < 4; i++) {
             String splitName = "split-test-" + i;
@@ -97,17 +97,19 @@ public class SplitsStorageTest {
 
     @Test
     public void updateChangeNumber() {
+        List<Split> splits = new ArrayList<>();
         Long newChangeNumber = INITIAL_CHANGE_NUMBER + 100;
         Long initialChangeNumber = mSplitsStorage.getTill();
-        mSplitsStorage.update(new ArrayList<>(), newChangeNumber);
+        mSplitsStorage.update(splits, splits, newChangeNumber);
         Long updatedChangeNumber = mSplitsStorage.getTill();
         Assert.assertEquals(INITIAL_CHANGE_NUMBER, initialChangeNumber);
         Assert.assertEquals(newChangeNumber, updatedChangeNumber);
     }
 
     @Test
-    public void addEmptySplit() {
-        mSplitsStorage.update(new ArrayList<>(), 1L);
+    public void updateEmptySplit() {
+        List<Split> splits = new ArrayList<>();
+        mSplitsStorage.update(splits, splits, 1L);
 
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
         long changeNumber = mSplitsStorage.getTill();
@@ -118,34 +120,23 @@ public class SplitsStorageTest {
 
     @Test
     public void addNullSplitList() {
-        mSplitsStorage.update(null, 1L);
+        mSplitsStorage.update(null, new ArrayList<>(), 1L);
 
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
-        Long changeNumber = mSplitsStorage.getTill();
+        long changeNumber = mSplitsStorage.getTill();
 
-       Assert.assertEquals(4, loadedSplits.size());
-        Assert.assertEquals(INITIAL_CHANGE_NUMBER, changeNumber);
+        Assert.assertEquals(4, loadedSplits.size());
+        Assert.assertEquals(1L, changeNumber);
     }
 
     @Test
-    public void addNullNameSplit() {
-        List<Split> splits = new ArrayList<>();
-        Split split = new Split();
-        split.name = null;
-        split.status = Status.ACTIVE;
-        splits.add(split);
+    public void deleteNullSplitList() {
+        mSplitsStorage.update(new ArrayList<>(), null, 1L);
 
-        Split splitOk = new Split();
-        splitOk.name = "test";
-        splitOk.status = Status.ACTIVE;
-        splits.add(splitOk);
-
-        mSplitsStorage.update(splits, 1L);
-
-        Map<String, Split> loadedSplits = mSplitsStorage.getAll();
+        Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
         long changeNumber = mSplitsStorage.getTill();
 
-        Assert.assertEquals(5, loadedSplits.size());
+        Assert.assertEquals(4, loadedSplits.size());
         Assert.assertEquals(1L, changeNumber);
     }
 
@@ -181,20 +172,25 @@ public class SplitsStorageTest {
             @Override
             public void run() {
                 for (int j = 1000; j < 1200; j += 10) {
-                    List<Split> splits = new ArrayList<>();
+                    List<Split> activeSplits = new ArrayList<>();
+                    List<Split> archivedSplits = new ArrayList<>();
                     for (int i = 0; i < 10; i++) {
                         int p = j + i;
                         String splitName = "split-test-" + p;
                         Split split = new Split();
                         split.name = splitName;
                         split.status = (p % 2 == 0 ? Status.ACTIVE : Status.ARCHIVED);
-                        splits.add(split);
+                        if (split.status == Status.ACTIVE) {
+                            activeSplits.add(split);
+                        } else {
+                            archivedSplits.add(split);
+                        }
                         try {
                             Thread.sleep(80);
                         } catch (InterruptedException e) {
                         }
                     }
-                    mSplitsStorage.update(splits, 1L);
+                    mSplitsStorage.update(activeSplits, archivedSplits, 1L);
                 }
                 latch.countDown();
             }
@@ -205,20 +201,26 @@ public class SplitsStorageTest {
             public void run() {
 
                 for (int j = 0; j < 200; j += 10) {
-                    List<Split> splits = new ArrayList<>();
+                    List<Split> activeSplits = new ArrayList<>();
+                    List<Split> archivedSplits = new ArrayList<>();
                     for (int i = 0; i < 10; i++) {
                         int p = j + i;
                         String splitName = "split-test-" + p;
                         Split split = new Split();
                         split.name = splitName;
                         split.status = (p % 2 != 0 ? Status.ACTIVE : Status.ARCHIVED);
-                        splits.add(split);
+                        if (split.status == Status.ACTIVE) {
+                            activeSplits.add(split);
+                        } else {
+                            archivedSplits.add(split);
+                        }
+                        ;
                         try {
                             Thread.sleep(100);
                         } catch (InterruptedException e) {
                         }
                     }
-                    mSplitsStorage.update(splits, 1L);
+                    mSplitsStorage.update(activeSplits, archivedSplits, 1L);
                 }
                 latch.countDown();
             }
@@ -243,16 +245,17 @@ public class SplitsStorageTest {
 
     @Test
     public void updatedSplitTrafficType() {
+        List<Split> empty = new ArrayList<>();
         Split s1 = newSplit("s1", Status.ACTIVE, "tt");
 
         Split s2 = newSplit("s2", Status.ACTIVE, "mytt");
         Split s2ar = newSplit("s2", Status.ARCHIVED, "mytt");
 
-        mSplitsStorage.update(Arrays.asList(s1), 1L);
-        mSplitsStorage.update(Arrays.asList(s2), 1L);
-        mSplitsStorage.update(Arrays.asList(s2), 1L);
-        mSplitsStorage.update(Arrays.asList(s2), 1L);
-        mSplitsStorage.update(Arrays.asList(s2ar), 1L);
+        mSplitsStorage.update(Arrays.asList(s1), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s2), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s2), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s2), empty, 1L);
+        mSplitsStorage.update(empty, Arrays.asList(s2ar), 1L);
 
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("tt"));
         Assert.assertFalse(mSplitsStorage.isValidTrafficType("mytt"));
@@ -260,15 +263,16 @@ public class SplitsStorageTest {
 
     @Test
     public void changedTrafficTypeForSplit() {
+        List<Split> empty = new ArrayList<>();
         String splitName = "n_s1";
 
         Split s1t1 = newSplit(splitName, Status.ACTIVE, "tt");
         Split s1t2 = newSplit(splitName, Status.ACTIVE, "mytt");
 
-        mSplitsStorage.update(Arrays.asList(s1t1), 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), 1L);
-        mSplitsStorage.update(Arrays.asList(s1t2), 1L);
+        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s1t2), empty, 1L);
 
         Assert.assertFalse(mSplitsStorage.isValidTrafficType("tt"));
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
@@ -276,17 +280,18 @@ public class SplitsStorageTest {
 
     @Test
     public void existingChangedTrafficTypeForSplit() {
+        List<Split> empty = new ArrayList<>();
         String splitName = "n_s1";
 
         Split s0 = newSplit("n_s0", Status.ACTIVE, "tt");
         Split s1t1 = newSplit(splitName, Status.ACTIVE, "tt");
         Split s1t2 = newSplit(splitName, Status.ACTIVE, "mytt");
 
-        mSplitsStorage.update(Arrays.asList(s0), 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), 1L);
-        mSplitsStorage.update(Arrays.asList(s1t2), 1L);
+        mSplitsStorage.update(Arrays.asList(s0), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
+        mSplitsStorage.update(Arrays.asList(s1t2), empty, 1L);
 
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("tt"));
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
