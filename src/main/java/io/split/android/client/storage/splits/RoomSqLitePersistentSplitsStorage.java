@@ -69,7 +69,7 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
             SplitEntity entity = new SplitEntity();
             entity.setName(split.name);
             entity.setBody(Json.toJson(split));
-            entity.setUpdatedAt(split.changeNumber);
+            entity.setUpdatedAt(System.currentTimeMillis() / 1000);
             splitEntities.add(entity);
         }
         return splitEntities;
