@@ -1,4 +1,4 @@
-package io.split.android.client.storage.splits;
+package io.split.android.client.backend.splits;
 
 import io.split.android.client.dtos.SplitChange;
 

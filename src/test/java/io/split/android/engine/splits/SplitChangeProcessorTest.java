@@ -11,7 +11,7 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
-import io.split.android.client.storage.splits.SplitChangeProcessor;
+import io.split.android.client.backend.splits.SplitChangeProcessor;
 
 public class SplitChangeProcessorTest {
 

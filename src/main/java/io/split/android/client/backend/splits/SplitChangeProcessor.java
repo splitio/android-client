@@ -1,4 +1,4 @@
-package io.split.android.client.storage.splits;
+package io.split.android.client.backend.splits;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.List;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.storage.splits.ProcessedSplitChange;
 
 public class SplitChangeProcessor {
     public ProcessedSplitChange process(SplitChange splitChange) {

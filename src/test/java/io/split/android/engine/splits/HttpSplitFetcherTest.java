@@ -15,7 +15,7 @@ import io.split.android.client.network.HttpRequest;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.HttpResponseImpl;
 import io.split.android.client.network.URIBuilder;
-import io.split.android.client.storage.splits.HttpSplitFetcher;
+import io.split.android.client.backend.splits.HttpSplitFetcher;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;
 
