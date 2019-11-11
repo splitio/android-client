@@ -6,13 +6,8 @@ import java.util.List;
 import io.split.android.client.dtos.Split;
 
 public class ProcessedSplitChange {
-    private List<Split> activeSplits;
-    private List<Split> archivedSplits;
-
-    public ProcessedSplitChange() {
-        activeSplits = new ArrayList<>();
-        archivedSplits = new ArrayList<>();
-    }
+    private final List<Split> activeSplits;
+    private final List<Split> archivedSplits;
 
     public ProcessedSplitChange(List<Split> activeSplits, List<Split> archivedSplits) {
         this.activeSplits = activeSplits;
@@ -23,15 +18,7 @@ public class ProcessedSplitChange {
         return activeSplits;
     }
 
-    public void setActiveSplits(List<Split> activeSplits) {
-        this.activeSplits = activeSplits;
-    }
-
     public List<Split> getArchivedSplits() {
         return archivedSplits;
-    }
-
-    public void setArchivedSplits(List<Split> archivedSplits) {
-        this.archivedSplits = archivedSplits;
     }
 }
