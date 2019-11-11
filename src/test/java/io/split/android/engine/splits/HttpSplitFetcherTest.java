@@ -59,6 +59,7 @@ public class HttpSplitFetcherTest {
 
     @Test
     public void testSuccessfulFetch() throws URISyntaxException, HttpException {
+        boolean exceptionWasThrown = false;
         URI uri = new URIBuilder(mFullUrl).addParameter("since", "" + -1).build();
         when(mNetworkHelperMock.isReachable(mFullUrl)).thenReturn(true);
         HttpRequest request = mock(HttpRequest.class);
@@ -72,8 +73,10 @@ public class HttpSplitFetcherTest {
         try {
             change = fetcher.execute(-1);
         } catch (IllegalStateException e) {
+            exceptionWasThrown = true;
         }
 
+        Assert.assertFalse(exceptionWasThrown);
         Assert.assertEquals(1, change.splits.size());
         Assert.assertEquals("sample_feature", change.splits.get(0).name);
         Assert.assertEquals(-1, change.since);
