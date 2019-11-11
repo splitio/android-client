@@ -19,7 +19,8 @@ import io.split.android.client.backend.splits.HttpSplitFetcher;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class HttpSplitFetcherTest {
 
