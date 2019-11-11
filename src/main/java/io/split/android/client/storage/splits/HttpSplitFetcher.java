@@ -49,7 +49,7 @@ public final class HttpSplitFetcher implements SplitFetcherV2 {
         }
 
         try {
-            URI uri = new URIBuilder(mTarget).addParameter(SINCE_PARAMETER, "" + since).build();
+            URI uri = new URIBuilder(mTarget).addParameter(SINCE_PARAMETER, Long.toString(since)).build();
 
             HttpResponse response = mClient.request(uri, HttpMethod.GET).execute();
 
@@ -65,9 +65,9 @@ public final class HttpSplitFetcher implements SplitFetcherV2 {
             }
 
             return splitChange;
-        } catch (Throwable t) {
+        } catch (Exception e) {
             mMetrics.count(Metrics.SPLIT_CHANGES_FETCHER_EXCEPTION, 1);
-            throw new IllegalStateException(exceptionMessage(t.getMessage()), t);
+            throw new IllegalStateException(exceptionMessage(e.getLocalizedMessage()), e);
         } finally {
             mMetrics.time(Metrics.SPLIT_CHANGES_FETCHER_TIME, System.currentTimeMillis() - start);
         }
