@@ -56,9 +56,9 @@ public class SplitsStorageImpl implements SplitsStorage {
             for (Split split : activeSplits) {
                 Split loadedSplit = mInMemorySplits.get(split.name);
                 if (loadedSplit != null && loadedSplit.trafficTypeName != null) {
-                    removeTrafficType(loadedSplit.trafficTypeName);
+                    decreaseTrafficTypeCount(loadedSplit.trafficTypeName);
                 }
-                addTrafficType(split.trafficTypeName);
+                increaseTrafficTypeCount(split.trafficTypeName);
                 mInMemorySplits.put(split.name, split);
             }
         }
@@ -66,7 +66,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         if(archivedSplits != null) {
             for (Split split : archivedSplits) {
                 mInMemorySplits.remove(split.name);
-                removeTrafficType(split.trafficTypeName);
+                decreaseTrafficTypeCount(split.trafficTypeName);
             }
         }
 
@@ -92,7 +92,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         return (mTrafficTypes.get(name.toLowerCase()) != null);
     }
 
-    private void addTrafficType(@NonNull String name) {
+    private void increaseTrafficTypeCount(@NonNull String name) {
         if (name == null) {
             return;
         }
@@ -102,7 +102,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         mTrafficTypes.put(lowercaseName, ++count);
     }
 
-    private void removeTrafficType(@NonNull String name) {
+    private void decreaseTrafficTypeCount(@NonNull String name) {
         if (name == null) {
             return;
         }
