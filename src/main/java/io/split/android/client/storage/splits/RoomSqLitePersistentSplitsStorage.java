@@ -50,10 +50,7 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
             changeNumber = info.getLongValue();
         }
 
-        SplitsSnapshot snapshot = new SplitsSnapshot();
-        snapshot.setChangeNumber(changeNumber);
-        snapshot.setSplits(convertEntitiesToSplitList(mDatabase.splitDao().getAll()));
-        return snapshot;
+        return new SplitsSnapshot(convertEntitiesToSplitList(mDatabase.splitDao().getAll()), changeNumber);
     }
 
     @Override
@@ -77,6 +74,11 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
 
     private List<Split> convertEntitiesToSplitList(List<SplitEntity> entities) {
         List<Split> splits = new ArrayList<>();
+
+        if (entities == null) {
+            return splits;
+        }
+
         for (SplitEntity entity : entities) {
             try {
                 splits.add(Json.fromJson(entity.getBody(), Split.class));
