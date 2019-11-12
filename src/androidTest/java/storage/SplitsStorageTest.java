@@ -2,10 +2,7 @@ package storage;
 
 import android.content.Context;
 
-import androidx.room.RoomDatabase;
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.google.gson.JsonSyntaxException;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,12 +20,9 @@ import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.storage.splits.PersistentSplitsStorage;
-import io.split.android.client.storage.splits.RoomSqLitePersistentSplitsStorage;
+import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
-import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
 
 public class SplitsStorageTest {
 
@@ -53,7 +47,7 @@ public class SplitsStorageTest {
         }
         mRoomDb.splitDao().insert(entities);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
-        mSplitsStorage = new SplitsStorageImpl(new RoomSqLitePersistentSplitsStorage(mRoomDb));
+        mSplitsStorage = new SplitsStorageImpl(new SqLitePersistentSplitsStorage(mRoomDb));
     }
 
     @Test

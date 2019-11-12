@@ -16,11 +16,11 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
-public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorage {
+public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     SplitRoomDatabase mDatabase;
 
-    public RoomSqLitePersistentSplitsStorage(SplitRoomDatabase database) {
+    public SqLitePersistentSplitsStorage(SplitRoomDatabase database) {
         mDatabase = database;
     }
 

@@ -2,7 +2,6 @@ package storage;
 
 import android.content.Context;
 
-import androidx.core.util.Pair;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
@@ -10,13 +9,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
@@ -24,9 +19,8 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
-import io.split.android.client.storage.splits.RoomSqLitePersistentSplitsStorage;
+import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsSnapshot;
-import io.split.android.client.storage.splits.SplitsStorageImpl;
 
 public class PersistentSplitsStorageTest {
 
@@ -51,7 +45,7 @@ public class PersistentSplitsStorageTest {
         }
         mRoomDb.splitDao().insert(entities);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
-        mPersistentSplitsStorage = new RoomSqLitePersistentSplitsStorage(mRoomDb);
+        mPersistentSplitsStorage = new SqLitePersistentSplitsStorage(mRoomDb);
     }
 
     @Test
