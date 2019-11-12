@@ -65,8 +65,9 @@ public class SplitsStorageImpl implements SplitsStorage {
 
         if(archivedSplits != null) {
             for (Split split : archivedSplits) {
-                mInMemorySplits.remove(split.name);
-                decreaseTrafficTypeCount(split.trafficTypeName);
+                if(mInMemorySplits.remove(split.name) != null) {
+                    decreaseTrafficTypeCount(split.trafficTypeName);
+                }
             }
         }
 
