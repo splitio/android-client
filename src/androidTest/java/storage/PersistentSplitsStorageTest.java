@@ -19,6 +19,7 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
+import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsSnapshot;
 
@@ -69,7 +70,7 @@ public class PersistentSplitsStorageTest {
             split.status = Status.ACTIVE;
             splits.add(split);
         }
-        mPersistentSplitsStorage.update(splits, new ArrayList<>(), 1L);
+        mPersistentSplitsStorage.update(new ProcessedSplitChange(splits, new ArrayList<>(), 1L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
@@ -87,7 +88,7 @@ public class PersistentSplitsStorageTest {
     @Test
     public void updateEmptySplit() {
         List<Split> splits = new ArrayList<>();
-        mPersistentSplitsStorage.update(splits, splits, 1L);
+        mPersistentSplitsStorage.update(new ProcessedSplitChange(splits, splits, 1L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
@@ -105,7 +106,7 @@ public class PersistentSplitsStorageTest {
     @Test
     public void addNullSplitList() {
         List<Split> splits = new ArrayList<>();
-        boolean res = mPersistentSplitsStorage.update(null, splits,1L);
+        boolean res = mPersistentSplitsStorage.update(new ProcessedSplitChange(null, splits,1L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
@@ -124,7 +125,7 @@ public class PersistentSplitsStorageTest {
     @Test
     public void deleteNullSplitList() {
         List<Split> splits = new ArrayList<>();
-        boolean res = mPersistentSplitsStorage.update(splits, null,1L);
+        boolean res = mPersistentSplitsStorage.update(new ProcessedSplitChange(splits, null,1L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
@@ -150,7 +151,7 @@ public class PersistentSplitsStorageTest {
             split.status = Status.ARCHIVED;
             splits.add(split);
         }
-        mPersistentSplitsStorage.update(null, splits, 1L);
+        mPersistentSplitsStorage.update(new ProcessedSplitChange(null, splits, 1L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
@@ -185,7 +186,7 @@ public class PersistentSplitsStorageTest {
             split.status = Status.ARCHIVED;
             splits.add(split);
         }
-        mPersistentSplitsStorage.update(null, splits, 1L);
+        mPersistentSplitsStorage.update(new ProcessedSplitChange(null, splits, 1L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         List<Split> loadedSlits = snapshot.getSplits();

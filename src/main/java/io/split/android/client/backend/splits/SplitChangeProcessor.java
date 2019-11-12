@@ -11,7 +11,7 @@ import io.split.android.client.storage.splits.ProcessedSplitChange;
 public class SplitChangeProcessor {
     public ProcessedSplitChange process(SplitChange splitChange) {
         if (splitChange == null || splitChange.splits == null) {
-            return new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>());
+            return new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), -1L);
         }
 
         List<Split> activeSplits = new ArrayList<>();
@@ -27,6 +27,6 @@ public class SplitChangeProcessor {
                 archivedSplits.add(split);
             }
         }
-        return new ProcessedSplitChange(activeSplits, archivedSplits);
+        return new ProcessedSplitChange(activeSplits, archivedSplits, splitChange.till);
     }
 }

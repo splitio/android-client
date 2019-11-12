@@ -25,15 +25,18 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     @Override
-    public boolean update(List<Split> activeSplits, List<Split> archivedSplits, long changeNumber) {
+    public boolean update(ProcessedSplitChange splitChange) {
 
-        List<String> removedSplits = splitNameList(archivedSplits);
-        List<SplitEntity> splitEntities = convertSplitListToEntities(activeSplits);
+        if(splitChange == null) {
+            return false;
+        }
+        List<String> removedSplits = splitNameList(splitChange.getArchivedSplits());
+        List<SplitEntity> splitEntities = convertSplitListToEntities(splitChange.getActiveSplits());
 
         mDatabase.runInTransaction(new Runnable() {
             @Override
             public void run() {
-                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, changeNumber));
+                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, splitChange.getChangeNumber()));
                 mDatabase.splitDao().insert(splitEntities);
                 mDatabase.splitDao().delete(removedSplits);
             }

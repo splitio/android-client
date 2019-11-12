@@ -51,7 +51,12 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
-    public void update(List<Split> activeSplits, List<Split> archivedSplits, long changeNumber) {
+    public void update(ProcessedSplitChange splitChange) {
+        if(splitChange == null) {
+            return;
+        }
+        List<Split> activeSplits = splitChange.getActiveSplits();
+        List<Split> archivedSplits = splitChange.getArchivedSplits();
         if(activeSplits != null) {
             for (Split split : activeSplits) {
                 Split loadedSplit = mInMemorySplits.get(split.name);
@@ -71,8 +76,8 @@ public class SplitsStorageImpl implements SplitsStorage {
             }
         }
 
-        mChangeNumber = changeNumber;
-        mPersistentStorage.update(activeSplits, archivedSplits, changeNumber);
+        mChangeNumber = splitChange.getChangeNumber();
+        mPersistentStorage.update(splitChange);
     }
 
     @Override

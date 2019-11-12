@@ -11,7 +11,7 @@ public interface SplitsStorage {
     Split get(@NonNull String name);
     Map<String, Split> getMany(@NonNull List<String> splits);
     Map<String, Split> getAll();
-    void update(List<Split> activeSplits, List<Split> archivedSplits, long changeNumber);
+    void update(ProcessedSplitChange splitChange);
     boolean isValidTrafficType(@NonNull String name);
     long getTill();
     void clear();
