@@ -1,4 +1,4 @@
-package io.split.android.client.backend.splits;
+package io.split.android.client.service.splits;
 
 import androidx.annotation.NonNull;
 
