@@ -2,10 +2,7 @@ package storage;
 
 import android.content.Context;
 
-import androidx.room.RoomDatabase;
 import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.google.gson.JsonSyntaxException;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,12 +20,10 @@ import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.storage.splits.PersistentSplitsStorage;
-import io.split.android.client.storage.splits.RoomSqLitePersistentSplitsStorage;
+import io.split.android.client.storage.splits.ProcessedSplitChange;
+import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
-import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
 
 public class SplitsStorageTest {
 
@@ -53,7 +48,7 @@ public class SplitsStorageTest {
         }
         mRoomDb.splitDao().insert(entities);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
-        mSplitsStorage = new SplitsStorageImpl(new RoomSqLitePersistentSplitsStorage(mRoomDb));
+        mSplitsStorage = new SplitsStorageImpl(new SqLitePersistentSplitsStorage(mRoomDb));
     }
 
     @Test
@@ -80,7 +75,8 @@ public class SplitsStorageTest {
             split.status = Status.ACTIVE;
             splits.add(split);
         }
-        mSplitsStorage.update(splits, new ArrayList<>(), 1L);
+        ProcessedSplitChange change = new ProcessedSplitChange(splits, new ArrayList<>(), 1L);
+        mSplitsStorage.update(change);
 
         for (int i = 0; i < 4; i++) {
             String splitName = "split-test-" + i;
@@ -100,7 +96,8 @@ public class SplitsStorageTest {
         List<Split> splits = new ArrayList<>();
         Long newChangeNumber = INITIAL_CHANGE_NUMBER + 100;
         Long initialChangeNumber = mSplitsStorage.getTill();
-        mSplitsStorage.update(splits, splits, newChangeNumber);
+        ProcessedSplitChange change = new ProcessedSplitChange(splits, splits, newChangeNumber);
+        mSplitsStorage.update(change);
         Long updatedChangeNumber = mSplitsStorage.getTill();
         Assert.assertEquals(INITIAL_CHANGE_NUMBER, initialChangeNumber);
         Assert.assertEquals(newChangeNumber, updatedChangeNumber);
@@ -109,7 +106,8 @@ public class SplitsStorageTest {
     @Test
     public void updateEmptySplit() {
         List<Split> splits = new ArrayList<>();
-        mSplitsStorage.update(splits, splits, 1L);
+        ProcessedSplitChange change = new ProcessedSplitChange(splits, splits, 1L);
+        mSplitsStorage.update(change);
 
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
         long changeNumber = mSplitsStorage.getTill();
@@ -120,7 +118,8 @@ public class SplitsStorageTest {
 
     @Test
     public void addNullSplitList() {
-        mSplitsStorage.update(null, new ArrayList<>(), 1L);
+        ProcessedSplitChange change = new ProcessedSplitChange(null,  new ArrayList<>(), 1L);
+        mSplitsStorage.update(change);
 
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
         long changeNumber = mSplitsStorage.getTill();
@@ -131,7 +130,8 @@ public class SplitsStorageTest {
 
     @Test
     public void deleteNullSplitList() {
-        mSplitsStorage.update(new ArrayList<>(), null, 1L);
+        ProcessedSplitChange change = new ProcessedSplitChange(new ArrayList<>(), null, 1L);
+        mSplitsStorage.update(change);
 
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
         long changeNumber = mSplitsStorage.getTill();
@@ -190,7 +190,8 @@ public class SplitsStorageTest {
                         } catch (InterruptedException e) {
                         }
                     }
-                    mSplitsStorage.update(activeSplits, archivedSplits, 1L);
+                    ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, 1L);
+                    mSplitsStorage.update(change);
                 }
                 latch.countDown();
             }
@@ -220,7 +221,8 @@ public class SplitsStorageTest {
                         } catch (InterruptedException e) {
                         }
                     }
-                    mSplitsStorage.update(activeSplits, archivedSplits, 1L);
+                    ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, 1L);
+                    mSplitsStorage.update(change);
                 }
                 latch.countDown();
             }
@@ -251,11 +253,11 @@ public class SplitsStorageTest {
         Split s2 = newSplit("s2", Status.ACTIVE, "mytt");
         Split s2ar = newSplit("s2", Status.ARCHIVED, "mytt");
 
-        mSplitsStorage.update(Arrays.asList(s1), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s2), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s2), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s2), empty, 1L);
-        mSplitsStorage.update(empty, Arrays.asList(s2ar), 1L);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(empty, Arrays.asList(s2ar), 1L));
 
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("tt"));
         Assert.assertFalse(mSplitsStorage.isValidTrafficType("mytt"));
@@ -269,10 +271,10 @@ public class SplitsStorageTest {
         Split s1t1 = newSplit(splitName, Status.ACTIVE, "tt");
         Split s1t2 = newSplit(splitName, Status.ACTIVE, "mytt");
 
-        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s1t2), empty, 1L);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t2), empty, 1L));
 
         Assert.assertFalse(mSplitsStorage.isValidTrafficType("tt"));
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
@@ -287,11 +289,11 @@ public class SplitsStorageTest {
         Split s1t1 = newSplit(splitName, Status.ACTIVE, "tt");
         Split s1t2 = newSplit(splitName, Status.ACTIVE, "mytt");
 
-        mSplitsStorage.update(Arrays.asList(s0), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s1t1), empty, 1L);
-        mSplitsStorage.update(Arrays.asList(s1t2), empty, 1L);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s0), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t2), empty, 1L));
 
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("tt"));
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("mytt"));

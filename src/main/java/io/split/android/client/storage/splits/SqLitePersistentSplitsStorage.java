@@ -16,24 +16,31 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
-public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorage {
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     SplitRoomDatabase mDatabase;
 
-    public RoomSqLitePersistentSplitsStorage(SplitRoomDatabase database) {
+    public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database) {
+        checkNotNull(database);
+
         mDatabase = database;
     }
 
     @Override
-    public boolean update(List<Split> activeSplits, List<Split> archivedSplits, long changeNumber) {
+    public boolean update(ProcessedSplitChange splitChange) {
 
-        List<String> removedSplits = splitNameList(archivedSplits);
-        List<SplitEntity> splitEntities = convertSplitListToEntities(activeSplits);
+        if (splitChange == null) {
+            return false;
+        }
+        List<String> removedSplits = splitNameList(splitChange.getArchivedSplits());
+        List<SplitEntity> splitEntities = convertSplitListToEntities(splitChange.getActiveSplits());
 
         mDatabase.runInTransaction(new Runnable() {
             @Override
             public void run() {
-                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, changeNumber));
+                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, splitChange.getChangeNumber()));
                 mDatabase.splitDao().insert(splitEntities);
                 mDatabase.splitDao().delete(removedSplits);
             }
@@ -50,10 +57,7 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
             changeNumber = info.getLongValue();
         }
 
-        SplitsSnapshot snapshot = new SplitsSnapshot();
-        snapshot.setChangeNumber(changeNumber);
-        snapshot.setSplits(convertEntitiesToSplitList(mDatabase.splitDao().getAll()));
-        return snapshot;
+        return new SplitsSnapshot(convertEntitiesToSplitList(mDatabase.splitDao().getAll()), changeNumber);
     }
 
     @Override
@@ -77,6 +81,11 @@ public class RoomSqLitePersistentSplitsStorage implements PersistentSplitsStorag
 
     private List<Split> convertEntitiesToSplitList(List<SplitEntity> entities) {
         List<Split> splits = new ArrayList<>();
+
+        if (entities == null) {
+            return splits;
+        }
+
         for (SplitEntity entity : entities) {
             try {
                 splits.add(Json.fromJson(entity.getBody(), Split.class));

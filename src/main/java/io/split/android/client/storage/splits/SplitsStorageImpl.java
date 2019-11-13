@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.Split;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class SplitsStorageImpl implements SplitsStorage {
 
     private PersistentSplitsStorage mPersistentStorage;
@@ -16,7 +18,9 @@ public class SplitsStorageImpl implements SplitsStorage {
     private long mChangeNumber;
     private Map<String, Integer> mTrafficTypes;
 
-    public SplitsStorageImpl(PersistentSplitsStorage persistentStorage) {
+    public SplitsStorageImpl(@NonNull PersistentSplitsStorage persistentStorage) {
+        checkNotNull(persistentStorage);
+
         mPersistentStorage = persistentStorage;
         mInMemorySplits = new ConcurrentHashMap<String, Split>();
         mTrafficTypes = new ConcurrentHashMap<String, Integer>();
@@ -51,7 +55,12 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
-    public void update(List<Split> activeSplits, List<Split> archivedSplits, long changeNumber) {
+    public void update(ProcessedSplitChange splitChange) {
+        if(splitChange == null) {
+            return;
+        }
+        List<Split> activeSplits = splitChange.getActiveSplits();
+        List<Split> archivedSplits = splitChange.getArchivedSplits();
         if(activeSplits != null) {
             for (Split split : activeSplits) {
                 Split loadedSplit = mInMemorySplits.get(split.name);
@@ -65,13 +74,14 @@ public class SplitsStorageImpl implements SplitsStorage {
 
         if(archivedSplits != null) {
             for (Split split : archivedSplits) {
-                mInMemorySplits.remove(split.name);
-                decreaseTrafficTypeCount(split.trafficTypeName);
+                if(mInMemorySplits.remove(split.name) != null) {
+                    decreaseTrafficTypeCount(split.trafficTypeName);
+                }
             }
         }
 
-        mChangeNumber = changeNumber;
-        mPersistentStorage.update(activeSplits, archivedSplits, changeNumber);
+        mChangeNumber = splitChange.getChangeNumber();
+        mPersistentStorage.update(splitChange);
     }
 
     @Override

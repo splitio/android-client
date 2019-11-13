@@ -1,4 +1,4 @@
-package io.split.android.client.backend.splits;
+package io.split.android.client.service.splits;
 
 import androidx.annotation.NonNull;
 
@@ -30,7 +30,12 @@ public final class HttpSplitFetcher implements SplitFetcherV2 {
         return new HttpSplitFetcher(client, new URIBuilder(root, SdkTargetPath.SPLIT_CHANGES).build(), metrics, networkHelper);
     }
 
-    private HttpSplitFetcher(@NonNull HttpClient client, @NonNull URI target, Metrics metrics, NetworkHelper networkHelper) {
+    private HttpSplitFetcher(@NonNull HttpClient client, @NonNull URI target, @NonNull Metrics metrics, @NonNull NetworkHelper networkHelper) {
+        checkNotNull(client);
+        checkNotNull(target);
+        checkNotNull(metrics);
+        checkNotNull(networkHelper);
+
         mClient = client;
         mTarget = target;
         mMetrics = metrics;
@@ -60,7 +65,7 @@ public final class HttpSplitFetcher implements SplitFetcherV2 {
 
             SplitChange splitChange = Json.fromJson(response.getData(), SplitChange.class);
 
-            if(splitChange == null) {
+            if (splitChange == null) {
                 throw new IllegalStateException(exceptionMessage("Wrong data received from server"));
             }
 
