@@ -1,4 +1,4 @@
-package io.split.android.client.backend;
+package io.split.android.client.service;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 

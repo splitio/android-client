@@ -1,4 +1,4 @@
-package io.split.android.client.backend;
+package io.split.android.client.service;
 
 public interface SplitTaskExecutor {
     void schedule(SplitTask task, long initialDelayInSecs, long periodInSecs);
