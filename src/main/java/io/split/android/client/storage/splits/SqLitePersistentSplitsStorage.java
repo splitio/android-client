@@ -16,18 +16,22 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     SplitRoomDatabase mDatabase;
 
-    public SqLitePersistentSplitsStorage(SplitRoomDatabase database) {
+    public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database) {
+        checkNotNull(database);
+
         mDatabase = database;
     }
 
     @Override
     public boolean update(ProcessedSplitChange splitChange) {
 
-        if(splitChange == null) {
+        if (splitChange == null) {
             return false;
         }
         List<String> removedSplits = splitNameList(splitChange.getArchivedSplits());

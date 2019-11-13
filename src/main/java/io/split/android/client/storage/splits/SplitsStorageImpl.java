@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.Split;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class SplitsStorageImpl implements SplitsStorage {
 
     private PersistentSplitsStorage mPersistentStorage;
@@ -16,7 +18,9 @@ public class SplitsStorageImpl implements SplitsStorage {
     private long mChangeNumber;
     private Map<String, Integer> mTrafficTypes;
 
-    public SplitsStorageImpl(PersistentSplitsStorage persistentStorage) {
+    public SplitsStorageImpl(@NonNull PersistentSplitsStorage persistentStorage) {
+        checkNotNull(persistentStorage);
+
         mPersistentStorage = persistentStorage;
         mInMemorySplits = new ConcurrentHashMap<String, Split>();
         mTrafficTypes = new ConcurrentHashMap<String, Integer>();
