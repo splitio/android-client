@@ -8,6 +8,8 @@ import io.split.android.client.service.splits.SplitFetcherV2;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class SplitsSyncTask implements SplitTask {
 
     SplitFetcherV2 mSplitFetcher;
@@ -15,6 +17,9 @@ public class SplitsSyncTask implements SplitTask {
     SplitChangeProcessor mSplitChangeProcessor;
 
     public SplitsSyncTask(SplitFetcherV2 splitFetcher, SplitsStorage splitsStorage) {
+        checkNotNull(splitFetcher);
+        checkNotNull(splitsStorage);
+
         mSplitFetcher = splitFetcher;
         mSplitsStorage = splitsStorage;
     }
@@ -27,6 +32,12 @@ public class SplitsSyncTask implements SplitTask {
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
         } catch (IllegalStateException e) {
             Logger.e("Error while executing splits sync task: " + e.getLocalizedMessage());
+        } catch (Exception e) {
+
         }
+    }
+
+    private void logError(String message) {
+        Logger.e("Error while executing splits sync task: " + message);
     }
 }
