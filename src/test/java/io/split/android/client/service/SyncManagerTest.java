@@ -25,9 +25,12 @@ import static org.mockito.Mockito.when;
 public class SyncManagerTest {
 
     SyncManager mSyncManager;
-    @Mock SplitTaskExecutor mTaskExecutor;
-    @Mock SplitFetcherProvider mSplitFetcherProvider;
-    @Mock SplitStorageProvider mSplitStorageProvider;
+    @Mock
+    SplitTaskExecutor mTaskExecutor;
+    @Mock
+    SplitFetcherProvider mSplitFetcherProvider;
+    @Mock
+    SplitStorageProvider mSplitStorageProvider;
     SplitClientConfig mSplitClientConfig;
 
     @Before

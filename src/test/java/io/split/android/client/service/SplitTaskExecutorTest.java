@@ -39,16 +39,16 @@ public class SplitTaskExecutorTest {
         final int taskCount = 10;
         CountDownLatch latch = new CountDownLatch(taskCount);
         List<TestTask> taskList = new ArrayList<>();
-        for(int i = 0; i<taskCount; i++) {
+        for (int i = 0; i < taskCount; i++) {
             taskList.add(new TestTask(latch));
         }
 
-        for(int i = 0; i<taskCount; i++) {
+        for (int i = 0; i < taskCount; i++) {
             mTaskExecutor.submit(taskList.get(i));
         }
 
         latch.await(10, TimeUnit.SECONDS);
-        for(int i = 0; i<taskCount; i++) {
+        for (int i = 0; i < taskCount; i++) {
             Assert.assertTrue(taskList.get(i).taskHasBeenCalled);
         }
     }
@@ -106,16 +106,16 @@ public class SplitTaskExecutorTest {
         final int taskCount = 4;
         CountDownLatch latch = new CountDownLatch(taskCount * 3);
         List<TestTask> taskList = new ArrayList<>();
-        for(int i = 0; i<taskCount; i++) {
+        for (int i = 0; i < taskCount; i++) {
             taskList.add(new TestTask(latch));
         }
 
-        for(int i = 0; i<taskCount; i++) {
+        for (int i = 0; i < taskCount; i++) {
             mTaskExecutor.schedule(taskList.get(i), 0L, i + 1);
         }
 
         latch.await(10, TimeUnit.SECONDS);
-        for(int i = 0; i<taskCount; i++) {
+        for (int i = 0; i < taskCount; i++) {
             Assert.assertTrue(taskList.get(i).taskHasBeenCalled);
         }
         Assert.assertTrue(4 < taskList.get(0).callCount);
@@ -203,6 +203,7 @@ public class SplitTaskExecutorTest {
         TestTask(CountDownLatch latch) {
             this.latch = latch;
         }
+
         public int callCount = 0;
         public boolean taskHasBeenCalled = false;
 
