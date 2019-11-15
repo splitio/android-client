@@ -1,5 +1,6 @@
 package io.split.android.client.service;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.concurrent.Executors;
@@ -11,6 +12,9 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final int SHUTDOWN_WAIT_TIME = 60;
@@ -27,13 +31,18 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     @Override
     public void schedule(SplitTask task, long initialDelayInSecs, long periodInSecs) {
-        if (task != null && !mScheduler.isShutdown()) {
-            ScheduledFuture<?> future = mScheduler.scheduleAtFixedRate(new TaskWrapper(task), periodInSecs, initialDelayInSecs, TimeUnit.SECONDS);
+        checkNotNull(task);
+        checkArgument(periodInSecs > 0);
+
+        if (!mScheduler.isShutdown()) {
+            ScheduledFuture<?> future = mScheduler.scheduleAtFixedRate(new TaskWrapper(task), initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
         }
     }
 
     @Override
     public void submit(SplitTask task) {
+        checkNotNull(task);
+
         if (task != null && !mScheduler.isShutdown()) {
             Future<?> future = mScheduler.submit(new TaskWrapper(task));
         }
@@ -55,7 +64,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
             mScheduler.shutdown();
             try {
                 if (!mScheduler.awaitTermination(SHUTDOWN_WAIT_TIME, TimeUnit.SECONDS)) {
-                    mScheduler.shutdownNow(); // Cancel currently executing tasks
+                    mScheduler.shutdownNow();
                     if (!mScheduler.awaitTermination(SHUTDOWN_WAIT_TIME, TimeUnit.SECONDS)) {
                         Logger.e("Split task executor did not terminate");
                     }

@@ -1,5 +1,7 @@
 package io.split.android.client.service;
 
+import android.util.Log;
+
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.SplitTask;
 import io.split.android.client.service.splits.HttpSplitFetcher;
@@ -12,9 +14,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitsSyncTask implements SplitTask {
 
-    SplitFetcherV2 mSplitFetcher;
-    SplitsStorage mSplitsStorage;
-    SplitChangeProcessor mSplitChangeProcessor;
+    private final SplitFetcherV2 mSplitFetcher;
+    private final SplitsStorage mSplitsStorage;
+    private final SplitChangeProcessor mSplitChangeProcessor;
 
     public SplitsSyncTask(SplitFetcherV2 splitFetcher, SplitsStorage splitsStorage) {
         checkNotNull(splitFetcher);
@@ -22,6 +24,7 @@ public class SplitsSyncTask implements SplitTask {
 
         mSplitFetcher = splitFetcher;
         mSplitsStorage = splitsStorage;
+        mSplitChangeProcessor = new SplitChangeProcessor();
     }
 
     @Override
@@ -31,9 +34,9 @@ public class SplitsSyncTask implements SplitTask {
             SplitChange splitChange = mSplitFetcher.execute(mSplitsStorage.getTill());
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
         } catch (IllegalStateException e) {
-            Logger.e("Error while executing splits sync task: " + e.getLocalizedMessage());
+            logError(e.getLocalizedMessage());
         } catch (Exception e) {
-
+            logError("unexpected " + e.getLocalizedMessage());
         }
     }
 

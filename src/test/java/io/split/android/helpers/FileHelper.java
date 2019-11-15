@@ -25,6 +25,16 @@ public class FileHelper {
         return null;
     }
 
+    public SplitChange loadSplitChangeFromFile (String name) {
+        try {
+            String content = loadFileContent(name);
+            SplitChange change = Json.fromJson(content, SplitChange.class);
+            return change;
+        } catch (Exception e) {
+        }
+        return null;
+    }
+
     public String loadFileContent(String name) {
         ClassLoader classLoader = this.getClass().getClassLoader();
         URL resource = classLoader.getResource(name);
