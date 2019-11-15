@@ -21,12 +21,14 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final int CORE_POOL_SIZE = 1;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
+    private boolean isPaused;
 
     public SplitTaskExecutorImpl() {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(false);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
         mScheduler = new PausableScheduledThreadPoolExecutorImpl(CORE_POOL_SIZE, threadFactoryBuilder.build());
+        isPaused = false;
     }
 
     @Override
@@ -49,13 +51,20 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     }
 
     @Override
-    public void pause() {
-        mScheduler.pause();
+    synchronized public void pause() {
+        if(!isPaused) {
+            mScheduler.pause();
+            isPaused = true;
+        }
+
     }
 
     @Override
-    public void resume() {
-        mScheduler.resume();
+    synchronized public void resume() {
+        if(isPaused) {
+            mScheduler.resume();
+            isPaused = false;
+        }
     }
 
     @Override
