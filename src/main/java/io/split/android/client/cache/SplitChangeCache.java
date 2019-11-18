@@ -1,10 +1,18 @@
 package io.split.android.client.cache;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.storage.splits.ProcessedSplitChange;
+import io.split.android.client.storage.splits.SplitsSnapshot;
+import io.split.android.client.storage.splits.SplitsStorage;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Created by guillermo on 11/23/17.
@@ -12,49 +20,29 @@ import io.split.android.client.dtos.SplitChange;
 
 public class SplitChangeCache implements ISplitChangeCache {
 
-    private ISplitCache mSplitCache;
+    private final SplitsStorage mSplitStorage;
+    private final SplitChangeProcessor mSplitChangeProcessor;
 
-    public SplitChangeCache(ISplitCache splitCache) {
-        this.mSplitCache = splitCache;
+    public SplitChangeCache(@NonNull SplitsStorage splitsStorage) {
+        checkNotNull(splitsStorage);
+        mSplitStorage = splitsStorage;
+        mSplitChangeProcessor = new SplitChangeProcessor();
     }
 
     @Override
     public boolean addChange(SplitChange splitChange) {
-        if (mSplitCache == null) {
-            return false;
-        }
-        boolean result = true;
-        mSplitCache.setChangeNumber(splitChange.till);
-        for (Split split : splitChange.splits) {
-            result = result && mSplitCache.addSplit(split);
-        }
-        return result;
+        ProcessedSplitChange processedSplitChange = mSplitChangeProcessor.process(splitChange);
+        mSplitStorage.update(processedSplitChange);
+        return true;
     }
 
     @Override
     public SplitChange getChanges(long since) {
-
-        long changeNumber = mSplitCache.getChangeNumber();
-
         SplitChange splitChange = new SplitChange();
-
         splitChange.splits = new ArrayList<>();
-        splitChange.since = changeNumber;
-        splitChange.till = changeNumber;
-
-        if (since == -1 || since < changeNumber) {
-            addAllSplits(splitChange.splits);
-        }
+        splitChange.splits.addAll(mSplitStorage.getAll().values());
+        splitChange.since = splitChange.till = mSplitStorage.getTill();
 
         return splitChange;
-    }
-
-    private void addAllSplits(List<Split> splits) {
-        for (String splitName : mSplitCache.getSplitNames()) {
-            Split cachedSplit = mSplitCache.getSplit(splitName);
-            if (cachedSplit != null) {
-                splits.add(cachedSplit);
-            }
-        }
     }
 }

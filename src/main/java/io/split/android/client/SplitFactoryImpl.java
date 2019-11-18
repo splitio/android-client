@@ -24,6 +24,7 @@ import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.ImpressionsManagerConfig;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.legacy.ImpressionsFileStorage;
 import io.split.android.client.impressions.ImpressionsManagerImpl;
 import io.split.android.client.storage.legacy.ImpressionsStorageManager;
@@ -37,6 +38,10 @@ import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.IStorage;
+import io.split.android.client.storage.splits.PersistentSplitsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.storage.splits.SplitsStorageImpl;
+import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.storage.legacy.TrackStorageManager;
@@ -134,7 +139,12 @@ public class SplitFactoryImpl implements SplitFactory {
         // Feature Changes
         IStorage fileStorage = new FileStorage(context.getCacheDir(), dataFolderName);
         ISplitCache splitCache = new SplitCache(fileStorage);
-        ISplitChangeCache splitChangeCache = new SplitChangeCache(splitCache);
+
+        // TODO: On final implementation wrap this in a component
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, dataFolderName);
+        PersistentSplitsStorage persistentSplitsStorage = new SqLitePersistentSplitsStorage(splitRoomDatabase);
+        SplitsStorage splitsStorage = new SplitsStorageImpl(persistentSplitsStorage);
+        ISplitChangeCache splitChangeCache = new SplitChangeCache(splitsStorage);
 
         SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpClient, rootTarget, uncachedFireAndForget, splitChangeCache);
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProviderImpl(
