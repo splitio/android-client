@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -22,7 +24,17 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.Status;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.storage.db.GeneralInfoEntity;
+import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.splits.PersistentSplitsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.storage.splits.SplitsStorageImpl;
+import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.utils.Logger;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -88,29 +100,28 @@ public class InitialChangeNumberTest {
         CountDownLatch latch = new CountDownLatch(1);
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
-        File cacheDir = mContext.getCacheDir();
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        splitRoomDatabase.clearAllTables();
+        PersistentSplitsStorage persistentSplitsStorage = new SqLitePersistentSplitsStorage(splitRoomDatabase);
+        SplitsStorage splitsStorage = new SplitsStorageImpl(persistentSplitsStorage);
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
+        SplitChangeProcessor processor = new SplitChangeProcessor();
 
-        File dataFolder = new File(cacheDir, dataFolderName);
-        if(dataFolder.exists()) {
-            File[] files = dataFolder.listFiles();
-            if(files != null) {
-                for (File file : files) {
-                    file.delete();
-                }
-            }
-            boolean isDataFolderDelete = dataFolder.delete();
-            log("Data folder exists and deleted: " + isDataFolderDelete);
-        }
-        dataFolder.mkdir();
-
+        List<Split> splitList = new ArrayList<>();
 
         for(int i=0; i<10; i++) {
             String splitName = "feature_" + i;
             long changeNumber = INITIAL_CHANGE_NUMBER - i * 100;
-            String jsonSplit = String.format("{\"name\":\"%s\", \"changeNumber\": %d}",
-                            splitName, changeNumber);
-            write(dataFolder, splitName, jsonSplit);
+            Split split = new Split();
+            split.name = splitName;
+            split.changeNumber = changeNumber;
+            split.status = Status.ACTIVE;
+            splitList.add(split);
         }
+        SplitChange change = new SplitChange();
+        change.splits = splitList;
+        change.since = INITIAL_CHANGE_NUMBER;
+        change.till = INITIAL_CHANGE_NUMBER;
 
         SplitClient client;
 
@@ -140,32 +151,7 @@ public class InitialChangeNumberTest {
         latch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived); // Checks that change number is the bigger number from cached splits
-
-    }
-
-
-    private void write(File folder, String splitName, String content) throws IOException {
-        File file = new File(folder, "SPLITIO.split." + splitName);
-        FileOutputStream fileOutputStream = null;
-        try {
-            fileOutputStream = new FileOutputStream(file);
-            fileOutputStream.write(content.getBytes());
-        } catch (FileNotFoundException e) {
-            Logger.e(e, "Failed to write content");
-            throw e;
-        } catch (IOException e) {
-            Logger.e(e, "Failed to write content");
-            throw e;
-        } finally {
-            try {
-                if(fileOutputStream != null) {
-                    fileOutputStream.close();
-                }
-            } catch (IOException e) {
-                Logger.e(e, "Failed to close file");
-            }
-        }
+        Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived); // Checks that change number is the bigger number from cached splitss
     }
 
     private void log(String m) {

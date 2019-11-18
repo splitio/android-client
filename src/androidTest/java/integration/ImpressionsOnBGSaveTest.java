@@ -64,7 +64,7 @@ public class ImpressionsOnBGSaveTest {
 
         LifecycleManager lifecycleManager = new LifecycleManager(impManager, new TrackClientStub(),
                 new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(),
-                new SplitCacheStub(), new MySegmentsCacheStub());
+                new MySegmentsCacheStub());
 
 
         lfRegistry.addObserver(lifecycleManager);

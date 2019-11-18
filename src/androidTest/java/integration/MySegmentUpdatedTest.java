@@ -40,6 +40,7 @@ import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -153,6 +154,9 @@ public class MySegmentUpdatedTest {
             boolean isDataFolderDelete = dataFolder.delete();
             log("Data folder exists and deleted: " + isDataFolderDelete);
         }
+
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        splitRoomDatabase.clearAllTables();
 
         SplitClient client;
 

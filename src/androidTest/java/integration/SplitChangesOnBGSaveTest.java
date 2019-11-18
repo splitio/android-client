@@ -55,7 +55,7 @@ public class SplitChangesOnBGSaveTest {
 
         LifecycleManager lifecycleManager = new LifecycleManager(new ImpressionsManagerStub(), new TrackClientStub(),
                 new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(),
-                splitCache, new MySegmentsCacheStub());
+                new MySegmentsCacheStub());
 
         lfRegistry.addObserver(lifecycleManager);
 

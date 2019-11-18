@@ -55,7 +55,7 @@ public class TestTracksOnBGSave {
             folder.delete();
         }
 
-        ITrackStorage fileStorage = new FileStorage.TracksFileStorage(rootFolder, "track_folder_test");
+        ITrackStorage fileStorage = new FileStorage.TracksFileStorage(rootFolder, "test_folder");
         TrackStorageManager storageManager = new TrackStorageManager(fileStorage);
 
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());
@@ -70,12 +70,11 @@ public class TestTracksOnBGSave {
         TrackClient trackClient = TrackClientImpl.create(
                 config, new HttpClientStub(),
                 URI.create("https://kubernetesturl.com/split"),
-                storageManager,
-                new SplitCacheStub(new ArrayList<>()));
+                storageManager);
 
         LifecycleManager lifecycleManager = new LifecycleManager(new ImpressionsManagerStub(), trackClient,
-                new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(),
-                new SplitCacheStub(), new MySegmentsCacheStub());
+                new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub()
+                , new MySegmentsCacheStub());
 
         lfRegistry.addObserver(lifecycleManager);
 

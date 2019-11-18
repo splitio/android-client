@@ -38,6 +38,7 @@ import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.grammar.Treatments;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -121,6 +122,9 @@ public class IntegrationTest {
             boolean isDataFolderDelete = dataFolder.delete();
             log("Data folder exists and deleted: " + isDataFolderDelete);
         }
+
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        splitRoomDatabase.clearAllTables();
 
         SplitClient client;
         SplitManager manager;

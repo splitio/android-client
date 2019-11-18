@@ -52,8 +52,7 @@ public class MySegmentsOnBGSaveTest {
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());
 
         LifecycleManager lifecycleManager = new LifecycleManager(new ImpressionsManagerStub(), new TrackClientStub(),
-                new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(),
-                new SplitCacheStub(), mySegmentsCache);
+                new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(), mySegmentsCache);
 
         lfRegistry.addObserver(lifecycleManager);
 

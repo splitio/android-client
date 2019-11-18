@@ -58,8 +58,7 @@ public class TracksFileStorageTest {
         final TrackClient trackClient = TrackClientImpl.create(
                 config, new HttpClientStub(),
                 URI.create("https://kubernetesturl.com/split"),
-                storageManager,
-                new SplitCacheStub(new ArrayList<>()));
+                storageManager);
 
         new Thread(new Runnable() {
             @Override
