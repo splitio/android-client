@@ -89,16 +89,16 @@ public class TrackClientImpl implements TrackClient {
         };
     }
 
-    public static TrackClient create(TrackClientConfig config, HttpClient httpClient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpClient, eventsRootTarget, storageManager, splitCache, null);
+    public static TrackClient create(TrackClientConfig config, HttpClient httpClient, URI eventsRootTarget, TrackStorageManager storageManager) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpClient, eventsRootTarget, storageManager, null);
     }
 
     @VisibleForTesting
-    public static TrackClient create(TrackClientConfig config, HttpClient httpClient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache, ExecutorService senderExecutor) throws URISyntaxException {
-        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpClient, eventsRootTarget, storageManager, splitCache, senderExecutor);
+    public static TrackClient create(TrackClientConfig config, HttpClient httpClient, URI eventsRootTarget, TrackStorageManager storageManager, ExecutorService senderExecutor) throws URISyntaxException {
+        return new TrackClientImpl(config, new LinkedBlockingQueue<Event>(), httpClient, eventsRootTarget, storageManager, senderExecutor);
     }
 
-    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, HttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ISplitCache splitCache, ExecutorService senderExecutor) throws URISyntaxException {
+    private TrackClientImpl(TrackClientConfig config, BlockingQueue<Event> eventQueue, HttpClient httpclient, URI eventsRootTarget, TrackStorageManager storageManager, ExecutorService senderExecutor) throws URISyntaxException {
 
         _storageManager = storageManager;
 

@@ -7,6 +7,8 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.storage.splits.PersistentSplitsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
@@ -54,7 +56,7 @@ public final class SplitClientImpl implements SplitClient {
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
                            TrackClient trackClient,
-                           ISplitCache splitCache) {
+                           SplitsStorage splitsStorage) {
 
         String mBucketingKey = key.bucketingKey();
         mMatchingKey = key.matchingKey();
@@ -63,7 +65,7 @@ public final class SplitClientImpl implements SplitClient {
         mConfig = config;
         mEventsManager = eventsManager;
         mTrackClient = trackClient;
-        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
+        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage);
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = new TreatmentManagerImpl(
                 mMatchingKey, mBucketingKey, new EvaluatorImpl(splitFetcher),

@@ -19,20 +19,17 @@ public class LifecycleManager implements LifecycleObserver {
     RefreshableSplitFetcherProvider mSplitFetcherProvider;
     RefreshableMySegmentsFetcherProvider mMySegmentsFetcherProvider;
     IMySegmentsCache mMySegmentsCache;
-    ISplitCache mSplitCache;
 
     public LifecycleManager(ImpressionsManager impressionsManager,
                             TrackClient trackClient,
                             RefreshableSplitFetcherProvider splitFetcherProvider,
                             RefreshableMySegmentsFetcherProvider mySegmentsFetcherProvider,
-                            ISplitCache splitCache,
                             IMySegmentsCache mySegmentsCache) {
 
         mImpressionsManager = impressionsManager;
         mTrackClient = trackClient;
         mSplitFetcherProvider = splitFetcherProvider;
         mMySegmentsFetcherProvider = mySegmentsFetcherProvider;
-        mSplitCache = splitCache;
         mMySegmentsCache = mySegmentsCache;
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
@@ -56,10 +53,6 @@ public class LifecycleManager implements LifecycleObserver {
 
         if(mMySegmentsFetcherProvider != null) {
             mMySegmentsFetcherProvider.pause();
-        }
-
-        if(mSplitCache != null) {
-            mSplitCache.saveToDisk();
         }
 
         if(mMySegmentsCache != null) {

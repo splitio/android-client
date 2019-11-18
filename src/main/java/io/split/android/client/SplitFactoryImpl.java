@@ -138,7 +138,6 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Feature Changes
         IStorage fileStorage = new FileStorage(context.getCacheDir(), dataFolderName);
-        ISplitCache splitCache = new SplitCache(fileStorage);
 
         // TODO: On final implementation wrap this in a component
         SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, dataFolderName);
@@ -149,7 +148,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpClient, rootTarget, uncachedFireAndForget, splitChangeCache);
         final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProviderImpl(
                 splitChangeFetcher, splitParser, findPollingPeriod(RANDOM,
-                config.featuresRefreshRate()), _eventsManager, splitCache.getChangeNumber());
+                config.featuresRefreshRate()), _eventsManager, splitsStorage.getTill());
 
         // Impressionss
         ImpressionsStorageManagerConfig impressionsStorageManagerConfig = new ImpressionsStorageManagerConfig();
@@ -188,10 +187,10 @@ public class SplitFactoryImpl implements SplitFactory {
         trackConfig.setMaxQueueSizeInBytes(config.maxQueueSizeInBytes());
         ITrackStorage eventsStorage = new FileStorage.TracksFileStorage(context.getCacheDir(), dataFolderName);
         TrackStorageManager trackStorageManager = new TrackStorageManager(eventsStorage);
-        _trackClient = TrackClientImpl.create(trackConfig, httpClient, eventsRootTarget, trackStorageManager, splitCache);
+        _trackClient = TrackClientImpl.create(trackConfig, httpClient, eventsRootTarget, trackStorageManager);
 
 
-        _lifecyleManager = new LifecycleManager(splitImpressionListener, _trackClient, splitFetcherProvider, segmentFetcher, splitCache, mySegmentsCache);
+        _lifecyleManager = new LifecycleManager(splitImpressionListener, _trackClient, splitFetcherProvider, segmentFetcher, mySegmentsCache);
 
         destroyer = new Runnable() {
             public void run() {
@@ -250,7 +249,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
 
         _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
-                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient, splitCache);
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient, splitsStorage);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);
