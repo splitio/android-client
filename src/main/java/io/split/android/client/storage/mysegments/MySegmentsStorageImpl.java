@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.google.common.collect.Sets;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -30,12 +31,18 @@ public class MySegmentsStorageImpl implements MySegmentsStorage {
 
     @Override
     public void set(List<String> mySegments) {
+        if(mySegments == null) {
+            return;
+        }
+        mInMemoryMySegments.clear();
         mInMemoryMySegments.addAll(mySegments);
+        mPersistentStorage.set(mySegments);
     }
 
     @Override
     public void clear() {
         mInMemoryMySegments.clear();
+        mPersistentStorage.set(new ArrayList<>());
     }
 
     private void loadFromDb() {

@@ -1,10 +1,12 @@
 package io.split.android.client.storage.mysegments;
 
+import androidx.annotation.NonNull;
+
 import java.util.List;
 import java.util.Set;
 
 public interface MySegmentsStorage {
     Set<String> getAll();
-    void set(List<String> mySegments);
+    void set(@NonNull List<String> mySegments);
     void clear();
 }

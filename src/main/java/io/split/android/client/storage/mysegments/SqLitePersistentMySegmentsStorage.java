@@ -42,6 +42,9 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
 
     @Override
     public void set(List<String> mySegments) {
+        if(mySegments == null) {
+            return;
+        }
         MySegmentEntity entity = new MySegmentEntity();
         entity.setUserKey(mUserKey);
         entity.setSegmentList(mStringHelper.join(",", mySegments));
@@ -60,16 +63,9 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
 
 
     private List<String> getMySegmentsFromEntity(MySegmentEntity entity) {
-        List<String> mySegments = new ArrayList<>();
-        if (entity == null) {
-            return mySegments;
+        if (entity == null || Strings.isNullOrEmpty(entity.getSegmentList())) {
+            return new ArrayList<>();
         }
-
-        try {
-            mySegments.add(Json.fromJson(entity.getSegmentList(), MY_SEGMENTS_LIST_TYPE));
-        } catch (JsonSyntaxException e) {
-            Logger.e("Could not parse my segments entity for key: " + entity.getUserKey());
-        }
-        return mySegments;
+        return Arrays.asList(entity.getSegmentList().split(","));
     }
 }

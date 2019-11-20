@@ -41,7 +41,7 @@ public abstract class BaseHttpFetcher {
     }
 
     protected void throwIlegalStatusException(@NonNull Exception exception) {
-        throwIlegalStatusException(exception);
+        throwIlegalStatusException(exception, null);
     }
 
     protected void throwIlegalStatusException(@NonNull Exception exception, String message) {
