@@ -12,8 +12,14 @@ public interface Metrics {
     public static final String GET_TREATMENTS_WITH_CONFIG_TIME = "sdk.getTreatmentsWithConfig";
 
     public static final String SPLIT_CHANGES_FETCHER_TIME = "splitChangeFetcher.time";
-    public static final String SPLIT_CHANGES_FETCHER_STATUS_OK = "splitChangeFetcher.exception";
-    public static final String SPLIT_CHANGES_FETCHER_EXCEPTION = "splitChangeFetcher.status.200";
+    public static final String SPLIT_CHANGES_FETCHER_EXCEPTION = "splitChangeFetcher.exception";
+    public static final String SPLIT_CHANGES_FETCHER_STATUS = "splitChangeFetcher.status.%d";
+
+    public static final String MY_SEGMENTS_FETCHER_TIME = "mySegmentsFetcher.time";
+    public static final String MY_SEGMENTS_FETCHER_EXCEPTION = "mySegmentsFetcher.exception";
+    public static final String MY_SEGMENTS_FETCHER_STATUS = "mySegmentsFetcher.status.%d";
+
+
 
     /**
      * Adjusts the specified counter by a given delta.
