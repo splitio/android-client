@@ -3,7 +3,7 @@ package io.split.android.client.service;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.storage.SplitStorageProvider;
+import io.split.android.client.storage.SplitStorageContainer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -11,22 +11,22 @@ public class SyncManagerImpl implements SyncManager {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitApiFacade mSplitApiFacade;
-    private final SplitStorageProvider mSplitsStorageProvider;
+    private final SplitStorageContainer mSplitsStorageProvider;
     private final SplitClientConfig mSplitClientConfig;
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull SplitTaskExecutor taskExecutor,
                            @NonNull SplitApiFacade splitApiFacade,
-                           @NonNull SplitStorageProvider splitStorageProvider) {
+                           @NonNull SplitStorageContainer splitStorageContainer) {
 
         checkNotNull(taskExecutor);
         checkNotNull(splitApiFacade);
-        checkNotNull(splitStorageProvider);
+        checkNotNull(splitStorageContainer);
         checkNotNull(splitClientConfig);
 
         mTaskExecutor = taskExecutor;
         mSplitApiFacade = splitApiFacade;
-        mSplitsStorageProvider = splitStorageProvider;
+        mSplitsStorageProvider = splitStorageContainer;
         mSplitClientConfig = splitClientConfig;
     }
 

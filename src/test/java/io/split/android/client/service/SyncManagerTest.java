@@ -9,7 +9,7 @@ import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.splits.SplitFetcherV2;
-import io.split.android.client.storage.SplitStorageProvider;
+import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -26,7 +26,7 @@ public class SyncManagerTest {
     @Mock
     SplitApiFacade mSplitApiFacade;
     @Mock
-    SplitStorageProvider mSplitStorageProvider;
+    SplitStorageContainer mSplitStorageContainer;
     SplitClientConfig mSplitClientConfig;
 
     @Before
@@ -35,9 +35,9 @@ public class SyncManagerTest {
         SplitFetcherV2 splitsFetcher = Mockito.mock(SplitFetcherV2.class);
         SplitsStorage splitsStorage = Mockito.mock(SplitsStorage.class);
         when(mSplitApiFacade.getSplitFetcher()).thenReturn(splitsFetcher);
-        when(mSplitStorageProvider.getSplitStorage()).thenReturn(splitsStorage);
+        when(mSplitStorageContainer.getSplitStorage()).thenReturn(splitsStorage);
         mSplitClientConfig = SplitClientConfig.builder().build();
-        mSyncManager = new SyncManagerImpl(mSplitClientConfig, mTaskExecutor, mSplitApiFacade, mSplitStorageProvider);
+        mSyncManager = new SyncManagerImpl(mSplitClientConfig, mTaskExecutor, mSplitApiFacade, mSplitStorageContainer);
     }
 
     @Test
