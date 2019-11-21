@@ -6,10 +6,10 @@ import io.split.android.client.service.splits.SplitFetcherV2;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SplitFetcherProvider {
+public class SplitApiFacade {
     private final SplitFetcherV2 mSplitFetcher;
 
-    public SplitFetcherProvider(@NonNull SplitFetcherV2 splitFetcher) {
+    public SplitApiFacade(@NonNull SplitFetcherV2 splitFetcher) {
         checkNotNull(splitFetcher);
 
         mSplitFetcher = splitFetcher;

@@ -10,22 +10,22 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SyncManagerImpl implements SyncManager {
 
     private final SplitTaskExecutor mTaskExecutor;
-    private final SplitFetcherProvider mSplitFetcherProvider;
+    private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageProvider mSplitsStorageProvider;
     private final SplitClientConfig mSplitClientConfig;
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull SplitTaskExecutor taskExecutor,
-                           @NonNull SplitFetcherProvider splitFetcherProvider,
+                           @NonNull SplitApiFacade splitApiFacade,
                            @NonNull SplitStorageProvider splitStorageProvider) {
 
         checkNotNull(taskExecutor);
-        checkNotNull(splitFetcherProvider);
+        checkNotNull(splitApiFacade);
         checkNotNull(splitStorageProvider);
         checkNotNull(splitClientConfig);
 
         mTaskExecutor = taskExecutor;
-        mSplitFetcherProvider = splitFetcherProvider;
+        mSplitApiFacade = splitApiFacade;
         mSplitsStorageProvider = splitStorageProvider;
         mSplitClientConfig = splitClientConfig;
     }
@@ -52,7 +52,7 @@ public class SyncManagerImpl implements SyncManager {
 
     private void scheduleTasks() {
         SplitsSyncTask splitsSyncTask = new SplitsSyncTask(
-                mSplitFetcherProvider.getSplitFetcher(),
+                mSplitApiFacade.getSplitFetcher(),
                 mSplitsStorageProvider.getSplitStorage());
         mTaskExecutor.schedule(splitsSyncTask, 0L, mSplitClientConfig.featuresRefreshRate());
     }
