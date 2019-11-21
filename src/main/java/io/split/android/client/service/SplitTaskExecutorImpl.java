@@ -89,6 +89,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         private final SplitTask mTask;
 
         TaskWrapper(SplitTask task) {
+            checkNotNull(task);
             mTask = task;
         }
 
