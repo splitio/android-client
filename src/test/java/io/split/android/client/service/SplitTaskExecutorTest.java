@@ -193,6 +193,19 @@ public class SplitTaskExecutorTest {
         Assert.assertFalse(executedOnStop);
     }
 
+    @Test
+    public void exceptionInScheduled() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(4);
+        TestTask task = new TestTask(latch);
+        task.shouldThrowException = true;
+
+        mTaskExecutor.schedule(task, 0L, 1);
+        latch.await(10, TimeUnit.SECONDS);
+
+        Assert.assertTrue(task.taskHasBeenCalled);
+        Assert.assertEquals(4, task.callCount);
+    }
+
     @After
     public void tearDown() {
     }
@@ -204,6 +217,7 @@ public class SplitTaskExecutorTest {
             this.latch = latch;
         }
 
+        public boolean shouldThrowException = false;
         public int callCount = 0;
         public boolean taskHasBeenCalled = false;
 
@@ -212,6 +226,9 @@ public class SplitTaskExecutorTest {
             callCount++;
             taskHasBeenCalled = true;
             latch.countDown();
+            if(shouldThrowException) {
+                throw new IllegalStateException();
+            }
         }
     }
 }
