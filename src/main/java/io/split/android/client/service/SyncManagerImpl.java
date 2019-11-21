@@ -3,6 +3,8 @@ package io.split.android.client.service;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.storage.SplitStorageProvider;
 
 import static com.google.common.base.Preconditions.checkNotNull;

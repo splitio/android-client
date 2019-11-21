@@ -1,10 +1,7 @@
-package io.split.android.client.service;
-
-import android.util.Log;
+package io.split.android.client.service.splits;
 
 import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.service.SplitTask;
-import io.split.android.client.service.splits.HttpSplitFetcher;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitFetcherV2;
 import io.split.android.client.storage.splits.SplitsStorage;

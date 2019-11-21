@@ -1,7 +1,5 @@
 package io.split.android.client.service;
 
-import androidx.annotation.NonNull;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,11 +8,11 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.splits.HttpSplitFetcher;
+import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.splits.SplitFetcherV2;
+import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.storage.SplitStorageProvider;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.engine.experiments.SplitFetcher;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;

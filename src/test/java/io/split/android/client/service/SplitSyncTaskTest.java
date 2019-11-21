@@ -1,23 +1,20 @@
 package io.split.android.client.service;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitFetcherV2;
+import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
