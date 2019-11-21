@@ -95,7 +95,12 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
         @Override
         public void run() {
-            mTask.execute();
+            try {
+                mTask.execute();
+            } catch (Exception e) {
+                Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
+            }
+
         }
     }
 
