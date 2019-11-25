@@ -46,7 +46,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         checkNotNull(task);
 
         if (task != null && !mScheduler.isShutdown()) {
-            Future<?> future = mScheduler.submit(new TaskWrapper(task));
+            mScheduler.submit(new TaskWrapper(task));
         }
     }
 
