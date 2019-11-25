@@ -37,7 +37,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         checkArgument(periodInSecs > 0);
 
         if (!mScheduler.isShutdown()) {
-            ScheduledFuture<?> future = mScheduler.scheduleAtFixedRate(new TaskWrapper(task), initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
+            mScheduler.scheduleAtFixedRate(new TaskWrapper(task), initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
         }
     }
 
