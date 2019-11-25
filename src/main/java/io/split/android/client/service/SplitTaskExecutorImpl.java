@@ -25,7 +25,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     public SplitTaskExecutorImpl() {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
-        threadFactoryBuilder.setDaemon(false);
+        threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
         mScheduler = new PausableScheduledThreadPoolExecutorImpl(CORE_POOL_SIZE, threadFactoryBuilder.build());
         isPaused = false;
