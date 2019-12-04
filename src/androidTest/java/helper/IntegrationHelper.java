@@ -46,4 +46,8 @@ public class IntegrationHelper {
     public static boolean isEven(int i) {
         return (i % 2) == 0;
     }
+
+    public static String emptySplitChanges(long since, long till) {
+        return String.format("{\"splits\":[], \"since\": %d, \"till\": %d }", since, till);
+    }
 }
