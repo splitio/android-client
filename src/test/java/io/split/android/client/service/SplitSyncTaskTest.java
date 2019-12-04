@@ -4,10 +4,9 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -17,7 +16,6 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyObject;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -26,19 +24,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class SplitSyncTaskTest {
-    @Mock
-    SplitFetcherV2 mSplitsFetcher;
-    @Mock
-    SplitsStorage mSplitsStorage;
-    @Mock
-    SplitChange mSplitChange = null;
 
-    @InjectMocks
+    SplitFetcherV2 mSplitsFetcher;
+    SplitsStorage mSplitsStorage;
+    SplitChange mSplitChange = null;
+    SplitChangeProcessor mSplitChangeProcessor;
+
     SplitsSyncTask mTask;
 
     @Before
     public void setup() {
-        MockitoAnnotations.initMocks(this);
+        mSplitsFetcher = Mockito.mock(SplitFetcherV2.class);
+        mSplitsStorage = Mockito.mock(SplitsStorage.class);
+        mSplitChangeProcessor = Mockito.spy(SplitChangeProcessor.class);
+        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor);
         loadSplitChanges();
     }
 
@@ -51,6 +50,7 @@ public class SplitSyncTaskTest {
 
         verify(mSplitsFetcher, times(1)).execute(-1);
         verify(mSplitsStorage, times(1)).update(any());
+        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
     }
 
     @Test
@@ -62,6 +62,7 @@ public class SplitSyncTaskTest {
 
         verify(mSplitsFetcher, times(1)).execute(-1);
         verify(mSplitsStorage, never()).update(any());
+        verify(mSplitChangeProcessor, never()).process(mSplitChange);
     }
 
     @Test
@@ -74,6 +75,7 @@ public class SplitSyncTaskTest {
 
         verify(mSplitsFetcher, times(1)).execute(-1);
         verify(mSplitsStorage, times(1)).update(any());
+        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
     }
 
     @After
