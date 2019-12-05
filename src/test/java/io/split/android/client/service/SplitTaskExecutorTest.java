@@ -138,6 +138,13 @@ public class SplitTaskExecutorTest {
 
     @Test
     public void pauseScheduled() throws InterruptedException {
+
+//      This test schedules 2 task, one to be executed every one sec without delay
+//      and the other with an initial delay of 6 secs every 20 secs
+//      Call count is taken before pause, then the executor is resumed
+//      and call count is taken again
+//      At the end call count is checked for both tasks
+
         CountDownLatch latch = new CountDownLatch(3);
         CountDownLatch latch1 = new CountDownLatch(1);
         TestTask task = new TestTask(latch);
@@ -224,7 +231,7 @@ public class SplitTaskExecutorTest {
             callCount++;
             taskHasBeenCalled = true;
             latch.countDown();
-            if(shouldThrowException) {
+            if (shouldThrowException) {
                 throw new IllegalStateException();
             }
         }
