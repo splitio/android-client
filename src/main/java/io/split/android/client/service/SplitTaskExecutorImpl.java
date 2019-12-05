@@ -49,12 +49,12 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     }
 
     @Override
-    synchronized public void pause() {
+    public void pause() {
         mScheduler.pause();
     }
 
     @Override
-    synchronized public void resume() {
+    public void resume() {
         mScheduler.resume();
     }
 
