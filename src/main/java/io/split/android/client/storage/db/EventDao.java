@@ -11,10 +11,10 @@ public interface EventDao {
     @Insert
     public void insert(EventEntity event);
 
-    @Query("SELECT id, body, timestamp, status FROM events " +
-            "WHERE timestamp >= :timestamp " +
-            "AND status = :status ORDER BY timestamp")
-    List<EventEntity> getBy(long timestamp, int status);
+    @Query("SELECT id, body, updated_at, status FROM events " +
+            "WHERE updated_at >= :updateAt " +
+            "AND status = :status ORDER BY updated_at")
+    List<EventEntity> getBy(long updateAt, int status);
 
     @Query("UPDATE events SET status = :status "  +
             " WHERE id IN (:ids)")
@@ -23,7 +23,7 @@ public interface EventDao {
     @Query("DELETE FROM events WHERE id IN (:ids)")
     void delete(List<Long> ids);
 
-    @Query("DELETE FROM events WHERE timestamp < :timestamp")
-    void deleteOutdated(long timestamp);
+    @Query("DELETE FROM events WHERE updated_at < :updateAt")
+    void deleteOutdated(long updateAt);
 
 }
