@@ -17,7 +17,7 @@ public class FileHelper {
             content = convertStreamToString(fin);
             fin.close();
         } catch (Exception e) {
-            System.out.println(e.getLocalizedMessage());
+            System.out.println("loadFileContent: Failed load file content" + e.getLocalizedMessage());
         }
         return content;
     }

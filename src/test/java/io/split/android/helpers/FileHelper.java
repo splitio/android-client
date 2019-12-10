@@ -21,6 +21,17 @@ public class FileHelper {
             SplitChange change = Json.fromJson(content, SplitChange.class);
             return change.splits;
         } catch (Exception e) {
+            System.out.println("loadAndParseSplitChangeFile: Failed load file content" + e.getLocalizedMessage());
+        }
+        return null;
+    }
+
+    public SplitChange loadSplitChangeFromFile (String name) {
+        try {
+            String content = loadFileContent(name);
+            SplitChange change = Json.fromJson(content, SplitChange.class);
+            return change;
+        } catch (Exception e) {
         }
         return null;
     }
