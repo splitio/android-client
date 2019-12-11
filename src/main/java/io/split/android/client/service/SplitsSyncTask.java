@@ -18,19 +18,21 @@ public class SplitsSyncTask implements SplitTask {
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
 
-    public SplitsSyncTask(SplitFetcherV2 splitFetcher, SplitsStorage splitsStorage) {
+    public SplitsSyncTask(SplitFetcherV2 splitFetcher,
+                          SplitsStorage splitsStorage,
+                          SplitChangeProcessor splitChangeProcessor) {
         checkNotNull(splitFetcher);
         checkNotNull(splitsStorage);
+        checkNotNull(splitChangeProcessor);
 
         mSplitFetcher = splitFetcher;
         mSplitsStorage = splitsStorage;
-        mSplitChangeProcessor = new SplitChangeProcessor();
+        mSplitChangeProcessor = splitChangeProcessor;
     }
 
     @Override
     public void execute() {
         try {
-            // TODO: Ask tincho why mSplitsStorage.getTill()
             SplitChange splitChange = mSplitFetcher.execute(mSplitsStorage.getTill());
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
         } catch (IllegalStateException e) {

@@ -21,14 +21,12 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final int CORE_POOL_SIZE = 1;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
-    private boolean isPaused;
 
     public SplitTaskExecutorImpl() {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
-        threadFactoryBuilder.setDaemon(false);
+        threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
         mScheduler = new PausableScheduledThreadPoolExecutorImpl(CORE_POOL_SIZE, threadFactoryBuilder.build());
-        isPaused = false;
     }
 
     @Override
@@ -37,7 +35,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         checkArgument(periodInSecs > 0);
 
         if (!mScheduler.isShutdown()) {
-            ScheduledFuture<?> future = mScheduler.scheduleAtFixedRate(new TaskWrapper(task), initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
+            mScheduler.scheduleAtFixedRate(new TaskWrapper(task), initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
         }
     }
 
@@ -46,25 +44,18 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         checkNotNull(task);
 
         if (task != null && !mScheduler.isShutdown()) {
-            Future<?> future = mScheduler.submit(new TaskWrapper(task));
+            mScheduler.submit(new TaskWrapper(task));
         }
     }
 
     @Override
-    synchronized public void pause() {
-        if(!isPaused) {
-            mScheduler.pause();
-            isPaused = true;
-        }
-
+    public void pause() {
+        mScheduler.pause();
     }
 
     @Override
-    synchronized public void resume() {
-        if(isPaused) {
-            mScheduler.resume();
-            isPaused = false;
-        }
+    public void resume() {
+        mScheduler.resume();
     }
 
     @Override
@@ -89,12 +80,18 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         private final SplitTask mTask;
 
         TaskWrapper(SplitTask task) {
+            checkNotNull(task);
             mTask = task;
         }
 
         @Override
         public void run() {
-            mTask.execute();
+            try {
+                mTask.execute();
+            } catch (Exception e) {
+                Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
+            }
+
         }
     }
 

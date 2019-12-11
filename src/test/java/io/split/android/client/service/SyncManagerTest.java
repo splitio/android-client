@@ -1,7 +1,5 @@
 package io.split.android.client.service;
 
-import androidx.annotation.NonNull;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,11 +8,9 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.splits.HttpSplitFetcher;
 import io.split.android.client.service.splits.SplitFetcherV2;
-import io.split.android.client.storage.SplitStorageProvider;
+import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.engine.experiments.SplitFetcher;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -28,9 +24,9 @@ public class SyncManagerTest {
     @Mock
     SplitTaskExecutor mTaskExecutor;
     @Mock
-    SplitFetcherProvider mSplitFetcherProvider;
+    SplitApiFacade mSplitApiFacade;
     @Mock
-    SplitStorageProvider mSplitStorageProvider;
+    SplitStorageContainer mSplitStorageContainer;
     SplitClientConfig mSplitClientConfig;
 
     @Before
@@ -38,10 +34,10 @@ public class SyncManagerTest {
         MockitoAnnotations.initMocks(this);
         SplitFetcherV2 splitsFetcher = Mockito.mock(SplitFetcherV2.class);
         SplitsStorage splitsStorage = Mockito.mock(SplitsStorage.class);
-        when(mSplitFetcherProvider.getSplitFetcher()).thenReturn(splitsFetcher);
-        when(mSplitStorageProvider.getSplitStorage()).thenReturn(splitsStorage);
+        when(mSplitApiFacade.getSplitFetcher()).thenReturn(splitsFetcher);
+        when(mSplitStorageContainer.getSplitStorage()).thenReturn(splitsStorage);
         mSplitClientConfig = SplitClientConfig.builder().build();
-        mSyncManager = new SyncManagerImpl(mSplitClientConfig, mTaskExecutor, mSplitFetcherProvider, mSplitStorageProvider);
+        mSyncManager = new SyncManagerImpl(mSplitClientConfig, mTaskExecutor, mSplitApiFacade, mSplitStorageContainer);
     }
 
     @Test
