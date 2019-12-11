@@ -77,4 +77,8 @@ public abstract class BaseHttpFetcher {
     protected HttpResponse executeRequest(URI uri) throws HttpException {
         return mClient.request(uri, HttpMethod.GET).execute();
     }
+
+    public static class MySegmentsJsonParser {
+
+    }
 }

@@ -19,8 +19,6 @@ public interface Metrics {
     public static final String MY_SEGMENTS_FETCHER_EXCEPTION = "mySegmentsFetcher.exception";
     public static final String MY_SEGMENTS_FETCHER_STATUS = "mySegmentsFetcher.status.%d";
 
-
-
     /**
      * Adjusts the specified counter by a given delta.
      * <p/>
