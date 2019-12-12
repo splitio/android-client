@@ -1,12 +1,10 @@
 package io.split.android.client.service;
 
-import android.util.Log;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.service.SplitTask;
-import io.split.android.client.service.splits.HttpSplitFetcher;
 import io.split.android.client.service.splits.SplitChangeProcessor;
-import io.split.android.client.service.splits.SplitFetcherV2;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
@@ -14,11 +12,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitsSyncTask implements SplitTask {
 
-    private final SplitFetcherV2 mSplitFetcher;
+    static final String SINCE_PARAM = "since";
+    private final HttpFetcher<SplitChange> mSplitFetcher;
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
 
-    public SplitsSyncTask(SplitFetcherV2 splitFetcher,
+
+    public SplitsSyncTask(HttpFetcher<SplitChange> splitFetcher,
                           SplitsStorage splitsStorage,
                           SplitChangeProcessor splitChangeProcessor) {
         checkNotNull(splitFetcher);
@@ -33,7 +33,9 @@ public class SplitsSyncTask implements SplitTask {
     @Override
     public void execute() {
         try {
-            SplitChange splitChange = mSplitFetcher.execute(mSplitsStorage.getTill());
+            Map<String, Object> params = new HashMap<>();
+            params.put(SINCE_PARAM, -1);
+            SplitChange splitChange = mSplitFetcher.execute(params);
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
         } catch (IllegalStateException e) {
             logError(e.getLocalizedMessage());

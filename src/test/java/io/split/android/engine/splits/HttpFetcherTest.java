@@ -26,7 +26,7 @@ import io.split.android.client.service.HttpFetcher;
 import io.split.android.client.service.HttpFetcherException;
 import io.split.android.client.service.HttpFetcherImpl;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
-import io.split.android.client.service.splits.HttpResponseParser;
+import io.split.android.client.service.HttpResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;

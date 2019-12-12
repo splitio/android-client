@@ -2,9 +2,6 @@ package io.split.android.client.service;
 
 import androidx.annotation.NonNull;
 
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Map;
 
@@ -12,8 +9,6 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
-import io.split.android.client.service.HttpFetcher;
-import io.split.android.client.service.splits.HttpResponseParser;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.metrics.MetricsFetcherConfig;

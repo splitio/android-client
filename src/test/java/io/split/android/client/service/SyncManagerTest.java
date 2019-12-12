@@ -8,7 +8,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.splits.SplitFetcherV2;
+import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 
@@ -32,7 +32,7 @@ public class SyncManagerTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        SplitFetcherV2 splitsFetcher = Mockito.mock(SplitFetcherV2.class);
+        HttpFetcher<SplitChange> splitsFetcher = Mockito.mock(HttpFetcher.class);
         SplitsStorage splitsStorage = Mockito.mock(SplitsStorage.class);
         when(mSplitApiFacade.getSplitFetcher()).thenReturn(splitsFetcher);
         when(mSplitStorageContainer.getSplitStorage()).thenReturn(splitsStorage);

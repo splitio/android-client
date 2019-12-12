@@ -8,9 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.service.splits.HttpResponseParser;
-import io.split.android.client.service.splits.HttpResponseParserException;
+import io.split.android.client.service.HttpResponseParser;
+import io.split.android.client.service.HttpResponseParserException;
 import io.split.android.client.utils.Json;
 
 public class MySegmentsResponseParser implements HttpResponseParser<List<MySegment>> {
@@ -20,7 +19,7 @@ public class MySegmentsResponseParser implements HttpResponseParser<List<MySegme
     }.getType();
 
     @Override
-    public List<MySegment> parse(String responseData) throws HttpResponseParserException{
+    public List<MySegment> parse(String responseData) throws HttpResponseParserException {
         try {
             Map<String, List<MySegment>> parsedResponse = Json.fromJson(responseData, MY_SEGMENTS_RESPONSE_TYPE);
             return parsedResponse.get("mySegments");

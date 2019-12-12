@@ -3,6 +3,8 @@ package io.split.android.client.service.splits;
 import com.google.gson.JsonSyntaxException;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.service.HttpResponseParser;
+import io.split.android.client.service.HttpResponseParserException;
 import io.split.android.client.utils.Json;
 
 public class SplitChangeResponseParser implements HttpResponseParser<SplitChange> {
