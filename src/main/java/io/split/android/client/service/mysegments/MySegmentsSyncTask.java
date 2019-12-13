@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
+import io.split.android.client.service.HttpFetcher;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.utils.Logger;
@@ -12,10 +13,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MySegmentsSyncTask implements SplitTask {
 
-    private final MySegmentsFetcherV2 mMySegmentsFetcher;
+    private final HttpFetcher<List<MySegment>> mMySegmentsFetcher;
     private final MySegmentsStorage mMySegmentsStorage;
 
-    public MySegmentsSyncTask(MySegmentsFetcherV2 mySegmentsFetcher, MySegmentsStorage mySegmentsStorage) {
+    public MySegmentsSyncTask(HttpFetcher<List<MySegment>> mySegmentsFetcher, MySegmentsStorage mySegmentsStorage) {
         checkNotNull(mySegmentsFetcher);
         checkNotNull(mySegmentsStorage);
 

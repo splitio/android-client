@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.service.mysegments.MySegmentsFetcherV2;
+import io.split.android.client.service.HttpFetcher;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 
 public class MySegmentsSyncTaskTest {
     @Mock
-    MySegmentsFetcherV2 mMySegmentsFetcher;
+    HttpFetcher mMySegmentsFetcher;
     @Mock
     MySegmentsStorage mySegmentsStorage;
 
@@ -41,7 +41,7 @@ public class MySegmentsSyncTaskTest {
     }
 
     @Test
-    public void correctExecution() {
+    public void correctExecution() throws HttpFetcherException {
         when(mMySegmentsFetcher.execute()).thenReturn(mMySegments);
 
         mTask.execute();
@@ -51,7 +51,7 @@ public class MySegmentsSyncTaskTest {
     }
 
     @Test
-    public void fetcherException() {
+    public void fetcherException() throws HttpFetcherException {
         when(mMySegmentsFetcher.execute()).thenThrow(IllegalStateException.class);
 
         mTask.execute();
@@ -61,7 +61,7 @@ public class MySegmentsSyncTaskTest {
     }
 
     @Test
-    public void storageException() {
+    public void storageException() throws HttpFetcherException {
         when(mMySegmentsFetcher.execute()).thenReturn(mMySegments);
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(any());
 

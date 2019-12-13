@@ -6,10 +6,10 @@ import io.split.android.client.storage.splits.SplitsStorage;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SplitStorageProvider {
+public class SplitStorageContainer {
     private final SplitsStorage mSplitStorage;
 
-    public SplitStorageProvider(@NonNull SplitsStorage splitStorage) {
+    public SplitStorageContainer(@NonNull SplitsStorage splitStorage) {
         checkNotNull(splitStorage);
 
         mSplitStorage = splitStorage;
