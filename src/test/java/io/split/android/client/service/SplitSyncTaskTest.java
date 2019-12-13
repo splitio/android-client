@@ -36,7 +36,7 @@ public class SplitSyncTaskTest {
     @Before
     public void setup() {
         mDefaultParams.clear();
-        mDefaultParams.put("since", -1);
+        mDefaultParams.put("since", -1L);
         mSplitsFetcher = (HttpFetcher<SplitChange>) Mockito.mock(HttpFetcher.class);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
         mSplitChangeProcessor = Mockito.spy(SplitChangeProcessor.class);
@@ -55,6 +55,24 @@ public class SplitSyncTaskTest {
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
     }
+
+    @Test
+    public void correctChangeNumExecution() throws HttpFetcherException {
+        long changeNum = 234567833L;
+        Map<String, Object> params = new HashMap<>();
+        params.put("since", changeNum);
+
+        when(mSplitsStorage.getTill()).thenReturn(changeNum);
+        when(mSplitsFetcher.execute(params)).thenReturn(mSplitChange);
+
+        mTask.execute();
+
+        verify(mSplitsFetcher, times(1)).execute(params);
+        verify(mSplitsStorage, times(1)).update(any());
+        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+    }
+
+
 
     @Test
     public void fetcherException() throws HttpFetcherException {

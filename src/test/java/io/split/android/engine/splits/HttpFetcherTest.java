@@ -30,7 +30,7 @@ import io.split.android.client.service.HttpResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;
-import io.split.android.engine.metrics.MetricsFetcherConfig;
+import io.split.android.engine.metrics.FetcherMetricsConfig;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -50,12 +50,12 @@ public class HttpFetcherTest {
     HttpResponseParser<SplitChange> mSplitChangeResponseParser = new SplitChangeResponseParser();
     HttpResponseParser<List<MySegment>> mMySegmentsResponseParser = new MySegmentsResponseParser();
 
-    MetricsFetcherConfig mMetricsSplitFetcherConfig
-            = new MetricsFetcherConfig(Metrics.SPLIT_CHANGES_FETCHER_EXCEPTION,
+    FetcherMetricsConfig mMetricsSplitFetcherConfig
+            = new FetcherMetricsConfig(Metrics.SPLIT_CHANGES_FETCHER_EXCEPTION,
             Metrics.SPLIT_CHANGES_FETCHER_TIME, Metrics.SPLIT_CHANGES_FETCHER_STATUS);
 
-    MetricsFetcherConfig mMetricsMySegmentsConfig
-            = new MetricsFetcherConfig(Metrics.MY_SEGMENTS_FETCHER_EXCEPTION,
+    FetcherMetricsConfig mMetricsMySegmentsConfig
+            = new FetcherMetricsConfig(Metrics.MY_SEGMENTS_FETCHER_EXCEPTION,
             Metrics.MY_SEGMENTS_FETCHER_TIME, Metrics.MY_SEGMENTS_FETCHER_STATUS);
 
     @Before

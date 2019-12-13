@@ -4,12 +4,12 @@ import androidx.annotation.NonNull;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class MetricsFetcherConfig {
+public class FetcherMetricsConfig {
     private final String exceptionLabel;
     private final String timeLabel;
     private final String statusLabel;
 
-    public MetricsFetcherConfig(@NonNull String exceptionLabel,
+    public FetcherMetricsConfig(@NonNull String exceptionLabel,
                                 @NonNull String timeLabel,
                                 @NonNull String statusLabel) {
 
