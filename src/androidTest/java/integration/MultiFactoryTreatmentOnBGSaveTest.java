@@ -88,7 +88,6 @@ public class MultiFactoryTreatmentOnBGSaveTest {
                 if (request.getPath().contains("/mySegments")) {
                     return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
                 } else if (request.getPath().contains("/splitChanges")) {
-                    //int r = getAndUpdateRequestId();
                     long r = Long.parseLong(request.getRequestUrl().queryParameter("since"));
                     String respData = getChangesResponse(r);
                     return new MockResponse().setResponseCode(200)
