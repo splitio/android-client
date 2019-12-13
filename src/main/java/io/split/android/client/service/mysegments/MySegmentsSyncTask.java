@@ -17,11 +17,8 @@ public class MySegmentsSyncTask implements SplitTask {
     private final MySegmentsStorage mMySegmentsStorage;
 
     public MySegmentsSyncTask(HttpFetcher<List<MySegment>> mySegmentsFetcher, MySegmentsStorage mySegmentsStorage) {
-        checkNotNull(mySegmentsFetcher);
-        checkNotNull(mySegmentsStorage);
-
-        mMySegmentsFetcher = mySegmentsFetcher;
-        mMySegmentsStorage = mySegmentsStorage;
+        mMySegmentsFetcher = checkNotNull(mySegmentsFetcher);
+        mMySegmentsStorage = checkNotNull(mySegmentsStorage);
     }
 
     @Override

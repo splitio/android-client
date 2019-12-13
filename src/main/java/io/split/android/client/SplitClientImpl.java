@@ -56,26 +56,22 @@ public final class SplitClientImpl implements SplitClient {
                            TrackClient trackClient,
                            ISplitCache splitCache) {
 
-        String mBucketingKey = key.bucketingKey();
-        mMatchingKey = key.matchingKey();
+        checkNotNull(splitFetcher);
+        checkNotNull(impressionListener);
 
-        mSplitFactory = container;
-        mConfig = config;
-        mEventsManager = eventsManager;
-        mTrackClient = trackClient;
+        String mBucketingKey = key.bucketingKey();
+        mMatchingKey = checkNotNull(key.matchingKey());
+
+        mSplitFactory = checkNotNull(container);
+        mConfig = checkNotNull(config);
+        mEventsManager = checkNotNull(eventsManager);
+        mTrackClient = checkNotNull(trackClient);
         mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = new TreatmentManagerImpl(
                 mMatchingKey, mBucketingKey, new EvaluatorImpl(splitFetcher),
                 new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), metrics,
                 impressionListener, mConfig, eventsManager);
-
-        checkNotNull(splitFetcher);
-        checkNotNull(impressionListener);
-        checkNotNull(mMatchingKey);
-        checkNotNull(mEventsManager);
-        checkNotNull(mTrackClient);
-
     }
 
     @Override
