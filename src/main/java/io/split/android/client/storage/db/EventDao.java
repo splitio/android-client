@@ -13,8 +13,8 @@ public interface EventDao {
 
     @Query("SELECT id, body, updated_at, status FROM events " +
             "WHERE updated_at >= :updateAt " +
-            "AND status = :status ORDER BY updated_at")
-    List<EventEntity> getBy(long updateAt, int status);
+            "AND status = :status ORDER BY updated_at LIMIT :maxRows")
+    List<EventEntity> getBy(long updateAt, int status, int maxRows);
 
     @Query("UPDATE events SET status = :status "  +
             " WHERE id IN (:ids)")

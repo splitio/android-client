@@ -20,9 +20,7 @@ public class EventsStorageImpl implements MySegmentsStorage {
 
 
     public EventsStorageImpl(@NonNull PersistentMySegmentsStorage persistentStorage) {
-        checkNotNull(persistentStorage);
-
-        mPersistentStorage = persistentStorage;
+        mPersistentStorage = checkNotNull(persistentStorage);
         mInMemoryMySegments = Sets.newConcurrentHashSet();
         loadFromDb();
     }

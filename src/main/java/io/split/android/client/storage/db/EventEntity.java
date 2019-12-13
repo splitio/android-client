@@ -16,7 +16,7 @@ public class EventEntity {
 
     @ColumnInfo(name = "updated_at")
     private long updatedAt;
-    private StorageRecordStatus status;
+    private int status;
 
     public long getId() {
         return id;
@@ -43,11 +43,11 @@ public class EventEntity {
         this.updatedAt = updatedAt;
     }
 
-    public StorageRecordStatus getStatus() {
+    public int getStatus() {
         return status;
     }
 
-    public void setStatus(StorageRecordStatus status) {
+    public void setStatus(int status) {
         this.status = status;
     }
 }

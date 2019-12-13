@@ -8,8 +8,7 @@ import androidx.room.PrimaryKey;
 
 @Entity(tableName = "impressions")
 public class ImpressionEntity {
-    public final static int STATUS_ACTIVE = 0;
-    public final static int STATUS_DELETED = 1;
+
 
     @PrimaryKey(autoGenerate = true)
     private long id;
