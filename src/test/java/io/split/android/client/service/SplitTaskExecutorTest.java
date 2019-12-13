@@ -1,7 +1,5 @@
 package io.split.android.client.service;
 
-import androidx.arch.core.executor.TaskExecutor;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,6 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 
 import static java.lang.Thread.sleep;
 
@@ -140,6 +142,13 @@ public class SplitTaskExecutorTest {
 
     @Test
     public void pauseScheduled() throws InterruptedException {
+
+//      This test schedules 2 task, one to be executed every one sec without delay
+//      and the other with an initial delay of 6 secs every 20 secs
+//      Call count is taken before pause, then the executor is resumed
+//      and call count is taken again
+//      At the end call count is checked for both tasks
+
         CountDownLatch latch = new CountDownLatch(3);
         CountDownLatch latch1 = new CountDownLatch(1);
         TestTask task = new TestTask(latch);
@@ -193,6 +202,19 @@ public class SplitTaskExecutorTest {
         Assert.assertFalse(executedOnStop);
     }
 
+    @Test
+    public void exceptionInScheduled() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(4);
+        TestTask task = new TestTask(latch);
+        task.shouldThrowException = true;
+
+        mTaskExecutor.schedule(task, 0L, 1);
+        latch.await(10, TimeUnit.SECONDS);
+
+        Assert.assertTrue(task.taskHasBeenCalled);
+        Assert.assertEquals(4, task.callCount);
+    }
+
     @After
     public void tearDown() {
     }
@@ -204,6 +226,7 @@ public class SplitTaskExecutorTest {
             this.latch = latch;
         }
 
+        public boolean shouldThrowException = false;
         public int callCount = 0;
         public boolean taskHasBeenCalled = false;
 
@@ -212,6 +235,9 @@ public class SplitTaskExecutorTest {
             callCount++;
             taskHasBeenCalled = true;
             latch.countDown();
+            if (shouldThrowException) {
+                throw new IllegalStateException();
+            }
         }
     }
 }
