@@ -40,13 +40,8 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
     }
 
     @Override
-    public T execute() throws HttpFetcherException {
-        return execute(null);
-    }
-
-    @Override
-    public T execute(Map<String, Object> params) throws HttpFetcherException {
-
+    public T execute(@NonNull Map<String, Object> params) throws HttpFetcherException {
+        checkNotNull(params);
         long start = System.currentTimeMillis();
         T responseData = null;
 
@@ -56,10 +51,8 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             }
 
             URIBuilder uriBuilder = new URIBuilder(mTarget);
-            if (params != null) {
-                for (Map.Entry<String, Object> param : params.entrySet()) {
-                    uriBuilder.addParameter(param.getKey(), param.getValue().toString());
-                }
+            for (Map.Entry<String, Object> param : params.entrySet()) {
+                uriBuilder.addParameter(param.getKey(), param.getValue().toString());
             }
 
             HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET).execute();

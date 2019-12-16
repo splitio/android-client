@@ -1,6 +1,7 @@
 package io.split.android.client.service.mysegments;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
@@ -27,7 +28,7 @@ public class MySegmentsSyncTask implements SplitTask {
     @Override
     public void execute() {
         try {
-            mMySegmentsStorage.set(getNameList(mMySegmentsFetcher.execute()));
+            mMySegmentsStorage.set(getNameList(mMySegmentsFetcher.execute(new HashMap<>())));
         } catch (IllegalStateException e) {
             logError(e.getLocalizedMessage());
         } catch (Exception e) {

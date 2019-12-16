@@ -62,7 +62,7 @@ public class HttpFetcherTest {
     public void setup() throws URISyntaxException {
         mUrl = new URI(TEST_URL);
         mSplitChangesUrl = new URI(SPLIT_CHANGES_TEST_URL);
-        mMySegmentsUrl = new URI(MY_SEGMENTS_TEST_URL);
+        mMySegmentsUrl = new URIBuilder(new URI(MY_SEGMENTS_TEST_URL), "thekey").build();
         mNetworkHelperMock = mock(NetworkHelper.class);
         mMetricsMock = mock(Metrics.class);
         mClientMock = mock(HttpClient.class);
@@ -183,7 +183,7 @@ public class HttpFetcherTest {
                 mMetricsMySegmentsConfig, mNetworkHelperMock, mMySegmentsResponseParser);
         List<MySegment> mySegments = null;
         try {
-            mySegments = fetcher.execute();
+            mySegments = fetcher.execute(new HashMap<>());
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }
@@ -212,7 +212,7 @@ public class HttpFetcherTest {
                 mMetricsMySegmentsConfig, mNetworkHelperMock, mMySegmentsResponseParser);
         List<MySegment> mySegments = null;
         try {
-            mySegments = fetcher.execute();
+            mySegments = fetcher.execute(new HashMap<>());
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }
