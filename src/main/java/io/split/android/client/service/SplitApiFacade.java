@@ -2,20 +2,21 @@ package io.split.android.client.service;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.service.splits.SplitFetcherV2;
+import io.split.android.client.dtos.SplitChange;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitApiFacade {
-    private final SplitFetcherV2 mSplitFetcher;
+    private final HttpFetcher<SplitChange> mSplitFetcher;
 
-    public SplitApiFacade(@NonNull SplitFetcherV2 splitFetcher) {
+
+    public SplitApiFacade(@NonNull HttpFetcher<SplitChange> splitFetcher) {
         checkNotNull(splitFetcher);
 
         mSplitFetcher = splitFetcher;
     }
 
-    public SplitFetcherV2 getSplitFetcher() {
+    public HttpFetcher<SplitChange> getSplitFetcher() {
         return mSplitFetcher;
     }
 }

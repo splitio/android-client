@@ -1,16 +1,15 @@
 package io.split.android.client.service;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.Spy;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.splits.SplitChangeProcessor;
-import io.split.android.client.service.splits.SplitFetcherV2;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.helpers.FileHelper;
@@ -25,16 +24,20 @@ import static org.mockito.Mockito.when;
 
 public class SplitSyncTaskTest {
 
-    SplitFetcherV2 mSplitsFetcher;
+    HttpFetcher<SplitChange> mSplitsFetcher;
     SplitsStorage mSplitsStorage;
     SplitChange mSplitChange = null;
     SplitChangeProcessor mSplitChangeProcessor;
 
     SplitsSyncTask mTask;
+    Map<String, Object> mDefaultParams = new HashMap<>();
+
 
     @Before
     public void setup() {
-        mSplitsFetcher = Mockito.mock(SplitFetcherV2.class);
+        mDefaultParams.clear();
+        mDefaultParams.put("since", -1L);
+        mSplitsFetcher = (HttpFetcher<SplitChange>) Mockito.mock(HttpFetcher.class);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
         mSplitChangeProcessor = Mockito.spy(SplitChangeProcessor.class);
         mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor);
@@ -42,38 +45,56 @@ public class SplitSyncTaskTest {
     }
 
     @Test
-    public void correctExecution() {
+    public void correctExecution() throws HttpFetcherException {
         when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsFetcher.execute(-1)).thenReturn(mSplitChange);
+        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
 
         mTask.execute();
 
-        verify(mSplitsFetcher, times(1)).execute(-1);
+        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
     }
 
     @Test
-    public void fetcherException() {
-        when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsFetcher.execute(-1)).thenThrow(IllegalStateException.class);
+    public void correctChangeNumExecution() throws HttpFetcherException {
+        long changeNum = 234567833L;
+        Map<String, Object> params = new HashMap<>();
+        params.put("since", changeNum);
+
+        when(mSplitsStorage.getTill()).thenReturn(changeNum);
+        when(mSplitsFetcher.execute(params)).thenReturn(mSplitChange);
 
         mTask.execute();
 
-        verify(mSplitsFetcher, times(1)).execute(-1);
+        verify(mSplitsFetcher, times(1)).execute(params);
+        verify(mSplitsStorage, times(1)).update(any());
+        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+    }
+
+
+
+    @Test
+    public void fetcherException() throws HttpFetcherException {
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+        when(mSplitsFetcher.execute(mDefaultParams)).thenThrow(IllegalStateException.class);
+
+        mTask.execute();
+
+        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
         verify(mSplitsStorage, never()).update(any());
         verify(mSplitChangeProcessor, never()).process(mSplitChange);
     }
 
     @Test
-    public void storageException() {
+    public void storageException() throws HttpFetcherException {
         when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsFetcher.execute(-1)).thenReturn(mSplitChange);
+        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
         doThrow(NullPointerException.class).when(mSplitsStorage).update(any(ProcessedSplitChange.class));
 
         mTask.execute();
 
-        verify(mSplitsFetcher, times(1)).execute(-1);
+        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
     }
