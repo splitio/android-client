@@ -16,6 +16,7 @@ import io.split.android.client.cache.IMySegmentsCache;
 import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.cache.ISplitChangeCache;
 import io.split.android.client.cache.MySegmentsCache;
+import io.split.android.client.cache.MySegmentsStorageWrapper;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.cache.SplitChangeCache;
 import io.split.android.client.events.SplitEventsManager;
@@ -38,6 +39,10 @@ import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.IStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageImpl;
+import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
+import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
@@ -128,9 +133,11 @@ public class SplitFactoryImpl implements SplitFactory {
             dataFolderName = config.defaultDataFolder();
         }
 
-        // Segments
-        IStorage mySegmentsStorage = new FileStorage(context.getCacheDir(), dataFolderName);
-        IMySegmentsCache mySegmentsCache = new MySegmentsCache(mySegmentsStorage);
+        // TODO: On final implementation wrap this in a component
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, dataFolderName);
+        PersistentMySegmentsStorage persistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(splitRoomDatabase, key.matchingKey());
+        MySegmentsStorage mySegmentsStorage = new MySegmentsStorageImpl(persistentMySegmentsStorage);
+        IMySegmentsCache mySegmentsCache = new MySegmentsStorageWrapper(mySegmentsStorage);
         MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpClient, rootTarget, mySegmentsCache);
         final RefreshableMySegmentsFetcherProviderImpl segmentFetcher = new RefreshableMySegmentsFetcherProviderImpl(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
 
@@ -140,7 +147,6 @@ public class SplitFactoryImpl implements SplitFactory {
         IStorage fileStorage = new FileStorage(context.getCacheDir(), dataFolderName);
 
         // TODO: On final implementation wrap this in a component
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, dataFolderName);
         PersistentSplitsStorage persistentSplitsStorage = new SqLitePersistentSplitsStorage(splitRoomDatabase);
         SplitsStorage splitsStorage = new SplitsStorageImpl(persistentSplitsStorage);
         ISplitChangeCache splitChangeCache = new SplitChangeCache(splitsStorage);
