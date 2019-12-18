@@ -1,4 +1,4 @@
-package io.split.android.engine.splits;
+package io.split.android.client.service;
 
 import org.junit.Assert;
 import org.junit.Before;
