@@ -11,7 +11,7 @@ import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;
-import io.split.android.engine.metrics.MetricsFetcherConfig;
+import io.split.android.engine.metrics.FetcherMetricsConfig;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -20,14 +20,14 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
     private final HttpClient mClient;
     private final URI mTarget;
     private final Metrics mMetrics;
-    private final MetricsFetcherConfig mMetricsFetcherConfig;
+    private final FetcherMetricsConfig mFetcherMetricsConfig;
     private final NetworkHelper mNetworkHelper;
     private HttpResponseParser<T> mResponseParser;
 
     public HttpFetcherImpl(@NonNull HttpClient client,
                            @NonNull URI target,
                            @NonNull Metrics metrics,
-                           @NonNull MetricsFetcherConfig metricsFetcherConfig,
+                           @NonNull FetcherMetricsConfig fetcherMetricsConfig,
                            @NonNull NetworkHelper networkHelper,
                            @NonNull HttpResponseParser<T> responseParser) {
 
@@ -35,18 +35,13 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
         mTarget = checkNotNull(target);
         mMetrics = checkNotNull(metrics);
         mNetworkHelper = checkNotNull(networkHelper);
-        mMetricsFetcherConfig = checkNotNull(metricsFetcherConfig);
+        mFetcherMetricsConfig = checkNotNull(fetcherMetricsConfig);
         mResponseParser = checkNotNull(responseParser);
     }
 
     @Override
-    public T execute() throws HttpFetcherException {
-        return execute(null);
-    }
-
-    @Override
-    public T execute(Map<String, Object> params) throws HttpFetcherException {
-
+    public T execute(@NonNull Map<String, Object> params) throws HttpFetcherException {
+        checkNotNull(params);
         long start = System.currentTimeMillis();
         T responseData = null;
 
@@ -56,16 +51,14 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             }
 
             URIBuilder uriBuilder = new URIBuilder(mTarget);
-            if (params != null) {
-                for (Map.Entry<String, Object> param : params.entrySet()) {
-                    uriBuilder.addParameter(param.getKey(), param.getValue().toString());
-                }
+            for (Map.Entry<String, Object> param : params.entrySet()) {
+                uriBuilder.addParameter(param.getKey(), param.getValue().toString());
             }
 
             HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET).execute();
 
             if (!response.isSuccess()) {
-                mMetrics.count(String.format(mMetricsFetcherConfig.getStatusLabel(), response.getHttpStatus()), 1);
+                mMetrics.count(String.format(mFetcherMetricsConfig.getStatusLabel(), response.getHttpStatus()), 1);
                 throw new IllegalStateException("http return code " + response.getHttpStatus());
             }
 
@@ -75,10 +68,10 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                 throw new IllegalStateException("Wrong data received from split changes server");
             }
         } catch (Exception e) {
-            mMetrics.count(mMetricsFetcherConfig.getExceptionLabel(), 1);
+            mMetrics.count(mFetcherMetricsConfig.getExceptionLabel(), 1);
             throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage());
         } finally {
-            mMetrics.time(mMetricsFetcherConfig.getTimeLabel(), System.currentTimeMillis() - start);
+            mMetrics.time(mFetcherMetricsConfig.getTimeLabel(), System.currentTimeMillis() - start);
         }
         return responseData;
     }

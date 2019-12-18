@@ -36,7 +36,7 @@ public class SplitsSyncTask implements SplitTask {
     public void execute() {
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put(SINCE_PARAM, -1);
+            params.put(SINCE_PARAM, mSplitsStorage.getTill());
             SplitChange splitChange = mSplitFetcher.execute(params);
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
         } catch (IllegalStateException e) {

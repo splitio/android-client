@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
@@ -42,32 +43,32 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void correctExecution() throws HttpFetcherException {
-        when(mMySegmentsFetcher.execute()).thenReturn(mMySegments);
+        when(mMySegmentsFetcher.execute(new HashMap<>())).thenReturn(mMySegments);
 
         mTask.execute();
 
-        verify(mMySegmentsFetcher, times(1)).execute();
+        verify(mMySegmentsFetcher, times(1)).execute(new HashMap<>());
         verify(mySegmentsStorage, times(1)).set(any());
     }
 
     @Test
     public void fetcherException() throws HttpFetcherException {
-        when(mMySegmentsFetcher.execute()).thenThrow(IllegalStateException.class);
+        when(mMySegmentsFetcher.execute(new HashMap<>())).thenThrow(IllegalStateException.class);
 
         mTask.execute();
 
-        verify(mMySegmentsFetcher, times(1)).execute();
+        verify(mMySegmentsFetcher, times(1)).execute(new HashMap<>());
         verify(mySegmentsStorage, never()).set(any());
     }
 
     @Test
     public void storageException() throws HttpFetcherException {
-        when(mMySegmentsFetcher.execute()).thenReturn(mMySegments);
+        when(mMySegmentsFetcher.execute(new HashMap<>())).thenReturn(mMySegments);
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(any());
 
         mTask.execute();
 
-        verify(mMySegmentsFetcher, times(1)).execute();
+        verify(mMySegmentsFetcher, times(1)).execute(new HashMap<>());
         verify(mySegmentsStorage, times(1)).set(any());
     }
 
