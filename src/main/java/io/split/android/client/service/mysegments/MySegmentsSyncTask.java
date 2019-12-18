@@ -6,6 +6,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.service.HttpFetcher;
+import io.split.android.client.service.HttpFetcherException;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.utils.Logger;
@@ -28,10 +29,9 @@ public class MySegmentsSyncTask implements SplitTask {
     @Override
     public void execute() {
         try {
-            mMySegmentsStorage.set(getNameList(mMySegmentsFetcher.execute(new HashMap<>())));
-        } catch (IllegalStateException e) {
-            logError(e.getLocalizedMessage());
-        } catch (Exception e) {
+            List<MySegment> mySegments = mMySegmentsFetcher.execute(new HashMap<>());
+            mMySegmentsStorage.set(getNameList(mySegments));
+        } catch (HttpFetcherException e) {
             logError("unexpected " + e.getLocalizedMessage());
         }
     }
