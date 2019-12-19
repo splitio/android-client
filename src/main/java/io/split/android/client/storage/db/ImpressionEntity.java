@@ -20,7 +20,8 @@ public class ImpressionEntity {
     @NonNull
     private String body;
 
-    private long timestamp;
+    @ColumnInfo(name = "created_at")
+    private long createdAt;
     private int status;
 
     public long getId() {
@@ -49,12 +50,12 @@ public class ImpressionEntity {
         this.body = body;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getCreatedAt() {
+        return createdAt;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
     }
 
     public int getStatus() {
