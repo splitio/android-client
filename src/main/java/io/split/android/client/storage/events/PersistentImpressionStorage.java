@@ -6,7 +6,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.Event;
 
-public interface PersistentEventsStorage {
+public interface PersistentImpressionStorage {
     void push(@NonNull Event event);
     List<Event> pop(int count);
     List<Event> getCritical();

@@ -40,11 +40,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         if(impression == null) {
             return;
         }
-        ImpressionEntity entity = new ImpressionEntity();
-        entity.setStatus(StorageRecordStatus.ACTIVE);
-        entity.setBody(Json.toJson(impression));
-        entity.setCreatedAt(System.currentTimeMillis() / 1000);
-        mImpressionDao.insert(entity);
+        mImpressionDao.insert(entityForImpression(impression));
     }
 
     @Override
@@ -54,11 +50,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         }
         List<ImpressionEntity> entities = new ArrayList<>();
         for(KeyImpression keyImpression : impressions) {
-            ImpressionEntity entity = new ImpressionEntity();
-            entity.setStatus(StorageRecordStatus.ACTIVE);
-            entity.setBody(Json.toJson(keyImpression));
-            entity.setCreatedAt(System.currentTimeMillis() / 1000);
-            entities.add(entity);
+            entities.add(entityForImpression(keyImpression));
         }
         mImpressionDao.insert(entities);
     }
@@ -91,6 +83,15 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
             }
         }
         return impressions;
+    }
+
+    private ImpressionEntity entityForImpression(KeyImpression impression) {
+        ImpressionEntity entity = new ImpressionEntity();
+        entity.setStatus(StorageRecordStatus.ACTIVE);
+        entity.setBody(Json.toJson(impression));
+        entity.setTestName(impression.feature);
+        entity.setCreatedAt(System.currentTimeMillis() / 1000);
+        return entity;
     }
 
     static final class GetAndUpdateTransaction implements Runnable {

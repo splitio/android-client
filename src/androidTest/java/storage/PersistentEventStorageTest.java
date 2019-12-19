@@ -9,19 +9,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.db.EventEntity;
-import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
-import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.storage.events.PersistentImpressionStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
-import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.StringHelper;
 
@@ -29,7 +24,7 @@ public class PersistentEventStorageTest {
 
     SplitRoomDatabase mRoomDb;
     Context mContext;
-    PersistentEventsStorage mPersistentEventsStorage;
+    PersistentImpressionStorage mPersistentEventsStorage;
     StringHelper mStringHelper;
     final static long EXPIRATION_PERIOD = 3600 * 24;
 
