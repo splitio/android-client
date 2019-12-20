@@ -3,11 +3,13 @@ package io.split.android.client.service;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +17,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.split.android.client.dtos.Event;
+import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
@@ -33,6 +37,7 @@ import io.split.android.engine.metrics.Metrics;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -42,17 +47,20 @@ public class HttpRecorderTest {
 
     private final static String TEST_URL = "http://testurl.com";
     private final static String EVENTS_TEST_URL = TEST_URL + SdkTargetPath.EVENTS;
+    private final static String IMPRESSIONS_TEST_URL = TEST_URL + SdkTargetPath.IMPRESSIONS;
 
     NetworkHelper mNetworkHelperMock ;
     HttpClient mClientMock;
     URI mUrl;
     URI mEventsUrl;
+    URI mImpressionsUrl;
     HttpRequestParser<List<Event>> mEventsRequestParser = new EventsRequestParser();
 
     @Before
     public void setup() throws URISyntaxException {
         mUrl = new URI(TEST_URL);
         mEventsUrl = new URI(EVENTS_TEST_URL);
+        mImpressionsUrl = new URI(IMPRESSIONS_TEST_URL);
         mNetworkHelperMock = mock(NetworkHelper.class);
         mClientMock = mock(HttpClient.class);
     }
@@ -147,6 +155,60 @@ public class HttpRecorderTest {
         }
 
         Assert.assertTrue(exceptionWasThrown);
+    }
+
+    @Test
+    public void successfulImpressionsSend() throws HttpException {
+        boolean exceptionWasThrown = false;
+
+        TestImpressions testImpression1 = new TestImpressions();
+        TestImpressions testImpression2 = new TestImpressions();
+
+        testImpression1.testName = "feature_1";
+        testImpression1.keyImpressions = createImpressions(testImpression1.testName);
+
+        testImpression2.testName = "feature_2";
+        testImpression2.keyImpressions = createImpressions(testImpression2.testName);
+
+        List<KeyImpression> impressions = new ArrayList(testImpression1.keyImpressions);
+        impressions.addAll(testImpression2.keyImpressions);
+
+        String jsonImpressions = Json.toJson(Arrays.asList(testImpression1, testImpression2));
+        when(mNetworkHelperMock.isReachable(mImpressionsUrl)).thenReturn(true);
+        HttpRequest request = mock(HttpRequest.class);
+
+        HttpResponse response = new HttpResponseImpl(200, "");
+        when(request.execute()).thenReturn(response);
+        when(mClientMock.request(mImpressionsUrl, HttpMethod.POST, jsonImpressions)).thenReturn(request);
+        ImpressionsRequestParser parser = (ImpressionsRequestParser) Mockito.mock(ImpressionsRequestParser.class);
+        when(parser.parse(impressions)).thenReturn(jsonImpressions);
+
+        HttpRecorder<List<KeyImpression>> recorder = new HttpRecorderImpl<>(mClientMock, mImpressionsUrl, mNetworkHelperMock, parser);
+
+        try {
+            recorder.execute(impressions);
+        } catch (HttpRecorderException e) {
+            exceptionWasThrown = true;
+        }
+
+        Assert.assertFalse(exceptionWasThrown);
+        verify(mClientMock, times(1)).request(mImpressionsUrl, HttpMethod.POST, jsonImpressions);
+        verify(request, times(1)).execute();
+
+    }
+
+    private List<KeyImpression> createImpressions(String feature) {
+        List<KeyImpression> impressions = new ArrayList<>();
+        for(int i = 0; i <= 5; i++) {
+            KeyImpression impression = new KeyImpression();
+            impression.keyName = "Impression_" + i;
+            impression.feature = feature;
+            impression.time = 11111;
+            impression.changeNumber = 9999L;
+            impression.label  = "default rule";
+            impressions.add(impression);
+        }
+        return impressions;
     }
 
     private List<Event> createEvents() {
