@@ -1,13 +1,12 @@
 package io.split.android.client.storage.db;
 
 import androidx.annotation.NonNull;
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "events")
 public class EventEntity {
-    public final static int STATUS_ACTIVE = 0;
-    public final static int STATUS_DELETED = 1;
 
     @PrimaryKey(autoGenerate = true)
     private long id;
@@ -15,7 +14,8 @@ public class EventEntity {
     @NonNull
     private String body;
 
-    private long timestamp;
+    @ColumnInfo(name = "updated_at")
+    private long updatedAt;
     private int status;
 
     public long getId() {
@@ -35,12 +35,12 @@ public class EventEntity {
         this.body = body;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public long getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public void setUpdatedAt(long updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public int getStatus() {
