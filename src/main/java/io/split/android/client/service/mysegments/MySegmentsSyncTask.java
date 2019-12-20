@@ -3,6 +3,7 @@ package io.split.android.client.service.mysegments;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.service.HttpFetcher;
@@ -32,7 +33,9 @@ public class MySegmentsSyncTask implements SplitTask {
             List<MySegment> mySegments = mMySegmentsFetcher.execute(new HashMap<>());
             mMySegmentsStorage.set(getNameList(mySegments));
         } catch (HttpFetcherException e) {
-            logError("unexpected " + e.getLocalizedMessage());
+            logError("Exception when fetching my segments: " + e.getLocalizedMessage());
+        } catch (Exception e) {
+            logError("Unknown error while retrieving my segments: " + e.getLocalizedMessage());
         }
     }
 
