@@ -9,13 +9,13 @@ import androidx.room.PrimaryKey;
 public class SplitEntity {
     @PrimaryKey()
     @NonNull
-    public String name;
+    private String name;
 
     @NonNull
-    public String body;
+    private String body;
 
     @ColumnInfo(name = "updated_at")
-    public long updatedAt;
+    private long updatedAt;
 
     @NonNull
     public String getName() {
