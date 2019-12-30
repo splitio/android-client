@@ -8,25 +8,25 @@ import java.util.Map;
 
 import io.split.android.client.cache.MySegmentsCacheMigrator;
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.storage.db.MySegmentDao;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.utils.StringHelper;
 import io.split.android.client.utils.TimeUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SplMigratorHelper {
+public class MySegmentsMigratorHelperImpl implements MySegmentsMigratorHelper {
     MySegmentsCacheMigrator mMySegmentsCacheMigrator;
     TimeUtils mTimeUtils;
     StringHelper mStringHelper;
 
-    public SplMigratorHelper(@NotNull MySegmentsCacheMigrator mySegmentsCacheMigrator,
-                             StringHelper stringHelper) {
+    public MySegmentsMigratorHelperImpl(@NotNull MySegmentsCacheMigrator mySegmentsCacheMigrator,
+                                        StringHelper stringHelper) {
         mMySegmentsCacheMigrator = checkNotNull(mySegmentsCacheMigrator);
         mStringHelper = checkNotNull(stringHelper);
         mTimeUtils = new TimeUtils();
     }
 
+    @Override
     public List<MySegmentEntity> loadLegacySegmentsAsEntities() {
         Map<String, List<MySegment>> mySegments = mMySegmentsCacheMigrator.getAllMySegments();
         List<MySegmentEntity> entities = new ArrayList<>();

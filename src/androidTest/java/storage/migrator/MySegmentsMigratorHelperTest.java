@@ -17,7 +17,8 @@ import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.cache.MySegmentsCacheMigrator;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.storage.db.MySegmentEntity;
-import io.split.android.client.storage.db.migrator.SplMigratorHelper;
+import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelper;
+import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelperImpl;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.IStorage;
 import io.split.android.client.utils.StringHelper;
@@ -25,7 +26,7 @@ import io.split.android.client.utils.StringHelper;
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class MySegmentsMigratorHelperTest {
     FileHelper mFileHelper = new FileHelper();
-    SplMigratorHelper mMigrator;
+    MySegmentsMigratorHelper mMigrator;
     MySegmentsCache mMySegmentsCache;
 
     @Before
@@ -36,7 +37,7 @@ public class MySegmentsMigratorHelperTest {
         IStorage fileStorage = new FileStorage(rootFolder, "mysegments");
         mMySegmentsCache = new MySegmentsCache(fileStorage);
         MySegmentsCacheMigrator mySegmentsCacheMigrator = mMySegmentsCache;
-        mMigrator = new SplMigratorHelper(mMySegmentsCache, new StringHelper());
+        mMigrator = new MySegmentsMigratorHelperImpl(mMySegmentsCache, new StringHelper());
     }
 
     @Test

@@ -1,6 +1,5 @@
 package storage.migrator;
 
-import androidx.core.util.Pair;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
@@ -15,9 +14,8 @@ import java.util.Map;
 
 import helper.FileHelper;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.db.EventEntity;
-import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
+import io.split.android.client.storage.db.migrator.EventsMigratorHelperImpl;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.client.track.EventsChunk;
@@ -28,7 +26,7 @@ import io.split.android.client.utils.TimeUtils;
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class EventsMigratorHelperTest {
     FileHelper mFileHelper = new FileHelper();
-    EventsMigratorHelper mMigrator;
+    EventsMigratorHelperImpl mMigrator;
     TrackStorageManager mLegacyEventsStorage;
     TimeUtils mTimeUtils = new TimeUtils();
 
@@ -39,7 +37,7 @@ public class EventsMigratorHelperTest {
 
         ITrackStorage fileStorage = new FileStorage.TracksFileStorage(rootFolder, "events");
         mLegacyEventsStorage = new TrackStorageManager(fileStorage);
-        mMigrator = new EventsMigratorHelper(mLegacyEventsStorage);
+        mMigrator = new EventsMigratorHelperImpl(mLegacyEventsStorage);
     }
 
     @Test

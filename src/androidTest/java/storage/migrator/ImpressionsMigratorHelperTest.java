@@ -16,9 +16,9 @@ import java.util.Map;
 import helper.FileHelper;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.IImpressionsStorage;
-import io.split.android.client.impressions.StoredImpressions;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelper;
+import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelperImpl;
 import io.split.android.client.storage.legacy.ImpressionsFileStorage;
 import io.split.android.client.storage.legacy.ImpressionsStorageManager;
 import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
@@ -39,7 +39,7 @@ public class ImpressionsMigratorHelperTest {
 
         IImpressionsStorage fileStorage = new ImpressionsFileStorage(rootFolder, "impressions");
         mLegacyImpressionsStorage = new ImpressionsStorageManager(fileStorage, new ImpressionsStorageManagerConfig());
-        mMigrator = new ImpressionsMigratorHelper(mLegacyImpressionsStorage);
+        mMigrator = new ImpressionsMigratorHelperImpl(mLegacyImpressionsStorage);
     }
 
     @Test

@@ -18,9 +18,9 @@ import io.split.android.client.cache.SplitCache;
 import io.split.android.client.cache.SplitCacheMigrator;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.migrator.SplitsMigratorHelper;
+import io.split.android.client.storage.db.migrator.SplitsMigratorHelperImpl;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.IStorage;
 import io.split.android.client.utils.Json;
@@ -39,7 +39,7 @@ public class SplitsMigratorHelperTest {
         IStorage fileStorage = new FileStorage(rootFolder, "splits");
         mSplitsCache = new SplitCache(fileStorage);
         SplitCacheMigrator splitsCacheMigrator = mSplitsCache;
-        mMigrator = new SplitsMigratorHelper(mSplitsCache);
+        mMigrator = new SplitsMigratorHelperImpl(mSplitsCache);
     }
 
     @Test
