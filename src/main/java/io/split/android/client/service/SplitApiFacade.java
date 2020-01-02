@@ -3,6 +3,7 @@ package io.split.android.client.service;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.service.http.HttpFetcher;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -20,7 +20,7 @@ import io.split.android.client.utils.StringHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SqLitePersistentEventsStorage implements PersistentImpressionStorage {
+public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
 
     private static final Type MY_SEGMENTS_LIST_TYPE = new TypeToken<List<String>>() {
     }.getType();

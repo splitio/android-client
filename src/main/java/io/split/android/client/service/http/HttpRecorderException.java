@@ -1,7 +1,7 @@
-package io.split.android.client.service;
+package io.split.android.client.service.http;
 
 public class HttpRecorderException extends Exception {
-    HttpRecorderException(String path, String message) {
+    public HttpRecorderException(String path, String message) {
         super("Error while sending data to " + path + ": " + message);
     }
 }

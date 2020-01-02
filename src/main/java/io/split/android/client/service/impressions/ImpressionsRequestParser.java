@@ -1,4 +1,4 @@
-package io.split.android.client.service;
+package io.split.android.client.service.impressions;
 
 import androidx.annotation.NonNull;
 
@@ -7,9 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.service.http.HttpRequestParser;
 import io.split.android.client.utils.Json;
 
 public class ImpressionsRequestParser implements HttpRequestParser<List<KeyImpression>> {

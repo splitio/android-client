@@ -1,4 +1,4 @@
-package io.split.android.client.service;
+package io.split.android.client.service.http;
 
 import androidx.annotation.NonNull;
 

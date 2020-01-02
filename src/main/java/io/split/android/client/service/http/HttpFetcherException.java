@@ -1,4 +1,4 @@
-package io.split.android.client.service;
+package io.split.android.client.service.http;
 
 public class HttpFetcherException extends Exception {
     HttpFetcherException(String path, String message) {

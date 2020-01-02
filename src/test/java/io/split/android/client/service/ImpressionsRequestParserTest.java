@@ -7,13 +7,12 @@ import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.service.http.HttpRequestParser;
+import io.split.android.client.service.impressions.ImpressionsRequestParser;
 import io.split.android.client.utils.Json;
 
 public class ImpressionsRequestParserTest {

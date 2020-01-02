@@ -8,6 +8,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.SplitChange;
