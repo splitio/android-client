@@ -4,7 +4,13 @@ package io.split.android.client.service;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.service.events.EventsRecorderTask;
+import io.split.android.client.service.events.EventsRecorderTaskConfig;
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -12,7 +18,7 @@ import io.split.android.client.storage.SplitStorageContainer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SyncManagerImpl implements SyncManager {
+public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitApiFacade mSplitApiFacade;
@@ -56,10 +62,36 @@ public class SyncManagerImpl implements SyncManager {
     }
 
     private void scheduleTasks() {
-        SplitsSyncTask splitsSyncTask = new SplitsSyncTask(
+
+    }
+
+    private void scheduleSplitsFetcherTask() {
+        SplitTask splitsSyncTask = new SplitsSyncTask(
                 mSplitApiFacade.getSplitFetcher(),
-                mSplitsStorageProvider.getSplitStorage(),
+                mSplitsStorageProvider.getSplitsStorage(),
                 new SplitChangeProcessor());
         mTaskExecutor.schedule(splitsSyncTask, 0L, mSplitClientConfig.featuresRefreshRate());
+    }
+
+    private void scheduleMySegmentsFetcherTask() {
+        SplitTask mySegmentsSyncTask = new MySegmentsSyncTask(
+                mSplitApiFacade.getMySegmentsFetcher(),
+                mSplitsStorageProvider.getMySegmentsStorage());
+        mTaskExecutor.schedule(mySegmentsSyncTask, 0L, mSplitClientConfig.featuresRefreshRate());
+    }
+
+    private void scheduleEventsRecorderTask() {
+
+        SplitTask eventsRecorderTask = new EventsRecorderTask(
+                "taskId",
+                this,
+                mSplitApiFacade.getEventsRecorder(),
+                mSplitsStorageProvider.getEventsStorage(),
+                new EventsRecorderTaskConfig(mSplitClientConfig.eventsPerPush()));
+        mTaskExecutor.schedule(eventsRecorderTask, 0L, mSplitClientConfig.featuresRefreshRate());
+    }
+
+    @Override
+    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
     }
 }
