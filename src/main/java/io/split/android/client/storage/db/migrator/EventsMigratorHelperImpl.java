@@ -37,7 +37,7 @@ public class EventsMigratorHelperImpl implements EventsMigratorHelper {
     private EventEntity createEventEntity(Event event) {
         EventEntity entity = new EventEntity();
         entity.setBody(Json.toJson(event));
-        entity.setUpdatedAt(event.timestamp);
+        entity.setCreatedAt(event.timestamp);
         entity.setStatus(StorageRecordStatus.ACTIVE);
         return entity;
     }

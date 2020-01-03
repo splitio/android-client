@@ -14,8 +14,8 @@ public class EventEntity {
     @NonNull
     private String body;
 
-    @ColumnInfo(name = "updated_at")
-    private long updatedAt;
+    @ColumnInfo(name = "created_at")
+    private long createdAt;
     private int status;
 
     public long getId() {
@@ -35,12 +35,12 @@ public class EventEntity {
         this.body = body;
     }
 
-    public long getUpdatedAt() {
-        return updatedAt;
+    public long getCreatedAt() {
+        return createdAt;
     }
 
-    public void setUpdatedAt(long updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
     }
 
     public int getStatus() {

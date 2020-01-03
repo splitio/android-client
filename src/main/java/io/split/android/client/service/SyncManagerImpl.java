@@ -62,7 +62,9 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
     }
 
     private void scheduleTasks() {
-
+        scheduleSplitsFetcherTask();
+        scheduleMySegmentsFetcherTask();
+        scheduleEventsRecorderTask();
     }
 
     private void scheduleSplitsFetcherTask() {

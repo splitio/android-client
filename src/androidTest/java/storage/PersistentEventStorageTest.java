@@ -122,7 +122,7 @@ public class PersistentEventStorageTest {
             long timestamp  = System.currentTimeMillis() / 1000;
             long updatedAt = !expired ? timestamp : timestamp - EXPIRATION_PERIOD * 2;
             EventEntity entity = new EventEntity();
-            entity.setUpdatedAt(updatedAt);
+            entity.setCreatedAt(updatedAt);
             entity.setBody(Json.toJson(event));
             entity.setStatus(status);
             mRoomDb.eventDao().insert(entity);
