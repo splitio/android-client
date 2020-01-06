@@ -17,9 +17,7 @@ public class MySegmentsStorageImpl implements MySegmentsStorage {
 
 
     public MySegmentsStorageImpl(@NonNull PersistentMySegmentsStorage persistentStorage) {
-        checkNotNull(persistentStorage);
-
-        mPersistentStorage = persistentStorage;
+        mPersistentStorage = checkNotNull(persistentStorage);
         mInMemoryMySegments = Sets.newConcurrentHashSet();
         loadFromDb();
     }

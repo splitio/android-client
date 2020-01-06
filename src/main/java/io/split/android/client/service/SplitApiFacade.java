@@ -11,9 +11,7 @@ public class SplitApiFacade {
 
 
     public SplitApiFacade(@NonNull HttpFetcher<SplitChange> splitFetcher) {
-        checkNotNull(splitFetcher);
-
-        mSplitFetcher = splitFetcher;
+        mSplitFetcher = checkNotNull(splitFetcher);
     }
 
     public HttpFetcher<SplitChange> getSplitFetcher() {

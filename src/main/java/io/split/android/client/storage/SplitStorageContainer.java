@@ -10,9 +10,7 @@ public class SplitStorageContainer {
     private final SplitsStorage mSplitStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage) {
-        checkNotNull(splitStorage);
-
-        mSplitStorage = splitStorage;
+        mSplitStorage = checkNotNull(splitStorage);
     }
 
     public SplitsStorage getSplitStorage() {

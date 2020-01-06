@@ -23,9 +23,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     SplitRoomDatabase mDatabase;
 
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database) {
-        checkNotNull(database);
-
-        mDatabase = database;
+        mDatabase = checkNotNull(database);
     }
 
     @Override

@@ -14,9 +14,7 @@ public class SplitEventExecutorResources {
 
 
     public void setSplitClient(SplitClient client) {
-        checkNotNull(client);
-
-        _client = client;
+        _client = checkNotNull(client);
     }
 
     public SplitClient getSplitClient() {

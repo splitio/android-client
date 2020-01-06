@@ -23,16 +23,10 @@ public class SyncManagerImpl implements SyncManager {
                            @NonNull SplitTaskExecutor taskExecutor,
                            @NonNull SplitApiFacade splitApiFacade,
                            @NonNull SplitStorageContainer splitStorageContainer) {
-
-        checkNotNull(taskExecutor);
-        checkNotNull(splitApiFacade);
-        checkNotNull(splitStorageContainer);
-        checkNotNull(splitClientConfig);
-
-        mTaskExecutor = taskExecutor;
-        mSplitApiFacade = splitApiFacade;
-        mSplitsStorageProvider = splitStorageContainer;
-        mSplitClientConfig = splitClientConfig;
+        mTaskExecutor = checkNotNull(taskExecutor);
+        mSplitApiFacade = checkNotNull(splitApiFacade);
+        mSplitsStorageProvider = checkNotNull(splitStorageContainer);
+        mSplitClientConfig = checkNotNull(splitClientConfig);
     }
 
     @Override

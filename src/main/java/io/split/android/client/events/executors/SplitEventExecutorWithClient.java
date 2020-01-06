@@ -19,10 +19,8 @@ public class SplitEventExecutorWithClient extends SplitEventExecutorAbstract{
     public SplitEventExecutorWithClient(SplitEventTask task, SplitClient client) {
 
         super(task);
-        _sclient = client;
-
         checkNotNull(task);
-        checkNotNull(client);
+        _sclient = checkNotNull(client);
     }
 
     public void execute(){
@@ -34,9 +32,7 @@ public class SplitEventExecutorWithClient extends SplitEventExecutorAbstract{
 
                 if (splitClients.length > 0) {
 
-                    SplitClient client = splitClients[0];
-
-                    checkNotNull(client);
+                    SplitClient client = checkNotNull(splitClients[0]);
 
                     //BACKGROUND POST EXECUTION
                     try {

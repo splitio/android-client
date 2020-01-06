@@ -15,8 +15,7 @@ public class URIBuilder {
     private Map<String, String> mParams;
 
     public URIBuilder(@NonNull URI rootURI, String path) {
-        checkNotNull(rootURI);
-        mRootURI = rootURI;
+        mRootURI = checkNotNull(rootURI);
         String rootPath = mRootURI.getPath();
         if(path != null && rootPath != null) {
             mPath = String.format("%s/%s", rootPath, path);
