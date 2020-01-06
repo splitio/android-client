@@ -1,12 +1,14 @@
-package io.split.android.client.service;
+package io.split.android.client.service.splits;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.service.HttpFetcher;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.service.executor.SplitTask;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
