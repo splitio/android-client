@@ -10,6 +10,10 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskExecutorImpl;
+
 import static java.lang.Thread.sleep;
 
 public class SplitTaskExecutorTest {
