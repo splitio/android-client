@@ -1,5 +1,7 @@
 package io.split.android.engine.experiments;
 
+import androidx.annotation.Nullable;
+
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -10,6 +12,7 @@ import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.AttributeMatcher;
@@ -32,30 +35,28 @@ import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
 import io.split.android.engine.segments.MySegments;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProviderImpl;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Converts io.codigo.dtos.Experiment to io.codigo.engine.splits.ParsedExperiment.
- *
  */
 public final class SplitParser {
 
     public static final int CONDITIONS_UPPER_LIMIT = 50;
 
-    private RefreshableMySegmentsFetcherProvider _mySegmentsFetcherProvider;
+    private MySegmentsStorage mMySegmentsStorage;
 
-    public static SplitParser get(RefreshableMySegmentsFetcherProviderImpl provider) {
-        return new SplitParser(provider);
+    public static SplitParser get(MySegmentsStorage mySegmentsStorage) {
+        return new SplitParser(mySegmentsStorage);
     }
 
-    public SplitParser(RefreshableMySegmentsFetcherProvider mySegmentsFetcherProvider) {
-        _mySegmentsFetcherProvider = checkNotNull(mySegmentsFetcherProvider);
+    public SplitParser(MySegmentsStorage mySegmentsStorage) {
+        mMySegmentsStorage = checkNotNull(mySegmentsStorage);
     }
 
-    public ParsedSplit parse(Split split) {
+    public @Nullable ParsedSplit parse(@Nullable Split split) {
         try {
             return parseWithoutExceptionHandling(split);
         } catch (Throwable t) {
@@ -65,6 +66,10 @@ public final class SplitParser {
     }
 
     private ParsedSplit parseWithoutExceptionHandling(Split split) {
+        if (split == null) {
+            return null;
+        }
+
         if (split.status != Status.ACTIVE) {
             return null;
         }
@@ -108,8 +113,7 @@ public final class SplitParser {
                 break;
             case IN_SEGMENT:
                 checkNotNull(matcher.userDefinedSegmentMatcherData);
-                MySegments mySegments = _mySegmentsFetcherProvider.mySegments();
-                delegate = new MySegmentsMatcher(mySegments, matcher.userDefinedSegmentMatcherData.segmentName);
+                delegate = new MySegmentsMatcher(mMySegmentsStorage.getAll(), matcher.userDefinedSegmentMatcherData.segmentName);
                 break;
             case WHITELIST:
                 checkNotNull(matcher.whitelistMatcherData);

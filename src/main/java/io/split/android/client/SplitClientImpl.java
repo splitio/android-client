@@ -20,6 +20,7 @@ import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitFetcher;
+import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.metrics.Metrics;
 
 
@@ -50,7 +51,7 @@ public final class SplitClientImpl implements SplitClient {
 
     public SplitClientImpl(SplitFactory container,
                            Key key,
-                           SplitFetcher splitFetcher,
+                           SplitParser splitParser,
                            ImpressionListener impressionListener,
                            Metrics metrics,
                            SplitClientConfig config,
@@ -58,7 +59,7 @@ public final class SplitClientImpl implements SplitClient {
                            TrackClient trackClient,
                            SplitsStorage splitsStorage) {
 
-        checkNotNull(splitFetcher);
+        checkNotNull(splitParser);
         checkNotNull(impressionListener);
 
         String mBucketingKey = key.bucketingKey();
@@ -68,11 +69,11 @@ public final class SplitClientImpl implements SplitClient {
         mConfig = checkNotNull(config);
         mEventsManager = checkNotNull(eventsManager);
         mTrackClient = checkNotNull(trackClient);
-        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
+        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage);
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = new TreatmentManagerImpl(
-                mMatchingKey, mBucketingKey, new EvaluatorImpl(splitFetcher),
-                new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), metrics,
+                mMatchingKey, mBucketingKey, new EvaluatorImpl(splitsStorage, splitParser),
+                new KeyValidatorImpl(), new SplitValidatorImpl(), metrics,
                 impressionListener, mConfig, eventsManager);
     }
 

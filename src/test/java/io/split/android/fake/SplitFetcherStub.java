@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
@@ -16,8 +17,8 @@ public class SplitFetcherStub implements SplitFetcher {
     Map<String, ParsedSplit> mSplits;
     SplitParser mParser;
 
-    public SplitFetcherStub(List<Split> splits, RefreshableMySegmentsFetcherProvider refreshableMySegmentsFetcherProvider){
-        mParser = new SplitParser(refreshableMySegmentsFetcherProvider);
+    public SplitFetcherStub(List<Split> splits, MySegmentsStorage mySegmentsStorage){
+        mParser = new SplitParser(mySegmentsStorage);
         mSplits = new HashMap<>();
         for (Split split : splits) {
            mSplits.put(split.name, mParser.parse(split));

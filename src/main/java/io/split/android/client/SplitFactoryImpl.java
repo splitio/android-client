@@ -54,6 +54,7 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
+import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
@@ -141,7 +142,7 @@ public class SplitFactoryImpl implements SplitFactory {
         MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpClient, rootTarget, mySegmentsCache);
         final RefreshableMySegmentsFetcherProviderImpl segmentFetcher = new RefreshableMySegmentsFetcherProviderImpl(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
 
-        SplitParser splitParser = new SplitParser(segmentFetcher);
+        SplitParser splitParser = new SplitParser(mySegmentsStorage);
 
         // Feature Changes
         IStorage fileStorage = new FileStorage(context.getCacheDir(), dataFolderName);
@@ -254,9 +255,9 @@ public class SplitFactoryImpl implements SplitFactory {
         });
 
 
-        _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
+        _client = new SplitClientImpl(this, key, splitParser,
                 impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient, splitsStorage);
-        _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
+        _manager = new SplitManagerImpl(splitsStorage, new SplitValidatorImpl(), splitParser);
 
         _eventsManager.getExecutorResources().setSplitClient(_client);
 
