@@ -4,19 +4,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.lang.reflect.Array;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import io.split.android.client.dtos.Event;
-import io.split.android.client.dtos.MySegment;
-import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
@@ -24,15 +17,10 @@ import io.split.android.client.network.HttpRequest;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.HttpResponseImpl;
 import io.split.android.client.network.SdkTargetPath;
-import io.split.android.client.network.URIBuilder;
-import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.NetworkHelper;
-import io.split.android.engine.metrics.FetcherMetricsConfig;
-import io.split.android.engine.metrics.Metrics;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -47,7 +35,7 @@ public class HttpRecorderTest {
     HttpClient mClientMock;
     URI mUrl;
     URI mEventsUrl;
-    HttpRequestParser<List<Event>> mEventsRequestParser = new EventsRequestParser();
+    HttpRequestBodySerializer<List<Event>> mEventsRequestSerializer = new EventsRequestBodySerializer();
 
     @Before
     public void setup() throws URISyntaxException {
@@ -63,7 +51,7 @@ public class HttpRecorderTest {
         when(mNetworkHelperMock.isReachable(mEventsUrl)).thenReturn(false);
 
         HttpRecorder<List<Event>> recorder = new HttpRecorderImpl<>(mClientMock, mUrl,
-                mNetworkHelperMock, mEventsRequestParser);
+                mNetworkHelperMock, mEventsRequestSerializer);
         boolean isReachable = true;
         try {
             List<Event> events = new ArrayList<>();
@@ -87,7 +75,7 @@ public class HttpRecorderTest {
         when(request.execute()).thenReturn(response);
         when(mClientMock.request(mEventsUrl, HttpMethod.POST, jsonEvents)).thenReturn(request);
 
-        HttpRecorder<List<Event>> recorder = new HttpRecorderImpl<>(mClientMock, mEventsUrl, mNetworkHelperMock, mEventsRequestParser);
+        HttpRecorder<List<Event>> recorder = new HttpRecorderImpl<>(mClientMock, mEventsUrl, mNetworkHelperMock, mEventsRequestSerializer);
         try {
             recorder.execute(events);
         } catch (HttpRecorderException e) {
@@ -113,7 +101,7 @@ public class HttpRecorderTest {
         when(request.execute()).thenReturn(response);
         when(mClientMock.request(mEventsUrl, HttpMethod.POST, jsonEvents)).thenReturn(request);
 
-        HttpRecorder<List<Event>> recorder = new HttpRecorderImpl<>(mClientMock, mEventsUrl, mNetworkHelperMock, mEventsRequestParser);
+        HttpRecorder<List<Event>> recorder = new HttpRecorderImpl<>(mClientMock, mEventsUrl, mNetworkHelperMock, mEventsRequestSerializer);
         boolean exceptionWasThrown = false;
         try {
             recorder.execute(events);
@@ -139,7 +127,7 @@ public class HttpRecorderTest {
         when(mClientMock.request(mEventsUrl, HttpMethod.POST, jsonEvents)).thenReturn(request);
 
 
-        HttpRecorder<List<Event>> recorder = new HttpRecorderImpl<>(mClientMock, mEventsUrl, mNetworkHelperMock, mEventsRequestParser);
+        HttpRecorder<List<Event>> recorder = new HttpRecorderImpl<>(mClientMock, mEventsUrl, mNetworkHelperMock, mEventsRequestSerializer);
         try {
             recorder.execute(events);
         } catch (HttpRecorderException e) {
