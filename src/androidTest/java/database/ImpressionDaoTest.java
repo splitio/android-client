@@ -19,6 +19,7 @@ import helper.IntegrationHelper;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
+import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -44,8 +45,8 @@ public class ImpressionDaoTest {
             mRoomDb.impressionDao().insert(impression);
         }
 
-        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(timestamp, ImpressionEntity.STATUS_ACTIVE);
-        List<ImpressionEntity> deletedImpressions = mRoomDb.impressionDao().getBy(timestamp, ImpressionEntity.STATUS_DELETED);
+        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(timestamp, StorageRecordStatus.ACTIVE);
+        List<ImpressionEntity> deletedImpressions = mRoomDb.impressionDao().getBy(timestamp, StorageRecordStatus.DELETED);
 
         Assert.assertEquals(10, activeImpressions.size());
         Assert.assertEquals(5, deletedImpressions.size());
@@ -59,21 +60,21 @@ public class ImpressionDaoTest {
             mRoomDb.impressionDao().insert(impression);
         }
 
-        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(timestamp, ImpressionEntity.STATUS_ACTIVE);
+        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(timestamp, StorageRecordStatus.ACTIVE);
         List<Long> ids = activeImpressions.stream().map(ImpressionEntity::getId).collect(Collectors.toList());
         List<Long> idsToSoftDelete = ids.subList(15, 20);
         List<Long> idsToDelete = ids.subList(10, 15);
 
-        mRoomDb.impressionDao().updateStatus(idsToSoftDelete, ImpressionEntity.STATUS_DELETED);
-        List<ImpressionEntity> afterSoftDelete = mRoomDb.impressionDao().getBy(0, ImpressionEntity.STATUS_ACTIVE);
+        mRoomDb.impressionDao().updateStatus(idsToSoftDelete, StorageRecordStatus.DELETED);
+        List<ImpressionEntity> afterSoftDelete = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE);
 
         mRoomDb.impressionDao().delete(idsToDelete);
-        List<ImpressionEntity> afterDelete = mRoomDb.impressionDao().getBy(0, ImpressionEntity.STATUS_ACTIVE);
-        List<ImpressionEntity> softDeletedAfterDelete = mRoomDb.impressionDao().getBy(0, ImpressionEntity.STATUS_DELETED);
+        List<ImpressionEntity> afterDelete = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE);
+        List<ImpressionEntity> softDeletedAfterDelete = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED);
 
         mRoomDb.impressionDao().deleteOutdated(timestamp + 6);
-        List<ImpressionEntity> afterAll = mRoomDb.impressionDao().getBy(timestamp, ImpressionEntity.STATUS_ACTIVE);
-        List<ImpressionEntity> deletedAfterAll = mRoomDb.impressionDao().getBy(timestamp, ImpressionEntity.STATUS_DELETED);
+        List<ImpressionEntity> afterAll = mRoomDb.impressionDao().getBy(timestamp, StorageRecordStatus.ACTIVE);
+        List<ImpressionEntity> deletedAfterAll = mRoomDb.impressionDao().getBy(timestamp, StorageRecordStatus.DELETED);
 
         Assert.assertEquals(20, activeImpressions.size());
         Assert.assertEquals(15, afterSoftDelete.size());
@@ -89,8 +90,8 @@ public class ImpressionDaoTest {
         mRoomDb.impressionDao().insert(generateData(1, 1, timestamp, false).get(0));
         mRoomDb.impressionDao().insert(generateData(2, 2, timestamp, true).get(0));
 
-        ImpressionEntity activeImpressionEntity = mRoomDb.impressionDao().getBy(timestamp, ImpressionEntity.STATUS_ACTIVE).get(0);
-        ImpressionEntity deletedImpressionEntity = mRoomDb.impressionDao().getBy(timestamp, ImpressionEntity.STATUS_DELETED).get(0);
+        ImpressionEntity activeImpressionEntity = mRoomDb.impressionDao().getBy(timestamp, StorageRecordStatus.ACTIVE).get(0);
+        ImpressionEntity deletedImpressionEntity = mRoomDb.impressionDao().getBy(timestamp, StorageRecordStatus.DELETED).get(0);
 
         KeyImpression activeImpression = Json.fromJson(activeImpressionEntity.getBody(), KeyImpression.class);
         KeyImpression deletedImpression = Json.fromJson(deletedImpressionEntity.getBody(), KeyImpression.class);
@@ -102,7 +103,7 @@ public class ImpressionDaoTest {
         Assert.assertEquals("key", activeImpression.keyName);
         Assert.assertNull(activeImpression.bucketingKey);
         Assert.assertEquals("test_1", activeImpressionEntity.getTestName());
-        Assert.assertEquals(ImpressionEntity.STATUS_ACTIVE, activeImpressionEntity.getStatus());
+        Assert.assertEquals(StorageRecordStatus.ACTIVE, activeImpressionEntity.getStatus());
         Assert.assertEquals(timestamp + 1, activeImpressionEntity.getTimestamp());
 
         Assert.assertEquals("t_2", deletedImpression.treatment);
@@ -112,7 +113,7 @@ public class ImpressionDaoTest {
         Assert.assertEquals("key", deletedImpression.keyName);
         Assert.assertNull(deletedImpression.bucketingKey);
         Assert.assertEquals("test_2", deletedImpressionEntity.getTestName());
-        Assert.assertEquals(ImpressionEntity.STATUS_DELETED, deletedImpressionEntity.getStatus());
+        Assert.assertEquals(StorageRecordStatus.DELETED, deletedImpressionEntity.getStatus());
         Assert.assertEquals(timestamp + 2, deletedImpressionEntity.getTimestamp());
     }
 
@@ -148,7 +149,7 @@ public class ImpressionDaoTest {
         long writeTime = System.currentTimeMillis() - start;
 
         start = System.currentTimeMillis();
-        impressionEntities = mRoomDb.impressionDao().getBy(0, ImpressionEntity.STATUS_ACTIVE);
+        impressionEntities = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE);
         long readTime = System.currentTimeMillis() - start;
 
         IntegrationHelper.logSeparator(TAG);
@@ -175,7 +176,7 @@ public class ImpressionDaoTest {
             impressionEntity.setTestName("test_" + i);
             impressionEntity.setBody(Json.toJson(impression));
             impressionEntity.setTimestamp(timestamp + i);
-            impressionEntity.setStatus(!markAsDeleted ? ImpressionEntity.STATUS_ACTIVE : ImpressionEntity.STATUS_DELETED);
+            impressionEntity.setStatus(!markAsDeleted ? StorageRecordStatus.ACTIVE : StorageRecordStatus.DELETED);
             impressionList.add(impressionEntity);
         }
         return impressionList;
