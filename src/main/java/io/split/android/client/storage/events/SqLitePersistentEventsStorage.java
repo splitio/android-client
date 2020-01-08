@@ -3,9 +3,7 @@ package io.split.android.client.storage.events;
 import androidx.annotation.NonNull;
 
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,29 +14,25 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.StringHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SqLitePersistentEventsStorage implements PersistentImpressionStorage {
 
-    private static final Type MY_SEGMENTS_LIST_TYPE = new TypeToken<List<String>>() {
-    }.getType();
     final SplitRoomDatabase mDatabase;
-    final StringHelper mStringHelper;
     final EventDao mEventDao;
     final long mExpirationPeriod;
 
     public SqLitePersistentEventsStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
         mDatabase = checkNotNull(database);
-        mStringHelper = new StringHelper();
+
         mEventDao = mDatabase.eventDao();
         mExpirationPeriod = expirationPeriod;
     }
 
     @Override
     public void push(@NonNull Event event) {
-        if(event == null) {
+        if (event == null) {
             return;
         }
         EventEntity entity = new EventEntity();
@@ -53,7 +47,7 @@ public class SqLitePersistentEventsStorage implements PersistentImpressionStorag
 
         List<EventEntity> entities = new ArrayList<>();
         mDatabase.runInTransaction(
-            new GetAndUpdateTransaction(mEventDao, entities, count, mExpirationPeriod)
+                new GetAndUpdateTransaction(mEventDao, entities, count, mExpirationPeriod)
         );
         return entitiesToEvents(entities);
     }
@@ -65,7 +59,7 @@ public class SqLitePersistentEventsStorage implements PersistentImpressionStorag
 
     private List<Event> entitiesToEvents(List<EventEntity> entities) {
         List<Event> events = new ArrayList<>();
-        for(EventEntity entity : entities) {
+        for (EventEntity entity : entities) {
             try {
                 events.add(Json.fromJson(entity.getBody(), Event.class));
             } catch (JsonSyntaxException e) {
@@ -107,7 +101,7 @@ public class SqLitePersistentEventsStorage implements PersistentImpressionStorag
             if (entities == null) {
                 return ids;
             }
-            for(EventEntity entity : entities) {
+            for (EventEntity entity : entities) {
                 ids.add(entity.getId());
             }
             return ids;
