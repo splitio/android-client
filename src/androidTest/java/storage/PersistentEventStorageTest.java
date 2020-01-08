@@ -15,18 +15,18 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
-import io.split.android.client.storage.events.PersistentImpressionStorage;
+import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.StringHelper;
 
 public class PersistentEventStorageTest {
 
+    final static long EXPIRATION_PERIOD = 3600 * 24;
     SplitRoomDatabase mRoomDb;
     Context mContext;
-    PersistentImpressionStorage mPersistentEventsStorage;
+    PersistentEventsStorage mPersistentEventsStorage;
     StringHelper mStringHelper;
-    final static long EXPIRATION_PERIOD = 3600 * 24;
 
     @Before
     public void setUp() {
@@ -44,7 +44,7 @@ public class PersistentEventStorageTest {
     @Test
     public void create() {
         List<Event> events = createEvents(201, 210, StorageRecordStatus.ACTIVE);
-        for(Event event : events) {
+        for (Event event : events) {
             mPersistentEventsStorage.push(event);
         }
         List<EventEntity> first10ActiveLoadedEvents = mRoomDb.eventDao().getBy(0,
@@ -113,13 +113,13 @@ public class PersistentEventStorageTest {
     }
 
     private void generateEvents(int from, int to, int status, boolean expired) {
-        for(int i = from; i <= to; i++) {
+        for (int i = from; i <= to; i++) {
             Event event = new Event();
             event.eventTypeId = "event_" + i;
             event.trafficTypeName = "custom";
             event.key = "key1";
 
-            long timestamp  = System.currentTimeMillis() / 1000;
+            long timestamp = System.currentTimeMillis() / 1000;
             long updatedAt = !expired ? timestamp : timestamp - EXPIRATION_PERIOD * 2;
             EventEntity entity = new EventEntity();
             entity.setUpdatedAt(updatedAt);
@@ -131,7 +131,7 @@ public class PersistentEventStorageTest {
 
     private List<Event> createEvents(int from, int to, int status) {
         List<Event> events = new ArrayList<>();
-        for(int i = from; i <= to; i++) {
+        for (int i = from; i <= to; i++) {
             Event event = new Event();
             event.eventTypeId = "event_" + i;
             event.trafficTypeName = "custom";
@@ -144,7 +144,7 @@ public class PersistentEventStorageTest {
     private boolean checkStatus(List<EventEntity> entities, int status) {
         boolean statusOk = true;
 
-        for(EventEntity entity : entities) {
+        for (EventEntity entity : entities) {
             statusOk = statusOk && (entity.getStatus() == status);
         }
         return statusOk;

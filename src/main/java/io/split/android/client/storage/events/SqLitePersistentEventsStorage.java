@@ -17,7 +17,7 @@ import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SqLitePersistentEventsStorage implements PersistentImpressionStorage {
+public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
 
     final SplitRoomDatabase mDatabase;
     final EventDao mEventDao;
