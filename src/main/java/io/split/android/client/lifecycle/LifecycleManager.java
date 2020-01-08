@@ -7,31 +7,23 @@ import androidx.lifecycle.ProcessLifecycleOwner;
 
 import io.split.android.client.TrackClient;
 import io.split.android.client.cache.IMySegmentsCache;
-import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.impressions.ImpressionsManager;
-import io.split.android.engine.experiments.RefreshableSplitFetcherProvider;
+import io.split.android.client.service.SyncManager;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 
 public class LifecycleManager implements LifecycleObserver {
 
     ImpressionsManager mImpressionsManager;
     TrackClient mTrackClient;
-    RefreshableSplitFetcherProvider mSplitFetcherProvider;
-    RefreshableMySegmentsFetcherProvider mMySegmentsFetcherProvider;
-    IMySegmentsCache mMySegmentsCache;
+    SyncManager mSyncManager;
 
-    public LifecycleManager(ImpressionsManager impressionsManager,
-                            TrackClient trackClient,
-                            RefreshableSplitFetcherProvider splitFetcherProvider,
-                            RefreshableMySegmentsFetcherProvider mySegmentsFetcherProvider,
-                            IMySegmentsCache mySegmentsCache) {
+    public LifecycleManager(SyncManager syncManager,
+            ImpressionsManager impressionsManager,
+                            TrackClient trackClient) {
 
         mImpressionsManager = impressionsManager;
         mTrackClient = trackClient;
-        mSplitFetcherProvider = splitFetcherProvider;
-        mMySegmentsFetcherProvider = mySegmentsFetcherProvider;
-        mMySegmentsCache = mySegmentsCache;
-
+        mSyncManager = syncManager;
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
     }
 
@@ -47,16 +39,8 @@ public class LifecycleManager implements LifecycleObserver {
             mTrackClient.saveToDisk();
         }
 
-        if(mSplitFetcherProvider != null) {
-            mSplitFetcherProvider.pause();
-        }
-
-        if(mMySegmentsFetcherProvider != null) {
-            mMySegmentsFetcherProvider.pause();
-        }
-
-        if(mMySegmentsCache != null) {
-            mMySegmentsCache.saveToDisk();
+        if(mSyncManager != null) {
+            mSyncManager.pause();
         }
     }
 
@@ -70,12 +54,8 @@ public class LifecycleManager implements LifecycleObserver {
             mTrackClient.resume();
         }
 
-        if(mSplitFetcherProvider != null) {
-            mSplitFetcherProvider.resume();
-        }
-
-        if(mMySegmentsFetcherProvider != null) {
-            mMySegmentsFetcherProvider.resume();
+        if(mSyncManager != null) {
+            mSyncManager.resume();
         }
     }
 

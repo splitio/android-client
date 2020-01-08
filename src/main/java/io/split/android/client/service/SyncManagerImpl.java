@@ -4,6 +4,7 @@ package io.split.android.client.service;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -18,15 +19,18 @@ public class SyncManagerImpl implements SyncManager {
     private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageContainer mSplitsStorageProvider;
     private final SplitClientConfig mSplitClientConfig;
+    private final SplitEventsManager mSplitEventsManager;
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull SplitTaskExecutor taskExecutor,
                            @NonNull SplitApiFacade splitApiFacade,
-                           @NonNull SplitStorageContainer splitStorageContainer) {
+                           @NonNull SplitStorageContainer splitStorageContainer,
+                           @NonNull SplitEventsManager splitEventsManager) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mSplitsStorageProvider = checkNotNull(splitStorageContainer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
+        mSplitEventsManager = checkNotNull(splitEventsManager);
     }
 
     @Override
