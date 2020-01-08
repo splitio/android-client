@@ -56,7 +56,7 @@ public class HttpRecorderTest {
         try {
             List<Event> events = new ArrayList<>();
             recorder.execute(events);
-        } catch (Exception e) {
+        } catch (HttpRecorderException e) {
             isReachable = false;
         }
 
