@@ -9,13 +9,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.MySegment;
-import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
@@ -43,6 +40,7 @@ public class HttpRecorderTest {
     HttpClient mClientMock;
     URI mUrl;
     URI mEventsUrl;
+    URI mImpressionsUrl;
     HttpRequestBodySerializer<List<Event>> mEventsRequestSerializer = new EventsRequestBodySerializer();
 
     @Before
@@ -169,8 +167,8 @@ public class HttpRecorderTest {
         HttpResponse response = new HttpResponseImpl(200, "");
         when(request.execute()).thenReturn(response);
         when(mClientMock.request(mImpressionsUrl, HttpMethod.POST, jsonImpressions)).thenReturn(request);
-        ImpressionsRequestParser parser = (ImpressionsRequestParser) Mockito.mock(ImpressionsRequestParser.class);
-        when(parser.parse(impressions)).thenReturn(jsonImpressions);
+        ImpressionsRequestBodySerializer parser = (ImpressionsRequestBodySerializer) Mockito.mock(ImpressionsRequestBodySerializer.class);
+        when(parser.serialize(impressions)).thenReturn(jsonImpressions);
 
         HttpRecorder<List<KeyImpression>> recorder = new HttpRecorderImpl<>(mClientMock, mImpressionsUrl, mNetworkHelperMock, parser);
 

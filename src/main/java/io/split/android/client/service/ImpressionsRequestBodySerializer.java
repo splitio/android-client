@@ -12,8 +12,9 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.utils.Json;
 
-public class ImpressionsRequestParser implements HttpRequestParser<List<KeyImpression>> {
-    public String parse(@NonNull List<KeyImpression> data) {
+public class ImpressionsRequestBodySerializer implements HttpRequestBodySerializer<List<KeyImpression>> {
+
+    public String serialize(@NonNull List<KeyImpression> data) {
         return Json.toJson(groupImpressions(data));
     }
 
