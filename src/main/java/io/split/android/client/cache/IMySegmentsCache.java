@@ -8,6 +8,7 @@ import io.split.android.client.dtos.MySegment;
  * Created by guillermo on 11/23/17.
  */
 
+@Deprecated
 public interface IMySegmentsCache {
 
     /**
@@ -33,4 +34,5 @@ public interface IMySegmentsCache {
      * Saves in memory cash to disk
      */
      void saveToDisk();
+
 }

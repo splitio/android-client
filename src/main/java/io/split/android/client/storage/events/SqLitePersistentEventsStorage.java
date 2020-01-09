@@ -38,7 +38,7 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
         EventEntity entity = new EventEntity();
         entity.setStatus(StorageRecordStatus.ACTIVE);
         entity.setBody(Json.toJson(event));
-        entity.setUpdatedAt(System.currentTimeMillis() / 1000);
+        entity.setCreatedAt(System.currentTimeMillis() / 1000);
         mEventDao.insert(entity);
     }
 

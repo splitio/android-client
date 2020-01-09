@@ -23,8 +23,8 @@ import io.split.android.client.utils.Logger;
 /**
  * Created by guillermo on 11/23/17.
  */
-
-public class SplitCache implements ISplitCache {
+@Deprecated
+public class SplitCache implements ISplitCache, SplitCacheMigrator {
 
     private static final String SPLIT_FILE_PREFIX = "SPLITIO.split.";
     private static final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
@@ -109,6 +109,11 @@ public class SplitCache implements ISplitCache {
             return false;
         }
         return (mTrafficTypes.get(trafficType.toLowerCase()) != null);
+    }
+
+    @Override
+    public List<Split> getAll() {
+        return new ArrayList(mInMemorySplits.values());
     }
 
     private void addTrafficType(@NotNull String name) {

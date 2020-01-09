@@ -49,6 +49,22 @@ public class TrackDaoTest {
     }
 
     @Test
+    public void insertRetrieveMax() throws InterruptedException {
+        long timestamp = System.currentTimeMillis();
+        List<EventEntity> trackEvents = generateData(1, 10, timestamp, false);
+        trackEvents.addAll(generateData(11, 15, timestamp, true));
+        for(EventEntity trackEvent : trackEvents) {
+            mRoomDb.eventDao().insert(trackEvent);
+        }
+
+        List<EventEntity> activeTrackEvents = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.ACTIVE, 2);
+        List<EventEntity> deletedTrackEvents = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.DELETED, 2);
+
+        Assert.assertEquals(2, activeTrackEvents.size());
+        Assert.assertEquals(2, deletedTrackEvents.size());
+    }
+
+    @Test
     public void insertUpdateRetrieve() throws InterruptedException {
         long timestamp = System.currentTimeMillis();
         List<EventEntity> trackEvents = generateData(1, 20, timestamp, false);
@@ -98,7 +114,7 @@ public class TrackDaoTest {
         Assert.assertEquals("traffic_1", activeTrackEvent.trafficTypeName);
         Assert.assertEquals("key", activeTrackEvent.key);
         Assert.assertEquals(StorageRecordStatus.ACTIVE, activeEventEntity.getStatus());
-        Assert.assertEquals(timestamp + 1, activeEventEntity.getUpdatedAt());
+        Assert.assertEquals(timestamp + 1, activeEventEntity.getCreatedAt());
 
         Assert.assertEquals("type_2", deletedTrackEvent.eventTypeId);
         Assert.assertEquals(2.0, deletedTrackEvent.value, 0.0);
@@ -106,7 +122,7 @@ public class TrackDaoTest {
         Assert.assertEquals("traffic_2", deletedTrackEvent.trafficTypeName);
         Assert.assertEquals("key", deletedTrackEvent.key);
         Assert.assertEquals(StorageRecordStatus.DELETED, deletedEventEntity.getStatus());
-        Assert.assertEquals(timestamp + 2, deletedEventEntity.getUpdatedAt());
+        Assert.assertEquals(timestamp + 2, deletedEventEntity.getCreatedAt());
     }
 
     @Test
@@ -165,7 +181,7 @@ public class TrackDaoTest {
 
             EventEntity eventEntity = new EventEntity();
             eventEntity.setBody(Json.toJson(trackEvent));
-            eventEntity.setUpdatedAt(timestamp + i);
+            eventEntity.setCreatedAt(timestamp + i);
             eventEntity.setStatus(!markAsDeleted ? StorageRecordStatus.ACTIVE : StorageRecordStatus.DELETED);
             trackEventList.add(eventEntity);
         }

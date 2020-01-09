@@ -23,7 +23,8 @@ import io.split.android.client.utils.Logger;
  * Created by guillermo on 12/28/17.
  */
 
-public class MySegmentsCache implements IMySegmentsCache {
+@Deprecated
+public class MySegmentsCache implements IMySegmentsCache, MySegmentsCacheMigrator {
 
     private static final String MY_SEGMENTS_FILE_NAME = "SPLITIO.mysegments";
 
@@ -92,4 +93,9 @@ public class MySegmentsCache implements IMySegmentsCache {
         }
     }
 
+
+    @Override
+    public Map<String, List<MySegment>> getAllMySegments() {
+        return mSegments;
+    }
 }

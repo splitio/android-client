@@ -10,6 +10,7 @@ import io.split.android.client.dtos.SplitChange;
  * Created by guillermo on 11/23/17.
  */
 
+@Deprecated
 public class SplitChangeCache implements ISplitChangeCache {
 
     private ISplitCache mSplitCache;

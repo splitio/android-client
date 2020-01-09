@@ -12,9 +12,9 @@ public interface EventDao {
     @Insert
     public void insert(EventEntity event);
 
-    @Query("SELECT id, body, updated_at, status FROM events " +
-            "WHERE updated_at >= :updateAt " +
-            "AND status = :status ORDER BY updated_at LIMIT :maxRows")
+    @Query("SELECT id, body, created_at, status FROM events " +
+            "WHERE created_at >= :updateAt " +
+            "AND status = :status ORDER BY created_at LIMIT :maxRows")
     List<EventEntity> getBy(long updateAt, int status, int maxRows);
 
     @Query("UPDATE events SET status = :status "  +
@@ -24,7 +24,7 @@ public interface EventDao {
     @Query("DELETE FROM events WHERE id IN (:ids)")
     void delete(List<Long> ids);
 
-    @Query("DELETE FROM events WHERE updated_at < :updateAt")
+    @Query("DELETE FROM events WHERE created_at < :updateAt")
     void deleteOutdated(long updateAt);
 
 }
