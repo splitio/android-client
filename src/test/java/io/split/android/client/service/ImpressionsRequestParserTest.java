@@ -11,8 +11,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
-import io.split.android.client.service.http.HttpRequestParser;
-import io.split.android.client.service.impressions.ImpressionsRequestParser;
+import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.utils.Json;
 
 public class ImpressionsRequestParserTest {
@@ -21,7 +20,7 @@ public class ImpressionsRequestParserTest {
             = new TypeToken<List<TestImpressions>>() {
     }.getType();
 
-    HttpRequestParser<List<KeyImpression>> parser = new ImpressionsRequestParser();
+    HttpRequestBodySerializer<List<KeyImpression>> parser = new ImpressionsRequestBodySerializer();
 
     @Test
     public void parsing() {
@@ -30,7 +29,7 @@ public class ImpressionsRequestParserTest {
         impressions.addAll(createImpressions(11, 15, "feature_2"));
         impressions.addAll(createImpressions(201, 215, "feature_3"));
 
-        String jsonTestImpressions = parser.parse(impressions);
+        String jsonTestImpressions = parser.serialize(impressions);
         List<TestImpressions> testImpressions = Json.fromJson(jsonTestImpressions, IMPRESSIONS_BODY_REQUEST_TYPE);
 
         List<KeyImpression> feat1Imp = impressionsForTest("feature_1", testImpressions);
