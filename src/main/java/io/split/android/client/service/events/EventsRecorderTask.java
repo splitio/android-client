@@ -1,12 +1,11 @@
 package io.split.android.client.service.events;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
 
 import java.util.List;
 
 import io.split.android.client.dtos.Event;
+import io.split.android.client.service.HttpRequestBodySerializer;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -14,6 +13,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
