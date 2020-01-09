@@ -1,9 +1,9 @@
 package fake;
 
-import io.split.android.client.TrackClient;
+import io.split.android.client.EventPropertiesProcessor;
 import io.split.android.client.dtos.Event;
 
-public class TrackClientStub implements TrackClient {
+public class TrackClientStub implements EventPropertiesProcessor {
     @Override
     public boolean track(Event event) {
         return false;

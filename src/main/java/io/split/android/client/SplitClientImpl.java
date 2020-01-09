@@ -7,6 +7,7 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.service.SyncManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
@@ -37,10 +38,11 @@ public final class SplitClientImpl implements SplitClient {
     private final SplitClientConfig mConfig;
     private final String mMatchingKey;
     private final SplitEventsManager mEventsManager;
-    private final TrackClient mTrackClient;
+    private final EventPropertiesProcessor mEventPropertiesProcessor;
     private final TreatmentManager mTreatmentManager;
     private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
+    private SyncManager mSyncManager;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -53,16 +55,14 @@ public final class SplitClientImpl implements SplitClient {
                            Metrics metrics,
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
-                           TrackClient trackClient,
+                           EventPropertiesProcessor eventPropertiesProcessor,
                            ISplitCache splitCache) {
 
         String mBucketingKey = key.bucketingKey();
         mMatchingKey = key.matchingKey();
-
         mSplitFactory = container;
         mConfig = config;
         mEventsManager = eventsManager;
-        mTrackClient = trackClient;
         mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = new TreatmentManagerImpl(
@@ -74,8 +74,9 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(impressionListener);
         checkNotNull(mMatchingKey);
         checkNotNull(mEventsManager);
-        checkNotNull(mTrackClient);
+        mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
 
+        // TODO: Initialize sync manager when integrating all components
     }
 
     @Override
@@ -171,6 +172,8 @@ public final class SplitClientImpl implements SplitClient {
         return track(mMatchingKey, mConfig.trafficType(), eventType, value, properties);
     }
 
+    // Estimated event size without properties
+    private final static int ESTIMATED_EVENT_SIZE_WITHOUT_PROPS = 1024;
     private boolean track(String key, String trafficType, String eventType, double value, Map<String, Object> properties) {
         final String validationTag = "track";
         final boolean isSdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
@@ -202,7 +205,14 @@ public final class SplitClientImpl implements SplitClient {
             event.trafficTypeName = event.trafficTypeName.toLowerCase();
         }
 
-        return mTrackClient.track(event);
+        ProcessedEventProperties processedProperties =
+                mEventPropertiesProcessor.process(event.properties);
+        if(!processedProperties.isValid()) {
+            return false;
+        }
+        event.setSizeInBytes(ESTIMATED_EVENT_SIZE_WITHOUT_PROPS + processedProperties.getSizeInBytes());
+        mSyncManager.pushEvent(event);
+        return true;
     }
 
 }

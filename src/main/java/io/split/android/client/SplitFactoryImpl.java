@@ -168,7 +168,6 @@ public class SplitFactoryImpl implements SplitFactory {
         CachedMetrics cachedMetrics = new CachedMetrics(httpMetrics, TimeUnit.SECONDS.toMillis(config.metricsRefreshRate()));
         final FireAndForgetMetrics cachedFireAndForgetMetrics = FireAndForgetMetrics.instance(cachedMetrics, 2, 1000);
 
-
         TrackClientConfig trackConfig = new TrackClientConfig();
         trackConfig.setFlushIntervalMillis(config.eventFlushInterval());
         trackConfig.setMaxEventsPerPost(config.eventsPerPush());
@@ -239,8 +238,9 @@ public class SplitFactoryImpl implements SplitFactory {
         });
 
 
-        _client = new SplitClientImpl(this, key, splitFetcherProvider.getFetcher(),
-                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient, splitCache);
+        _client = new SplitClientImpl(this, key,
+                splitFetcherProvider.getFetcher(), impressionListener,
+                cachedFireAndForgetMetrics, config, _eventsManager, new EventPropertiesProcessorImpl(trackConfig), splitCache);
         _manager = new SplitManagerImpl(splitFetcherProvider.getFetcher());
 
         _eventsManager.getExecutorResources().setSplitClient(_client);
