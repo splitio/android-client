@@ -75,6 +75,8 @@ public class EventsRecorderTaskTest {
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+        Assert.assertEquals(0, result.getNonSentRecords());
+        Assert.assertEquals(0, result.getNonSentBytes());
     }
 
     @Test
@@ -103,6 +105,8 @@ public class EventsRecorderTaskTest {
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertEquals(100, result.getNonSentRecords());
+        Assert.assertEquals(1000, result.getNonSentBytes());
     }
 
     @Test
@@ -130,6 +134,8 @@ public class EventsRecorderTaskTest {
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+        Assert.assertEquals(0, result.getNonSentRecords());
+        Assert.assertEquals(0, result.getNonSentBytes());
     }
 
     @After
@@ -145,6 +151,7 @@ public class EventsRecorderTaskTest {
             event.eventTypeId = "event_" + i;
             event.trafficTypeName = "custom";
             event.key = "key1";
+            event.setSizeInBytes(10);
             events.add(event);
         }
         return events;
