@@ -24,13 +24,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SqLitePersistentImpressionsStorage implements PersistentImpressionsStorage {
 
     final SplitRoomDatabase mDatabase;
-    final StringHelper mStringHelper;
     final ImpressionDao mImpressionDao;
     final long mExpirationPeriod;
 
     public SqLitePersistentImpressionsStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
         mDatabase = checkNotNull(database);
-        mStringHelper = new StringHelper();
         mImpressionDao = mDatabase.impressionDao();
         mExpirationPeriod = expirationPeriod;
     }
