@@ -118,7 +118,7 @@ public class SyncManagerTest {
         mSyncManager.start();
         for(int i=0; i<6; i++) {
             Event event = new Event();
-            event.setSizeInBytes(2000);
+            event.setSizeInBytes(2000000);
             mSyncManager.pushEvent(event);
         }
 
