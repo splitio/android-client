@@ -12,6 +12,7 @@ import java.util.List;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.service.events.EventsRecorderTask;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
@@ -39,6 +40,9 @@ public class SyncManagerTest {
     SplitApiFacade mSplitApiFacade;
     @Mock
     SplitStorageContainer mSplitStorageContainer;
+    @Mock
+    PersistentEventsStorage mEventsStorage;
+
     SplitClientConfig mSplitClientConfig;
 
     @Before
@@ -50,7 +54,6 @@ public class SyncManagerTest {
 
         SplitsStorage splitsStorage = Mockito.mock(SplitsStorage.class);
         MySegmentsStorage mySegmentsStorage = Mockito.mock(MySegmentsStorage.class);
-        PersistentEventsStorage eventsStorage = Mockito.mock(PersistentEventsStorage.class);
 
         when(mSplitApiFacade.getSplitFetcher()).thenReturn(splitsFetcher);
         when(mSplitApiFacade.getMySegmentsFetcher()).thenReturn(mySegmentsFetcher);
@@ -58,9 +61,12 @@ public class SyncManagerTest {
 
         when(mSplitStorageContainer.getSplitsStorage()).thenReturn(splitsStorage);
         when(mSplitStorageContainer.getMySegmentsStorage()).thenReturn(mySegmentsStorage);
-        when(mSplitStorageContainer.getEventsStorage()).thenReturn(eventsStorage);
+        when(mSplitStorageContainer.getEventsStorage()).thenReturn(mEventsStorage);
 
-        mSplitClientConfig = SplitClientConfig.builder().build();
+        mSplitClientConfig = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .build();
+
         mSyncManager = new SyncManagerImpl(mSplitClientConfig, mTaskExecutor, mSplitApiFacade, mSplitStorageContainer);
     }
 
@@ -85,6 +91,39 @@ public class SyncManagerTest {
         mSyncManager.pause();
         mSyncManager.resume();
         verify(mTaskExecutor, times(1)).resume();
+    }
+
+    @Test
+    public void pushEvent() {
+        Event event = new Event();
+        mSyncManager.start();
+        mSyncManager.pushEvent(event);
+        verify(mTaskExecutor, times(0)).submit(any(SplitTask.class));
+        verify(mEventsStorage, times(1)).push(event);
+    }
+
+    @Test
+    public void pushEventReachQueueSize() {
+        mSyncManager.start();
+        for(int i=0; i<22; i++) {
+            mSyncManager.pushEvent(new Event());
+        }
+
+        verify(mEventsStorage, times(22)).push(any(Event.class));
+        verify(mTaskExecutor, times(2)).submit(any(SplitTask.class));
+    }
+
+    @Test
+    public void pushEventBytesLimit() {
+        mSyncManager.start();
+        for(int i=0; i<6; i++) {
+            Event event = new Event();
+            event.setSizeInBytes(2000);
+            mSyncManager.pushEvent(event);
+        }
+
+        verify(mEventsStorage, times(6)).push(any(Event.class));
+        verify(mTaskExecutor, times(2)).submit(any(SplitTask.class));
     }
 
     @After
