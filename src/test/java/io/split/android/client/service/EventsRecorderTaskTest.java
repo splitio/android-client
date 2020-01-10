@@ -8,9 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.service.events.EventsRecorderTask;
@@ -24,7 +22,6 @@ import io.split.android.client.storage.events.PersistentEventsStorage;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -75,7 +72,7 @@ public class EventsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskId());
+        Assert.assertEquals(TASK_ID, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
@@ -103,7 +100,7 @@ public class EventsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskId());
+        Assert.assertEquals(TASK_ID, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
@@ -130,7 +127,7 @@ public class EventsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskId());
+        Assert.assertEquals(TASK_ID, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 

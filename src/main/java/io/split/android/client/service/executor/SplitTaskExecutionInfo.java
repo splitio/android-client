@@ -5,19 +5,34 @@ import androidx.annotation.NonNull;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitTaskExecutionInfo {
-    final private String taskId;
+    final private SplitTaskType taskType;
     final private SplitTaskExecutionStatus status;
+    final private int nonSentRecords;
+    final private long nonSentBytes;
 
-    public SplitTaskExecutionInfo(@NonNull String taskId, @NonNull SplitTaskExecutionStatus status) {
-        this.taskId = checkNotNull(taskId);
+    public SplitTaskExecutionInfo(SplitTaskType taskType,
+                                  @NonNull SplitTaskExecutionStatus status,
+                                  int nonSentRecords,
+                                  long nonSentBytes){
+        this.taskType = taskType;
         this.status = checkNotNull(status);
+        this.nonSentRecords = nonSentRecords;
+        this.nonSentBytes = nonSentBytes;
     }
 
     public SplitTaskExecutionStatus getStatus() {
         return status;
     }
 
-    public String getTaskId() {
-        return taskId;
+    public SplitTaskType getTaskType() {
+        return taskType;
+    }
+
+    public int getNonSentRecords() {
+        return nonSentRecords;
+    }
+
+    public long getNonSentBytes() {
+        return nonSentBytes;
     }
 }

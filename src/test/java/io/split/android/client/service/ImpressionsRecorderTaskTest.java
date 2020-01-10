@@ -10,10 +10,7 @@ import org.mockito.Mockito;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.service.events.EventsRecorderTask;
-import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -21,7 +18,6 @@ import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
-import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 
 import static org.mockito.Mockito.doThrow;
@@ -75,7 +71,7 @@ public class ImpressionsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskId());
+        Assert.assertEquals(TASK_ID, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
@@ -103,7 +99,7 @@ public class ImpressionsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskId());
+        Assert.assertEquals(TASK_ID, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
@@ -130,7 +126,7 @@ public class ImpressionsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskId());
+        Assert.assertEquals(TASK_ID, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
