@@ -9,6 +9,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
@@ -53,6 +54,8 @@ public class ImpressionsRecorderTask implements SplitTask {
             sendMore = (events.size() == mConfig.getImpressionsPerPush());
         }
 
-        mExecutionListener.taskExecuted(new SplitTaskExecutionInfo(mTaskId, status));
+        mExecutionListener.taskExecuted(
+                new SplitTaskExecutionInfo(SplitTaskType.IMPRESSIONS_RECORDER, status,
+                        0, 0));
     }
 }

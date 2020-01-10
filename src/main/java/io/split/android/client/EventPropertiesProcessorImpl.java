@@ -3,37 +3,16 @@ package io.split.android.client;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ValidationConfig;
 
 
 public class EventPropertiesProcessorImpl implements EventPropertiesProcessor {
 
-    private static final long MAX_SIZE_BYTES = 5 * 1024 * 1024L;
     private static final String VALIDATION_TAG = "track";
     private final static int MAX_PROPS_COUNT = 300;
     private final static int MAXIMUM_EVENT_PROPERTY_BYTES =
             ValidationConfig.getInstance().getMaximumEventPropertyBytes();
-
-
-    private final TrackClientConfig mConfig;
-
-    public EventPropertiesProcessorImpl(TrackClientConfig config) {
-        mConfig = config;
-    }
-
-//    @Override
-//    public boolean track(Event event) {
-//
-//        int sizeInBytes = EVENT_SIZE_WITHOUT_PROPS;
-//        ProccessedEventProperties proccessedProperties = processProperties(event.properties);
-//        if(proccessedProperties.isValid) {
-//            return false;
-//        }
-//        event.setSizeInBytes(sizeInBytes);
-//        return true;
-//    }
 
     @Override
     public ProcessedEventProperties process(Map<String, Object> properties) {

@@ -16,6 +16,7 @@ import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.events.PersistentEventsStorage;
@@ -59,7 +60,7 @@ public class EventsRecorderTaskTest {
                 .thenReturn(new ArrayList<>());
 
         EventsRecorderTask task = new EventsRecorderTask(
-                TASK_ID,
+                SplitTaskType.EVENTS_RECORDER,
                 mTaskExecutionListener,
                 mEventsRecorder,
                 mPersistentEventsStorage,
@@ -72,7 +73,7 @@ public class EventsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskType());
+        Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
@@ -87,7 +88,7 @@ public class EventsRecorderTaskTest {
         doThrow(new HttpRecorderException("","")).when(mEventsRecorder).execute(mDefaultParams);
 
         EventsRecorderTask task = new EventsRecorderTask(
-                TASK_ID,
+                SplitTaskType.EVENTS_RECORDER,
                 mTaskExecutionListener,
                 mEventsRecorder,
                 mPersistentEventsStorage,
@@ -100,7 +101,7 @@ public class EventsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskType());
+        Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
@@ -114,7 +115,7 @@ public class EventsRecorderTaskTest {
         doThrow(new HttpRecorderException("","")).when(mEventsRecorder).execute(mDefaultParams);
 
         EventsRecorderTask task = new EventsRecorderTask(
-                TASK_ID,
+                SplitTaskType.EVENTS_RECORDER,
                 mTaskExecutionListener,
                 mEventsRecorder,
                 mPersistentEventsStorage,
@@ -127,7 +128,7 @@ public class EventsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskType());
+        Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 

@@ -2,7 +2,7 @@ package io.split.android.client;
 
 import java.util.Map;
 
-class ProcessedEventProperties {
+public class ProcessedEventProperties {
     private final boolean isValid;
     private final Map<String, Object> properties;
     private final int sizeInBytes;
