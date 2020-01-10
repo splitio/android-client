@@ -43,7 +43,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
 
     @Override
     public void pushMany(@NonNull List<KeyImpression> impressions) {
-        if(impressions == null) {
+        if(impressions == null || impressions.size() == 0) {
             return;
         }
         List<ImpressionEntity> entities = new ArrayList<>();
