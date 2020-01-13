@@ -29,13 +29,12 @@ public class MySegmentsStorageTest {
     Context mContext;
     PersistentMySegmentsStorage mPersistentMySegmentsStorage;
     MySegmentsStorage mMySegmentsStorage;
-    StringHelper mStringHelper;
     final String mUserKey = "userkey-1";
 
     @Before
     public void setUp() {
-        mStringHelper = new StringHelper();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext.deleteDatabase("encripted_api_key");
         mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
         mRoomDb.clearAllTables();
 

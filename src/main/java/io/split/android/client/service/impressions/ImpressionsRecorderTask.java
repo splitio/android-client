@@ -42,16 +42,18 @@ public class ImpressionsRecorderTask implements SplitTask {
         SplitTaskExecutionStatus status = SplitTaskExecutionStatus.SUCCESS;
         boolean sendMore = true;
         while(sendMore) {
-            List<KeyImpression> events = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
-            if(events.size() > 0) {
+            List<KeyImpression> impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
+            if(impressions.size() > 0) {
                 try {
-                    mHttpRecorder.execute(events);
+                    mHttpRecorder.execute(impressions);
                 } catch (HttpRecorderException e) {
                     status = SplitTaskExecutionStatus.ERROR;
-                    Logger.e("Event recorder task: Some events couldn't be sent");
+                    Logger.e("Event recorder task: Some events couldn't be sent." +
+                            "Saving to send them in a new iteration");
+                    mPersistenImpressionsStorage.setActive(impressions);
                 }
             }
-            sendMore = (events.size() == mConfig.getImpressionsPerPush());
+            sendMore = (impressions.size() == mConfig.getImpressionsPerPush());
         }
 
         mExecutionListener.taskExecuted(

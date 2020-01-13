@@ -100,6 +100,7 @@ public class EventsRecorderTaskTest {
 
         verify(mEventsRecorder, times(1)).execute(mDefaultParams);
         verify(mPersistentEventsStorage, times(2)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentEventsStorage, times(1)).setActive(any());
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();

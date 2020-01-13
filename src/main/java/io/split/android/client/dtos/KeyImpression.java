@@ -2,6 +2,7 @@ package io.split.android.client.dtos;
 
 
 public class KeyImpression {
+    public transient long storageId;
     public String feature;
     public String keyName;
     public String bucketingKey;

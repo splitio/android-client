@@ -25,13 +25,12 @@ public class PersistentImpressionStorageTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
     PersistentImpressionsStorage mPersistentImpressionStorage;
-    StringHelper mStringHelper;
     final static long EXPIRATION_PERIOD = 3600 * 24;
 
     @Before
     public void setUp() {
-        mStringHelper = new StringHelper();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext.deleteDatabase("encripted_api_key");
         mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
         mRoomDb.clearAllTables();
         generateImpressions(1, 10, StorageRecordStatus.ACTIVE, false);
@@ -110,6 +109,23 @@ public class PersistentImpressionStorageTest {
         Assert.assertEquals("Impression_5", Impressions1.get(4).keyName);
         Assert.assertEquals(10, activeImpressions.size());
         Assert.assertEquals(20, deletedImpressions.size());
+    }
+
+    @Test
+    public void setActive() {
+
+        List<KeyImpression> impressions = mPersistentImpressionStorage.pop(100);
+        List<ImpressionEntity> activeImpressionsBefore = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 100);
+        List<ImpressionEntity> deletedImpressionsBefore = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED, 100);
+        mPersistentImpressionStorage.setActive(impressions);
+        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 100);
+        List<ImpressionEntity> deletedImpressionsAfter = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED, 100);
+
+        Assert.assertEquals(10, impressions.size());
+        Assert.assertEquals(10, activeImpressionsBefore.size());
+        Assert.assertEquals(20, deletedImpressionsBefore.size());
+        Assert.assertEquals(20, activeImpressions.size());
+        Assert.assertEquals(10, deletedImpressionsAfter.size());
     }
 
     private void generateImpressions(int from, int to, int status, boolean expired) {
