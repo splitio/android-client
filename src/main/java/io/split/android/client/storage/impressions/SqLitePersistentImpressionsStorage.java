@@ -64,6 +64,13 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
     }
 
     @Override
+    public void setActive(@NonNull List<KeyImpression> impressions) {
+        checkNotNull(impressions);
+        List<Long> ids = getImpressionsId(impressions);
+        mImpressionDao.updateStatus(ids, StorageRecordStatus.ACTIVE);
+    }
+
+    @Override
     public List<KeyImpression> getCritical() {
         return new ArrayList<>();
     }
@@ -72,7 +79,9 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         List<KeyImpression> impressions = new ArrayList<>();
         for(ImpressionEntity entity : entities) {
             try {
-                impressions.add(Json.fromJson(entity.getBody(), KeyImpression.class));
+                KeyImpression impression = Json.fromJson(entity.getBody(), KeyImpression.class);
+                impression.storageId = entity.getId();
+                impressions.add(impression);
             } catch (JsonSyntaxException e) {
                 Logger.e("Unable to parse impression entity: " +
                         entity.getBody() + " Error: " + e.getLocalizedMessage());
@@ -90,6 +99,17 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         entity.setTestName(impression.feature);
         entity.setCreatedAt(System.currentTimeMillis() / 1000);
         return entity;
+    }
+
+    private List<Long> getImpressionsId(List<KeyImpression> impressions) {
+        List<Long> ids = new ArrayList<>();
+        if (impressions == null) {
+            return ids;
+        }
+        for(KeyImpression impression : impressions) {
+            ids.add(impression.storageId);
+        }
+        return ids;
     }
 
     static final class GetAndUpdateTransaction implements Runnable {
