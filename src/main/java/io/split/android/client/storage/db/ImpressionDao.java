@@ -15,10 +15,13 @@ public interface ImpressionDao {
     @Insert
     void insert(ImpressionEntity impression);
 
-    @Query("SELECT id, test_name, body, timestamp, status FROM impressions " +
-            "WHERE timestamp >= :timestamp " +
-            "AND status = :status ORDER BY timestamp, test_name")
-    List<ImpressionEntity> getBy(long timestamp, int status);
+    @Insert
+    void insert(List<ImpressionEntity> impressions);
+
+    @Query("SELECT id, test_name, body, created_at, status FROM impressions " +
+            "WHERE created_at >= :timestamp " +
+            "AND status = :status ORDER BY created_at LIMIT :maxRows")
+    List<ImpressionEntity> getBy(long timestamp, int status, int maxRows);
 
     @Query("UPDATE impressions SET status = :status " +
             " WHERE id IN (:ids)")
@@ -27,6 +30,6 @@ public interface ImpressionDao {
     @Query("DELETE FROM impressions WHERE id IN (:ids)")
     void delete(List<Long> ids);
 
-    @Query("DELETE FROM impressions WHERE timestamp < :timestamp")
+    @Query("DELETE FROM impressions WHERE created_at < :timestamp")
     void deleteOutdated(long timestamp);
 }

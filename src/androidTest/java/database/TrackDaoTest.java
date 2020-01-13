@@ -49,6 +49,22 @@ public class TrackDaoTest {
     }
 
     @Test
+    public void insertRetrieveMax() throws InterruptedException {
+        long timestamp = System.currentTimeMillis();
+        List<EventEntity> trackEvents = generateData(1, 10, timestamp, false);
+        trackEvents.addAll(generateData(11, 15, timestamp, true));
+        for(EventEntity trackEvent : trackEvents) {
+            mRoomDb.eventDao().insert(trackEvent);
+        }
+
+        List<EventEntity> activeTrackEvents = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.ACTIVE, 2);
+        List<EventEntity> deletedTrackEvents = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.DELETED, 2);
+
+        Assert.assertEquals(2, activeTrackEvents.size());
+        Assert.assertEquals(2, deletedTrackEvents.size());
+    }
+
+    @Test
     public void insertUpdateRetrieve() throws InterruptedException {
         long timestamp = System.currentTimeMillis();
         List<EventEntity> trackEvents = generateData(1, 20, timestamp, false);
