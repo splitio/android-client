@@ -49,7 +49,9 @@ public class EventsRecorderTask implements SplitTask {
                     mHttpRecorder.execute(events);
                 } catch (HttpRecorderException e) {
                     status = SplitTaskExecutionStatus.ERROR;
-                    Logger.e("Event recorder task: Some events couldn't be sent");
+                    Logger.e("Event recorder task: Some events couldn't be sent" +
+                            "Saving to send them in a new iteration");
+                    mPersistenEventsStorage.setActive(events);
                 }
             }
             sendMore = (events.size() == mConfig.getEventsPerPush());

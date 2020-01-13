@@ -34,6 +34,7 @@ public class PersistentSplitsStorageTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext.deleteDatabase("encripted_api_key");
         mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
         mRoomDb.clearAllTables();
         List<SplitEntity> entities = new ArrayList<>();
