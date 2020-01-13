@@ -24,13 +24,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SqLitePersistentImpressionsStorage implements PersistentImpressionsStorage {
 
     final SplitRoomDatabase mDatabase;
-    final StringHelper mStringHelper;
     final ImpressionDao mImpressionDao;
     final long mExpirationPeriod;
 
     public SqLitePersistentImpressionsStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
         mDatabase = checkNotNull(database);
-        mStringHelper = new StringHelper();
         mImpressionDao = mDatabase.impressionDao();
         mExpirationPeriod = expirationPeriod;
     }
@@ -45,7 +43,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
 
     @Override
     public void pushMany(@NonNull List<KeyImpression> impressions) {
-        if(impressions == null) {
+        if(impressions == null || impressions.size() == 0) {
             return;
         }
         List<ImpressionEntity> entities = new ArrayList<>();
