@@ -53,6 +53,13 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
     }
 
     @Override
+    public void setActive(@NonNull List<Event> events) {
+        checkNotNull(events);
+        List<Long> ids = getEventsId(events);
+        mEventDao.updateStatus(ids, StorageRecordStatus.ACTIVE);
+    }
+
+    @Override
     public List<Event> getCritical() {
         return new ArrayList<>();
     }
@@ -61,7 +68,9 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
         List<Event> events = new ArrayList<>();
         for (EventEntity entity : entities) {
             try {
-                events.add(Json.fromJson(entity.getBody(), Event.class));
+                Event event = Json.fromJson(entity.getBody(), Event.class);
+                event.storageId = entity.getId();
+                events.add(event);
             } catch (JsonSyntaxException e) {
                 Logger.e("Unable to parse event entity: " +
                         entity.getBody() + " Error: " + e.getLocalizedMessage());
@@ -70,6 +79,17 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
             }
         }
         return events;
+    }
+
+    private List<Long> getEventsId(List<Event> entities) {
+        List<Long> ids = new ArrayList<>();
+        if (entities == null) {
+            return ids;
+        }
+        for (Event entity : entities) {
+            ids.add(entity.storageId);
+        }
+        return ids;
     }
 
     static final class GetAndUpdateTransaction implements Runnable {
