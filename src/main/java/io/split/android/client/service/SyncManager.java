@@ -1,6 +1,7 @@
 package io.split.android.client.service;
 
 import io.split.android.client.dtos.Event;
+import io.split.android.client.impressions.Impression;
 
 public interface SyncManager {
     void start();
@@ -12,4 +13,6 @@ public interface SyncManager {
     void stop();
 
     void pushEvent(Event event);
+
+    void pushImpression(Impression impression);
 }
