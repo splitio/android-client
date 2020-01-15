@@ -20,6 +20,7 @@ public class SplitClientConfig {
     private final int _segmentsRefreshRate;
     private final int _impressionsRefreshRate;
     private final int _impressionsQueueSize;
+    private final int _impressionsPerPush;
     private final static int _impressionsMaxSentAttempts = 3;
     private final static long _impressionsChunkOudatedTime = 3600 * 1000; // One day millis
 
@@ -63,7 +64,9 @@ public class SplitClientConfig {
                               int segmentsRefreshRate,
                               int impressionsRefreshRate,
                               int impressionsQueueSize,
-                              long impressionsChunkSize, int metricsRefreshRate,
+                              long impressionsChunkSize,
+                              int impressionsPerPush,
+                              int metricsRefreshRate,
                               int connectionTimeout,
                               int readTimeout,
                               int numThreadsForSegmentFetch,
@@ -84,6 +87,7 @@ public class SplitClientConfig {
         _segmentsRefreshRate = segmentsRefreshRate;
         _impressionsRefreshRate = impressionsRefreshRate;
         _impressionsQueueSize = impressionsQueueSize;
+        _impressionsPerPush = impressionsPerPush;
         _metricsRefreshRate = metricsRefreshRate;
         _connectionTimeout = connectionTimeout;
         _readTimeout = readTimeout;
@@ -166,6 +170,10 @@ public class SplitClientConfig {
 
     public long impressionsChunkSize() {
         return _impressionsChunkSize;
+    }
+
+    public int impressionsPerPush() {
+        return _impressionsPerPush;
     }
 
     public int metricsRefreshRate() {
@@ -291,6 +299,7 @@ public class SplitClientConfig {
         private int _segmentsRefreshRate = 1800;
         private int _impressionsRefreshRate = 1800;
         private int _impressionsQueueSize = 30000;
+        private int _impressionsPerPush = 2000;
         private int _connectionTimeout = 15000;
         private int _readTimeout = 15000;
         private int _numThreadsForSegmentFetch = 2;
@@ -436,6 +445,17 @@ public class SplitClientConfig {
          */
         public Builder impressionsQueueSize(int impressionsQueueSize) {
             _impressionsQueueSize = impressionsQueueSize;
+            return this;
+        }
+
+        /**
+         * Max size of the batch to push impressions
+         *
+         * @param impressionsPerPush
+         * @return this builder
+         */
+        public Builder impressionsPerPush(int impressionsPerPush) {
+            _impressionsPerPush = impressionsPerPush;
             return this;
         }
 
@@ -648,7 +668,9 @@ public class SplitClientConfig {
                     _segmentsRefreshRate,
                     _impressionsRefreshRate,
                     _impressionsQueueSize,
-                    _impressionsChunkSize, _metricsRefreshRate,
+                    _impressionsChunkSize,
+                    _impressionsPerPush,
+                    _metricsRefreshRate,
                     _connectionTimeout,
                     _readTimeout,
                     _numThreadsForSegmentFetch,

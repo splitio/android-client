@@ -8,6 +8,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.executor.SplitTask;
@@ -15,18 +17,22 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.impressions.ImpressionsRecorderTask;
+import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static io.split.android.client.service.executor.SplitTaskType.*;
+import static io.split.android.client.service.executor.SplitTaskType.EVENTS_RECORDER;
+import static io.split.android.client.service.executor.SplitTaskType.IMPRESSIONS_RECORDER;
 
 public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener {
 
+    private static final long ESTIMATED_IMPRESSION_SIZE_IN_BYTES = 512L;
     private static final long MAX_EVENTS_SIZE_BYTES = 5 * 1024 * 1024L;
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitApiFacade mSplitApiFacade;
@@ -35,6 +41,9 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
 
     private AtomicInteger mPushedEventCount;
     private AtomicLong mTotalEventsSizeInBytes;
+
+    private AtomicInteger mPushedImpressionsCount;
+    private AtomicLong mTotalImpressionsSizeInBytes;
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull SplitTaskExecutor taskExecutor,
@@ -47,6 +56,8 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mPushedEventCount = new AtomicInteger(0);
         mTotalEventsSizeInBytes = new AtomicLong(0);
+        mPushedImpressionsCount = new AtomicInteger(0);
+        mTotalImpressionsSizeInBytes = new AtomicLong(0);
     }
 
     @Override
@@ -73,6 +84,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         scheduleSplitsFetcherTask();
         scheduleMySegmentsFetcherTask();
         scheduleEventsRecorderTask();
+        scheduleImpressionsRecorderTask();
     }
 
     private void scheduleSplitsFetcherTask() {
@@ -87,11 +99,15 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         SplitTask mySegmentsSyncTask = new MySegmentsSyncTask(
                 mSplitApiFacade.getMySegmentsFetcher(),
                 mSplitsStorageContainer.getMySegmentsStorage());
-        mTaskExecutor.schedule(mySegmentsSyncTask, 0L, mSplitClientConfig.featuresRefreshRate());
+        mTaskExecutor.schedule(mySegmentsSyncTask, 0L, mSplitClientConfig.segmentsRefreshRate());
     }
 
     private void scheduleEventsRecorderTask() {
-        mTaskExecutor.schedule(createEventsSyncTask(), 0L, mSplitClientConfig.featuresRefreshRate());
+        mTaskExecutor.schedule(createEventsSyncTask(), 0L, mSplitClientConfig.eventFlushInterval());
+    }
+
+    private void scheduleImpressionsRecorderTask() {
+        mTaskExecutor.schedule(createImpressionsSyncTask(), 0L, mSplitClientConfig.impressionsRefreshRate());
     }
 
     @Override
@@ -109,10 +125,31 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
     }
 
     @Override
+    public void pushImpression(Impression impression) {
+
+        KeyImpression keyImpression = buildKeyImpression(impression);
+        PersistentImpressionsStorage impressionsStorage =
+                mSplitsStorageContainer.getImpressionsStorage();
+        impressionsStorage.push(keyImpression);
+        int pushedImpressionCount = mPushedImpressionsCount.addAndGet(1);
+        long totalImpressionsSizeInBytes =
+                mTotalImpressionsSizeInBytes.addAndGet(ESTIMATED_IMPRESSION_SIZE_IN_BYTES);
+        if (pushedImpressionCount > mSplitClientConfig.impressionsQueueSize() ||
+                totalImpressionsSizeInBytes >= mSplitClientConfig.impressionsChunkSize()) {
+            mPushedImpressionsCount.set(0);
+            mTotalImpressionsSizeInBytes.set(0);
+            mTaskExecutor.submit(createEventsSyncTask());
+        }
+    }
+
+    @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
         switch (taskInfo.getTaskType()) {
             case EVENTS_RECORDER:
                 updateEventsTaskStatus(taskInfo);
+                break;
+            case IMPRESSIONS_RECORDER:
+                updateImpressionsTaskStatus(taskInfo);
                 break;
         }
     }
@@ -126,10 +163,40 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
                 new EventsRecorderTaskConfig(mSplitClientConfig.eventsPerPush()));
     }
 
+    private SplitTask createImpressionsSyncTask() {
+        return new ImpressionsRecorderTask(
+                IMPRESSIONS_RECORDER,
+                this,
+                mSplitApiFacade.getImpressionsRecorder(),
+                mSplitsStorageContainer.getImpressionsStorage(),
+                new ImpressionsRecorderTaskConfig(
+                        mSplitClientConfig.impressionsPerPush(),
+                        ESTIMATED_IMPRESSION_SIZE_IN_BYTES));
+    }
+
     private void updateEventsTaskStatus(SplitTaskExecutionInfo executionInfo) {
-        if(executionInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+        if (executionInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
             mPushedEventCount.addAndGet(executionInfo.getNonSentRecords());
             mTotalEventsSizeInBytes.addAndGet(executionInfo.getNonSentBytes());
         }
+    }
+
+    private void updateImpressionsTaskStatus(SplitTaskExecutionInfo executionInfo) {
+        if (executionInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+            mPushedImpressionsCount.addAndGet(executionInfo.getNonSentRecords());
+            mTotalImpressionsSizeInBytes.addAndGet(executionInfo.getNonSentBytes());
+        }
+    }
+
+    private KeyImpression buildKeyImpression(Impression impression) {
+        KeyImpression keyImpression = new KeyImpression();
+        keyImpression.feature = impression.split();
+        keyImpression.keyName = impression.key();
+        keyImpression.bucketingKey = impression.bucketingKey();
+        keyImpression.label = impression.appliedRule();
+        keyImpression.treatment = impression.treatment();
+        keyImpression.time = impression.time();
+        keyImpression.changeNumber = impression.changeNumber();
+        return keyImpression;
     }
 }

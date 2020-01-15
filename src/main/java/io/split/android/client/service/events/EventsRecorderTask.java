@@ -48,6 +48,7 @@ public class EventsRecorderTask implements SplitTask {
             events = mPersistenEventsStorage.pop(mConfig.getEventsPerPush());
             if (events.size() > 0) {
                 try {
+                    Logger.d("Posting %d Split events", events.size());
                     mHttpRecorder.execute(events);
                 } catch (HttpRecorderException e) {
                     status = SplitTaskExecutionStatus.ERROR;
