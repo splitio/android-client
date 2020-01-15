@@ -41,9 +41,9 @@ public class EventsRecorderTask implements SplitTask {
     @Override
     public void execute() {
         SplitTaskExecutionStatus status = SplitTaskExecutionStatus.SUCCESS;
-        boolean sendMore = true;
-        while(sendMore) {
-            List<Event> events = mPersistenEventsStorage.pop(mConfig.getEventsPerPush());
+        List<Event> events;
+        do {
+            events = mPersistenEventsStorage.pop(mConfig.getEventsPerPush());
             if(events.size() > 0) {
                 try {
                     mHttpRecorder.execute(events);
@@ -54,8 +54,7 @@ public class EventsRecorderTask implements SplitTask {
                     mPersistenEventsStorage.setActive(events);
                 }
             }
-            sendMore = (events.size() == mConfig.getEventsPerPush());
-        }
+        } while (events.size() == mConfig.getEventsPerPush());
 
         mExecutionListener.taskExecuted(new SplitTaskExecutionInfo(mTaskId, status));
     }
