@@ -39,10 +39,10 @@ public class ImpressionsRecorderTask implements SplitTask {
     @Override
     public void execute() {
         SplitTaskExecutionStatus status = SplitTaskExecutionStatus.SUCCESS;
-        boolean sendMore = true;
-        while(sendMore) {
-            List<KeyImpression> impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
-            if(impressions.size() > 0) {
+        List<KeyImpression> impressions;
+        do {
+            impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
+            if (impressions.size() > 0) {
                 try {
                     mHttpRecorder.execute(impressions);
                 } catch (HttpRecorderException e) {
@@ -52,8 +52,7 @@ public class ImpressionsRecorderTask implements SplitTask {
                     mPersistenImpressionsStorage.setActive(impressions);
                 }
             }
-            sendMore = (impressions.size() == mConfig.getImpressionsPerPush());
-        }
+        } while (impressions.size() == mConfig.getImpressionsPerPush());
 
         mExecutionListener.taskExecuted(new SplitTaskExecutionInfo(mTaskId, status));
     }
