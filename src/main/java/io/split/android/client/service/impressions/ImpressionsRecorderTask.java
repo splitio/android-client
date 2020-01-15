@@ -45,8 +45,9 @@ public class ImpressionsRecorderTask implements SplitTask {
         int nonSentRecords = 0;
         long nonSentBytes = 0;
         boolean sendMore = true;
-        while(sendMore) {
-            List<KeyImpression> impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
+        List<KeyImpression> impressions;
+        do {
+            impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
             if(impressions.size() > 0) {
                 try {
                     Logger.d("Posting %d Split impressions", impressions.size());
@@ -60,9 +61,8 @@ public class ImpressionsRecorderTask implements SplitTask {
                     mPersistenImpressionsStorage.setActive(impressions);
                 }
             }
-            sendMore = (impressions.size() == mConfig.getImpressionsPerPush());
+        } while (impressions.size() == mConfig.getImpressionsPerPush());
 
-        }
         Logger.d("Posting Split impressions took %d millis", (System.currentTimeMillis() - initialTime));
         mExecutionListener.taskExecuted(
                 new SplitTaskExecutionInfo(SplitTaskType.IMPRESSIONS_RECORDER, status,
