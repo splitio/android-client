@@ -2,6 +2,7 @@ package io.split.android.client.service;
 
 
 import androidx.annotation.NonNull;
+import androidx.work.WorkManager;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -38,6 +39,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
     private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageContainer mSplitsStorageContainer;
     private final SplitClientConfig mSplitClientConfig;
+    private WorkManager mWorkManager;
 
     private AtomicInteger mPushedEventCount;
     private AtomicLong mTotalEventsSizeInBytes;
@@ -48,7 +50,8 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull SplitTaskExecutor taskExecutor,
                            @NonNull SplitApiFacade splitApiFacade,
-                           @NonNull SplitStorageContainer splitStorageContainer) {
+                           @NonNull SplitStorageContainer splitStorageContainer,
+                           WorkManager workManager) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitApiFacade = checkNotNull(splitApiFacade);
@@ -58,6 +61,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         mTotalEventsSizeInBytes = new AtomicLong(0);
         mPushedImpressionsCount = new AtomicInteger(0);
         mTotalImpressionsSizeInBytes = new AtomicLong(0);
+        mWorkManager = workManager;
     }
 
     @Override

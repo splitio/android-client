@@ -1,6 +1,7 @@
 package io.split.android.client.service.events;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class EventsRecorderTask implements SplitTask {
     private final EventsRecorderTaskConfig mConfig;
 
     public EventsRecorderTask(@NonNull SplitTaskType taskType,
-                              @NonNull SplitTaskExecutionListener executionListener,
+                              @Nullable SplitTaskExecutionListener executionListener,
                               @NonNull HttpRecorder<List<Event>> httpRecorder,
                               @NonNull PersistentEventsStorage persistenEventsStorage,
                               @NonNull EventsRecorderTaskConfig config) {
@@ -38,7 +39,7 @@ public class EventsRecorderTask implements SplitTask {
     }
 
     @Override
-    public void execute() {
+    public SplitTaskExecutionInfo execute() {
         SplitTaskExecutionStatus status = SplitTaskExecutionStatus.SUCCESS;
         int nonSentRecords = 0;
         long nonSentBytes = 0;
@@ -61,8 +62,12 @@ public class EventsRecorderTask implements SplitTask {
             sendMore = (events.size() == mConfig.getEventsPerPush());
         }
 
-        mExecutionListener.taskExecuted(new SplitTaskExecutionInfo(
-                mTaskType, status, nonSentRecords, nonSentBytes));
+        SplitTaskExecutionInfo info = new SplitTaskExecutionInfo(
+                mTaskType, status, nonSentRecords, nonSentBytes);
+        if(mExecutionListener != null) {
+            mExecutionListener.taskExecuted(info);
+        }
+        return info;
     }
 
     private long sumEventBytes(List<Event> events) {
