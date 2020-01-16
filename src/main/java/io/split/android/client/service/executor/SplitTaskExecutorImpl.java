@@ -1,9 +1,11 @@
 package io.split.android.client.service.executor;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
+import java.lang.ref.WeakReference;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.utils.Logger;
@@ -27,21 +29,27 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     }
 
     @Override
-    public void schedule(SplitTask task, long initialDelayInSecs, long periodInSecs) {
+    public void schedule(@NonNull SplitTask task,
+                         long initialDelayInSecs,
+                         long periodInSecs,
+                         @Nullable SplitTaskExecutionListener executionListener
+    ) {
         checkNotNull(task);
         checkArgument(periodInSecs > 0);
 
         if (!mScheduler.isShutdown()) {
-            mScheduler.scheduleAtFixedRate(new TaskWrapper(task), initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
+            mScheduler.scheduleAtFixedRate(
+                    new TaskWrapper(task, executionListener),
+                    initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
         }
     }
 
     @Override
-    public void submit(SplitTask task) {
+    public void submit(@NonNull SplitTask task,
+                       @Nullable SplitTaskExecutionListener executionListener) {
         checkNotNull(task);
-
         if (task != null && !mScheduler.isShutdown()) {
-            mScheduler.submit(new TaskWrapper(task));
+            mScheduler.submit(new TaskWrapper(task, executionListener));
         }
     }
 
@@ -75,21 +83,27 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     static class TaskWrapper implements Runnable {
         private final SplitTask mTask;
+        private WeakReference<SplitTaskExecutionListener> mExecutionListener;
 
-        TaskWrapper(SplitTask task) {
-            checkNotNull(task);
-            mTask = task;
+        TaskWrapper(SplitTask task,
+                    SplitTaskExecutionListener executionListener) {
+
+            mTask = checkNotNull(task);
+            mExecutionListener = new WeakReference<>(executionListener);
         }
 
         @Override
         public void run() {
             try {
-                mTask.execute();
+                SplitTaskExecutionInfo info = mTask.execute();
+                SplitTaskExecutionListener listener = mExecutionListener.get();
+                if (listener != null) {
+                    listener.taskExecuted(info);
+                }
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
             }
 
         }
     }
-
 }

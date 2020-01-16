@@ -3,7 +3,6 @@ package io.split.android.client;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
-
 import io.split.android.client.utils.Logger;
 
 /**
@@ -34,6 +33,7 @@ public class SplitClientConfig {
     private final ImpressionListener _impressionListener;
     private final int _waitBeforeShutdown;
     private long _impressionsChunkSize;
+    private boolean _synchronizeInBackground;
 
     //.Track configuration
     private final int _eventsQueueSize;
@@ -80,7 +80,8 @@ public class SplitClientConfig {
                               int eventsQueueSize,
                               int eventsPerPush,
                               long eventFlushInterval,
-                              String trafficType) {
+                              String trafficType,
+                              boolean synchronizeInBackground) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -105,6 +106,7 @@ public class SplitClientConfig {
         _eventsPerPush = eventsPerPush;
         _eventFlushInterval = eventFlushInterval;
         _trafficType = trafficType;
+        _synchronizeInBackground = synchronizeInBackground;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -288,6 +290,10 @@ public class SplitClientConfig {
         return _ip;
     }
 
+    public boolean synchronizeInBackground() {
+        return _synchronizeInBackground;
+    }
+
     public static final class Builder {
 
         private String _endpoint = "https://sdk.split.io/api";
@@ -319,6 +325,7 @@ public class SplitClientConfig {
 
         private String _hostname = "unknown";
         private String _ip = "unknown";
+        private boolean _synchronizeInBackground = false;
 
         public Builder() {
         }
@@ -611,6 +618,19 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * When set to true app sync is done
+         * using android resources event while app is in background.
+         * Otherwise synchronization only occurs while app
+         * is in foreground
+         *
+         * @return true when synchronization is done in background
+         */
+        public Builder sychronizeInBackground(boolean synchronizeInBackground) {
+            _synchronizeInBackground = synchronizeInBackground;
+            return this;
+        }
+
         public SplitClientConfig build() {
 
             if (_featuresRefreshRate < 30) {
@@ -684,7 +704,8 @@ public class SplitClientConfig {
                     _eventsQueueSize,
                     _eventsPerPush,
                     _eventFlushInterval,
-                    _trafficType);
+                    _trafficType,
+                    _synchronizeInBackground);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

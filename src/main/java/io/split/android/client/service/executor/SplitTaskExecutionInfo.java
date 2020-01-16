@@ -10,7 +10,21 @@ public class SplitTaskExecutionInfo {
     final private int nonSentRecords;
     final private long nonSentBytes;
 
-    public SplitTaskExecutionInfo(SplitTaskType taskType,
+    public static SplitTaskExecutionInfo success(SplitTaskType taskType) {
+        return new SplitTaskExecutionInfo(
+                taskType, SplitTaskExecutionStatus.SUCCESS,
+                0, 0);
+    }
+
+    public static SplitTaskExecutionInfo error(SplitTaskType taskType,
+                                               int nonSentRecords,
+                                               long nonSentBytes) {
+        return new SplitTaskExecutionInfo(
+                taskType, SplitTaskExecutionStatus.SUCCESS,
+                0, 0);
+    }
+
+    private SplitTaskExecutionInfo(SplitTaskType taskType,
                                   @NonNull SplitTaskExecutionStatus status,
                                   int nonSentRecords,
                                   long nonSentBytes){

@@ -1,10 +1,14 @@
 package io.split.android.client.service.mysegments;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.executor.SplitTask;
@@ -18,13 +22,15 @@ public class MySegmentsSyncTask implements SplitTask {
     private final HttpFetcher<List<MySegment>> mMySegmentsFetcher;
     private final MySegmentsStorage mMySegmentsStorage;
 
-    public MySegmentsSyncTask(HttpFetcher<List<MySegment>> mySegmentsFetcher, MySegmentsStorage mySegmentsStorage) {
+    public MySegmentsSyncTask(@NonNull HttpFetcher<List<MySegment>> mySegmentsFetcher,
+                              @NonNull MySegmentsStorage mySegmentsStorage) {
         mMySegmentsFetcher = checkNotNull(mySegmentsFetcher);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
     }
 
     @Override
-    public void execute() {
+    @NonNull
+    public SplitTaskExecutionInfo execute() {
         try {
             List<MySegment> mySegments = mMySegmentsFetcher.execute(new HashMap<>());
             mMySegmentsStorage.set(getNameList(mySegments));
@@ -33,6 +39,7 @@ public class MySegmentsSyncTask implements SplitTask {
         } catch (Exception e) {
             logError("Unknown error while retrieving my segments: " + e.getLocalizedMessage());
         }
+        return SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC);
     }
 
     private void logError(String message) {
