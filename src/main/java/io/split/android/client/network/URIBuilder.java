@@ -34,7 +34,7 @@ public class URIBuilder {
         this(rootURI, null);
     }
 
-    public URIBuilder addParameter(String param, String value) {
+    public URIBuilder addParameter(@NonNull String param, @NonNull String value) {
         if (param != null && value != null) {
             mParams.put(param, value);
         }
