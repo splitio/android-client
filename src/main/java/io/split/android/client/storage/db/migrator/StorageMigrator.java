@@ -50,7 +50,8 @@ public class StorageMigrator {
             // every time sdk is initialized
             runMigration();
             mGeneralInfoDao.update(new GeneralInfoEntity(
-                            GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
+                    GeneralInfoEntity.DATBASE_MIGRATION_STATUS,
+                    GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         }
     }
 

@@ -20,6 +20,7 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.db.EventEntity;
+import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
@@ -60,6 +61,7 @@ public class StorageMigratorTest {
         mImpressionsMigratorHelper = new ImpressionsMigratorHelperMock();
 
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        context.deleteDatabase("migrator_folder_test");
         mDatabase = SplitRoomDatabase.getDatabase(context,
                 "migrator_folder_test");
         mDatabase.clearAllTables();
@@ -79,6 +81,7 @@ public class StorageMigratorTest {
 
         MySegmentEntity mySegmentEntity3 = mDatabase.mySegmentDao().getByUserKeys("the_key_3");
         MySegmentEntity mySegmentEntity8 = mDatabase.mySegmentDao().getByUserKeys("the_key_8");
+        GeneralInfoEntity migrationInfo = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.DATBASE_MIGRATION_STATUS);
 
         List<SplitEntity> splitEntities = mDatabase.splitDao().getAll();
         SplitEntity splitEntity = findSplitByName("split_1", splitEntities);
@@ -92,6 +95,7 @@ public class StorageMigratorTest {
         ImpressionEntity impressionEntity = findImpressionsByTestName("feature_4", impressionEntities);
         KeyImpression impression = Json.fromJson(impressionEntity.getBody(), KeyImpression.class);
 
+        Assert.assertEquals(GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE, migrationInfo.getLongValue());
         Assert.assertNotNull(mySegmentEntity3);
         Assert.assertEquals("the_key_3", mySegmentEntity3.getUserKey());
         Assert.assertEquals("segment1,segment2,segment3", mySegmentEntity3.getSegmentList());
@@ -140,7 +144,29 @@ public class StorageMigratorTest {
         List<SplitEntity> splitEntities = mDatabase.splitDao().getAll();
         List<EventEntity> eventEntities = mDatabase.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 1000);
         List<ImpressionEntity> impressionEntities = mDatabase.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 1000);
+        GeneralInfoEntity migrationInfo = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.DATBASE_MIGRATION_STATUS);
 
+        Assert.assertEquals(GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE, migrationInfo.getLongValue());
+        Assert.assertEquals(0, splitEntities.size());
+        Assert.assertEquals(0, eventEntities.size());
+        Assert.assertEquals(0, impressionEntities.size());
+    }
+
+    @Test
+    public void failedMigration() {
+        mMySegmentsMigratorHelper.setMySegments(null);
+        mSplitsMigratorHelper.setSnapshot(-1, null);
+        mEventsMigratorHelper.setEvents(null);
+        mImpressionsMigratorHelper.setImpressions(null);
+
+        mMigrator.checkAndMigrateIfNeeded();
+
+        List<SplitEntity> splitEntities = mDatabase.splitDao().getAll();
+        List<EventEntity> eventEntities = mDatabase.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 1000);
+        List<ImpressionEntity> impressionEntities = mDatabase.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 1000);
+        GeneralInfoEntity migrationInfo = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.DATBASE_MIGRATION_STATUS);
+
+        Assert.assertEquals(GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE, migrationInfo.getLongValue());
         Assert.assertEquals(0, splitEntities.size());
         Assert.assertEquals(0, eventEntities.size());
         Assert.assertEquals(0, impressionEntities.size());
