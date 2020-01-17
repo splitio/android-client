@@ -1,7 +1,6 @@
 package io.split.android.client.cache;
 
 
-
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -57,11 +56,11 @@ public class MySegmentsCache implements IMySegmentsCache, MySegmentsCacheMigrato
     }
 
     // TODO: This methods should use new db storage implementation
-    private void loadSegmentsFromDisk(){
+    private void loadSegmentsFromDisk() {
 
         try {
             String storedMySegments = mFileStorage.read(getMySegmentsFileName());
-            if(storedMySegments == null || storedMySegments.trim().equals("")) return;
+            if (storedMySegments == null || storedMySegments.trim().equals("")) return;
             Type listType = new TypeToken<Map<String, List<MySegment>>>() {
             }.getType();
 
@@ -69,7 +68,7 @@ public class MySegmentsCache implements IMySegmentsCache, MySegmentsCacheMigrato
             Set<String> keys = segments.keySet();
             for (String key : keys) {
                 List<MySegment> keySegments = segments.get(key);
-                if(keySegments != null) {
+                if (keySegments != null) {
                     mSegments.put(key, Collections.synchronizedList(keySegments));
                 }
             }
@@ -97,5 +96,10 @@ public class MySegmentsCache implements IMySegmentsCache, MySegmentsCacheMigrato
     @Override
     public Map<String, List<MySegment>> getAllMySegments() {
         return mSegments;
+    }
+
+    @Override
+    public void deleteAllFiles() {
+        mFileStorage.delete(getMySegmentsFileName());
     }
 }

@@ -32,11 +32,8 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
     final StringHelper mStringHelper;
 
     public SqLitePersistentMySegmentsStorage(@NonNull SplitRoomDatabase database, @NonNull String userKey) {
-        checkNotNull(database);
-        checkNotNull(userKey);
-
-        mDatabase = database;
-        mUserKey = userKey;
+        mDatabase = checkNotNull(database);
+        mUserKey = checkNotNull(userKey);
         mStringHelper = new StringHelper();
     }
 

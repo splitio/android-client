@@ -62,13 +62,13 @@ public class SplitCache implements ISplitCache, SplitCacheMigrator {
 
     @Override
     public boolean addSplit(Split split) {
-        if(split == null || split.name == null) {
+        if (split == null || split.name == null) {
             return false;
         }
 
-        if(split.status == Status.ACTIVE) {
+        if (split.status == Status.ACTIVE) {
             Split loadedSplit = mInMemorySplits.get(split.name);
-            if(loadedSplit != null && loadedSplit.trafficTypeName != null) {
+            if (loadedSplit != null && loadedSplit.trafficTypeName != null) {
                 removeTrafficType(loadedSplit.trafficTypeName);
             }
             addTrafficType(split.trafficTypeName);
@@ -95,17 +95,17 @@ public class SplitCache implements ISplitCache, SplitCacheMigrator {
 
     @Override
     synchronized public Split getSplit(String splitName) {
-        return  mInMemorySplits.get(splitName);
+        return mInMemorySplits.get(splitName);
     }
 
     @Override
     synchronized public List<String> getSplitNames() {
-        return new ArrayList<String>(mInMemorySplits.keySet()) ;
+        return new ArrayList<String>(mInMemorySplits.keySet());
     }
 
     @Override
     public boolean trafficTypeExists(String trafficType) {
-        if(trafficType == null) {
+        if (trafficType == null) {
             return false;
         }
         return (mTrafficTypes.get(trafficType.toLowerCase()) != null);
@@ -117,7 +117,7 @@ public class SplitCache implements ISplitCache, SplitCacheMigrator {
     }
 
     private void addTrafficType(@NotNull String name) {
-        if(name == null) {
+        if (name == null) {
             return;
         }
 
@@ -127,13 +127,13 @@ public class SplitCache implements ISplitCache, SplitCacheMigrator {
     }
 
     private void removeTrafficType(@NotNull String name) {
-        if(name == null) {
+        if (name == null) {
             return;
         }
         String lowercaseName = name.toLowerCase();
 
         int count = countForTrafficType(lowercaseName);
-        if(count > 1) {
+        if (count > 1) {
             mTrafficTypes.put(lowercaseName, --count);
         } else {
             mTrafficTypes.remove(lowercaseName);
@@ -143,16 +143,16 @@ public class SplitCache implements ISplitCache, SplitCacheMigrator {
     private int countForTrafficType(@NotNull String name) {
         int count = 0;
         Integer countValue = mTrafficTypes.get(name);
-        if(countValue != null) {
+        if (countValue != null) {
             count = countValue;
         }
         return count;
     }
 
-    private Split getSplitFromDisk(String splitName){
+    private Split getSplitFromDisk(String splitName) {
         Split split = null;
 
-        if(Strings.isNullOrEmpty(splitName)) {
+        if (Strings.isNullOrEmpty(splitName)) {
             return null;
         }
 
@@ -188,7 +188,7 @@ public class SplitCache implements ISplitCache, SplitCacheMigrator {
         }
 
         // Delete removed splits
-        for(String splitName : mRemovedSplits) {
+        for (String splitName : mRemovedSplits) {
             try {
                 mFileStorageManager.delete(getSplitId(splitName));
             } catch (Exception e) {
@@ -201,9 +201,9 @@ public class SplitCache implements ISplitCache, SplitCacheMigrator {
     void loadSplitsFromDisk() {
         long maxChangeNumber = -1;
         List<String> fileIds = mFileStorageManager.getAllIds(SPLIT_FILE_PREFIX);
-        for(String fileId : fileIds) {
+        for (String fileId : fileIds) {
             Split split = getSplitFromDisk(fileId);
-            if(split != null) {
+            if (split != null) {
                 if (split.name != null) {
                     mInMemorySplits.put(split.name, split);
                     addTrafficType(split.trafficTypeName);
@@ -217,4 +217,13 @@ public class SplitCache implements ISplitCache, SplitCacheMigrator {
         mChangeNumber = maxChangeNumber;
     }
 
+    @Override
+    public void deleteAllFiles() {
+        Set<String> splitNames = mInMemorySplits.keySet();
+        for (String splitName : splitNames) {
+                mFileStorageManager.delete(getSplitId(splitName));
+        }
+        mFileStorageManager.delete(getChangeNumberFileName());
+
+    }
 }
