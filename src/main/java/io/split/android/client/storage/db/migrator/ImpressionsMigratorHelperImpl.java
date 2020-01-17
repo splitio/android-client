@@ -41,6 +41,7 @@ public class ImpressionsMigratorHelperImpl implements ImpressionsMigratorHelper 
                 }
             }
         }
+        mImpressionsStorageManager.deleteAllFiles();
         return entities;
     }
 

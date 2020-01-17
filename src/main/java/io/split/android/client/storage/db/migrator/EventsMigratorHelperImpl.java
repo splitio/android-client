@@ -31,6 +31,7 @@ public class EventsMigratorHelperImpl implements EventsMigratorHelper {
                 entities.add(eventEntity);
             }
         }
+        mEventsStorageManager.deleteAllFiles();
         return entities;
     }
 
