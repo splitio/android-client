@@ -20,8 +20,8 @@ public class SplitTaskExecutionInfo {
                                                int nonSentRecords,
                                                long nonSentBytes) {
         return new SplitTaskExecutionInfo(
-                taskType, SplitTaskExecutionStatus.SUCCESS,
-                0, 0);
+                taskType, SplitTaskExecutionStatus.ERROR,
+                nonSentRecords, nonSentBytes);
     }
 
     private SplitTaskExecutionInfo(SplitTaskType taskType,

@@ -1,6 +1,7 @@
 package io.split.android.client.service;
 
 import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
 import org.junit.After;
@@ -39,6 +40,8 @@ import io.split.android.client.storage.splits.SplitsStorage;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -91,7 +94,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void schedule() throws InterruptedException {
+    public void splitExecutorSchedule() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -100,16 +103,79 @@ public class SyncManagerTest {
         setup(config);
         mSyncManager.start();
         verify(mTaskExecutor, times(1)).schedule(
-                any(SplitsSyncTask.class), anyLong(), anyLong(), mTaskExecutionListener);
+                any(SplitsSyncTask.class), anyLong(), anyLong(), any());
         verify(mTaskExecutor, times(1)).schedule(
-                any(MySegmentsSyncTask.class), anyLong(), anyLong(), mTaskExecutionListener);
+                any(MySegmentsSyncTask.class), anyLong(), anyLong(),
+                any());
         verify(mTaskExecutor, times(1)).schedule(
-                any(EventsRecorderTask.class), anyLong(), anyLong(), mTaskExecutionListener);
+                any(EventsRecorderTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
         verify(mTaskExecutor, times(1)).schedule(
-                any(ImpressionsRecorderTask.class), anyLong(), anyLong(), mTaskExecutionListener);
+                any(ImpressionsRecorderTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
 
         verify(mWorkManager, never()).enqueueUniquePeriodicWork(
-                SplitTaskType.SPLITS_SYNC.toString(), any(ExistingPeriodicWorkPolicy))
+                SplitTaskType.SPLITS_SYNC.toString(),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+
+        verify(mWorkManager, never()).enqueueUniquePeriodicWork(
+                SplitTaskType.MY_SEGMENTS_SYNC.toString(),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+
+        verify(mWorkManager, never()).enqueueUniquePeriodicWork(
+                SplitTaskType.EVENTS_RECORDER.toString(),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+
+        verify(mWorkManager, never()).enqueueUniquePeriodicWork(
+                SplitTaskType.IMPRESSIONS_RECORDER.toString(),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+    }
+
+    @Test
+    public void workManagerSchedule() throws InterruptedException {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(true)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
+        mSyncManager.start();
+        verify(mTaskExecutor, never()).schedule(
+                any(SplitsSyncTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+        verify(mTaskExecutor, never()).schedule(
+                any(MySegmentsSyncTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+        verify(mTaskExecutor, never()).schedule(
+                any(EventsRecorderTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+        verify(mTaskExecutor, never()).schedule(
+                any(ImpressionsRecorderTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+
+        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.SPLITS_SYNC.toString()),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+
+        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.MY_SEGMENTS_SYNC.toString()),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+
+        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.EVENTS_RECORDER.toString()),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+
+        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.IMPRESSIONS_RECORDER.toString()),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
     }
 
     @Test
@@ -127,6 +193,12 @@ public class SyncManagerTest {
 
     @Test
     public void resume() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
         mSyncManager.start();
         mSyncManager.pause();
         mSyncManager.resume();
@@ -135,26 +207,48 @@ public class SyncManagerTest {
 
     @Test
     public void pushEvent() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
         Event event = new Event();
         mSyncManager.start();
         mSyncManager.pushEvent(event);
-        verify(mTaskExecutor, times(0)).submit(any(SplitTask.class));
+        verify(mTaskExecutor, times(0)).submit(
+                any(SplitTask.class),
+                any(SplitTaskExecutionListener.class));
         verify(mEventsStorage, times(1)).push(event);
     }
 
     @Test
     public void pushEventReachQueueSize() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
         mSyncManager.start();
         for (int i = 0; i < 22; i++) {
             mSyncManager.pushEvent(new Event());
         }
 
         verify(mEventsStorage, times(22)).push(any(Event.class));
-        verify(mTaskExecutor, times(2)).submit(any(SplitTask.class));
+        verify(mTaskExecutor, times(2)).submit(
+                any(SplitTask.class),
+                any(SplitTaskExecutionListener.class));
     }
 
     @Test
     public void pushEventBytesLimit() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
         mSyncManager.start();
         for (int i = 0; i < 6; i++) {
             Event event = new Event();
@@ -163,16 +257,26 @@ public class SyncManagerTest {
         }
 
         verify(mEventsStorage, times(6)).push(any(Event.class));
-        verify(mTaskExecutor, times(2)).submit(any(SplitTask.class));
+        verify(mTaskExecutor, times(2)).submit(
+                any(SplitTask.class),
+                any(SplitTaskExecutionListener.class));
     }
 
     @Test
     public void pushImpression() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
         Impression impression = createImpression();
         ArgumentCaptor<KeyImpression> impressionCaptor = ArgumentCaptor.forClass(KeyImpression.class);
         mSyncManager.start();
         mSyncManager.pushImpression(impression);
-        verify(mTaskExecutor, times(0)).submit(any(SplitTask.class));
+        verify(mTaskExecutor, times(0)).submit(
+                any(SplitTask.class),
+                any(SplitTaskExecutionListener.class));
         verify(mImpressionsStorage, times(1)).push(impressionCaptor.capture());
         Assert.assertEquals("key", impressionCaptor.getValue().keyName);
         Assert.assertEquals("bkey", impressionCaptor.getValue().bucketingKey);
@@ -185,17 +289,31 @@ public class SyncManagerTest {
 
     @Test
     public void pushImpressionReachQueueSize() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
         mSyncManager.start();
         for (int i = 0; i < 8; i++) {
             mSyncManager.pushImpression(createImpression());
         }
 
         verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
-        verify(mTaskExecutor, times(2)).submit(any(SplitTask.class));
+        verify(mTaskExecutor, times(2)).submit(
+                any(SplitTask.class),
+                any(SplitTaskExecutionListener.class));
     }
 
     @Test
     public void pushImpressionBytesLimit() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
 
         mSyncManager.start();
         for (int i = 0; i < 10; i++) {
@@ -203,7 +321,9 @@ public class SyncManagerTest {
         }
 
         verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
-        verify(mTaskExecutor, times(2)).submit(any(SplitTask.class));
+        verify(mTaskExecutor, times(2)).submit(
+                any(SplitTask.class),
+                any(SplitTaskExecutionListener.class));
     }
 
     @After

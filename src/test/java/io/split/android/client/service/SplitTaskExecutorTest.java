@@ -1,5 +1,7 @@
 package io.split.android.client.service;
 
+import androidx.annotation.NonNull;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,10 +13,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
+import io.split.android.client.service.executor.SplitTaskType;
 
 import static java.lang.Thread.sleep;
+import static org.mockito.Mockito.mock;
 
 public class SplitTaskExecutorTest {
 
@@ -30,29 +36,42 @@ public class SplitTaskExecutorTest {
         CountDownLatch latch = new CountDownLatch(1);
         TestTask task = new TestTask(latch);
 
-        mTaskExecutor.submit(task);
-        latch.await(5, TimeUnit.SECONDS);
+        CountDownLatch listenerLatch = new CountDownLatch(1);
+        TestListener listener = new TestListener(listenerLatch);
+
+        mTaskExecutor.submit(task, listener);
+        latch.await(15, TimeUnit.SECONDS);
+        listenerLatch.await(15, TimeUnit.SECONDS);
 
         Assert.assertTrue(task.taskHasBeenCalled);
+        Assert.assertTrue(listener.taskExecutedCalled);
+
     }
 
     @Test
     public void multipleSubmit() throws InterruptedException {
         final int taskCount = 10;
         CountDownLatch latch = new CountDownLatch(taskCount);
+
+        CountDownLatch listenerLatch = new CountDownLatch(taskCount);
+        TestListener listener = new TestListener(listenerLatch);
+
         List<TestTask> taskList = new ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
             taskList.add(new TestTask(latch));
         }
 
         for (int i = 0; i < taskCount; i++) {
-            mTaskExecutor.submit(taskList.get(i));
+            mTaskExecutor.submit(taskList.get(i), listener);
         }
 
         latch.await(10, TimeUnit.SECONDS);
+
+        listenerLatch.await(15, TimeUnit.SECONDS);
         for (int i = 0; i < taskCount; i++) {
             Assert.assertTrue(taskList.get(i).taskHasBeenCalled);
         }
+        Assert.assertTrue(listener.taskExecutedCalled);
     }
 
     @Test
@@ -61,7 +80,7 @@ public class SplitTaskExecutorTest {
         TestTask task = new TestTask(latch);
 
         mTaskExecutor.pause();
-        mTaskExecutor.submit(task);
+        mTaskExecutor.submit(task, mock(SplitTaskExecutionListener.class));
         latch.await(5, TimeUnit.SECONDS);
         boolean executedOnPause = task.taskHasBeenCalled;
         mTaskExecutor.resume();
@@ -78,12 +97,12 @@ public class SplitTaskExecutorTest {
         TestTask task = new TestTask(latch);
         TestTask taskOnStop = new TestTask(latch);
 
-        mTaskExecutor.submit(task);
+        mTaskExecutor.submit(task, mock(SplitTaskExecutionListener.class));
         latch.await(5, TimeUnit.SECONDS);
         boolean executedBeforeStop = task.taskHasBeenCalled;
 
         mTaskExecutor.stop();
-        mTaskExecutor.submit(taskOnStop);
+        mTaskExecutor.submit(taskOnStop, mock(SplitTaskExecutionListener.class));
         latch.await(5, TimeUnit.SECONDS);
         boolean executedOnStop = taskOnStop.taskHasBeenCalled;
 
@@ -96,7 +115,8 @@ public class SplitTaskExecutorTest {
         CountDownLatch latch = new CountDownLatch(4);
         TestTask task = new TestTask(latch);
 
-        mTaskExecutor.schedule(task, 0L, 1);
+        mTaskExecutor.schedule(
+                task, 0L, 1, mock(SplitTaskExecutionListener.class));
         latch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(task.taskHasBeenCalled);
@@ -113,7 +133,9 @@ public class SplitTaskExecutorTest {
         }
 
         for (int i = 0; i < taskCount; i++) {
-            mTaskExecutor.schedule(taskList.get(i), 0L, i + 1);
+            mTaskExecutor.schedule(
+                    taskList.get(i), 0L, i + 1,
+                    mock(SplitTaskExecutionListener.class));
         }
 
         latch.await(10, TimeUnit.SECONDS);
@@ -129,7 +151,8 @@ public class SplitTaskExecutorTest {
         TestTask task = new TestTask(latch);
 
         mTaskExecutor.pause();
-        mTaskExecutor.schedule(task, 0L, 1);
+        mTaskExecutor.schedule(
+                task, 0L, 1, mock(SplitTaskExecutionListener.class));
         latch.await(5, TimeUnit.SECONDS);
         boolean executedOnPause = task.taskHasBeenCalled;
         mTaskExecutor.resume();
@@ -154,8 +177,10 @@ public class SplitTaskExecutorTest {
         TestTask task = new TestTask(latch);
         TestTask task1 = new TestTask(latch);
 
-        mTaskExecutor.schedule(task, 0L, 1);
-        mTaskExecutor.schedule(task1, 6L, 20);
+        mTaskExecutor.schedule(
+                task, 0L, 1, mock(SplitTaskExecutionListener.class));
+        mTaskExecutor.schedule(
+                task1, 6L, 20, mock(SplitTaskExecutionListener.class));
         latch.await(5, TimeUnit.SECONDS);
         int countBeforePause = task.callCount;
         int count1BeforePause = task1.callCount;
@@ -189,12 +214,15 @@ public class SplitTaskExecutorTest {
         TestTask task = new TestTask(latch);
         TestTask taskOnStop = new TestTask(latch);
 
-        mTaskExecutor.schedule(task, 0L, 1);
+        mTaskExecutor.schedule(
+                task, 0L, 1, mock(SplitTaskExecutionListener.class));
         latch.await(5, TimeUnit.SECONDS);
         boolean executedBeforeStop = task.taskHasBeenCalled;
 
         mTaskExecutor.stop();
-        mTaskExecutor.schedule(taskOnStop, 0L, 1);
+        mTaskExecutor.schedule(
+                taskOnStop, 0L, 1,
+                mock(SplitTaskExecutionListener.class));
         latch.await(5, TimeUnit.SECONDS);
         boolean executedOnStop = taskOnStop.taskHasBeenCalled;
 
@@ -208,7 +236,8 @@ public class SplitTaskExecutorTest {
         TestTask task = new TestTask(latch);
         task.shouldThrowException = true;
 
-        mTaskExecutor.schedule(task, 0L, 1);
+        mTaskExecutor.schedule(
+                task, 0L, 1, mock(SplitTaskExecutionListener.class));
         latch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(task.taskHasBeenCalled);
@@ -231,13 +260,29 @@ public class SplitTaskExecutorTest {
         public boolean taskHasBeenCalled = false;
 
         @Override
-        public void execute() {
+        public SplitTaskExecutionInfo execute() {
             callCount++;
             taskHasBeenCalled = true;
             latch.countDown();
             if (shouldThrowException) {
                 throw new IllegalStateException();
             }
+            return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
+        }
+    }
+
+    static class TestListener implements SplitTaskExecutionListener {
+        CountDownLatch mLatch;
+        boolean taskExecutedCalled = false;
+
+        public TestListener(CountDownLatch latch) {
+            mLatch = latch;
+        }
+
+        @Override
+        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+            taskExecutedCalled = true;
+            mLatch.countDown();
         }
     }
 }
