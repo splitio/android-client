@@ -13,6 +13,7 @@ import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -25,6 +26,7 @@ public class StorageMigrator {
     private final SplitsMigratorHelper mSplitsMigratorHelper;
     private final EventsMigratorHelper mEventsMigratorHelper;
     private final ImpressionsMigratorHelper mImpressionsMigratorHelper;
+    private final GeneralInfoDao mGeneralInfoDao;
 
     public StorageMigrator(@NotNull SplitRoomDatabase sqLiteDatabase,
                            @NotNull MySegmentsMigratorHelper mySegmentsMigratorHelper,
@@ -37,18 +39,24 @@ public class StorageMigrator {
         mSplitsMigratorHelper = checkNotNull(splitsMigratorHelper);
         mEventsMigratorHelper = checkNotNull(eventsMigratorHelper);
         mImpressionsMigratorHelper = checkNotNull(impressionsMigratorHelper);
+        mGeneralInfoDao = mSqLiteDatabase.generalInfoDao();
         mStringHelper = new StringHelper();
     }
 
     public void checkAndMigrateIfNeeded() {
         if (isMigrationNeeded()) {
+            // If migration fails, data is erased and
+            // new storage is used anyway to avoid trying to migrate
+            // every time sdk is initialized
             runMigration();
+            mGeneralInfoDao.update(new GeneralInfoEntity(
+                    GeneralInfoEntity.DATBASE_MIGRATION_STATUS,
+                    GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         }
     }
 
     private boolean isMigrationNeeded() {
-        GeneralInfoDao generalInfoDao = mSqLiteDatabase.generalInfoDao();
-        GeneralInfoEntity migrationStatus = generalInfoDao.getByName(GeneralInfoEntity.DATBASE_MIGRATION_STATUS);
+        GeneralInfoEntity migrationStatus = mGeneralInfoDao.getByName(GeneralInfoEntity.DATBASE_MIGRATION_STATUS);
         return migrationStatus == null;
     }
 
@@ -59,10 +67,15 @@ public class StorageMigrator {
         mSqLiteDatabase.runInTransaction(new Runnable() {
             @Override
             public void run() {
-                migrateMySegments();
-                migrateSplits();
-                migrateEvents();
-                migrateImpressions();
+                try {
+                    migrateMySegments();
+                    migrateSplits();
+                    migrateEvents();
+                    migrateImpressions();
+                } catch (Exception e) {
+                    Logger.e("Couldn't migrate legacy data. Reason: " +
+                            e.getLocalizedMessage());
+                }
             }
         });
     }

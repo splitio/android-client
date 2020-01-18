@@ -335,4 +335,9 @@ public class ImpressionsStorageManager {
         }
         mFileStorageManager.delete(CHUNK_HEADERS_FILE_NAME);
     }
+
+    public void deleteAllFiles() {
+        List<String> filesToDelete = mFileStorageManager.getAllIds(IMPRESSIONS_FILE_PREFIX);
+        mFileStorageManager.delete(filesToDelete);
+    }
 }

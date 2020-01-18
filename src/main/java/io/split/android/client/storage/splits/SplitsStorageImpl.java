@@ -19,9 +19,7 @@ public class SplitsStorageImpl implements SplitsStorage {
     private Map<String, Integer> mTrafficTypes;
 
     public SplitsStorageImpl(@NonNull PersistentSplitsStorage persistentStorage) {
-        checkNotNull(persistentStorage);
-
-        mPersistentStorage = persistentStorage;
+        mPersistentStorage = checkNotNull(persistentStorage);
         mInMemorySplits = new ConcurrentHashMap<String, Split>();
         mTrafficTypes = new ConcurrentHashMap<String, Integer>();
         loadFromDb();
