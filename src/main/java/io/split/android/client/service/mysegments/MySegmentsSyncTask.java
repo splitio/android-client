@@ -3,11 +3,10 @@ package io.split.android.client.service.mysegments;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.service.HttpFetcher;
-import io.split.android.client.service.HttpFetcherException;
+import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.utils.Logger;

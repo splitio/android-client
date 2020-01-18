@@ -25,13 +25,12 @@ public class PersistentImpressionStorageTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
     PersistentImpressionsStorage mPersistentImpressionStorage;
-    StringHelper mStringHelper;
     final static long EXPIRATION_PERIOD = 3600 * 24;
 
     @Before
     public void setUp() {
-        mStringHelper = new StringHelper();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext.deleteDatabase("encripted_api_key");
         mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
         mRoomDb.clearAllTables();
         generateImpressions(1, 10, StorageRecordStatus.ACTIVE, false);

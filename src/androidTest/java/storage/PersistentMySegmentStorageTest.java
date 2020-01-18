@@ -35,12 +35,11 @@ public class PersistentMySegmentStorageTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
     PersistentMySegmentsStorage mPersistentMySegmentsStorage;
-    StringHelper mStringHelper;
 
     @Before
     public void setUp() {
-        mStringHelper = new StringHelper();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext.deleteDatabase("encripted_api_key");
         mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
         mRoomDb.clearAllTables();
 

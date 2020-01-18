@@ -21,6 +21,12 @@ import io.split.android.client.network.HttpRequest;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.HttpResponseImpl;
 import io.split.android.client.network.SdkTargetPath;
+import io.split.android.client.service.events.EventsRecorderTask;
+import io.split.android.client.service.events.EventsRequestBodySerializer;
+import io.split.android.client.service.http.HttpRecorder;
+import io.split.android.client.service.http.HttpRecorderException;
+import io.split.android.client.service.http.HttpRecorderImpl;
+import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.NetworkHelper;
 

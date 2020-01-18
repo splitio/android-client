@@ -68,18 +68,18 @@ public class EventsMigratorHelperTest {
         Assert.assertEquals("event_1", event1.eventTypeId);
         Assert.assertEquals("custom", event1.trafficTypeName);
         Assert.assertEquals("the_key", event1.key);
-        Assert.assertTrue(entity1.getUpdatedAt() > 0);
+        Assert.assertTrue(entity1.getCreatedAt() > 0);
 
 
         Assert.assertEquals("event_25", event2.eventTypeId);
         Assert.assertEquals("custom", event2.trafficTypeName);
         Assert.assertEquals("the_key", event2.key);
-        Assert.assertTrue(entity2.getUpdatedAt() > 0);
+        Assert.assertTrue(entity2.getCreatedAt() > 0);
 
         Assert.assertEquals("event_50", event3.eventTypeId);
         Assert.assertEquals("custom", event3.trafficTypeName);
         Assert.assertEquals("the_key", event3.key);
-        Assert.assertTrue(entity3.getUpdatedAt() > 0);
+        Assert.assertTrue(entity3.getCreatedAt() > 0);
 
     }
 

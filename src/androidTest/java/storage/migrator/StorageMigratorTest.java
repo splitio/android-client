@@ -2,7 +2,6 @@ package storage.migrator;
 
 import android.content.Context;
 
-import androidx.core.util.Pair;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
@@ -12,7 +11,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import io.split.android.client.dtos.Event;
@@ -26,17 +24,8 @@ import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
-import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
-import io.split.android.client.storage.db.migrator.EventsMigratorHelperImpl;
-import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelper;
-import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelperImpl;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelper;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelperImpl;
-import io.split.android.client.storage.db.migrator.SplitsMigratorHelper;
-import io.split.android.client.storage.db.migrator.SplitsMigratorHelperImpl;
 import io.split.android.client.storage.db.migrator.StorageMigrator;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.TimeUtils;
 import storage.migrator.mocks.EventsMigratorHelperMock;
 import storage.migrator.mocks.ImpressionsMigratorHelperMock;
 import storage.migrator.mocks.MySegmentsMigratorHelperMock;
@@ -113,7 +102,7 @@ public class StorageMigratorTest {
         Assert.assertEquals(Status.ACTIVE, split.status);
 
         Assert.assertEquals(10, eventEntities.size());
-        Assert.assertEquals(100, eventEntity.getUpdatedAt());
+        Assert.assertEquals(100, eventEntity.getCreatedAt());
         Assert.assertEquals(StorageRecordStatus.ACTIVE, eventEntity.getStatus());
         Assert.assertEquals("event_1", event.eventTypeId);
         Assert.assertEquals("the_key_1", event.key);
@@ -216,7 +205,7 @@ public class StorageMigratorTest {
             event.properties.put("pepe", "custom");
             EventEntity entity = new EventEntity();
             entity.setStatus(StorageRecordStatus.ACTIVE);
-            entity.setUpdatedAt(100);
+            entity.setCreatedAt(100);
             entity.setBody(Json.toJson(event));
             entities.add(entity);
         }

@@ -26,12 +26,11 @@ public class PersistentEventStorageTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
     PersistentEventsStorage mPersistentEventsStorage;
-    StringHelper mStringHelper;
 
     @Before
     public void setUp() {
-        mStringHelper = new StringHelper();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext.deleteDatabase("encripted_api_key");
         mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
         mRoomDb.clearAllTables();
         generateEvents(1, 10, StorageRecordStatus.ACTIVE, false);
@@ -112,6 +111,23 @@ public class PersistentEventStorageTest {
         Assert.assertEquals(20, deletedEvents.size());
     }
 
+    @Test
+    public void setActive() {
+
+        List<Event> events = mPersistentEventsStorage.pop(100);
+        List<EventEntity> activeEventsBefore = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 100);
+        List<EventEntity> deletedEventsBefore = mRoomDb.eventDao().getBy(0, StorageRecordStatus.DELETED, 100);
+        mPersistentEventsStorage.setActive(events);
+        List<EventEntity> activeEvents = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 100);
+        List<EventEntity> deletedEventsAfter = mRoomDb.eventDao().getBy(0, StorageRecordStatus.DELETED, 100);
+
+        Assert.assertEquals(10, events.size());
+        Assert.assertEquals(10, activeEventsBefore.size());
+        Assert.assertEquals(20, deletedEventsBefore.size());
+        Assert.assertEquals(20, activeEvents.size());
+        Assert.assertEquals(10, deletedEventsAfter.size());
+    }
+
     private void generateEvents(int from, int to, int status, boolean expired) {
         for (int i = from; i <= to; i++) {
             Event event = new Event();
@@ -122,7 +138,7 @@ public class PersistentEventStorageTest {
             long timestamp = System.currentTimeMillis() / 1000;
             long updatedAt = !expired ? timestamp : timestamp - EXPIRATION_PERIOD * 2;
             EventEntity entity = new EventEntity();
-            entity.setUpdatedAt(updatedAt);
+            entity.setCreatedAt(updatedAt);
             entity.setBody(Json.toJson(event));
             entity.setStatus(status);
             mRoomDb.eventDao().insert(entity);
