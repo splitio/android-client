@@ -1,6 +1,7 @@
 package io.split.android.client.service;
 
 
+import android.app.ActivityOptions;
 import android.app.Service;
 
 import androidx.annotation.NonNull;
@@ -16,6 +17,7 @@ import androidx.work.WorkManager;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -23,6 +25,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -56,6 +59,8 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
     private AtomicInteger mPushedImpressionsCount;
     private AtomicLong mTotalImpressionsSizeInBytes;
 
+    private AtomicBoolean mFirstSlitChangesFetch;
+    private AtomicBoolean mFirstMySegmentFetch;
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull SplitTaskExecutor taskExecutor,
@@ -73,6 +78,8 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         mTotalEventsSizeInBytes = new AtomicLong(0);
         mPushedImpressionsCount = new AtomicInteger(0);
         mTotalImpressionsSizeInBytes = new AtomicLong(0);
+        mFirstSlitChangesFetch = new AtomicBoolean(true);
+        mFirstMySegmentFetch = new AtomicBoolean(true);
         if (mSplitClientConfig.synchronizeInBackground()) {
             mWorkManager = checkNotNull(workManager);
         }
@@ -148,7 +155,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
             scheduleWork(SplitTaskType.SPLITS_SYNC.toString(), SplitsSyncWorker.class, ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
         } else {
             mTaskExecutor.schedule(mSplitTaskFactory.createSplitsSyncTask(), ServiceConstants.NO_INITIAL_DELAY,
-                    mSplitClientConfig.featuresRefreshRate(), null);
+                    mSplitClientConfig.featuresRefreshRate(), this);
         }
     }
 
@@ -157,7 +164,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
             scheduleWork(SplitTaskType.MY_SEGMENTS_SYNC.toString(), MySegmentsSyncWorker.class, ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
         } else {
             mTaskExecutor.schedule(mSplitTaskFactory.createMySegmentsSyncTask(), ServiceConstants.NO_INITIAL_DELAY,
-                    mSplitClientConfig.segmentsRefreshRate(), null);
+                    mSplitClientConfig.segmentsRefreshRate(), this);
         }
     }
 
@@ -186,6 +193,12 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
 
     private void updateTaskStatus(SplitTaskExecutionInfo taskInfo) {
         switch (taskInfo.getTaskType()) {
+            case SPLITS_SYNC:
+                updateSplitChangesTaskStatus(taskInfo);
+                break;
+            case MY_SEGMENTS_SYNC:
+                updateMySegmentsTaskStatus(taskInfo);
+                break;
             case EVENTS_RECORDER:
                 updateEventsTaskStatus(taskInfo);
                 break;
@@ -203,6 +216,20 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
                 executionPeriod,
                 TimeUnit.SECONDS).build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.KEEP, request);
+    }
+
+    private void updateSplitChangesTaskStatus(SplitTaskExecutionInfo executionInfo) {
+        if (mFirstSlitChangesFetch.get() && executionInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+            mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+            mFirstSlitChangesFetch.set(false);
+        }
+    }
+
+    private void updateMySegmentsTaskStatus(SplitTaskExecutionInfo executionInfo) {
+        if (mFirstMySegmentFetch.get() && executionInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+            mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_READY);
+            mFirstMySegmentFetch.set(false);
+        }
     }
 
     private void updateEventsTaskStatus(SplitTaskExecutionInfo executionInfo) {

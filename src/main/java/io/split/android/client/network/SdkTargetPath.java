@@ -26,6 +26,6 @@ public class SdkTargetPath {
     }
 
     private static URI buildUrl(String baseUrl, String path) throws URISyntaxException {
-        return new URI(baseUrl + "/" + path);
+        return new URI(baseUrl + path);
     }
 }

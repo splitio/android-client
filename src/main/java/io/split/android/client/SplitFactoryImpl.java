@@ -210,7 +210,7 @@ public class SplitFactoryImpl implements SplitFactory {
         PersistentSplitsStorage persistentSplitsStorage = new SqLitePersistentSplitsStorage(splitRoomDatabase);
         SplitsStorage splitsStorage = new SplitsStorageImpl(persistentSplitsStorage);
 
-        SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
+        _splitTaskExecutor = new SplitTaskExecutorImpl();
 
         SplitStorageContainer storageContainer = new SplitStorageContainer(
                 splitsStorage, mySegmentsStorage,
@@ -223,6 +223,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 _eventsManager, WorkManager.getInstance(context)
         );
 
+        _syncManager.start();
 
         // Impressionss
         ImpressionsStorageManagerConfig impressionsStorageManagerConfig = new ImpressionsStorageManagerConfig();
