@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.service.HttpResponseParser;
-import io.split.android.client.service.HttpResponseParserException;
+import io.split.android.client.service.http.HttpResponseParser;
+import io.split.android.client.service.http.HttpResponseParserException;
 import io.split.android.client.utils.Json;
 
 public class MySegmentsResponseParser implements HttpResponseParser<List<MySegment>> {

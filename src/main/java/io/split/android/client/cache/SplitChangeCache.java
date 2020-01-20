@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Created by guillermo on 11/23/17.
  */
 
+@Deprecated
 public class SplitChangeCache implements ISplitChangeCache {
 
     private final SplitsStorage mSplitStorage;

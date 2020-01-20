@@ -17,6 +17,7 @@ import helper.IntegrationHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
 
 public class TrackDaoTest {
@@ -37,14 +38,30 @@ public class TrackDaoTest {
         List<EventEntity> trackEvents = generateData(1, 10, timestamp, false);
         trackEvents.addAll(generateData(11, 15, timestamp, true));
         for(EventEntity trackEvent : trackEvents) {
-            mRoomDb.trackEventDao().insert(trackEvent);
+            mRoomDb.eventDao().insert(trackEvent);
         }
 
-        List<EventEntity> activeTrackEvents = mRoomDb.trackEventDao().getBy(timestamp, EventEntity.STATUS_ACTIVE);
-        List<EventEntity> deletedTrackEvents = mRoomDb.trackEventDao().getBy(timestamp, EventEntity.STATUS_DELETED);
+        List<EventEntity> activeTrackEvents = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.ACTIVE, 9999);
+        List<EventEntity> deletedTrackEvents = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.DELETED, 9999);
 
         Assert.assertEquals(10, activeTrackEvents.size());
         Assert.assertEquals(5, deletedTrackEvents.size());
+    }
+
+    @Test
+    public void insertRetrieveMax() throws InterruptedException {
+        long timestamp = System.currentTimeMillis();
+        List<EventEntity> trackEvents = generateData(1, 10, timestamp, false);
+        trackEvents.addAll(generateData(11, 15, timestamp, true));
+        for(EventEntity trackEvent : trackEvents) {
+            mRoomDb.eventDao().insert(trackEvent);
+        }
+
+        List<EventEntity> activeTrackEvents = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.ACTIVE, 2);
+        List<EventEntity> deletedTrackEvents = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.DELETED, 2);
+
+        Assert.assertEquals(2, activeTrackEvents.size());
+        Assert.assertEquals(2, deletedTrackEvents.size());
     }
 
     @Test
@@ -52,24 +69,24 @@ public class TrackDaoTest {
         long timestamp = System.currentTimeMillis();
         List<EventEntity> trackEvents = generateData(1, 20, timestamp, false);
         for(EventEntity trackEvent : trackEvents) {
-            mRoomDb.trackEventDao().insert(trackEvent);
+            mRoomDb.eventDao().insert(trackEvent);
         }
 
-        List<EventEntity> activeTrackEvents = mRoomDb.trackEventDao().getBy(timestamp, EventEntity.STATUS_ACTIVE);
+        List<EventEntity> activeTrackEvents = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.ACTIVE, 9999);
         List<Long> ids = activeTrackEvents.stream().map(EventEntity::getId).collect(Collectors.toList());
         List<Long> idsToSoftDelete = ids.subList(15, 20);
         List<Long> idsToDelete = ids.subList(10, 15);
 
-        mRoomDb.trackEventDao().updateStatus(idsToSoftDelete, EventEntity.STATUS_DELETED);
-        List<EventEntity> afterSoftDelete = mRoomDb.trackEventDao().getBy(0, EventEntity.STATUS_ACTIVE);
+        mRoomDb.eventDao().updateStatus(idsToSoftDelete, StorageRecordStatus.DELETED);
+        List<EventEntity> afterSoftDelete = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 9999);
 
-        mRoomDb.trackEventDao().delete(idsToDelete);
-        List<EventEntity> afterDelete = mRoomDb.trackEventDao().getBy(0, EventEntity.STATUS_ACTIVE);
-        List<EventEntity> softDeletedAfterDelete = mRoomDb.trackEventDao().getBy(0, EventEntity.STATUS_DELETED);
+        mRoomDb.eventDao().delete(idsToDelete);
+        List<EventEntity> afterDelete = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 9999);
+        List<EventEntity> softDeletedAfterDelete = mRoomDb.eventDao().getBy(0, StorageRecordStatus.DELETED, 9999);
 
-        mRoomDb.trackEventDao().deleteOutdated(timestamp + 6);
-        List<EventEntity> afterAll = mRoomDb.trackEventDao().getBy(timestamp, EventEntity.STATUS_ACTIVE);
-        List<EventEntity> deletedAfterAll = mRoomDb.trackEventDao().getBy(timestamp, EventEntity.STATUS_DELETED);
+        mRoomDb.eventDao().deleteOutdated(timestamp + 6);
+        List<EventEntity> afterAll = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.ACTIVE, 9999);
+        List<EventEntity> deletedAfterAll = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.DELETED, 9999);
 
         Assert.assertEquals(20, activeTrackEvents.size());
         Assert.assertEquals(15, afterSoftDelete.size());
@@ -82,11 +99,11 @@ public class TrackDaoTest {
     @Test
     public void dataIntegrity() {
         long timestamp = System.currentTimeMillis();
-        mRoomDb.trackEventDao().insert(generateData(1, 1, timestamp, false).get(0));
-        mRoomDb.trackEventDao().insert(generateData(2, 2, timestamp, true).get(0));
+        mRoomDb.eventDao().insert(generateData(1, 1, timestamp, false).get(0));
+        mRoomDb.eventDao().insert(generateData(2, 2, timestamp, true).get(0));
 
-        EventEntity activeEventEntity = mRoomDb.trackEventDao().getBy(timestamp, EventEntity.STATUS_ACTIVE).get(0);
-        EventEntity deletedEventEntity = mRoomDb.trackEventDao().getBy(timestamp, EventEntity.STATUS_DELETED).get(0);
+        EventEntity activeEventEntity = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.ACTIVE, 9999).get(0);
+        EventEntity deletedEventEntity = mRoomDb.eventDao().getBy(timestamp, StorageRecordStatus.DELETED, 9999).get(0);
 
         Event activeTrackEvent = Json.fromJson(activeEventEntity.getBody(), Event.class);
         Event deletedTrackEvent = Json.fromJson(deletedEventEntity.getBody(), Event.class);
@@ -96,16 +113,16 @@ public class TrackDaoTest {
         Assert.assertEquals(timestamp + 1, activeTrackEvent.timestamp);
         Assert.assertEquals("traffic_1", activeTrackEvent.trafficTypeName);
         Assert.assertEquals("key", activeTrackEvent.key);
-        Assert.assertEquals(EventEntity.STATUS_ACTIVE, activeEventEntity.getStatus());
-        Assert.assertEquals(timestamp + 1, activeEventEntity.getTimestamp());
+        Assert.assertEquals(StorageRecordStatus.ACTIVE, activeEventEntity.getStatus());
+        Assert.assertEquals(timestamp + 1, activeEventEntity.getCreatedAt());
 
         Assert.assertEquals("type_2", deletedTrackEvent.eventTypeId);
         Assert.assertEquals(2.0, deletedTrackEvent.value, 0.0);
         Assert.assertEquals(timestamp + 2, deletedTrackEvent.timestamp);
         Assert.assertEquals("traffic_2", deletedTrackEvent.trafficTypeName);
         Assert.assertEquals("key", deletedTrackEvent.key);
-        Assert.assertEquals(EventEntity.STATUS_DELETED, deletedEventEntity.getStatus());
-        Assert.assertEquals(timestamp + 2, deletedEventEntity.getTimestamp());
+        Assert.assertEquals(StorageRecordStatus.DELETED, deletedEventEntity.getStatus());
+        Assert.assertEquals(timestamp + 2, deletedEventEntity.getCreatedAt());
     }
 
     @Test
@@ -135,12 +152,12 @@ public class TrackDaoTest {
         List<EventEntity> trackEventEntities = generateData(1, count, 100000, false);
         long start = System.currentTimeMillis();
         for(EventEntity eventEntity : trackEventEntities) {
-            mRoomDb.trackEventDao().insert(eventEntity);
+            mRoomDb.eventDao().insert(eventEntity);
         }
         long writeTime = System.currentTimeMillis() - start;
 
         start = System.currentTimeMillis();
-        trackEventEntities = mRoomDb.trackEventDao().getBy(0, EventEntity.STATUS_ACTIVE);
+        trackEventEntities = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 9999);
         long readTime = System.currentTimeMillis() - start;
 
         IntegrationHelper.logSeparator(TAG);
@@ -164,8 +181,8 @@ public class TrackDaoTest {
 
             EventEntity eventEntity = new EventEntity();
             eventEntity.setBody(Json.toJson(trackEvent));
-            eventEntity.setTimestamp(timestamp + i);
-            eventEntity.setStatus(!markAsDeleted ? EventEntity.STATUS_ACTIVE : EventEntity.STATUS_DELETED);
+            eventEntity.setCreatedAt(timestamp + i);
+            eventEntity.setStatus(!markAsDeleted ? StorageRecordStatus.ACTIVE : StorageRecordStatus.DELETED);
             trackEventList.add(eventEntity);
         }
         return trackEventList;

@@ -24,6 +24,7 @@ import fake.MySegmentsCacheStub;
 import fake.RefreshableMySegmentsFetcherProviderStub;
 import fake.RefreshableSplitFetcherProviderStub;
 import fake.SplitCacheStub;
+import io.split.android.client.EventPropertiesProcessor;
 import io.split.android.client.TrackClient;
 import io.split.android.client.TrackClientImpl;
 import io.split.android.client.dtos.Event;

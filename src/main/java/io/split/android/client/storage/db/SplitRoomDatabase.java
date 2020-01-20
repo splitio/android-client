@@ -22,7 +22,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
 
     public abstract SplitDao splitDao();
 
-    public abstract EventDao trackEventDao();
+    public abstract EventDao eventDao();
 
     public abstract ImpressionDao impressionDao();
 

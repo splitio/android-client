@@ -10,6 +10,10 @@ import androidx.room.PrimaryKey;
 public class GeneralInfoEntity {
 
     public static final String CHANGE_NUMBER_INFO = "splitChangesChangeNumber";
+    public static final String DATBASE_MIGRATION_STATUS = "databaseMigrationStatus";
+
+    public static final int DATBASE_MIGRATION_STATUS_DONE = 1;
+
 
     @PrimaryKey()
     @NonNull

@@ -1,4 +1,4 @@
-package io.split.android.client.service;
+package io.split.android.client.service.http;
 
 import androidx.annotation.NonNull;
 
@@ -52,7 +52,8 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
 
             URIBuilder uriBuilder = new URIBuilder(mTarget);
             for (Map.Entry<String, Object> param : params.entrySet()) {
-                uriBuilder.addParameter(param.getKey(), param.getValue().toString());
+                Object value = param.getValue();
+                uriBuilder.addParameter(param.getKey(), value != null ? value.toString() : "");
             }
 
             HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET).execute();

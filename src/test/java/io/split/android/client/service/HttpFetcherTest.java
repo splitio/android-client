@@ -1,4 +1,4 @@
-package io.split.android.engine.splits;
+package io.split.android.client.service;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,11 +22,11 @@ import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.HttpResponseImpl;
 import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.URIBuilder;
-import io.split.android.client.service.HttpFetcher;
-import io.split.android.client.service.HttpFetcherException;
-import io.split.android.client.service.HttpFetcherImpl;
+import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.http.HttpFetcherImpl;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
-import io.split.android.client.service.HttpResponseParser;
+import io.split.android.client.service.http.HttpResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;

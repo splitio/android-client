@@ -21,9 +21,9 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
-import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
+import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 
 public class SplitsStorageTest {
 
@@ -36,6 +36,7 @@ public class SplitsStorageTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext.deleteDatabase("encripted_api_key");
         mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
         mRoomDb.clearAllTables();
         List<SplitEntity> entities = new ArrayList<>();
@@ -118,7 +119,7 @@ public class SplitsStorageTest {
 
     @Test
     public void addNullSplitList() {
-        ProcessedSplitChange change = new ProcessedSplitChange(null,  new ArrayList<>(), 1L);
+        ProcessedSplitChange change = new ProcessedSplitChange(null, new ArrayList<>(), 1L);
         mSplitsStorage.update(change);
 
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
@@ -310,6 +311,5 @@ public class SplitsStorageTest {
         }
         return split;
     }
-
 }
 

@@ -5,6 +5,7 @@ import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
+import io.split.android.client.EventPropertiesProcessor;
 import io.split.android.client.TrackClient;
 import io.split.android.client.cache.IMySegmentsCache;
 import io.split.android.client.impressions.ImpressionsManager;

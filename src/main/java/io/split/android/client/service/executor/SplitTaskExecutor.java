@@ -1,9 +1,15 @@
 package io.split.android.client.service.executor;
 
-public interface SplitTaskExecutor {
-    void schedule(SplitTask task, long initialDelayInSecs, long periodInSecs);
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-    void submit(SplitTask task);
+public interface SplitTaskExecutor {
+    void schedule(@NonNull SplitTask task,
+                  long initialDelayInSecs,
+                  long periodInSecs,
+                  @Nullable SplitTaskExecutionListener executionListener);
+
+    void submit(@NonNull SplitTask task, @Nullable SplitTaskExecutionListener executionListener);
 
     void pause();
 

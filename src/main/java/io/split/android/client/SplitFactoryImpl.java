@@ -2,6 +2,8 @@ package io.split.android.client;
 
 import android.content.Context;
 
+import androidx.work.WorkManager;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,6 +14,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.Event;
+import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
@@ -29,17 +33,28 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
-import io.split.android.client.service.HttpFetcher;
-import io.split.android.client.service.HttpFetcherImpl;
+import io.split.android.client.service.HttpRequestBodySerializer;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.SyncManager;
 import io.split.android.client.service.SyncManagerImpl;
+import io.split.android.client.service.events.EventsRequestBodySerializer;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
+import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.executor.SplitTaskFactoryImpl;
+import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.http.HttpFetcherImpl;
+import io.split.android.client.service.http.HttpRecorder;
+import io.split.android.client.service.http.HttpRecorderImpl;
+import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
+import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.storage.impressions.SqLitePersistentImpressionsStorage;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.IStorage;
 import io.split.android.client.storage.legacy.ImpressionsFileStorage;
@@ -91,7 +106,8 @@ public class SplitFactoryImpl implements SplitFactory {
     private SyncManager _syncManager;
     private SplitTaskExecutor _splitTaskExecutor;
 
-    public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+    public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
+            throws URISyntaxException {
 
         ValidationConfig.getInstance().setMaximumKeyLength(config.maximumKeyLength());
         ValidationConfig.getInstance().setTrackEventNamePattern(config.trackEventNamePattern());
@@ -144,16 +160,11 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, dataFolderName);
         PersistentMySegmentsStorage persistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(splitRoomDatabase, key.matchingKey());
         MySegmentsStorage mySegmentsStorage = new MySegmentsStorageImpl(persistentMySegmentsStorage);
-
-
-//        IMySegmentsCache mySegmentsCache = new MySegmentsStorageWrapper(mySegmentsStorage);
-//        MySegmentsFetcher mySegmentsFetcher = HttpMySegmentsFetcher.create(httpClient, rootTarget, mySegmentsCache);
-//        final RefreshableMySegmentsFetcherProviderImpl segmentFetcher = new RefreshableMySegmentsFetcherProviderImpl(mySegmentsFetcher, findPollingPeriod(RANDOM, config.segmentsRefreshRate()), key.matchingKey(), _eventsManager);
+        PersistentImpressionsStorage persistentImpressionsStorage = new SqLitePersistentImpressionsStorage(splitRoomDatabase, 100);
+        PersistentEventsStorage persistentEventsStorage = new SqLitePersistentEventsStorage(splitRoomDatabase, 100);
 
         SplitParser splitParser = new SplitParser(mySegmentsStorage);
 
-        // Feature Changes
-        IStorage fileStorage = new FileStorage(context.getCacheDir(), dataFolderName);
 
         // TODO: On final implementation wrap this in a component
         CachedMetrics cachedMetrics = new CachedMetrics(httpMetrics, TimeUnit.SECONDS.toMillis(config.metricsRefreshRate()));
@@ -166,9 +177,9 @@ public class SplitFactoryImpl implements SplitFactory {
                 Metrics.SPLIT_CHANGES_FETCHER_TIME,
                 Metrics.SPLIT_CHANGES_FETCHER_STATUS
         );
-        URI splitChangesUri = new URI(config.endpoint() + "/" + SdkTargetPath.SPLIT_CHANGES);
+
         HttpFetcher<SplitChange> splitsFetcher = new HttpFetcherImpl<SplitChange>(httpClient,
-                splitChangesUri, cachedFireAndForgetMetrics,
+                SdkTargetPath.splitChanges(config.endpoint()), cachedFireAndForgetMetrics,
                 splitsfetcherMetricsConfig,
                 networkHelper, new SplitChangeResponseParser());
 
@@ -177,13 +188,24 @@ public class SplitFactoryImpl implements SplitFactory {
                 Metrics.MY_SEGMENTS_FETCHER_TIME,
                 Metrics.MY_SEGMENTS_FETCHER_STATUS
         );
-        URI mySegmentsUri = new URI(config.endpoint() + "/" + SdkTargetPath.MY_SEGMENTS);
+
         HttpFetcher<List<MySegment>> mySegmentsFetcher = new HttpFetcherImpl<List<MySegment>>(httpClient,
-                mySegmentsUri, cachedFireAndForgetMetrics,
+                SdkTargetPath.mySegments(config.endpoint()), cachedFireAndForgetMetrics,
                 mySegmentsfetcherMetricsConfig,
                 networkHelper, new MySegmentsResponseParser());
 
-        SplitApiFacade splitApiFacade = new SplitApiFacade(splitsFetcher, mySegmentsFetcher);
+        HttpRecorder<List<Event>> eventsRecorder = new HttpRecorderImpl<List<Event>>(
+                httpClient, SdkTargetPath.events(config.eventsEndpoint()), networkHelper,
+                new EventsRequestBodySerializer());
+
+        HttpRecorder<List<KeyImpression>> impressionsRecorder = new HttpRecorderImpl<List<KeyImpression>>(
+                httpClient, SdkTargetPath.events(config.eventsEndpoint()), networkHelper,
+                new ImpressionsRequestBodySerializer());
+
+
+        SplitApiFacade splitApiFacade = new SplitApiFacade(
+                splitsFetcher, mySegmentsFetcher,
+                eventsRecorder, impressionsRecorder);
 
         PersistentSplitsStorage persistentSplitsStorage = new SqLitePersistentSplitsStorage(splitRoomDatabase);
         SplitsStorage splitsStorage = new SplitsStorageImpl(persistentSplitsStorage);
@@ -191,19 +213,16 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
 
         SplitStorageContainer storageContainer = new SplitStorageContainer(
-                splitsStorage,
-                mySegmentsStorage);
+                splitsStorage, mySegmentsStorage,
+                persistentEventsStorage, persistentImpressionsStorage);
+
+        SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(config, splitApiFacade, storageContainer);
+
         _syncManager = new SyncManagerImpl(
-                config, _splitTaskExecutor, splitApiFacade,
-                storageContainer, _eventsManager
+                config, _splitTaskExecutor, storageContainer, splitTaskFactory,
+                _eventsManager, WorkManager.getInstance(context)
         );
 
-        //ISplitChangeCache splitChangeCache = new SplitChangeCache(splitsStorage);
-//
-//        SplitChangeFetcher splitChangeFetcher = HttpSplitChangeFetcher.create(httpClient, rootTarget, uncachedFireAndForget, splitChangeCache);
-//        final RefreshableSplitFetcherProvider splitFetcherProvider = new RefreshableSplitFetcherProviderImpl(
-//                splitChangeFetcher, splitParser, findPollingPeriod(RANDOM,
-//                config.featuresRefreshRate()), _eventsManager, splitsStorage.getTill());
 
         // Impressionss
         ImpressionsStorageManagerConfig impressionsStorageManagerConfig = new ImpressionsStorageManagerConfig();
@@ -228,7 +247,6 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             impressionListener = splitImpressionListener;
         }
-
 
         TrackClientConfig trackConfig = new TrackClientConfig();
         trackConfig.setFlushIntervalMillis(config.eventFlushInterval());
@@ -297,7 +315,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
 
         _client = new SplitClientImpl(this, key, splitParser,
-                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, _trackClient, splitsStorage);
+                impressionListener, cachedFireAndForgetMetrics, config, _eventsManager, splitsStorage, new EventPropertiesProcessorImpl());
         _manager = new SplitManagerImpl(splitsStorage, new SplitValidatorImpl(), splitParser);
 
         _eventsManager.getExecutorResources().setSplitClient(_client);

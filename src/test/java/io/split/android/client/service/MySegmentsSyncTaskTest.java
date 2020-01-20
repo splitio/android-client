@@ -12,7 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.service.HttpFetcher;
+import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 

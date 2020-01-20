@@ -3,7 +3,6 @@ package io.split.android.client;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
-
 import io.split.android.client.utils.Logger;
 
 /**
@@ -20,6 +19,7 @@ public class SplitClientConfig {
     private final int _segmentsRefreshRate;
     private final int _impressionsRefreshRate;
     private final int _impressionsQueueSize;
+    private final int _impressionsPerPush;
     private final static int _impressionsMaxSentAttempts = 3;
     private final static long _impressionsChunkOudatedTime = 3600 * 1000; // One day millis
 
@@ -33,6 +33,7 @@ public class SplitClientConfig {
     private final ImpressionListener _impressionListener;
     private final int _waitBeforeShutdown;
     private long _impressionsChunkSize;
+    private boolean _synchronizeInBackground;
 
     //.Track configuration
     private final int _eventsQueueSize;
@@ -63,7 +64,9 @@ public class SplitClientConfig {
                               int segmentsRefreshRate,
                               int impressionsRefreshRate,
                               int impressionsQueueSize,
-                              long impressionsChunkSize, int metricsRefreshRate,
+                              long impressionsChunkSize,
+                              int impressionsPerPush,
+                              int metricsRefreshRate,
                               int connectionTimeout,
                               int readTimeout,
                               int numThreadsForSegmentFetch,
@@ -77,13 +80,15 @@ public class SplitClientConfig {
                               int eventsQueueSize,
                               int eventsPerPush,
                               long eventFlushInterval,
-                              String trafficType) {
+                              String trafficType,
+                              boolean synchronizeInBackground) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
         _segmentsRefreshRate = segmentsRefreshRate;
         _impressionsRefreshRate = impressionsRefreshRate;
         _impressionsQueueSize = impressionsQueueSize;
+        _impressionsPerPush = impressionsPerPush;
         _metricsRefreshRate = metricsRefreshRate;
         _connectionTimeout = connectionTimeout;
         _readTimeout = readTimeout;
@@ -101,6 +106,7 @@ public class SplitClientConfig {
         _eventsPerPush = eventsPerPush;
         _eventFlushInterval = eventFlushInterval;
         _trafficType = trafficType;
+        _synchronizeInBackground = synchronizeInBackground;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -166,6 +172,10 @@ public class SplitClientConfig {
 
     public long impressionsChunkSize() {
         return _impressionsChunkSize;
+    }
+
+    public int impressionsPerPush() {
+        return _impressionsPerPush;
     }
 
     public int metricsRefreshRate() {
@@ -280,6 +290,10 @@ public class SplitClientConfig {
         return _ip;
     }
 
+    public boolean synchronizeInBackground() {
+        return _synchronizeInBackground;
+    }
+
     public static final class Builder {
 
         private String _endpoint = "https://sdk.split.io/api";
@@ -291,6 +305,7 @@ public class SplitClientConfig {
         private int _segmentsRefreshRate = 1800;
         private int _impressionsRefreshRate = 1800;
         private int _impressionsQueueSize = 30000;
+        private int _impressionsPerPush = 2000;
         private int _connectionTimeout = 15000;
         private int _readTimeout = 15000;
         private int _numThreadsForSegmentFetch = 2;
@@ -310,6 +325,7 @@ public class SplitClientConfig {
 
         private String _hostname = "unknown";
         private String _ip = "unknown";
+        private boolean _synchronizeInBackground = false;
 
         public Builder() {
         }
@@ -436,6 +452,17 @@ public class SplitClientConfig {
          */
         public Builder impressionsQueueSize(int impressionsQueueSize) {
             _impressionsQueueSize = impressionsQueueSize;
+            return this;
+        }
+
+        /**
+         * Max size of the batch to push impressions
+         *
+         * @param impressionsPerPush
+         * @return this builder
+         */
+        public Builder impressionsPerPush(int impressionsPerPush) {
+            _impressionsPerPush = impressionsPerPush;
             return this;
         }
 
@@ -591,6 +618,19 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * When set to true app sync is done
+         * using android resources event while app is in background.
+         * Otherwise synchronization only occurs while app
+         * is in foreground
+         *
+         * @return true when synchronization is done in background
+         */
+        public Builder sychronizeInBackground(boolean synchronizeInBackground) {
+            _synchronizeInBackground = synchronizeInBackground;
+            return this;
+        }
+
         public SplitClientConfig build() {
 
             if (_featuresRefreshRate < 30) {
@@ -648,7 +688,9 @@ public class SplitClientConfig {
                     _segmentsRefreshRate,
                     _impressionsRefreshRate,
                     _impressionsQueueSize,
-                    _impressionsChunkSize, _metricsRefreshRate,
+                    _impressionsChunkSize,
+                    _impressionsPerPush,
+                    _metricsRefreshRate,
                     _connectionTimeout,
                     _readTimeout,
                     _numThreadsForSegmentFetch,
@@ -662,7 +704,8 @@ public class SplitClientConfig {
                     _eventsQueueSize,
                     _eventsPerPush,
                     _eventFlushInterval,
-                    _trafficType);
+                    _trafficType,
+                    _synchronizeInBackground);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

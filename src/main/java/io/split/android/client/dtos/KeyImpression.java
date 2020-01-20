@@ -1,7 +1,10 @@
 package io.split.android.client.dtos;
 
 
+import io.split.android.client.utils.Json;
+
 public class KeyImpression {
+    public transient long storageId;
     public String feature;
     public String keyName;
     public String bucketingKey;

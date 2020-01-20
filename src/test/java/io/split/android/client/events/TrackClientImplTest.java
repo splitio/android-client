@@ -2,6 +2,7 @@ package io.split.android.client.events;
 
 import com.google.common.base.Strings;
 
+import io.split.android.client.EventPropertiesProcessor;
 import io.split.android.client.TrackClient;
 import io.split.android.client.TrackClientImpl;
 import io.split.android.client.dtos.Event;
@@ -44,7 +45,7 @@ public class TrackClientImplTest {
         config.setFlushIntervalMillis(100000);
         config.setWaitBeforeShutdown(100000);
         config.setMaxEventsPerPost(10000);
-        TrackClient eventClient = TrackClientImpl.create(
+        TrackClient trackClient = TrackClientImpl.create(
                 config, new HttpClientMock(),
                 URI.create("https://kubernetesturl.com/split"),
                 new TrackStorageManager(
@@ -53,12 +54,12 @@ public class TrackClientImplTest {
                 senderExecutor);
 
         for (int i = 0; i < 165; ++i) {
-            eventClient.track(create32kbEvent());
+            trackClient.track(create32kbEvent());
         }
 
         int prevSubmitCount = senderExecutor.getSubmitCount();
 
-        eventClient.track(create32kbEvent());
+        trackClient.track(create32kbEvent());
 
         latch.await(15, TimeUnit.SECONDS);
 
@@ -77,7 +78,7 @@ public class TrackClientImplTest {
         config.setFlushIntervalMillis(999999);
         config.setWaitBeforeShutdown(100000);
         config.setMaxEventsPerPost(2);
-        TrackClient eventClient = TrackClientImpl.create(
+        TrackClient trackClient = TrackClientImpl.create(
                 config, new HttpClientMock(),
                 URI.create("https://kubernetesturl.com/split"),
                 new TrackStorageManager(
@@ -86,13 +87,13 @@ public class TrackClientImplTest {
                 senderExecutor);
 
         for (int i = 0; i < 9; ++i) {
-            eventClient.track(create32kbEvent());
+            trackClient.track(create32kbEvent());
         }
 
         Thread.sleep(5000);
         int prevSubmitCount = senderExecutor.getSubmitCount();
 
-        eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
+        trackClient.track(create32kbEvent()); // 159 32kb events should be about to flush
 
         latch.await(5, TimeUnit.SECONDS);
 
@@ -112,7 +113,7 @@ public class TrackClientImplTest {
         config.setFlushIntervalMillis(999999);
         config.setWaitBeforeShutdown(100000);
         config.setMaxEventsPerPost(2);
-        TrackClient eventClient = TrackClientImpl.create(
+        TrackClient trackClient = TrackClientImpl.create(
                 config, new HttpClientMock(),
                 URI.create("https://kubernetesturl.com/split"),
                 new TrackStorageManager(
@@ -121,7 +122,7 @@ public class TrackClientImplTest {
                 senderExecutor);
 
         for (int i = 0; i < 10; ++i) {
-            eventClient.track(create32kbEvent());
+            trackClient.track(create32kbEvent());
         }
 
         latch.await(5, TimeUnit.SECONDS);
@@ -130,7 +131,7 @@ public class TrackClientImplTest {
 
         int prevSubmitCount = senderExecutor.getSubmitCount();
 
-        eventClient.track(create32kbEvent()); // 159 32kb events should be about to flush
+        trackClient.track(create32kbEvent()); // 159 32kb events should be about to flush
 
         latch.await(5, TimeUnit.SECONDS);
 
