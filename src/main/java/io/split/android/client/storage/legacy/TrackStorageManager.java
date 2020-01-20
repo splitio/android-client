@@ -183,4 +183,9 @@ public class TrackStorageManager {
         }
         mFileStorageManager.delete(CHUNK_HEADERS_FILE_NAME);
     }
+
+    public void deleteAllFiles() {
+        List<String> filesToDelete = mFileStorageManager.getAllIds(TRACK_FILE_PREFIX);
+        mFileStorageManager.delete(filesToDelete);
+    }
 }

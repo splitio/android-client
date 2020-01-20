@@ -58,25 +58,22 @@ public final class SplitClientImpl implements SplitClient {
                            EventPropertiesProcessor eventPropertiesProcessor,
                            ISplitCache splitCache) {
 
+        checkNotNull(splitFetcher);
+        checkNotNull(impressionListener);
+
         String mBucketingKey = key.bucketingKey();
-        mMatchingKey = key.matchingKey();
-        mSplitFactory = container;
-        mConfig = config;
-        mEventsManager = eventsManager;
+        mMatchingKey = checkNotNull(key.matchingKey());
+
+        mSplitFactory = checkNotNull(container);
+        mConfig = checkNotNull(config);
+        mEventsManager = checkNotNull(eventsManager);
         mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = new TreatmentManagerImpl(
                 mMatchingKey, mBucketingKey, new EvaluatorImpl(splitFetcher),
                 new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), metrics,
                 impressionListener, mConfig, eventsManager);
-
-        checkNotNull(splitFetcher);
-        checkNotNull(impressionListener);
-        checkNotNull(mMatchingKey);
-        checkNotNull(mEventsManager);
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
-
-        // TODO: Initialize sync manager when integrating all components
     }
 
     @Override

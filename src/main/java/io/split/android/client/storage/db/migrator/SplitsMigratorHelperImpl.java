@@ -32,7 +32,7 @@ public class SplitsMigratorHelperImpl implements SplitsMigratorHelper {
             SplitEntity splitEntity = createSplitEntity(split);
             entities.add(splitEntity);
         }
-
+        mSplitCacheMigrator.deleteAllFiles();
         return new Pair<>(mSplitCacheMigrator.getChangeNumber(), entities);
     }
 

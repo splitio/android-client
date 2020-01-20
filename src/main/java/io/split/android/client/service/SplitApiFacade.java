@@ -19,7 +19,6 @@ public class SplitApiFacade {
     private final HttpRecorder<List<Event>> mEventsRecorder;
     private final HttpRecorder<List<KeyImpression>> mImpressionsRecorder;
 
-
     public SplitApiFacade(@NonNull HttpFetcher<SplitChange> splitFetcher,
                           @NonNull HttpFetcher<List<MySegment>> mySegmentsFetcher,
                           @NonNull HttpRecorder<List<Event>> eventsRecorder,
