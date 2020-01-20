@@ -34,6 +34,7 @@ public class MySegmentsMigratorHelperImpl implements MySegmentsMigratorHelper {
             MySegmentEntity mySegmentEntity = createMySegmentEntity(entry.getKey(), entry.getValue());
             entities.add(mySegmentEntity);
         }
+        mMySegmentsCacheMigrator.deleteAllFiles();
         return entities;
     }
 

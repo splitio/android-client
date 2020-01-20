@@ -24,18 +24,24 @@ public class ImpressionsMigratorHelperImpl implements ImpressionsMigratorHelper 
 
     @Override
     public List<ImpressionEntity> loadLegacyImpressionsAsEntities() {
-        List<StoredImpressions> impressionsChuncks = mImpressionsStorageManager.getStoredImpressions();
         List<ImpressionEntity> entities = new ArrayList<>();
-        for(StoredImpressions chunk : impressionsChuncks) {
+        List<StoredImpressions> impressionsChuncks = mImpressionsStorageManager.getStoredImpressions();
+
+        for (StoredImpressions chunk : impressionsChuncks) {
             List<TestImpressions> testImpressions = chunk.impressions();
-            for(TestImpressions testImpression : testImpressions) {
-                List<KeyImpression> impressions = testImpression.keyImpressions;
-                for(KeyImpression impression : impressions) {
-                    ImpressionEntity impressionEntity = createImpressionEntity(impression);
-                    entities.add(impressionEntity);
+            if (testImpressions != null) {
+                for (TestImpressions testImpression : testImpressions) {
+                    List<KeyImpression> impressions = testImpression.keyImpressions;
+                    if (impressions != null) {
+                        for (KeyImpression impression : impressions) {
+                            ImpressionEntity impressionEntity = createImpressionEntity(impression);
+                            entities.add(impressionEntity);
+                        }
+                    }
                 }
             }
         }
+        mImpressionsStorageManager.deleteAllFiles();
         return entities;
     }
 

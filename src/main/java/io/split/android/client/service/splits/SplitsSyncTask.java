@@ -23,16 +23,12 @@ public class SplitsSyncTask implements SplitTask {
     private final SplitChangeProcessor mSplitChangeProcessor;
 
 
-    public SplitsSyncTask(@NonNull HttpFetcher<SplitChange> splitFetcher,
-                          @NonNull SplitsStorage splitsStorage,
-                          @NonNull SplitChangeProcessor splitChangeProcessor) {
-        checkNotNull(splitFetcher);
-        checkNotNull(splitsStorage);
-        checkNotNull(splitChangeProcessor);
-
-        mSplitFetcher = splitFetcher;
-        mSplitsStorage = splitsStorage;
-        mSplitChangeProcessor = splitChangeProcessor;
+    public SplitsSyncTask(HttpFetcher<SplitChange> splitFetcher,
+                          SplitsStorage splitsStorage,
+                          SplitChangeProcessor splitChangeProcessor) {
+        mSplitFetcher = checkNotNull(splitFetcher);
+        mSplitsStorage = checkNotNull(splitsStorage);
+        mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
     }
 
     @Override

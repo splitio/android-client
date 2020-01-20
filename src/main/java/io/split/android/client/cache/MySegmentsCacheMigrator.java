@@ -12,4 +12,9 @@ public interface MySegmentsCacheMigrator {
      * while migrating to new storage implementation
      */
     Map<String, List<MySegment>> getAllMySegments();
+
+    /**
+     * Removes all data from disk
+     */
+    void deleteAllFiles();
 }
