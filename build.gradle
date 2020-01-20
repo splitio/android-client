@@ -52,7 +52,7 @@ android {
 }
 
 dependencies {
-    def roomVersion = '2.2.1'
+    def roomVersion = '2.2.2'
     def lifeCycleVersion = '2.1.0'
 
     // Room components

@@ -6,7 +6,6 @@ import androidx.work.WorkManager;
 
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -87,7 +86,10 @@ public class SyncManagerTest {
         when(mSplitStorageContainer.getEventsStorage()).thenReturn(mEventsStorage);
         when(mSplitStorageContainer.getImpressionsStorage()).thenReturn(mImpressionsStorage);
 
-
+        when(mTaskFactory.createSplitsSyncTask()).thenReturn(Mockito.mock(SplitsSyncTask.class));
+        when(mTaskFactory.createMySegmentsSyncTask()).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
+        when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
+        when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
 
         mSyncManager = new SyncManagerImpl(splitClientConfig, mTaskExecutor,
                 mSplitStorageContainer, mTaskFactory, mWorkManager);
@@ -103,10 +105,11 @@ public class SyncManagerTest {
         setup(config);
         mSyncManager.start();
         verify(mTaskExecutor, times(1)).schedule(
-                any(SplitsSyncTask.class), anyLong(), anyLong(), any());
+                any(SplitsSyncTask.class), anyLong(), anyLong(),
+                isNull());
         verify(mTaskExecutor, times(1)).schedule(
                 any(MySegmentsSyncTask.class), anyLong(), anyLong(),
-                any());
+                isNull());
         verify(mTaskExecutor, times(1)).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
@@ -115,22 +118,22 @@ public class SyncManagerTest {
                 any(SplitTaskExecutionListener.class));
 
         verify(mWorkManager, never()).enqueueUniquePeriodicWork(
-                SplitTaskType.SPLITS_SYNC.toString(),
+                eq(SplitTaskType.SPLITS_SYNC.toString()),
                 any(ExistingPeriodicWorkPolicy.class),
                 any(PeriodicWorkRequest.class));
 
         verify(mWorkManager, never()).enqueueUniquePeriodicWork(
-                SplitTaskType.MY_SEGMENTS_SYNC.toString(),
+                eq(SplitTaskType.MY_SEGMENTS_SYNC.toString()),
                 any(ExistingPeriodicWorkPolicy.class),
                 any(PeriodicWorkRequest.class));
 
         verify(mWorkManager, never()).enqueueUniquePeriodicWork(
-                SplitTaskType.EVENTS_RECORDER.toString(),
+                eq(SplitTaskType.EVENTS_RECORDER.toString()),
                 any(ExistingPeriodicWorkPolicy.class),
                 any(PeriodicWorkRequest.class));
 
         verify(mWorkManager, never()).enqueueUniquePeriodicWork(
-                SplitTaskType.IMPRESSIONS_RECORDER.toString(),
+                eq(SplitTaskType.IMPRESSIONS_RECORDER.toString()),
                 any(ExistingPeriodicWorkPolicy.class),
                 any(PeriodicWorkRequest.class));
     }

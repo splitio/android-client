@@ -171,7 +171,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
             scheduleWork(SplitTaskType.IMPRESSIONS_RECORDER.toString(), ImpressionsRecorderWorker.class, ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
         } else {
             mTaskExecutor.schedule(mSplitTaskFactory.createImpressionsRecorderTask(), ServiceConstants.NO_INITIAL_DELAY,
-                    mSplitClientConfig.impressionsRefreshRate(), null);
+                    mSplitClientConfig.impressionsRefreshRate(), this);
         }
     }
 
@@ -200,7 +200,6 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
                 TimeUnit.SECONDS).build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.KEEP, request);
     }
-
 
     private void updateEventsTaskStatus(SplitTaskExecutionInfo executionInfo) {
         if (executionInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
