@@ -111,6 +111,23 @@ public class PersistentImpressionStorageTest {
         Assert.assertEquals(20, deletedImpressions.size());
     }
 
+    @Test
+    public void setActive() {
+
+        List<KeyImpression> impressions = mPersistentImpressionStorage.pop(100);
+        List<ImpressionEntity> activeImpressionsBefore = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 100);
+        List<ImpressionEntity> deletedImpressionsBefore = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED, 100);
+        mPersistentImpressionStorage.setActive(impressions);
+        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 100);
+        List<ImpressionEntity> deletedImpressionsAfter = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED, 100);
+
+        Assert.assertEquals(10, impressions.size());
+        Assert.assertEquals(10, activeImpressionsBefore.size());
+        Assert.assertEquals(20, deletedImpressionsBefore.size());
+        Assert.assertEquals(20, activeImpressions.size());
+        Assert.assertEquals(10, deletedImpressionsAfter.size());
+    }
+
     private void generateImpressions(int from, int to, int status, boolean expired) {
         for(int i = from; i <= to; i++) {
             long timestamp  = System.currentTimeMillis() / 1000;

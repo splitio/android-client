@@ -10,7 +10,8 @@ import io.split.android.client.impressions.Impression;
 
 public interface PersistentImpressionsStorage {
     void push(@NonNull KeyImpression impression);
-    void pushMany(@NonNull List<KeyImpression> impression);
+    void pushMany(@NonNull List<KeyImpression> impressions);
     List<KeyImpression> pop(int count);
     List<KeyImpression> getCritical();
+    void setActive(@NonNull List<KeyImpression> impressions);
 }
