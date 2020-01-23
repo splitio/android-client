@@ -10,6 +10,7 @@ import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.service.SyncManager;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.engine.experiments.SplitFetcher;
@@ -38,8 +39,9 @@ public class SplitClientImplFactory {
                 new Metrics.NoopMetrics(),
                 cfg,
                 eventsManager,
+                mock(SplitsStorage.class),
                 mock(EventPropertiesProcessor.class),
-                new SplitCacheStub(new ArrayList<>())
+                mock(SyncManager.class)
         );
             try {
                 Thread.sleep(200);
@@ -62,8 +64,9 @@ public class SplitClientImplFactory {
                 new Metrics.NoopMetrics(),
                 cfg,
                 new SplitEventsManager(cfg),
+                mock(SplitsStorage.class),
                 mock(EventPropertiesProcessor.class),
-                new SplitCacheStub(new ArrayList<>())
+                mock(SyncManager.class)
         );
     }
 
@@ -77,8 +80,9 @@ public class SplitClientImplFactory {
                 new Metrics.NoopMetrics(),
                 SplitClientConfig.builder().build(),
                 eventsManager,
+                mock(SplitsStorage.class),
                 mock(EventPropertiesProcessor.class),
-                new SplitCacheStub(new ArrayList<>())
+                mock(SyncManager.class)
         );
     }
 }
