@@ -39,10 +39,9 @@ public class SplitsSyncTask implements SplitTask {
             params.put(SINCE_PARAM, mSplitsStorage.getTill());
             SplitChange splitChange = mSplitFetcher.execute(params);
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
-        } catch (IllegalStateException e) {
-            logError(e.getLocalizedMessage());
         } catch (Exception e) {
             logError("unexpected " + e.getLocalizedMessage());
+            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         }
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }

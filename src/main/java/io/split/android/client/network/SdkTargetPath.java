@@ -13,8 +13,8 @@ public class SdkTargetPath {
         return buildUrl(baseUrl, SPLIT_CHANGES);
     }
 
-    public static final URI mySegments(String baseUrl) throws URISyntaxException {
-        return buildUrl(baseUrl, MY_SEGMENTS);
+    public static final URI mySegments(String baseUrl, String key) throws URISyntaxException {
+        return buildUrl(baseUrl, MY_SEGMENTS + "/" + key);
     }
 
     public static final URI events(String baseUrl) throws URISyntaxException {

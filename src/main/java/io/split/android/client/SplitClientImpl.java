@@ -45,7 +45,7 @@ public final class SplitClientImpl implements SplitClient {
     private final TreatmentManager mTreatmentManager;
     private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
-    private SyncManager mSyncManager;
+    private final SyncManager mSyncManager;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -59,7 +59,8 @@ public final class SplitClientImpl implements SplitClient {
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
                            SplitsStorage splitsStorage,
-                           EventPropertiesProcessor eventPropertiesProcessor) {
+                           EventPropertiesProcessor eventPropertiesProcessor,
+                           SyncManager syncManager) {
 
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
@@ -77,6 +78,7 @@ public final class SplitClientImpl implements SplitClient {
                 new KeyValidatorImpl(), new SplitValidatorImpl(), metrics,
                 impressionListener, mConfig, eventsManager);
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
+        mSyncManager = checkNotNull(syncManager);
     }
 
     @Override
