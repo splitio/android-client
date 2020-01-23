@@ -14,8 +14,6 @@ import fake.HttpClientStub;
 import io.split.android.client.impressions.IImpressionsStorage;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.storage.legacy.ImpressionsFileStorage;
-import io.split.android.client.impressions.ImpressionsManagerConfig;
-import io.split.android.client.impressions.ImpressionsManagerImpl;
 import io.split.android.client.storage.legacy.ImpressionsStorageManager;
 import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
 

@@ -2,16 +2,11 @@ package io.split.android.client.events;
 
 import com.google.common.base.Strings;
 
-import io.split.android.client.EventPropertiesProcessor;
-import io.split.android.client.TrackClient;
-import io.split.android.client.TrackClientImpl;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.legacy.FileStorage;
-import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.fake.ExecutorServiceMock;
 import io.split.android.fake.HttpClientMock;
-import io.split.android.fake.SplitCacheStub;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,7 +17,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;

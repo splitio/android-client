@@ -7,7 +7,6 @@ import org.junit.Test;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -15,13 +14,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import fake.HttpClientStub;
-import fake.SplitCacheStub;
-import io.split.android.client.TrackClient;
-import io.split.android.client.TrackClientImpl;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.track.ITrackStorage;
-import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.storage.legacy.TrackStorageManager;
 
 public class TracksFileStorageTest {

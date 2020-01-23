@@ -23,16 +23,11 @@ import fake.ImpressionsManagerStub;
 import fake.MySegmentsCacheStub;
 import fake.RefreshableMySegmentsFetcherProviderStub;
 import fake.RefreshableSplitFetcherProviderStub;
-import fake.SplitCacheStub;
-import io.split.android.client.EventPropertiesProcessor;
-import io.split.android.client.TrackClient;
-import io.split.android.client.TrackClientImpl;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.lifecycle.LifecycleManager;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
-import io.split.android.client.track.TrackClientConfig;
 import io.split.android.client.storage.legacy.TrackStorageManager;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
