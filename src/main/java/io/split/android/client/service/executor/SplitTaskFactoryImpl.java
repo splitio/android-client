@@ -9,7 +9,9 @@ import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
+import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -63,4 +65,13 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 mSplitsStorageContainer.getMySegmentsStorage());
     }
 
+    @Override
+    public SplitTask createLoadMySegmentsTask() {
+        return new LoadMySegmentsTask(mSplitsStorageContainer.getMySegmentsStorage());
+    }
+
+    @Override
+    public SplitTask createLoadSplitsTask() {
+        return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage());
+    }
 }

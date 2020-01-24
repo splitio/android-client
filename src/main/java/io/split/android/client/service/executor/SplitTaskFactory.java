@@ -8,4 +8,8 @@ public interface SplitTaskFactory {
     SplitTask createSplitsSyncTask();
 
     SplitTask createMySegmentsSyncTask();
+
+    SplitTask createLoadMySegmentsTask();
+
+    SplitTask createLoadSplitsTask();
 }
