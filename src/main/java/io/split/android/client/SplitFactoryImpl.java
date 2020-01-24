@@ -8,7 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
@@ -89,8 +89,7 @@ public class SplitFactoryImpl implements SplitFactory {
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
 
-        ValidationConfig.getInstance().setMaximumKeyLength(config.maximumKeyLength());
-        ValidationConfig.getInstance().setTrackEventNamePattern(config.trackEventNamePattern());
+        setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
         ValidationMessageLogger validationLogger = new ValidationMessageLoggerImpl();
 
@@ -111,89 +110,30 @@ public class SplitFactoryImpl implements SplitFactory {
         _factoryMonitor.add(apiToken);
         _apiKey = apiToken;
 
-        SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
-        headersBuilder.setHostIp(config.ip());
-        headersBuilder.setHostname(config.hostname());
-        headersBuilder.setClientVersion(SplitClientConfig.splitSdkVersion);
-        headersBuilder.setApiToken(apiToken);
-
         final HttpClient httpClient = new HttpClientImpl();
-        httpClient.addHeaders(headersBuilder.build());
+        httpClient.addHeaders(buildHeaders(config, apiToken));
 
         URI eventsRootTarget = URI.create(config.eventsEndpoint());
 
-        // TODO: 11/23/17  Add MetricsCache
-        // Metrics
         HttpMetrics httpMetrics = HttpMetrics.create(httpClient, eventsRootTarget);
         final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
 
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
         gates = new SDKReadinessGates();
 
-        String dataFolderName = Utils.convertApiKeyToFolder(apiToken);
-        if (dataFolderName == null) {
-            dataFolderName = config.defaultDataFolder();
-        }
+        SplitStorageContainer storageContainer = buildStorageContainer(context, key, buildDatabaseName(config, apiToken));
 
-        // TODO: On final implementation wrap this in a component
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, dataFolderName);
-        PersistentMySegmentsStorage persistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(splitRoomDatabase, key.matchingKey());
-        MySegmentsStorage mySegmentsStorage = new MySegmentsStorageImpl(persistentMySegmentsStorage);
-        PersistentImpressionsStorage persistentImpressionsStorage = new SqLitePersistentImpressionsStorage(splitRoomDatabase, 100);
-        PersistentEventsStorage persistentEventsStorage = new SqLitePersistentEventsStorage(splitRoomDatabase, 100);
+        SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 
-        SplitParser splitParser = new SplitParser(mySegmentsStorage);
-
-
-        // TODO: On final implementation wrap this in a component
+        // TODO: Setup metrics in task executor
         CachedMetrics cachedMetrics = new CachedMetrics(httpMetrics, TimeUnit.SECONDS.toMillis(config.metricsRefreshRate()));
         final FireAndForgetMetrics cachedFireAndForgetMetrics = FireAndForgetMetrics.instance(cachedMetrics, 2, 1000);
 
-        NetworkHelper networkHelper = new NetworkHelper();
-
-        FetcherMetricsConfig splitsfetcherMetricsConfig = new FetcherMetricsConfig(
-                Metrics.SPLIT_CHANGES_FETCHER_EXCEPTION,
-                Metrics.SPLIT_CHANGES_FETCHER_TIME,
-                Metrics.SPLIT_CHANGES_FETCHER_STATUS
-        );
-
-        HttpFetcher<SplitChange> splitsFetcher = new HttpFetcherImpl<SplitChange>(httpClient,
-                SdkTargetPath.splitChanges(config.endpoint()), cachedFireAndForgetMetrics,
-                splitsfetcherMetricsConfig,
-                networkHelper, new SplitChangeResponseParser());
-
-        FetcherMetricsConfig mySegmentsfetcherMetricsConfig = new FetcherMetricsConfig(
-                Metrics.MY_SEGMENTS_FETCHER_EXCEPTION,
-                Metrics.MY_SEGMENTS_FETCHER_TIME,
-                Metrics.MY_SEGMENTS_FETCHER_STATUS
-        );
-
-        HttpFetcher<List<MySegment>> mySegmentsFetcher = new HttpFetcherImpl<>(httpClient,
-                SdkTargetPath.mySegments(config.endpoint(), key.matchingKey()), cachedFireAndForgetMetrics,
-                mySegmentsfetcherMetricsConfig,
-                networkHelper, new MySegmentsResponseParser());
-
-        HttpRecorder<List<Event>> eventsRecorder = new HttpRecorderImpl<>(
-                httpClient, SdkTargetPath.events(config.eventsEndpoint()), networkHelper,
-                new EventsRequestBodySerializer());
-
-        HttpRecorder<List<KeyImpression>> impressionsRecorder = new HttpRecorderImpl<>(
-                httpClient, SdkTargetPath.impressions(config.eventsEndpoint()), networkHelper,
-                new ImpressionsRequestBodySerializer());
-
-
-        SplitApiFacade splitApiFacade = new SplitApiFacade(
-                splitsFetcher, mySegmentsFetcher,
-                eventsRecorder, impressionsRecorder);
-
-        PersistentSplitsStorage persistentSplitsStorage = new SqLitePersistentSplitsStorage(splitRoomDatabase);
-        SplitsStorage splitsStorage = new SplitsStorageImpl(persistentSplitsStorage);
+        SplitApiFacade splitApiFacade = buildApiFacade(
+                config, key,
+                httpClient, cachedFireAndForgetMetrics);
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
-
-        SplitStorageContainer storageContainer = new SplitStorageContainer(
-                splitsStorage, mySegmentsStorage,
-                persistentEventsStorage, persistentImpressionsStorage);
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(config, splitApiFacade, storageContainer);
 
@@ -203,7 +143,6 @@ public class SplitFactoryImpl implements SplitFactory {
         );
 
         _syncManager.start();
-
 
         final ImpressionListener splitImpressionListener
                 = new SyncImpressionListener(_syncManager);
@@ -255,11 +194,13 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-
         _client = new SplitClientImpl(this, key, splitParser,
                 customerImpressionListener, cachedFireAndForgetMetrics, config, _eventsManager,
-                splitsStorage, new EventPropertiesProcessorImpl(), _syncManager);
-        _manager = new SplitManagerImpl(splitsStorage, new SplitValidatorImpl(), splitParser);
+                storageContainer.getSplitsStorage(), new EventPropertiesProcessorImpl(),
+                _syncManager);
+        _manager = new SplitManagerImpl(
+                storageContainer.getSplitsStorage(),
+                new SplitValidatorImpl(), splitParser);
 
         _eventsManager.getExecutorResources().setSplitClient(_client);
 
@@ -292,4 +233,81 @@ public class SplitFactoryImpl implements SplitFactory {
         return gates.isSDKReadyNow();
     }
 
+    private Map<String, String> buildHeaders(SplitClientConfig splitClientConfig, String apiToken) {
+        SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
+        headersBuilder.setHostIp(splitClientConfig.ip());
+        headersBuilder.setHostname(splitClientConfig.hostname());
+        headersBuilder.setClientVersion(SplitClientConfig.splitSdkVersion);
+        headersBuilder.setApiToken(apiToken);
+        return headersBuilder.build();
+    }
+
+    private String buildDatabaseName(SplitClientConfig splitClientConfig, String apiToken) {
+        String databaseName = Utils.convertApiKeyToFolder(apiToken);
+        if (databaseName == null) {
+            databaseName = splitClientConfig.defaultDataFolder();
+        }
+        return databaseName;
+    }
+
+    private SplitStorageContainer buildStorageContainer(Context context, Key key, String databaseName) {
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
+        PersistentMySegmentsStorage persistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(splitRoomDatabase, key.matchingKey());
+        MySegmentsStorage mySegmentsStorage = new MySegmentsStorageImpl(persistentMySegmentsStorage);
+        PersistentImpressionsStorage persistentImpressionsStorage = new SqLitePersistentImpressionsStorage(splitRoomDatabase, 100);
+        PersistentEventsStorage persistentEventsStorage = new SqLitePersistentEventsStorage(splitRoomDatabase, 100);
+        PersistentSplitsStorage persistentSplitsStorage = new SqLitePersistentSplitsStorage(splitRoomDatabase);
+        SplitsStorage splitsStorage = new SplitsStorageImpl(persistentSplitsStorage);
+        return new SplitStorageContainer(
+                splitsStorage, mySegmentsStorage,
+                persistentEventsStorage, persistentImpressionsStorage);
+    }
+
+    private SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
+                                          Key key,
+                                          HttpClient httpClient,
+                                          Metrics cachedFireAndForgetMetrics) throws URISyntaxException {
+        NetworkHelper networkHelper = new NetworkHelper();
+
+        FetcherMetricsConfig splitsfetcherMetricsConfig = new FetcherMetricsConfig(
+                Metrics.SPLIT_CHANGES_FETCHER_EXCEPTION,
+                Metrics.SPLIT_CHANGES_FETCHER_TIME,
+                Metrics.SPLIT_CHANGES_FETCHER_STATUS
+        );
+
+        HttpFetcher<SplitChange> splitsFetcher = new HttpFetcherImpl<SplitChange>(httpClient,
+                SdkTargetPath.splitChanges(splitClientConfig.endpoint()), cachedFireAndForgetMetrics,
+                splitsfetcherMetricsConfig,
+                networkHelper, new SplitChangeResponseParser());
+
+        FetcherMetricsConfig mySegmentsfetcherMetricsConfig = new FetcherMetricsConfig(
+                Metrics.MY_SEGMENTS_FETCHER_EXCEPTION,
+                Metrics.MY_SEGMENTS_FETCHER_TIME,
+                Metrics.MY_SEGMENTS_FETCHER_STATUS
+        );
+
+        HttpFetcher<List<MySegment>> mySegmentsFetcher = new HttpFetcherImpl<>(httpClient,
+                SdkTargetPath.mySegments(splitClientConfig.endpoint(), key.matchingKey()), cachedFireAndForgetMetrics,
+                mySegmentsfetcherMetricsConfig,
+                networkHelper, new MySegmentsResponseParser());
+
+        HttpRecorder<List<Event>> eventsRecorder = new HttpRecorderImpl<>(
+                httpClient, SdkTargetPath.events(splitClientConfig.eventsEndpoint()), networkHelper,
+                new EventsRequestBodySerializer());
+
+        HttpRecorder<List<KeyImpression>> impressionsRecorder = new HttpRecorderImpl<>(
+                httpClient, SdkTargetPath.impressions(splitClientConfig.eventsEndpoint()), networkHelper,
+                new ImpressionsRequestBodySerializer());
+
+
+        return new SplitApiFacade(
+                splitsFetcher, mySegmentsFetcher,
+                eventsRecorder, impressionsRecorder);
+
+    }
+
+    void setupValidations(SplitClientConfig splitClientConfig) {
+        ValidationConfig.getInstance().setMaximumKeyLength(splitClientConfig.maximumKeyLength());
+        ValidationConfig.getInstance().setTrackEventNamePattern(splitClientConfig.trackEventNamePattern());
+    }
 }
