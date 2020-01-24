@@ -57,6 +57,7 @@ public class MySegmentsStorageTest {
 
     @Test
     public void getMySegments() {
+        mMySegmentsStorage.loadFromDisk();
         Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
 
         Assert.assertEquals(3, snapshot.size());
@@ -67,7 +68,7 @@ public class MySegmentsStorageTest {
 
     @Test
     public void updateSegments() {
-
+        mMySegmentsStorage.loadFromDisk();
         mMySegmentsStorage.set(Arrays.asList("a1", "a2", "a3", "a4"));
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
 
@@ -89,7 +90,7 @@ public class MySegmentsStorageTest {
 
     @Test
     public void updateEmptyMySegment() {
-
+        mMySegmentsStorage.loadFromDisk();
         mMySegmentsStorage.set(new ArrayList<>());
 
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
@@ -103,9 +104,11 @@ public class MySegmentsStorageTest {
 
     @Test
     public void addNullMySegmentsList() {
-        mPersistentMySegmentsStorage.set(null);
 
+        mPersistentMySegmentsStorage.set(null);
+        mMySegmentsStorage.loadFromDisk();
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        mySegmentsStorage.loadFromDisk();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
@@ -116,9 +119,12 @@ public class MySegmentsStorageTest {
 
     @Test
     public void clear() {
+        mMySegmentsStorage.loadFromDisk();
         mMySegmentsStorage.clear();
+        mMySegmentsStorage.loadFromDisk();
 
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        mySegmentsStorage.loadFromDisk();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
@@ -128,7 +134,7 @@ public class MySegmentsStorageTest {
 
     @Test
     public void updateToStorageConcurrency() throws InterruptedException {
-
+        mMySegmentsStorage.loadFromDisk();
         CountDownLatch latch = new CountDownLatch(2);
 
         new Thread(new Runnable() {
