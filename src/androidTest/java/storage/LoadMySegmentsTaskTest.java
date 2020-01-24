@@ -14,6 +14,7 @@ import java.util.Set;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -35,7 +36,6 @@ public class LoadMySegmentsTaskTest {
         mContext.deleteDatabase("encripted_api_key");
         mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
         mRoomDb.clearAllTables();
-
 
         MySegmentEntity entity = new MySegmentEntity();
         entity.setUserKey(mUserKey);
@@ -64,29 +64,6 @@ public class LoadMySegmentsTaskTest {
         Assert.assertTrue(snapshot.contains("s1"));
         Assert.assertTrue(snapshot.contains("s2"));
         Assert.assertTrue(snapshot.contains("s3"));
-    }
-
-    @Test
-    public void executeEmpty() {
-        mMySegmentsStorage.clear();
-        SplitTask task = new LoadMySegmentsTask(mMySegmentsStorage);
-        SplitTaskExecutionInfo result = task.execute();
-        Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
-
-        Assert.assertEquals(0, snapshot.size());
-    }
-
-    @Test
-    public void updateEmptyMySegment() {
-        mMySegmentsStorage.loadFromDisk();
-        mMySegmentsStorage.set(new ArrayList<>());
-
-        MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
-
-        Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
-        Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
-
-        Assert.assertEquals(0, snapshot.size());
-        Assert.assertEquals(0, newSnapshot.size());
+        Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 }

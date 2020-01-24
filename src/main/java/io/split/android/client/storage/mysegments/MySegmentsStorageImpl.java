@@ -22,6 +22,11 @@ public class MySegmentsStorageImpl implements MySegmentsStorage {
     }
 
     @Override
+    public void loadLocal() {
+        mInMemoryMySegments.addAll(mPersistentStorage.getSnapshot());
+    }
+
+    @Override
     public Set<String> getAll() {
         return mInMemoryMySegments;
     }
@@ -40,10 +45,5 @@ public class MySegmentsStorageImpl implements MySegmentsStorage {
     public void clear() {
         mInMemoryMySegments.clear();
         mPersistentStorage.set(new ArrayList<>());
-    }
-
-    @Override
-    public void loadFromDisk() {
-        mInMemoryMySegments.addAll(mPersistentStorage.getSnapshot());
     }
 }
