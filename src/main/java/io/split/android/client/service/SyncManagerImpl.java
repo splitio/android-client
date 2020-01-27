@@ -210,10 +210,10 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
                 break;
 
             case LOAD_LOCAL_SPLITS:
-                updateEventsTaskStatus(taskInfo);
+                updateSplitsLoadingStatus(taskInfo);
                 break;
             case LOAD_LOCAL_MY_SYGMENTS:
-                updateImpressionsTaskStatus(taskInfo);
+                updateMySegmentsLoadingStatus(taskInfo);
                 break;
         }
     }
@@ -256,12 +256,16 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         }
     }
 
-    private void updateSplitsLoadingStatus(SplitTaskExecutionInfo info) {
-        // Should fire splits loaded from cash event here
+    private void updateSplitsLoadingStatus(SplitTaskExecutionInfo executionInfo) {
+        if (executionInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+            mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        }
     }
 
-    private void updateMySegmentsLoadingStatus(SplitTaskExecutionInfo info) {
-        // Should fire splits loaded from cash event here
+    private void updateMySegmentsLoadingStatus(SplitTaskExecutionInfo executionInfo) {
+        if (executionInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+            mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
+        }
     }
 
     private KeyImpression buildKeyImpression(Impression impression) {
