@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.work.WorkManager;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -12,6 +13,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.cache.MySegmentsCache;
+import io.split.android.client.cache.MySegmentsCacheMigrator;
+import io.split.android.client.cache.SplitCache;
+import io.split.android.client.cache.SplitCacheMigrator;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.MySegment;
@@ -46,10 +51,27 @@ import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
+import io.split.android.client.storage.db.migrator.EventsMigratorHelperImpl;
+import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelper;
+import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelperImpl;
+import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelper;
+import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelperImpl;
+import io.split.android.client.storage.db.migrator.SplitsMigratorHelper;
+import io.split.android.client.storage.db.migrator.SplitsMigratorHelperImpl;
+import io.split.android.client.storage.db.migrator.StorageMigrator;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.impressions.SqLitePersistentImpressionsStorage;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.storage.legacy.FileStorageHelper;
+import io.split.android.client.storage.legacy.IStorage;
+import io.split.android.client.storage.legacy.ImpressionsFileStorage;
+import io.split.android.client.storage.legacy.ImpressionsStorageManager;
+import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
+import io.split.android.client.storage.legacy.TrackStorageManager;
+import io.split.android.client.storage.legacy.TracksFileStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageImpl;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
@@ -60,6 +82,7 @@ import io.split.android.client.storage.splits.SplitsStorageImpl;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.NetworkHelper;
+import io.split.android.client.utils.StringHelper;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -89,6 +112,8 @@ public class SplitFactoryImpl implements SplitFactory {
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
 
+
+
         setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
         ValidationMessageLogger validationLogger = new ValidationMessageLoggerImpl();
@@ -110,6 +135,10 @@ public class SplitFactoryImpl implements SplitFactory {
         _factoryMonitor.add(apiToken);
         _apiKey = apiToken;
 
+        String databaseName = buildDatabaseName(config, apiToken);
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
+        checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, splitRoomDatabase);
+
         final HttpClient httpClient = new HttpClientImpl();
         httpClient.addHeaders(buildHeaders(config, apiToken));
 
@@ -121,7 +150,8 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
         gates = new SDKReadinessGates();
 
-        SplitStorageContainer storageContainer = buildStorageContainer(context, key, buildDatabaseName(config, apiToken));
+
+        SplitStorageContainer storageContainer = buildStorageContainer(splitRoomDatabase, key);
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 
@@ -130,8 +160,7 @@ public class SplitFactoryImpl implements SplitFactory {
         final FireAndForgetMetrics cachedFireAndForgetMetrics = FireAndForgetMetrics.instance(cachedMetrics, 2, 1000);
 
         SplitApiFacade splitApiFacade = buildApiFacade(
-                config, key,
-                httpClient, cachedFireAndForgetMetrics);
+                config, key, httpClient, cachedFireAndForgetMetrics);
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
 
@@ -250,8 +279,8 @@ public class SplitFactoryImpl implements SplitFactory {
         return databaseName;
     }
 
-    private SplitStorageContainer buildStorageContainer(Context context, Key key, String databaseName) {
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
+    private SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key) {
+
         PersistentMySegmentsStorage persistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(splitRoomDatabase, key.matchingKey());
         MySegmentsStorage mySegmentsStorage = new MySegmentsStorageImpl(persistentMySegmentsStorage);
         PersistentImpressionsStorage persistentImpressionsStorage = new SqLitePersistentImpressionsStorage(splitRoomDatabase, 100);
@@ -306,8 +335,44 @@ public class SplitFactoryImpl implements SplitFactory {
 
     }
 
-    void setupValidations(SplitClientConfig splitClientConfig) {
+    private void setupValidations(SplitClientConfig splitClientConfig) {
         ValidationConfig.getInstance().setMaximumKeyLength(splitClientConfig.maximumKeyLength());
         ValidationConfig.getInstance().setTrackEventNamePattern(splitClientConfig.trackEventNamePattern());
     }
+
+    private void checkAndMigrateIfNeeded(File rootFolder,
+                                         String dataFolderName,
+                                         SplitRoomDatabase splitRoomDatabase) {
+
+        IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
+        SplitCacheMigrator splitCacheMigrator = new SplitCache(fileStore);
+        MySegmentsCacheMigrator mySegmentsCacheMigrator = new MySegmentsCache(fileStore);
+
+        TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
+        TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
+
+
+        ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
+        ImpressionsStorageManager impressionsStorageManager =
+                new ImpressionsStorageManager(impressionsFileStorage,
+                        new ImpressionsStorageManagerConfig(),
+                        new FileStorageHelper());
+
+
+        SplitsMigratorHelper splitsMigratorHelper
+                = new SplitsMigratorHelperImpl(splitCacheMigrator);
+        MySegmentsMigratorHelper mySegmentsMigratorHelper
+                = new MySegmentsMigratorHelperImpl(mySegmentsCacheMigrator, new StringHelper());
+
+        EventsMigratorHelper eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
+
+        ImpressionsMigratorHelper impressionsMigratorHelper =
+                new ImpressionsMigratorHelperImpl(impressionsStorageManager);
+
+        StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase,
+                mySegmentsMigratorHelper, splitsMigratorHelper,
+                eventsMigratorHelper, impressionsMigratorHelper);
+        storageMigrator.checkAndMigrateIfNeeded();
+    }
+
 }
