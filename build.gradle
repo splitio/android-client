@@ -40,6 +40,7 @@ android {
 
     configurations {
         javadocDeps
+        all*.exclude group: 'com.google.guava', module: 'listenablefuture'
     }
 
     lintOptions {
