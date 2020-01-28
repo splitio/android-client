@@ -60,13 +60,13 @@ public class EventPropertiesProcessorTest {
         for (int i = 0; i < 10; i++) {
             properties.put("key" + i, "the value");
         }
-        for (int i = 0; i < 10; i++) {
-            properties.put("key" + i, null);
+        for (int i = 10; i < 20; i++) {
+            properties.put("key" + i + 10, null);
         }
         ProcessedEventProperties result = processor.process(properties);
 
         Assert.assertTrue(result.isValid());
-        Assert.assertEquals(10, result.getProperties().size());
+        Assert.assertEquals(20, result.getProperties().size());
     }
 
     @Test
