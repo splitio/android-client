@@ -8,9 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.service.events.EventsRecorderTask;
@@ -18,13 +16,13 @@ import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -62,7 +60,7 @@ public class EventsRecorderTaskTest {
                 .thenReturn(new ArrayList<>());
 
         EventsRecorderTask task = new EventsRecorderTask(
-                TASK_ID,
+                SplitTaskType.EVENTS_RECORDER,
                 mTaskExecutionListener,
                 mEventsRecorder,
                 mPersistentEventsStorage,
@@ -75,8 +73,10 @@ public class EventsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskId());
+        Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+        Assert.assertEquals(0, result.getNonSentRecords());
+        Assert.assertEquals(0, result.getNonSentBytes());
     }
 
     @Test
@@ -90,7 +90,7 @@ public class EventsRecorderTaskTest {
         doThrow(new HttpRecorderException("","")).when(mEventsRecorder).execute(mDefaultParams);
 
         EventsRecorderTask task = new EventsRecorderTask(
-                TASK_ID,
+                SplitTaskType.EVENTS_RECORDER,
                 mTaskExecutionListener,
                 mEventsRecorder,
                 mPersistentEventsStorage,
@@ -104,8 +104,10 @@ public class EventsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskId());
+        Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertEquals(100, result.getNonSentRecords());
+        Assert.assertEquals(1000, result.getNonSentBytes());
     }
 
     @Test
@@ -118,7 +120,7 @@ public class EventsRecorderTaskTest {
         doThrow(new HttpRecorderException("","")).when(mEventsRecorder).execute(mDefaultParams);
 
         EventsRecorderTask task = new EventsRecorderTask(
-                TASK_ID,
+                SplitTaskType.EVENTS_RECORDER,
                 mTaskExecutionListener,
                 mEventsRecorder,
                 mPersistentEventsStorage,
@@ -131,8 +133,10 @@ public class EventsRecorderTaskTest {
         verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
         SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
-        Assert.assertEquals(TASK_ID, result.getTaskId());
+        Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+        Assert.assertEquals(0, result.getNonSentRecords());
+        Assert.assertEquals(0, result.getNonSentBytes());
     }
 
     @After
@@ -148,6 +152,7 @@ public class EventsRecorderTaskTest {
             event.eventTypeId = "event_" + i;
             event.trafficTypeName = "custom";
             event.key = "key1";
+            event.setSizeInBytes(10);
             events.add(event);
         }
         return events;
