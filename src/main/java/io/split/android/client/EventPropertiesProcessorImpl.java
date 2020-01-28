@@ -29,13 +29,9 @@ public class EventPropertiesProcessorImpl implements EventPropertiesProcessor {
 
         for (Map.Entry entry : properties.entrySet()) {
             Object value = entry.getValue();
-            if (value == null) {
-                continue;
-            }
-
             String key = entry.getKey().toString();
 
-            if (isInvalidValueType(value)) {
+            if (value != null && isInvalidValueType(value)) {
                 finalProperties.put(key, null);
             }
             sizeInBytes += calculateEventSizeInBytes(key, value);
@@ -58,8 +54,11 @@ public class EventPropertiesProcessorImpl implements EventPropertiesProcessor {
     }
 
     private int calculateEventSizeInBytes(String key, Object value) {
-        return (value.getClass() == String.class ? value.toString().getBytes().length : 0) +
-                key.getBytes().length;
+        int valueSize = 0;
+        if(value != null && value.getClass() == String.class) {
+            valueSize = value.toString().getBytes().length;
+        }
+        return valueSize + key.getBytes().length;
     }
 
 
