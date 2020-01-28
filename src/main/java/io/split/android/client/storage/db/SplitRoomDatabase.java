@@ -40,8 +40,6 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
                 if (mInstance == null) {
                     mInstance = Room.databaseBuilder(context.getApplicationContext(),
                             SplitRoomDatabase.class, databaseName)
-                            // TODO: Temproal to test with current setup. REMOVE!!
-                            .allowMainThreadQueries()
                             .build();
                 }
             }
