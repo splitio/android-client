@@ -344,35 +344,36 @@ public class SplitFactoryImpl implements SplitFactory {
                                          String dataFolderName,
                                          SplitRoomDatabase splitRoomDatabase) {
 
-        IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
-        SplitCacheMigrator splitCacheMigrator = new SplitCache(fileStore);
-        MySegmentsCacheMigrator mySegmentsCacheMigrator = new MySegmentsCache(fileStore);
+        StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase);
+        if (storageMigrator.isMigrationNeeded()) {
+            IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
+            SplitCacheMigrator splitCacheMigrator = new SplitCache(fileStore);
+            MySegmentsCacheMigrator mySegmentsCacheMigrator = new MySegmentsCache(fileStore);
 
-        TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
-        TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
-
-
-        ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
-        ImpressionsStorageManager impressionsStorageManager =
-                new ImpressionsStorageManager(impressionsFileStorage,
-                        new ImpressionsStorageManagerConfig(),
-                        new FileStorageHelper());
+            TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
+            TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
 
 
-        SplitsMigratorHelper splitsMigratorHelper
-                = new SplitsMigratorHelperImpl(splitCacheMigrator);
-        MySegmentsMigratorHelper mySegmentsMigratorHelper
-                = new MySegmentsMigratorHelperImpl(mySegmentsCacheMigrator, new StringHelper());
+            ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
+            ImpressionsStorageManager impressionsStorageManager =
+                    new ImpressionsStorageManager(impressionsFileStorage,
+                            new ImpressionsStorageManagerConfig(),
+                            new FileStorageHelper());
 
-        EventsMigratorHelper eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
 
-        ImpressionsMigratorHelper impressionsMigratorHelper =
-                new ImpressionsMigratorHelperImpl(impressionsStorageManager);
+            SplitsMigratorHelper splitsMigratorHelper
+                    = new SplitsMigratorHelperImpl(splitCacheMigrator);
+            MySegmentsMigratorHelper mySegmentsMigratorHelper
+                    = new MySegmentsMigratorHelperImpl(mySegmentsCacheMigrator, new StringHelper());
 
-        StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase,
-                mySegmentsMigratorHelper, splitsMigratorHelper,
-                eventsMigratorHelper, impressionsMigratorHelper);
-        storageMigrator.checkAndMigrateIfNeeded();
+            EventsMigratorHelper eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
+
+            ImpressionsMigratorHelper impressionsMigratorHelper =
+                    new ImpressionsMigratorHelperImpl(impressionsStorageManager);
+
+            storageMigrator.runMigration(mySegmentsMigratorHelper, splitsMigratorHelper,
+                    eventsMigratorHelper, impressionsMigratorHelper);
+
+        }
     }
-
 }
