@@ -227,7 +227,7 @@ public class SyncManagerTest {
         mSyncManager.start();
         mSyncManager.pushEvent(event);
         verify(mTaskExecutor, times(0)).submit(
-                any(SplitTask.class),
+                any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
         verify(mEventsStorage, times(1)).push(event);
     }
@@ -247,7 +247,7 @@ public class SyncManagerTest {
 
         verify(mEventsStorage, times(22)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(SplitTask.class),
+                any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -268,7 +268,7 @@ public class SyncManagerTest {
 
         verify(mEventsStorage, times(6)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(SplitTask.class),
+                any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -285,7 +285,7 @@ public class SyncManagerTest {
         mSyncManager.start();
         mSyncManager.pushImpression(impression);
         verify(mTaskExecutor, times(0)).submit(
-                any(SplitTask.class),
+                any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
         verify(mImpressionsStorage, times(1)).push(impressionCaptor.capture());
         Assert.assertEquals("key", impressionCaptor.getValue().keyName);
@@ -312,7 +312,7 @@ public class SyncManagerTest {
 
         verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(SplitTask.class),
+                any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -332,7 +332,7 @@ public class SyncManagerTest {
 
         verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(SplitTask.class),
+                any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
