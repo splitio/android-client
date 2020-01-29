@@ -34,24 +34,9 @@ public class StorageMigrator {
         mGeneralInfoDao = mSqLiteDatabase.generalInfoDao();
     }
 
-    public boolean isMigrationNeeded() {
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicBoolean result = new AtomicBoolean(false);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                final GeneralInfoEntity migrationStatus =
-                        mGeneralInfoDao.getByName(GeneralInfoEntity.DATBASE_MIGRATION_STATUS);
-                result.set(migrationStatus == null);
-                latch.countDown();
-            }
-        }).start();
-        try {
-            latch.await(5, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        return result.get();
+    public boolean isMigrationDone() {
+        MigrationChecker migrationChecker = new MigrationChecker();
+        return migrationChecker.isMigrationDone();
     }
 
     public void runMigration(@NotNull MySegmentsMigratorHelper mySegmentsMigratorHelper,
@@ -64,36 +49,8 @@ public class StorageMigrator {
         mEventsMigratorHelper = checkNotNull(eventsMigratorHelper);
         mImpressionsMigratorHelper = checkNotNull(impressionsMigratorHelper);
 
-        CountDownLatch latch = new CountDownLatch(1);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                // If migration fails, data is erased and
-                // new storage is used anyway to avoid trying to migrate
-                // every time sdk is initialized
-                mGeneralInfoDao.update(new GeneralInfoEntity(
-                        GeneralInfoEntity.DATBASE_MIGRATION_STATUS,
-                        GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
-
-                // Migration data is loaded within the transaction to limit its scope
-                // to its own function and that way try to use as less memory as possible
-                mSqLiteDatabase.runInTransaction(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            migrateMySegments();
-                            migrateSplits();
-                            migrateEvents();
-                            migrateImpressions();
-                        } catch (Exception e) {
-                            Logger.e("Couldn't migrate legacy data. Reason: " +
-                                    e.getLocalizedMessage());
-                        }
-                    }
-                });
-                latch.countDown();
-            }
-        }).start();
+        MigrationRunner migrationRunner = new MigrationRunner();
+        migrationRunner.runMigration();
     }
 
     private void migrateMySegments() {
@@ -123,6 +80,70 @@ public class StorageMigrator {
         List<ImpressionEntity> impressionEntities = mImpressionsMigratorHelper.loadLegacyImpressionsAsEntities();
         for (ImpressionEntity entity : impressionEntities) {
             mSqLiteDatabase.impressionDao().insert(entity);
+        }
+    }
+
+    private class MigrationChecker extends Thread {
+        private CountDownLatch mLatch = new CountDownLatch(1);
+        private AtomicBoolean mResult = new AtomicBoolean(false);
+
+        public void run() {
+            final GeneralInfoEntity migrationStatus =
+                    mGeneralInfoDao.getByName(GeneralInfoEntity.DATBASE_MIGRATION_STATUS);
+            mResult.set(migrationStatus != null);
+            mLatch.countDown();
+        }
+
+        public boolean isMigrationDone() {
+            this.start();
+            try {
+                mLatch.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return mResult.get();
+        }
+    }
+
+    private class MigrationRunner extends Thread {
+
+        private CountDownLatch mLatch = new CountDownLatch(1);
+
+        @Override
+        public void run() {
+            // If migration fails, data is erased and
+            // new storage is used anyway to avoid trying to migrate
+            // every time sdk is initialized
+            mGeneralInfoDao.update(new GeneralInfoEntity(
+                    GeneralInfoEntity.DATBASE_MIGRATION_STATUS,
+                    GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
+
+            // Migration data is loaded within the transaction to limit its scope
+            // to its own function and that way try to use as less memory as possible
+            mSqLiteDatabase.runInTransaction(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        migrateMySegments();
+                        migrateSplits();
+                        migrateEvents();
+                        migrateImpressions();
+                    } catch (Exception e) {
+                        Logger.e("Couldn't migrate legacy data. Reason: " +
+                                e.getLocalizedMessage());
+                    }
+                }
+            });
+            mLatch.countDown();
+        }
+
+        public void runMigration() {
+            this.start();
+            try {
+                mLatch.await(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 }
