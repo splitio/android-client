@@ -12,7 +12,6 @@ import java.util.List;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
@@ -34,7 +33,6 @@ public class ImpressionsRecorderTaskTest {
 
     HttpRecorder<List<KeyImpression>> mImpressionsRecorder;
     PersistentImpressionsStorage mPersistentImpressionsStorage;
-    SplitTaskExecutionListener mTaskExecutionListener;
 
 
     List<KeyImpression> mDefaultParams = new ArrayList<>();
@@ -46,7 +44,6 @@ public class ImpressionsRecorderTaskTest {
         mDefaultParams = createImpressions();
         mImpressionsRecorder = (HttpRecorder<List<KeyImpression>>) Mockito.mock(HttpRecorder.class);
         mPersistentImpressionsStorage = Mockito.mock(PersistentImpressionsStorage.class);
-        mTaskExecutionListener = Mockito.mock(SplitTaskExecutionListener.class);
     }
 
     @Test
@@ -60,19 +57,15 @@ public class ImpressionsRecorderTaskTest {
                 .thenReturn(new ArrayList<>());
 
         ImpressionsRecorderTask task = new ImpressionsRecorderTask(
-                SplitTaskType.IMPRESSIONS_RECORDER,
-                mTaskExecutionListener,
                 mImpressionsRecorder,
                 mPersistentImpressionsStorage,
                 mDefaultConfig);
 
-        task.execute();
+        SplitTaskExecutionInfo result = task.execute();
 
         verify(mImpressionsRecorder, times(2)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(3)).pop(DEFAULT_POP_CONFIG);
-        verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
-        SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
         Assert.assertEquals(TASK_TYPE, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
         Assert.assertEquals(0, result.getNonSentRecords());
@@ -82,27 +75,21 @@ public class ImpressionsRecorderTaskTest {
     @Test
     public void throwingException() throws HttpRecorderException {
 
-        ArgumentCaptor<SplitTaskExecutionInfo> taskInfoCaptor = ArgumentCaptor.forClass(SplitTaskExecutionInfo.class);
-
         when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
                 .thenReturn(mDefaultParams)
                 .thenReturn(new ArrayList<>());
-        doThrow(new HttpRecorderException("","")).when(mImpressionsRecorder).execute(mDefaultParams);
+        doThrow(new HttpRecorderException("", "")).when(mImpressionsRecorder).execute(mDefaultParams);
 
         ImpressionsRecorderTask task = new ImpressionsRecorderTask(
-                SplitTaskType.IMPRESSIONS_RECORDER,
-                mTaskExecutionListener,
                 mImpressionsRecorder,
                 mPersistentImpressionsStorage,
                 mDefaultConfig);
 
-        task.execute();
+        SplitTaskExecutionInfo result = task.execute();
 
         verify(mImpressionsRecorder, times(1)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(2)).pop(DEFAULT_POP_CONFIG);
-        verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
-        SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
         Assert.assertEquals(TASK_TYPE, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
         Assert.assertEquals(100, result.getNonSentRecords());
@@ -112,26 +99,20 @@ public class ImpressionsRecorderTaskTest {
     @Test
     public void emptyImpressions() throws HttpRecorderException {
 
-        ArgumentCaptor<SplitTaskExecutionInfo> taskInfoCaptor = ArgumentCaptor.forClass(SplitTaskExecutionInfo.class);
-
         when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
                 .thenReturn(new ArrayList<>());
-        doThrow(new HttpRecorderException("","")).when(mImpressionsRecorder).execute(mDefaultParams);
+        doThrow(new HttpRecorderException("", "")).when(mImpressionsRecorder).execute(mDefaultParams);
 
         ImpressionsRecorderTask task = new ImpressionsRecorderTask(
-                SplitTaskType.IMPRESSIONS_RECORDER,
-                mTaskExecutionListener,
                 mImpressionsRecorder,
                 mPersistentImpressionsStorage,
                 mDefaultConfig);
 
-        task.execute();
+        SplitTaskExecutionInfo result = task.execute();
 
         verify(mImpressionsRecorder, times(0)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(1)).pop(DEFAULT_POP_CONFIG);
-        verify(mTaskExecutionListener, times(1)).taskExecuted(taskInfoCaptor.capture());
 
-        SplitTaskExecutionInfo result = taskInfoCaptor.getValue();
         Assert.assertEquals(TASK_TYPE, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
         Assert.assertEquals(0, result.getNonSentRecords());
@@ -146,7 +127,7 @@ public class ImpressionsRecorderTaskTest {
 
     private List<KeyImpression> createImpressions() {
         List<KeyImpression> impressions = new ArrayList<>();
-        for(int i=0; i<DEFAULT_POP_CONFIG; i++) {
+        for (int i = 0; i < DEFAULT_POP_CONFIG; i++) {
             KeyImpression impression = newImpression("feature_" + ((i % 2) == 0 ? 1 : 2), "impression_" + i);
             impressions.add(impression);
         }

@@ -1,9 +1,13 @@
 package io.split.android.client.service.splits;
 
+import androidx.annotation.NonNull;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
@@ -28,7 +32,8 @@ public class SplitsSyncTask implements SplitTask {
     }
 
     @Override
-    public void execute() {
+    @NonNull
+    public SplitTaskExecutionInfo execute() {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put(SINCE_PARAM, mSplitsStorage.getTill());
@@ -39,6 +44,7 @@ public class SplitsSyncTask implements SplitTask {
         } catch (Exception e) {
             logError("unexpected " + e.getLocalizedMessage());
         }
+        return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
     private void logError(String message) {
