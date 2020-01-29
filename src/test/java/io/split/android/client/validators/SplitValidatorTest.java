@@ -22,11 +22,6 @@ public class SplitValidatorTest {
 
     @Before
     public void setUp() {
-//        FileHelper fileHelper = new FileHelper();
-//        List<String> mySegments = Arrays.asList("s1", "s2", "test_copy");
-//        RefreshableMySegmentsFetcherProvider mySegmentsProvider = new RefreshableMySegmentsFetcherProviderStub(mySegments);
-//        List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-//        SplitFetcher splitFetcher = new SplitFetcherStub(splits, mySegmentsProvider);
         validator = new SplitValidatorImpl();
     }
 
