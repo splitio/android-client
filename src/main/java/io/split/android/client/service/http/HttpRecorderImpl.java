@@ -7,7 +7,6 @@ import java.net.URI;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
-import io.split.android.client.service.HttpRequestBodySerializer;
 import io.split.android.client.utils.NetworkHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;

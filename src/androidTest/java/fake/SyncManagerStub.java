@@ -2,7 +2,7 @@ package fake;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.SyncManager;
+import io.split.android.client.service.synchronizer.SyncManager;
 
 public class SyncManagerStub implements SyncManager {
 

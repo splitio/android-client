@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import fake.SyncManagerStub;
 import io.split.android.client.lifecycle.LifecycleManager;
-import io.split.android.client.service.SyncManager;
+import io.split.android.client.service.synchronizer.SyncManager;
 
 public class LifecyleOnBGTest {
 

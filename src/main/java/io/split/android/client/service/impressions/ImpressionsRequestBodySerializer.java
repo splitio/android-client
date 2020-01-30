@@ -9,7 +9,7 @@ import java.util.Map;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.TestImpressions;
-import io.split.android.client.service.HttpRequestBodySerializer;
+import io.split.android.client.service.http.HttpRequestBodySerializer;
 import io.split.android.client.utils.Json;
 
 public class ImpressionsRequestBodySerializer implements HttpRequestBodySerializer<List<KeyImpression>> {
