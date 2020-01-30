@@ -3,6 +3,7 @@ package io.split.android.client.dtos;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.InBytesSizable;
+import io.split.android.client.impressions.Impression;
 import io.split.android.client.utils.Json;
 
 public class KeyImpression implements InBytesSizable {
@@ -14,6 +15,19 @@ public class KeyImpression implements InBytesSizable {
     public String label;
     public long time;
     public Long changeNumber; // can be null if there is no changeNumber
+
+    public KeyImpression() {
+    }
+
+    public KeyImpression(Impression impression) {
+        this.feature = impression.split();
+        this.keyName = impression.key();
+        this.bucketingKey = impression.bucketingKey();
+        this.label = impression.appliedRule();
+        this.treatment = impression.treatment();
+        this.time = impression.time();
+        this.changeNumber = impression.changeNumber();
+    }
 
     @Override
     public boolean equals(Object o) {

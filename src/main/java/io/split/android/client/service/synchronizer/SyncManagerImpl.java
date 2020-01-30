@@ -113,7 +113,7 @@ public class SyncManagerImpl implements SyncManager {
 
     @Override
     public void pushImpression(Impression impression) {
-        if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(buildKeyImpression(impression))) {
+        if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(new KeyImpression(impression))) {
             mTaskExecutor.submit(
                     mSplitTaskFactory.createImpressionsRecorderTask(), mImpressionsSyncHelper);
         }
@@ -155,17 +155,5 @@ public class SyncManagerImpl implements SyncManager {
                 mLoadLocalSplitsListener);
         mTaskExecutor.submit(mSplitTaskFactory.createMySegmentsSyncTask(),
                 mLoadLocalMySegmentsListener);
-    }
-
-    private KeyImpression buildKeyImpression(Impression impression) {
-        KeyImpression keyImpression = new KeyImpression();
-        keyImpression.feature = impression.split();
-        keyImpression.keyName = impression.key();
-        keyImpression.bucketingKey = impression.bucketingKey();
-        keyImpression.label = impression.appliedRule();
-        keyImpression.treatment = impression.treatment();
-        keyImpression.time = impression.time();
-        keyImpression.changeNumber = impression.changeNumber();
-        return keyImpression;
     }
 }
