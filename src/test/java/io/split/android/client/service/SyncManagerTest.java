@@ -37,6 +37,7 @@ import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -218,7 +219,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pushEvent() {
+    public void pushEvent() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -228,6 +229,7 @@ public class SyncManagerTest {
         Event event = new Event();
         mSyncManager.start();
         mSyncManager.pushEvent(event);
+        Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
                 any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
@@ -235,7 +237,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pushEventReachQueueSize() {
+    public void pushEventReachQueueSize() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -246,7 +248,7 @@ public class SyncManagerTest {
         for (int i = 0; i < 22; i++) {
             mSyncManager.pushEvent(new Event());
         }
-
+        Thread.sleep(200);
         verify(mEventsStorage, times(22)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
                 any(EventsRecorderTask.class),
@@ -275,7 +277,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pushImpression() {
+    public void pushImpression() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -286,6 +288,7 @@ public class SyncManagerTest {
         ArgumentCaptor<KeyImpression> impressionCaptor = ArgumentCaptor.forClass(KeyImpression.class);
         mSyncManager.start();
         mSyncManager.pushImpression(impression);
+        Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
                 any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
@@ -300,7 +303,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pushImpressionReachQueueSize() {
+    public void pushImpressionReachQueueSize() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -311,15 +314,15 @@ public class SyncManagerTest {
         for (int i = 0; i < 8; i++) {
             mSyncManager.pushImpression(createImpression());
         }
-
+        Thread.sleep(200);
         verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
                 any(ImpressionsRecorderTask.class),
-                any(SplitTaskExecutionListener.class));
+                any(RecorderSyncHelper.class));
     }
 
     @Test
-    public void pushImpressionBytesLimit() {
+    public void pushImpressionBytesLimit() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -331,7 +334,7 @@ public class SyncManagerTest {
         for (int i = 0; i < 10; i++) {
             mSyncManager.pushImpression(createImpression());
         }
-
+        Thread.sleep(200);
         verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
                 any(ImpressionsRecorderTask.class),

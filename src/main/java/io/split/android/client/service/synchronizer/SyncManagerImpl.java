@@ -56,11 +56,13 @@ public class SyncManagerImpl implements SyncManager {
     private void initializeListeners() {
         mEventsSyncHelper = new RecorderSyncHelperImpl<>(
                 mSplitsStorageContainer.getEventsStorage(),
-                mSplitClientConfig.eventsQueueSize());
+                mSplitClientConfig.eventsQueueSize(),
+                ServiceConstants.MAX_EVENTS_SIZE_BYTES);
 
         mImpressionsSyncHelper = new RecorderSyncHelperImpl<>(
                 mSplitsStorageContainer.getImpressionsStorage(),
-                mSplitClientConfig.eventsQueueSize());
+                mSplitClientConfig.impressionsQueueSize(),
+                mSplitClientConfig.impressionsChunkSize());
 
         mSplitsSyncTaskListener = new FetcherSyncListener(
                 mSplitEventsManager, SplitInternalEvent.SPLITS_ARE_READY);
@@ -153,7 +155,7 @@ public class SyncManagerImpl implements SyncManager {
     private void submitDataLoadingTasks() {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
                 mLoadLocalSplitsListener);
-        mTaskExecutor.submit(mSplitTaskFactory.createMySegmentsSyncTask(),
+        mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(),
                 mLoadLocalMySegmentsListener);
     }
 }
