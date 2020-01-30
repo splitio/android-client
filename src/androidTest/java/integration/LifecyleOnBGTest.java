@@ -21,7 +21,7 @@ public class LifecyleOnBGTest {
     public void setup() {
         SyncManager syncManager = new SyncManagerStub();
         mSyncManagerStub = (SyncManagerStub) syncManager;
-        mSyncManagerStub.pauseCalled =false;
+        mSyncManagerStub.pauseCalled = false;
         mSyncManagerStub.resumeCalled = false;
         mLifecycleManager = new LifecycleManager(syncManager);
     }

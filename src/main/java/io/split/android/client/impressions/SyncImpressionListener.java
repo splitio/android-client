@@ -1,6 +1,6 @@
 package io.split.android.client.impressions;
 
-import io.split.android.client.service.SyncManager;
+import io.split.android.client.service.synchronizer.SyncManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

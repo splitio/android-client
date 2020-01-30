@@ -1,4 +1,4 @@
-package io.split.android.client.service;
+package io.split.android.client.service.synchronizer;
 
 
 import androidx.annotation.NonNull;
@@ -24,6 +24,8 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -125,8 +127,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
 
     @Override
     public void pushImpression(Impression impression) {
-
-        KeyImpression keyImpression = buildKeyImpression(impression);
+        KeyImpression keyImpression = new KeyImpression(impression);
         PersistentImpressionsStorage impressionsStorage =
                 mSplitsStorageContainer.getImpressionsStorage();
         impressionsStorage.push(keyImpression);
@@ -266,18 +267,6 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         if (executionInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
             mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
         }
-    }
-
-    private KeyImpression buildKeyImpression(Impression impression) {
-        KeyImpression keyImpression = new KeyImpression();
-        keyImpression.feature = impression.split();
-        keyImpression.keyName = impression.key();
-        keyImpression.bucketingKey = impression.bucketingKey();
-        keyImpression.label = impression.appliedRule();
-        keyImpression.treatment = impression.treatment();
-        keyImpression.time = impression.time();
-        keyImpression.changeNumber = impression.changeNumber();
-        return keyImpression;
     }
 
     private void observeWorkState(UUID requestId) {
