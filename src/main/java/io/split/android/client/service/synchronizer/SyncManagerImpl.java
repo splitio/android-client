@@ -3,6 +3,7 @@ package io.split.android.client.service.synchronizer;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import androidx.work.Configuration;
 import androidx.work.WorkManager;
 
@@ -20,6 +21,7 @@ import io.split.android.client.storage.SplitStorageContainer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class SyncManagerImpl implements SyncManager {
 
     private final SplitTaskExecutor mTaskExecutor;
@@ -44,7 +46,7 @@ public class SyncManagerImpl implements SyncManager {
                            @NonNull SplitStorageContainer splitStorageContainer,
                            @NonNull SplitTaskFactory splitTaskFactory,
                            @NonNull SplitEventsManager splitEventsManager,
-                           Context context) {
+                           WorkManagerFactoryWrapper workManagerFactoryWrapper) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
@@ -55,19 +57,11 @@ public class SyncManagerImpl implements SyncManager {
         setupListeners();
 
         if (mSplitClientConfig.synchronizeInBackground()) {
-            checkNotNull(context);
-            setupWorkManager(context);
+            checkNotNull(workManagerFactoryWrapper);
+            mWorkManagerWrapper = new WorkManagerWrapper(
+                    workManagerFactoryWrapper.getWorkManager(),
+                    mEventsSyncHelper, mImpressionsSyncHelper);
         }
-    }
-
-    private void setupWorkManager(Context context) {
-        Configuration workManagerConfig = new Configuration.Builder()
-                .setWorkerFactory(new SplitWorkerFactory(mSplitTaskFactory))
-                .build();
-        WorkManager.initialize(context, workManagerConfig);
-        mWorkManagerWrapper = new WorkManagerWrapper(
-                WorkManager.getInstance(context),
-                mEventsSyncHelper, mImpressionsSyncHelper);
     }
 
     private void setupListeners() {

@@ -1,6 +1,7 @@
 package io.split.android.client.service.synchronizer;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -11,7 +12,7 @@ import io.split.android.client.storage.StoragePusher;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHelper<T> {
+class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHelper<T> {
 
     private final StoragePusher mStorage;
     private AtomicInteger mPushedCount;

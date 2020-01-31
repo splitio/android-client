@@ -49,6 +49,7 @@ import io.split.android.client.service.http.HttpRecorderImpl;
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
+import io.split.android.client.service.synchronizer.WorkManagerFactoryWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
@@ -168,7 +169,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         _syncManager = new SyncManagerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
-                _eventsManager,context
+                _eventsManager,new WorkManagerFactoryWrapper(context, splitTaskFactory)
         );
 
         _syncManager.start();

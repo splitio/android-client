@@ -1,6 +1,7 @@
 package io.split.android.client.service.synchronizer;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.work.Data;
@@ -26,6 +27,7 @@ import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class WorkManagerWrapper {
     final private WorkManager mWorkManager;
     final private SplitTaskExecutionListener mEventsRecorderListener;
@@ -61,6 +63,7 @@ public class WorkManagerWrapper {
                 executionPeriod,
                 TimeUnit.SECONDS).build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.KEEP, request);
+        observeWorkState(request.getId());
     }
 
     private void observeWorkState(UUID requestId) {
