@@ -22,7 +22,6 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageImpl;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
-import io.split.android.client.utils.StringHelper;
 
 public class MySegmentsStorageTest {
     SplitRoomDatabase mRoomDb;
@@ -56,7 +55,15 @@ public class MySegmentsStorageTest {
     }
 
     @Test
+    public void noLocalLoaded() {
+        Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
+
+        Assert.assertEquals(0, snapshot.size());
+    }
+
+    @Test
     public void getMySegments() {
+        mMySegmentsStorage.loadLocal();
         Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
 
         Assert.assertEquals(3, snapshot.size());
@@ -67,7 +74,7 @@ public class MySegmentsStorageTest {
 
     @Test
     public void updateSegments() {
-
+        mMySegmentsStorage.loadLocal();
         mMySegmentsStorage.set(Arrays.asList("a1", "a2", "a3", "a4"));
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
 
@@ -89,7 +96,7 @@ public class MySegmentsStorageTest {
 
     @Test
     public void updateEmptyMySegment() {
-
+        mMySegmentsStorage.loadLocal();
         mMySegmentsStorage.set(new ArrayList<>());
 
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
@@ -103,9 +110,11 @@ public class MySegmentsStorageTest {
 
     @Test
     public void addNullMySegmentsList() {
-        mPersistentMySegmentsStorage.set(null);
 
+        mPersistentMySegmentsStorage.set(null);
+        mMySegmentsStorage.loadLocal();
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
@@ -116,9 +125,12 @@ public class MySegmentsStorageTest {
 
     @Test
     public void clear() {
+        mMySegmentsStorage.loadLocal();
         mMySegmentsStorage.clear();
+        mMySegmentsStorage.loadLocal();
 
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
@@ -128,7 +140,7 @@ public class MySegmentsStorageTest {
 
     @Test
     public void updateToStorageConcurrency() throws InterruptedException {
-
+        mMySegmentsStorage.loadLocal();
         CountDownLatch latch = new CountDownLatch(2);
 
         new Thread(new Runnable() {
@@ -170,7 +182,7 @@ public class MySegmentsStorageTest {
             }
         }).start();
         latch.await(40, TimeUnit.SECONDS);
-Set<String> l = mMySegmentsStorage.getAll();
+        Set<String> l = mMySegmentsStorage.getAll();
         Assert.assertEquals(10, mMySegmentsStorage.getAll().size());
     }
 

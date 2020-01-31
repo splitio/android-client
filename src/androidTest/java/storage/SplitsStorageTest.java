@@ -53,8 +53,15 @@ public class SplitsStorageTest {
     }
 
     @Test
-    public void getSplits() {
+    public void noLocalLoaded() {
+        Map<String, Split> all = mSplitsStorage.getAll();
 
+        Assert.assertEquals(0, all.size());
+    }
+
+    @Test
+    public void getSplits() {
+        mSplitsStorage.loadLocal();
         Split split0 = mSplitsStorage.get("split-0");
         Split split1 = mSplitsStorage.get("split-1");
         Split split2 = mSplitsStorage.get("split-2");
@@ -68,6 +75,7 @@ public class SplitsStorageTest {
 
     @Test
     public void addSplits() {
+        mSplitsStorage.loadLocal();
         List<Split> splits = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             String splitName = "split-test-" + i;
@@ -89,11 +97,13 @@ public class SplitsStorageTest {
 
     @Test
     public void initialChangeNumber() {
+        mSplitsStorage.loadLocal();
         Assert.assertEquals((long) INITIAL_CHANGE_NUMBER, mSplitsStorage.getTill());
     }
 
     @Test
     public void updateChangeNumber() {
+        mSplitsStorage.loadLocal();
         List<Split> splits = new ArrayList<>();
         Long newChangeNumber = INITIAL_CHANGE_NUMBER + 100;
         Long initialChangeNumber = mSplitsStorage.getTill();
@@ -106,6 +116,7 @@ public class SplitsStorageTest {
 
     @Test
     public void updateEmptySplit() {
+        mSplitsStorage.loadLocal();
         List<Split> splits = new ArrayList<>();
         ProcessedSplitChange change = new ProcessedSplitChange(splits, splits, 1L);
         mSplitsStorage.update(change);
@@ -119,6 +130,7 @@ public class SplitsStorageTest {
 
     @Test
     public void addNullSplitList() {
+        mSplitsStorage.loadLocal();
         ProcessedSplitChange change = new ProcessedSplitChange(null, new ArrayList<>(), 1L);
         mSplitsStorage.update(change);
 
@@ -131,6 +143,7 @@ public class SplitsStorageTest {
 
     @Test
     public void deleteNullSplitList() {
+        mSplitsStorage.loadLocal();
         ProcessedSplitChange change = new ProcessedSplitChange(new ArrayList<>(), null, 1L);
         mSplitsStorage.update(change);
 
@@ -143,6 +156,7 @@ public class SplitsStorageTest {
 
     @Test
     public void getManyNullArgs() {
+        mSplitsStorage.loadLocal();
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
 
         Assert.assertEquals(4, loadedSplits.size());
@@ -150,6 +164,7 @@ public class SplitsStorageTest {
 
     @Test
     public void getManyEmptyArgs() {
+        mSplitsStorage.loadLocal();
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(new ArrayList<>());
 
         Assert.assertEquals(4, loadedSplits.size());
@@ -157,6 +172,7 @@ public class SplitsStorageTest {
 
     @Test
     public void getMany() {
+        mSplitsStorage.loadLocal();
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(Arrays.asList("split-0", "split-3", "non-existing"));
 
         Assert.assertEquals(2, loadedSplits.size());
@@ -248,6 +264,7 @@ public class SplitsStorageTest {
 
     @Test
     public void updatedSplitTrafficType() {
+        mSplitsStorage.loadLocal();
         List<Split> empty = new ArrayList<>();
         Split s1 = newSplit("s1", Status.ACTIVE, "tt");
 
@@ -266,6 +283,7 @@ public class SplitsStorageTest {
 
     @Test
     public void changedTrafficTypeForSplit() {
+        mSplitsStorage.loadLocal();
         List<Split> empty = new ArrayList<>();
         String splitName = "n_s1";
 
@@ -283,6 +301,7 @@ public class SplitsStorageTest {
 
     @Test
     public void existingChangedTrafficTypeForSplit() {
+        mSplitsStorage.loadLocal();
         List<Split> empty = new ArrayList<>();
         String splitName = "n_s1";
 

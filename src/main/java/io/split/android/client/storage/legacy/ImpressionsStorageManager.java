@@ -50,11 +50,14 @@ public class ImpressionsStorageManager {
     Map<String, StoredImpressions> mImpressionsToSend;
     ImpressionsStorageManagerConfig mConfig;
 
-    public ImpressionsStorageManager(IImpressionsStorage storage, ImpressionsStorageManagerConfig config) {
+    public ImpressionsStorageManager(IImpressionsStorage storage,
+                                     ImpressionsStorageManagerConfig config) {
         this(storage, config, new FileStorageHelper());
     }
 
-    public ImpressionsStorageManager(IImpressionsStorage storage, ImpressionsStorageManagerConfig config, FileStorageHelper fileStorageHelper) {
+    public ImpressionsStorageManager(IImpressionsStorage storage,
+                                     ImpressionsStorageManagerConfig config,
+                                     FileStorageHelper fileStorageHelper) {
         mFileStorageManager = storage;
         mImpressionsToSend = new ConcurrentHashMap<String, StoredImpressions>();
         mConfig = config;

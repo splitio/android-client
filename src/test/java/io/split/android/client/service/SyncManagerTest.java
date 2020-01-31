@@ -1,5 +1,7 @@
 package io.split.android.client.service;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
@@ -12,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.SplitClientConfig;
@@ -20,9 +23,11 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -32,6 +37,8 @@ import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
@@ -41,7 +48,6 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -223,7 +229,7 @@ public class SyncManagerTest {
         mSyncManager.start();
         mSyncManager.pushEvent(event);
         verify(mTaskExecutor, times(0)).submit(
-                any(SplitTask.class),
+                any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
         verify(mEventsStorage, times(1)).push(event);
     }
@@ -243,7 +249,7 @@ public class SyncManagerTest {
 
         verify(mEventsStorage, times(22)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(SplitTask.class),
+                any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -264,7 +270,7 @@ public class SyncManagerTest {
 
         verify(mEventsStorage, times(6)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(SplitTask.class),
+                any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -281,7 +287,7 @@ public class SyncManagerTest {
         mSyncManager.start();
         mSyncManager.pushImpression(impression);
         verify(mTaskExecutor, times(0)).submit(
-                any(SplitTask.class),
+                any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
         verify(mImpressionsStorage, times(1)).push(impressionCaptor.capture());
         Assert.assertEquals("key", impressionCaptor.getValue().keyName);
@@ -308,7 +314,7 @@ public class SyncManagerTest {
 
         verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(SplitTask.class),
+                any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -328,8 +334,28 @@ public class SyncManagerTest {
 
         verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(SplitTask.class),
+                any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
+    }
+
+    @Test
+    public void loadLocalData() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .sychronizeInBackground(false)
+                .build();
+        setup(config);
+
+        List<SplitTaskExecutionInfo> list = new ArrayList<>();
+        list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
+        list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
+        SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
+        mSyncManager = new SyncManagerImpl(config, executor,
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManager);
+        mSyncManager.start();
+        verify(mEventsManager, times(1))
+                .notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
+        verify(mEventsManager, times(1))
+                .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
     }
 
     @After
@@ -351,5 +377,46 @@ public class SyncManagerTest {
         result.time = impression.time();
         result.changeNumber = impression.changeNumber();
         return result;
+    }
+
+    static class SplitTaskExecutorSub implements SplitTaskExecutor {
+
+        List<SplitTaskExecutionInfo> mInfoList;
+        int mRequestIndex = 0;
+
+        public SplitTaskExecutorSub(List<SplitTaskExecutionInfo> infoList) {
+            mInfoList = infoList;
+        }
+
+        @Override
+        public void schedule(@NonNull SplitTask task, long initialDelayInSecs,
+                             long periodInSecs,
+                             @Nullable SplitTaskExecutionListener executionListener) {
+
+        }
+
+        @Override
+        public void submit(@NonNull SplitTask task,
+                           @Nullable SplitTaskExecutionListener executionListener) {
+
+            SplitTaskExecutionInfo info = mInfoList.get(mRequestIndex);
+            mRequestIndex++;
+            executionListener.taskExecuted(info);
+        }
+
+        @Override
+        public void pause() {
+
+        }
+
+        @Override
+        public void resume() {
+
+        }
+
+        @Override
+        public void stop() {
+
+        }
     }
 }

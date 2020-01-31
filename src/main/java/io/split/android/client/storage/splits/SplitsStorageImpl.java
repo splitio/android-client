@@ -22,7 +22,16 @@ public class SplitsStorageImpl implements SplitsStorage {
         mPersistentStorage = checkNotNull(persistentStorage);
         mInMemorySplits = new ConcurrentHashMap<String, Split>();
         mTrafficTypes = new ConcurrentHashMap<String, Integer>();
-        loadFromDb();
+    }
+
+    @Override
+    public void loadLocal() {
+        SplitsSnapshot snapshot = mPersistentStorage.getSnapshot();
+        List<Split> splits = snapshot.getSplits();
+        mChangeNumber = snapshot.getChangeNumber();
+        for (Split split : splits) {
+            mInMemorySplits.put(split.name, split);
+        }
     }
 
     @Override
@@ -131,15 +140,5 @@ public class SplitsStorageImpl implements SplitsStorage {
             count = countValue;
         }
         return count;
-    }
-
-
-    private void loadFromDb() {
-        SplitsSnapshot snapshot = mPersistentStorage.getSnapshot();
-        List<Split> splits = snapshot.getSplits();
-        mChangeNumber = snapshot.getChangeNumber();
-        for (Split split : splits) {
-            mInMemorySplits.put(split.name, split);
-        }
     }
 }

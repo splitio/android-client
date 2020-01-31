@@ -37,12 +37,13 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
     private Map<SplitEvent, List<SplitEventTask>> _suscriptions;
 
-
-
     private SplitEventExecutorResources _resources;
 
     private boolean _eventMySegmentsAreReady = false;
     private boolean _eventSplitsAreReady = false;
+
+    private boolean _eventLocalMySegmentsAreLoaded = false;
+    private boolean _eventLocalSplitsAreLoaded = false;
 
     private Map<SplitEvent, Integer> _executionTimes;
 
@@ -68,10 +69,10 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
                     }
                 } catch (InterruptedException e) {
                     //InterruptedException could be thrown by Thread.sleep trying to wait before check if sdk is ready
-                    Logger.d("Waiting before to check if SDK is READY has been interrupted",e.getMessage());
+                    Logger.d("Waiting before to check if SDK is READY has been interrupted", e.getMessage());
                     notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
                 } catch (Throwable e) {
-                    Logger.d("Waiting before to check if SDK is READY interrupted ",e.getMessage());
+                    Logger.d("Waiting before to check if SDK is READY interrupted ", e.getMessage());
                     notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
                 }
             }
@@ -95,6 +96,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     private void registerMaxAllowebExecutionTimesPerEvent() {
         _executionTimes.put(SplitEvent.SDK_READY, 1);
         _executionTimes.put(SplitEvent.SDK_READY_TIMED_OUT, 1);
+        _executionTimes.put(SplitEvent.SDK_READY_FROM_CACHE, 1);
     }
 
     public SplitEventExecutorResources getExecutorResources() {
@@ -129,24 +131,24 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         _suscriptions.get(event).add(task);
     }
 
-    public boolean eventAlreadyTriggered(SplitEvent event){
+    public boolean eventAlreadyTriggered(SplitEvent event) {
         return _executionTimes.get(event) == 0;
     }
 
     @Override
-    public void run(){
+    public void run() {
         // This code was intentionally designed this way
         // TODO: Analize refactor
         //noinspection InfiniteLoopStatement,InfiniteLoopStatement
-        while(true){
+        while (true) {
             triggerEventsWhenAreAvailable();
         }
     }
 
-    private void triggerEventsWhenAreAvailable(){
+    private void triggerEventsWhenAreAvailable() {
         try {
             SplitInternalEvent event = _queue.take(); //Blocking method (waiting if necessary until an element becomes available.)
-            switch (event){
+            switch (event) {
                 case SPLITS_ARE_READY:
                     _eventSplitsAreReady = true;
                     if (_eventMySegmentsAreReady) {
@@ -159,8 +161,22 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
                         trigger(SplitEvent.SDK_READY);
                     }
                     break;
+
+                case SPLITS_LOADED_FROM_STORAGE:
+                    _eventLocalSplitsAreLoaded = true;
+                    if (_eventLocalMySegmentsAreLoaded) {
+                        trigger(SplitEvent.SDK_READY_FROM_CACHE);
+                    }
+                    break;
+                case MYSEGMENTS_LOADED_FROM_STORAGE:
+                    _eventLocalMySegmentsAreLoaded = true;
+                    if (_eventLocalSplitsAreLoaded) {
+                        trigger(SplitEvent.SDK_READY_FROM_CACHE);
+                    }
+                    break;
+
                 case SDK_READY_TIMEOUT_REACHED:
-                    if (!_eventSplitsAreReady || !_eventMySegmentsAreReady ) {
+                    if (!_eventSplitsAreReady || !_eventMySegmentsAreReady) {
                         trigger(SplitEvent.SDK_READY_TIMED_OUT);
                     }
                     break;
@@ -175,9 +191,9 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     private void trigger(SplitEvent event) {
 
         // If executionTimes is zero, maximum executions has been reached
-        if (_executionTimes.get(event) == 0){
+        if (_executionTimes.get(event) == 0) {
             return;
-        // If executionTimes is grater than zero, maximum executions decrease 1
+            // If executionTimes is grater than zero, maximum executions decrease 1
         } else if (_executionTimes.get(event) > 0) {
             _executionTimes.put(event, _executionTimes.get(event) - 1);
         } //If executionTimes is lower than zero, execute it without limitation
@@ -191,9 +207,9 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         }
     }
 
-    private void executeTask(SplitEvent event, SplitEventTask task){
+    private void executeTask(SplitEvent event, SplitEventTask task) {
         SplitEventExecutorAbstract executor = SplitEventExecutorFactory.factory(event, task, _resources);
-        if (executor != null){
+        if (executor != null) {
             executor.execute();
         }
     }

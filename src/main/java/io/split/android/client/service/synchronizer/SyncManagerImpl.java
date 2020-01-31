@@ -1,8 +1,5 @@
-package io.split.android.client.service;
+package io.split.android.client.service.synchronizer;
 
-
-import android.app.ActivityOptions;
-import android.app.Service;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,11 +19,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -87,6 +86,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
 
     @Override
     public void start() {
+        submitDataLoadingTasks();
         scheduleTasks();
     }
 
@@ -147,6 +147,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         scheduleMySegmentsFetcherTask();
         scheduleEventsRecorderTask();
         scheduleImpressionsRecorderTask();
+        Logger.i("Synchronization tasks scheduled");
     }
 
     private void scheduleSplitsFetcherTask() {
@@ -185,6 +186,12 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         }
     }
 
+    private void submitDataLoadingTasks() {
+        mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(), this);
+        mTaskExecutor.submit(mSplitTaskFactory.createMySegmentsSyncTask(), this);
+        Logger.i("Loading cache data tasks submitted");
+    }
+
     @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
         updateTaskStatus(taskInfo);
@@ -203,6 +210,13 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
                 break;
             case IMPRESSIONS_RECORDER:
                 updateImpressionsTaskStatus(taskInfo);
+                break;
+
+            case LOAD_LOCAL_SPLITS:
+                updateSplitsLoadingStatus(taskInfo);
+                break;
+            case LOAD_LOCAL_MY_SYGMENTS:
+                updateMySegmentsLoadingStatus(taskInfo);
                 break;
         }
     }
@@ -245,6 +259,18 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         }
     }
 
+    private void updateSplitsLoadingStatus(SplitTaskExecutionInfo executionInfo) {
+        if (executionInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+            mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        }
+    }
+
+    private void updateMySegmentsLoadingStatus(SplitTaskExecutionInfo executionInfo) {
+        if (executionInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+            mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
+        }
+    }
+
     private void observeWorkState(UUID requestId) {
         mWorkManager.getWorkInfoByIdLiveData(requestId)
                 .observe(ProcessLifecycleOwner.get(), new Observer<WorkInfo>() {
@@ -261,7 +287,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
                 workInfo.getOutputData() != null) {
 
             Data outputData = workInfo.getOutputData();
-            String taskStatusRaw = outputData .getString(ServiceConstants.TASK_INFO_FIELD_STATUS);
+            String taskStatusRaw = outputData.getString(ServiceConstants.TASK_INFO_FIELD_STATUS);
             String taskTypeRaw = outputData.getString(ServiceConstants.TASK_INFO_FIELD_TYPE);
 
             SplitTaskExecutionStatus taskStatus;
@@ -274,7 +300,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
                         exception.getLocalizedMessage());
                 return;
             }
-            if(taskStatus == SplitTaskExecutionStatus.SUCCESS) {
+            if (taskStatus == SplitTaskExecutionStatus.SUCCESS) {
                 updateTaskStatus(SplitTaskExecutionInfo.success(taskType));
             } else {
                 int recordNonSent = outputData.getInt(

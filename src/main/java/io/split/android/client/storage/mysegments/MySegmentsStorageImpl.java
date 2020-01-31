@@ -19,7 +19,11 @@ public class MySegmentsStorageImpl implements MySegmentsStorage {
     public MySegmentsStorageImpl(@NonNull PersistentMySegmentsStorage persistentStorage) {
         mPersistentStorage = checkNotNull(persistentStorage);
         mInMemoryMySegments = Sets.newConcurrentHashSet();
-        loadFromDb();
+    }
+
+    @Override
+    public void loadLocal() {
+        mInMemoryMySegments.addAll(mPersistentStorage.getSnapshot());
     }
 
     @Override
@@ -29,7 +33,7 @@ public class MySegmentsStorageImpl implements MySegmentsStorage {
 
     @Override
     public void set(List<String> mySegments) {
-        if(mySegments == null) {
+        if (mySegments == null) {
             return;
         }
         mInMemoryMySegments.clear();
@@ -41,9 +45,5 @@ public class MySegmentsStorageImpl implements MySegmentsStorage {
     public void clear() {
         mInMemoryMySegments.clear();
         mPersistentStorage.set(new ArrayList<>());
-    }
-
-    private void loadFromDb() {
-        mInMemoryMySegments.addAll(mPersistentStorage.getSnapshot());
     }
 }

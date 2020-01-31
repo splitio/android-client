@@ -20,6 +20,7 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.IStorage;
 import io.split.android.client.storage.legacy.MemoryStorage;
+import io.split.android.client.storage.legacy.TracksFileStorage;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.storage.legacy.TrackStorageManager;
@@ -53,7 +54,8 @@ public class TrackStorageTest {
             }
             folder.delete();
         }
-        mStorage = new FileStorage.TracksFileStorage(rootFolder, "test_folder");
+        mStorage = new
+                TracksFileStorage(rootFolder, "test_folder");
         mTrackStorage = new TrackStorageManager(mStorage);
 
     }
