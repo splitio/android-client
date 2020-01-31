@@ -147,6 +147,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         scheduleMySegmentsFetcherTask();
         scheduleEventsRecorderTask();
         scheduleImpressionsRecorderTask();
+        Logger.i("Synchronization tasks scheduled");
     }
 
     private void scheduleSplitsFetcherTask() {
@@ -188,6 +189,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
     private void submitDataLoadingTasks() {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(), this);
         mTaskExecutor.submit(mSplitTaskFactory.createMySegmentsSyncTask(), this);
+        Logger.i("Loading cache data tasks submitted");
     }
 
     @Override
