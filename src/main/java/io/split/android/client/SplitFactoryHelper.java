@@ -16,6 +16,7 @@ import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRequestBodySerializer;
+import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherImpl;
 import io.split.android.client.service.http.HttpRecorder;
@@ -23,6 +24,7 @@ import io.split.android.client.service.http.HttpRecorderImpl;
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
+import io.split.android.client.service.synchronizer.WorkManagerFactoryWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.events.PersistentEventsStorage;
@@ -75,9 +77,9 @@ class SplitFactoryHelper {
     }
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
-                                          Key key,
-                                          HttpClient httpClient,
-                                          Metrics cachedFireAndForgetMetrics) throws URISyntaxException {
+                                  Key key,
+                                  HttpClient httpClient,
+                                  Metrics cachedFireAndForgetMetrics) throws URISyntaxException {
         NetworkHelper networkHelper = new NetworkHelper();
 
         FetcherMetricsConfig splitsfetcherMetricsConfig = new FetcherMetricsConfig(
@@ -110,10 +112,17 @@ class SplitFactoryHelper {
                 httpClient, SdkTargetPath.impressions(splitClientConfig.eventsEndpoint()), networkHelper,
                 new ImpressionsRequestBodySerializer());
 
-
         return new SplitApiFacade(
                 splitsFetcher, mySegmentsFetcher,
                 eventsRecorder, impressionsRecorder);
+    }
 
+    WorkManagerFactoryWrapper buildWorkManagerFactory(SplitClientConfig splitClientConfig,
+                                                      Context context,
+                                                      SplitTaskFactory splitTaskFactory) {
+        if (splitClientConfig.synchronizeInBackground()) {
+            return new WorkManagerFactoryWrapper(context, splitTaskFactory);
+        }
+        return null;
     }
 }

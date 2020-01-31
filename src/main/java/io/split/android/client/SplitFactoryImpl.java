@@ -167,9 +167,11 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(config, splitApiFacade, storageContainer);
 
+
         _syncManager = new SyncManagerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
-                _eventsManager,new WorkManagerFactoryWrapper(context, splitTaskFactory)
+                _eventsManager,
+                factoryHelper.buildWorkManagerFactory(config, context, splitTaskFactory)
         );
 
         _syncManager.start();
