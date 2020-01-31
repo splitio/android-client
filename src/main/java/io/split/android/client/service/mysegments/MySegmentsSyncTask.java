@@ -34,10 +34,9 @@ public class MySegmentsSyncTask implements SplitTask {
         try {
             List<MySegment> mySegments = mMySegmentsFetcher.execute(new HashMap<>());
             mMySegmentsStorage.set(getNameList(mySegments));
-        } catch (HttpFetcherException e) {
-            logError("Exception when fetching my segments: " + e.getLocalizedMessage());
         } catch (Exception e) {
             logError("Unknown error while retrieving my segments: " + e.getLocalizedMessage());
+            return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
         }
         return SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC);
     }

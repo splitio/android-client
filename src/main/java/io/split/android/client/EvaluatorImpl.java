@@ -3,27 +3,32 @@ package io.split.android.client;
 import java.util.Map;
 
 import io.split.android.client.dtos.ConditionType;
+import io.split.android.client.dtos.Split;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
+import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.splitter.Splitter;
 import io.split.android.grammar.Treatments;
 
 public class EvaluatorImpl implements Evaluator {
 
-    private final SplitFetcher mSplitFetcher;
+    private final SplitsStorage mSplitsStorage;
+    private final SplitParser mSplitParser;
 
-    public EvaluatorImpl(SplitFetcher splitFetcher) {
-        mSplitFetcher = splitFetcher;
+    public EvaluatorImpl(SplitsStorage splitsStorage, SplitParser splitParser) {
+        mSplitsStorage = splitsStorage;
+        mSplitParser = splitParser;
     }
 
     @Override
     public EvaluationResult getTreatment(String matchingKey, String bucketingKey, String splitName, Map<String, Object> attributes) {
 
         try {
-            ParsedSplit parsedSplit = mSplitFetcher.fetch(splitName);
+            ParsedSplit parsedSplit = mSplitParser.parse(mSplitsStorage.get(splitName));
             if (parsedSplit == null) {
                 return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.DEFINITION_NOT_FOUND);
             }

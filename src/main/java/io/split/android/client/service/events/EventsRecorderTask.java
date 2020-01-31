@@ -48,7 +48,8 @@ public class EventsRecorderTask implements SplitTask {
                     nonSentRecords += mConfig.getEventsPerPush();
                     nonSentBytes += sumEventBytes(events);
                     Logger.e("Event recorder task: Some events couldn't be sent" +
-                            "Saving to send them in a new iteration");
+                            "Saving to send them in a new iteration: " +
+                            e.getLocalizedMessage());
                     mPersistenEventsStorage.setActive(events);
                 }
             }

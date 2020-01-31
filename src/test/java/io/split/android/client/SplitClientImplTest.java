@@ -13,16 +13,18 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.DataType;
+import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.SplitClientImplFactory;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
-import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.CombiningMatcher;
 import io.split.android.engine.matchers.DependencyMatcher;
@@ -31,6 +33,7 @@ import io.split.android.engine.matchers.GreaterThanOrEqualToMatcher;
 import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
 import io.split.android.grammar.Treatments;
+import io.split.android.helpers.SplitHelper;
 
 import static io.split.android.engine.ConditionsTestUtil.partition;
 import static org.hamcrest.Matchers.equalTo;
@@ -50,32 +53,32 @@ public class SplitClientImplTest {
     @Test
     public void null_key_results_in_control() {
         String test = "test1";
-        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition("on", 100)));
-        List<ParsedCondition> conditions = Lists.newArrayList(rollOutToEveryone);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
+        Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition("on", 100)));
+        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("test1"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("test1"), splitsStorage);
 
         assertThat(client.getTreatment(null), is(equalTo(Treatments.CONTROL)));
 
-        verifyZeroInteractions(splitFetcher);
+        verifyZeroInteractions(splitsStorage);
     }
 
     @Test
     public void null_test_results_in_control() {
         String test = "test1";
-        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()),
+        Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()),
                 Lists.newArrayList(partition("on", 100)));
-        List<ParsedCondition> conditions = Lists.newArrayList(rollOutToEveryone);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -89,9 +92,9 @@ public class SplitClientImplTest {
 
     @Test
     public void exceptions_result_in_control() {
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@relateiq.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@relateiq.com"), splitsStorage);
 
         assertThat(client.getTreatment("test1"), is(equalTo(Treatments.CONTROL)));
 
@@ -101,15 +104,15 @@ public class SplitClientImplTest {
     public void works() {
         String test = "test1";
 
-        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()),
+        Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()),
                 Lists.newArrayList(partition("on", 100)));
-        List<ParsedCondition> conditions = Lists.newArrayList(rollOutToEveryone);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -127,16 +130,16 @@ public class SplitClientImplTest {
     public void last_condition_is_always_default() {
         String test = "test1";
 
-        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(
+        Condition rollOutToEveryone = SplitHelper.createCondition(
                 CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))),
                 Lists.newArrayList(partition("on", 100)));
-        List<ParsedCondition> conditions = Lists.newArrayList(rollOutToEveryone);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, "user", 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, "user", 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
 
         try {
             Thread.sleep(1000);
@@ -157,17 +160,17 @@ public class SplitClientImplTest {
     public void multiple_conditions_work() {
         String test = "test1";
 
-        ParsedCondition adil_is_always_on = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition("on", 100)));
-        ParsedCondition pato_is_never_shown = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("pato@codigo.com"))), Lists.newArrayList(partition("off", 100)));
-        ParsedCondition trevor_is_always_shown = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("trevor@codigo.com"))), Lists.newArrayList(partition("on", 100)));
+        Condition adil_is_always_on = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition("on", 100)));
+        Condition pato_is_never_shown = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("pato@codigo.com"))), Lists.newArrayList(partition("off", 100)));
+        Condition trevor_is_always_shown = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("trevor@codigo.com"))), Lists.newArrayList(partition("on", 100)));
 
-        List<ParsedCondition> conditions = Lists.newArrayList(adil_is_always_on, pato_is_never_shown, trevor_is_always_shown);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(adil_is_always_on, pato_is_never_shown, trevor_is_always_shown);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -177,7 +180,7 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -188,7 +191,7 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("trevor@codigo.com"), splitFetcher);
+        client = SplitClientImplFactory.get(Key.withMatchingKey("trevor@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -204,14 +207,14 @@ public class SplitClientImplTest {
     public void killed_test_always_goes_to_default() {
         String test = "test1";
 
-        ParsedCondition rollOutToEveryone = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition("on", 100)));
-        List<ParsedCondition> conditions = Lists.newArrayList(rollOutToEveryone);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, true, Treatments.OFF, conditions, "user", 1, 1, null);
+        Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition("on", 100)));
+        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, true, Treatments.OFF, conditions, "user", 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
 
         try {
             Thread.sleep(1000);
@@ -234,19 +237,19 @@ public class SplitClientImplTest {
         String parent = "parent";
         String dependent = "dependent";
 
-        ParsedCondition parent_is_on = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition(Treatments.ON, 100)));
-        List<ParsedCondition> parent_conditions = Lists.newArrayList(parent_is_on);
-        ParsedSplit parentSplit = ParsedSplit.createParsedSplitForTests(parent, 123, false, Treatments.OFF, parent_conditions, null, 1, 1, null);
+        Condition parent_is_on = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition(Treatments.ON, 100)));
+        List<Condition> parent_conditions = Lists.newArrayList(parent_is_on);
+        Split parentSplit = SplitHelper.createSplit(parent, 123, false, Treatments.OFF, parent_conditions, null, 1, 1, null);
 
-        ParsedCondition dependent_needs_parent = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new DependencyMatcher(parent, Lists.newArrayList(Treatments.ON))), Lists.newArrayList(partition(Treatments.ON, 100)));
-        List<ParsedCondition> dependent_conditions = Lists.newArrayList(dependent_needs_parent);
-        ParsedSplit dependentSplit = ParsedSplit.createParsedSplitForTests(dependent, 123, false, Treatments.OFF, dependent_conditions, null, 1, 1, null);
+        Condition dependent_needs_parent = SplitHelper.createCondition(CombiningMatcher.of(new DependencyMatcher(parent, Lists.newArrayList(Treatments.ON))), Lists.newArrayList(partition(Treatments.ON, 100)));
+        List<Condition> dependent_conditions = Lists.newArrayList(dependent_needs_parent);
+        Split dependentSplit = SplitHelper.createSplit(dependent, 123, false, Treatments.OFF, dependent_conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(parent)).thenReturn(parentSplit);
-        when(splitFetcher.fetch(dependent)).thenReturn(dependentSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(parent)).thenReturn(parentSplit);
+        when(splitsStorage.get(dependent)).thenReturn(dependentSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -263,19 +266,19 @@ public class SplitClientImplTest {
         String parent = "parent";
         String dependent = "dependent";
 
-        ParsedCondition parent_is_on = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition(Treatments.ON, 100)));
-        List<ParsedCondition> parent_conditions = Lists.newArrayList(parent_is_on);
-        ParsedSplit parentSplit = ParsedSplit.createParsedSplitForTests(parent, 123, false, Treatments.OFF, parent_conditions, null, 1, 1, null);
+        Condition parent_is_on = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition(Treatments.ON, 100)));
+        List<Condition> parent_conditions = Lists.newArrayList(parent_is_on);
+        Split parentSplit = SplitHelper.createSplit(parent, 123, false, Treatments.OFF, parent_conditions, null, 1, 1, null);
 
-        ParsedCondition dependent_needs_parent = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new DependencyMatcher(parent, Lists.newArrayList(Treatments.OFF))), Lists.newArrayList(partition(Treatments.ON, 100)));
-        List<ParsedCondition> dependent_conditions = Lists.newArrayList(dependent_needs_parent);
-        ParsedSplit dependentSplit = ParsedSplit.createParsedSplitForTests(dependent, 123, false, Treatments.OFF, dependent_conditions, null, 1, 1, null);
+        Condition dependent_needs_parent = SplitHelper.createCondition(CombiningMatcher.of(new DependencyMatcher(parent, Lists.newArrayList(Treatments.OFF))), Lists.newArrayList(partition(Treatments.ON, 100)));
+        List<Condition> dependent_conditions = Lists.newArrayList(dependent_needs_parent);
+        Split dependentSplit = SplitHelper.createSplit(dependent, 123, false, Treatments.OFF, dependent_conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(parent)).thenReturn(parentSplit);
-        when(splitFetcher.fetch(dependent)).thenReturn(dependentSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(parent)).thenReturn(parentSplit);
+        when(splitsStorage.get(dependent)).thenReturn(dependentSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -291,14 +294,14 @@ public class SplitClientImplTest {
     public void dependency_matcher_control() {
         String dependent = "dependent";
 
-        ParsedCondition dependent_needs_parent = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new DependencyMatcher("not-exists", Lists.newArrayList(Treatments.OFF))), Lists.newArrayList(partition(Treatments.OFF, 100)));
-        List<ParsedCondition> dependent_conditions = Lists.newArrayList(dependent_needs_parent);
-        ParsedSplit dependentSplit = ParsedSplit.createParsedSplitForTests(dependent, 123, false, Treatments.ON, dependent_conditions, null, 1, 1, null);
+        Condition dependent_needs_parent = SplitHelper.createCondition(CombiningMatcher.of(new DependencyMatcher("not-exists", Lists.newArrayList(Treatments.OFF))), Lists.newArrayList(partition(Treatments.OFF, 100)));
+        List<Condition> dependent_conditions = Lists.newArrayList(dependent_needs_parent);
+        Split dependentSplit = SplitHelper.createSplit(dependent, 123, false, Treatments.ON, dependent_conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(dependent)).thenReturn(dependentSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(dependent)).thenReturn(dependentSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -314,16 +317,16 @@ public class SplitClientImplTest {
     public void attributes_work() {
         String test = "test1";
 
-        ParsedCondition adil_is_always_on = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition(Treatments.ON, 100)));
-        ParsedCondition users_with_age_greater_than_10_are_on = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of("age", new GreaterThanOrEqualToMatcher(10, DataType.NUMBER)), Lists.newArrayList(partition("on", 100)));
+        Condition adil_is_always_on = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition(Treatments.ON, 100)));
+        Condition users_with_age_greater_than_10_are_on = SplitHelper.createCondition(CombiningMatcher.of("age", new GreaterThanOrEqualToMatcher(10, DataType.NUMBER)), Lists.newArrayList(partition("on", 100)));
 
-        List<ParsedCondition> conditions = Lists.newArrayList(adil_is_always_on, users_with_age_greater_than_10_are_on);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(adil_is_always_on, users_with_age_greater_than_10_are_on);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -335,7 +338,7 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -352,15 +355,15 @@ public class SplitClientImplTest {
     public void attributes_work_2() {
         String test = "test1";
 
-        ParsedCondition age_equal_to_0_should_be_on = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of("age", new EqualToMatcher(0, DataType.NUMBER)), Lists.newArrayList(partition("on", 100)));
+        Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(CombiningMatcher.of("age", new EqualToMatcher(0, DataType.NUMBER)), Lists.newArrayList(partition("on", 100)));
 
-        List<ParsedCondition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, "user", 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, "user", 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -372,7 +375,7 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -388,15 +391,15 @@ public class SplitClientImplTest {
     public void attributes_greater_than_negative_number() {
         String test = "test1";
 
-        ParsedCondition age_equal_to_0_should_be_on = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of("age", new EqualToMatcher(-20, DataType.NUMBER)), Lists.newArrayList(partition("on", 100)));
+        Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(CombiningMatcher.of("age", new EqualToMatcher(-20, DataType.NUMBER)), Lists.newArrayList(partition("on", 100)));
 
-        List<ParsedCondition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -413,7 +416,7 @@ public class SplitClientImplTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -432,15 +435,15 @@ public class SplitClientImplTest {
     public void attributes_for_sets() {
         String test = "test1";
 
-        ParsedCondition any_of_set = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of("products", new ContainsAnyOfSetMatcher(Lists.newArrayList("sms", "video"))), Lists.newArrayList(partition("on", 100)));
+        Condition any_of_set = SplitHelper.createCondition(CombiningMatcher.of("products", new ContainsAnyOfSetMatcher(Lists.newArrayList("sms", "video"))), Lists.newArrayList(partition("on", 100)));
 
-        List<ParsedCondition> conditions = Lists.newArrayList(any_of_set);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(any_of_set);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -452,7 +455,7 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher);
+        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
@@ -473,18 +476,19 @@ public class SplitClientImplTest {
     public void labels_are_populated() {
         String test = "test1";
 
-        ParsedCondition age_equal_to_0_should_be_on = new ParsedCondition(ConditionType.ROLLOUT,
+        Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(
                 CombiningMatcher.of("age", new EqualToMatcher(-20, DataType.NUMBER)),
-                Lists.newArrayList(partition("on", 100)),
-                "foolabel"
-        );
+                Lists.newArrayList(partition("on", 100)));
 
-        List<ParsedCondition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        age_equal_to_0_should_be_on.conditionType = ConditionType.ROLLOUT;
+        age_equal_to_0_should_be_on.label = "foolabel";
+
+        List<Condition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
         ImpressionListener impressionListener = mock(ImpressionListener.class);
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher, impressionListener);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage, impressionListener);
         Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
 
 
@@ -551,19 +555,37 @@ public class SplitClientImplTest {
 
         String test = "test1";
 
-        ParsedCondition whitelistCondition = new ParsedCondition(ConditionType.WHITELIST, CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@split.io"))), Lists.newArrayList(partition("on", 100), partition("off", 0)), "whitelisted user");
-        ParsedCondition rollOutToEveryone = new ParsedCondition(ConditionType.ROLLOUT, CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition("on", 100), partition("off", 0)), "in segment all");
+        Condition whitelistCondition = SplitHelper.createCondition(
+                CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@split.io"))),
+                Lists.newArrayList(partition("on", 100), partition("off", 0)));
+        whitelistCondition.conditionType = ConditionType.WHITELIST;
+        whitelistCondition.label = "whitelisted user";
 
-        List<ParsedCondition> conditions = Lists.newArrayList(whitelistCondition, rollOutToEveryone);
+        Condition rollOutToEveryone = SplitHelper.createCondition(
+                CombiningMatcher.of(new AllKeysMatcher()),
+                Lists.newArrayList(partition("on", 100), partition("off", 0)));
+        rollOutToEveryone.conditionType = ConditionType.ROLLOUT;
+        rollOutToEveryone.label = "in segment all";
 
-        ParsedSplit parsedSplit = new ParsedSplit(test, 123, false, Treatments.OFF, conditions, null, 1, trafficAllocation, trafficAllocationSeed, algo, null);
+        List<Condition> conditions = Lists.newArrayList(whitelistCondition, rollOutToEveryone);
+        Split split = new Split();
+        split.name = test;
+        split.seed = 123;
+        split.killed = false;
+        split.defaultTreatment = Treatments.OFF;
+        split.conditions = conditions;
+        split.trafficTypeName = null;
+        split.changeNumber = 1;
+        split.trafficAllocation = trafficAllocation;
+        split.trafficAllocationSeed = trafficAllocationSeed;
+        split.algo = algo;
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(split);
 
         ImpressionListener impressionListener = mock(ImpressionListener.class);
 
-        SplitClientImpl client = SplitClientImplFactory.get(key, splitFetcher, impressionListener);
+        SplitClientImpl client = SplitClientImplFactory.get(key, splitsStorage, impressionListener);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
@@ -589,17 +611,17 @@ public class SplitClientImplTest {
 
         Set<String> whitelist = new HashSet<>();
         whitelist.add("aijaz");
-        ParsedCondition aijaz_should_match = ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new WhitelistMatcher(whitelist)), Lists.newArrayList(partition("on", 100)));
+        Condition aijaz_should_match = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(whitelist)), Lists.newArrayList(partition("on", 100)));
 
-        List<ParsedCondition> conditions = Lists.newArrayList(aijaz_should_match);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, "user", 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(aijaz_should_match);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, "user", 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
 
         Key bad_key = new Key("adil", "aijaz");
-        SplitClientImpl client = SplitClientImplFactory.get(bad_key, splitFetcher);
+        SplitClientImpl client = SplitClientImplFactory.get(bad_key, splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
@@ -609,7 +631,7 @@ public class SplitClientImplTest {
         });
 
         Key good_key = new Key("aijaz", "adil");
-        client = SplitClientImplFactory.get(good_key, splitFetcher);
+        client = SplitClientImplFactory.get(good_key, splitsStorage);
 
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
@@ -625,22 +647,22 @@ public class SplitClientImplTest {
     public void impression_metadata_is_propagated() {
         String test = "test1";
 
-        ParsedCondition age_equal_to_0_should_be_on = new ParsedCondition(ConditionType.ROLLOUT,
+        Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(
                 CombiningMatcher.of("age", new EqualToMatcher(-20, DataType.NUMBER)),
-                Lists.newArrayList(partition("on", 100)),
-                "foolabel"
-        );
+                Lists.newArrayList(partition("on", 100)));
+        age_equal_to_0_should_be_on.conditionType = ConditionType.ROLLOUT;
+        age_equal_to_0_should_be_on.label = "foolabel";
 
-        List<ParsedCondition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
-        ParsedSplit parsedSplit = ParsedSplit.createParsedSplitForTests(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
+        List<Condition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
+        Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
-        SplitFetcher splitFetcher = mock(SplitFetcher.class);
-        when(splitFetcher.fetch(test)).thenReturn(parsedSplit);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
         ImpressionListener impressionListener = mock(ImpressionListener.class);
 
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitFetcher, impressionListener);
+        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage, impressionListener);
 
         Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
 

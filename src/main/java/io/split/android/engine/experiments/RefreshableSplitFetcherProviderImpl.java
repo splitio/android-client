@@ -35,7 +35,11 @@ public class RefreshableSplitFetcherProviderImpl implements RefreshableSplitFetc
     private final long _initialChangeNumber;
 
 
-    public RefreshableSplitFetcherProviderImpl(SplitChangeFetcher splitChangeFetcher, SplitParser splitParser, long refreshEveryNSeconds, ISplitEventsManager eventsManager, long initialChangeNumber) {
+    public RefreshableSplitFetcherProviderImpl(SplitChangeFetcher splitChangeFetcher,
+                                               SplitParser splitParser,
+                                               long refreshEveryNSeconds,
+                                               ISplitEventsManager eventsManager,
+                                               long initialChangeNumber) {
         _splitChangeFetcher = splitChangeFetcher;
         checkNotNull(_splitChangeFetcher);
 

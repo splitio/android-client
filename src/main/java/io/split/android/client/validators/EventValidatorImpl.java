@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 
 import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.storage.splits.SplitsStorage;
 
 /**
  * Contains func an instance of Event class.
@@ -12,11 +13,11 @@ public class EventValidatorImpl implements EventValidator {
 
     private final String TYPE_REGEX = ValidationConfig.getInstance().getTrackEventNamePattern();
     private KeyValidator mKeyValidator;
-    private ISplitCache mSplitCache;
+    private final SplitsStorage mSplitsStorage;
 
-    public EventValidatorImpl(KeyValidator keyValidator, ISplitCache splitCache) {
-        this.mKeyValidator = keyValidator;
-        this.mSplitCache = splitCache;
+    public EventValidatorImpl(KeyValidator keyValidator, SplitsStorage splitsStorage) {
+        mKeyValidator = keyValidator;
+        mSplitsStorage = splitsStorage;
     }
 
     @Override
@@ -58,7 +59,7 @@ public class EventValidatorImpl implements EventValidator {
             errorInfo = new ValidationErrorInfo(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_HAS_UPPERCASE_CHARS, "traffic_type_name should be all lowercase - converting string to lowercase", true);
         }
 
-        if (validateTrafficType && !mSplitCache.trafficTypeExists(event.trafficTypeName)) {
+        if (validateTrafficType && !mSplitsStorage.isValidTrafficType(event.trafficTypeName)) {
             String message = "Traffic Type " + event.trafficTypeName + " does not have any corresponding Splits in this environment, "
                     + "make sure you’re tracking your events to a valid traffic type defined in the Split console";
             if(errorInfo == null) {

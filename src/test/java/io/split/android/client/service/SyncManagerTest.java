@@ -19,6 +19,7 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.executor.SplitTask;
@@ -65,6 +66,8 @@ public class SyncManagerTest {
     WorkManager mWorkManager;
     @Mock
     SplitTaskFactory mTaskFactory;
+    @Mock
+    SplitEventsManager mEventsManager;
 
     public void setup(SplitClientConfig splitClientConfig) {
         MockitoAnnotations.initMocks(this);
@@ -92,7 +95,7 @@ public class SyncManagerTest {
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
 
         mSyncManager = new SyncManagerImpl(splitClientConfig, mTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mWorkManager);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManager);
     }
 
     @Test
@@ -106,10 +109,10 @@ public class SyncManagerTest {
         mSyncManager.start();
         verify(mTaskExecutor, times(1)).schedule(
                 any(SplitsSyncTask.class), anyLong(), anyLong(),
-                isNull());
+                any(SplitTaskExecutionListener.class));
         verify(mTaskExecutor, times(1)).schedule(
                 any(MySegmentsSyncTask.class), anyLong(), anyLong(),
-                isNull());
+                any(SplitTaskExecutionListener.class));
         verify(mTaskExecutor, times(1)).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));

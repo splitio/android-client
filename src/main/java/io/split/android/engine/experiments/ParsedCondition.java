@@ -8,7 +8,6 @@ import java.util.List;
 
 /**
  * A pair of matcher and partitions.
- *
  */
 public final class ParsedCondition {
 
@@ -16,11 +15,6 @@ public final class ParsedCondition {
     private final CombiningMatcher _matcher;
     private final List<Partition> _partitions;
     private final String _label;
-
-    public static ParsedCondition createParsedConditionForTests(CombiningMatcher matcher, List<Partition> partitions) {
-        return new ParsedCondition(ConditionType.ROLLOUT, matcher, partitions, null);
-    }
-
 
     public ParsedCondition(ConditionType conditionType, CombiningMatcher matcher, List<Partition> partitions, String label) {
         _conditionType = conditionType;

@@ -38,6 +38,7 @@ import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.grammar.Treatments;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -110,18 +111,12 @@ public class IntegrationTest {
         File cacheDir = mContext.getCacheDir();
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
 
-        File dataFolder = new File(cacheDir, dataFolderName);
-        if(dataFolder.exists()) {
-            File[] files = dataFolder.listFiles();
-            if(files != null) {
-                for (File file : files) {
-                    file.delete();
-                }
-            }
-            boolean isDataFolderDelete = dataFolder.delete();
-            log("Data folder exists and deleted: " + isDataFolderDelete);
-        }
 
+
+        mContext.deleteDatabase(dataFolderName);
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        splitRoomDatabase.clearAllTables();
+        File dataFolder = new File(cacheDir, dataFolderName);
         SplitClient client;
         SplitManager manager;
 
@@ -177,7 +172,6 @@ public class IntegrationTest {
         Event event99 = findEventWithValue(lastTrackHitEvents, 99.0);
         Event event100 = findEventWithValue(lastTrackHitEvents, 100.0);
 
-        Assert.assertTrue(dataFolder.exists());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
         Assert.assertEquals("off", t1);

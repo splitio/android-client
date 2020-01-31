@@ -7,6 +7,8 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.storage.splits.PersistentSplitsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.service.SyncManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
@@ -19,6 +21,7 @@ import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitFetcher;
+import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.metrics.Metrics;
 
 
@@ -42,7 +45,7 @@ public final class SplitClientImpl implements SplitClient {
     private final TreatmentManager mTreatmentManager;
     private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
-    private SyncManager mSyncManager;
+    private final SyncManager mSyncManager;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -50,15 +53,16 @@ public final class SplitClientImpl implements SplitClient {
 
     public SplitClientImpl(SplitFactory container,
                            Key key,
-                           SplitFetcher splitFetcher,
+                           SplitParser splitParser,
                            ImpressionListener impressionListener,
                            Metrics metrics,
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
+                           SplitsStorage splitsStorage,
                            EventPropertiesProcessor eventPropertiesProcessor,
-                           ISplitCache splitCache) {
+                           SyncManager syncManager) {
 
-        checkNotNull(splitFetcher);
+        checkNotNull(splitParser);
         checkNotNull(impressionListener);
 
         String mBucketingKey = key.bucketingKey();
@@ -67,13 +71,14 @@ public final class SplitClientImpl implements SplitClient {
         mSplitFactory = checkNotNull(container);
         mConfig = checkNotNull(config);
         mEventsManager = checkNotNull(eventsManager);
-        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
+        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage);
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = new TreatmentManagerImpl(
-                mMatchingKey, mBucketingKey, new EvaluatorImpl(splitFetcher),
-                new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), metrics,
+                mMatchingKey, mBucketingKey, new EvaluatorImpl(splitsStorage, splitParser),
+                new KeyValidatorImpl(), new SplitValidatorImpl(), metrics,
                 impressionListener, mConfig, eventsManager);
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
+        mSyncManager = checkNotNull(syncManager);
     }
 
     @Override

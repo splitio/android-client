@@ -1,6 +1,7 @@
 package io.split.android.engine.matchers;
 
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.Evaluator;
 import io.split.android.engine.segments.MySegments;
@@ -11,10 +12,10 @@ import io.split.android.engine.segments.MySegments;
 
 public class MySegmentsMatcher implements Matcher {
 
-    private MySegments _mySegments;
+    private Set<String> _mySegments;
     private String _segmentName;
 
-    public MySegmentsMatcher(MySegments mySegments, String segmentName) {
+    public MySegmentsMatcher(Set<String> mySegments, String segmentName) {
         _mySegments = mySegments;
         _segmentName = segmentName;
     }

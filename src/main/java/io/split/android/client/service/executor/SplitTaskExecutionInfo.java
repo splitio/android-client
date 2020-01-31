@@ -16,6 +16,12 @@ public class SplitTaskExecutionInfo {
                 0, 0);
     }
 
+    public static SplitTaskExecutionInfo error(SplitTaskType taskType) {
+        return new SplitTaskExecutionInfo(
+                taskType, SplitTaskExecutionStatus.ERROR,
+                0, 0);
+    }
+
     public static SplitTaskExecutionInfo error(SplitTaskType taskType,
                                                int nonSentRecords,
                                                long nonSentBytes) {
