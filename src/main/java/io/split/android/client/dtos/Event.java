@@ -4,7 +4,9 @@ import com.google.common.base.Objects;
 
 import java.util.Map;
 
-public class Event {
+import io.split.android.client.storage.InBytesSizable;
+
+public class Event implements InBytesSizable {
 
     public String eventTypeId;
     public String trafficTypeName;
@@ -38,7 +40,7 @@ public class Event {
         this.sizeInBytes = sizeInBytes;
     }
 
-    public int getSizeInBytes() {
+    public long getSizeInBytes() {
         return sizeInBytes;
     }
 }

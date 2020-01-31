@@ -1,7 +1,10 @@
 package io.split.android.client.service;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
@@ -37,8 +40,10 @@ import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
+import io.split.android.client.service.synchronizer.WorkManagerFactoryWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
@@ -48,6 +53,7 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -69,11 +75,15 @@ public class SyncManagerTest {
     @Mock
     SplitTaskExecutionListener mTaskExecutionListener;
     @Mock
+    WorkManagerFactoryWrapper mWorkManagerFactoryWrapper;
+    @Mock
     WorkManager mWorkManager;
     @Mock
     SplitTaskFactory mTaskFactory;
     @Mock
     SplitEventsManager mEventsManager;
+    @Mock
+    Context mContext;
 
     public void setup(SplitClientConfig splitClientConfig) {
         MockitoAnnotations.initMocks(this);
@@ -100,8 +110,11 @@ public class SyncManagerTest {
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
 
+        when(mWorkManagerFactoryWrapper.getWorkManager()).thenReturn(mWorkManager);
+        when(mWorkManager.getWorkInfoByIdLiveData(any())).thenReturn(mock(LiveData.class));
+
         mSyncManager = new SyncManagerImpl(splitClientConfig, mTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManager);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerFactoryWrapper);
     }
 
     @Test
@@ -156,16 +169,16 @@ public class SyncManagerTest {
                 .build();
         setup(config);
         mSyncManager.start();
-        verify(mTaskExecutor, never()).schedule(
+        verify(mTaskExecutor, times(1)).schedule(
                 any(SplitsSyncTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
-        verify(mTaskExecutor, never()).schedule(
+        verify(mTaskExecutor, times(1)).schedule(
                 any(MySegmentsSyncTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
-        verify(mTaskExecutor, never()).schedule(
+        verify(mTaskExecutor, times(1)).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
-        verify(mTaskExecutor, never()).schedule(
+        verify(mTaskExecutor, times(1)).schedule(
                 any(ImpressionsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
 
@@ -218,7 +231,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pushEvent() {
+    public void pushEvent() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -228,6 +241,7 @@ public class SyncManagerTest {
         Event event = new Event();
         mSyncManager.start();
         mSyncManager.pushEvent(event);
+        Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
                 any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
@@ -235,7 +249,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pushEventReachQueueSize() {
+    public void pushEventReachQueueSize() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -246,7 +260,7 @@ public class SyncManagerTest {
         for (int i = 0; i < 22; i++) {
             mSyncManager.pushEvent(new Event());
         }
-
+        Thread.sleep(200);
         verify(mEventsStorage, times(22)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
                 any(EventsRecorderTask.class),
@@ -254,7 +268,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pushEventBytesLimit() {
+    public void pushEventBytesLimit() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -267,7 +281,7 @@ public class SyncManagerTest {
             event.setSizeInBytes(2000000);
             mSyncManager.pushEvent(event);
         }
-
+        Thread.sleep(200);
         verify(mEventsStorage, times(6)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
                 any(EventsRecorderTask.class),
@@ -275,7 +289,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pushImpression() {
+    public void pushImpression() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -286,6 +300,7 @@ public class SyncManagerTest {
         ArgumentCaptor<KeyImpression> impressionCaptor = ArgumentCaptor.forClass(KeyImpression.class);
         mSyncManager.start();
         mSyncManager.pushImpression(impression);
+        Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
                 any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
@@ -300,7 +315,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pushImpressionReachQueueSize() {
+    public void pushImpressionReachQueueSize() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -311,15 +326,15 @@ public class SyncManagerTest {
         for (int i = 0; i < 8; i++) {
             mSyncManager.pushImpression(createImpression());
         }
-
+        Thread.sleep(200);
         verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
                 any(ImpressionsRecorderTask.class),
-                any(SplitTaskExecutionListener.class));
+                any(RecorderSyncHelper.class));
     }
 
     @Test
-    public void pushImpressionBytesLimit() {
+    public void pushImpressionBytesLimit() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -331,7 +346,7 @@ public class SyncManagerTest {
         for (int i = 0; i < 10; i++) {
             mSyncManager.pushImpression(createImpression());
         }
-
+        Thread.sleep(200);
         verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
                 any(ImpressionsRecorderTask.class),
@@ -350,7 +365,7 @@ public class SyncManagerTest {
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
         mSyncManager = new SyncManagerImpl(config, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManager);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerFactoryWrapper);
         mSyncManager.start();
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);

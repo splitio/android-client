@@ -1,10 +1,12 @@
 package io.split.android.client.dtos;
 
 
+import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.storage.InBytesSizable;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.utils.Json;
 
-public class KeyImpression {
+public class KeyImpression implements InBytesSizable {
     public transient long storageId;
     public String feature;
     public String keyName;
@@ -44,6 +46,11 @@ public class KeyImpression {
         }
 
         return bucketingKey.equals(that.bucketingKey);
+    }
+
+    @Override
+    public long getSizeInBytes() {
+        return ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES;
     }
 
     @Override

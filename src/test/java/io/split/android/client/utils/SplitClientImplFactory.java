@@ -1,7 +1,5 @@
 package io.split.android.client.utils;
 
-import java.util.ArrayList;
-
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientImpl;
 import io.split.android.client.SplitFactory;
@@ -13,10 +11,8 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.metrics.Metrics;
-import io.split.android.fake.SplitCacheStub;
 
 import static org.mockito.Mockito.mock;
 
