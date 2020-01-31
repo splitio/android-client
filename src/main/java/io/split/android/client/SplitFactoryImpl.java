@@ -275,6 +275,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase);
         if (!storageMigrator.isMigrationDone()) {
+            Logger.i("Migrating cache to new storage implementation");
             IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
             SplitCacheMigrator splitCacheMigrator = new SplitCache(fileStore);
             MySegmentsCacheMigrator mySegmentsCacheMigrator = new MySegmentsCache(fileStore);
@@ -289,7 +290,6 @@ public class SplitFactoryImpl implements SplitFactory {
                             new ImpressionsStorageManagerConfig(),
                             new FileStorageHelper());
 
-
             SplitsMigratorHelper splitsMigratorHelper
                     = new SplitsMigratorHelperImpl(splitCacheMigrator);
             MySegmentsMigratorHelper mySegmentsMigratorHelper
@@ -302,6 +302,8 @@ public class SplitFactoryImpl implements SplitFactory {
 
             storageMigrator.runMigration(mySegmentsMigratorHelper, splitsMigratorHelper,
                     eventsMigratorHelper, impressionsMigratorHelper);
+
+            Logger.i("Migration done");
 
         }
     }

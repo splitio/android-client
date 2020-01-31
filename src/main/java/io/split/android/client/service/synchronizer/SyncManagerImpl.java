@@ -18,6 +18,7 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.workmanager.SplitWorkerFactory;
 import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -137,6 +138,7 @@ public class SyncManagerImpl implements SyncManager {
         scheduleMySegmentsFetcherTask();
         scheduleEventsRecorderTask();
         scheduleImpressionsRecorderTask();
+        Logger.i("Synchronization tasks scheduled");
     }
 
     private void scheduleSplitsFetcherTask() {
