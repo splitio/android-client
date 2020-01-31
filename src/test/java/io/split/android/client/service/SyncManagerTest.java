@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
@@ -52,6 +53,7 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -109,6 +111,7 @@ public class SyncManagerTest {
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
 
         when(mWorkManagerFactoryWrapper.getWorkManager()).thenReturn(mWorkManager);
+        when(mWorkManager.getWorkInfoByIdLiveData(any())).thenReturn(mock(LiveData.class));
 
         mSyncManager = new SyncManagerImpl(splitClientConfig, mTaskExecutor,
                 mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerFactoryWrapper);
@@ -157,48 +160,48 @@ public class SyncManagerTest {
                 any(PeriodicWorkRequest.class));
     }
 
-//    @Test
-//    public void workManagerSchedule() throws InterruptedException {
-//        SplitClientConfig config = SplitClientConfig.builder()
-//                .eventsQueueSize(10)
-//                .sychronizeInBackground(true)
-//                .impressionsQueueSize(3)
-//                .build();
-//        setup(config);
-//        mSyncManager.start();
-//        verify(mTaskExecutor, never()).schedule(
-//                any(SplitsSyncTask.class), anyLong(), anyLong(),
-//                any(SplitTaskExecutionListener.class));
-//        verify(mTaskExecutor, never()).schedule(
-//                any(MySegmentsSyncTask.class), anyLong(), anyLong(),
-//                any(SplitTaskExecutionListener.class));
-//        verify(mTaskExecutor, never()).schedule(
-//                any(EventsRecorderTask.class), anyLong(), anyLong(),
-//                any(SplitTaskExecutionListener.class));
-//        verify(mTaskExecutor, never()).schedule(
-//                any(ImpressionsRecorderTask.class), anyLong(), anyLong(),
-//                any(SplitTaskExecutionListener.class));
-//
-//        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
-//                eq(SplitTaskType.SPLITS_SYNC.toString()),
-//                any(ExistingPeriodicWorkPolicy.class),
-//                any(PeriodicWorkRequest.class));
-//
-//        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
-//                eq(SplitTaskType.MY_SEGMENTS_SYNC.toString()),
-//                any(ExistingPeriodicWorkPolicy.class),
-//                any(PeriodicWorkRequest.class));
-//
-//        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
-//                eq(SplitTaskType.EVENTS_RECORDER.toString()),
-//                any(ExistingPeriodicWorkPolicy.class),
-//                any(PeriodicWorkRequest.class));
-//
-//        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
-//                eq(SplitTaskType.IMPRESSIONS_RECORDER.toString()),
-//                any(ExistingPeriodicWorkPolicy.class),
-//                any(PeriodicWorkRequest.class));
-//    }
+    @Test
+    public void workManagerSchedule() throws InterruptedException {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(true)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
+        mSyncManager.start();
+        verify(mTaskExecutor, times(1)).schedule(
+                any(SplitsSyncTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+        verify(mTaskExecutor, times(1)).schedule(
+                any(MySegmentsSyncTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+        verify(mTaskExecutor, times(1)).schedule(
+                any(EventsRecorderTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+        verify(mTaskExecutor, times(1)).schedule(
+                any(ImpressionsRecorderTask.class), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+
+        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.SPLITS_SYNC.toString()),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+
+        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.MY_SEGMENTS_SYNC.toString()),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+
+        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.EVENTS_RECORDER.toString()),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+
+        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.IMPRESSIONS_RECORDER.toString()),
+                any(ExistingPeriodicWorkPolicy.class),
+                any(PeriodicWorkRequest.class));
+    }
 
     @Test
     public void pause() {

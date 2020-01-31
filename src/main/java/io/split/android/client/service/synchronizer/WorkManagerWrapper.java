@@ -39,9 +39,10 @@ public class WorkManagerWrapper {
         mWorkManager = checkNotNull(workManager);
         mEventsRecorderListener = checkNotNull(eventsRecorderListener);
         mImpressionsRecorderListener = checkNotNull(impressionsRecorderListener);
+        scheduleWork();
     }
 
-    private void schedule() {
+    private void scheduleWork() {
         scheduleWork(SplitTaskType.SPLITS_SYNC.toString(), SplitsSyncWorker.class,
                 ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
 
