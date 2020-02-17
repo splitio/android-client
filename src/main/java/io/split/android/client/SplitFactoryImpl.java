@@ -195,6 +195,8 @@ public class SplitFactoryImpl implements SplitFactory {
             public void run() {
                 Logger.w("Shutdown called for split");
                 try {
+                    _syncManager.stop();
+                    Logger.i("Flushing impressions and events");
                     _lifecyleManager.destroy();
                     Logger.i("Successful shutdown of lifecycle manager");
                     _factoryMonitor.remove(_apiKey);
