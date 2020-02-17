@@ -43,6 +43,7 @@ public class EventsRecorderTask implements SplitTask {
                 try {
                     Logger.d("Posting %d Split events", events.size());
                     mHttpRecorder.execute(events);
+                    Logger.d("%d split events sent", events.size());
                 } catch (HttpRecorderException e) {
                     status = SplitTaskExecutionStatus.ERROR;
                     nonSentRecords += mConfig.getEventsPerPush();
