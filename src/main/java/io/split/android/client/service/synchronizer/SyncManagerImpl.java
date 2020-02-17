@@ -107,6 +107,7 @@ public class SyncManagerImpl implements SyncManager {
 
     @Override
     public void stop() {
+        flush();
         mTaskExecutor.stop();
     }
 
