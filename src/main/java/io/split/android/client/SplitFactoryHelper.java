@@ -2,6 +2,8 @@ package io.split.android.client;
 
 import android.content.Context;
 
+import androidx.work.WorkManager;
+
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +16,7 @@ import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRequestBodySerializer;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -24,7 +27,6 @@ import io.split.android.client.service.http.HttpRecorderImpl;
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
-import io.split.android.client.service.synchronizer.WorkManagerFactoryWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.events.PersistentEventsStorage;
@@ -65,11 +67,17 @@ class SplitFactoryHelper {
 
     SplitStorageContainer buildStorageContainer(Context context, Key key, String databaseName) {
         SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
-        PersistentMySegmentsStorage persistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(splitRoomDatabase, key.matchingKey());
+        PersistentMySegmentsStorage persistentMySegmentsStorage
+                = new SqLitePersistentMySegmentsStorage(splitRoomDatabase, key.matchingKey());
         MySegmentsStorage mySegmentsStorage = new MySegmentsStorageImpl(persistentMySegmentsStorage);
-        PersistentImpressionsStorage persistentImpressionsStorage = new SqLitePersistentImpressionsStorage(splitRoomDatabase, 100);
-        PersistentEventsStorage persistentEventsStorage = new SqLitePersistentEventsStorage(splitRoomDatabase, 100);
-        PersistentSplitsStorage persistentSplitsStorage = new SqLitePersistentSplitsStorage(splitRoomDatabase);
+        PersistentImpressionsStorage persistentImpressionsStorage =
+                new SqLitePersistentImpressionsStorage(splitRoomDatabase,
+                        ServiceConstants.EXPIRATION_PERIOD);
+        PersistentEventsStorage persistentEventsStorage =
+                new SqLitePersistentEventsStorage(splitRoomDatabase,
+                        ServiceConstants.EXPIRATION_PERIOD);
+        PersistentSplitsStorage persistentSplitsStorage
+                = new SqLitePersistentSplitsStorage(splitRoomDatabase);
         SplitsStorage splitsStorage = new SplitsStorageImpl(persistentSplitsStorage);
         return new SplitStorageContainer(
                 splitsStorage, mySegmentsStorage,
@@ -117,11 +125,9 @@ class SplitFactoryHelper {
                 eventsRecorder, impressionsRecorder);
     }
 
-    WorkManagerFactoryWrapper buildWorkManagerFactory(SplitClientConfig splitClientConfig,
-                                                      Context context,
-                                                      SplitTaskFactory splitTaskFactory) {
-        if (splitClientConfig.synchronizeInBackground()) {
-            return new WorkManagerFactoryWrapper(context, splitTaskFactory);
+    public static WorkManager workManagerInstance(Context context, SplitClientConfig splitClientConfig) {
+        if(splitClientConfig.synchronizeInBackground()) {
+            return WorkManager.getInstance(context);
         }
         return null;
     }

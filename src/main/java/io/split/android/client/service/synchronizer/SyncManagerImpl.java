@@ -1,10 +1,8 @@
 package io.split.android.client.service.synchronizer;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.work.Configuration;
 import androidx.work.WorkManager;
 
 import io.split.android.client.SplitClientConfig;
@@ -16,7 +14,6 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.workmanager.SplitWorkerFactory;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
 
@@ -47,7 +44,7 @@ public class SyncManagerImpl implements SyncManager {
                            @NonNull SplitStorageContainer splitStorageContainer,
                            @NonNull SplitTaskFactory splitTaskFactory,
                            @NonNull SplitEventsManager splitEventsManager,
-                           WorkManagerFactoryWrapper workManagerFactoryWrapper) {
+                           @Nullable WorkManager workManager) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
@@ -58,10 +55,9 @@ public class SyncManagerImpl implements SyncManager {
         setupListeners();
 
         if (mSplitClientConfig.synchronizeInBackground()) {
-            checkNotNull(workManagerFactoryWrapper);
+            checkNotNull(workManager);
             mWorkManagerWrapper = new WorkManagerWrapper(
-                    workManagerFactoryWrapper.getWorkManager(),
-                    mEventsSyncHelper, mImpressionsSyncHelper);
+                    workManager, mEventsSyncHelper, mImpressionsSyncHelper);
         }
     }
 

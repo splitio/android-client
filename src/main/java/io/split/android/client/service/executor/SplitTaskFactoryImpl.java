@@ -24,7 +24,22 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitStorageContainer mSplitsStorageContainer;
     private final SplitClientConfig mSplitClientConfig;
 
-    public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
+    private static SplitTaskFactory mInstance;
+
+    public static SplitTaskFactory getInstance() {
+        checkNotNull(mInstance);
+        return mInstance;
+    }
+
+    public static void initialize(@NonNull SplitClientConfig splitClientConfig,
+                      @NonNull SplitApiFacade splitApiFacade,
+                      @NonNull SplitStorageContainer splitStorageContainer) {
+        mInstance = new SplitTaskFactoryImpl(
+                splitClientConfig, splitApiFacade, splitStorageContainer);
+
+    }
+
+    private SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
                                 @NonNull SplitApiFacade splitApiFacade,
                                 @NonNull SplitStorageContainer splitStorageContainer) {
         mSplitClientConfig = checkNotNull(splitClientConfig);

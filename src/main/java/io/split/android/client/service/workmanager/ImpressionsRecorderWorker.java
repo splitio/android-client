@@ -5,12 +5,12 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.work.WorkerParameters;
 
-import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 
 public class ImpressionsRecorderWorker extends SplitWorker {
     public ImpressionsRecorderWorker(@NonNull Context context,
-                                     @NonNull WorkerParameters workerParams,
-                                     @NonNull SplitTask task) {
-        super(context, workerParams, task);
+                                     @NonNull WorkerParameters workerParams) {
+        super(context, workerParams,
+                SplitTaskFactoryImpl.getInstance().createImpressionsRecorderTask());
     }
 }

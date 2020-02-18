@@ -2,14 +2,11 @@ package io.split.android.client;
 
 import android.content.Context;
 
-import androidx.work.WorkManager;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
@@ -17,10 +14,6 @@ import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.cache.MySegmentsCacheMigrator;
 import io.split.android.client.cache.SplitCache;
 import io.split.android.client.cache.SplitCacheMigrator;
-import io.split.android.client.dtos.Event;
-import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.MySegment;
-import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -32,24 +25,13 @@ import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
-import io.split.android.client.network.SdkTargetPath;
-import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.SplitApiFacade;
-import io.split.android.client.service.synchronizer.SyncManager;
-import io.split.android.client.service.synchronizer.SyncManagerImpl;
-import io.split.android.client.service.events.EventsRequestBodySerializer;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
-import io.split.android.client.service.http.HttpFetcher;
-import io.split.android.client.service.http.HttpFetcherImpl;
-import io.split.android.client.service.http.HttpRecorder;
-import io.split.android.client.service.http.HttpRecorderImpl;
-import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
-import io.split.android.client.service.mysegments.MySegmentsResponseParser;
-import io.split.android.client.service.splits.SplitChangeResponseParser;
-import io.split.android.client.service.synchronizer.WorkManagerFactoryWrapper;
+import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
@@ -61,10 +43,6 @@ import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelperImpl;
 import io.split.android.client.storage.db.migrator.SplitsMigratorHelper;
 import io.split.android.client.storage.db.migrator.SplitsMigratorHelperImpl;
 import io.split.android.client.storage.db.migrator.StorageMigrator;
-import io.split.android.client.storage.events.PersistentEventsStorage;
-import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
-import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
-import io.split.android.client.storage.impressions.SqLitePersistentImpressionsStorage;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.FileStorageHelper;
 import io.split.android.client.storage.legacy.IStorage;
@@ -73,18 +51,8 @@ import io.split.android.client.storage.legacy.ImpressionsStorageManager;
 import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
 import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.client.storage.legacy.TracksFileStorage;
-import io.split.android.client.storage.mysegments.MySegmentsStorage;
-import io.split.android.client.storage.mysegments.MySegmentsStorageImpl;
-import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
-import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
-import io.split.android.client.storage.splits.PersistentSplitsStorage;
-import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.storage.splits.SplitsStorageImpl;
-import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.StringHelper;
-import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
@@ -94,8 +62,6 @@ import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.metrics.FetcherMetricsConfig;
-import io.split.android.engine.metrics.Metrics;
 
 public class SplitFactoryImpl implements SplitFactory {
 
@@ -165,14 +131,12 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
 
-        SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(config, splitApiFacade, storageContainer);
-
+        SplitTaskFactoryImpl.initialize(config, splitApiFacade, storageContainer);
+        SplitTaskFactory splitTaskFactory = SplitTaskFactoryImpl.getInstance();
 
         _syncManager = new SyncManagerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
-                _eventsManager,
-                factoryHelper.buildWorkManagerFactory(config, context, splitTaskFactory)
-        );
+                _eventsManager, SplitFactoryHelper.workManagerInstance(context, config));
 
         _syncManager.start();
 

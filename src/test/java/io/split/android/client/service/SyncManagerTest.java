@@ -43,7 +43,6 @@ import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
-import io.split.android.client.service.synchronizer.WorkManagerFactoryWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
