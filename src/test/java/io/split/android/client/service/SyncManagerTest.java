@@ -73,8 +73,7 @@ public class SyncManagerTest {
     PersistentImpressionsStorage mImpressionsStorage;
     @Mock
     SplitTaskExecutionListener mTaskExecutionListener;
-    @Mock
-    WorkManagerFactoryWrapper mWorkManagerFactoryWrapper;
+
     @Mock
     WorkManager mWorkManager;
     @Mock
@@ -109,11 +108,10 @@ public class SyncManagerTest {
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
 
-        when(mWorkManagerFactoryWrapper.getWorkManager()).thenReturn(mWorkManager);
         when(mWorkManager.getWorkInfoByIdLiveData(any())).thenReturn(mock(LiveData.class));
 
         mSyncManager = new SyncManagerImpl(splitClientConfig, mTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerFactoryWrapper);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManager);
     }
 
     @Test
@@ -364,7 +362,7 @@ public class SyncManagerTest {
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
         mSyncManager = new SyncManagerImpl(config, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerFactoryWrapper);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManager);
         mSyncManager.start();
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
