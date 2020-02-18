@@ -39,10 +39,16 @@ public class WorkManagerWrapper {
         mWorkManager = checkNotNull(workManager);
         mEventsRecorderListener = checkNotNull(eventsRecorderListener);
         mImpressionsRecorderListener = checkNotNull(impressionsRecorderListener);
-        scheduleWork();
     }
 
-    private void scheduleWork() {
+    public void removeWork() {
+        mWorkManager.cancelUniqueWork(SplitTaskType.SPLITS_SYNC.toString());
+        mWorkManager.cancelUniqueWork(SplitTaskType.MY_SEGMENTS_SYNC.toString());
+        mWorkManager.cancelUniqueWork(SplitTaskType.EVENTS_RECORDER.toString());
+        mWorkManager.cancelUniqueWork(SplitTaskType.IMPRESSIONS_RECORDER.toString());
+    }
+
+    public void scheduleWork() {
         scheduleWork(SplitTaskType.SPLITS_SYNC.toString(), SplitsSyncWorker.class,
                 ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
 

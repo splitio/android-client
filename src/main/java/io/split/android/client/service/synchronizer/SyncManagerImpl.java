@@ -44,7 +44,9 @@ public class SyncManagerImpl implements SyncManager {
                            @NonNull SplitStorageContainer splitStorageContainer,
                            @NonNull SplitTaskFactory splitTaskFactory,
                            @NonNull SplitEventsManager splitEventsManager,
-                           @Nullable WorkManager workManager) {
+                           @NonNull WorkManager workManager) {
+
+        checkNotNull(workManager);
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
@@ -54,10 +56,11 @@ public class SyncManagerImpl implements SyncManager {
 
         setupListeners();
 
+        mWorkManagerWrapper = new WorkManagerWrapper(workManager, mEventsSyncHelper, mImpressionsSyncHelper);
         if (mSplitClientConfig.synchronizeInBackground()) {
-            checkNotNull(workManager);
-            mWorkManagerWrapper = new WorkManagerWrapper(
-                    workManager, mEventsSyncHelper, mImpressionsSyncHelper);
+            mWorkManagerWrapper.scheduleWork();
+        } else {
+            mWorkManagerWrapper.removeWork();
         }
     }
 

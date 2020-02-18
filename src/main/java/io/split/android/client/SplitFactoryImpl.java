@@ -2,6 +2,8 @@ package io.split.android.client;
 
 import android.content.Context;
 
+import androidx.work.WorkManager;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -136,7 +138,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         _syncManager = new SyncManagerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
-                _eventsManager, SplitFactoryHelper.workManagerInstance(context, config));
+                _eventsManager, WorkManager.getInstance(context));
 
         _syncManager.start();
 

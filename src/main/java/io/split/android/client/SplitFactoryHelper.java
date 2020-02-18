@@ -124,11 +124,4 @@ class SplitFactoryHelper {
                 splitsFetcher, mySegmentsFetcher,
                 eventsRecorder, impressionsRecorder);
     }
-
-    public static WorkManager workManagerInstance(Context context, SplitClientConfig splitClientConfig) {
-        if(splitClientConfig.synchronizeInBackground()) {
-            return WorkManager.getInstance(context);
-        }
-        return null;
-    }
 }
