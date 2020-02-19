@@ -1,5 +1,6 @@
 package io.split.android.client.service.synchronizer;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.Observer;
@@ -11,9 +12,12 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -30,15 +34,31 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class WorkManagerWrapper {
     final private WorkManager mWorkManager;
-    final private SplitTaskExecutionListener mEventsRecorderListener;
-    final private SplitTaskExecutionListener mImpressionsRecorderListener;
+    final private List<SplitTaskExecutionListener> mExecutionListeners;
+    final private String mDatabaseName;
+    final private String mApiKey;
+    final private String mKey;
+    final private SplitClientConfig mSplitClientConfig;
 
-    public WorkManagerWrapper(WorkManager workManager,
-                              SplitTaskExecutionListener eventsRecorderListener,
-                              SplitTaskExecutionListener impressionsRecorderListener) {
+    public WorkManagerWrapper(@NonNull WorkManager workManager,
+                              @NonNull SplitClientConfig splitClientConfig,
+                              @NonNull String apiKey, @NonNull String databaseName,
+                              @NonNull String key) {
         mWorkManager = checkNotNull(workManager);
-        mEventsRecorderListener = checkNotNull(eventsRecorderListener);
-        mImpressionsRecorderListener = checkNotNull(impressionsRecorderListener);
+        mDatabaseName = checkNotNull(databaseName);
+        mSplitClientConfig = checkNotNull(splitClientConfig);
+        mApiKey = checkNotNull(apiKey);
+        mKey = checkNotNull(key);
+
+        mExecutionListeners = new ArrayList<>();
+    }
+
+    public void addTaskExecutionListener(SplitTaskExecutionListener taskExecutionListener) {
+        mExecutionListeners.add(taskExecutionListener);
+    }
+
+    public void stop() {
+        mExecutionListeners.clear();
     }
 
     public void removeWork() {
@@ -46,29 +66,33 @@ public class WorkManagerWrapper {
         mWorkManager.cancelUniqueWork(SplitTaskType.MY_SEGMENTS_SYNC.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.EVENTS_RECORDER.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.IMPRESSIONS_RECORDER.toString());
+        mExecutionListeners.clear();
     }
 
     public void scheduleWork() {
         scheduleWork(SplitTaskType.SPLITS_SYNC.toString(), SplitsSyncWorker.class,
-                ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
+                buildSplitSyncInputData(), ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
 
         scheduleWork(SplitTaskType.MY_SEGMENTS_SYNC.toString(), MySegmentsSyncWorker.class,
-                ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
+                buildMySegmentsSyncInputData(), ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
 
         scheduleWork(SplitTaskType.EVENTS_RECORDER.toString(), EventsRecorderWorker.class,
-                ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
+                buildEventsRecorderInputData(), ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
 
         scheduleWork(SplitTaskType.IMPRESSIONS_RECORDER.toString(),
-                ImpressionsRecorderWorker.class, ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
+                ImpressionsRecorderWorker.class, buildImpressionsRecorderInputData(),
+                ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
     }
 
     private void scheduleWork(String requestType,
                               Class<? extends ListenableWorker> workerClass,
+                              Data inputData,
                               long executionPeriod) {
         PeriodicWorkRequest request = new PeriodicWorkRequest
                 .Builder(workerClass,
                 executionPeriod,
-                TimeUnit.SECONDS).build();
+                TimeUnit.SECONDS).setInputData(buildInputData(inputData))
+                .build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.KEEP, request);
         observeWorkState(request.getId());
     }
@@ -81,6 +105,18 @@ public class WorkManagerWrapper {
                         processWorkInfo(workInfo);
                     }
                 });
+    }
+
+    private Data buildInputData(Data customData) {
+        Data.Builder dataBuilder = new Data.Builder();
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_DATABASE_NAME, mDatabaseName);
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_API_KEY, mApiKey);
+        dataBuilder.putString(
+                ServiceConstants.WORKER_PARAM_EVENTS_ENDPOINT, mSplitClientConfig.eventsEndpoint());
+        if(customData != null) {
+            dataBuilder.putAll(customData);
+        }
+        return dataBuilder.build();
     }
 
     private void processWorkInfo(WorkInfo workInfo) {
@@ -115,13 +151,35 @@ public class WorkManagerWrapper {
     }
 
     private void updateTaskStatus(SplitTaskExecutionInfo taskInfo) {
-        switch (taskInfo.getTaskType()) {
-            case EVENTS_RECORDER:
-                mEventsRecorderListener.taskExecuted(taskInfo);
-                break;
-            case IMPRESSIONS_RECORDER:
-                mImpressionsRecorderListener.taskExecuted(taskInfo);
-                break;
+        for(SplitTaskExecutionListener executionListener : mExecutionListeners) {
+            executionListener.taskExecuted(taskInfo);
         }
+    }
+
+    private Data buildSplitSyncInputData() {
+        Data.Builder dataBuilder = new Data.Builder();
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
+        return buildInputData(dataBuilder.build());
+    }
+
+    private Data buildMySegmentsSyncInputData() {
+        Data.Builder dataBuilder = new Data.Builder();
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_KEY, mKey);
+        return buildInputData(dataBuilder.build());
+    }
+
+    private Data buildEventsRecorderInputData() {
+        Data.Builder dataBuilder = new Data.Builder();
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.eventsEndpoint());
+        dataBuilder.putInt(ServiceConstants.WORKER_PARAM_EVENTS_PER_PUSH, mSplitClientConfig.eventsPerPush());
+        return buildInputData(dataBuilder.build());
+    }
+
+    private Data buildImpressionsRecorderInputData() {
+        Data.Builder dataBuilder = new Data.Builder();
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.eventsEndpoint());
+        dataBuilder.putInt(ServiceConstants.WORKER_PARAM_IMPRESSIONS_PER_PUSH, mSplitClientConfig.impressionsPerPush());
+        return buildInputData(dataBuilder.build());
     }
 }

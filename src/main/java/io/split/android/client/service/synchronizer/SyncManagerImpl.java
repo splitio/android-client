@@ -1,9 +1,7 @@
 package io.split.android.client.service.synchronizer;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-import androidx.work.WorkManager;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
@@ -44,21 +42,21 @@ public class SyncManagerImpl implements SyncManager {
                            @NonNull SplitStorageContainer splitStorageContainer,
                            @NonNull SplitTaskFactory splitTaskFactory,
                            @NonNull SplitEventsManager splitEventsManager,
-                           @NonNull WorkManager workManager) {
-
-        checkNotNull(workManager);
+                           @NonNull WorkManagerWrapper workManagerWrapper) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitEventsManager = checkNotNull(splitEventsManager);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
+        mWorkManagerWrapper = checkNotNull(workManagerWrapper);
 
         setupListeners();
 
-        mWorkManagerWrapper = new WorkManagerWrapper(workManager, mEventsSyncHelper, mImpressionsSyncHelper);
         if (mSplitClientConfig.synchronizeInBackground()) {
             mWorkManagerWrapper.scheduleWork();
+            mWorkManagerWrapper.addTaskExecutionListener(mEventsSyncHelper);
+            mWorkManagerWrapper.addTaskExecutionListener(mImpressionsSyncHelper);
         } else {
             mWorkManagerWrapper.removeWork();
         }
@@ -106,6 +104,7 @@ public class SyncManagerImpl implements SyncManager {
 
     @Override
     public void stop() {
+        mWorkManagerWrapper.stop();
         flush();
         mTaskExecutor.stop();
     }

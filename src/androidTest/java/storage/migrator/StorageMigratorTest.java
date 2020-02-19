@@ -54,9 +54,7 @@ public class StorageMigratorTest {
         mDatabase = SplitRoomDatabase.getDatabase(context,
                 "migrator_folder_test");
         mDatabase.clearAllTables();
-        mMigrator = new StorageMigrator( mDatabase,
-                mMySegmentsMigratorHelper, mSplitsMigratorHelper,
-                mEventsMigratorHelper, mImpressionsMigratorHelper);
+        mMigrator = new StorageMigrator(mDatabase);
     }
 
     @Test
@@ -66,7 +64,8 @@ public class StorageMigratorTest {
         mEventsMigratorHelper.setEvents(generateEventsEntities(10));
         mImpressionsMigratorHelper.setImpressions(generateImpressionsEntities(10));
 
-        mMigrator.checkAndMigrateIfNeeded();
+        mMigrator.runMigration(mMySegmentsMigratorHelper, mSplitsMigratorHelper,
+                mEventsMigratorHelper, mImpressionsMigratorHelper);
 
         MySegmentEntity mySegmentEntity3 = mDatabase.mySegmentDao().getByUserKeys("the_key_3");
         MySegmentEntity mySegmentEntity8 = mDatabase.mySegmentDao().getByUserKeys("the_key_8");
@@ -128,7 +127,8 @@ public class StorageMigratorTest {
         mEventsMigratorHelper.setEvents(new ArrayList<>());
         mImpressionsMigratorHelper.setImpressions(new ArrayList<>());
 
-        mMigrator.checkAndMigrateIfNeeded();
+        mMigrator.runMigration(mMySegmentsMigratorHelper, mSplitsMigratorHelper,
+                mEventsMigratorHelper, mImpressionsMigratorHelper);
 
         List<SplitEntity> splitEntities = mDatabase.splitDao().getAll();
         List<EventEntity> eventEntities = mDatabase.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 1000);
@@ -148,7 +148,8 @@ public class StorageMigratorTest {
         mEventsMigratorHelper.setEvents(null);
         mImpressionsMigratorHelper.setImpressions(null);
 
-        mMigrator.checkAndMigrateIfNeeded();
+        mMigrator.runMigration(mMySegmentsMigratorHelper, mSplitsMigratorHelper,
+                mEventsMigratorHelper, mImpressionsMigratorHelper);
 
         List<SplitEntity> splitEntities = mDatabase.splitDao().getAll();
         List<EventEntity> eventEntities = mDatabase.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 1000);
