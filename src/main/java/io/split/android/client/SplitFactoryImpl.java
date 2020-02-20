@@ -72,7 +72,6 @@ public class SplitFactoryImpl implements SplitFactory {
     private final Runnable destroyer;
     private boolean isTerminated = false;
     private final String _apiKey;
-    private SDKReadinessGates gates;
 
     private FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
     private LifecycleManager _lifecyleManager;
@@ -116,7 +115,6 @@ public class SplitFactoryImpl implements SplitFactory {
         final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
 
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
-        gates = new SDKReadinessGates();
 
         SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(context, key, factoryHelper.buildDatabaseName(config, apiToken));
 
@@ -229,7 +227,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
     @Override
     public boolean isReady() {
-        return gates.isSDKReadyNow();
+        return _client.isReady();
     }
 
     private void setupValidations(SplitClientConfig splitClientConfig) {
