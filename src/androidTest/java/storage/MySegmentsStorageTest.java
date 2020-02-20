@@ -77,6 +77,7 @@ public class MySegmentsStorageTest {
         mMySegmentsStorage.loadLocal();
         mMySegmentsStorage.set(Arrays.asList("a1", "a2", "a3", "a4"));
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
@@ -100,6 +101,7 @@ public class MySegmentsStorageTest {
         mMySegmentsStorage.set(new ArrayList<>());
 
         MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());

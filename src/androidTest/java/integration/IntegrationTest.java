@@ -68,11 +68,6 @@ public class IntegrationTest {
         }
     }
 
-    @After
-    public void tearDown() throws IOException {
-        mWebServer.shutdown();
-    }
-
     private void setupServer() {
         mWebServer = new MockWebServer();
 
@@ -172,6 +167,8 @@ public class IntegrationTest {
         Event event99 = findEventWithValue(lastTrackHitEvents, 99.0);
         Event event100 = findEventWithValue(lastTrackHitEvents, 100.0);
 
+        Assert.assertTrue(client.isReady());
+        Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
         Assert.assertEquals("off", t1);
@@ -191,6 +188,8 @@ public class IntegrationTest {
         Assert.assertEquals(10, mTrackEndpointHits.size());
         Assert.assertNotNull(event99);
         Assert.assertNull(event100);
+
+        splitFactory.destroy();
     }
 
 
@@ -225,6 +224,13 @@ public class IntegrationTest {
 
         Assert.assertFalse(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTimeOutTask.isOnPostExecutionCalled);
+
+        splitFactory.destroy();
+    }
+
+    @After
+    public void tearDown() throws IOException {
+        mWebServer.shutdown();
     }
 
     private String splitsPerRequest(int reqId) {

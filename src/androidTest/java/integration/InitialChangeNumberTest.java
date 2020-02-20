@@ -102,26 +102,8 @@ public class InitialChangeNumberTest {
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
         SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
         splitRoomDatabase.clearAllTables();
-        PersistentSplitsStorage persistentSplitsStorage = new SqLitePersistentSplitsStorage(splitRoomDatabase);
-        SplitsStorage splitsStorage = new SplitsStorageImpl(persistentSplitsStorage);
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
-        SplitChangeProcessor processor = new SplitChangeProcessor();
-
-        List<Split> splitList = new ArrayList<>();
-
-        for(int i=0; i<10; i++) {
-            String splitName = "feature_" + i;
-            long changeNumber = INITIAL_CHANGE_NUMBER - i * 100;
-            Split split = new Split();
-            split.name = splitName;
-            split.changeNumber = changeNumber;
-            split.status = Status.ACTIVE;
-            splitList.add(split);
-        }
-        SplitChange change = new SplitChange();
-        change.splits = splitList;
-        change.since = INITIAL_CHANGE_NUMBER;
-        change.till = INITIAL_CHANGE_NUMBER;
 
         SplitClient client;
 
