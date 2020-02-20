@@ -14,7 +14,7 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
-import java.util.ArrayList;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -35,12 +35,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class WorkManagerWrapper {
     final private WorkManager mWorkManager;
-    final private List<SplitTaskExecutionListener> mExecutionListeners;
     final private String mDatabaseName;
     final private String mApiKey;
     final private String mKey;
     final private SplitClientConfig mSplitClientConfig;
     final private Constraints mConstraints;
+    private WeakReference<SplitTaskExecutionListener> mFetcherExecutionListener;
 
     public WorkManagerWrapper(@NonNull WorkManager workManager,
                               @NonNull SplitClientConfig splitClientConfig,
@@ -52,16 +52,10 @@ public class WorkManagerWrapper {
         mApiKey = checkNotNull(apiKey);
         mKey = checkNotNull(key);
         mConstraints = buildConstraints();
-
-        mExecutionListeners = new ArrayList<>();
     }
 
-    public void addTaskExecutionListener(SplitTaskExecutionListener taskExecutionListener) {
-        mExecutionListeners.add(taskExecutionListener);
-    }
-
-    public void stop() {
-        mExecutionListeners.clear();
+    public void setFetcherExecutionListener(SplitTaskExecutionListener fetcherExecutionListener) {
+        mFetcherExecutionListener = new WeakReference<>(fetcherExecutionListener);
     }
 
     public void removeWork() {
@@ -69,7 +63,7 @@ public class WorkManagerWrapper {
         mWorkManager.cancelUniqueWork(SplitTaskType.MY_SEGMENTS_SYNC.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.EVENTS_RECORDER.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.IMPRESSIONS_RECORDER.toString());
-        mExecutionListeners.clear();
+        mFetcherExecutionListener.clear();
     }
 
     public void scheduleWork() {
@@ -107,7 +101,7 @@ public class WorkManagerWrapper {
                         for (WorkInfo workInfo : workInfoList) {
                             Logger.d("Work manager task: " + workInfo.getTags() +
                                     ", state: " + workInfo.getState().toString());
-                            processWorkInfo(workInfo);
+                            updateTaskStatus(workInfo);
                         }
                     }
                 });
@@ -119,42 +113,34 @@ public class WorkManagerWrapper {
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_API_KEY, mApiKey);
         dataBuilder.putString(
                 ServiceConstants.WORKER_PARAM_EVENTS_ENDPOINT, mSplitClientConfig.eventsEndpoint());
-        if(customData != null) {
+        if (customData != null) {
             dataBuilder.putAll(customData);
         }
         return dataBuilder.build();
     }
 
-    private void processWorkInfo(WorkInfo workInfo) {
+    private void updateTaskStatus(WorkInfo workInfo) {
 
         if (workInfo == null || workInfo.getTags() == null ||
-                !workInfo.getState().equals(WorkInfo.State.ENQUEUED)) {
+                !workInfo.getState().equals(WorkInfo.State.RUNNING)) {
             return;
         }
-        SplitTaskType taskType = taskTypeFromTag(workInfo.getTags());
+        SplitTaskType taskType = taskTypeFromTags(workInfo.getTags());
         if (taskType != null) {
-            updateTaskStatus(SplitTaskExecutionInfo.success(taskType));
+            SplitTaskExecutionListener listener = mFetcherExecutionListener.get();
+            if (listener != null) {
+                listener.taskExecuted(SplitTaskExecutionInfo.success(taskType));
+            }
         }
     }
 
-    private SplitTaskType taskTypeFromTag(Set<String> tags) {
-        if(tags.contains(SplitsSyncWorker.class.getCanonicalName())) {
+    private SplitTaskType taskTypeFromTags(Set<String> tags) {
+        if (tags.contains(SplitsSyncWorker.class.getCanonicalName())) {
             return SplitTaskType.SPLITS_SYNC;
-        } else if(tags.contains(MySegmentsSyncWorker.class.getCanonicalName())) {
+        } else if (tags.contains(SplitsSyncWorker.class.getCanonicalName())) {
             return SplitTaskType.MY_SEGMENTS_SYNC;
-        } else if(tags.contains(EventsRecorderWorker.class.getCanonicalName())) {
-            return SplitTaskType.EVENTS_RECORDER;
-        } else if(tags.contains(ImpressionsRecorderWorker.class.getCanonicalName())) {
-            return SplitTaskType.IMPRESSIONS_RECORDER;
         }
         return null;
-    }
-
-    private void updateTaskStatus(SplitTaskExecutionInfo taskInfo) {
-        Logger.d("Updating work manager task status for " + taskInfo.getTaskType().toString());
-        for(SplitTaskExecutionListener executionListener : mExecutionListeners) {
-            executionListener.taskExecuted(taskInfo);
-        }
     }
 
     private Data buildSplitSyncInputData() {

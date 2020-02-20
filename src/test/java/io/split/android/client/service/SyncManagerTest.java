@@ -43,6 +43,7 @@ import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
+import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
@@ -81,7 +82,8 @@ public class SyncManagerTest {
     @Mock
     SplitEventsManager mEventsManager;
     @Mock
-    Context mContext;
+    WorkManagerWrapper mWorkManagerWrapper;
+
 
     public void setup(SplitClientConfig splitClientConfig) {
         MockitoAnnotations.initMocks(this);
@@ -108,10 +110,12 @@ public class SyncManagerTest {
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
 
+        //when(WorkManager.getInstance(any(Context.class))).thenReturn(mWorkManager);
+
         when(mWorkManager.getWorkInfoByIdLiveData(any())).thenReturn(mock(LiveData.class));
 
         mSyncManager = new SyncManagerImpl(splitClientConfig, mTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManager);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper);
     }
 
     @Test
@@ -155,6 +159,9 @@ public class SyncManagerTest {
                 eq(SplitTaskType.IMPRESSIONS_RECORDER.toString()),
                 any(ExistingPeriodicWorkPolicy.class),
                 any(PeriodicWorkRequest.class));
+
+        verify(mWorkManagerWrapper, times(1)).removeWork();
+        verify(mWorkManagerWrapper, never()).scheduleWork();
     }
 
     @Test
@@ -179,25 +186,8 @@ public class SyncManagerTest {
                 any(ImpressionsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
 
-        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
-                eq(SplitTaskType.SPLITS_SYNC.toString()),
-                any(ExistingPeriodicWorkPolicy.class),
-                any(PeriodicWorkRequest.class));
-
-        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
-                eq(SplitTaskType.MY_SEGMENTS_SYNC.toString()),
-                any(ExistingPeriodicWorkPolicy.class),
-                any(PeriodicWorkRequest.class));
-
-        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
-                eq(SplitTaskType.EVENTS_RECORDER.toString()),
-                any(ExistingPeriodicWorkPolicy.class),
-                any(PeriodicWorkRequest.class));
-
-        verify(mWorkManager, times(1)).enqueueUniquePeriodicWork(
-                eq(SplitTaskType.IMPRESSIONS_RECORDER.toString()),
-                any(ExistingPeriodicWorkPolicy.class),
-                any(PeriodicWorkRequest.class));
+        verify(mWorkManagerWrapper, times(1)).scheduleWork();
+        verify(mWorkManagerWrapper, never()).removeWork();
     }
 
     @Test
@@ -240,7 +230,7 @@ public class SyncManagerTest {
         mSyncManager.pushEvent(event);
         Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
-                any(EventsRecorderTask.class),
+                any(EventsRecorderTask.class), anyLong(),
                 any(SplitTaskExecutionListener.class));
         verify(mEventsStorage, times(1)).push(event);
     }
@@ -260,7 +250,7 @@ public class SyncManagerTest {
         Thread.sleep(200);
         verify(mEventsStorage, times(22)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(EventsRecorderTask.class),
+                any(EventsRecorderTask.class), anyLong(),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -281,7 +271,7 @@ public class SyncManagerTest {
         Thread.sleep(200);
         verify(mEventsStorage, times(6)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(EventsRecorderTask.class),
+                any(EventsRecorderTask.class), anyLong(),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -299,7 +289,7 @@ public class SyncManagerTest {
         mSyncManager.pushImpression(impression);
         Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
-                any(ImpressionsRecorderTask.class),
+                any(ImpressionsRecorderTask.class), anyLong(),
                 any(SplitTaskExecutionListener.class));
         verify(mImpressionsStorage, times(1)).push(impressionCaptor.capture());
         Assert.assertEquals("key", impressionCaptor.getValue().keyName);
@@ -326,7 +316,7 @@ public class SyncManagerTest {
         Thread.sleep(200);
         verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(ImpressionsRecorderTask.class),
+                any(ImpressionsRecorderTask.class), anyLong(),
                 any(RecorderSyncHelper.class));
     }
 
@@ -346,7 +336,7 @@ public class SyncManagerTest {
         Thread.sleep(200);
         verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(ImpressionsRecorderTask.class),
+                any(ImpressionsRecorderTask.class), anyLong(),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -362,7 +352,7 @@ public class SyncManagerTest {
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
         mSyncManager = new SyncManagerImpl(config, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManager);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper);
         mSyncManager.start();
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
@@ -409,6 +399,7 @@ public class SyncManagerTest {
 
         @Override
         public void submit(@NonNull SplitTask task,
+                           long delayInSecs,
                            @Nullable SplitTaskExecutionListener executionListener) {
 
             SplitTaskExecutionInfo info = mInfoList.get(mRequestIndex);

@@ -10,6 +10,8 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -19,7 +21,7 @@ import io.split.android.client.utils.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-public class SyncManagerImpl implements SyncManager, WmFetcherSyncListenerDelegate {
+public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitStorageContainer mSplitsStorageContainer;
@@ -55,9 +57,7 @@ public class SyncManagerImpl implements SyncManager, WmFetcherSyncListenerDelega
         setupListeners();
 
         if (mSplitClientConfig.synchronizeInBackground()) {
-            mWorkManagerWrapper.addTaskExecutionListener(mEventsSyncHelper);
-            mWorkManagerWrapper.addTaskExecutionListener(mImpressionsSyncHelper);
-            mWorkManagerWrapper.addTaskExecutionListener(new WmFetcherSyncListener(this));
+            mWorkManagerWrapper.setFetcherExecutionListener(this);
             mWorkManagerWrapper.scheduleWork();
         } else {
             mWorkManagerWrapper.removeWork();
@@ -108,23 +108,25 @@ public class SyncManagerImpl implements SyncManager, WmFetcherSyncListenerDelega
 
     @Override
     public void stop() {
-        mWorkManagerWrapper.stop();
         flush();
         mTaskExecutor.stop();
     }
 
     @Override
     public void flush() {
-        mTaskExecutor.submit(mSplitTaskFactory.createEventsRecorderTask(), mEventsSyncHelper);
+        mTaskExecutor.submit(mSplitTaskFactory.createEventsRecorderTask(),
+                ServiceConstants.NO_INITIAL_DELAY, mEventsSyncHelper);
         mTaskExecutor.submit(
-                mSplitTaskFactory.createImpressionsRecorderTask(), mImpressionsSyncHelper);
+                mSplitTaskFactory.createImpressionsRecorderTask(),
+                ServiceConstants.NO_INITIAL_DELAY, mImpressionsSyncHelper);
     }
 
     @Override
     public void pushEvent(Event event) {
         if (mEventsSyncHelper.pushAndCheckIfFlushNeeded(event)) {
             mTaskExecutor.submit(
-                    mSplitTaskFactory.createEventsRecorderTask(), mEventsSyncHelper);
+                    mSplitTaskFactory.createEventsRecorderTask(),
+                    ServiceConstants.NO_INITIAL_DELAY, mEventsSyncHelper);
         }
     }
 
@@ -132,7 +134,8 @@ public class SyncManagerImpl implements SyncManager, WmFetcherSyncListenerDelega
     public void pushImpression(Impression impression) {
         if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(new KeyImpression(impression))) {
             mTaskExecutor.submit(
-                    mSplitTaskFactory.createImpressionsRecorderTask(), mImpressionsSyncHelper);
+                    mSplitTaskFactory.createImpressionsRecorderTask(),
+                    ServiceConstants.NO_INITIAL_DELAY, mImpressionsSyncHelper);
         }
     }
 
@@ -170,20 +173,26 @@ public class SyncManagerImpl implements SyncManager, WmFetcherSyncListenerDelega
 
     private void submitDataLoadingTasks() {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
+                ServiceConstants.NO_INITIAL_DELAY,
                 mLoadLocalSplitsListener);
         mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(),
+                ServiceConstants.NO_INITIAL_DELAY,
                 mLoadLocalMySegmentsListener);
     }
 
     @Override
-    public void splitsUpdatedInBackground() {
-        Logger.d("Loading split definitions updated in background");
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(), null);
-    }
-
-    @Override
-    public void mySegmentsUpdatedInBackground() {
-        Logger.d("Loading my segments updated in background");
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(), null);
+    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+        switch (taskInfo.getTaskType()) {
+            case SPLITS_SYNC:
+                Logger.d("Loading split definitions updated in background");
+                mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
+                        ServiceConstants.DEFAULT_INITIAL_DELAY, null);
+                break;
+            case MY_SEGMENTS_SYNC:
+                Logger.d("Loading my segments updated in background");
+                mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(),
+                        ServiceConstants.DEFAULT_INITIAL_DELAY, null);
+                break;
+        }
     }
 }
