@@ -63,7 +63,9 @@ public class WorkManagerWrapper {
         mWorkManager.cancelUniqueWork(SplitTaskType.MY_SEGMENTS_SYNC.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.EVENTS_RECORDER.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.IMPRESSIONS_RECORDER.toString());
-        mFetcherExecutionListener.clear();
+        if(mFetcherExecutionListener != null) {
+            mFetcherExecutionListener.clear();
+        }
     }
 
     public void scheduleWork() {
@@ -121,7 +123,8 @@ public class WorkManagerWrapper {
 
     private void updateTaskStatus(WorkInfo workInfo) {
 
-        if (workInfo == null || workInfo.getTags() == null ||
+        if (mFetcherExecutionListener != null && workInfo == null ||
+                workInfo.getTags() == null ||
                 !workInfo.getState().equals(WorkInfo.State.RUNNING)) {
             return;
         }
