@@ -5,23 +5,24 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ProcessLifecycleOwner;
+import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ListenableWorker;
+import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
-import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
@@ -39,6 +40,7 @@ public class WorkManagerWrapper {
     final private String mApiKey;
     final private String mKey;
     final private SplitClientConfig mSplitClientConfig;
+    final private Constraints mConstraints;
 
     public WorkManagerWrapper(@NonNull WorkManager workManager,
                               @NonNull SplitClientConfig splitClientConfig,
@@ -49,6 +51,7 @@ public class WorkManagerWrapper {
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mApiKey = checkNotNull(apiKey);
         mKey = checkNotNull(key);
+        mConstraints = buildConstraints();
 
         mExecutionListeners = new ArrayList<>();
     }
@@ -71,38 +74,41 @@ public class WorkManagerWrapper {
 
     public void scheduleWork() {
         scheduleWork(SplitTaskType.SPLITS_SYNC.toString(), SplitsSyncWorker.class,
-                buildSplitSyncInputData(), ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
+                buildSplitSyncInputData());
 
         scheduleWork(SplitTaskType.MY_SEGMENTS_SYNC.toString(), MySegmentsSyncWorker.class,
-                buildMySegmentsSyncInputData(), ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
+                buildMySegmentsSyncInputData());
 
         scheduleWork(SplitTaskType.EVENTS_RECORDER.toString(), EventsRecorderWorker.class,
-                buildEventsRecorderInputData(), ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
+                buildEventsRecorderInputData());
 
         scheduleWork(SplitTaskType.IMPRESSIONS_RECORDER.toString(),
-                ImpressionsRecorderWorker.class, buildImpressionsRecorderInputData(),
-                ServiceConstants.DEFAULT_WORK_EXECUTION_PERIOD);
+                ImpressionsRecorderWorker.class, buildImpressionsRecorderInputData());
     }
 
     private void scheduleWork(String requestType,
                               Class<? extends ListenableWorker> workerClass,
-                              Data inputData,
-                              long executionPeriod) {
+                              Data inputData) {
         PeriodicWorkRequest request = new PeriodicWorkRequest
-                .Builder(workerClass,
-                executionPeriod,
-                TimeUnit.SECONDS).setInputData(buildInputData(inputData))
+                .Builder(workerClass, mSplitClientConfig.backgroundSyncPeriod(), TimeUnit.MINUTES)
+                .setInputData(buildInputData(inputData))
+                .setConstraints(mConstraints)
                 .build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.KEEP, request);
-        observeWorkState(request.getId());
+        observeWorkState(workerClass.getCanonicalName());
     }
 
-    private void observeWorkState(UUID requestId) {
-        mWorkManager.getWorkInfoByIdLiveData(requestId)
-                .observe(ProcessLifecycleOwner.get(), new Observer<WorkInfo>() {
+    private void observeWorkState(String tag) {
+        Logger.d("Adding work manager observer for request id " + tag);
+        mWorkManager.getWorkInfosByTagLiveData(tag)
+                .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
                     @Override
-                    public void onChanged(@Nullable WorkInfo workInfo) {
-                        processWorkInfo(workInfo);
+                    public void onChanged(@Nullable List<WorkInfo> workInfoList) {
+                        for (WorkInfo workInfo : workInfoList) {
+                            Logger.d("Work manager task: " + workInfo.getTags() +
+                                    ", state: " + workInfo.getState().toString());
+                            processWorkInfo(workInfo);
+                        }
                     }
                 });
     }
@@ -120,37 +126,32 @@ public class WorkManagerWrapper {
     }
 
     private void processWorkInfo(WorkInfo workInfo) {
-        if (workInfo != null &&
-                workInfo.getState() == WorkInfo.State.SUCCEEDED &&
-                workInfo.getOutputData() != null) {
 
-            Data outputData = workInfo.getOutputData();
-            String taskStatusRaw = outputData.getString(ServiceConstants.TASK_INFO_FIELD_STATUS);
-            String taskTypeRaw = outputData.getString(ServiceConstants.TASK_INFO_FIELD_TYPE);
-
-            SplitTaskExecutionStatus taskStatus;
-            SplitTaskType taskType;
-            try {
-                taskStatus = SplitTaskExecutionStatus.valueOf(taskStatusRaw);
-                taskType = SplitTaskType.valueOf(taskTypeRaw);
-            } catch (IllegalArgumentException exception) {
-                Logger.e("Error while reading work status: " +
-                        exception.getLocalizedMessage());
-                return;
-            }
-            if (taskStatus == SplitTaskExecutionStatus.SUCCESS) {
-                updateTaskStatus(SplitTaskExecutionInfo.success(taskType));
-            } else {
-                int recordNonSent = outputData.getInt(
-                        ServiceConstants.TASK_INFO_FIELD_RECORDS_NON_SENT, 0);
-                long bytesNonSent = outputData.getInt(
-                        ServiceConstants.TASK_INFO_FIELD_BYTES_NON_SET, 0);
-                updateTaskStatus(SplitTaskExecutionInfo.error(taskType, recordNonSent, bytesNonSent));
-            }
+        if (workInfo == null || workInfo.getTags() == null ||
+                !workInfo.getState().equals(WorkInfo.State.ENQUEUED)) {
+            return;
+        }
+        SplitTaskType taskType = taskTypeFromTag(workInfo.getTags());
+        if (taskType != null) {
+            updateTaskStatus(SplitTaskExecutionInfo.success(taskType));
         }
     }
 
+    private SplitTaskType taskTypeFromTag(Set<String> tags) {
+        if(tags.contains(SplitsSyncWorker.class.getCanonicalName())) {
+            return SplitTaskType.SPLITS_SYNC;
+        } else if(tags.contains(MySegmentsSyncWorker.class.getCanonicalName())) {
+            return SplitTaskType.MY_SEGMENTS_SYNC;
+        } else if(tags.contains(EventsRecorderWorker.class.getCanonicalName())) {
+            return SplitTaskType.EVENTS_RECORDER;
+        } else if(tags.contains(ImpressionsRecorderWorker.class.getCanonicalName())) {
+            return SplitTaskType.IMPRESSIONS_RECORDER;
+        }
+        return null;
+    }
+
     private void updateTaskStatus(SplitTaskExecutionInfo taskInfo) {
+        Logger.d("Updating work manager task status for " + taskInfo.getTaskType().toString());
         for(SplitTaskExecutionListener executionListener : mExecutionListeners) {
             executionListener.taskExecuted(taskInfo);
         }
@@ -171,15 +172,30 @@ public class WorkManagerWrapper {
 
     private Data buildEventsRecorderInputData() {
         Data.Builder dataBuilder = new Data.Builder();
-        dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.eventsEndpoint());
-        dataBuilder.putInt(ServiceConstants.WORKER_PARAM_EVENTS_PER_PUSH, mSplitClientConfig.eventsPerPush());
+        dataBuilder.putString(
+                ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.eventsEndpoint());
+        dataBuilder.putInt(
+                ServiceConstants.WORKER_PARAM_EVENTS_PER_PUSH, mSplitClientConfig.eventsPerPush());
         return buildInputData(dataBuilder.build());
     }
 
     private Data buildImpressionsRecorderInputData() {
         Data.Builder dataBuilder = new Data.Builder();
-        dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.eventsEndpoint());
-        dataBuilder.putInt(ServiceConstants.WORKER_PARAM_IMPRESSIONS_PER_PUSH, mSplitClientConfig.impressionsPerPush());
+        dataBuilder.putString(
+                ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.eventsEndpoint());
+        dataBuilder.putInt(
+                ServiceConstants.WORKER_PARAM_IMPRESSIONS_PER_PUSH,
+                mSplitClientConfig.impressionsPerPush());
         return buildInputData(dataBuilder.build());
+    }
+
+    private Constraints buildConstraints() {
+        Constraints.Builder constraintsBuilder = new Constraints.Builder();
+        constraintsBuilder.setRequiredNetworkType(
+                mSplitClientConfig.backgroundSyncWhenBatteryWifiOnly() ?
+                        NetworkType.UNMETERED : NetworkType.CONNECTED);
+        constraintsBuilder.setRequiresBatteryNotLow(
+                mSplitClientConfig.backgroundSyncWhenBatteryNotLow());
+        return constraintsBuilder.build();
     }
 }

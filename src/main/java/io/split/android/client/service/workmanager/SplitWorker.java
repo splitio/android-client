@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.android_client.BuildConfig;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.metrics.CachedMetrics;
 import io.split.android.client.metrics.HttpMetrics;
@@ -48,7 +49,7 @@ public abstract class SplitWorker extends Worker {
         mDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
 
         SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
-        headersBuilder.setClientVersion(SplitClientConfig.splitSdkVersion);
+        headersBuilder.setClientVersion(BuildConfig.VERSION_NAME);
         headersBuilder.setApiToken(apiKey);
         mHttpClient = new HttpClientImpl();
         mHttpClient.addHeaders(headersBuilder.build());
@@ -68,14 +69,8 @@ public abstract class SplitWorker extends Worker {
     @Override
     public Result doWork() {
         checkNotNull(mSplitTask);
-        SplitTaskExecutionInfo info = mSplitTask.execute();
-        Data data = new Data.Builder()
-                .putString(ServiceConstants.TASK_INFO_FIELD_STATUS, info.getStatus().toString())
-                .putString(ServiceConstants.TASK_INFO_FIELD_TYPE, info.getTaskType().toString())
-                .putInt(ServiceConstants.TASK_INFO_FIELD_RECORDS_NON_SENT, info.getNonSentRecords())
-                .putLong(ServiceConstants.TASK_INFO_FIELD_BYTES_NON_SET, info.getNonSentBytes())
-                .build();
-        return Result.success(data);
+        mSplitTask.execute();
+        return Result.success();
     }
 
     protected SplitRoomDatabase getDatabase() {

@@ -12,13 +12,14 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-public class SyncManagerImpl implements SyncManager {
+public class SyncManagerImpl implements SyncManager, WmFetcherSyncListenerDelegate {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitStorageContainer mSplitsStorageContainer;
@@ -54,9 +55,10 @@ public class SyncManagerImpl implements SyncManager {
         setupListeners();
 
         if (mSplitClientConfig.synchronizeInBackground()) {
-            mWorkManagerWrapper.scheduleWork();
             mWorkManagerWrapper.addTaskExecutionListener(mEventsSyncHelper);
             mWorkManagerWrapper.addTaskExecutionListener(mImpressionsSyncHelper);
+            mWorkManagerWrapper.addTaskExecutionListener(new WmFetcherSyncListener(this));
+            mWorkManagerWrapper.scheduleWork();
         } else {
             mWorkManagerWrapper.removeWork();
         }
@@ -64,11 +66,13 @@ public class SyncManagerImpl implements SyncManager {
 
     private void setupListeners() {
         mEventsSyncHelper = new RecorderSyncHelperImpl<>(
+                SplitTaskType.EVENTS_RECORDER,
                 mSplitsStorageContainer.getEventsStorage(),
                 mSplitClientConfig.eventsQueueSize(),
                 ServiceConstants.MAX_EVENTS_SIZE_BYTES);
 
         mImpressionsSyncHelper = new RecorderSyncHelperImpl<>(
+                SplitTaskType.IMPRESSIONS_RECORDER,
                 mSplitsStorageContainer.getImpressionsStorage(),
                 mSplitClientConfig.impressionsQueueSize(),
                 mSplitClientConfig.impressionsChunkSize());
@@ -169,5 +173,17 @@ public class SyncManagerImpl implements SyncManager {
                 mLoadLocalSplitsListener);
         mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(),
                 mLoadLocalMySegmentsListener);
+    }
+
+    @Override
+    public void splitsUpdatedInBackground() {
+        Logger.d("Loading split definitions updated in background");
+        mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(), null);
+    }
+
+    @Override
+    public void mySegmentsUpdatedInBackground() {
+        Logger.d("Loading my segments updated in background");
+        mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(), null);
     }
 }

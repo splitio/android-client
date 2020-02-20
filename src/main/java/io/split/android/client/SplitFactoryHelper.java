@@ -57,8 +57,8 @@ class SplitFactoryHelper {
         return new SplitApiFacade(
                 ServiceFactory.getSplitsFetcher(networkHelper, httpClient,
                         splitClientConfig.endpoint(), cachedFireAndForgetMetrics),
-                ServiceFactory.getMySegmentsFetcher(networkHelper, httpClient, key.matchingKey(),
-                        splitClientConfig.endpoint(), cachedFireAndForgetMetrics),
+                ServiceFactory.getMySegmentsFetcher(networkHelper, httpClient,
+                        splitClientConfig.endpoint(), key.matchingKey(),   cachedFireAndForgetMetrics),
                 ServiceFactory.getEventsRecorder(networkHelper, httpClient,
                         splitClientConfig.eventsEndpoint()),
                 ServiceFactory.getImpressionsRecorder(networkHelper, httpClient,

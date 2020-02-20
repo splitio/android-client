@@ -33,7 +33,12 @@ public class SplitClientConfig {
     private final ImpressionListener _impressionListener;
     private final int _waitBeforeShutdown;
     private long _impressionsChunkSize;
+
+    // Background sync
     private boolean _synchronizeInBackground;
+    private long _backgroundSyncPeriod;
+    private boolean _backgroundSyncWhenBatteryNotLow = true;
+    private boolean _backgroundSyncWhenWifiOnly = false;
 
     //.Track configuration
     private final int _eventsQueueSize;
@@ -81,7 +86,10 @@ public class SplitClientConfig {
                               int eventsPerPush,
                               long eventFlushInterval,
                               String trafficType,
-                              boolean synchronizeInBackground) {
+                              boolean synchronizeInBackground,
+                              long backgroundSyncPeriod,
+                              boolean backgroundSyncWhenBatteryNotLow,
+                              boolean backgroundSyncWhenWifiOnly) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -107,6 +115,8 @@ public class SplitClientConfig {
         _eventFlushInterval = eventFlushInterval;
         _trafficType = trafficType;
         _synchronizeInBackground = synchronizeInBackground;
+        _backgroundSyncPeriod = backgroundSyncPeriod;
+        _backgroundSyncWhenBatteryNotLow = backgroundSyncWhenBatteryNotLow;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -294,6 +304,18 @@ public class SplitClientConfig {
         return _synchronizeInBackground;
     }
 
+    public long backgroundSyncPeriod() {
+        return _backgroundSyncPeriod;
+    }
+
+    public boolean backgroundSyncWhenBatteryNotLow() {
+        return _backgroundSyncWhenBatteryNotLow;
+    }
+
+    public boolean backgroundSyncWhenBatteryWifiOnly() {
+        return _backgroundSyncWhenWifiOnly;
+    }
+
     public static final class Builder {
 
         private String _endpoint = "https://sdk.split.io/api";
@@ -326,6 +348,9 @@ public class SplitClientConfig {
         private String _hostname = "unknown";
         private String _ip = "unknown";
         private boolean _synchronizeInBackground = false;
+        private long _backgroundSyncPeriod = 900; // 15 min
+        private boolean _backgroundSyncWhenBatteryNotLow = true;
+        private boolean _backgroundSyncWhenWifiOnly = false;
 
         public Builder() {
         }
@@ -624,12 +649,47 @@ public class SplitClientConfig {
          * Otherwise synchronization only occurs while app
          * is in foreground
          *
-         * @return true when synchronization is done in background
+         * @return this builder
          */
         public Builder sychronizeInBackground(boolean synchronizeInBackground) {
             _synchronizeInBackground = synchronizeInBackground;
             return this;
         }
+
+        /**
+         * Period in minutes to execute background synchronization
+         * Default values is 15 minutes and is the minimum allowed.
+         * Is a lower value is especified default value will be used.
+         * @return this builder
+         */
+        public Builder sychronizeInBackgroundPeriod(long backgroundSyncPeriod) {
+            _backgroundSyncPeriod = backgroundSyncPeriod;
+            return this;
+        }
+
+        /**
+         * Synchronize in background only if battery has no low charge level
+         * Default value is set to true
+         *
+         * @return this builder
+         */
+        public Builder backgroundSyncWhenBatteryNotLow(boolean backgroundSyncWhenBatteryNotLow) {
+            _backgroundSyncWhenBatteryNotLow = backgroundSyncWhenBatteryNotLow;
+            return this;
+        }
+
+        /**
+         * Synchronize in background only when a connection is wifi (unmetered)
+         * When value is set to false, synchronization will occur whenever connection is available.
+         * Default value is set to false
+         *
+         * @return this builder
+         */
+        public Builder backgroundSyncWhenWifiOnly(boolean backgroundSyncWhenWifiOnly) {
+            _backgroundSyncWhenWifiOnly = backgroundSyncWhenWifiOnly;
+            return this;
+        }
+
 
         public SplitClientConfig build() {
 
@@ -681,6 +741,12 @@ public class SplitClientConfig {
                 throw new IllegalArgumentException("Number of threads for fetching segments MUST be greater than zero");
             }
 
+            if (_backgroundSyncPeriod < 15) {
+                Logger.w("Background sync period is lower than allowed. " +
+                        "Setting to default value.");
+                _backgroundSyncPeriod = 15;
+            }
+
             return new SplitClientConfig(
                     _endpoint,
                     _eventsEndpoint,
@@ -705,7 +771,10 @@ public class SplitClientConfig {
                     _eventsPerPush,
                     _eventFlushInterval,
                     _trafficType,
-                    _synchronizeInBackground);
+                    _synchronizeInBackground,
+                    _backgroundSyncPeriod,
+                    _backgroundSyncWhenBatteryNotLow,
+                    _backgroundSyncWhenWifiOnly);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
