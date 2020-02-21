@@ -30,7 +30,6 @@ import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.SplitsSyncWorker;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelper;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -71,7 +70,7 @@ public class WorkManagerWrapper {
         mWorkManager.cancelUniqueWork(SplitTaskType.MY_SEGMENTS_SYNC.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.EVENTS_RECORDER.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.IMPRESSIONS_RECORDER.toString());
-        if(mFetcherExecutionListener != null) {
+        if (mFetcherExecutionListener != null) {
             mFetcherExecutionListener.clear();
         }
     }
@@ -104,18 +103,18 @@ public class WorkManagerWrapper {
 
     private void observeWorkState(UUID requestId) {
         Logger.d("Adding work manager observer for request id " + requestId.toString());
-        mWorkManager.getWorkInfoById(requestId)
-                .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
+        mWorkManager.getWorkInfoByIdLiveData(requestId)
+                .observe(ProcessLifecycleOwner.get(), new Observer<WorkInfo>() {
                     @Override
-                    public void onChanged(@Nullable List<WorkInfo> workInfoList) {
-                        if(workInfoList == null) {
+                    public void onChanged(@Nullable WorkInfo workInfo) {
+                        if (workInfo == null) {
                             return;
                         }
-                        for (WorkInfo workInfo : workInfoList) {
-                            Logger.d("Work manager task: " + workInfo.getTags() +
-                                    ", state: " + workInfo.getState().toString());
-                            updateTaskStatus(workInfo);
-                        }
+
+                        Logger.d("Work manager task: " + workInfo.getTags() +
+                                ", state: " + workInfo.getState().toString());
+                        updateTaskStatus(workInfo);
+
                     }
                 });
     }
@@ -144,7 +143,7 @@ public class WorkManagerWrapper {
             return;
         }
         boolean shouldLoadLocal = mShouldLoadFromLocal.contains(taskType.toString());
-        if(!shouldLoadLocal) {
+        if (!shouldLoadLocal) {
             Logger.d("Avoiding update for " + taskType.toString());
             mShouldLoadFromLocal.add(taskType.toString());
             return;
