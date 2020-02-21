@@ -97,7 +97,7 @@ public class WorkManagerWrapper {
                 .setInputData(buildInputData(inputData))
                 .setConstraints(mConstraints)
                 .build();
-        mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.KEEP, request);
+        mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.REPLACE, request);
         observeWorkState(workerClass.getCanonicalName());
     }
 
