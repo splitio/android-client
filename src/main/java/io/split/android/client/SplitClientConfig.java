@@ -348,7 +348,7 @@ public class SplitClientConfig {
         private String _hostname = "unknown";
         private String _ip = "unknown";
         private boolean _synchronizeInBackground = false;
-        private long _backgroundSyncPeriod = 900; // 15 min
+        private long _backgroundSyncPeriod = 15;
         private boolean _backgroundSyncWhenBatteryNotLow = true;
         private boolean _backgroundSyncWhenWifiOnly = false;
 
