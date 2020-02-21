@@ -230,7 +230,7 @@ public class SyncManagerTest {
         mSyncManager.pushEvent(event);
         Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
-                any(EventsRecorderTask.class), anyLong(),
+                any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
         verify(mEventsStorage, times(1)).push(event);
     }
@@ -250,7 +250,7 @@ public class SyncManagerTest {
         Thread.sleep(200);
         verify(mEventsStorage, times(22)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(EventsRecorderTask.class), anyLong(),
+                any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -271,7 +271,7 @@ public class SyncManagerTest {
         Thread.sleep(200);
         verify(mEventsStorage, times(6)).push(any(Event.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(EventsRecorderTask.class), anyLong(),
+                any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -289,7 +289,7 @@ public class SyncManagerTest {
         mSyncManager.pushImpression(impression);
         Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
-                any(ImpressionsRecorderTask.class), anyLong(),
+                any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
         verify(mImpressionsStorage, times(1)).push(impressionCaptor.capture());
         Assert.assertEquals("key", impressionCaptor.getValue().keyName);
@@ -316,7 +316,7 @@ public class SyncManagerTest {
         Thread.sleep(200);
         verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(ImpressionsRecorderTask.class), anyLong(),
+                any(ImpressionsRecorderTask.class),
                 any(RecorderSyncHelper.class));
     }
 
@@ -336,7 +336,7 @@ public class SyncManagerTest {
         Thread.sleep(200);
         verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
         verify(mTaskExecutor, times(2)).submit(
-                any(ImpressionsRecorderTask.class), anyLong(),
+                any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
 
@@ -399,7 +399,6 @@ public class SyncManagerTest {
 
         @Override
         public void submit(@NonNull SplitTask task,
-                           long delayInSecs,
                            @Nullable SplitTaskExecutionListener executionListener) {
 
             SplitTaskExecutionInfo info = mInfoList.get(mRequestIndex);

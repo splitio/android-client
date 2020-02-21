@@ -10,7 +10,6 @@ public interface SplitTaskExecutor {
                   @Nullable SplitTaskExecutionListener executionListener);
 
     void submit(@NonNull SplitTask task,
-                long delayInSecs,
                 @Nullable SplitTaskExecutionListener executionListener);
 
     void pause();
