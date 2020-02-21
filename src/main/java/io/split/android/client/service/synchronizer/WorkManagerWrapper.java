@@ -18,6 +18,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
@@ -29,7 +30,6 @@ import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.SplitsSyncWorker;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelper;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -70,7 +70,7 @@ public class WorkManagerWrapper {
         mWorkManager.cancelUniqueWork(SplitTaskType.MY_SEGMENTS_SYNC.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.EVENTS_RECORDER.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.IMPRESSIONS_RECORDER.toString());
-        if(mFetcherExecutionListener != null) {
+        if (mFetcherExecutionListener != null) {
             mFetcherExecutionListener.clear();
         }
     }
@@ -96,25 +96,26 @@ public class WorkManagerWrapper {
                 .Builder(workerClass, mSplitClientConfig.backgroundSyncPeriod(), TimeUnit.MINUTES)
                 .setInputData(buildInputData(inputData))
                 .setConstraints(mConstraints)
+                .setInitialDelay(ServiceConstants.DEFAULT_INITIAL_DELAY, TimeUnit.MINUTES)
                 .build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.REPLACE, request);
-        observeWorkState(workerClass.getCanonicalName());
+        observeWorkState(request.getId());
     }
 
-    private void observeWorkState(String tag) {
-        Logger.d("Adding work manager observer for request id " + tag);
-        mWorkManager.getWorkInfosByTagLiveData(tag)
-                .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
+    private void observeWorkState(UUID requestId) {
+        Logger.d("Adding work manager observer for request id " + requestId.toString());
+        mWorkManager.getWorkInfoByIdLiveData(requestId)
+                .observe(ProcessLifecycleOwner.get(), new Observer<WorkInfo>() {
                     @Override
-                    public void onChanged(@Nullable List<WorkInfo> workInfoList) {
-                        if(workInfoList == null) {
+                    public void onChanged(@Nullable WorkInfo workInfo) {
+                        if (workInfo == null) {
                             return;
                         }
-                        for (WorkInfo workInfo : workInfoList) {
-                            Logger.d("Work manager task: " + workInfo.getTags() +
-                                    ", state: " + workInfo.getState().toString());
-                            updateTaskStatus(workInfo);
-                        }
+
+                        Logger.d("Work manager task: " + workInfo.getTags() +
+                                ", state: " + workInfo.getState().toString());
+                        updateTaskStatus(workInfo);
+
                     }
                 });
     }
@@ -143,7 +144,7 @@ public class WorkManagerWrapper {
             return;
         }
         boolean shouldLoadLocal = mShouldLoadFromLocal.contains(taskType.toString());
-        if(!shouldLoadLocal) {
+        if (!shouldLoadLocal) {
             Logger.d("Avoiding update for " + taskType.toString());
             mShouldLoadFromLocal.add(taskType.toString());
             return;
@@ -154,7 +155,6 @@ public class WorkManagerWrapper {
             Logger.d("Updating for " + taskType.toString());
             listener.taskExecuted(SplitTaskExecutionInfo.success(taskType));
         }
-
     }
 
     private SplitTaskType taskTypeFromTags(Set<String> tags) {
