@@ -18,6 +18,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
@@ -98,12 +99,12 @@ public class WorkManagerWrapper {
                 .setConstraints(mConstraints)
                 .build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.REPLACE, request);
-        observeWorkState(workerClass.getCanonicalName());
+        observeWorkState(request.getId());
     }
 
-    private void observeWorkState(String tag) {
-        Logger.d("Adding work manager observer for request id " + tag);
-        mWorkManager.getWorkInfosByTagLiveData(tag)
+    private void observeWorkState(UUID requestId) {
+        Logger.d("Adding work manager observer for request id " + requestId.toString());
+        mWorkManager.getWorkInfoById(requestId)
                 .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
                     @Override
                     public void onChanged(@Nullable List<WorkInfo> workInfoList) {
@@ -154,7 +155,6 @@ public class WorkManagerWrapper {
             Logger.d("Updating for " + taskType.toString());
             listener.taskExecuted(SplitTaskExecutionInfo.success(taskType));
         }
-
     }
 
     private SplitTaskType taskTypeFromTags(Set<String> tags) {
