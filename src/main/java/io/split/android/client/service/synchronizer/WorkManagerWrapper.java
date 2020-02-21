@@ -15,6 +15,7 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +29,7 @@ import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.SplitsSyncWorker;
+import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelper;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,6 +43,10 @@ public class WorkManagerWrapper {
     final private SplitClientConfig mSplitClientConfig;
     final private Constraints mConstraints;
     private WeakReference<SplitTaskExecutionListener> mFetcherExecutionListener;
+    // This variable is used to avoid loading data first time
+    // we receive enqueued event
+    final private Set<String> mShouldLoadFromLocal;
+
 
     public WorkManagerWrapper(@NonNull WorkManager workManager,
                               @NonNull SplitClientConfig splitClientConfig,
@@ -51,6 +57,7 @@ public class WorkManagerWrapper {
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mApiKey = checkNotNull(apiKey);
         mKey = checkNotNull(key);
+        mShouldLoadFromLocal = new HashSet<>();
         mConstraints = buildConstraints();
     }
 
@@ -100,6 +107,9 @@ public class WorkManagerWrapper {
                 .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
                     @Override
                     public void onChanged(@Nullable List<WorkInfo> workInfoList) {
+                        if(workInfoList == null) {
+                            return;
+                        }
                         for (WorkInfo workInfo : workInfoList) {
                             Logger.d("Work manager task: " + workInfo.getTags() +
                                     ", state: " + workInfo.getState().toString());
@@ -123,24 +133,34 @@ public class WorkManagerWrapper {
 
     private void updateTaskStatus(WorkInfo workInfo) {
 
-        if (mFetcherExecutionListener != null && workInfo == null ||
+        if (mFetcherExecutionListener == null || workInfo == null ||
                 workInfo.getTags() == null ||
-                !workInfo.getState().equals(WorkInfo.State.RUNNING)) {
+                !workInfo.getState().equals(WorkInfo.State.ENQUEUED)) {
             return;
         }
         SplitTaskType taskType = taskTypeFromTags(workInfo.getTags());
-        if (taskType != null) {
-            SplitTaskExecutionListener listener = mFetcherExecutionListener.get();
-            if (listener != null) {
-                listener.taskExecuted(SplitTaskExecutionInfo.success(taskType));
-            }
+        if (taskType == null) {
+            return;
         }
+        boolean shouldLoadLocal = mShouldLoadFromLocal.contains(taskType.toString());
+        if(!shouldLoadLocal) {
+            Logger.d("Avoiding update for " + taskType.toString());
+            mShouldLoadFromLocal.add(taskType.toString());
+            return;
+        }
+
+        SplitTaskExecutionListener listener = mFetcherExecutionListener.get();
+        if (listener != null) {
+            Logger.d("Updating for " + taskType.toString());
+            listener.taskExecuted(SplitTaskExecutionInfo.success(taskType));
+        }
+
     }
 
     private SplitTaskType taskTypeFromTags(Set<String> tags) {
         if (tags.contains(SplitsSyncWorker.class.getCanonicalName())) {
             return SplitTaskType.SPLITS_SYNC;
-        } else if (tags.contains(SplitsSyncWorker.class.getCanonicalName())) {
+        } else if (tags.contains(MySegmentsSyncWorker.class.getCanonicalName())) {
             return SplitTaskType.MY_SEGMENTS_SYNC;
         }
         return null;

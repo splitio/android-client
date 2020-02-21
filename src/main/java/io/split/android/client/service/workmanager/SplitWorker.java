@@ -25,7 +25,7 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;
 
-import static androidx.core.util.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class SplitWorker extends Worker {
 

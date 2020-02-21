@@ -115,10 +115,10 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
     @Override
     public void flush() {
         mTaskExecutor.submit(mSplitTaskFactory.createEventsRecorderTask(),
-                ServiceConstants.NO_INITIAL_DELAY, mEventsSyncHelper);
+                mEventsSyncHelper);
         mTaskExecutor.submit(
                 mSplitTaskFactory.createImpressionsRecorderTask(),
-                ServiceConstants.NO_INITIAL_DELAY, mImpressionsSyncHelper);
+                mImpressionsSyncHelper);
     }
 
     @Override
@@ -126,7 +126,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         if (mEventsSyncHelper.pushAndCheckIfFlushNeeded(event)) {
             mTaskExecutor.submit(
                     mSplitTaskFactory.createEventsRecorderTask(),
-                    ServiceConstants.NO_INITIAL_DELAY, mEventsSyncHelper);
+                    mEventsSyncHelper);
         }
     }
 
@@ -135,7 +135,7 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
         if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(new KeyImpression(impression))) {
             mTaskExecutor.submit(
                     mSplitTaskFactory.createImpressionsRecorderTask(),
-                    ServiceConstants.NO_INITIAL_DELAY, mImpressionsSyncHelper);
+                    mImpressionsSyncHelper);
         }
     }
 
@@ -173,10 +173,8 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
 
     private void submitDataLoadingTasks() {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
-                ServiceConstants.NO_INITIAL_DELAY,
                 mLoadLocalSplitsListener);
         mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(),
-                ServiceConstants.NO_INITIAL_DELAY,
                 mLoadLocalMySegmentsListener);
     }
 
@@ -186,12 +184,12 @@ public class SyncManagerImpl implements SyncManager, SplitTaskExecutionListener 
             case SPLITS_SYNC:
                 Logger.d("Loading split definitions updated in background");
                 mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
-                        ServiceConstants.DEFAULT_INITIAL_DELAY, null);
+                        null);
                 break;
             case MY_SEGMENTS_SYNC:
                 Logger.d("Loading my segments updated in background");
                 mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(),
-                        ServiceConstants.DEFAULT_INITIAL_DELAY, null);
+                        null);
                 break;
         }
     }

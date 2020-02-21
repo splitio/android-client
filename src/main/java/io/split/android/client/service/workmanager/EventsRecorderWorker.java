@@ -23,7 +23,7 @@ public class EventsRecorderWorker extends SplitWorker {
         super(context, workerParams);
         try {
             int eventsPerPush = workerParams.getInputData().getInt(
-                    ServiceConstants.WORKER_PARAM_IMPRESSIONS_PER_PUSH,
+                    ServiceConstants.WORKER_PARAM_EVENTS_PER_PUSH,
                     ServiceConstants.DEFAULT_RECORDS_PER_PUSH);
 
             mSplitTask = new EventsRecorderTask(ServiceFactory.getEventsRecorder(

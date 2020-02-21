@@ -46,12 +46,10 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     @Override
     public void submit(@NonNull SplitTask task,
-                       long delayInSecs,
                        @Nullable SplitTaskExecutionListener executionListener) {
         checkNotNull(task);
         if (task != null && !mScheduler.isShutdown()) {
-            mScheduler.schedule(new TaskWrapper(task, executionListener),
-                    delayInSecs, TimeUnit.SECONDS);
+            mScheduler.submit(new TaskWrapper(task, executionListener));
         }
     }
 
