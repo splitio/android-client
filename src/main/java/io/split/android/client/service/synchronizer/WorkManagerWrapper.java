@@ -96,6 +96,7 @@ public class WorkManagerWrapper {
                 .Builder(workerClass, mSplitClientConfig.backgroundSyncPeriod(), TimeUnit.MINUTES)
                 .setInputData(buildInputData(inputData))
                 .setConstraints(mConstraints)
+                .setInitialDelay(ServiceConstants.DEFAULT_INITIAL_DELAY, TimeUnit.MINUTES)
                 .build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.REPLACE, request);
         observeWorkState(request.getId());
