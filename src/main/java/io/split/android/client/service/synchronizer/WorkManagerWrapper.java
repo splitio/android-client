@@ -100,6 +100,9 @@ public class WorkManagerWrapper {
                 .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
                     @Override
                     public void onChanged(@Nullable List<WorkInfo> workInfoList) {
+                        if(workInfoList == null) {
+                            return;
+                        }
                         for (WorkInfo workInfo : workInfoList) {
                             Logger.d("Work manager task: " + workInfo.getTags() +
                                     ", state: " + workInfo.getState().toString());
@@ -123,7 +126,7 @@ public class WorkManagerWrapper {
 
     private void updateTaskStatus(WorkInfo workInfo) {
 
-        if (mFetcherExecutionListener != null && workInfo == null ||
+        if (mFetcherExecutionListener == null || workInfo == null ||
                 workInfo.getTags() == null ||
                 !workInfo.getState().equals(WorkInfo.State.RUNNING)) {
             return;
