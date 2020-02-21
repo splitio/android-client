@@ -145,6 +145,7 @@ public class SplitClientConfig {
         _synchronizeInBackground = synchronizeInBackground;
         _backgroundSyncPeriod = backgroundSyncPeriod;
         _backgroundSyncWhenBatteryNotLow = backgroundSyncWhenBatteryNotLow;
+        _backgroundSyncWhenWifiOnly = backgroundSyncWhenWifiOnly;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
