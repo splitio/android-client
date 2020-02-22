@@ -31,6 +31,9 @@ public class TestableSplitConfigBuilder {
     private long mEventFlushInterval = 1800;
     private String mTrafficType = null;
     private boolean mSynchronizeInBackground = false;
+    private long mBackgroundSyncPeriod;
+    private boolean mBackgroundSyncWhenBatteryNotLow = true;
+    private boolean mBackgroundSyncWhenWifiOnly = false;
 
     public TestableSplitConfigBuilder endpoint(String endpoint, String eventsEndpoint) {
         this.mEndpoint = endpoint;
@@ -177,7 +180,10 @@ public class TestableSplitConfigBuilder {
                     mEventsPerPush,
                     mEventFlushInterval,
                     mTrafficType,
-                    mSynchronizeInBackground);
+                    mSynchronizeInBackground,
+                    mBackgroundSyncPeriod,
+                    mBackgroundSyncWhenBatteryNotLow,
+                    mBackgroundSyncWhenWifiOnly);
             return config;
         } catch (Exception e) {
             System.out.println(e.getLocalizedMessage());

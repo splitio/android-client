@@ -140,20 +140,6 @@ public class MySegmentsServerErrorTest {
 
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
 
-        File cacheDir = mContext.getCacheDir();
-
-        File dataFolder = new File(cacheDir, dataFolderName);
-        if (dataFolder.exists()) {
-            File[] files = dataFolder.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    file.delete();
-                }
-            }
-            boolean isDataFolderDelete = dataFolder.delete();
-            log("Data folder exists and deleted: " + isDataFolderDelete);
-        }
-
         SplitClient client;
 
         final String url = mWebServer.url("/").url().toString();

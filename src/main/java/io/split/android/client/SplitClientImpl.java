@@ -91,7 +91,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean isReady() {
-        return mSplitFactory.isReady();
+        return mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
     }
 
     @Override
