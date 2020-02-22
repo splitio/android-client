@@ -37,7 +37,6 @@ public class ImpressionsRecorderTask implements SplitTask {
         SplitTaskExecutionStatus status = SplitTaskExecutionStatus.SUCCESS;
         int nonSentRecords = 0;
         long nonSentBytes = 0;
-        boolean sendMore = true;
         List<KeyImpression> impressions;
         do {
             impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
@@ -45,6 +44,7 @@ public class ImpressionsRecorderTask implements SplitTask {
                 try {
                     Logger.d("Posting %d Split impressions", impressions.size());
                     mHttpRecorder.execute(impressions);
+                    Logger.d("%d split impressions sent", impressions.size());
                 } catch (HttpRecorderException e) {
                     status = SplitTaskExecutionStatus.ERROR;
                     nonSentRecords += mConfig.getImpressionsPerPush();
@@ -62,6 +62,7 @@ public class ImpressionsRecorderTask implements SplitTask {
                     SplitTaskType.IMPRESSIONS_RECORDER,
                     nonSentRecords, nonSentBytes);
         }
+        Logger.d("Posting %d Split impressions", impressions.size());
         return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
     }
 

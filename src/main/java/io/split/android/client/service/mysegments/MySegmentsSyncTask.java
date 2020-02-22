@@ -38,6 +38,7 @@ public class MySegmentsSyncTask implements SplitTask {
             logError("Unknown error while retrieving my segments: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
         }
+        Logger.d("My Segments have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC);
     }
 

@@ -18,6 +18,7 @@ import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.migrator.EventsMigratorHelperImpl;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.TrackStorageManager;
+import io.split.android.client.storage.legacy.TracksFileStorage;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.utils.Json;
@@ -35,7 +36,7 @@ public class EventsMigratorHelperTest {
         File cacheFolder = InstrumentationRegistry.getInstrumentation().getContext().getCacheDir();
         File rootFolder = mFileHelper.emptyAndGetTestFolder(cacheFolder, "events_folder_test");
 
-        ITrackStorage fileStorage = new FileStorage.TracksFileStorage(rootFolder, "events");
+        ITrackStorage fileStorage = new TracksFileStorage(rootFolder, "events");
         mLegacyEventsStorage = new TrackStorageManager(fileStorage);
         mMigrator = new EventsMigratorHelperImpl(mLegacyEventsStorage);
     }

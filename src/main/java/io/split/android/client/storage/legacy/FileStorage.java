@@ -95,7 +95,7 @@ public class FileStorage implements IStorage {
                     fileOutputStream.close();
                 }
             } catch (IOException e) {
-                Logger.e(e, "Failed to close file");
+                Logger.e(e, "Failed to stop file");
             }
         }
         return true;

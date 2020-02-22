@@ -9,7 +9,8 @@ public interface SplitTaskExecutor {
                   long periodInSecs,
                   @Nullable SplitTaskExecutionListener executionListener);
 
-    void submit(@NonNull SplitTask task, @Nullable SplitTaskExecutionListener executionListener);
+    void submit(@NonNull SplitTask task,
+                @Nullable SplitTaskExecutionListener executionListener);
 
     void pause();
 

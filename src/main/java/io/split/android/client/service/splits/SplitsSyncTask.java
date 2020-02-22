@@ -43,6 +43,7 @@ public class SplitsSyncTask implements SplitTask {
             logError("unexpected " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         }
+        Logger.d("Features have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 

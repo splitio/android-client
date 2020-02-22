@@ -59,7 +59,7 @@ dependencies {
     // Room components
     implementation "androidx.room:room-runtime:$roomVersion"
     annotationProcessor "androidx.room:room-compiler:$roomVersion"
-    implementation "androidx.work:work-runtime:2.2.0"
+    implementation 'androidx.work:work-runtime:2.3.1'
 
 
     implementation "androidx.lifecycle:lifecycle-extensions:$lifeCycleVersion"
@@ -80,6 +80,7 @@ dependencies {
     androidTestImplementation 'androidx.test:rules:1.2.0'
     androidTestImplementation 'com.squareup.okhttp3:mockwebserver:4.2.1'
     androidTestImplementation "androidx.room:room-testing:$roomVersion"
+    androidTestImplementation 'androidx.work:work-testing:2.3.1'
 
     testImplementation 'org.mockito:mockito-core:3.1.0'
     testImplementation 'org.hamcrest:hamcrest-all:1.3'
