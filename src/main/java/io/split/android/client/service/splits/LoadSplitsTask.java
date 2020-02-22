@@ -20,7 +20,10 @@ public class LoadSplitsTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
-            mSplitsStorage.loadLocal();
-        return SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS);
+        mSplitsStorage.loadLocal();
+        if(mSplitsStorage.getTill() > -1) {
+            return SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS);
+        }
+        return SplitTaskExecutionInfo.error(SplitTaskType.LOAD_LOCAL_SPLITS);
     }
 }

@@ -98,6 +98,7 @@ public class InitialChangeNumberTest {
     @Test
     public void firstRequestChangeNumber() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
         SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
@@ -126,13 +127,17 @@ public class InitialChangeNumberTest {
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
         SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(readyFromCacheLatch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
 
         latch.await(40, TimeUnit.SECONDS);
+        readyFromCacheLatch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived); // Checks that change number is the bigger number from cached splitss
     }
 
