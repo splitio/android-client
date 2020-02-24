@@ -3,7 +3,7 @@ package io.split.android.client.service;
 public class ServiceConstants {
     //TODO: CHECK THIS VALUE TINCHO!!!!
     public static final long EXPIRATION_PERIOD = 3600 * 24 * 90;
-    public static final long ESTIMATED_IMPRESSION_SIZE_IN_BYTES = 50L;
+    public static final long ESTIMATED_IMPRESSION_SIZE_IN_BYTES = 150L;
     public static final long MAX_EVENTS_SIZE_BYTES = 5 * 1024 * 1024L;
     public static final long NO_INITIAL_DELAY = 0;
     public static final long DEFAULT_INITIAL_DELAY = 15L;

@@ -123,7 +123,7 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(event);
         checkNotNull(task);
 
-        if(mEventsManager.eventAlreadyTriggered(event)) {
+        if(!event.equals(SplitEvent.SDK_READY_FROM_CACHE) && mEventsManager.eventAlreadyTriggered(event)) {
             Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event.toString()));
             return;
         }

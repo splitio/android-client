@@ -99,22 +99,24 @@ public class WorkManagerWrapper {
                 .setInitialDelay(ServiceConstants.DEFAULT_INITIAL_DELAY, TimeUnit.MINUTES)
                 .build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.REPLACE, request);
-        observeWorkState(request.getId());
+        observeWorkState(workerClass.getCanonicalName());
     }
 
-    private void observeWorkState(UUID requestId) {
-        Logger.d("Adding work manager observer for request id " + requestId.toString());
-        mWorkManager.getWorkInfoByIdLiveData(requestId)
-                .observe(ProcessLifecycleOwner.get(), new Observer<WorkInfo>() {
+    private void observeWorkState(String tag) {
+        Logger.d("Adding work manager observer for request id " + tag);
+        mWorkManager.getWorkInfosByTagLiveData(tag)
+                .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
                     @Override
-                    public void onChanged(@Nullable WorkInfo workInfo) {
-                        if (workInfo == null) {
+                    public void onChanged(@Nullable List<WorkInfo> workInfoList) {
+                        if (workInfoList == null) {
                             return;
                         }
 
-                        Logger.d("Work manager task: " + workInfo.getTags() +
-                                ", state: " + workInfo.getState().toString());
-                        updateTaskStatus(workInfo);
+                        for(WorkInfo workInfo : workInfoList) {
+                            Logger.d("Work manager task: " + workInfo.getTags() +
+                                    ", state: " + workInfo.getState().toString());
+                            updateTaskStatus(workInfo);
+                        }
 
                     }
                 });

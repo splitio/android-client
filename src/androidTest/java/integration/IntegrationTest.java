@@ -38,6 +38,7 @@ import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.grammar.Treatments;
 import okhttp3.mockwebserver.Dispatcher;
@@ -100,18 +101,16 @@ public class IntegrationTest {
     @Test
     public void testAll() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
         mLatchTrack = new CountDownLatch(10);
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
-        File cacheDir = mContext.getCacheDir();
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
 
-
-
-        mContext.deleteDatabase(dataFolderName);
         SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
         splitRoomDatabase.clearAllTables();
-        File dataFolder = new File(cacheDir, dataFolderName);
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 2));
         SplitClient client;
         SplitManager manager;
 
@@ -124,6 +123,7 @@ public class IntegrationTest {
                 .featuresRefreshRate(30)
                 .segmentsRefreshRate(30)
                 .impressionsRefreshRate(30)
+                .eventFlushInterval(200)
                 .enableDebug()
                 .trafficType("account")
                 .eventsPerPush(10)
@@ -136,14 +136,17 @@ public class IntegrationTest {
 
         client = splitFactory.client();
         manager = splitFactory.manager();
-
+        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(readyFromCacheLatch);
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
         SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
+        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
 
+        readyFromCacheLatch.await(40, TimeUnit.SECONDS);
         latch.await(40, TimeUnit.SECONDS);
+
         String t1 = client.getTreatment("FACUNDO_TEST");
         String t2 = client.getTreatment("NO_EXISTING_FEATURE");
         SplitResult treatmentConfigEmojis = client.getTreatmentWithConfig("Welcome_Page_UI", null);
@@ -169,8 +172,10 @@ public class IntegrationTest {
 
         Assert.assertTrue(client.isReady());
         Assert.assertTrue(splitFactory.isReady());
+        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
+
         Assert.assertEquals("off", t1);
         Assert.assertEquals(Treatments.CONTROL, t2);
         Assert.assertEquals("off", treatmentConfigEmojis.treatment());
@@ -192,6 +197,59 @@ public class IntegrationTest {
         splitFactory.destroy();
     }
 
+    @Test
+    public void testNoReadyFromCache() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
+        String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
+        ImpressionListenerHelper impListener = new ImpressionListenerHelper();
+
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        splitRoomDatabase.clearAllTables();
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
+        SplitClient client;
+        SplitManager manager;
+
+        final String url = mWebServer.url("/").url().toString();
+
+        Key key = new Key("CUSTOMER_ID",null);
+        SplitClientConfig config = SplitClientConfig.builder()
+                .endpoint(url, url)
+                .ready(30000)
+                .featuresRefreshRate(30)
+                .segmentsRefreshRate(30)
+                .impressionsRefreshRate(30)
+                .enableDebug()
+                .trafficType("account")
+                .eventsPerPush(10)
+                .eventsQueueSize(100)
+                .impressionListener(impListener)
+                .build();
+
+
+        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+
+        client = splitFactory.client();
+        manager = splitFactory.manager();
+        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper();
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+
+        client.on(SplitEvent.SDK_READY, readyTask);
+        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
+        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+
+        latch.await(40, TimeUnit.SECONDS);
+
+        Assert.assertTrue(client.isReady());
+        Assert.assertTrue(splitFactory.isReady());
+        Assert.assertFalse(readyFromCacheTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
+        Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
+
+        splitFactory.destroy();
+    }
 
     @Test
     public void testSdkTimeout() throws Exception {
