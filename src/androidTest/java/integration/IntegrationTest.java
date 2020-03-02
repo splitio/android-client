@@ -8,17 +8,17 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.junit.Assert;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -64,7 +64,7 @@ public class IntegrationTest {
         mCurSplitReqId = 1;
         mTrackEndpointHits = new ArrayList<>();
         mLatchTrack = null;
-        if(mJsonChanges == null) {
+        if (mJsonChanges == null) {
             loadSplitChanges();
         }
     }
@@ -75,7 +75,7 @@ public class IntegrationTest {
         final Dispatcher dispatcher = new Dispatcher() {
 
             @Override
-            public MockResponse dispatch (RecordedRequest request) throws InterruptedException {
+            public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 if (request.getPath().contains("/mySegments")) {
                     return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
                 } else if (request.getPath().contains("/splitChanges")) {
@@ -86,7 +86,7 @@ public class IntegrationTest {
                 } else if (request.getPath().contains("/events/bulk")) {
                     String trackRequestBody = request.getBody().readUtf8();
                     mTrackEndpointHits.add(trackRequestBody);
-                    if(mLatchTrack != null) {
+                    if (mLatchTrack != null) {
                         mLatchTrack.countDown();
                     }
                     return new MockResponse().setResponseCode(200);
@@ -116,7 +116,7 @@ public class IntegrationTest {
 
         final String url = mWebServer.url("/").url().toString();
 
-        Key key = new Key("CUSTOMER_ID",null);
+        Key key = new Key("CUSTOMER_ID", null);
         SplitClientConfig config = SplitClientConfig.builder()
                 .endpoint(url, url)
                 .ready(30000)
@@ -160,15 +160,39 @@ public class IntegrationTest {
         Impression i1 = impListener.getImpression(impListener.buildKey("CUSTOMER_ID", "FACUNDO_TEST", "off"));
         Impression i2 = impListener.getImpression(impListener.buildKey("CUSTOMER_ID", "NO_EXISTING_FEATURE", Treatments.CONTROL));
 
-        for(int i=0; i<101; i++) {
-            client.track("account", i);
+        for (int i = 0; i < 101; i++) {
+            Map<String, Object> props = new HashMap<>();
+            props.clear();
+            switch (i) {
+                case 98:
+                    props.put("stringKey", "pepe");
+                    props.put("numberKey", 1.3);
+                    props.put("booleanKey", true);
+                    props.put("nullKey", null);
+                    client.track("account", i, props);
+                    break;
+                case 99:
+                    props.put("stringKey", "pepe");
+                    props.put("numberKey", 1.3);
+                    props.put("booleanKey", true);
+                    props.put("nullKey", null);
+                    props.put("listKey", Arrays.asList("a", "b", "c"));
+                    client.track("account", i, props);
+                    break;
+                default:
+                    client.track("account", i);
+            }
+
         }
 
         mLatchTrack.await(30, TimeUnit.SECONDS);
 
-        List<Event> lastTrackHitEvents = buildEventsFromJson(mTrackEndpointHits.get(mTrackEndpointHits.size() -1));
+        List<Event> lastTrackHitEvents = buildEventsFromJson(mTrackEndpointHits.get(mTrackEndpointHits.size() - 1));
+        Event event98 = findEventWithValue(lastTrackHitEvents, 98.0);
         Event event99 = findEventWithValue(lastTrackHitEvents, 99.0);
         Event event100 = findEventWithValue(lastTrackHitEvents, 100.0);
+        Map<String, Object> props98 = event98.properties;
+        Map<String, Object> props99 = event99.properties;
 
         Assert.assertTrue(client.isReady());
         Assert.assertTrue(splitFactory.isReady());
@@ -191,8 +215,20 @@ public class IntegrationTest {
         Assert.assertNull(i2);
         Assert.assertEquals("not in split", i1.appliedRule());
         Assert.assertEquals(10, mTrackEndpointHits.size());
+        Assert.assertNotNull(event98);
         Assert.assertNotNull(event99);
         Assert.assertNull(event100);
+
+        Assert.assertEquals("pepe", props98.get("stringKey"));
+        Assert.assertEquals(1.3, props98.get("numberKey"));
+        Assert.assertEquals(true, props98.get("booleanKey"));
+        Assert.assertEquals(null, props98.get("nullKey"));
+
+        Assert.assertEquals("pepe", props99.get("stringKey"));
+        Assert.assertEquals(1.3, props99.get("numberKey"));
+        Assert.assertEquals(true, props99.get("booleanKey"));
+        Assert.assertEquals(null, props99.get("nullKey"));
+        Assert.assertEquals(null, props99.get("listKey"));
 
         splitFactory.destroy();
     }
@@ -213,7 +249,7 @@ public class IntegrationTest {
 
         final String url = mWebServer.url("/").url().toString();
 
-        Key key = new Key("CUSTOMER_ID",null);
+        Key key = new Key("CUSTOMER_ID", null);
         SplitClientConfig config = SplitClientConfig.builder()
                 .endpoint(url, url)
                 .ready(30000)
@@ -258,7 +294,7 @@ public class IntegrationTest {
 
         SplitClient client;
 
-        Key key = new Key("CUSTOMER_ID",null);
+        Key key = new Key("CUSTOMER_ID", null);
         SplitClientConfig config = SplitClientConfig.builder()
                 .ready(30000)
                 .featuresRefreshRate(99999)
@@ -293,7 +329,7 @@ public class IntegrationTest {
 
     private String splitsPerRequest(int reqId) {
         int req = mJsonChanges.size() - 1;
-        if(reqId < req) {
+        if (reqId < req) {
             req = reqId;
         }
         return mJsonChanges.get(req);
@@ -302,8 +338,8 @@ public class IntegrationTest {
     private void loadSplitChanges() {
         FileHelper fileHelper = new FileHelper();
         mJsonChanges = new ArrayList<>();
-        for(int i=0; i<1; i++) {
-            String changes = fileHelper.loadFileContent(mContext,"split_changes_" + (i + 1) + ".json");
+        for (int i = 0; i < 1; i++) {
+            String changes = fileHelper.loadFileContent(mContext, "split_changes_" + (i + 1) + ".json");
             mJsonChanges.add(changes);
         }
     }
@@ -312,21 +348,22 @@ public class IntegrationTest {
 
         GsonBuilder gsonBuilder = new GsonBuilder();
 
-        Type mapType = new TypeToken<List<Event>>(){}.getType();
+        Type mapType = new TypeToken<List<Event>>() {
+        }.getType();
         Gson gson = gsonBuilder.create();
         List<Event> events;
         try {
             events = gson.fromJson(attributesJson, mapType);
         } catch (Exception e) {
-            events =  Collections.emptyList();
+            events = Collections.emptyList();
         }
 
         return events;
     }
 
     private Event findEventWithValue(List<Event> events, double value) {
-        for(Event event : events) {
-            if(value == event.value) {
+        for (Event event : events) {
+            if (value == event.value) {
                 return event;
             }
         }

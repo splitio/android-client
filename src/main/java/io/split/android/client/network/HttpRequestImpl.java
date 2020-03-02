@@ -53,7 +53,7 @@ public class HttpRequestImpl implements HttpRequest {
             connection.setRequestMethod(mHttpMethod.name());
             addHeaders(connection);
             response = buildResponse(connection);
-
+            connection.disconnect();
         } catch (MalformedURLException e) {
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
         } catch (ProtocolException e) {
@@ -85,7 +85,9 @@ public class HttpRequestImpl implements HttpRequest {
                 }
             }
         }
-        return buildResponse(connection);
+        HttpResponse httpResponse = buildResponse(connection);
+        connection.disconnect();
+        return httpResponse;
     }
 
     private void addHeaders(HttpURLConnection connection) {
