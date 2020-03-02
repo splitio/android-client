@@ -209,6 +209,7 @@ public final class SplitClientImpl implements SplitClient {
         if(!processedProperties.isValid()) {
             return false;
         }
+        event.properties = processedProperties.getProperties();
         event.setSizeInBytes(ESTIMATED_EVENT_SIZE_WITHOUT_PROPS + processedProperties.getSizeInBytes());
         mSyncManager.pushEvent(event);
         return true;
