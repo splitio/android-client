@@ -4,10 +4,12 @@ public final class Key {
     private final String _matchingKey;
     private final String _bucketingKey;
 
+    @Deprecated
     public static Key withMatchingKey(String matchingKey) {
         return new Key(matchingKey, null);
     }
 
+    @Deprecated
     public static Key withMatchingKeyAndBucketingKey(String matchingKey, String bucketingKey) {
         return new Key(matchingKey, bucketingKey);
     }
@@ -15,6 +17,10 @@ public final class Key {
     public Key(String matchingKey, String bucketingKey) {
         _matchingKey = matchingKey;
         _bucketingKey = bucketingKey;
+    }
+
+    public Key(String matchingKey) {
+        this(matchingKey, null);
     }
 
     public String matchingKey() {
