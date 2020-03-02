@@ -116,7 +116,7 @@ public class IntegrationTest {
 
         final String url = mWebServer.url("/").url().toString();
 
-        Key key = new Key("CUSTOMER_ID", null);
+        Key key = new Key("CUSTOMER_ID");
         SplitClientConfig config = SplitClientConfig.builder()
                 .endpoint(url, url)
                 .ready(30000)
