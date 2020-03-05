@@ -8,5 +8,6 @@ public interface HttpClient {
     void addHeaders(Map<String, String> headers);
     HttpRequest request(URI uri, HttpMethod httpMethod);
     HttpRequest request(URI uri, HttpMethod httpMethod, String body);
+    HttpStreamRequest streamRequest(URI uri);
     void close();
 }

@@ -6,6 +6,7 @@ import java.util.Map;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpRequest;
+import io.split.android.client.network.HttpStreamRequest;
 
 public class HttpClientMock implements HttpClient {
     @Override
@@ -31,5 +32,10 @@ public class HttpClientMock implements HttpClient {
     @Override
     public void close() {
 
+    }
+
+    @Override
+    public HttpStreamRequest streamRequest(URI uri) {
+        return null;
     }
 }

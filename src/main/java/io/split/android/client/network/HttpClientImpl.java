@@ -23,6 +23,11 @@ public class HttpClientImpl implements HttpClient {
     }
 
     @Override
+    public HttpStreamRequest streamRequest(URI uri) {
+        return new HttpStreamRequestImpl(uri, mHeaders);
+    }
+
+    @Override
     public void setHeader(String name, String value) {
         if(name == null || value == null) {
             throw new IllegalArgumentException(String.format("Invalid value for header %s: %s", name, value));
@@ -36,6 +41,8 @@ public class HttpClientImpl implements HttpClient {
             setHeader(header.getKey(), header.getValue());
         }
     }
+
+
 
     @Override
     public void close() {
