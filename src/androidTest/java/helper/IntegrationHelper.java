@@ -53,4 +53,8 @@ public class IntegrationHelper {
     public static void logSeparator(String tag) {
         Log.i(tag, Strings.repeat("-", 200) );
     }
+
+    public static String emptySplitChanges(long since, long till) {
+        return String.format("{\"splits\":[], \"since\": %d, \"till\": %d }", since, till);
+    }
 }

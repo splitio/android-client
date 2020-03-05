@@ -1,0 +1,54 @@
+{
+  "algo": 2,
+  "changeNumber": 1506703252916,
+  "conditions": [
+    {
+      "conditionType": "ROLLOUT",
+      "label": "in split sample_1 treatment [on]",
+      "matcherGroup": {
+        "combiner": "AND",
+        "matchers": [
+          {
+            "betweenMatcherData": null,
+            "booleanMatcherData": null,
+            "dependencyMatcherData": {
+              "split": "sample_1",
+              "treatments": [
+                "on"
+              ]
+            },
+            "keySelector": {
+              "attribute": null,
+              "trafficType": "client"
+            },
+            "matcherType": "IN_SPLIT_TREATMENT",
+            "negate": false,
+            "stringMatcherData": null,
+            "unaryNumericMatcherData": null,
+            "userDefinedSegmentMatcherData": null,
+            "whitelistMatcherData": null
+          }
+        ]
+      },
+      "partitions": [
+        {
+          "size": 100,
+          "treatment": "on"
+        },
+        {
+          "size": 0,
+          "treatment": "off"
+        }
+      ]
+    }
+  ],
+  "configurations": {},
+  "defaultTreatment": "on",
+  "killed": false,
+  "name": "dep_split",
+  "seed": 1570767299,
+  "status": "ACTIVE",
+  "trafficAllocation": 100,
+  "trafficAllocationSeed": -645244312,
+  "trafficTypeName": "client"
+}
