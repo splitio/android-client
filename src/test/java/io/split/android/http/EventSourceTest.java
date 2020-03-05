@@ -28,11 +28,11 @@ public class EventSourceTest {
 
     @Before
     public void setup() throws IOException {
-        //setupServer();
     }
 
     @Test
     public void test() throws MalformedURLException, URISyntaxException, InterruptedException {
+        // ************ WIP ******************
         //URI uri = mWebServer.url(TEST_URL).uri();
         URI uri = new URI("https://streamdata.motwin.net/https://stockmarket.streamdata.io/prices?X-Sd-Token=MzNkZTYwN2ItYTZlMy00ODMzLWFiZWMtZTkxNTM0NjE4MWE1");
 

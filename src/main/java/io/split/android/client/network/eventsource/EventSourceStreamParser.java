@@ -1,5 +1,7 @@
 package io.split.android.client.network.eventsource;
 
+import androidx.annotation.VisibleForTesting;
+
 import java.util.Map;
 
 public class EventSourceStreamParser {
@@ -15,17 +17,25 @@ public class EventSourceStreamParser {
      *                       if the line contains any.
      * @return Returns true if a blank line meaning the final of an event if found.
      */
-    boolean parseLineAndAppendValue(String streamLine, Map<String, String> messageValues) {
-        String trimmedLine = streamLine.trim();
-        if (trimmedLine == null || trimmedLine.isEmpty()) {
-            return true;
-        }
+    @VisibleForTesting
+    public boolean parseLineAndAppendValue(String streamLine, Map<String, String> messageValues) {
 
-        if (trimmedLine.substring(0, 0) == FIELD_SEPARATOR) {
+        if(streamLine == null) {
             return false;
         }
 
+        String trimmedLine = streamLine.trim();
+
+        if (trimmedLine.isEmpty()) {
+            return true;
+        }
+
         int separatorIndex = trimmedLine.indexOf(FIELD_SEPARATOR);
+
+        if(separatorIndex == 0) {
+            return false;
+        }
+
         if (separatorIndex > -1) {
             String field = trimmedLine.substring(0, separatorIndex).trim();
             String value = "";
