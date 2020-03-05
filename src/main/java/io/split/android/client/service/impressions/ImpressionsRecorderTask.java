@@ -33,7 +33,6 @@ public class ImpressionsRecorderTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
-        long initialTime = System.currentTimeMillis();
         SplitTaskExecutionStatus status = SplitTaskExecutionStatus.SUCCESS;
         int nonSentRecords = 0;
         long nonSentBytes = 0;

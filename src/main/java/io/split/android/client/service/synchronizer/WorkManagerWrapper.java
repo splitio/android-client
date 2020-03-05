@@ -138,7 +138,7 @@ public class WorkManagerWrapper {
 
         if (mFetcherExecutionListener == null || workInfo == null ||
                 workInfo.getTags() == null ||
-                !workInfo.getState().equals(WorkInfo.State.ENQUEUED)) {
+                !WorkInfo.State.ENQUEUED.equals(workInfo.getState())) {
             return;
         }
         SplitTaskType taskType = taskTypeFromTags(workInfo.getTags());
