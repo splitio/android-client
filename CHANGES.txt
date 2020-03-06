@@ -1,3 +1,10 @@
+2.5.0: (Mar 6, 2020)
+- Replaced disk files by Room to handle cache data
+- Improved sync architecture
+- Improved thread management
+- Fixed isReady flag
+- Removed some unused tags in manifest
+
 2.4.4: (Sep 26, 2019)
 - Fixed issue when load events from disk
 
