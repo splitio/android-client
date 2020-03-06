@@ -153,7 +153,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             splitName = split.trim();
         }
 
-        EvaluationResult evaluationResult = evaluateIfReady(splitName, attributes);
+        EvaluationResult evaluationResult = evaluateIfReady(splitName, attributes, validationTag);
         SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
 
         if(evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
@@ -199,7 +199,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 mValidationLogger.w(errorInfo, validationTag);
             }
 
-            EvaluationResult result = evaluateIfReady(split.trim(), attributes);
+            EvaluationResult result = evaluateIfReady(split.trim(), attributes, validationTag);
             results.put(split.trim(), new SplitResult(result.getTreatment(), result.getConfigurations()));
 
             if(result.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
@@ -261,8 +261,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         return results;
     }
 
-    private EvaluationResult evaluateIfReady(String splitName, Map<String, Object> attributes) {
-        if(!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)) {
+    private EvaluationResult evaluateIfReady(String splitName,
+                                             Map<String, Object> attributes, String validationTag) {
+        if(!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY) &&
+                !mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE) ) {
+            mValidationLogger.w("the SDK is not ready, results may be incorrect. Make sure to wait for SDK readiness before using this method", validationTag);
             return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null);
         }
         return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, splitName, attributes);
