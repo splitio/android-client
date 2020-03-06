@@ -36,10 +36,17 @@ import io.split.android.client.SplitResult;
 import io.split.android.client.api.Key;
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.storage.db.GeneralInfoEntity;
+import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.storage.splits.SplitsStorageImpl;
+import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
+import io.split.android.client.utils.Json;
 import io.split.android.grammar.Treatments;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -54,7 +61,6 @@ public class IntegrationTest {
     int mCurSplitReqId = 1;
     List<String> mTrackEndpointHits = null;
     List<String> mJsonChanges = null;
-    String mTrackRequestBody = null;
     CountDownLatch mLatchTrack = null;
 
     @Before
@@ -185,7 +191,7 @@ public class IntegrationTest {
 
         }
 
-        mLatchTrack.await(30, TimeUnit.SECONDS);
+        mLatchTrack.await(40, TimeUnit.SECONDS);
 
         List<Event> lastTrackHitEvents = buildEventsFromJson(mTrackEndpointHits.get(mTrackEndpointHits.size() - 1));
         Event event98 = findEventWithValue(lastTrackHitEvents, 98.0);
@@ -283,6 +289,80 @@ public class IntegrationTest {
         Assert.assertFalse(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
+
+        splitFactory.destroy();
+    }
+
+    @Test
+    public void testGetTreatmentFromCache() throws Exception {
+
+        SplitRoomDatabase mRoomDb;
+        Context mContext;
+        String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
+        String databaseName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext.deleteDatabase(databaseName);
+        mRoomDb = SplitRoomDatabase.getDatabase(mContext, databaseName);
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
+
+        SplitChange change = Json.fromJson(mJsonChanges.get(0), SplitChange.class);
+        List<SplitEntity> entities = new ArrayList<>();
+        for (Split split : change.splits) {
+            String splitName = split.name;
+            SplitEntity entity = new SplitEntity();
+            entity.setName(splitName);
+            entity.setBody(Json.toJson(split));
+            entities.add(entity);
+        }
+        mRoomDb.splitDao().insert(entities);
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        SplitClient client;
+
+        Key key = new Key("CUSTOMER_ID", null);
+        SplitClientConfig config = SplitClientConfig.builder()
+                .ready(30000)
+                .featuresRefreshRate(99999)
+                .segmentsRefreshRate(99999)
+                .impressionsRefreshRate(99999)
+                .trafficType("account")
+                .build();
+
+
+        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+
+        client = splitFactory.client();
+        SplitManager manager = splitFactory.manager();
+
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+
+        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyTask);
+        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+
+        latch.await(40, TimeUnit.SECONDS);
+
+        String t1 = client.getTreatment("FACUNDO_TEST");
+        String t2 = client.getTreatment("NO_EXISTING_FEATURE");
+        SplitResult treatmentConfigEmojis = client.getTreatmentWithConfig("Welcome_Page_UI", null);
+
+        Map<String, String> ts1 = client.getTreatments(Arrays.asList("testing222", "NO_EXISTING_FEATURE1", "NO_EXISTING_FEATURE2"), null);
+
+        SplitView s1 = manager.split("FACUNDO_TEST");
+        SplitView s2 = manager.split("NO_EXISTING_FEATURE");
+
+        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
+        Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
+
+        Assert.assertEquals("off", t1);
+        Assert.assertEquals(Treatments.CONTROL, t2);
+        Assert.assertEquals("off", treatmentConfigEmojis.treatment());
+        Assert.assertEquals("{\"the_emojis\":\"\uD83D\uDE01 -- áéíóúöÖüÜÏëç\"}", treatmentConfigEmojis.config());
+        Assert.assertEquals("off", ts1.get("testing222"));
+        Assert.assertEquals(Treatments.CONTROL, ts1.get("NO_EXISTING_FEATURE1"));
+        Assert.assertEquals(Treatments.CONTROL, ts1.get("NO_EXISTING_FEATURE2"));
 
         splitFactory.destroy();
     }
