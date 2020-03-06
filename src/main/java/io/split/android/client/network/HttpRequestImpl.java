@@ -66,7 +66,6 @@ public class HttpRequestImpl implements HttpRequest {
 
     private HttpResponse postRequest() throws IOException {
 
-        HttpResponse response;
         URL url = mUri.toURL();
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();

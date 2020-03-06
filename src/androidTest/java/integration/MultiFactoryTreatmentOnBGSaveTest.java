@@ -1,10 +1,10 @@
 package integration;
 
-import android.arch.lifecycle.Lifecycle;
-import android.arch.lifecycle.LifecycleRegistry;
-import android.arch.lifecycle.ProcessLifecycleOwner;
 import android.content.Context;
 
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleRegistry;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.common.base.Strings;
@@ -24,14 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import fake.ImpressionsManagerStub;
-import fake.MySegmentsCacheStub;
-import fake.RefreshableMySegmentsFetcherProviderStub;
-import fake.RefreshableSplitFetcherProviderStub;
-import fake.SplitCacheStub;
-import fake.TrackClientStub;
+import fake.SyncManagerStub;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -111,9 +104,7 @@ public class MultiFactoryTreatmentOnBGSaveTest {
 
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());
 
-        LifecycleManager lifecycleManager = new LifecycleManager(new ImpressionsManagerStub(), new TrackClientStub(),
-                new RefreshableSplitFetcherProviderStub(), new RefreshableMySegmentsFetcherProviderStub(),
-                new SplitCacheStub(), new MySegmentsCacheStub());
+        LifecycleManager lifecycleManager = new LifecycleManager(new SyncManagerStub());
 
         lfRegistry.addObserver(lifecycleManager);
 
