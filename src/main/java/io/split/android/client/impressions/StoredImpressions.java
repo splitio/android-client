@@ -7,6 +7,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.TestImpressions;
 
+@Deprecated
 public class StoredImpressions {
     private final String id;
     private final List<TestImpressions> impressions;

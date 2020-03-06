@@ -17,6 +17,7 @@ public class SplitEventExecutorFactory {
 
         switch(event){
             case SDK_READY:
+            case SDK_READY_FROM_CACHE:
                 executor = new SplitEventExecutorWithClient(task, resources.getSplitClient());
                 break;
 

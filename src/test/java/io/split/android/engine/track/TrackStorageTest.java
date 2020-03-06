@@ -17,12 +17,13 @@ import java.util.Set;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.storage.IStorage;
-import io.split.android.client.storage.MemoryStorage;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.storage.legacy.IStorage;
+import io.split.android.client.storage.legacy.MemoryStorage;
+import io.split.android.client.storage.legacy.TracksFileStorage;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
-import io.split.android.client.track.TrackStorageManager;
-import io.split.android.client.track.TracksFileStorage;
+import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.client.utils.Json;
 import io.split.android.fake.MemoryUtilsNoMemoryStub;
 import io.split.android.fake.TrackFileStorageStub;
@@ -53,7 +54,8 @@ public class TrackStorageTest {
             }
             folder.delete();
         }
-        mStorage = new TracksFileStorage(rootFolder, "test_folder");
+        mStorage = new
+                TracksFileStorage(rootFolder, "test_folder");
         mTrackStorage = new TrackStorageManager(mStorage);
 
     }

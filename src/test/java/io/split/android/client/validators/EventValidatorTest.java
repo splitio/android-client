@@ -14,7 +14,11 @@ import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.storage.FileStorage;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class EventValidatorTest {
 
@@ -22,12 +26,14 @@ public class EventValidatorTest {
 
     @Before
     public void setUp() {
-        ISplitCache splitCache = new SplitCache(new FileStorage(new File("./build", "."), "folder"));
-        splitCache.addSplit(newSplit("s0", "traffic1"));
-        splitCache.addSplit(newSplit("s1", "trafficType1"));
-        splitCache.addSplit(newSplit("s2", "custom"));
 
-        validator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+
+        when(splitsStorage.isValidTrafficType("traffic1")).thenReturn(true);
+        when(splitsStorage.isValidTrafficType("trafficType1")).thenReturn(true);
+        when(splitsStorage.isValidTrafficType("custom")).thenReturn(true);
+
+        validator = new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage);
     }
 
     @Test

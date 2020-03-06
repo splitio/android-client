@@ -37,6 +37,8 @@ import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.storage.db.GeneralInfoEntity;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -135,24 +137,16 @@ public class MySegmentsServerErrorTest {
     public void test() throws Exception {
         ArrayList<String> treatments = new ArrayList<>();
         CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
 
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        splitRoomDatabase.clearAllTables();
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
+
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
-
-        File cacheDir = mContext.getCacheDir();
-
-        File dataFolder = new File(cacheDir, dataFolderName);
-        if (dataFolder.exists()) {
-            File[] files = dataFolder.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    file.delete();
-                }
-            }
-            boolean isDataFolderDelete = dataFolder.delete();
-            log("Data folder exists and deleted: " + isDataFolderDelete);
-        }
 
         SplitClient client;
 
@@ -175,11 +169,14 @@ public class MySegmentsServerErrorTest {
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
         SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(readyFromCacheLatch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
 
-        latch.await(20, TimeUnit.SECONDS);
+        latch.await(15, TimeUnit.SECONDS);
+        readyFromCacheLatch.await(5, TimeUnit.SECONDS);
 
         for (int i = 0; i < 4; i++) {
             mLatchs.get(i).await(20, TimeUnit.SECONDS);
@@ -188,6 +185,7 @@ public class MySegmentsServerErrorTest {
         mImpLatch.await(30, TimeUnit.SECONDS);
         client.destroy();
 
+        Assert.assertFalse(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertEquals("on_s1", treatments.get(0));
         Assert.assertEquals("on_s1", treatments.get(1));
         Assert.assertEquals("on_s1", treatments.get(2));

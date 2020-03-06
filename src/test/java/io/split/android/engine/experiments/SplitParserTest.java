@@ -2,7 +2,9 @@ package io.split.android.engine.experiments;
 
 import com.google.common.collect.Lists;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +19,7 @@ import io.split.android.client.dtos.MatcherType;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.matchers.AttributeMatcher;
 import io.split.android.engine.matchers.BetweenMatcher;
@@ -45,10 +48,16 @@ import static org.junit.Assert.assertThat;
  */
 public class SplitParserTest {
 
+    MySegmentsStorage mMySegmentsStorage;
+    @Before
+    public void setup() {
+        mMySegmentsStorage = Mockito.mock(MySegmentsStorage.class);
+    }
+
     @Test
     public void less_than_or_equal_to() {
         RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key");
-        SplitParser parser = SplitParser.get(provider);
+        SplitParser parser = SplitParser.get(mMySegmentsStorage);
 
         Matcher ageLessThan10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.LESS_THAN_OR_EQUAL_TO, DataType.NUMBER, 10L, false);
 
@@ -67,10 +76,10 @@ public class SplitParserTest {
 
         AttributeMatcher ageLessThan10Logic = new AttributeMatcher("age", new LessThanOrEqualToMatcher(10, DataType.NUMBER), false);
         CombiningMatcher combiningMatcher = new CombiningMatcher(MatcherCombiner.AND, Lists.newArrayList(ageLessThan10Logic));
-        ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
+        ParsedCondition parsedCondition = SplitHelper.createParsedCondition(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, configs);
+        ParsedSplit expected = SplitHelper.createParsedSplit("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, configs);
 
         assertThat(actual, is(equalTo(expected)));
     }
@@ -80,7 +89,7 @@ public class SplitParserTest {
 
         RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key");
 
-        SplitParser parser = SplitParser.get(provider);
+        SplitParser parser = SplitParser.get(mMySegmentsStorage);
 
         Matcher ageLessThan10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.EQUAL_TO, DataType.NUMBER, 10L, true);
 
@@ -96,10 +105,10 @@ public class SplitParserTest {
 
         AttributeMatcher equalToMatcher = new AttributeMatcher("age", new EqualToMatcher(10, DataType.NUMBER), true);
         CombiningMatcher combiningMatcher = new CombiningMatcher(MatcherCombiner.AND, Lists.newArrayList(equalToMatcher));
-        ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
+        ParsedCondition parsedCondition = SplitHelper.createParsedCondition(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
+        ParsedSplit expected = SplitHelper.createParsedSplit("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
     }
@@ -107,7 +116,7 @@ public class SplitParserTest {
     @Test
     public void equal_to_negative_number() {
 
-        SplitParser parser = new SplitParser(StaticMySegmentsFectherProvider.get("key"));
+        SplitParser parser = new SplitParser(mMySegmentsStorage);
 
         Matcher equalToNegative10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.EQUAL_TO, DataType.NUMBER, -10L, false);
 
@@ -123,10 +132,10 @@ public class SplitParserTest {
 
         AttributeMatcher ageEqualTo10Logic = new AttributeMatcher("age", new EqualToMatcher(-10, DataType.NUMBER), false);
         CombiningMatcher combiningMatcher = new CombiningMatcher(MatcherCombiner.AND, Lists.newArrayList(ageEqualTo10Logic));
-        ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
+        ParsedCondition parsedCondition = SplitHelper.createParsedCondition(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
+        ParsedSplit expected = SplitHelper.createParsedSplit("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
     }
@@ -134,7 +143,7 @@ public class SplitParserTest {
     @Test
     public void between() {
 
-        SplitParser parser = new SplitParser(StaticMySegmentsFectherProvider.get("key"));
+        SplitParser parser = new SplitParser(mMySegmentsStorage);
 
         Matcher ageBetween10And11 = ConditionsTestUtil.betweenMatcher("user",
                 "age",
@@ -155,10 +164,10 @@ public class SplitParserTest {
 
         AttributeMatcher ageBetween10And11Logic = new AttributeMatcher("age", new BetweenMatcher(10, 12, DataType.NUMBER), false);
         CombiningMatcher combiningMatcher = new CombiningMatcher(MatcherCombiner.AND, Lists.newArrayList(ageBetween10And11Logic));
-        ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
+        ParsedCondition parsedCondition = SplitHelper.createParsedCondition(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
+        ParsedSplit expected = SplitHelper.createParsedSplit("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
     }
@@ -299,7 +308,7 @@ public class SplitParserTest {
 
     public void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
 
-        SplitParser parser = new SplitParser(StaticMySegmentsFectherProvider.get("key"));
+        SplitParser parser = new SplitParser(mMySegmentsStorage);
 
         List<Partition> partitions = Lists.newArrayList(ConditionsTestUtil.partition("on", 100));
 
@@ -312,10 +321,10 @@ public class SplitParserTest {
 
         AttributeMatcher attrMatcher = new AttributeMatcher("products", m, false);
         CombiningMatcher combiningMatcher = new CombiningMatcher(MatcherCombiner.AND, Lists.newArrayList(attrMatcher));
-        ParsedCondition parsedCondition = ParsedCondition.createParsedConditionForTests(combiningMatcher, partitions);
+        ParsedCondition parsedCondition = SplitHelper.createParsedCondition(combiningMatcher, partitions);
         List<ParsedCondition> listOfMatcherAndSplits = Lists.newArrayList(parsedCondition);
 
-        ParsedSplit expected = ParsedSplit.createParsedSplitForTests("splitName", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
+        ParsedSplit expected = SplitHelper.createParsedSplit("splitName", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
     }

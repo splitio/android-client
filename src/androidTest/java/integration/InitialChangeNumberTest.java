@@ -13,6 +13,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -22,7 +24,17 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.Status;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.storage.db.GeneralInfoEntity;
+import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.splits.PersistentSplitsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.storage.splits.SplitsStorageImpl;
+import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.utils.Logger;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -86,31 +98,13 @@ public class InitialChangeNumberTest {
     @Test
     public void firstRequestChangeNumber() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
-        File cacheDir = mContext.getCacheDir();
-
-        File dataFolder = new File(cacheDir, dataFolderName);
-        if(dataFolder.exists()) {
-            File[] files = dataFolder.listFiles();
-            if(files != null) {
-                for (File file : files) {
-                    file.delete();
-                }
-            }
-            boolean isDataFolderDelete = dataFolder.delete();
-            log("Data folder exists and deleted: " + isDataFolderDelete);
-        }
-        dataFolder.mkdir();
-
-
-        for(int i=0; i<10; i++) {
-            String splitName = "feature_" + i;
-            long changeNumber = INITIAL_CHANGE_NUMBER - i * 100;
-            String jsonSplit = String.format("{\"name\":\"%s\", \"changeNumber\": %d}",
-                            splitName, changeNumber);
-            write(dataFolder, splitName, jsonSplit);
-        }
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        splitRoomDatabase.clearAllTables();
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
 
         SplitClient client;
 
@@ -133,39 +127,18 @@ public class InitialChangeNumberTest {
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
         SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(readyFromCacheLatch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
 
         latch.await(40, TimeUnit.SECONDS);
+        readyFromCacheLatch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived); // Checks that change number is the bigger number from cached splits
-
-    }
-
-
-    private void write(File folder, String splitName, String content) throws IOException {
-        File file = new File(folder, "SPLITIO.split." + splitName);
-        FileOutputStream fileOutputStream = null;
-        try {
-            fileOutputStream = new FileOutputStream(file);
-            fileOutputStream.write(content.getBytes());
-        } catch (FileNotFoundException e) {
-            Logger.e(e, "Failed to write content");
-            throw e;
-        } catch (IOException e) {
-            Logger.e(e, "Failed to write content");
-            throw e;
-        } finally {
-            try {
-                if(fileOutputStream != null) {
-                    fileOutputStream.close();
-                }
-            } catch (IOException e) {
-                Logger.e(e, "Failed to close file");
-            }
-        }
+        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
+        Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived); // Checks that change number is the bigger number from cached splitss
     }
 
     private void log(String m) {

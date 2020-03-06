@@ -14,6 +14,7 @@ public class TestableSplitConfigBuilder {
     private int mImpressionsRefreshRate = 1800;
     private int mImpressionsQueueSize = 30000;
     private long mImpressionsChunkSize = 2 * 1024;
+    private int mImpressionsPerPush = 10;
     private int mMetricsRefreshRate = 1800;
     private int mConnectionTimeout = 15000;
     private int mReadTimeout = 15000;
@@ -29,6 +30,10 @@ public class TestableSplitConfigBuilder {
     private int mEventsPerPush = 2000;
     private long mEventFlushInterval = 1800;
     private String mTrafficType = null;
+    private boolean mSynchronizeInBackground = false;
+    private long mBackgroundSyncPeriod;
+    private boolean mBackgroundSyncWhenBatteryNotLow = true;
+    private boolean mBackgroundSyncWhenWifiOnly = false;
 
     public TestableSplitConfigBuilder endpoint(String endpoint, String eventsEndpoint) {
         this.mEndpoint = endpoint;
@@ -136,6 +141,16 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder synchronizeInBackground(boolean synchronizeInBackground) {
+        this.mSynchronizeInBackground = synchronizeInBackground;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder impressionsPerPush(int impressionsPerPush) {
+        this.mImpressionsPerPush = impressionsPerPush;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -149,6 +164,7 @@ public class TestableSplitConfigBuilder {
                     mImpressionsRefreshRate,
                     mImpressionsQueueSize,
                     mImpressionsChunkSize,
+                    mImpressionsPerPush,
                     mMetricsRefreshRate,
                     mConnectionTimeout,
                     mReadTimeout,
@@ -163,7 +179,11 @@ public class TestableSplitConfigBuilder {
                     mEventsQueueSize,
                     mEventsPerPush,
                     mEventFlushInterval,
-                    mTrafficType);
+                    mTrafficType,
+                    mSynchronizeInBackground,
+                    mBackgroundSyncPeriod,
+                    mBackgroundSyncWhenBatteryNotLow,
+                    mBackgroundSyncWhenWifiOnly);
             return config;
         } catch (Exception e) {
             System.out.println(e.getLocalizedMessage());

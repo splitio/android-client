@@ -40,6 +40,7 @@ import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -140,19 +141,8 @@ public class MySegmentUpdatedTest {
 
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
 
-        File cacheDir = mContext.getCacheDir();
-
-        File dataFolder = new File(cacheDir, dataFolderName);
-        if (dataFolder.exists()) {
-            File[] files = dataFolder.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    file.delete();
-                }
-            }
-            boolean isDataFolderDelete = dataFolder.delete();
-            log("Data folder exists and deleted: " + isDataFolderDelete);
-        }
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        splitRoomDatabase.clearAllTables();
 
         SplitClient client;
 

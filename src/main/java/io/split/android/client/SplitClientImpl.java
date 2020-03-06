@@ -1,12 +1,13 @@
 package io.split.android.client;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.cache.ISplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
@@ -17,7 +18,7 @@ import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
-import io.split.android.engine.experiments.SplitFetcher;
+import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.metrics.Metrics;
 
 
@@ -37,10 +38,11 @@ public final class SplitClientImpl implements SplitClient {
     private final SplitClientConfig mConfig;
     private final String mMatchingKey;
     private final SplitEventsManager mEventsManager;
-    private final TrackClient mTrackClient;
+    private final EventPropertiesProcessor mEventPropertiesProcessor;
     private final TreatmentManager mTreatmentManager;
     private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
+    private final SyncManager mSyncManager;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -48,34 +50,32 @@ public final class SplitClientImpl implements SplitClient {
 
     public SplitClientImpl(SplitFactory container,
                            Key key,
-                           SplitFetcher splitFetcher,
+                           SplitParser splitParser,
                            ImpressionListener impressionListener,
                            Metrics metrics,
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
-                           TrackClient trackClient,
-                           ISplitCache splitCache) {
+                           SplitsStorage splitsStorage,
+                           EventPropertiesProcessor eventPropertiesProcessor,
+                           SyncManager syncManager) {
+
+        checkNotNull(splitParser);
+        checkNotNull(impressionListener);
 
         String mBucketingKey = key.bucketingKey();
-        mMatchingKey = key.matchingKey();
+        mMatchingKey = checkNotNull(key.matchingKey());
 
-        mSplitFactory = container;
-        mConfig = config;
-        mEventsManager = eventsManager;
-        mTrackClient = trackClient;
-        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
+        mSplitFactory = checkNotNull(container);
+        mConfig = checkNotNull(config);
+        mEventsManager = checkNotNull(eventsManager);
+        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage);
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = new TreatmentManagerImpl(
-                mMatchingKey, mBucketingKey, new EvaluatorImpl(splitFetcher),
-                new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), metrics,
+                mMatchingKey, mBucketingKey, new EvaluatorImpl(splitsStorage, splitParser),
+                new KeyValidatorImpl(), new SplitValidatorImpl(), metrics,
                 impressionListener, mConfig, eventsManager);
-
-        checkNotNull(splitFetcher);
-        checkNotNull(impressionListener);
-        checkNotNull(mMatchingKey);
-        checkNotNull(mEventsManager);
-        checkNotNull(mTrackClient);
-
+        mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
+        mSyncManager = checkNotNull(syncManager);
     }
 
     @Override
@@ -91,7 +91,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean isReady() {
-        return mSplitFactory.isReady();
+        return mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
     }
 
     @Override
@@ -123,7 +123,7 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(event);
         checkNotNull(task);
 
-        if(mEventsManager.eventAlreadyTriggered(event)) {
+        if(!event.equals(SplitEvent.SDK_READY_FROM_CACHE) && mEventsManager.eventAlreadyTriggered(event)) {
             Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event.toString()));
             return;
         }
@@ -171,16 +171,14 @@ public final class SplitClientImpl implements SplitClient {
         return track(mMatchingKey, mConfig.trafficType(), eventType, value, properties);
     }
 
+    // Estimated event size without properties
+    private final static int ESTIMATED_EVENT_SIZE_WITHOUT_PROPS = 1024;
     private boolean track(String key, String trafficType, String eventType, double value, Map<String, Object> properties) {
         final String validationTag = "track";
         final boolean isSdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
         if(mIsClientDestroyed) {
             mValidationLogger.e("Client has already been destroyed - no calls possible", validationTag);
             return false;
-        }
-
-        if(!isSdkReady) {
-            mValidationLogger.w("the SDK is not ready, results may be incorrect. Make sure to wait for SDK readiness before using this method", validationTag);
         }
 
         Event event = new Event();
@@ -202,7 +200,15 @@ public final class SplitClientImpl implements SplitClient {
             event.trafficTypeName = event.trafficTypeName.toLowerCase();
         }
 
-        return mTrackClient.track(event);
+        ProcessedEventProperties processedProperties =
+                mEventPropertiesProcessor.process(event.properties);
+        if(!processedProperties.isValid()) {
+            return false;
+        }
+        event.properties = processedProperties.getProperties();
+        event.setSizeInBytes(ESTIMATED_EVENT_SIZE_WITHOUT_PROPS + processedProperties.getSizeInBytes());
+        mSyncManager.pushEvent(event);
+        return true;
     }
 
 }

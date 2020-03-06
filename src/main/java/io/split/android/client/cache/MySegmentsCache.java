@@ -1,7 +1,6 @@
 package io.split.android.client.cache;
 
 
-
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -15,7 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.storage.IStorage;
+import io.split.android.client.storage.legacy.IStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
@@ -23,7 +22,8 @@ import io.split.android.client.utils.Logger;
  * Created by guillermo on 12/28/17.
  */
 
-public class MySegmentsCache implements IMySegmentsCache {
+@Deprecated
+public class MySegmentsCache implements IMySegmentsCache, MySegmentsCacheMigrator {
 
     private static final String MY_SEGMENTS_FILE_NAME = "SPLITIO.mysegments";
 
@@ -55,11 +55,11 @@ public class MySegmentsCache implements IMySegmentsCache {
         mSegments.remove(key);
     }
 
-    private void loadSegmentsFromDisk(){
+    private void loadSegmentsFromDisk() {
 
         try {
             String storedMySegments = mFileStorage.read(getMySegmentsFileName());
-            if(storedMySegments == null || storedMySegments.trim().equals("")) return;
+            if (storedMySegments == null || storedMySegments.trim().equals("")) return;
             Type listType = new TypeToken<Map<String, List<MySegment>>>() {
             }.getType();
 
@@ -67,7 +67,7 @@ public class MySegmentsCache implements IMySegmentsCache {
             Set<String> keys = segments.keySet();
             for (String key : keys) {
                 List<MySegment> keySegments = segments.get(key);
-                if(keySegments != null) {
+                if (keySegments != null) {
                     mSegments.put(key, Collections.synchronizedList(keySegments));
                 }
             }
@@ -90,4 +90,14 @@ public class MySegmentsCache implements IMySegmentsCache {
         }
     }
 
+
+    @Override
+    public Map<String, List<MySegment>> getAllMySegments() {
+        return mSegments;
+    }
+
+    @Override
+    public void deleteAllFiles() {
+        mFileStorage.delete(getMySegmentsFileName());
+    }
 }

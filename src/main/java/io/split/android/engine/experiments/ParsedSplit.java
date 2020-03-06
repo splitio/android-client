@@ -10,7 +10,6 @@ import java.util.Map;
  * that class? Because it does not have the logic of matching. ParsedExperiment
  * has the matchers that also encapsulate the logic of matching. We
  * can easily cache this object.
- *
  */
 @SuppressWarnings("RedundantCast")
 public class ParsedSplit {
@@ -26,32 +25,6 @@ public class ParsedSplit {
     private final int _trafficAllocationSeed;
     private final int _algo;
     private final Map<String, String> _configurations;
-
-    public static ParsedSplit createParsedSplitForTests(
-            String feature,
-            int seed,
-            boolean killed,
-            String defaultTreatment,
-            List<ParsedCondition> matcherAndSplits,
-            String trafficTypeName,
-            long changeNumber,
-            int algo,
-            Map<String, String> configurations
-    ) {
-        return new ParsedSplit(
-                feature,
-                seed,
-                killed,
-                defaultTreatment,
-                matcherAndSplits,
-                trafficTypeName,
-                changeNumber,
-                100,
-                seed,
-                algo,
-                configurations
-        );
-    }
 
     public ParsedSplit(
             String feature,
@@ -84,7 +57,6 @@ public class ParsedSplit {
     }
 
 
-
     public String feature() {
         return _split;
     }
@@ -113,24 +85,32 @@ public class ParsedSplit {
         return _parsedCondition;
     }
 
-    public String trafficTypeName() {return _trafficTypeName;}
+    public String trafficTypeName() {
+        return _trafficTypeName;
+    }
 
-    public long changeNumber() {return _changeNumber;}
+    public long changeNumber() {
+        return _changeNumber;
+    }
 
-    public int algo() {return _algo;}
+    public int algo() {
+        return _algo;
+    }
 
-    public Map<String, String> configurations() {return _configurations;}
+    public Map<String, String> configurations() {
+        return _configurations;
+    }
 
     @Override
     public int hashCode() {
         int result = 17;
         result = 31 * result + _split.hashCode();
-        result = 31 * result + (int)(_seed ^ (_seed >>> 32));
+        result = 31 * result + (int) (_seed ^ (_seed >>> 32));
         result = 31 * result + (_killed ? 1 : 0);
         result = 31 * result + _defaultTreatment.hashCode();
         result = 31 * result + _parsedCondition.hashCode();
         result = 31 * result + (_trafficTypeName == null ? 0 : _trafficTypeName.hashCode());
-        result = 31 * result + (int)(_changeNumber ^ (_changeNumber >>> 32));
+        result = 31 * result + (int) (_changeNumber ^ (_changeNumber >>> 32));
         result = 31 * result + (_algo ^ (_algo >>> 32));
         return result;
     }
@@ -158,7 +138,7 @@ public class ParsedSplit {
     public String toString() {
         return "name:" + _split + ", seed:" + _seed + ", killed:" + _killed +
                 ", default treatment:" + _defaultTreatment +
-                ", parsedConditions:" +  _parsedCondition +
+                ", parsedConditions:" + _parsedCondition +
                 ", trafficTypeName:" + _trafficTypeName + ", changeNumber:" + _changeNumber +
                 ", algo:" + _algo + ", config:" + _configurations;
 

@@ -9,7 +9,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +29,8 @@ import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.storage.db.GeneralInfoEntity;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -78,9 +79,9 @@ public class TrackTest {
                 } else if (request.getPath().contains("/events/bulk")) {
 
                     int code = 0;
-                    synchronized(this) {
+                    synchronized (this) {
                         int index = mCurReqId;
-                        if(index > 0 && index < 4) {
+                        if (index > 0 && index < 4) {
                             code = 500;
                         } else {
                             List<Event> data = IntegrationHelper.buildEventsFromJson(request.getBody().readUtf8());
@@ -88,7 +89,7 @@ public class TrackTest {
                             code = 200;
                         }
 
-                        if(index < 6) {
+                        if (index < 6) {
                             mCurReqId = index + 1;
                             mLatchs.get(index).countDown();
                         }
@@ -113,22 +114,11 @@ public class TrackTest {
         CountDownLatch latch = new CountDownLatch(1);
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
+        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        splitRoomDatabase.clearAllTables();
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
 
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
-
-        File cacheDir = mContext.getCacheDir();
-
-        File dataFolder = new File(cacheDir, dataFolderName);
-        if (dataFolder.exists()) {
-            File[] files = dataFolder.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    file.delete();
-                }
-            }
-            boolean isDataFolderDelete = dataFolder.delete();
-            log("Data folder exists and deleted: " + isDataFolderDelete);
-        }
 
         SplitClient client;
 
@@ -158,28 +148,28 @@ public class TrackTest {
 
         latch.await(20, TimeUnit.SECONDS);
 
-        Map<String,Object> prop = new HashMap<>();
+        Map<String, Object> prop = new HashMap<>();
 
         client.track("custom", "e%%%%%");
         client.track("custom", "");
         client.track("custom", "e^^^^");
 
         for (int i = 0; i < 5; i++) {
-            prop.put("value", i);
+            prop.put("value", 0.0);
             client.track("custom", "event1", i, prop);
         }
         mLatchs.get(0).await(20, TimeUnit.SECONDS);
         trackCount.add(mEventsHits.size());
 
         for (int i = 0; i < 5; i++) {
-            prop.put("value", i);
+            prop.put("value", 2);
             client.track("custom", "event2", i, prop);
         }
         mLatchs.get(1).await(20, TimeUnit.SECONDS);
         trackCount.add(mEventsHits.size());
 
         for (int i = 0; i < 5; i++) {
-            prop.put("value", i);
+            prop.put("value", 3);
             client.track("custom", "event3", i, prop);
         }
         mLatchs.get(2).await(20, TimeUnit.SECONDS);
@@ -230,10 +220,10 @@ public class TrackTest {
         int i = 0;
         while (i < 3) {
             List<Event> events = mEventsHits.get(i);
-            if(events != null) {
+            if (events != null) {
                 Optional<Event> oe = events.stream()
                         .filter(event -> event.eventTypeId.equals(type) && event.value == value).findFirst();
-                if(oe.isPresent()) {
+                if (oe.isPresent()) {
                     return oe.get();
                 }
             }

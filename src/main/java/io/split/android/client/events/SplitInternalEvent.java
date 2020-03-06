@@ -5,6 +5,8 @@ package io.split.android.client.events;
  */
 
 public enum SplitInternalEvent {
+    MYSEGMENTS_LOADED_FROM_STORAGE,
+    SPLITS_LOADED_FROM_STORAGE,
     MYSEGEMENTS_ARE_READY,
     SPLITS_ARE_READY,
     SDK_READY_TIMEOUT_REACHED,

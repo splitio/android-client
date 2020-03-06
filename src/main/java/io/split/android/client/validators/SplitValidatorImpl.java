@@ -3,6 +3,7 @@ package io.split.android.client.validators;
 import com.google.common.base.Strings;
 
 
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.engine.experiments.SplitFetcher;
 
 /**
@@ -10,32 +11,37 @@ import io.split.android.engine.experiments.SplitFetcher;
  */
 public class SplitValidatorImpl implements SplitValidator {
 
-    SplitFetcher mSplitFetcher;
-
-    public SplitValidatorImpl(SplitFetcher splitFetcher) {
-        mSplitFetcher = splitFetcher;
-    }
-
     @Override
     public ValidationErrorInfo validateName(String name) {
 
         if (name == null) {
-            return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed a null split name, split name must be a non-empty string");
+            return new ValidationErrorInfo(
+                    ValidationErrorInfo.ERROR_SOME,
+                    "you passed a null split name, split name must " +
+                            "be a non-empty string");
         }
 
         if (Strings.isNullOrEmpty(name.trim())) {
-            return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed an empty split name, split name must be a non-empty string");
+            return new ValidationErrorInfo(
+                    ValidationErrorInfo.ERROR_SOME,
+                    "you passed an empty split name, " +
+                            "split name must be a non-empty string");
         }
 
-        if(name.trim().length() != name.length()) {
-            return new ValidationErrorInfo(ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED, "split name '" + name + "' has extra whitespace, trimming", true);
+        if (name.trim().length() != name.length()) {
+            return new ValidationErrorInfo(
+                    ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED,
+                    "split name '" + name + "' has extra whitespace, trimming",
+                    true);
         }
 
         return null;
     }
 
     public String splitNotFoundMessage(String splitName) {
-        return "split: you passed '" + splitName + "' that does not exist in this environment, please double check what Splits exist in the web console.";
+        return "split: you passed '" + splitName +
+                "' that does not exist in this environment, " +
+                "please double check what Splits exist in the web console.";
     }
 
 }

@@ -3,13 +3,49 @@ package io.split.android.client;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
-
 import io.split.android.client.utils.Logger;
 
 /**
  * Configurations for the SplitClient.
  */
 public class SplitClientConfig {
+
+    private static final int MIN_FEATURES_REFRESH_RATE = 30;
+    private static final int MIN_MYSEGMENTS_REFRESH_RATE = 30;
+    private static final int MIN_IMPRESSIONS_REFRESH_RATE = 30;
+    private static final int MIN_METRICS_REFRESH_RATE = 30;
+    private static final int MIN_IMPRESSIONS_QUEUE_SIZE = 0;
+    private static final int MIN_IMPRESSIONS_CHUNK_SIZE = 0;
+    private static final int MIN_CONNECTION_TIMEOUT = 0;
+    private static final int MIN_READ_TIMEOUT = 0;
+    private static final int DEFAULT_FEATURES_REFRESH_RATE_SECS = 3600;
+    private static final int DEFAULT_SEGMENTS_REFRESH_RATE_SECS = 1800;
+    private static final int DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS = 1800;
+    private static final int DEFAULT_IMPRESSIONS_QUEUE_SIZE = 30000;
+    private static final int DEFAULT_IMPRESSIONS_PER_PUSH = 2000;
+    private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 15000;
+    private static final int DEFAULT_READ_TIMEOUT_SECS = 15000;
+    private static final int DEFAULT_NUM_THREAD_FOR_SEGMENT_FETCH = 2;
+    private static final int DEFAULT_READY = -1;
+    private static final int DEFAULT_METRICS_REFRESH_RATE_SECS = 1800;
+    private static final int DEFAULT_WAIT_BEFORE_SHUTDOW_SECS = 5000;
+    private static final int DEFAULT_IMPRESSIONS_CHUNK_SIZE = 2 * 1024;
+    private static final int DEFAULT_EVENTS_QUEUE_SIZE = 10000;
+    private static final int DEFAULT_EVENTS_FLUSH_INTERVAL = 1800;
+    private static final int DEFAULT_EVENTS_PER_PUSH = 2000;
+    private static final int DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES = 15;
+
+    private static final int IMPRESSIONS_MAX_SENT_ATTEMPTS = 3;
+    private static final int IMPRESSIONS_CHUNK_OUTDATED_TIME = 3600 * 1000; // One day millis
+    private final static int EVENTS_MAX_SENT_ATTEMPS = 3;
+    private final static int MAX_QUEUE_SIZE_IN_BYTES = 5242880; // 5mb
+
+    // Validation settings
+    private static final int MAXIMUM_KEY_LENGTH = 250;
+    private static final String TRACK_EVENT_NAME_PATTERN = "^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$";
+
+    // Data folder
+    private static final String DEFAULT_DATA_FOLDER = "split_data";
 
     private final String _endpoint;
     private final String _eventsEndpoint;
@@ -20,8 +56,9 @@ public class SplitClientConfig {
     private final int _segmentsRefreshRate;
     private final int _impressionsRefreshRate;
     private final int _impressionsQueueSize;
-    private final static int _impressionsMaxSentAttempts = 3;
-    private final static long _impressionsChunkOudatedTime = 3600 * 1000; // One day millis
+    private final int _impressionsPerPush;
+    private final static int _impressionsMaxSentAttempts = IMPRESSIONS_MAX_SENT_ATTEMPTS;
+    private final static long _impressionsChunkOudatedTime = IMPRESSIONS_CHUNK_OUTDATED_TIME;
 
     private final int _metricsRefreshRate;
     private final int _connectionTimeout;
@@ -34,20 +71,17 @@ public class SplitClientConfig {
     private final int _waitBeforeShutdown;
     private long _impressionsChunkSize;
 
+    // Background sync
+    private boolean _synchronizeInBackground;
+    private long _backgroundSyncPeriod;
+    private boolean _backgroundSyncWhenBatteryNotLow ;
+    private boolean _backgroundSyncWhenWifiOnly;
+
     //.Track configuration
     private final int _eventsQueueSize;
     private final int _eventsPerPush;
     private final long _eventFlushInterval;
     private final String _trafficType;
-    private final static int _eventsMaxSentAttemps = 3;
-    private final static int _maxQueueSizeInBytes = 5242880; // 5mb
-
-    // Validation settings
-    private static final int _maximumKeyLength = 250;
-    private static final String _trackEventNamePattern = "^[a-zA-Z0-9][-_.:a-zA-Z0-9]{0,79}$";
-
-    // Data folder
-    private static final String _defaultDataFolder = "split_data";
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -63,7 +97,9 @@ public class SplitClientConfig {
                               int segmentsRefreshRate,
                               int impressionsRefreshRate,
                               int impressionsQueueSize,
-                              long impressionsChunkSize, int metricsRefreshRate,
+                              long impressionsChunkSize,
+                              int impressionsPerPush,
+                              int metricsRefreshRate,
                               int connectionTimeout,
                               int readTimeout,
                               int numThreadsForSegmentFetch,
@@ -77,13 +113,18 @@ public class SplitClientConfig {
                               int eventsQueueSize,
                               int eventsPerPush,
                               long eventFlushInterval,
-                              String trafficType) {
+                              String trafficType,
+                              boolean synchronizeInBackground,
+                              long backgroundSyncPeriod,
+                              boolean backgroundSyncWhenBatteryNotLow,
+                              boolean backgroundSyncWhenWifiOnly) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
         _segmentsRefreshRate = segmentsRefreshRate;
         _impressionsRefreshRate = impressionsRefreshRate;
         _impressionsQueueSize = impressionsQueueSize;
+        _impressionsPerPush = impressionsPerPush;
         _metricsRefreshRate = metricsRefreshRate;
         _connectionTimeout = connectionTimeout;
         _readTimeout = readTimeout;
@@ -101,6 +142,10 @@ public class SplitClientConfig {
         _eventsPerPush = eventsPerPush;
         _eventFlushInterval = eventFlushInterval;
         _trafficType = trafficType;
+        _synchronizeInBackground = synchronizeInBackground;
+        _backgroundSyncPeriod = backgroundSyncPeriod;
+        _backgroundSyncWhenBatteryNotLow = backgroundSyncWhenBatteryNotLow;
+        _backgroundSyncWhenWifiOnly = backgroundSyncWhenWifiOnly;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -168,6 +213,10 @@ public class SplitClientConfig {
         return _impressionsChunkSize;
     }
 
+    public int impressionsPerPush() {
+        return _impressionsPerPush;
+    }
+
     public int metricsRefreshRate() {
         return _metricsRefreshRate;
     }
@@ -233,7 +282,7 @@ public class SplitClientConfig {
      */
 
     int eventsMaxSentAttempts() {
-        return _eventsMaxSentAttemps;
+        return EVENTS_MAX_SENT_ATTEMPS;
     }
 
     /**
@@ -242,7 +291,7 @@ public class SplitClientConfig {
      * @return Maximum events queue size in bytes.
      */
     int maxQueueSizeInBytes() {
-        return _maxQueueSizeInBytes;
+        return MAX_QUEUE_SIZE_IN_BYTES;
     }
 
 
@@ -252,7 +301,7 @@ public class SplitClientConfig {
      * @return Regex pattern string
      */
     String trackEventNamePattern() {
-        return _trackEventNamePattern;
+        return TRACK_EVENT_NAME_PATTERN;
     }
 
 
@@ -262,7 +311,7 @@ public class SplitClientConfig {
      * @return Maximum char length
      */
     int maximumKeyLength() {
-        return _maximumKeyLength;
+        return MAXIMUM_KEY_LENGTH;
     }
 
     /**
@@ -273,11 +322,27 @@ public class SplitClientConfig {
      * @return Default data folder
      */
     String defaultDataFolder() {
-        return _defaultDataFolder;
+        return DEFAULT_DATA_FOLDER;
     }
 
     public String ip() {
         return _ip;
+    }
+
+    public boolean synchronizeInBackground() {
+        return _synchronizeInBackground;
+    }
+
+    public long backgroundSyncPeriod() {
+        return _backgroundSyncPeriod;
+    }
+
+    public boolean backgroundSyncWhenBatteryNotLow() {
+        return _backgroundSyncWhenBatteryNotLow;
+    }
+
+    public boolean backgroundSyncWhenBatteryWifiOnly() {
+        return _backgroundSyncWhenWifiOnly;
     }
 
     public static final class Builder {
@@ -287,29 +352,34 @@ public class SplitClientConfig {
         private String _eventsEndpoint = "https://events.split.io/api";
         private boolean _eventsEndpointSet = false;
 
-        private int _featuresRefreshRate = 3600;
-        private int _segmentsRefreshRate = 1800;
-        private int _impressionsRefreshRate = 1800;
-        private int _impressionsQueueSize = 30000;
-        private int _connectionTimeout = 15000;
-        private int _readTimeout = 15000;
-        private int _numThreadsForSegmentFetch = 2;
+        private int _featuresRefreshRate = DEFAULT_FEATURES_REFRESH_RATE_SECS;
+        private int _segmentsRefreshRate = DEFAULT_SEGMENTS_REFRESH_RATE_SECS;
+        private int _impressionsRefreshRate = DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS;
+        private int _impressionsQueueSize = DEFAULT_IMPRESSIONS_QUEUE_SIZE;
+        private int _impressionsPerPush = DEFAULT_IMPRESSIONS_PER_PUSH;
+        private int _connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
+        private int _readTimeout = DEFAULT_READ_TIMEOUT_SECS;
+        private int _numThreadsForSegmentFetch = DEFAULT_NUM_THREAD_FOR_SEGMENT_FETCH;
         private boolean _debugEnabled = false;
-        private int _ready = -1; // -1 means no blocking
-        private int _metricsRefreshRate = 1800;
+        private int _ready = DEFAULT_READY; // -1 means no blocking
+        private int _metricsRefreshRate = DEFAULT_METRICS_REFRESH_RATE_SECS;
         private boolean _labelsEnabled = true;
         private ImpressionListener _impressionListener;
-        private int _waitBeforeShutdown = 5000;
-        private long _impressionsChunkSize = 2 * 1024; //2KB default size
+        private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
+        private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
 
         //.track configuration
-        private int _eventsQueueSize = 10000;
-        private long _eventFlushInterval = 1800;
-        private int _eventsPerPush = 2000;
+        private int _eventsQueueSize = DEFAULT_EVENTS_QUEUE_SIZE;
+        private long _eventFlushInterval = DEFAULT_EVENTS_FLUSH_INTERVAL;
+        private int _eventsPerPush = DEFAULT_EVENTS_PER_PUSH;
         private String _trafficType = null;
 
         private String _hostname = "unknown";
         private String _ip = "unknown";
+        private boolean _synchronizeInBackground = false;
+        private long _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
+        private boolean _backgroundSyncWhenBatteryNotLow = true;
+        private boolean _backgroundSyncWhenWifiOnly = false;
 
         public Builder() {
         }
@@ -436,6 +506,17 @@ public class SplitClientConfig {
          */
         public Builder impressionsQueueSize(int impressionsQueueSize) {
             _impressionsQueueSize = impressionsQueueSize;
+            return this;
+        }
+
+        /**
+         * Max size of the batch to push impressions
+         *
+         * @param impressionsPerPush
+         * @return this builder
+         */
+        public Builder impressionsPerPush(int impressionsPerPush) {
+            _impressionsPerPush = impressionsPerPush;
             return this;
         }
 
@@ -591,37 +672,85 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * When set to true app sync is done
+         * using android resources event while app is in background.
+         * Otherwise synchronization only occurs while app
+         * is in foreground
+         *
+         * @return this builder
+         */
+        public Builder sychronizeInBackground(boolean synchronizeInBackground) {
+            _synchronizeInBackground = synchronizeInBackground;
+            return this;
+        }
+
+        /**
+         * Period in minutes to execute background synchronization
+         * Default values is 15 minutes and is the minimum allowed.
+         * Is a lower value is especified default value will be used.
+         * @return this builder
+         */
+        public Builder sychronizeInBackgroundPeriod(long backgroundSyncPeriod) {
+            _backgroundSyncPeriod = backgroundSyncPeriod;
+            return this;
+        }
+
+        /**
+         * Synchronize in background only if battery has no low charge level
+         * Default value is set to true
+         *
+         * @return this builder
+         */
+        public Builder backgroundSyncWhenBatteryNotLow(boolean backgroundSyncWhenBatteryNotLow) {
+            _backgroundSyncWhenBatteryNotLow = backgroundSyncWhenBatteryNotLow;
+            return this;
+        }
+
+        /**
+         * Synchronize in background only when a connection is wifi (unmetered)
+         * When value is set to false, synchronization will occur whenever connection is available.
+         * Default value is set to false
+         *
+         * @return this builder
+         */
+        public Builder backgroundSyncWhenWifiOnly(boolean backgroundSyncWhenWifiOnly) {
+            _backgroundSyncWhenWifiOnly = backgroundSyncWhenWifiOnly;
+            return this;
+        }
+
         public SplitClientConfig build() {
 
-            if (_featuresRefreshRate < 30) {
+
+            if (_featuresRefreshRate < MIN_FEATURES_REFRESH_RATE) {
                 throw new IllegalArgumentException("featuresRefreshRate must be >= 30: " + _featuresRefreshRate);
             }
 
-            if (_segmentsRefreshRate < 30) {
+            if (_segmentsRefreshRate < MIN_MYSEGMENTS_REFRESH_RATE) {
                 throw new IllegalArgumentException("segmentsRefreshRate must be >= 30: " + _segmentsRefreshRate);
             }
 
-            if (_impressionsRefreshRate < 30) {
+            if (_impressionsRefreshRate < MIN_IMPRESSIONS_REFRESH_RATE) {
                 throw new IllegalArgumentException("impressionsRefreshRate must be >= 30: " + _impressionsRefreshRate);
             }
 
-            if (_metricsRefreshRate < 30) {
+            if (_metricsRefreshRate < MIN_METRICS_REFRESH_RATE) {
                 throw new IllegalArgumentException("metricsRefreshRate must be >= 30: " + _metricsRefreshRate);
             }
 
-            if (_impressionsQueueSize <= 0) {
+            if (_impressionsQueueSize <= MIN_IMPRESSIONS_QUEUE_SIZE) {
                 throw new IllegalArgumentException("impressionsQueueSize must be > 0: " + _impressionsQueueSize);
             }
 
-            if (_impressionsChunkSize <= 0) {
+            if (_impressionsChunkSize <= MIN_IMPRESSIONS_CHUNK_SIZE) {
                 throw new IllegalArgumentException("impressionsChunkSize must be > 0: " + _impressionsChunkSize);
             }
 
-            if (_connectionTimeout <= 0) {
+            if (_connectionTimeout <= MIN_CONNECTION_TIMEOUT) {
                 throw new IllegalArgumentException("connectionTimeOutInMs must be > 0: " + _connectionTimeout);
             }
 
-            if (_readTimeout <= 0) {
+            if (_readTimeout <= MIN_READ_TIMEOUT) {
                 throw new IllegalArgumentException("readTimeout must be > 0: " + _readTimeout);
             }
 
@@ -641,6 +770,12 @@ public class SplitClientConfig {
                 throw new IllegalArgumentException("Number of threads for fetching segments MUST be greater than zero");
             }
 
+            if (_backgroundSyncPeriod < DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES) {
+                Logger.w("Background sync period is lower than allowed. " +
+                        "Setting to default value.");
+                _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
+            }
+
             return new SplitClientConfig(
                     _endpoint,
                     _eventsEndpoint,
@@ -648,7 +783,9 @@ public class SplitClientConfig {
                     _segmentsRefreshRate,
                     _impressionsRefreshRate,
                     _impressionsQueueSize,
-                    _impressionsChunkSize, _metricsRefreshRate,
+                    _impressionsChunkSize,
+                    _impressionsPerPush,
+                    _metricsRefreshRate,
                     _connectionTimeout,
                     _readTimeout,
                     _numThreadsForSegmentFetch,
@@ -662,7 +799,11 @@ public class SplitClientConfig {
                     _eventsQueueSize,
                     _eventsPerPush,
                     _eventFlushInterval,
-                    _trafficType);
+                    _trafficType,
+                    _synchronizeInBackground,
+                    _backgroundSyncPeriod,
+                    _backgroundSyncWhenBatteryNotLow,
+                    _backgroundSyncWhenWifiOnly);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
