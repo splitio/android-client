@@ -227,7 +227,6 @@ public class ImpressionsStorageManager {
     }
 
     private void createImpressionsFromChunkFiles() {
-        List<Map<String, List<KeyImpression>>> impressions = new ArrayList<>();
         List<String> allFileNames = mFileStorageManager.getAllIds(IMPRESSIONS_CHUNK_FILE_PREFIX);
         for (String fileName : allFileNames) {
             String fileContent = mFileStorageHelper.checkMemoryAndReadFile(fileName, mFileStorageManager);

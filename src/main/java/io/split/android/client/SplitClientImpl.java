@@ -181,10 +181,6 @@ public final class SplitClientImpl implements SplitClient {
             return false;
         }
 
-        if(!isSdkReady) {
-            mValidationLogger.w("the SDK is not ready, results may be incorrect. Make sure to wait for SDK readiness before using this method", validationTag);
-        }
-
         Event event = new Event();
         event.eventTypeId = eventType;
         event.trafficTypeName = trafficType;

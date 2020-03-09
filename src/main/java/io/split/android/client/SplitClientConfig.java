@@ -74,8 +74,8 @@ public class SplitClientConfig {
     // Background sync
     private boolean _synchronizeInBackground;
     private long _backgroundSyncPeriod;
-    private boolean _backgroundSyncWhenBatteryNotLow = true;
-    private boolean _backgroundSyncWhenWifiOnly = false;
+    private boolean _backgroundSyncWhenBatteryNotLow ;
+    private boolean _backgroundSyncWhenWifiOnly;
 
     //.Track configuration
     private final int _eventsQueueSize;

@@ -17,7 +17,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final int SHUTDOWN_WAIT_TIME = 60;
-    private static final int CORE_POOL_SIZE = 1;
+    private static final int MIN_THREADPOOL_SIZE_WHEN_IDLE = 1;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
 
@@ -25,7 +25,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
-        mScheduler = new PausableScheduledThreadPoolExecutorImpl(CORE_POOL_SIZE, threadFactoryBuilder.build());
+        mScheduler = new PausableScheduledThreadPoolExecutorImpl(MIN_THREADPOOL_SIZE_WHEN_IDLE, threadFactoryBuilder.build());
     }
 
     @Override
