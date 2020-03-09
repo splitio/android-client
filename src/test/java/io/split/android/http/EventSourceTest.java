@@ -37,7 +37,12 @@ public class EventSourceTest {
         URI uri = new URI("https://streamdata.motwin.net/https://stockmarket.streamdata.io/prices?X-Sd-Token=MzNkZTYwN2ItYTZlMy00ODMzLWFiZWMtZTkxNTM0NjE4MWE1");
 
         mEventSource = new EventSource(uri, new HttpClientImpl(), new EventSourceStreamParser(), new Listener());
-        Thread.sleep(999999);
+        Thread.sleep(10000);
+
+        mEventSource.disconnect();
+
+        mEventSource = new EventSource(uri, new HttpClientImpl(), new EventSourceStreamParser(), new Listener());
+        Thread.sleep(10000);
     }
 
     private void setupServer() throws IOException {

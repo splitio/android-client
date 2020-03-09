@@ -6,9 +6,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URI;
-import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.split.android.client.network.HttpClient;
@@ -21,12 +24,15 @@ import static androidx.core.util.Preconditions.checkNotNull;
 
 public class EventSource {
 
+    private final static int POOL_SIZE = 1;
     private final URI mTargetUrl;
     private AtomicInteger mReadyState;
     private final HttpClient mHttpClient;
     private HttpStreamRequest mHttpStreamRequest = null;
     private EventSourceStreamParser mEventSourceStreamParser;
     private WeakReference<EventSourceListener> mListener;
+    private final ExecutorService mExecutor;
+
 
     final static int CONNECTING = 0;
     final static int CLOSED = 2;
@@ -42,6 +48,7 @@ public class EventSource {
 
         mReadyState = new AtomicInteger(CLOSED);
         mListener = new WeakReference<>(checkNotNull(listener));
+        mExecutor = Executors.newFixedThreadPool(POOL_SIZE);
         connect();
     }
 
@@ -57,33 +64,31 @@ public class EventSource {
         mHttpStreamRequest.close();
     }
 
-    private void connect() {
-        mHttpStreamRequest = mHttpClient.streamRequest(mTargetUrl);
-        try {
-            HttpStreamResponse response = mHttpStreamRequest.execute();
-            if (response.isSuccess()) {
-                BufferedReader bufferedReader = response.getBufferedReader();
-                String inputLine;
-                Map<String, String> values = new HashMap<>();
-                while ((inputLine = bufferedReader.readLine()) != null) {
-                    // parseLineAndAppendValue returns true if an event has to be dispatched
-                    if (mEventSourceStreamParser.parseLineAndAppendValue(inputLine, values)) {
-                        triggerOnMessage(values);
-                        values = new HashMap<>();
-                    }
+    public void close() {
+        mHttpStreamRequest.close();
+        shutdownAndAwaitTermination();
+    }
 
-                }
-                bufferedReader.close();
+    private void shutdownAndAwaitTermination() {
+        mExecutor.shutdown(); // Disable new tasks from being submitted
+        try {
+            // Wait a while for existing tasks to terminate
+            if (!mExecutor.awaitTermination(60, TimeUnit.SECONDS)) {
+                mExecutor.shutdownNow(); // Cancel currently executing tasks
+                // Wait a while for tasks to respond to being cancelled
+                if (!mExecutor.awaitTermination(60, TimeUnit.SECONDS))
+                    System.err.println("Pool did not terminate");
             }
-        } catch (HttpException e) {
-            Logger.e("An error has ocurred while trying to connecto to stream " +
-                    mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-            triggerOnError();
-        } catch (IOException e) {
-            Logger.e("An error has ocurred while parsing stream from " +
-                    mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-            triggerOnError();
+        } catch (InterruptedException ie) {
+            // (Re-)Cancel if current thread also interrupted
+            mExecutor.shutdownNow();
+            // Preserve interrupt status
+            Thread.currentThread().interrupt();
         }
+    }
+
+    private void connect() {
+        mExecutor.execute(new PersistentConnectionExecutor());
     }
 
     private void triggerOnMessage(Map<String, String> messageValues) {
@@ -107,5 +112,38 @@ public class EventSource {
         }
     }
 
-
+    private class PersistentConnectionExecutor implements Runnable {
+        @Override
+        public void run() {
+            mHttpStreamRequest = mHttpClient.streamRequest(mTargetUrl);
+            try {
+                HttpStreamResponse response = mHttpStreamRequest.execute();
+                if (response.isSuccess()) {
+                    BufferedReader bufferedReader = response.getBufferedReader();
+                    String inputLine;
+                    Map<String, String> values = new HashMap<>();
+                    while ((inputLine = bufferedReader.readLine()) != null) {
+                        // parseLineAndAppendValue returns true if an event has to be dispatched
+                        if (mEventSourceStreamParser.parseLineAndAppendValue(inputLine, values)) {
+                            triggerOnMessage(values);
+                            values = new HashMap<>();
+                        }
+                    }
+                    bufferedReader.close();
+                }
+            } catch (HttpException e) {
+                Logger.e("An error has ocurred while trying to connecting to stream " +
+                        mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+                triggerOnError();
+            } catch (IOException e) {
+                Logger.e("An error has ocurred while parsing stream from " +
+                        mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+                triggerOnError();
+            } catch (Exception e) {
+                Logger.e("An unexpected error has ocurred while receiving stream events from " +
+                        mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+                triggerOnError();
+            }
+        }
+    }
 }
