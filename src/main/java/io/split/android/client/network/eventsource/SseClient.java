@@ -8,7 +8,6 @@ import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -22,29 +21,28 @@ import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 
-public class EventSource {
+public class SseClient {
 
     private final static int POOL_SIZE = 1;
     private final URI mTargetUrl;
     private AtomicInteger mReadyState;
     private final HttpClient mHttpClient;
     private HttpStreamRequest mHttpStreamRequest = null;
-    private EventSourceStreamParser mEventSourceStreamParser;
+    private NotificationParser mNotificationParser;
     private WeakReference<EventSourceListener> mListener;
     private final ExecutorService mExecutor;
-
 
     final static int CONNECTING = 0;
     final static int CLOSED = 2;
     final static int OPEN = 1;
 
-    public EventSource(@NonNull URI uri,
-                       @NonNull HttpClient httpClient,
-                       @NonNull EventSourceStreamParser eventSourceStreamParser,
-                       @NonNull EventSourceListener listener) {
+    public SseClient(@NonNull URI uri,
+                     @NonNull HttpClient httpClient,
+                     @NonNull NotificationParser notificationParser,
+                     @NonNull EventSourceListener listener) {
         mTargetUrl = checkNotNull(uri);
         mHttpClient = checkNotNull(httpClient);
-        mEventSourceStreamParser = checkNotNull(eventSourceStreamParser);
+        mNotificationParser = checkNotNull(notificationParser);
 
         mReadyState = new AtomicInteger(CLOSED);
         mListener = new WeakReference<>(checkNotNull(listener));
@@ -124,7 +122,7 @@ public class EventSource {
                     Map<String, String> values = new HashMap<>();
                     while ((inputLine = bufferedReader.readLine()) != null) {
                         // parseLineAndAppendValue returns true if an event has to be dispatched
-                        if (mEventSourceStreamParser.parseLineAndAppendValue(inputLine, values)) {
+                        if (mNotificationParser.parseLineAndAppendValue(inputLine, values)) {
                             triggerOnMessage(values);
                             values = new HashMap<>();
                         }

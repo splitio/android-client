@@ -7,15 +7,15 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.network.eventsource.EventSourceStreamParser;
+import io.split.android.client.network.eventsource.NotificationParser;
 
-public class EventSourceStreamParserTest {
-    EventSourceStreamParser mParser;
+public class NotificationParserTest {
+    NotificationParser mParser;
     Map<String, String> mValues;
 
     @Before
     public void setup() {
-        mParser = new EventSourceStreamParser();
+        mParser = new NotificationParser();
         mValues = new HashMap<>();
     }
 

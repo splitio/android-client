@@ -7,24 +7,23 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.network.HttpClientImpl;
-import io.split.android.client.network.eventsource.EventSource;
+import io.split.android.client.network.eventsource.SseClient;
 import io.split.android.client.network.eventsource.EventSourceListener;
-import io.split.android.client.network.eventsource.EventSourceStreamParser;
+import io.split.android.client.network.eventsource.NotificationParser;
 import io.split.android.helpers.FileHelper;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 
-public class EventSourceTest {
+public class SseClientTest {
     private MockWebServer mWebServer;
     final private static String TEST_URL = "/testSseUrl/";
-    EventSource mEventSource;
-    EventSourceStreamParser mEventSourceStreamParser;
+    SseClient mSseClient;
+    NotificationParser mNotificationParser;
 
     @Before
     public void setup() throws IOException {
@@ -36,12 +35,12 @@ public class EventSourceTest {
         //URI uri = mWebServer.url(TEST_URL).uri();
         URI uri = new URI("https://streamdata.motwin.net/https://stockmarket.streamdata.io/prices?X-Sd-Token=MzNkZTYwN2ItYTZlMy00ODMzLWFiZWMtZTkxNTM0NjE4MWE1");
 
-        mEventSource = new EventSource(uri, new HttpClientImpl(), new EventSourceStreamParser(), new Listener());
+        mSseClient = new SseClient(uri, new HttpClientImpl(), new NotificationParser(), new Listener());
         Thread.sleep(10000);
 
-        mEventSource.disconnect();
+        mSseClient.disconnect();
 
-        mEventSource = new EventSource(uri, new HttpClientImpl(), new EventSourceStreamParser(), new Listener());
+        mSseClient = new SseClient(uri, new HttpClientImpl(), new NotificationParser(), new Listener());
         Thread.sleep(10000);
     }
 
@@ -69,17 +68,17 @@ public class EventSourceTest {
     private class Listener implements EventSourceListener {
         @Override
         public void onOpen() {
-            System.out.println("EventSourceTest: OnOPEN!!!!");
+            System.out.println("SseClientTest: OnOPEN!!!!");
         }
 
         @Override
         public void onMessage(Map<String, String> values) {
-            System.out.println("EventSourceTest: OnMsg!!!!");
+            System.out.println("SseClientTest: OnMsg!!!!");
         }
 
         @Override
         public void onError() {
-            System.out.println("EventSourceTest: OnError!!!!");
+            System.out.println("SseClientTest: OnError!!!!");
         }
     }
 
