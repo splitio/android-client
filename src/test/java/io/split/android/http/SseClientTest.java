@@ -10,9 +10,9 @@ import java.net.URISyntaxException;
 import java.util.Map;
 
 import io.split.android.client.network.HttpClientImpl;
-import io.split.android.client.network.sseclient.SseClient;
-import io.split.android.client.network.sseclient.EventSourceListener;
-import io.split.android.client.network.sseclient.NotificationParser;
+import io.split.android.client.service.sseclient.SseClient;
+import io.split.android.client.service.sseclient.EventSourceListener;
+import io.split.android.client.service.sseclient.NotificationParser;
 import io.split.android.helpers.FileHelper;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;

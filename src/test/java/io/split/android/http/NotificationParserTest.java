@@ -7,7 +7,7 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.network.sseclient.NotificationParser;
+import io.split.android.client.service.sseclient.NotificationParser;
 
 public class NotificationParserTest {
     NotificationParser mParser;

@@ -1,4 +1,4 @@
-package io.split.android.client.network.sseclient;
+package io.split.android.client.service.sseclient;
 
 import androidx.annotation.VisibleForTesting;
 
