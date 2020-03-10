@@ -1,4 +1,4 @@
-package io.split.android.client.network.eventsource;
+package io.split.android.client.network.sseclient;
 
 public class PushMessage {
     private String messageId;
