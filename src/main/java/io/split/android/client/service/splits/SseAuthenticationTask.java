@@ -34,18 +34,23 @@ public class SseAuthenticationTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
+        SseAuthenticationResponse authResponse;
         try {
             Map<String, Object> params = new HashMap<>();
             params.put(API_KEY_PARAM, mApiKey);
             params.put(USER_KEY_PARAM, mUserKey);
-            SseAuthenticationResponse authResponse = mAuthFetcher.execute(params);
+            authResponse = mAuthFetcher.execute(params);
 
         } catch (Exception e) {
             logError("Unexpected " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK);
         }
         Logger.d("SSE Authentication done");
-        return SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK);
+        Map<String, Object> data = new HashMap<>();
+        data.put(SplitTaskExecutionInfo.SSE_AUTH_TOKEN, authResponse.getToken());
+        data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, authResponse.isValidApiKey());
+        data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, authResponse.isStreamingEnabled());
+        return SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK, data);
     }
 
     private void logError(String message) {

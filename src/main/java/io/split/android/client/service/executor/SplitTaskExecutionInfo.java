@@ -2,6 +2,8 @@ package io.split.android.client.service.executor;
 
 import androidx.annotation.NonNull;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,6 +13,9 @@ public class SplitTaskExecutionInfo {
 
     public static final String NON_SENT_RECORDS = "NON_SENT_RECORDS";
     public static final String NON_SENT_BYTES = "NON_SENT_BYTES";
+    public static final String SSE_AUTH_TOKEN = "SSE_AUTH_TOKEN";
+    public static final String IS_STREAMING_ENABLED = "IS_STREAMING_ENABLED";
+    public static final String IS_VALID_API_KEY = "IS_VALID_API_KEY";
 
     final private SplitTaskType taskType;
     final private SplitTaskExecutionStatus status;
@@ -21,6 +26,12 @@ public class SplitTaskExecutionInfo {
     public static SplitTaskExecutionInfo success(SplitTaskType taskType) {
         return new SplitTaskExecutionInfo(
                 taskType, SplitTaskExecutionStatus.SUCCESS, new HashMap<>());
+    }
+
+    public static SplitTaskExecutionInfo success(SplitTaskType taskType,
+                                                 Map<String, Object> data) {
+        return new SplitTaskExecutionInfo(
+                taskType, SplitTaskExecutionStatus.SUCCESS, data);
     }
 
     public static SplitTaskExecutionInfo error(SplitTaskType taskType) {
@@ -35,7 +46,7 @@ public class SplitTaskExecutionInfo {
     }
 
     private SplitTaskExecutionInfo(SplitTaskType taskType,
-                                  @NonNull SplitTaskExecutionStatus status,
+                                   @NonNull SplitTaskExecutionStatus status,
                                    @NonNull Map<String, Object> data) {
         this.taskType = taskType;
         this.status = checkNotNull(status);
@@ -50,13 +61,23 @@ public class SplitTaskExecutionInfo {
         return taskType;
     }
 
-    public int getIntegerValue(String paramName) {
+    public @Nullable Integer getIntegerValue(String paramName) {
         Object value = data.get(paramName);
-        return value == null ? 0 : Integer.parseInt(value.toString());
+        return value != null ? Integer.parseInt(value.toString()) : null;
     }
 
-    public long getLongValue(String paramName) {
+    public @Nullable Long getLongValue(String paramName) {
         Object value = data.get(paramName);
-        return value == null ? 0 : Long.parseLong(value.toString());
+        return value != null ? Long.parseLong(value.toString()) : null;
+    }
+
+    public @Nullable String getStringValue(String paramName) {
+        Object value = data.get(paramName);
+        return value != null ? value.toString() : null;
+    }
+
+    public @Nullable Boolean getBoolValue(String paramName) {
+        Object value = data.get(paramName);
+        return value != null ? Boolean.parseBoolean(value.toString()) : null;
     }
 }

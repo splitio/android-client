@@ -65,8 +65,8 @@ public class EventsRecorderTaskTest {
 
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
-        Assert.assertEquals(0, result.getNonSentRecords());
-        Assert.assertEquals(0, result.getNonSentBytes());
+        Assert.assertNull(result.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS));
+        Assert.assertNull(result.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES));
     }
 
     @Test
@@ -90,8 +90,8 @@ public class EventsRecorderTaskTest {
 
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
-        Assert.assertEquals(100, result.getNonSentRecords());
-        Assert.assertEquals(1000, result.getNonSentBytes());
+        Assert.assertEquals(100, result.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS).intValue());
+        Assert.assertEquals(1000, result.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES).longValue());
     }
 
     @Test
@@ -113,8 +113,8 @@ public class EventsRecorderTaskTest {
 
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
-        Assert.assertEquals(0, result.getNonSentRecords());
-        Assert.assertEquals(0, result.getNonSentBytes());
+        Assert.assertNull(result.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS));
+        Assert.assertNull(result.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES));
     }
 
     @After
