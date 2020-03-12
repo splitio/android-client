@@ -6,6 +6,7 @@ import java.util.Map;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpRequest;
+import io.split.android.client.network.HttpStreamRequest;
 
 public class HttpClientStub implements HttpClient {
     @Override
@@ -24,6 +25,11 @@ public class HttpClientStub implements HttpClient {
     @Override
     public HttpRequest request(URI uri, HttpMethod httpMethod, String body) {
         return new HttpRequestStub();
+    }
+
+    @Override
+    public HttpStreamRequest streamRequest(URI uri) {
+        return null;
     }
 
     @Override
