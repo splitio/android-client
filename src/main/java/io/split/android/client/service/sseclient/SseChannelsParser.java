@@ -73,6 +73,8 @@ public class SseChannelsParser {
             decoded = new String(bytes, Charset.defaultCharset());
         } catch (IllegalArgumentException e) {
             Logger.e("Received bytes didn't correspond to a valid Base64 encoded string." + e.getLocalizedMessage());
+        } catch (Exception e) {
+            Logger.e("An unknown error has ocurred " + e.getLocalizedMessage());
         }
         return decoded;
     }

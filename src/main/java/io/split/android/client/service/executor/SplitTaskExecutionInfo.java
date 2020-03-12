@@ -80,4 +80,8 @@ public class SplitTaskExecutionInfo {
         Object value = data.get(paramName);
         return value != null ? Boolean.parseBoolean(value.toString()) : null;
     }
+
+    public @Nullable Object getObjectValue(String paramName) {
+        return data.get(paramName);
+    }
 }
