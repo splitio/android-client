@@ -4,7 +4,7 @@ public class SyncManagerFeedbackChannelImpl implements SyncManagerFeedbackChanne
 
     @Override
     public void pushMessage(SyncManagerFeedbackMessage message) {
-        
+
     }
 
     @Override
