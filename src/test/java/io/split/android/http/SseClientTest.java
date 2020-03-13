@@ -4,11 +4,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.sseclient.SseClient;
 import io.split.android.client.network.sseclient.EventSourceListener;
@@ -25,22 +31,31 @@ public class SseClientTest {
     SseClient mSseClient;
     NotificationParser mNotificationParser;
 
-    final static String JWT = "eyJhbGciOiJIUzI1NiIsImtpZCI6ImtleUlkIiwidHlwIjoiSldUIn0.eyJvcmdJZCI6ImY3ZjAzNTIwLTVkZjctMTFlOC04NDc2LTBlYzU0NzFhM2NlYyIsImVudklkIjoiZjdmNjI4OTAtNWRmNy0xMWU4LTg0NzYtMGVjNTQ3MWEzY2VjIiwidXNlcktleXMiOlsiamF2aSJdLCJ4LWFibHktY2FwYWJpbGl0eSI6IntcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X01UY3dOVEkyTVRNME1nPT1fbXlTZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X3NwbGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xcIjpbXCJzdWJzY3JpYmVcIl19IiwieC1hYmx5LWNsaWVudElkIjoiY2xpZW50SWQiLCJleHAiOjE1ODM5NDc4MTIsImlhdCI6MTU4Mzk0NDIxMn0.bSkxugrXKLaJJkvlND1QEd7vrwqWiPjn77pkrJOl4t8";
+    final static String JWT = "";
 
     @Before
     public void setup() throws IOException {
     }
 
     @Test
-    public void test() throws MalformedURLException, URISyntaxException, InterruptedException {
+    public void test() throws MalformedURLException, URISyntaxException, InterruptedException, UnsupportedEncodingException {
         // ************ WIP ******************
         //URI uri = mWebServer.url(TEST_URL).uri();
         //URI uri = new URI("https://streamdata.motwin.net/https://stockmarket.streamdata.io/prices?X-Sd-Token=MzNkZTYwN2ItYTZlMy00ODMzLWFiZWMtZTkxNTM0NjE4MWE1");
 
-        URI uri = new URI("https://realtime.ably.io/event-stream?myChannel=MzM5Njc0ODcyNg%3D%3D_MTExMzgwNjgx_MTcwNTI2MTM0Mg%3D%3D_mySegments=&v=1.1&token=" + JWT);
+        List<String> channelList = new ArrayList<>();
 
-        mSseClient = new SseClient(uri, new HttpClientImpl(), new NotificationParser(), new Listener());
-        Thread.sleep(10000);
+
+        String channels = String.join(",", channelList);
+
+        URI uri = new URI("https://realtime.ably.io/sse?v=1.1&channel=" + channels + "&accessToken=" + JWT);
+
+        HttpClient httpClient = new HttpClientImpl();
+        
+        httpClient.setHeader("Content-Type","text/event-stream");
+
+        mSseClient = new SseClient(uri, httpClient, new NotificationParser(), new Listener());
+        Thread.sleep(100000);
 
         mSseClient.disconnect();
 
