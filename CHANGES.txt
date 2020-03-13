@@ -1,4 +1,4 @@
-2.5.0: (Mar 6, 2020)
+2.5.0: (Mar 13, 2020)
 - Replaced disk files by Room to handle cache data
 - Improved sync architecture
 - Improved thread management
