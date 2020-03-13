@@ -1,3 +1,5 @@
+2.4.5: (Oct 8, 2019)
+- Fixed concurrency issue when parsing events from disk
 2.4.4: (Sep 26, 2019)
 - Fixed issue when load events from disk
 
