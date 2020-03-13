@@ -25,6 +25,8 @@ public class SseClientTest {
     SseClient mSseClient;
     NotificationParser mNotificationParser;
 
+    final static String JWT = "eyJhbGciOiJIUzI1NiIsImtpZCI6ImtleUlkIiwidHlwIjoiSldUIn0.eyJvcmdJZCI6ImY3ZjAzNTIwLTVkZjctMTFlOC04NDc2LTBlYzU0NzFhM2NlYyIsImVudklkIjoiZjdmNjI4OTAtNWRmNy0xMWU4LTg0NzYtMGVjNTQ3MWEzY2VjIiwidXNlcktleXMiOlsiamF2aSJdLCJ4LWFibHktY2FwYWJpbGl0eSI6IntcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X01UY3dOVEkyTVRNME1nPT1fbXlTZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X3NwbGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xcIjpbXCJzdWJzY3JpYmVcIl19IiwieC1hYmx5LWNsaWVudElkIjoiY2xpZW50SWQiLCJleHAiOjE1ODM5NDc4MTIsImlhdCI6MTU4Mzk0NDIxMn0.bSkxugrXKLaJJkvlND1QEd7vrwqWiPjn77pkrJOl4t8";
+
     @Before
     public void setup() throws IOException {
     }
@@ -33,7 +35,9 @@ public class SseClientTest {
     public void test() throws MalformedURLException, URISyntaxException, InterruptedException {
         // ************ WIP ******************
         //URI uri = mWebServer.url(TEST_URL).uri();
-        URI uri = new URI("https://streamdata.motwin.net/https://stockmarket.streamdata.io/prices?X-Sd-Token=MzNkZTYwN2ItYTZlMy00ODMzLWFiZWMtZTkxNTM0NjE4MWE1");
+        //URI uri = new URI("https://streamdata.motwin.net/https://stockmarket.streamdata.io/prices?X-Sd-Token=MzNkZTYwN2ItYTZlMy00ODMzLWFiZWMtZTkxNTM0NjE4MWE1");
+
+        URI uri = new URI("https://realtime.ably.io/event-stream?myChannel=MzM5Njc0ODcyNg%3D%3D_MTExMzgwNjgx_MTcwNTI2MTM0Mg%3D%3D_mySegments=&v=1.1&token=" + JWT);
 
         mSseClient = new SseClient(uri, new HttpClientImpl(), new NotificationParser(), new Listener());
         Thread.sleep(10000);
