@@ -8,6 +8,7 @@ import io.split.android.client.dtos.Split;
  * Created by guillermo on 11/23/17.
  */
 
+@Deprecated
 public interface ISplitCache {
     /**
      *

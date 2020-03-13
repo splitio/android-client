@@ -1,17 +1,14 @@
-package Localhost;
+package localhost;
 
-import android.content.Context;
-
-import junit.framework.Assert;
-
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Map;
 
 import androidx.test.platform.app.InstrumentationRegistry;
-import io.split.android.client.Localhost.LocalhostFileParser;
-import io.split.android.client.Localhost.LocalhostPropertiesFileParser;
+import io.split.android.client.localhost.LocalhostFileParser;
+import io.split.android.client.localhost.LocalhostPropertiesFileParser;
 import io.split.android.client.dtos.Split;
 
 public class LocalhostPropertiesParserTest {

@@ -4,6 +4,7 @@ import java.util.concurrent.CountDownLatch;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.events.SplitEventTask;
+import io.split.android.client.utils.Logger;
 
 public class SplitEventTaskHelper extends SplitEventTask {
 
@@ -20,6 +21,7 @@ public class SplitEventTaskHelper extends SplitEventTask {
     @Override
     public void onPostExecution(SplitClient client) {
         isOnPostExecutionCalled = true;
+        Logger.d("TASK ON POST " + isOnPostExecutionCalled);
         if(mlatch != null) {
             mlatch.countDown();
         }
@@ -29,4 +31,4 @@ public class SplitEventTaskHelper extends SplitEventTask {
     public void onPostExecutionView(SplitClient client) {
 
     }
-};
+}

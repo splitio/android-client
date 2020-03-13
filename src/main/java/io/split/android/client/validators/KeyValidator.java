@@ -1,7 +1,5 @@
 package io.split.android.client.validators;
 
-import io.split.android.client.api.Key;
-
 /**
  * Interface to implement by Key validators
  */
@@ -13,5 +11,5 @@ public interface KeyValidator {
      * @param bucketingKey: Bucketing key
      * @return true when the key is valid, false when it is not
      */
-    public ValidationErrorInfo validate(String matchingKey, String bucketingKey);
+    ValidationErrorInfo validate(String matchingKey, String bucketingKey);
 }

@@ -2,13 +2,13 @@ package io.split.android.client.cache;
 
 import java.util.List;
 
-import io.split.android.client.api.Key;
 import io.split.android.client.dtos.MySegment;
 
 /**
  * Created by guillermo on 11/23/17.
  */
 
+@Deprecated
 public interface IMySegmentsCache {
 
     /**
@@ -34,4 +34,5 @@ public interface IMySegmentsCache {
      * Saves in memory cash to disk
      */
      void saveToDisk();
+
 }

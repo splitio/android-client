@@ -10,7 +10,7 @@ public final class EvaluationResult {
         this(treatment, label, null);
     }
 
-    public EvaluationResult(String treatment, String label, Long changeNumber) {
+    private EvaluationResult(String treatment, String label, Long changeNumber) {
         this(treatment, label, changeNumber, null);
     }
 

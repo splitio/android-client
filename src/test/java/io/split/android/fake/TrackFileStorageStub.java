@@ -1,9 +1,8 @@
 package io.split.android.fake;
 
-import java.io.IOException;
 import java.util.Map;
 
-import io.split.android.client.storage.MemoryStorage;
+import io.split.android.client.storage.legacy.MemoryStorage;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
 

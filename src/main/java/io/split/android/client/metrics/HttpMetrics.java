@@ -30,11 +30,9 @@ public class HttpMetrics implements Metrics, DTOMetrics {
     }
 
 
-    public HttpMetrics(HttpClient client, URI uri) {
-        _client = client;
-        _target = uri;
-        checkNotNull(_client);
-        checkNotNull(_target);
+    private HttpMetrics(HttpClient client, URI uri) {
+        _client = checkNotNull(client);
+        _target = checkNotNull(uri);
     }
 
 

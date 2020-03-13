@@ -1,53 +1,58 @@
 package io.split.android.engine.experiments;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Type;
-import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.utils.Json;
-import io.split.android.client.validators.EventValidatorImpl;
+import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
 import io.split.android.fake.SplitFetcherStub;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 public class EvaluatorTest {
 
-    SplitFetcher splitFetcher;
-    Evaluator evaluator;
+    private SplitFetcher splitFetcher;
+    private Evaluator evaluator;
 
     @Before
     public void loadSplitsFromFile(){
-        if(splitFetcher == null) {
+        if(evaluator == null) {
             FileHelper fileHelper = new FileHelper();
-            List<String> mySegments = Arrays.asList("s1", "s2", "test_copy");
-            RefreshableMySegmentsFetcherProvider mySegmentsProvider = new RefreshableMySegmentsFetcherProviderStub(mySegments);
+            MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
+            SplitsStorage splitsStorage = mock(SplitsStorage.class);
+
+            Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            splitFetcher = new SplitFetcherStub(splits, mySegmentsProvider);
-            evaluator = new EvaluatorImpl(splitFetcher);
+            SplitParser splitParser = new SplitParser(mySegmentsStorage);
+
+            Map<String, Split> splitsMap = splitsMap(splits);
+            when(splitsStorage.getAll()).thenReturn(splitsMap);
+            when(splitsStorage.get("FACUNDO_TEST")).thenReturn(splitsMap.get("FACUNDO_TEST"));
+            when(splitsStorage.get("a_new_split_2")).thenReturn(splitsMap.get("a_new_split_2"));
+            when(splitsStorage.get("Test")).thenReturn(splitsMap.get("Test"));
+
+
+            when(mySegmentsStorage.getAll()).thenReturn(mySegments);
+
+            evaluator = new EvaluatorImpl(splitsStorage, splitParser);
         }
     }
 
@@ -127,7 +132,13 @@ public class EvaluatorTest {
         Assert.assertEquals(TreatmentLabels.DEFINITION_NOT_FOUND, result.getLabel());
     }
 
-
+    private Map<String, Split> splitsMap(List<Split> splits) {
+        Map<String, Split> splitsMap = new HashMap<>();
+        for(Split split : splits) {
+            splitsMap.put(split.name, split);
+        }
+        return splitsMap;
+    }
 
 
 }

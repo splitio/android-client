@@ -4,12 +4,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientImpl;
 import io.split.android.client.dtos.MatcherCombiner;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -44,12 +42,10 @@ public class CombiningMatcher {
             return false;
         }
 
-        switch (_combiner) {
-            case AND:
-                return and(key, bucketingKey, attributes, evaluator);
-            default:
-                throw new IllegalArgumentException("Unknown combiner: " + _combiner);
+        if (_combiner == MatcherCombiner.AND) {
+            return and(key, bucketingKey, attributes, evaluator);
         }
+        throw new IllegalArgumentException("Unknown combiner: " + _combiner);
 
     }
 
@@ -79,7 +75,7 @@ public class CombiningMatcher {
         boolean first = true;
         for (AttributeMatcher matcher : _delegates) {
             if (!first) {
-                bldr.append(" " + _combiner);
+                bldr.append(" ").append(_combiner);
             }
             bldr.append(" ");
             bldr.append(matcher);

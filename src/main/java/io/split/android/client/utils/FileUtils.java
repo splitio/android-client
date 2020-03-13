@@ -3,18 +3,15 @@ package io.split.android.client.utils;
 import android.content.Context;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URL;
 
 public class FileUtils {
 
     public String loadFileContent(String name, Context context) throws IOException {
-        String content = null;
+        String content;
 
         try {
             InputStream fin = context.getAssets().open(name);
@@ -30,11 +27,12 @@ public class FileUtils {
         return content;
     }
 
-    String convertStreamToString(InputStream is) throws IOException {
+    private String convertStreamToString(InputStream is) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
-        String line = null;
+        String line;
 
+        //noinspection ConstantConditions
         if (reader != null) {
             while ((line = reader.readLine()) != null) {
                 sb.append(line).append("\n");
@@ -48,7 +46,7 @@ public class FileUtils {
         String content = null;
         try {
             content = loadFileContent(fileName, context);
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         return content != null;
     }

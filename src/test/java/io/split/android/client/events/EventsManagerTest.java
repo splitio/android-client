@@ -1,8 +1,11 @@
 package io.split.android.client.events;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import io.split.android.client.SplitClientConfig;
 
@@ -13,7 +16,7 @@ import static org.junit.Assert.assertThat;
 public class EventsManagerTest {
 
     @Test
-    public void event_on_ready() {
+    public void eventOnReady() {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(cfg);
@@ -50,7 +53,7 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void event_on_ready_timed_out() {
+    public void eventOnReadyTimedOut() {
         SplitClientConfig cfg = SplitClientConfig.builder().ready(1000).build();
         SplitEventsManager eventManager = new SplitEventsManager(cfg);
 
@@ -82,7 +85,7 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void event_on_ready_and_on_ready_timed_out() {
+    public void eventOnReadyAndOnReadyTimedOut() {
         SplitClientConfig cfg = SplitClientConfig.builder().ready(1000).build();
         SplitEventsManager eventManager = new SplitEventsManager(cfg);
 
@@ -142,4 +145,56 @@ public class EventsManagerTest {
         assertThat(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY), is(equalTo(true)));
         assertThat(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT), is(equalTo(true)));
     }
+
+    @Test
+    public void eventOnReadyFromCacheSplitsFirst() {
+        List<SplitInternalEvent> eventList = new ArrayList<>();
+        eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        eventList.add(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
+        eventOnReadyFromCache(eventList);
+    }
+
+    @Test
+    public void eventOnReadyFromCacheMySegmentsFirst() {
+        List<SplitInternalEvent> eventList = new ArrayList<>();
+        eventList.add(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
+        eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        eventOnReadyFromCache(eventList);
+    }
+
+    public void eventOnReadyFromCache(List<SplitInternalEvent> eventList) {
+
+        SplitClientConfig cfg = SplitClientConfig.builder().build();
+        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+
+        for(SplitInternalEvent event : eventList) {
+            eventManager.notifyInternalEvent(event);
+        }
+
+        boolean shouldStop = false;
+        long maxExecutionTime = System.currentTimeMillis() + 10000;
+        long intervalExecutionTime = 1000;
+
+        while(!shouldStop) {
+            try {
+                Thread.currentThread().sleep(intervalExecutionTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                Assert.fail();
+            }
+
+            maxExecutionTime -= intervalExecutionTime;
+
+            if (System.currentTimeMillis() > maxExecutionTime) {
+                shouldStop = true;
+            }
+
+            if (eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)) {
+                shouldStop = true;
+            }
+        }
+
+        assertThat(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE), is(equalTo(true)));
+    }
+
 }

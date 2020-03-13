@@ -4,7 +4,6 @@ import java.util.List;
 
 /**
  * A listener for Impressions generated each time getTreatment is called.
- *
  */
 public interface ImpressionListener {
 
@@ -53,5 +52,4 @@ public interface ImpressionListener {
             }
         }
     }
-
 }

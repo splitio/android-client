@@ -1,10 +1,8 @@
 package io.split.android.engine.matchers;
 
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientImpl;
 
 import java.util.Map;
-import java.util.Objects;
 
 public final class AttributeMatcher {
 
@@ -96,7 +94,7 @@ public final class AttributeMatcher {
         @Override
         public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, Evaluator evaluator) {
             boolean result = _delegate.match(matchValue, bucketingKey, attributes, evaluator);
-            return (_negate) ? !result : result;
+            return _negate != result;
         }
 
         @Override

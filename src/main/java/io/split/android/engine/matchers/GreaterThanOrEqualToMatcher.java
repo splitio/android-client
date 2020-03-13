@@ -1,7 +1,6 @@
 package io.split.android.engine.matchers;
 
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientImpl;
 import io.split.android.client.dtos.DataType;
 
 import java.util.Map;
@@ -20,6 +19,7 @@ public class GreaterThanOrEqualToMatcher implements Matcher {
         _dataType = dataType;
 
         if (_dataType == DataType.DATETIME) {
+            //noinspection ConstantConditions
             _normalizedCompareTo = asDateHourMinute(_compareTo);
         } else {
             _normalizedCompareTo = _compareTo;
@@ -45,10 +45,7 @@ public class GreaterThanOrEqualToMatcher implements Matcher {
 
     @Override
     public String toString() {
-        StringBuilder bldr = new StringBuilder();
-        bldr.append(">= ");
-        bldr.append(_compareTo);
-        return bldr.toString();
+        return ">= " + _compareTo;
     }
 
     @Override

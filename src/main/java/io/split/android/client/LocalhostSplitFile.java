@@ -12,17 +12,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class LocalhostSplitFile {
 
-    private final LocalhostSplitFactory _splitFactory;
     private final File _file;
 
-    public LocalhostSplitFile(LocalhostSplitFactory splitFactory, String directory, String fileName) throws IOException {
-        Preconditions.checkNotNull(directory);
-        Preconditions.checkNotNull(fileName);
-
-        _splitFactory = Preconditions.checkNotNull(splitFactory);
-        _file = new File(directory, fileName);
+    public LocalhostSplitFile(String directory, String fileName) throws IOException {
+        _file = new File(checkNotNull(directory), checkNotNull(fileName));
     }
 
     public Map<String, String> readOnSplits() throws IOException {

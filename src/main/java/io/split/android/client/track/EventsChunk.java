@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import io.split.android.client.dtos.Event;
 
+@Deprecated
 public class EventsChunk {
     private String id;
     private List<Event> events;

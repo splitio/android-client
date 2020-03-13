@@ -17,10 +17,20 @@ public class FileHelper {
 
     public List<Split> loadAndParseSplitChangeFile (String name) {
         try {
-            String content = loadFileContent(name);;
+            String content = loadFileContent(name);
             SplitChange change = Json.fromJson(content, SplitChange.class);
-            List<Split> splits = change.splits;
-            return splits;
+            return change.splits;
+        } catch (Exception e) {
+            System.out.println("loadAndParseSplitChangeFile: Failed load file content" + e.getLocalizedMessage());
+        }
+        return null;
+    }
+
+    public SplitChange loadSplitChangeFromFile (String name) {
+        try {
+            String content = loadFileContent(name);
+            SplitChange change = Json.fromJson(content, SplitChange.class);
+            return change;
         } catch (Exception e) {
         }
         return null;
@@ -43,7 +53,7 @@ public class FileHelper {
     private String convertStreamToString(InputStream is) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
-        String line = null;
+        String line;
 
         while ((line = reader.readLine()) != null) {
             sb.append(line).append("\n");

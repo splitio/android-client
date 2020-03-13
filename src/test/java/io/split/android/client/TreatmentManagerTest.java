@@ -8,17 +8,23 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.engine.experiments.SplitFetcher;
+import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import io.split.android.fake.ImpressionListenerMock;
@@ -29,6 +35,10 @@ import io.split.android.fake.SplitFetcherStub;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+@SuppressWarnings("ConstantConditions")
 public class TreatmentManagerTest {
 
     SplitFetcher splitFetcher;
@@ -38,14 +48,25 @@ public class TreatmentManagerTest {
     ISplitEventsManager eventsManagerStub;
 
     @Before
-    public void loadSplitsFromFile(){
-        if(splitFetcher == null) {
+    public void loadSplitsFromFile() {
+        if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
-            List<String> mySegments = Arrays.asList("s1", "s2", "test_copy");
-            RefreshableMySegmentsFetcherProvider mySegmentsProvider = new RefreshableMySegmentsFetcherProviderStub(mySegments);
+            MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
+            SplitsStorage splitsStorage = mock(SplitsStorage.class);
+
+            Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            SplitFetcher splitFetcher = new SplitFetcherStub(splits, mySegmentsProvider);
-            evaluator = new EvaluatorImpl(splitFetcher);
+            SplitParser splitParser = new SplitParser(mySegmentsStorage);
+
+            Map<String, Split> splitsMap = splitsMap(splits);
+            when(splitsStorage.getAll()).thenReturn(splitsMap);
+            when(splitsStorage.get("FACUNDO_TEST")).thenReturn(splitsMap.get("FACUNDO_TEST"));
+            when(splitsStorage.get("testo2222")).thenReturn(splitsMap.get("testo2222"));
+            when(splitsStorage.get("Test")).thenReturn(splitsMap.get("Test"));
+
+            when(mySegmentsStorage.getAll()).thenReturn(mySegments);
+
+            evaluator = new EvaluatorImpl(splitsStorage, splitParser);
         }
         impressionListener = new ImpressionListenerMock();
         metrics = new MetricsMock();
@@ -215,16 +236,16 @@ public class TreatmentManagerTest {
         Assert.assertEquals(Treatments.CONTROL, splitResult.treatment());
         Assert.assertNull(splitResult.config());
 
-        for(String split : splitList) {
+        for (String split : splitList) {
             Assert.assertNotNull(treatmentList.get(split));
         }
 
-        for(SplitResult result : splitResultList.values()) {
+        for (SplitResult result : splitResultList.values()) {
             Assert.assertNotNull(treatment);
             Assert.assertEquals(Treatments.CONTROL, treatment);
         }
 
-        for(SplitResult result : splitResultList.values()) {
+        for (SplitResult result : splitResultList.values()) {
             Assert.assertNotNull(splitResult);
             Assert.assertEquals(Treatments.CONTROL, splitResult.treatment());
             Assert.assertNull(splitResult.config());
@@ -237,13 +258,20 @@ public class TreatmentManagerTest {
         List<String> mySegments = Arrays.asList("s1", "s2", "test_copy");
         RefreshableMySegmentsFetcherProvider mySegmentsProvider = new RefreshableMySegmentsFetcherProviderStub(mySegments);
         List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-        SplitFetcher splitFetcher = new SplitFetcherStub(splits, mySegmentsProvider);
 
         SplitClientConfig config = SplitClientConfig.builder().build();
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
-                new KeyValidatorImpl(), new SplitValidatorImpl(splitFetcher), new MetricsMock(),
+                new KeyValidatorImpl(), new SplitValidatorImpl(), new MetricsMock(),
                 new ImpressionListenerMock(), config, eventsManagerStub);
+    }
+
+    private Map<String, Split> splitsMap(List<Split> splits) {
+        Map<String, Split> splitsMap = new HashMap<>();
+        for (Split split : splits) {
+            splitsMap.put(split.name, split);
+        }
+        return splitsMap;
     }
 
 }

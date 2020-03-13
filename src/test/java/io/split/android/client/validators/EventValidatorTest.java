@@ -2,7 +2,7 @@ package io.split.android.client.validators;
 
 import com.google.common.base.Strings;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -14,7 +14,11 @@ import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.storage.FileStorage;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class EventValidatorTest {
 
@@ -22,12 +26,14 @@ public class EventValidatorTest {
 
     @Before
     public void setUp() {
-        ISplitCache splitCache = new SplitCache(new FileStorage(new File("./build", "."), "folder"));
-        splitCache.addSplit(newSplit("s0", "traffic1", Status.ACTIVE));
-        splitCache.addSplit(newSplit("s1", "trafficType1", Status.ACTIVE));
-        splitCache.addSplit(newSplit("s2", "custom", Status.ACTIVE));
 
-        validator = new EventValidatorImpl(new KeyValidatorImpl(), splitCache);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+
+        when(splitsStorage.isValidTrafficType("traffic1")).thenReturn(true);
+        when(splitsStorage.isValidTrafficType("trafficType1")).thenReturn(true);
+        when(splitsStorage.isValidTrafficType("custom")).thenReturn(true);
+
+        validator = new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage);
     }
 
     @Test
@@ -296,11 +302,11 @@ public class EventValidatorTest {
                 + " underscore, period, or colon as separators of alphanumeric characters.";
     }
 
-    private Split newSplit(String name, String trafficType, Status status) {
+    private Split newSplit(String name, String trafficType) {
         Split split = new Split();
         split.name = name;
         split.trafficTypeName = trafficType;
-        split.status = status;
+        split.status = Status.ACTIVE;
         return split;
     }
 }

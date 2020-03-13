@@ -2,7 +2,6 @@ package io.split.android.engine.matchers;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientImpl;
 
 import java.util.List;
 import java.util.Map;
@@ -41,12 +40,7 @@ public class DependencyMatcher implements Matcher {
 
     @Override
     public String toString() {
-        StringBuilder bldr = new StringBuilder();
-        bldr.append("in split \"");
-        bldr.append(this._split);
-        bldr.append("\" treatment ");
-        bldr.append(this._treatments);
-        return bldr.toString();
+        return "in split \"" + this._split + "\" treatment " + this._treatments;
     }
 
     @Override

@@ -2,13 +2,10 @@ package io.split.android.client.validators;
 
 import com.google.common.base.Strings;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
-
-import io.split.android.client.api.Key;
 
 public class KeyValidatorTest {
 

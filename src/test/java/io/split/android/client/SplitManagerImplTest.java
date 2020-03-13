@@ -2,18 +2,24 @@ package io.split.android.client;
 
 import com.google.common.collect.Lists;
 import io.split.android.client.api.SplitView;
+import io.split.android.client.dtos.Condition;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.validators.SplitValidator;
+import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.engine.ConditionsTestUtil;
-import io.split.android.engine.experiments.ParsedCondition;
-import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
+import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.CombiningMatcher;
 import io.split.android.helpers.SplitHelper;
 
+
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,13 +33,24 @@ import static org.junit.Assert.assertThat;
 
 public class SplitManagerImplTest {
 
+    SplitsStorage mSplitsStorage;
+    MySegmentsStorage mMySegmentsStorage;
+    SplitManager mSplitManager;
+
+    @Before
+    public void setup() {
+        mSplitsStorage = Mockito.mock(SplitsStorage.class);
+        mMySegmentsStorage = Mockito.mock(MySegmentsStorage.class);
+        SplitValidator validator = new SplitValidatorImpl();
+        SplitParser parser = new SplitParser(mMySegmentsStorage);
+        mSplitManager = new SplitManagerImpl(mSplitsStorage, validator, parser);
+    }
+
     @Test
     public void splitCallWithNonExistentSplit() {
         String nonExistent = "nonExistent";
-        SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
-        Mockito.when(splitFetcher.fetch(nonExistent)).thenReturn(null);
-        SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
-        assertThat(splitManager.split("nonExistent"), is(nullValue()));
+        Mockito.when(mSplitsStorage.get(nonExistent)).thenReturn(null);
+        assertThat(mSplitManager.split("nonExistent"), is(nullValue()));
     }
 
     @Test
@@ -44,15 +61,17 @@ public class SplitManagerImplTest {
         Map<String, String> configs = new HashMap<>();
         configs.put("off", "{\"f\":\"v\"}");
         configs.put("on", "{\"f1\":\"v1\"}");
-        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition("off")), "traffic", 456L, 1, configs);
-        Mockito.when(splitFetcher.fetch(existent)).thenReturn(response);
+        Split response = SplitHelper.createSplit("existent", 123,
+                true, "off", Lists.newArrayList(getTestCondition()),
+                "traffic", 456L, 1, configs);
+        Mockito.when(mSplitsStorage.get(existent)).thenReturn(response);
 
-        SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
+        SplitManager splitManager = mSplitManager;
         SplitView theOne = splitManager.split(existent);
-        assertThat(theOne.name, is(equalTo(response.feature())));
-        assertThat(theOne.changeNumber, is(equalTo(response.changeNumber())));
-        assertThat(theOne.killed, is(equalTo(response.killed())));
-        assertThat(theOne.trafficType, is(equalTo(response.trafficTypeName())));
+        assertThat(theOne.name, is(equalTo(response.name)));
+        assertThat(theOne.changeNumber, is(equalTo(response.changeNumber)));
+        assertThat(theOne.killed, is(equalTo(response.killed)));
+        assertThat(theOne.trafficType, is(equalTo(response.trafficTypeName)));
         assertThat(theOne.treatments.size(), is(equalTo(1)));
         assertThat(theOne.treatments.get(0), is(equalTo("off")));
         assertThat(theOne.configs, is(notNullValue()));
@@ -66,26 +85,26 @@ public class SplitManagerImplTest {
     @Test
     public void splitsCallWithNoSplit() {
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
-        Mockito.when(splitFetcher.fetchAll()).thenReturn(Lists.<ParsedSplit>newArrayList());
-        SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
+        Mockito.when(splitFetcher.fetchAll()).thenReturn(Lists.newArrayList());
+        SplitManager splitManager = mSplitManager;
         assertThat(splitManager.splits(), is(empty()));
     }
 
     @Test
     public void splitsCallWithSplit() {
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
-        List<ParsedSplit> parsedSplits = Lists.newArrayList();
-        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition("off")), "traffic", 456L, 1, null);
-        parsedSplits.add(response);
+        Map<String, Split> splitsMap = new HashMap<>();
+        Split split = SplitHelper.createSplit("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition()), "traffic", 456L, 1, null);
+        splitsMap.put(split.name, split);
 
-        Mockito.when(splitFetcher.fetchAll()).thenReturn(parsedSplits);
-        SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
+        Mockito.when(mSplitsStorage.getAll()).thenReturn(splitsMap);
+        SplitManager splitManager = mSplitManager;
         List<SplitView> splits = splitManager.splits();
         assertThat(splits.size(), is(equalTo(1)));
-        assertThat(splits.get(0).name, is(equalTo(response.feature())));
-        assertThat(splits.get(0).changeNumber, is(equalTo(response.changeNumber())));
-        assertThat(splits.get(0).killed, is(equalTo(response.killed())));
-        assertThat(splits.get(0).trafficType, is(equalTo(response.trafficTypeName())));
+        assertThat(splits.get(0).name, is(equalTo(split.name)));
+        assertThat(splits.get(0).changeNumber, is(equalTo(split.changeNumber)));
+        assertThat(splits.get(0).killed, is(equalTo(split.killed)));
+        assertThat(splits.get(0).trafficType, is(equalTo(split.trafficTypeName)));
         assertThat(splits.get(0).treatments.size(), is(equalTo(1)));
         assertThat(splits.get(0).treatments.get(0), is(equalTo("off")));
         assertThat(splits.get(0).treatments.get(0), is(equalTo("off")));
@@ -93,28 +112,29 @@ public class SplitManagerImplTest {
 
     @Test
     public void splitNamesCallWithNoSplit() {
-        SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
-        Mockito.when(splitFetcher.fetchAll()).thenReturn(Lists.<ParsedSplit>newArrayList());
-        SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
+        Mockito.when(mSplitsStorage.getAll()).thenReturn(new HashMap<>());
+        SplitManager splitManager = mSplitManager;
         assertThat(splitManager.splitNames(), is(empty()));
     }
 
     @Test
     public void splitNamesCallWithSplit() {
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
-        List<ParsedSplit> parsedSplits = Lists.newArrayList();
-        ParsedSplit response = ParsedSplit.createParsedSplitForTests("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition("off")), "traffic", 456L, 1, null);
-        parsedSplits.add(response);
+        Map<String, Split> splitsMap = new HashMap<>();
+        Split split = SplitHelper.createSplit("FeatureName", 123, true,
+                "off", Lists.newArrayList(getTestCondition()),
+                "traffic", 456L, 1, null);
+        splitsMap.put(split.name, split);
 
-        Mockito.when(splitFetcher.fetchAll()).thenReturn(parsedSplits);
-        SplitManagerImpl splitManager = new SplitManagerImpl(splitFetcher);
+        Mockito.when(mSplitsStorage.getAll()).thenReturn(splitsMap);
+        SplitManager splitManager = mSplitManager;
         List<String> splitNames = splitManager.splitNames();
         assertThat(splitNames.size(), is(equalTo(1)));
-        assertThat(splitNames.get(0), is(equalTo(response.feature())));
+        assertThat(splitNames.get(0), is(equalTo(split.name)));
     }
 
-    private ParsedCondition getTestCondition(String treatment) {
-        return ParsedCondition.createParsedConditionForTests(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(ConditionsTestUtil.partition(treatment, 10)));
+    private Condition getTestCondition() {
+        return SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(ConditionsTestUtil.partition("off", 10)));
     }
 
 }

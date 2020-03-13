@@ -1,7 +1,5 @@
 package io.split.android.engine;
 
-import io.split.android.client.events.SplitEventsManager;
-import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.utils.Logger;
 
 

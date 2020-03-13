@@ -1,7 +1,5 @@
 package io.split.android.client.validators;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +11,6 @@ import io.split.android.client.SplitResult;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.Logger;
@@ -156,7 +153,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             splitName = split.trim();
         }
 
-        EvaluationResult evaluationResult = evaluateIfReady(splitName, attributes);
+        EvaluationResult evaluationResult = evaluateIfReady(splitName, attributes, validationTag);
         SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
 
         if(evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
@@ -202,7 +199,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 mValidationLogger.w(errorInfo, validationTag);
             }
 
-            EvaluationResult result = evaluateIfReady(split.trim(), attributes);
+            EvaluationResult result = evaluateIfReady(split.trim(), attributes, validationTag);
             results.put(split.trim(), new SplitResult(result.getTreatment(), result.getConfigurations()));
 
             if(result.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
@@ -247,6 +244,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         return results;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private Map<String, String> controlTreatmentsForSplits(List<String> splits, String validationTag) {
         Map<String, String> results = new HashMap<>();
         for(String split : splits) {
@@ -263,8 +261,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         return results;
     }
 
-    private EvaluationResult evaluateIfReady(String splitName, Map<String, Object> attributes) {
-        if(!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)) {
+    private EvaluationResult evaluateIfReady(String splitName,
+                                             Map<String, Object> attributes, String validationTag) {
+        if(!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY) &&
+                !mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE) ) {
+            mValidationLogger.w("the SDK is not ready, results may be incorrect. Make sure to wait for SDK readiness before using this method", validationTag);
             return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null);
         }
         return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, splitName, attributes);

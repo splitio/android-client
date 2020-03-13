@@ -35,7 +35,7 @@ public class WhitelistMatcherTest {
     public void works_with_empty_whitelist() {
         List<String> whitelist = Lists.newArrayList("a", "a\"b");
 
-        WhitelistMatcher matcher = new WhitelistMatcher(Collections.<String>emptyList());
+        WhitelistMatcher matcher = new WhitelistMatcher(Collections.emptyList());
 
         for (String item : whitelist) {
             assertThat(matcher.match(item, null, null, null), is(false));

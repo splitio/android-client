@@ -3,7 +3,6 @@ package io.split.android.client.utils;
 import com.google.common.base.Strings;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -62,7 +61,7 @@ public class Utils {
         if(string == null) {
             return "";
         }
-        return string.replaceAll("[^a-zA-Z0-9\\.\\-]", "_");
+        return string.replaceAll("[^a-zA-Z0-9.\\-]", "_");
     }
 
     private static String sanitizeForFolderName(String string) {

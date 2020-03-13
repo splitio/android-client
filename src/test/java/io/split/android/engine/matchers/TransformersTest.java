@@ -18,8 +18,8 @@ public class TransformersTest {
     public void asLongWorks() {
         assertThat(asLong("19"), is(nullValue()));
         assertThat(asLong(null), is(nullValue()));
-        assertThat(asLong(new Integer(19)), is(equalTo(new Long(19))));
-        assertThat(asLong(new Long(-19)), is(equalTo(new Long(-19))));
+        assertThat(asLong(19), is(equalTo(19L)));
+        assertThat(asLong((long) -19), is(equalTo((long) -19)));
     }
 
     @Test

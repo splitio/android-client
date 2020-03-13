@@ -3,7 +3,7 @@ package io.split.android.client;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 
-import io.split.android.client.Localhost.LocalhostGrammar;
+import io.split.android.client.localhost.LocalhostGrammar;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
@@ -12,8 +12,6 @@ import io.split.android.grammar.Treatments;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * An implementation of SplitClient that considers all partitions
@@ -108,7 +106,6 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public void flush() {
-        return;
     }
 
     @Override
@@ -117,7 +114,6 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     public void on(SplitEvent event, SplitEventTask task) {
-        return;
     }
 
     void updateSplitsMap(ImmutableMap<String, Split> splits) {

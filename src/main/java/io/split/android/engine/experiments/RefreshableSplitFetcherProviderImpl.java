@@ -3,7 +3,6 @@ package io.split.android.engine.experiments;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import io.split.android.client.events.ISplitEventsManager;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
@@ -36,7 +35,11 @@ public class RefreshableSplitFetcherProviderImpl implements RefreshableSplitFetc
     private final long _initialChangeNumber;
 
 
-    public RefreshableSplitFetcherProviderImpl(SplitChangeFetcher splitChangeFetcher, SplitParser splitParser, long refreshEveryNSeconds, ISplitEventsManager eventsManager, long initialChangeNumber) {
+    public RefreshableSplitFetcherProviderImpl(SplitChangeFetcher splitChangeFetcher,
+                                               SplitParser splitParser,
+                                               long refreshEveryNSeconds,
+                                               ISplitEventsManager eventsManager,
+                                               long initialChangeNumber) {
         _splitChangeFetcher = splitChangeFetcher;
         checkNotNull(_splitChangeFetcher);
 

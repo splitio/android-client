@@ -1,17 +1,16 @@
 package io.split.android.client;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
-import io.split.android.fake.SplitFactoryStub;
 
 public class FactoryMonitorTest {
 
-    FactoryMonitor monitor;
+    private FactoryMonitor monitor;
 
     @Before
     public void setup() {

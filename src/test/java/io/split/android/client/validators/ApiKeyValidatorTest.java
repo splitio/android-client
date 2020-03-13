@@ -1,10 +1,9 @@
 package io.split.android.client.validators;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 public class ApiKeyValidatorTest {
 

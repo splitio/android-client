@@ -7,11 +7,12 @@ import java.util.List;
 
 import io.split.android.client.dtos.TestImpressions;
 
+@Deprecated
 public class StoredImpressions {
     private final String id;
     private final List<TestImpressions> impressions;
     private int attempts = 0;
-    private long timestamp = 0;
+    private long timestamp;
 
     public static StoredImpressions from(String id, List<TestImpressions> impressions, long timestamp) {
         return new StoredImpressions(id, impressions, timestamp);

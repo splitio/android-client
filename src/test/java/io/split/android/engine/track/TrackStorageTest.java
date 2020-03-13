@@ -17,16 +17,18 @@ import java.util.Set;
 
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.storage.IStorage;
-import io.split.android.client.storage.MemoryStorage;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.storage.legacy.IStorage;
+import io.split.android.client.storage.legacy.MemoryStorage;
+import io.split.android.client.storage.legacy.TracksFileStorage;
 import io.split.android.client.track.EventsChunk;
 import io.split.android.client.track.ITrackStorage;
-import io.split.android.client.track.TrackStorageManager;
-import io.split.android.client.track.TracksFileStorage;
+import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.client.utils.Json;
 import io.split.android.fake.MemoryUtilsNoMemoryStub;
 import io.split.android.fake.TrackFileStorageStub;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class TrackStorageTest {
 
     TrackStorageManager mTrackStorage = null;
@@ -52,7 +54,8 @@ public class TrackStorageTest {
             }
             folder.delete();
         }
-        mStorage = new TracksFileStorage(rootFolder, "test_folder");
+        mStorage = new
+                TracksFileStorage(rootFolder, "test_folder");
         mTrackStorage = new TrackStorageManager(mStorage);
 
     }
@@ -163,7 +166,7 @@ public class TrackStorageTest {
                 {1100, 1305, 4506, 7530, 3209, 5230, 6500, 6880, 4100, 23000},
         };
 
-        populateStorageWithLegacyFile(chunkCount, chunksData, memStorage);
+        populateStorageWithLegacyFile(chunksData, memStorage);
 
         TrackStorageManager manager = new TrackStorageManager(memStorage);
         List<EventsChunk> loadedChunks = manager.getEventsChunks();
@@ -187,7 +190,7 @@ public class TrackStorageTest {
                 {1100, 1305, 4506, 7530, 3209, 5230, 6500, 6880, 4100, 23000},
         };
 
-        populateStorageWithLegacyFile(chunkCount, chunksData, memStorage);
+        populateStorageWithLegacyFile(chunksData, memStorage);
 
         TrackStorageManager manager = new TrackStorageManager(memStorage, new MemoryUtilsNoMemoryStub());
         List<EventsChunk> loadedChunks = manager.getEventsChunks();
@@ -205,7 +208,7 @@ public class TrackStorageTest {
                 {1100, 1305, 4506, 7530, 3209, 5230, 6500, 6880, 4100, 23000},
         };
 
-        populateStorageWithLegacyChunkFiles(chunkCount, chunksData, memStorage);
+        populateStorageWithLegacyChunkFiles(chunksData, memStorage);
 
         TrackStorageManager manager = new TrackStorageManager(memStorage);
         List<EventsChunk> loadedChunks = manager.getEventsChunks();
@@ -247,7 +250,7 @@ public class TrackStorageTest {
                 {1100, 1305, 4506, 7530, 3209, 5230, 6500, 6880, 4100, 23000},
         };
 
-        populateStorageWithLegacyChunkFiles(chunkCount, chunksData, memStorage);
+        populateStorageWithLegacyChunkFiles(chunksData, memStorage);
 
         TrackStorageManager manager = new TrackStorageManager(memStorage, new MemoryUtilsNoMemoryStub());
         List<EventsChunk> loadedChunks = manager.getEventsChunks();
@@ -268,11 +271,11 @@ public class TrackStorageTest {
     }
 
     // Helpers
-    private void populateStorageWithLegacyFile(int chunkCount, int[][] chunksData, ITrackStorage storage) throws IOException {
+    private void populateStorageWithLegacyFile(int[][] chunksData, ITrackStorage storage) throws IOException {
 
         final String LEGACY_EVENTS_FILE_NAME = "SPLITIO.events.json";
         Map<String, EventsChunk> chunks = new HashMap<>();
-        for(int i = 0; i < chunkCount; i++) {
+        for(int i = 0; i < 10; i++) {
             int eventCount = chunksData[0][i];
             int eventSize = chunksData[1][i];
             List<Event> events  = new ArrayList<>();
@@ -292,12 +295,12 @@ public class TrackStorageTest {
         storage.write(LEGACY_EVENTS_FILE_NAME, jsonChunks);
     }
 
-    private void populateStorageWithLegacyChunkFiles(int chunkCount, int[][] chunksData, ITrackStorage storage) throws IOException{
+    private void populateStorageWithLegacyChunkFiles(int[][] chunksData, ITrackStorage storage) throws IOException{
         final String CHUNK_HEADERS_FILE = "SPLITIO.events_chunk_headers.json";
         final String EVENTS_FILE_PREFIX = "SPLITIO.events_#";
 
         List<ChunkHeader> headers = new ArrayList<>();
-        for(int i = 0; i < chunkCount; i++) {
+        for(int i = 0; i < 10; i++) {
             int eventCount = chunksData[0][i];
             int eventSize = chunksData[1][i];
             Map<String, List<Event>> chunkEvents = new HashMap<>();
@@ -331,8 +334,6 @@ public class TrackStorageTest {
                 {1100, 1305, 4506, 7530, 3209, 5230, 6500, 6880, 4100, 23000},
         };
 
-        TrackStorageManager savingManager = manager;
-
         for(int i = 0; i < chunkCount; i++) {
             int eventCount = chunksData[0][i];
             int eventSize = chunksData[1][i];
@@ -347,7 +348,7 @@ public class TrackStorageTest {
             }
             EventsChunk chunk = new EventsChunk(events);
             chunk.addAtempt();
-            savingManager.saveEvents(chunk);
+            manager.saveEvents(chunk);
         }
         return totalSize;
     }

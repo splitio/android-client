@@ -8,8 +8,6 @@ import java.net.URISyntaxException;
 
 import io.split.android.client.network.URIBuilder;
 
-import static org.junit.Assert.*;
-
 public class URIBuilderTest {
 
     @Test

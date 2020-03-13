@@ -5,6 +5,9 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.List;
 
+// This code will be removed.
+// Also, to avoid possible problems with json parsing
+@SuppressWarnings("FieldCanBeLocal")
 public class ChunkHeader {
     public final static Type CHUNK_HEADER_TYPE = new TypeToken<List<ChunkHeader>>() {
     }.getType();

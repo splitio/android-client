@@ -4,10 +4,8 @@ import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.events.ISplitEventsManager;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.utils.Logger;
-import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.FetcherPolicy;
 
 import static com.google.common.base.Preconditions.checkNotNull;

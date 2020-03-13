@@ -1,61 +1,94 @@
+
+2.5.0: (Mar 13, 2020)
+- Replaced disk files by Room to handle cache data
+- Improved sync architecture
+- Improved thread management
+- Fixed isReady flag
+- Removed some unused tags in manifest
+
 2.4.5: (Oct 8, 2019)
 - Fixed concurrency issue when parsing events from disk
+
 2.4.4: (Sep 26, 2019)
 - Fixed issue when load events from disk
+
 2.4.3: (Sep 20, 2019)
-- Improved SDK readiness from cache
-- Improved thread pausing on background
+ - Updated SDK readiness from cache
+ - Updated thread pausing on background
+
 2.4.2: (Sep 5, 2019)
-- Using JsonL to save cache files
-- Fixing minor issue when saving tracks and impressions on disk
+ - Updated file cache to use JSONL format
+ - Bugfixing - minor issue when saving tracks and impressions on disk
+
 2.4.1: (Jul 26, 2019)
-- Replaced http client by HttpURLConnection
-- Split some cache files in chunks when saving to disk
+ - Replaced http client by HttpURLConnection
+ - Updated file cache to split in chunks when saving to disk
+
 2.4.0: (Jun 28, 2019)
-- Adding validation for multiple factory instantiation
-- Adding validation for Traffic types
-- Adding validation for Split while evaluating
-- Improving code to retrieve Split SDK version
+ - Added validation for multiple factory instantiation
+ - Added validation for Traffic types
+ - Added validation for Split while evaluating
+ - Updated code to retrieve Split SDK version
+
 2.3.2: (Jun 24, 2019)
-- Fixing issue with sdk ready event when no internet connection
-- Adding integration tests
+ - Bugfixing - issue with sdk ready event when no internet connection
+ - Added integration tests
+
 2.3.1: (Jun 14, 2019)
-- Fixing concurrence issue when writing split to disk
-- Adding missing UTF-8 support to some json parsing
+ - Bugfixing - concurrence issue when writing split to disk
+ - Added missing UTF-8 support to some json parsing
+
 2.3.0: (May 24, 2019)
-- Adding track event properties
+ - Added track event properties
+
 2.2.1: (May 9, 2019)
-- Fixing issue when device in airplane mode
+ - Bugfixing - issue when device in airplane mode
+
 2.2.0: (May 1, 2019)
-- Adding Dynamic Configs feature
+ - Added Dynamic Configs feature
+
 2.0.1: (Mar 14, 2019)
-- Using different folders for api key to store cached data
+ - Updated file cache to use different folders for api key to store cached data
+
 2.0.0: (Feb 11, 2019)
-- Adding several validations for passed parameters
+ - Added several validations for passed parameters
+
 1.2.3: (Jan 21, 2019)
-- Storing splits, segments, impressions and tracks on disk only when app goes to background or close
-- Fixing issue when traffic allocation equals to zero
+ - Storing splits, segments, impressions and tracks on disk only when app goes to background or close
+ - Bugfixing - issue when traffic allocation equals to zero
+
 1.2.2: (Oct 1, 2018)
-- Fixed issue fetching split changes
+ - Fixed issue fetching split changes
+
 1.2.1: (Sep 27, 2018)
-- Adding proguard rules file
+ - Added proguard rules file
+
 1.2.0: (Sep 24, 2018)
-- Adding split manager feature
+ - Added split manager feature
+
 1.1.0: (Aug 28, 2018)
-- Adding get treatments feature
+ - Added get treatments feature
+
 1.0.2: (Aug 15, 2018)
-- Adding impression listener
+ - Added impression listener
+
 1.0.1: (Jul 19, 2018)
- - Hotfix: More defensive checks for possible corrupt caches
+ - Bugfixing - more defensive checks for possible corrupt caches
+
 1.0.0: (Jun 29, 2018)
- - .Track feature
+ - Added .Track feature
+
 0.9.4: (May 24, 2018)
- - Hotfix: event SDK_READY not reachable when segments were not linked to a split definition
+ - Bugfixing - event SDK_READY not reachable when segments were not linked to a split definition
+
 0.9.3: (Apr 16, 2018)
- - Events listener has been added. Available events: SDK_READY, SDK_READY_TIMEOUT
+ - Added Events listener. Available events: SDK_READY, SDK_READY_TIMEOUT
+
 0.9.2: (Mar 19, 2018)
- - Adding first load from cache
+ - Added first load from cache
+
 0.9.1: (Feb 20, 2018)
- - Adding clear log messages
+ - Added clear log messages
+
 0.9.0: (Feb 19, 2018)
  - Initial Release

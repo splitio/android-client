@@ -1,8 +1,6 @@
 package io.split.android.client.network;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -15,10 +13,10 @@ import java.util.Map;
 
 public class HttpRequestImpl implements HttpRequest {
 
-    URI mUri;
-    String mBody;
-    HttpMethod mHttpMethod;
-    Map<String, String> mHeaders;
+    private URI mUri;
+    private String mBody;
+    private HttpMethod mHttpMethod;
+    private Map<String, String> mHeaders;
 
     HttpRequestImpl(URI uri, HttpMethod httpMethod, String body, Map<String, String> headers) {
         mUri = uri;
@@ -46,16 +44,16 @@ public class HttpRequestImpl implements HttpRequest {
     }
 
     private HttpResponse getRequest() throws HttpException {
-        URL url = null;
-        HttpURLConnection connection = null;
-        HttpResponse response = null;
+        URL url;
+        HttpURLConnection connection;
+        HttpResponse response;
         try {
             url = mUri.toURL();
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod(mHttpMethod.name());
             addHeaders(connection);
             response = buildResponse(connection);
-
+            connection.disconnect();
         } catch (MalformedURLException e) {
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
         } catch (ProtocolException e) {
@@ -68,7 +66,6 @@ public class HttpRequestImpl implements HttpRequest {
 
     private HttpResponse postRequest() throws IOException {
 
-        HttpResponse response;
         URL url = mUri.toURL();
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -81,15 +78,15 @@ public class HttpRequestImpl implements HttpRequest {
                 bodyStream = connection.getOutputStream();
                 bodyStream.write(mBody.getBytes());
                 bodyStream.flush();
-            } catch (IOException e) {
-                throw (e);
             } finally {
                 if(bodyStream != null) {
                     bodyStream.close();
                 }
             }
         }
-        return buildResponse(connection);
+        HttpResponse httpResponse = buildResponse(connection);
+        connection.disconnect();
+        return httpResponse;
     }
 
     private void addHeaders(HttpURLConnection connection) {
@@ -105,7 +102,7 @@ public class HttpRequestImpl implements HttpRequest {
                     connection.getInputStream()));
 
             String inputLine;
-            StringBuffer responseData = new StringBuffer();
+            StringBuilder responseData = new StringBuilder();
             while ((inputLine = in.readLine()) != null) {
                 responseData.append(inputLine);
             }

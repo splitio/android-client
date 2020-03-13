@@ -1,7 +1,6 @@
 package io.split.android.client.network;
 
-import android.net.Uri;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -16,8 +15,7 @@ public class URIBuilder {
     private Map<String, String> mParams;
 
     public URIBuilder(@NonNull URI rootURI, String path) {
-        checkNotNull(rootURI);
-        mRootURI = rootURI;
+        mRootURI = checkNotNull(rootURI);
         String rootPath = mRootURI.getPath();
         if(path != null && rootPath != null) {
             mPath = String.format("%s/%s", rootPath, path);
@@ -35,7 +33,7 @@ public class URIBuilder {
         this(rootURI, null);
     }
 
-    public URIBuilder addParameter(String param, String value) {
+    public URIBuilder addParameter(@NonNull String param, @NonNull String value) {
         if (param != null && value != null) {
             mParams.put(param, value);
         }
@@ -48,9 +46,9 @@ public class URIBuilder {
         if (mParams.size() > 0) {
             StringBuilder query = new StringBuilder();
             for (Map.Entry<String, String> param : mParams.entrySet()) {
-                query.append(param.getKey() + "=" + param.getValue() + "&");
+                query.append(param.getKey()).append("=").append(param.getValue()).append("&");
             }
-            params = query.substring(0, query.length() - 1).toString();
+            params = query.substring(0, query.length() - 1);
         }
 
         return new URI(mRootURI.getScheme(),
