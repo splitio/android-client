@@ -11,7 +11,7 @@ import java.util.Map;
 
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.sseclient.SseClient;
-import io.split.android.client.service.sseclient.EventSourceListener;
+import io.split.android.client.service.sseclient.SseClientListener;
 import io.split.android.client.service.sseclient.NotificationParser;
 import io.split.android.helpers.FileHelper;
 import okhttp3.mockwebserver.Dispatcher;
@@ -65,7 +65,7 @@ public class SseClientTest {
         mWebServer.start();
     }
 
-    private class Listener implements EventSourceListener {
+    private class Listener implements SseClientListener {
         @Override
         public void onOpen() {
             System.out.println("SseClientTest: OnOPEN!!!!");

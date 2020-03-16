@@ -29,7 +29,7 @@ public class SseClient {
     private final HttpClient mHttpClient;
     private HttpStreamRequest mHttpStreamRequest = null;
     private NotificationParser mNotificationParser;
-    private WeakReference<EventSourceListener> mListener;
+    private WeakReference<SseClientListener> mListener;
     private final ExecutorService mExecutor;
 
     final static int CONNECTING = 0;
@@ -39,7 +39,7 @@ public class SseClient {
     public SseClient(@NonNull URI uri,
                      @NonNull HttpClient httpClient,
                      @NonNull NotificationParser notificationParser,
-                     @NonNull EventSourceListener listener) {
+                     @NonNull SseClientListener listener) {
         mTargetUrl = checkNotNull(uri);
         mHttpClient = checkNotNull(httpClient);
         mNotificationParser = checkNotNull(notificationParser);
@@ -90,21 +90,21 @@ public class SseClient {
     }
 
     private void triggerOnMessage(Map<String, String> messageValues) {
-        EventSourceListener listener = mListener.get();
+        SseClientListener listener = mListener.get();
         if (listener != null) {
             listener.onMessage(messageValues);
         }
     }
 
     private void triggerOnError() {
-        EventSourceListener listener = mListener.get();
+        SseClientListener listener = mListener.get();
         if (listener != null) {
             listener.onError();
         }
     }
 
     private void triggerOnOpen() {
-        EventSourceListener listener = mListener.get();
+        SseClientListener listener = mListener.get();
         if (listener != null) {
             listener.onOpen();
         }
