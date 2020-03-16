@@ -1,6 +1,9 @@
 package io.split.android.client.service.sseclient.feedbackchannel;
 
+import androidx.annotation.NonNull;
+
 public interface SyncManagerFeedbackChannel {
-    void pushMessage(SyncManagerFeedbackMessage message);
-    void register(SyncManagerFeedbackListener listener);
+    void pushMessage(@NonNull SyncManagerFeedbackMessage message);
+    void register(@NonNull SyncManagerFeedbackListener listener);
+    void close();
 }
