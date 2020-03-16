@@ -28,8 +28,8 @@ public class SseClient {
     private AtomicInteger mReadyState;
     private final HttpClient mHttpClient;
     private HttpStreamRequest mHttpStreamRequest = null;
-    private NotificationParser mNotificationParser;
-    private WeakReference<EventSourceListener> mListener;
+    private EventStreamParser mEventStreamParser;
+    private WeakReference<SseClientListener> mListener;
     private final ExecutorService mExecutor;
 
     final static int CONNECTING = 0;
@@ -38,16 +38,15 @@ public class SseClient {
 
     public SseClient(@NonNull URI uri,
                      @NonNull HttpClient httpClient,
-                     @NonNull NotificationParser notificationParser,
-                     @NonNull EventSourceListener listener) {
+                     @NonNull EventStreamParser eventStreamParser,
+                     @NonNull SseClientListener listener) {
         mTargetUrl = checkNotNull(uri);
         mHttpClient = checkNotNull(httpClient);
-        mNotificationParser = checkNotNull(notificationParser);
-
+        mEventStreamParser = checkNotNull(eventStreamParser);
         mReadyState = new AtomicInteger(CLOSED);
         mListener = new WeakReference<>(checkNotNull(listener));
         mExecutor = Executors.newFixedThreadPool(POOL_SIZE);
-        connect();
+        mReadyState.set(CLOSED);
     }
 
     public int readyState() {
@@ -56,6 +55,11 @@ public class SseClient {
 
     public String url() {
         return mTargetUrl.toString();
+    }
+
+    public void connect() {
+        mReadyState.set(CONNECTING);
+        mExecutor.execute(new PersistentConnectionExecutor());
     }
 
     public void disconnect() {
@@ -85,26 +89,27 @@ public class SseClient {
         }
     }
 
-    private void connect() {
-        mExecutor.execute(new PersistentConnectionExecutor());
+    private void setCloseStatus() {
+        mReadyState.set(CLOSED);
+        triggerOnError();
     }
 
     private void triggerOnMessage(Map<String, String> messageValues) {
-        EventSourceListener listener = mListener.get();
+        SseClientListener listener = mListener.get();
         if (listener != null) {
             listener.onMessage(messageValues);
         }
     }
 
     private void triggerOnError() {
-        EventSourceListener listener = mListener.get();
+        SseClientListener listener = mListener.get();
         if (listener != null) {
             listener.onError();
         }
     }
 
     private void triggerOnOpen() {
-        EventSourceListener listener = mListener.get();
+        SseClientListener listener = mListener.get();
         if (listener != null) {
             listener.onOpen();
         }
@@ -122,7 +127,7 @@ public class SseClient {
                     Map<String, String> values = new HashMap<>();
                     while ((inputLine = bufferedReader.readLine()) != null) {
                         // parseLineAndAppendValue returns true if an event has to be dispatched
-                        if (mNotificationParser.parseLineAndAppendValue(inputLine, values)) {
+                        if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
                             triggerOnMessage(values);
                             values = new HashMap<>();
                         }
@@ -132,15 +137,15 @@ public class SseClient {
             } catch (HttpException e) {
                 Logger.e("An error has ocurred while trying to connecting to stream " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                triggerOnError();
+                setCloseStatus();
             } catch (IOException e) {
                 Logger.e("An error has ocurred while parsing stream from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                triggerOnError();
+                setCloseStatus();
             } catch (Exception e) {
                 Logger.e("An unexpected error has ocurred while receiving stream events from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                triggerOnError();
+                setCloseStatus();
             }
         }
     }
