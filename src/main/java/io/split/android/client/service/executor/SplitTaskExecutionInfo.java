@@ -16,6 +16,7 @@ public class SplitTaskExecutionInfo {
     public static final String CHANNEL_LIST_PARAM = "CHANNEL_LIST";
     public static final String IS_STREAMING_ENABLED = "IS_STREAMING_ENABLED";
     public static final String IS_VALID_API_KEY = "IS_VALID_API_KEY";
+    public static final String SSE_TOKEN = "SSE_TOKEN";
 
     final private SplitTaskType taskType;
     final private SplitTaskExecutionStatus status;
