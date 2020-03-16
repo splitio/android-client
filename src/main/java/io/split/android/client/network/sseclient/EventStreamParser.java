@@ -4,7 +4,7 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.Map;
 
-public class NotificationParser {
+public class EventStreamParser {
     private final static String FIELD_SEPARATOR = ":";
 
     /**

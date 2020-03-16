@@ -16,7 +16,7 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.sseclient.SseClient;
 import io.split.android.client.network.sseclient.SseClientListener;
-import io.split.android.client.network.sseclient.NotificationParser;
+import io.split.android.client.network.sseclient.EventStreamParser;
 import io.split.android.helpers.FileHelper;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -27,7 +27,7 @@ public class SseClientTest {
     private MockWebServer mWebServer;
     final private static String TEST_URL = "/testSseUrl/";
     SseClient mSseClient;
-    NotificationParser mNotificationParser;
+    EventStreamParser mEventStreamParser;
 
     final static String JWT = "";
 
@@ -52,12 +52,12 @@ public class SseClientTest {
         
         httpClient.setHeader("Content-Type","text/event-stream");
 
-        mSseClient = new SseClient(uri, httpClient, new NotificationParser(), new Listener());
+        mSseClient = new SseClient(uri, httpClient, new EventStreamParser(), new Listener());
         Thread.sleep(100000);
 
         mSseClient.disconnect();
 
-        mSseClient = new SseClient(uri, new HttpClientImpl(), new NotificationParser(), new Listener());
+        mSseClient = new SseClient(uri, new HttpClientImpl(), new EventStreamParser(), new Listener());
         Thread.sleep(10000);
     }
 
