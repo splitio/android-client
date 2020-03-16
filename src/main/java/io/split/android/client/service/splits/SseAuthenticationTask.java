@@ -51,6 +51,7 @@ public class SseAuthenticationTask implements SplitTask {
         }
         Logger.d("SSE Authentication done");
         Map<String, Object> data = new HashMap<>();
+        data.put(SplitTaskExecutionInfo.SSE_TOKEN, authResponse.getToken());
         data.put(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM, mChannelParser.parse(authResponse.getToken()));
         data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, authResponse.isValidApiKey());
         data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, authResponse.isStreamingEnabled());

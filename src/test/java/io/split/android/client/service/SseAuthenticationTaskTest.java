@@ -76,6 +76,7 @@ public class SseAuthenticationTaskTest {
         Assert.assertEquals("channel1", channelList.get(0));
         Assert.assertEquals(true, info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
         Assert.assertEquals(true, info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
+        Assert.assertEquals(JWT, info.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN));
     }
 
     @Test
@@ -101,6 +102,7 @@ public class SseAuthenticationTaskTest {
         Assert.assertEquals(0, channelList.size());
         Assert.assertEquals(false, info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
         Assert.assertEquals(false, info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
+        Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN));
     }
 
     @Test
@@ -112,6 +114,7 @@ public class SseAuthenticationTaskTest {
         Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM));
         Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
         Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
+        Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN));
     }
 
     @After
