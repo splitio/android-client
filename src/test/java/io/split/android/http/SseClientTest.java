@@ -8,8 +8,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +15,7 @@ import java.util.Map;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.sseclient.SseClient;
-import io.split.android.client.network.sseclient.EventSourceListener;
+import io.split.android.client.network.sseclient.SseClientListener;
 import io.split.android.client.network.sseclient.NotificationParser;
 import io.split.android.helpers.FileHelper;
 import okhttp3.mockwebserver.Dispatcher;
@@ -84,7 +82,7 @@ public class SseClientTest {
         mWebServer.start();
     }
 
-    private class Listener implements EventSourceListener {
+    private class Listener implements SseClientListener {
         @Override
         public void onOpen() {
             System.out.println("SseClientTest: OnOPEN!!!!");
