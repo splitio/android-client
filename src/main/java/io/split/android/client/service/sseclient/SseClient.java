@@ -28,7 +28,7 @@ public class SseClient {
     private AtomicInteger mReadyState;
     private final HttpClient mHttpClient;
     private HttpStreamRequest mHttpStreamRequest = null;
-    private NotificationParser mNotificationParser;
+    private EventStreamParser mEventStreamParser;
     private WeakReference<SseClientListener> mListener;
     private final ExecutorService mExecutor;
 
@@ -38,11 +38,11 @@ public class SseClient {
 
     public SseClient(@NonNull URI uri,
                      @NonNull HttpClient httpClient,
-                     @NonNull NotificationParser notificationParser,
+                     @NonNull EventStreamParser eventStreamParser,
                      @NonNull SseClientListener listener) {
         mTargetUrl = checkNotNull(uri);
         mHttpClient = checkNotNull(httpClient);
-        mNotificationParser = checkNotNull(notificationParser);
+        mEventStreamParser = checkNotNull(eventStreamParser);
         mReadyState = new AtomicInteger(CLOSED);
         mListener = new WeakReference<>(checkNotNull(listener));
         mExecutor = Executors.newFixedThreadPool(POOL_SIZE);
@@ -128,7 +128,7 @@ public class SseClient {
                     Map<String, String> values = new HashMap<>();
                     while ((inputLine = bufferedReader.readLine()) != null) {
                         // parseLineAndAppendValue returns true if an event has to be dispatched
-                        if (mNotificationParser.parseLineAndAppendValue(inputLine, values)) {
+                        if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
                             triggerOnMessage(values);
                             values = new HashMap<>();
                         }
