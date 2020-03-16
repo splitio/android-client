@@ -122,6 +122,7 @@ public class SseClient {
             try {
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
+                    mReadyState.set(OPEN);
                     BufferedReader bufferedReader = response.getBufferedReader();
                     String inputLine;
                     Map<String, String> values = new HashMap<>();
@@ -133,6 +134,8 @@ public class SseClient {
                         }
                     }
                     bufferedReader.close();
+                } else {
+                    setCloseStatus();
                 }
             } catch (HttpException e) {
                 Logger.e("An error has ocurred while trying to connecting to stream " +
