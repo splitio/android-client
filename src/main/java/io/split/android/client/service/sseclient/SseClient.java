@@ -43,11 +43,10 @@ public class SseClient {
         mTargetUrl = checkNotNull(uri);
         mHttpClient = checkNotNull(httpClient);
         mNotificationParser = checkNotNull(notificationParser);
-
         mReadyState = new AtomicInteger(CLOSED);
         mListener = new WeakReference<>(checkNotNull(listener));
         mExecutor = Executors.newFixedThreadPool(POOL_SIZE);
-        connect();
+        mReadyState.set(CLOSED);
     }
 
     public int readyState() {
@@ -56,6 +55,11 @@ public class SseClient {
 
     public String url() {
         return mTargetUrl.toString();
+    }
+
+    public void connect() {
+        mReadyState.set(CONNECTING);
+        mExecutor.execute(new PersistentConnectionExecutor());
     }
 
     public void disconnect() {
@@ -85,8 +89,9 @@ public class SseClient {
         }
     }
 
-    private void connect() {
-        mExecutor.execute(new PersistentConnectionExecutor());
+    private void setCloseStatus() {
+        mReadyState.set(CLOSED);
+        triggerOnError();
     }
 
     private void triggerOnMessage(Map<String, String> messageValues) {
@@ -132,15 +137,15 @@ public class SseClient {
             } catch (HttpException e) {
                 Logger.e("An error has ocurred while trying to connecting to stream " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                triggerOnError();
+                setCloseStatus();
             } catch (IOException e) {
                 Logger.e("An error has ocurred while parsing stream from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                triggerOnError();
+                setCloseStatus();
             } catch (Exception e) {
                 Logger.e("An unexpected error has ocurred while receiving stream events from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                triggerOnError();
+                setCloseStatus();
             }
         }
     }
