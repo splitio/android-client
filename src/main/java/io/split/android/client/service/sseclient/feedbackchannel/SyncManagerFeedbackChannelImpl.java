@@ -5,13 +5,17 @@ import androidx.annotation.NonNull;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SyncManagerFeedbackChannelImpl implements SyncManagerFeedbackChannel {
 
     private List<WeakReference<SyncManagerFeedbackListener>> mListeners;
 
     public SyncManagerFeedbackChannelImpl() {
-        mListeners = Concurrent
+        mListeners = new CopyOnWriteArrayList<>();
     }
 
     @Override
