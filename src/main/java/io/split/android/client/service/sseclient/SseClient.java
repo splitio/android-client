@@ -6,7 +6,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,12 +19,16 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpStreamRequest;
 import io.split.android.client.network.HttpStreamResponse;
+import io.split.android.client.network.URIBuilder;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.StringHelper;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 
 public class SseClient {
 
+    private static final String CONTENT_TYPE_HEADER = "Content-Type";
+    private static final String CONTENT_TYPE_VALUE_STREAM = "text/event-stream";
     private final static int POOL_SIZE = 1;
     private final URI mTargetUrl;
     private AtomicInteger mReadyState;
@@ -57,34 +63,32 @@ public class SseClient {
         return mTargetUrl.toString();
     }
 
-    public void connect() {
+    public void connect(String token, List<String> channels) {
         mReadyState.set(CONNECTING);
-        mExecutor.execute(new PersistentConnectionExecutor());
+        mExecutor.execute(new PersistentConnectionExecutor(token, channels));
     }
 
     public void disconnect() {
+        setCloseStatus();
         mHttpStreamRequest.close();
     }
 
     public void close() {
+        setCloseStatus();
         mHttpStreamRequest.close();
         shutdownAndAwaitTermination();
     }
 
     private void shutdownAndAwaitTermination() {
-        mExecutor.shutdown(); // Disable new tasks from being submitted
+        mExecutor.shutdown();
         try {
-            // Wait a while for existing tasks to terminate
             if (!mExecutor.awaitTermination(60, TimeUnit.SECONDS)) {
-                mExecutor.shutdownNow(); // Cancel currently executing tasks
-                // Wait a while for tasks to respond to being cancelled
+                mExecutor.shutdownNow();
                 if (!mExecutor.awaitTermination(60, TimeUnit.SECONDS))
                     System.err.println("Pool did not terminate");
             }
         } catch (InterruptedException ie) {
-            // (Re-)Cancel if current thread also interrupted
             mExecutor.shutdownNow();
-            // Preserve interrupt status
             Thread.currentThread().interrupt();
         }
     }
@@ -116,10 +120,30 @@ public class SseClient {
     }
 
     private class PersistentConnectionExecutor implements Runnable {
+        private static final String PUSH_NOTIFICATION_CHANNELS_PARAM = "channel";
+        private static final String PUSH_NOTIFICATION_TOKEN_PARAM = "accessToken";
+
+        private final StringHelper mStringHelper;
+        private final List<String> mChannels;
+        private final String mToken;
+
+        public PersistentConnectionExecutor(@NonNull String token,
+                                            @NonNull List<String> channels) {
+            mToken = checkNotNull(token);
+            mChannels = checkNotNull(channels);
+            mStringHelper = new StringHelper();
+        }
+
         @Override
         public void run() {
-            mHttpStreamRequest = mHttpClient.streamRequest(mTargetUrl);
+            String channels = mStringHelper.join(",", mChannels);
             try {
+                URI url = new URIBuilder(mTargetUrl)
+                        .addParameter(PUSH_NOTIFICATION_CHANNELS_PARAM, channels)
+                        .addParameter(PUSH_NOTIFICATION_TOKEN_PARAM, mToken)
+                        .build();
+                mHttpStreamRequest = mHttpClient.streamRequest(url);
+                mHttpStreamRequest.addHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE_STREAM);
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
                     mReadyState.set(OPEN);
@@ -127,27 +151,26 @@ public class SseClient {
                     String inputLine;
                     Map<String, String> values = new HashMap<>();
                     while ((inputLine = bufferedReader.readLine()) != null) {
-                        // parseLineAndAppendValue returns true if an event has to be dispatched
                         if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
                             triggerOnMessage(values);
                             values = new HashMap<>();
                         }
                     }
                     bufferedReader.close();
-                } else {
-                    setCloseStatus();
                 }
+            } catch (URISyntaxException e) {
+                Logger.e("An error has ocurred while creating stream Url " +
+                        mTargetUrl.toString() + " : " + e.getLocalizedMessage());
             } catch (HttpException e) {
                 Logger.e("An error has ocurred while trying to connecting to stream " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                setCloseStatus();
             } catch (IOException e) {
                 Logger.e("An error has ocurred while parsing stream from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                setCloseStatus();
             } catch (Exception e) {
                 Logger.e("An unexpected error has ocurred while receiving stream events from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+            } finally {
                 setCloseStatus();
             }
         }
