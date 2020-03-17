@@ -8,6 +8,7 @@ public class SdkTargetPath {
     public static final String MY_SEGMENTS = "/mySegments";
     public static final String EVENTS = "/events/bulk";
     public static final String IMPRESSIONS = "/testImpressions/bulk";
+    public static final String SSE_AUTHENTICATION = "/auth";
 
     public static final URI splitChanges(String baseUrl) throws URISyntaxException {
         return buildUrl(baseUrl, SPLIT_CHANGES);
@@ -23,6 +24,10 @@ public class SdkTargetPath {
 
     public static final URI impressions(String baseUrl) throws URISyntaxException {
         return buildUrl(baseUrl, IMPRESSIONS);
+    }
+
+    public static final URI sseAuthentication(String baseUrl) throws URISyntaxException {
+        return buildUrl(baseUrl, SSE_AUTHENTICATION);
     }
 
     private static URI buildUrl(String baseUrl, String path) throws URISyntaxException {
