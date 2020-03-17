@@ -14,9 +14,10 @@ import java.util.Map;
 
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
-import io.split.android.client.network.sseclient.SseClient;
-import io.split.android.client.network.sseclient.SseClientListener;
-import io.split.android.client.network.sseclient.EventStreamParser;
+import io.split.android.client.service.sseclient.SseClient;
+import io.split.android.client.service.sseclient.EventStreamParser;
+
+import io.split.android.client.service.sseclient.SseClientListener;
 import io.split.android.helpers.FileHelper;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -35,7 +36,7 @@ public class SseClientTest {
     public void setup() throws IOException {
     }
 
-    @Test
+    //@Test
     public void test() throws MalformedURLException, URISyntaxException, InterruptedException, UnsupportedEncodingException {
         // ************ WIP ******************
         //URI uri = mWebServer.url(TEST_URL).uri();

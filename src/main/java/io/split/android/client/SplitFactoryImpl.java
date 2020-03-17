@@ -130,7 +130,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 httpClient, cachedFireAndForgetMetrics);
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
-        SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(config, splitApiFacade, storageContainer);;
+        SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
+                config, splitApiFacade, storageContainer, apiToken, key.matchingKey());
 
         _syncManager = new SyncManagerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,

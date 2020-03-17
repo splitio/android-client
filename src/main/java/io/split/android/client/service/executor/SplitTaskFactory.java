@@ -12,4 +12,6 @@ public interface SplitTaskFactory {
     SplitTask createLoadMySegmentsTask();
 
     SplitTask createLoadSplitsTask();
+
+    SplitTask createSseAuthenticationTask();
 }

@@ -2,7 +2,9 @@ package io.split.android.client.service.events;
 
 import androidx.annotation.NonNull;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.service.executor.SplitTask;
@@ -57,9 +59,11 @@ public class EventsRecorderTask implements SplitTask {
         } while (events.size() == mConfig.getEventsPerPush());
 
         if (status == SplitTaskExecutionStatus.ERROR) {
+            Map<String, Object> data = new HashMap<>();
+            data.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, nonSentRecords);
+            data.put(SplitTaskExecutionInfo.NON_SENT_BYTES, nonSentBytes);
             return SplitTaskExecutionInfo.error(
-                    SplitTaskType.EVENTS_RECORDER,
-                    nonSentRecords, nonSentBytes);
+                    SplitTaskType.EVENTS_RECORDER, data);
         }
         return SplitTaskExecutionInfo.success(SplitTaskType.EVENTS_RECORDER);
     }

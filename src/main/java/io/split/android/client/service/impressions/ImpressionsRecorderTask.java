@@ -2,7 +2,9 @@ package io.split.android.client.service.impressions;
 
 import androidx.annotation.NonNull;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.executor.SplitTask;
@@ -57,9 +59,11 @@ public class ImpressionsRecorderTask implements SplitTask {
         } while (impressions.size() == mConfig.getImpressionsPerPush());
 
         if (status == SplitTaskExecutionStatus.ERROR) {
+            Map<String, Object> data = new HashMap<>();
+            data.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, nonSentRecords);
+            data.put(SplitTaskExecutionInfo.NON_SENT_BYTES, nonSentBytes);
             return SplitTaskExecutionInfo.error(
-                    SplitTaskType.IMPRESSIONS_RECORDER,
-                    nonSentRecords, nonSentBytes);
+                    SplitTaskType.IMPRESSIONS_RECORDER, data);
         }
         Logger.d("Posting %d Split impressions", impressions.size());
         return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
