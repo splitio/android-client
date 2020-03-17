@@ -10,6 +10,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeed
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannelImpl;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackListener;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
+import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -33,14 +34,14 @@ public class SyncManagerChannelMessageTest {
         SyncManagerFeedbackListener l3 = Mockito.mock(SyncManagerFeedbackListener.class);
 
         mChannel.register(l1);
-        mChannel.pushMessage(new SyncManagerFeedbackMessage(1));
-        mChannel.pushMessage(new SyncManagerFeedbackMessage(2));
+        mChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_ENABLED));
+        mChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_ENABLED));
 
         mChannel.register(l2);
-        mChannel.pushMessage(new SyncManagerFeedbackMessage(3));
+        mChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
 
         mChannel.register(l3);
-        mChannel.pushMessage(new SyncManagerFeedbackMessage(3));
+        mChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
 
         verify(l1, times(4)).onFedbackMessage(any(SyncManagerFeedbackMessage.class));
         verify(l2, times(2)).onFedbackMessage(any(SyncManagerFeedbackMessage.class));
@@ -51,9 +52,9 @@ public class SyncManagerChannelMessageTest {
     public void correctMessage() {
         SyncManagerFeedbackListener l1 = Mockito.mock(SyncManagerFeedbackListener.class);
 
-        SyncManagerFeedbackMessage m0 = new SyncManagerFeedbackMessage(0);
-        SyncManagerFeedbackMessage m1 = new SyncManagerFeedbackMessage(100);
-        SyncManagerFeedbackMessage m2 = new SyncManagerFeedbackMessage(200);
+        SyncManagerFeedbackMessage m0 = new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_ENABLED);
+        SyncManagerFeedbackMessage m1 = new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_ENABLED);
+        SyncManagerFeedbackMessage m2 = new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED);
 
         mChannel.pushMessage(m0);
 
@@ -71,7 +72,7 @@ public class SyncManagerChannelMessageTest {
         SyncManagerFeedbackListener l1 = Mockito.mock(SyncManagerFeedbackListener.class);
         SyncManagerFeedbackListener l2 = Mockito.mock(SyncManagerFeedbackListener.class);
 
-        SyncManagerFeedbackMessage m1 = new SyncManagerFeedbackMessage(100);
+        SyncManagerFeedbackMessage m1 = new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_ENABLED);
 
         mChannel.pushMessage(m1);
 
