@@ -36,7 +36,7 @@ public class SseClientTest {
     public void setup() throws IOException {
     }
 
-    @Test
+    //@Test
     public void test() throws MalformedURLException, URISyntaxException, InterruptedException, UnsupportedEncodingException {
         // ************ WIP ******************
         //URI uri = mWebServer.url(TEST_URL).uri();
