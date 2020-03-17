@@ -1,5 +1,6 @@
 package io.split.android.client;
 
+import android.app.Service;
 import android.content.Context;
 
 import androidx.work.WorkManager;
@@ -59,6 +60,9 @@ class SplitFactoryHelper {
                         splitClientConfig.endpoint(), cachedFireAndForgetMetrics),
                 ServiceFactory.getMySegmentsFetcher(networkHelper, httpClient,
                         splitClientConfig.endpoint(), key.matchingKey(),   cachedFireAndForgetMetrics),
+                // TODO: Replace by auth url config
+                ServiceFactory.getSseAuthenticationFetcher(networkHelper, httpClient,
+                        "https://auth.split-stage.io/api"),
                 ServiceFactory.getEventsRecorder(networkHelper, httpClient,
                         splitClientConfig.eventsEndpoint()),
                 ServiceFactory.getImpressionsRecorder(networkHelper, httpClient,

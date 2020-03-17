@@ -14,6 +14,8 @@ import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
+import io.split.android.client.service.sseclient.SseChannelsParser;
 import io.split.android.client.storage.SplitStorageContainer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -23,13 +25,20 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageContainer mSplitsStorageContainer;
     private final SplitClientConfig mSplitClientConfig;
+    private final String mApiKey;
+    private final String mUserKey;
 
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
                                 @NonNull SplitApiFacade splitApiFacade,
-                                @NonNull SplitStorageContainer splitStorageContainer) {
+                                @NonNull SplitStorageContainer splitStorageContainer,
+                                @NonNull String apiKey,
+                                @NonNull String userKey) {
+
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
+        mApiKey = checkNotNull(apiKey);
+        mUserKey = checkNotNull(userKey);
     }
 
     @Override
@@ -73,5 +82,11 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SplitTask createLoadSplitsTask() {
         return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage());
+    }
+
+    @Override
+    public SplitTask createSseAuthenticationTask() {
+        return new SseAuthenticationTask(mSplitApiFacade.getSseAuthenticationFetcher(),
+                mApiKey, mUserKey, new SseChannelsParser());
     }
 }

@@ -1,4 +1,4 @@
-package io.split.android.client.service.splits;
+package io.split.android.client.service.sseauthentication;
 
 import androidx.annotation.NonNull;
 
