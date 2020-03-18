@@ -59,10 +59,6 @@ public class SseClient {
         return mReadyState.get();
     }
 
-    public String url() {
-        return mTargetUrl.toString();
-    }
-
     public void connect(String token, List<String> channels) {
         mReadyState.set(CONNECTING);
         mExecutor.execute(new PersistentConnectionExecutor(token, channels));
@@ -71,6 +67,10 @@ public class SseClient {
     public void disconnect() {
         setCloseStatus();
         mHttpStreamRequest.close();
+    }
+
+    public void setListener(SseClientListener listener) {
+        mListener = new WeakReference<>(listener);
     }
 
     public void close() {

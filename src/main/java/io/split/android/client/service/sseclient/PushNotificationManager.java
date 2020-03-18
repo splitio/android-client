@@ -2,6 +2,7 @@ package io.split.android.client.service.sseclient;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.core.util.Pair;
 
 import java.util.List;
@@ -19,13 +20,12 @@ import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 
-public class PushNotificationManager {
+public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener{
 
     private final SseClient mSseClient;
     private final SplitTaskExecutor mTaskExecutor;
     private final SyncManagerFeedbackChannel mSyncManagerFeedbackChannel;
     private final SplitTaskFactory mSplitTaskFactory;
-    private final AuthTaskListener mAuthTaskListener;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -35,13 +35,13 @@ public class PushNotificationManager {
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTaskExecutor = checkNotNull(taskExecutor);
         mSyncManagerFeedbackChannel = checkNotNull(syncManagerFeedbackChannel);
-        mAuthTaskListener = new AuthTaskListener();
+        mSseClient.setListener(this);
     }
 
     public void start() {
         mTaskExecutor.submit(
                 mSplitTaskFactory.createSseAuthenticationTask(),
-                mAuthTaskListener);
+                this);
     }
 
     public void stop() {
@@ -60,8 +60,9 @@ public class PushNotificationManager {
         mSyncManagerFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
     }
 
-    private class SseMessageHandler implements SseClientListener {
-
+//
+//     SSE client listener implementation
+//
         @Override
         public void onOpen() {
             notifyPushEnabled();
@@ -76,13 +77,14 @@ public class PushNotificationManager {
         public void onError() {
             notifyPushDisabled();
         }
-    }
 
-    private class AuthTaskListener implements SplitTaskExecutionListener {
+//
+//      Split Task Executor Listener implementation
+//
         @Override
         public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
             Pair<String, List<String>> unpackedResult = unpackResult(taskInfo);
-            if (unpackedResult != null) {
+            if (unpackedResult != null && unpackedResult.second.size() == 2) {
                 connectToSse(unpackedResult.first, unpackedResult.second);
             } else {
                 notifyPushDisabled();
@@ -97,7 +99,7 @@ public class PushNotificationManager {
             Boolean isStreamingEnabled = taskInfo.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED);
             if (isStreamingEnabled != null && isStreamingEnabled.booleanValue()) {
                 String token = taskInfo.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN);
-                Object channelsObject = taskInfo.getObjectValue(SplitTaskExecutionInfo.SSE_TOKEN);
+                Object channelsObject = taskInfo.getObjectValue(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM);
                 if (token != null && channelsObject != null) {
                     try {
                         List<String> channels = (List<String>) channelsObject;
@@ -114,7 +116,4 @@ public class PushNotificationManager {
             }
             return null;
         }
-
-    }
-
 }
