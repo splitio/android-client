@@ -1,4 +1,4 @@
-package io.split.android.http;
+package io.split.android.client.service.sseclient;
 
 import org.junit.Assert;
 import org.junit.Before;

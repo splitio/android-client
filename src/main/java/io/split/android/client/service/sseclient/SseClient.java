@@ -122,6 +122,9 @@ public class SseClient {
     private class PersistentConnectionExecutor implements Runnable {
         private static final String PUSH_NOTIFICATION_CHANNELS_PARAM = "channel";
         private static final String PUSH_NOTIFICATION_TOKEN_PARAM = "accessToken";
+        private static final String PUSH_NOTIFICATION_VERSION_PARAM = "v";
+        private static final String PUSH_NOTIFICATION_VERSION_VALUE = "1.1";
+
 
         private final StringHelper mStringHelper;
         private final List<String> mChannels;
@@ -139,6 +142,7 @@ public class SseClient {
             String channels = mStringHelper.join(",", mChannels);
             try {
                 URI url = new URIBuilder(mTargetUrl)
+                        .addParameter(PUSH_NOTIFICATION_VERSION_PARAM, PUSH_NOTIFICATION_VERSION_VALUE)
                         .addParameter(PUSH_NOTIFICATION_CHANNELS_PARAM, channels)
                         .addParameter(PUSH_NOTIFICATION_TOKEN_PARAM, mToken)
                         .build();

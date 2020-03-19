@@ -6,6 +6,9 @@ import java.util.Map;
 
 public class EventStreamParser {
     private final static String FIELD_SEPARATOR = ":";
+    private final static String EVENT_FIELD = "event";
+    private final static String KEEP_ALIVE_EVENT = "keepalive";
+    private final static String KEEP_ALIVE_TOKEN = ":" + KEEP_ALIVE_EVENT;
 
     /**
      * This parsing implementation is based in the folowing specification:
@@ -26,7 +29,16 @@ public class EventStreamParser {
 
         String trimmedLine = streamLine.trim();
 
-        if (trimmedLine.isEmpty()) {
+        if(KEEP_ALIVE_TOKEN.equals(trimmedLine)) {
+            messageValues.put(EVENT_FIELD, KEEP_ALIVE_EVENT);
+            return true;
+        }
+
+        if (trimmedLine.isEmpty() && messageValues.size() == 0) {
+            return false;
+        }
+
+        if (trimmedLine.isEmpty() && messageValues.size() == 3) {
             return true;
         }
 

@@ -1,5 +1,9 @@
 package io.split.android.client.service.sseclient.notifications;
 
-public interface IncomingNotification {
-    NotificationType getType();
+public class IncomingNotification {
+    private NotificationType type;
+
+    public NotificationType getType() {
+        return type;
+    }
 }
