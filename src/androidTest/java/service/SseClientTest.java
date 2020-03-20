@@ -31,7 +31,7 @@ public class SseClientTest {
     public void setup() throws IOException {
     }
 
-    @Test
+    //@Test
     public void okSse() throws MalformedURLException, URISyntaxException, InterruptedException, UnsupportedEncodingException {
         // ************ WIP ******************
 
