@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -30,34 +29,32 @@ public class NotificationProcessor {
 
     public void process(String rawJson) {
         try {
-            process(mNotificationParser.parseRawNotification(rawJson).getData());
+            String notificationJson = mNotificationParser.parseRawNotification(rawJson).getData();
+
+            IncomingNotification incomingNotification =
+                    mNotificationParser.parseIncoming(notificationJson);
+            switch (incomingNotification.getType()) {
+                case SPLIT_UPDATE:
+                    processSplitUpdate(mNotificationParser.parseSplitUpdate(notificationJson));
+                    break;
+                case SPLIT_KILL:
+                    processSplitKill(mNotificationParser.parseSplitKill(notificationJson));
+                    break;
+                case MY_SEGMENTS_UPDATE:
+                    processMySegmentUpdate(mNotificationParser.parseMySegmentUpdate(notificationJson));
+                    break;
+                case CONTROL:
+                    processControl();
+                    break;
+                default:
+                    Logger.e("Unknow notification arrived: " + notificationJson);
+            }
         } catch (JsonSyntaxException e) {
             Logger.e("Error processing incoming push notification: " +
                     e.getLocalizedMessage());
         } catch (Exception e) {
             Logger.e("Unknown error while processing incoming push notification: " +
                     e.getLocalizedMessage());
-        }
-    }
-
-    private void processIncoming(String notificationJson) throws JsonSyntaxException {
-        IncomingNotification incomingNotification =
-                mNotificationParser.parseIncoming(notificationJson);
-        switch (incomingNotification.getType()) {
-            case SPLIT_UPDATE:
-                processSplitUpdate(mNotificationParser.parseSplitUpdate(notificationJson));
-                break;
-            case SPLIT_KILL:
-                processSplitKill(mNotificationParser.parseSplitKill(notificationJson));
-                break;
-            case MY_SEGMENTS_UPDATE:
-                processMySegmentUpdate(mNotificationParser.parseMySegmentUpdate(notificationJson));
-                break;
-            case CONTROL:
-                processControl();
-                break;
-            default:
-                Logger.e("Unknow notification arrived: " + notificationJson);
         }
     }
 
