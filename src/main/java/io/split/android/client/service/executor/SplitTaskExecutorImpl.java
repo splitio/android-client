@@ -54,6 +54,11 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     }
 
     @Override
+    public void execute(@NonNull SplitTask task, @NonNull String queueName) {
+        //  TODO: Will be implemented in next PR to make this small
+    }
+
+    @Override
     public void pause() {
         mScheduler.pause();
     }
@@ -81,7 +86,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         }
     }
 
-    static class TaskWrapper implements Runnable {
+    private static class TaskWrapper implements Runnable {
         private final SplitTask mTask;
         private WeakReference<SplitTaskExecutionListener> mExecutionListener;
 
