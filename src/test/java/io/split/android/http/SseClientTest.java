@@ -15,9 +15,8 @@ import java.util.Map;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.sseclient.SseClient;
-import io.split.android.client.service.sseclient.EventStreamParser;
-
 import io.split.android.client.service.sseclient.SseClientListener;
+import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.helpers.FileHelper;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
