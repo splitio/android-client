@@ -6,6 +6,10 @@ import androidx.annotation.Nullable;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.lang.ref.WeakReference;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.utils.Logger;
@@ -20,12 +24,14 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final int MIN_THREADPOOL_SIZE_WHEN_IDLE = 1;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
+    private final Map<String, BlockingQueue<SplitTask>> mEnqueuedTasks;
 
     public SplitTaskExecutorImpl() {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
         mScheduler = new PausableScheduledThreadPoolExecutorImpl(MIN_THREADPOOL_SIZE_WHEN_IDLE, threadFactoryBuilder.build());
+        mEnqueuedTasks = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -55,7 +61,12 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     @Override
     public void execute(@NonNull SplitTask task, @NonNull String queueName) {
-        //  TODO: Will be implemented in next PR to make this small
+        BlockingQueue<SplitTask> queue = mEnqueuedTasks.get(queueName);
+        if(queue == null) {
+            queue = new LinkedBlockingQueue<>();
+            mEnqueuedTasks.put(queueName, queue);
+        }
+        queue.add(task);
     }
 
     @Override
@@ -89,12 +100,20 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static class TaskWrapper implements Runnable {
         private final SplitTask mTask;
         private WeakReference<SplitTaskExecutionListener> mExecutionListener;
+        private String mQueueName;
 
         TaskWrapper(SplitTask task,
                     SplitTaskExecutionListener executionListener) {
+           this(task, executionListener, null);
+        }
+
+        TaskWrapper(SplitTask task,
+                    SplitTaskExecutionListener executionListener,
+                    String queueName) {
 
             mTask = checkNotNull(task);
             mExecutionListener = new WeakReference<>(executionListener);
+            mQueueName = queueName;
         }
 
         @Override
@@ -104,6 +123,9 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                 SplitTaskExecutionListener listener = mExecutionListener.get();
                 if (listener != null) {
                     listener.taskExecuted(info);
+                }
+                if (mQueueName !=  null) {
+                    
                 }
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
