@@ -15,6 +15,7 @@ import java.util.Map;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.sseclient.SseClient;
+
 import io.split.android.client.service.sseclient.SseClientListener;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.helpers.FileHelper;
@@ -38,8 +39,6 @@ public class SseClientTest {
     //@Test
     public void test() throws MalformedURLException, URISyntaxException, InterruptedException, UnsupportedEncodingException {
         // ************ WIP ******************
-        //URI uri = mWebServer.url(TEST_URL).uri();
-        //URI uri = new URI("https://streamdata.motwin.net/https://stockmarket.streamdata.io/prices?X-Sd-Token=MzNkZTYwN2ItYTZlMy00ODMzLWFiZWMtZTkxNTM0NjE4MWE1");
 
         List<String> channelList = new ArrayList<>();
 
