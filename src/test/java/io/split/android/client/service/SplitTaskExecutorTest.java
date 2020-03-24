@@ -9,6 +9,8 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -244,6 +246,43 @@ public class SplitTaskExecutorTest {
         Assert.assertEquals(4, task.callCount);
     }
 
+    @Test
+    public void testOrderWhenSubmitedByQueue() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(9);
+        String q1 = "q1";
+        String q2 = "q2";
+        String q3 = "q3";
+        mTaskExecutor.execute(new TestQueueTask(q1, 1, latch), q1);
+        mTaskExecutor.execute(new TestQueueTask(q2, 1, latch), q2);
+        mTaskExecutor.execute(new TestQueueTask(q1, 2, latch), q1);
+
+        mTaskExecutor.execute(new TestQueueTask(q3, 1, latch), q3);
+        mTaskExecutor.execute(new TestQueueTask(q1, 3, latch), q1);
+
+        mTaskExecutor.execute(new TestQueueTask(q3, 2, latch), q3);
+        mTaskExecutor.execute(new TestQueueTask(q3, 3, latch), q3);
+        mTaskExecutor.execute(new TestQueueTask(q2, 2, latch), q2);
+        mTaskExecutor.execute(new TestQueueTask(q2, 3, latch), q2);
+
+        latch.await(5, TimeUnit.SECONDS);
+
+        List<Integer> listQ1 = TestQueueTask.EXECUTED_TASKS.get(q1);
+        List<Integer> listQ2 = TestQueueTask.EXECUTED_TASKS.get(q2);
+        List<Integer> listQ3 = TestQueueTask.EXECUTED_TASKS.get(q3);
+
+        Assert.assertEquals(1, listQ1.get(0).intValue());
+        Assert.assertEquals(2, listQ1.get(1).intValue());
+        Assert.assertEquals(3, listQ1.get(2).intValue());
+
+        Assert.assertEquals(1, listQ2.get(0).intValue());
+        Assert.assertEquals(2, listQ2.get(1).intValue());
+        Assert.assertEquals(3, listQ2.get(2).intValue());
+
+        Assert.assertEquals(1, listQ3.get(0).intValue());
+        Assert.assertEquals(2, listQ3.get(1).intValue());
+        Assert.assertEquals(3, listQ3.get(2).intValue());
+
+    }
     @After
     public void tearDown() {
     }
@@ -283,6 +322,32 @@ public class SplitTaskExecutorTest {
         public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
             taskExecutedCalled = true;
             mLatch.countDown();
+        }
+    }
+
+    private static class TestQueueTask implements SplitTask {
+        public CountDownLatch mLatch;
+        public static Map<String, List<Integer>> EXECUTED_TASKS = new ConcurrentHashMap<>();
+        private final String mQueueName;
+        private final int mId;
+
+        public TestQueueTask(String queueName, int id, CountDownLatch latch) {
+            mQueueName = queueName;
+            mId = id;
+            mLatch = latch;
+        }
+
+        @NonNull
+        @Override
+        public SplitTaskExecutionInfo execute() {
+            List<Integer> ids = EXECUTED_TASKS.get(mQueueName);
+            if(ids == null) {
+                ids = new ArrayList<>();
+                EXECUTED_TASKS.put(mQueueName, ids);
+            }
+            ids.add(mId);
+            mLatch.countDown();
+            return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
         }
     }
 }

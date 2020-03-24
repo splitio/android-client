@@ -9,6 +9,8 @@ import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -24,14 +26,14 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final int MIN_THREADPOOL_SIZE_WHEN_IDLE = 1;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
-    private final Map<String, BlockingQueue<SplitTask>> mEnqueuedTasks;
+    private final Map<String, ExecutorService> mExecutorQueues;
 
     public SplitTaskExecutorImpl() {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
         mScheduler = new PausableScheduledThreadPoolExecutorImpl(MIN_THREADPOOL_SIZE_WHEN_IDLE, threadFactoryBuilder.build());
-        mEnqueuedTasks = new ConcurrentHashMap<>();
+        mExecutorQueues = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -61,12 +63,12 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     @Override
     public void execute(@NonNull SplitTask task, @NonNull String queueName) {
-        BlockingQueue<SplitTask> queue = mEnqueuedTasks.get(queueName);
-        if(queue == null) {
-            queue = new LinkedBlockingQueue<>();
-            mEnqueuedTasks.put(queueName, queue);
+        ExecutorService executorServiceForQueue = mExecutorQueues.get(queueName);
+        if(executorServiceForQueue == null) {
+            executorServiceForQueue = Executors.newSingleThreadExecutor();
+            mExecutorQueues.put(queueName, executorServiceForQueue);
         }
-        queue.add(task);
+        executorServiceForQueue.execute(new TaskWrapper(task, null));
     }
 
     @Override
@@ -81,6 +83,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     @Override
     public void stop() {
+        mExecutorQueues.clear();
         if (!mScheduler.isShutdown()) {
             mScheduler.shutdown();
             try {
@@ -97,23 +100,14 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         }
     }
 
-    private static class TaskWrapper implements Runnable {
+    private class TaskWrapper implements Runnable {
         private final SplitTask mTask;
         private WeakReference<SplitTaskExecutionListener> mExecutionListener;
-        private String mQueueName;
 
         TaskWrapper(SplitTask task,
                     SplitTaskExecutionListener executionListener) {
-           this(task, executionListener, null);
-        }
-
-        TaskWrapper(SplitTask task,
-                    SplitTaskExecutionListener executionListener,
-                    String queueName) {
-
             mTask = checkNotNull(task);
             mExecutionListener = new WeakReference<>(executionListener);
-            mQueueName = queueName;
         }
 
         @Override
@@ -123,9 +117,6 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                 SplitTaskExecutionListener listener = mExecutionListener.get();
                 if (listener != null) {
                     listener.taskExecuted(info);
-                }
-                if (mQueueName !=  null) {
-                    
                 }
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
