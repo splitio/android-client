@@ -84,7 +84,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @Override
         public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
             Pair<String, List<String>> unpackedResult = unpackResult(taskInfo);
-            if (unpackedResult != null && unpackedResult.second.size() == 2) {
+            if (unpackedResult != null && unpackedResult.second.size() > 0) {
                 connectToSse(unpackedResult.first, unpackedResult.second);
             } else {
                 notifyPushDisabled();
