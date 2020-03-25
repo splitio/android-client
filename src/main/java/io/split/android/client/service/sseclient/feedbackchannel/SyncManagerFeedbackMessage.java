@@ -6,12 +6,23 @@ public class SyncManagerFeedbackMessage {
      */
 
     private SyncManagerFeedbackMessageType message;
+    private Object data;
 
     public SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType message) {
+        this(message, null);
+    }
+
+    public SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType message,
+                                      Object data) {
         this.message = message;
+        this.data = data;
     }
 
     public SyncManagerFeedbackMessageType getMessage() {
         return message;
+    }
+
+    public Object getData() {
+        return data;
     }
 }

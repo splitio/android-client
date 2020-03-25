@@ -28,8 +28,8 @@ public class MySegmentsUpdateTask implements ParameterizableSplitTask<List<Strin
     }
 
     @Override
-    public void setParams(List<String> params) {
-        mMySegments = params;
+    public void setParam(List<String> parameter) {
+        mMySegments = parameter;
     }
 
     @Override

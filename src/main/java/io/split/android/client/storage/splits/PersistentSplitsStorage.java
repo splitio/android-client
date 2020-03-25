@@ -9,5 +9,6 @@ import io.split.android.client.dtos.Split;
 public interface PersistentSplitsStorage {
     boolean update(ProcessedSplitChange splitChange);
     SplitsSnapshot getSnapshot();
+    void update(Split splitName);
     void close();
 }

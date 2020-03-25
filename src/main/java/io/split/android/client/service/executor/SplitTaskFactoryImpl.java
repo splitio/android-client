@@ -11,8 +11,10 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.SseChannelsParser;
@@ -88,5 +90,15 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     public SplitTask createSseAuthenticationTask() {
         return new SseAuthenticationTask(mSplitApiFacade.getSseAuthenticationFetcher(),
                 mApiKey, mUserKey, new SseChannelsParser());
+    }
+
+    @Override
+    public ParameterizableSplitTask createSplitKillTask() {
+        return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage());
+    }
+
+    @Override
+    public ParameterizableSplitTask createMySegmentsUpdateTask() {
+        return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage());
     }
 }

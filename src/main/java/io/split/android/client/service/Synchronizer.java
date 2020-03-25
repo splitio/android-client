@@ -2,7 +2,7 @@ package io.split.android.client.service;
 
 public interface Synchronizer {
     void syncAll();
-    void synchronizeSplits();
+    void synchronizeSplits(long since);
     void syncronizeMySegments();
     void startPeriodicFetching();
     void stopPeriodicFetching();
