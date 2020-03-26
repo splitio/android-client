@@ -8,6 +8,7 @@ import java.util.List;
 
 import io.split.android.client.service.sseclient.SseChannelsParser;
 
+
 public class SseChannelsParserTest {
 
     @Before
