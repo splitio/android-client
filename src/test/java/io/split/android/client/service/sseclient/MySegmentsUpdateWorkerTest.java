@@ -5,12 +5,12 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import io.split.android.client.service.synchronizer.Synchronizer;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannelImpl;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+
+import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
+import io.split.android.client.service.synchronizer.Synchronizer;
 
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -18,35 +18,32 @@ import static org.mockito.Mockito.verify;
 
 public class MySegmentsUpdateWorkerTest {
 
-    SyncManagerFeedbackChannel mFeedbackChannel;
-
     MySegmentsUpdateWorker mWorker;
 
     @Mock
     Synchronizer mSynchronizer;
 
+    BlockingQueue<MySegmentChangeNotification> mNotificationQueue;
+
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        mFeedbackChannel = new SyncManagerFeedbackChannelImpl();
-        mWorker = new MySegmentsUpdateWorker(mSynchronizer);
-        mFeedbackChannel.register(mWorker);
+        mNotificationQueue = new ArrayBlockingQueue<>(50);
+        mWorker = new MySegmentsUpdateWorker(mSynchronizer, mNotificationQueue);
     }
 
     @Test
-    public void mySegmentsUpdateReceived() {
+    public void mySegmentsUpdateReceived() throws InterruptedException {
 
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.MY_SEGMENTS_UPDATED));
-        verify(mSynchronizer, times(1)).syncronizeMySegments();
-    }
+        mNotificationQueue.offer(new MySegmentChangeNotification());
+        mNotificationQueue.offer(new MySegmentChangeNotification());
+        mNotificationQueue.offer(new MySegmentChangeNotification());
+        mNotificationQueue.offer(new MySegmentChangeNotification());
 
-    @Test
-    public void otherMessageReceived() {
+        Thread.sleep(1000);
 
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.SPLITS_UPDATED));
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
+        verify(mSynchronizer, times(4)).syncronizeMySegments();
 
-        verify(mSynchronizer, never()).syncronizeMySegments();
+
     }
 }

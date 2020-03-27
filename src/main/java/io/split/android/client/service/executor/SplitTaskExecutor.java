@@ -14,8 +14,6 @@ public interface SplitTaskExecutor {
     void submit(@NonNull SplitTask task,
                 @Nullable SplitTaskExecutionListener executionListener);
 
-    void execute(@NonNull SplitTask task, @NonNull String queueName);
-
     void pause();
 
     void resume();

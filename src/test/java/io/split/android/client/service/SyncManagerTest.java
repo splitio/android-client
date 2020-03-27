@@ -19,6 +19,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
@@ -391,9 +392,10 @@ public class SyncManagerTest {
         }
 
         @Override
-        public void schedule(@NonNull SplitTask task, long initialDelayInSecs,
+        public String schedule(@NonNull SplitTask task, long initialDelayInSecs,
                              long periodInSecs,
                              @Nullable SplitTaskExecutionListener executionListener) {
+            return UUID.randomUUID().toString();
 
         }
 
@@ -417,12 +419,12 @@ public class SyncManagerTest {
         }
 
         @Override
-        public void stop() {
+        public void stopTasks(List<String> taskIds) {
 
         }
 
         @Override
-        public void execute(@NonNull SplitTask task, @NonNull String queueName) {
+        public void stop() {
 
         }
     }

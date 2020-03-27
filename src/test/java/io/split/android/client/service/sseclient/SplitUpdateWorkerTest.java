@@ -1,26 +1,28 @@
 package io.split.android.client.service.sseclient;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import io.split.android.client.service.synchronizer.Synchronizer;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannelImpl;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
-import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
-import static org.mockito.ArgumentMatchers.any;
+import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
+import io.split.android.client.service.synchronizer.Synchronizer;
+
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class SplitUpdateWorkerTest {
 
-    SyncManagerFeedbackChannel mFeedbackChannel;
+    BlockingQueue<SplitsChangeNotification> mNotificationsQueue;
 
     SplitUpdatesWorker mWorker;
 
@@ -30,39 +32,38 @@ public class SplitUpdateWorkerTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        mFeedbackChannel = new SyncManagerFeedbackChannelImpl();
-        mWorker = new SplitUpdatesWorker(mSynchronizer);
-        mFeedbackChannel.register(mWorker);
+        mNotificationsQueue = new ArrayBlockingQueue<>(50);
+        mWorker = new SplitUpdatesWorker(mSynchronizer, mNotificationsQueue);
     }
 
     @Test
-    public void splitsUpdateReceived() {
+    public void splitsUpdateReceived() throws InterruptedException {
         Long changeNumber = 1000L;
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.SPLITS_UPDATED, changeNumber));
+        SplitsChangeNotification notification = Mockito.mock(SplitsChangeNotification.class);
+        when(notification.getChangeNumber()).thenReturn(changeNumber);
+        mNotificationsQueue.offer(notification);
 
-        verify(mSynchronizer, times(1)).synchronizeSplits(changeNumber);
+        Thread.sleep(2000);
+
+        ArgumentCaptor<Long> changeNumberCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(mSynchronizer, times(1))
+                .synchronizeSplits(changeNumberCaptor.capture());
+        Assert.assertEquals(changeNumber, changeNumberCaptor.getValue());
     }
 
     @Test
-    public void otherMessageReceived() {
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.MY_SEGMENTS_UPDATED));
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
+    public void severalSplitsUpdateReceived() throws InterruptedException {
+        Long changeNumber = 1000L;
+        SplitsChangeNotification notification = Mockito.mock(SplitsChangeNotification.class);
+        when(notification.getChangeNumber()).thenReturn(changeNumber);
+        mNotificationsQueue.offer(notification);
+        mNotificationsQueue.offer(notification);
+        mNotificationsQueue.offer(notification);
+        mNotificationsQueue.offer(notification);
 
-        verify(mSynchronizer, never()).syncronizeMySegments();
-    }
+        Thread.sleep(2000);
 
-    @Test
-    public void noChangeNumberReceived() {
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.SPLITS_UPDATED));
-
-        verify(mSynchronizer, never()).synchronizeSplits(anyLong());
-    }
-
-    @Test
-    public void noValidChangeNumberReceived() {
-        mFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.SPLITS_UPDATED, "hi"));
-
-        verify(mSynchronizer, never()).synchronizeSplits(anyLong());
+        verify(mSynchronizer, times(4))
+                .synchronizeSplits(anyLong());
     }
 }

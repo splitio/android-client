@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.ParameterizableSplitTask;
@@ -21,17 +22,21 @@ public class NotificationProcessor {
 
     private final NotificationParser mNotificationParser;
     private final SplitTaskExecutor mSplitTaskExecutor;
-    private final SyncManagerFeedbackChannel mSyncManagerFeedbackChannel;
     private final SplitTaskFactory mSplitTaskFactory;
+    private final BlockingQueue<MySegmentChangeNotification> mMySegmentUpdateNotificationsQueue;
+    private final BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationsQueue;
 
-    public NotificationProcessor(@NonNull SplitTaskExecutor splitTaskExecutor,
-                                 @NonNull SplitTaskFactory splitTaskFactory,
-                                 @NonNull NotificationParser notificationParser,
-                                 @NonNull SyncManagerFeedbackChannel syncManagerFeedbackChannel) {
+    public NotificationProcessor(
+            @NonNull SplitTaskExecutor splitTaskExecutor,
+            @NonNull SplitTaskFactory splitTaskFactory,
+            @NonNull NotificationParser notificationParser,
+            @NonNull BlockingQueue<MySegmentChangeNotification> mySegmentUpdateNotificationsQueue,
+            @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue) {
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mNotificationParser = checkNotNull(notificationParser);
-        mSyncManagerFeedbackChannel = checkNotNull(syncManagerFeedbackChannel);
+        mMySegmentUpdateNotificationsQueue = checkNotNull(mySegmentUpdateNotificationsQueue);
+        mSplitsUpdateNotificationsQueue = checkNotNull(splitsUpdateNotificationsQueue);
     }
 
     public void process(String rawJson) {
@@ -66,8 +71,7 @@ public class NotificationProcessor {
     }
 
     private void processSplitUpdate(SplitsChangeNotification notification) {
-        mSyncManagerFeedbackChannel.pushMessage(
-                new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.SPLITS_UPDATED));
+        mSplitsUpdateNotificationsQueue.offer(notification);
     }
 
     private void processSplitKill(SplitKillNotification notification) {
@@ -82,11 +86,10 @@ public class NotificationProcessor {
 
     private void processMySegmentUpdate(MySegmentChangeNotification notification) {
         if (!notification.isIncludesPayload()) {
-            mSyncManagerFeedbackChannel.pushMessage(
-                    new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.MY_SEGMENTS_UPDATED));
+            mMySegmentUpdateNotificationsQueue.offer(notification);
         } else {
             List<String> segmentList = notification.getSegmentList();
-            if(segmentList != null && segmentList.size() > 0) {
+            if (segmentList != null && segmentList.size() > 0) {
                 ParameterizableSplitTask<List<String>> task = mSplitTaskFactory.createMySegmentsUpdateTask();
                 task.setParam(notification.getSegmentList());
                 mSplitTaskExecutor.submit(task, null);
