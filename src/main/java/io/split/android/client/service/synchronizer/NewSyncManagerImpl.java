@@ -34,6 +34,7 @@ public class NewSyncManagerImpl implements NewSyncManager, SyncManagerFeedbackLi
         mSynchronizer = checkNotNull(synchronizer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mPushNotificationManager = checkNotNull(pushNotificationManager);
+        mIsPushEnabled = new AtomicBoolean(false);
     }
 
 
