@@ -15,9 +15,4 @@ public interface SyncManager {
 
     void stop();
 
-    void flush();
-
-    void pushEvent(Event event);
-
-    void pushImpression(Impression impression);
 }

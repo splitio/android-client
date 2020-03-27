@@ -2,6 +2,8 @@ package io.split.android.client.service.executor;
 
 import androidx.annotation.NonNull;
 
+import java.util.List;
+
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
@@ -16,6 +18,7 @@ import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.SseChannelsParser;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -100,5 +103,13 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public ParameterizableSplitTask createMySegmentsUpdateTask() {
         return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage());
+    }
+
+    @Override
+    public ParameterizableSplitTask createSplitsUpdateTask() {
+        return new SplitsUpdateTask(
+                mSplitApiFacade.getSplitFetcher(),
+                mSplitsStorageContainer.getSplitsStorage(),
+                new SplitChangeProcessor());
     }
 }

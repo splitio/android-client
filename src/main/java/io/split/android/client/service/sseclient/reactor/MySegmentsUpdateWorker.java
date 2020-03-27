@@ -2,16 +2,10 @@ package io.split.android.client.service.sseclient.reactor;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.service.Synchronizer;
-import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
+import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackListener;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;

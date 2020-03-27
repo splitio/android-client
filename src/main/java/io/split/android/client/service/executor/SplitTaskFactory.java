@@ -23,4 +23,6 @@ public interface SplitTaskFactory {
 
     ParameterizableSplitTask<List<String>> createMySegmentsUpdateTask();
 
+    ParameterizableSplitTask<Long> createSplitsUpdateTask();
+
 }

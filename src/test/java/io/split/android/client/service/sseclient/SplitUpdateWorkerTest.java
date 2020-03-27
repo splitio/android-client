@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import io.split.android.client.service.Synchronizer;
+import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannelImpl;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;

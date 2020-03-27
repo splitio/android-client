@@ -3,8 +3,10 @@ package io.split.android.client.service.executor;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.List;
+
 public interface SplitTaskExecutor {
-    void schedule(@NonNull SplitTask task,
+    String schedule(@NonNull SplitTask task,
                   long initialDelayInSecs,
                   long periodInSecs,
                   @Nullable SplitTaskExecutionListener executionListener);
@@ -17,6 +19,8 @@ public interface SplitTaskExecutor {
     void pause();
 
     void resume();
+
+    void stopTasks(List<String> taskIds);
 
     void stop();
 }

@@ -2,7 +2,7 @@ package io.split.android.client.service.sseclient.reactor;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.service.Synchronizer;
+import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackListener;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
