@@ -33,6 +33,14 @@ public class SplitKillTask implements ParameterizableSplitTask<Split> {
                 logError("Split name to kill could not be null.");
                 return SplitTaskExecutionInfo.error(SplitTaskType.SPLIT_KILL);
             }
+            long changeNumber = mSplitsStorage.getTill();
+
+            if(mKilledSplit.changeNumber <= changeNumber) {
+                Logger.d("Skipping killed split notification for old change number: "
+                        + mKilledSplit.changeNumber);
+                return SplitTaskExecutionInfo.success(SplitTaskType.SPLIT_KILL);
+            }
+
             Split splitToKill = mSplitsStorage.get(mKilledSplit.name);
             splitToKill.killed = true;
             splitToKill.defaultTreatment = mKilledSplit.defaultTreatment;

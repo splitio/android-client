@@ -52,6 +52,8 @@ public class SplitKillTaskTest {
         split.changeNumber = 1001;
         mTask.setParam(split);
 
+        when(mSplitsStorage.getTill()).thenReturn(1000L);
+
         SplitTaskExecutionInfo result = mTask.execute();
         ArgumentCaptor<Split> splitCaptor =
                 ArgumentCaptor.forClass(Split.class);
@@ -65,6 +67,23 @@ public class SplitKillTaskTest {
     }
 
     @Test
+    public void oldChangeNumber() throws HttpFetcherException {
+        Split split = new Split();
+        split.name = "split1";
+        split.defaultTreatment = "on";
+        split.changeNumber = 1001;
+        mTask.setParam(split);
+
+        when(mSplitsStorage.getTill()).thenReturn(1002L);
+
+        SplitTaskExecutionInfo result = mTask.execute();
+        ArgumentCaptor<Split> splitCaptor =
+                ArgumentCaptor.forClass(Split.class);
+        verify(mSplitsStorage, never()).updateWithoutChecks(splitCaptor.capture());
+        Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+    }
+
+    @Test
     public void nullParam() throws HttpFetcherException {
         mTask.setParam(null);
         SplitTaskExecutionInfo result = mTask.execute();
@@ -75,6 +94,8 @@ public class SplitKillTaskTest {
     @Test
     public void storageException() {
         Split split = new Split();
+        split.changeNumber = 2000L;
+        when(mSplitsStorage.getTill()).thenReturn(1000L);
         mTask.setParam(split);
         doThrow(NullPointerException.class).when(mSplitsStorage).updateWithoutChecks(any());
         SplitTaskExecutionInfo result = mTask.execute();
