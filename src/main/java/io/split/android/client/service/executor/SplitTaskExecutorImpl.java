@@ -26,14 +26,12 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final int MIN_THREADPOOL_SIZE_WHEN_IDLE = 1;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
-    private final Map<String, ExecutorService> mExecutorQueues;
 
     public SplitTaskExecutorImpl() {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
         mScheduler = new PausableScheduledThreadPoolExecutorImpl(MIN_THREADPOOL_SIZE_WHEN_IDLE, threadFactoryBuilder.build());
-        mExecutorQueues = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -62,16 +60,6 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     }
 
     @Override
-    public void execute(@NonNull SplitTask task, @NonNull String queueName) {
-        ExecutorService executorServiceForQueue = mExecutorQueues.get(queueName);
-        if(executorServiceForQueue == null) {
-            executorServiceForQueue = Executors.newSingleThreadExecutor();
-            mExecutorQueues.put(queueName, executorServiceForQueue);
-        }
-        executorServiceForQueue.execute(new TaskWrapper(task, null));
-    }
-
-    @Override
     public void pause() {
         mScheduler.pause();
     }
@@ -83,7 +71,6 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     @Override
     public void stop() {
-        mExecutorQueues.clear();
         if (!mScheduler.isShutdown()) {
             mScheduler.shutdown();
             try {

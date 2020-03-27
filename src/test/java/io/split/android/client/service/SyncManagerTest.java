@@ -420,10 +420,5 @@ public class SyncManagerTest {
         public void stop() {
 
         }
-
-        @Override
-        public void execute(@NonNull SplitTask task, @NonNull String queueName) {
-
-        }
     }
 }

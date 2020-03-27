@@ -10,6 +10,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -47,7 +48,10 @@ public class NotificationProcessorTest {
     NotificationParser mNotificationParser;
 
     @Mock
-    SyncManagerFeedbackChannel mSyncManagerFeedbackChannel;
+    BlockingQueue<MySegmentChangeNotification> mMySegmentChangeQueue;
+
+    @Mock
+    BlockingQueue<SplitsChangeNotification> mSplitsChangeQueue;
 
     NotificationProcessor mNotificationProcessor;
 
@@ -65,23 +69,30 @@ public class NotificationProcessorTest {
         when(mSplitTaskFactory.createSplitKillTask())
                 .thenReturn(Mockito.mock(SplitKillTask.class));
 
-        mNotificationProcessor = new NotificationProcessor(mSplitTaskExecutor, mSplitTaskFactory,
-                mNotificationParser, mSyncManagerFeedbackChannel);
+        mNotificationProcessor = new NotificationProcessor(mSplitTaskExecutor,
+                mSplitTaskFactory, mNotificationParser,
+                mMySegmentChangeQueue, mSplitsChangeQueue);
     }
 
     @Test
     public void splitUpdateNotification() {
+
+        SplitsChangeNotification updateNotification =  Mockito.mock(SplitsChangeNotification.class);
+
         IncomingNotification incomingNotification = Mockito.mock(IncomingNotification.class);
         when(incomingNotification.getType()).thenReturn(NotificationType.SPLIT_UPDATE);
+        when(updateNotification.getType()).thenReturn(NotificationType.SPLIT_UPDATE);
+        when(updateNotification.getChangeNumber()).thenReturn(100L);
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseSplitUpdate(anyString())).thenReturn(new SplitsChangeNotification());
+        when(mNotificationParser.parseSplitUpdate(anyString())).thenReturn(updateNotification);
 
         mNotificationProcessor.process("somenotification");
 
-        ArgumentCaptor<SyncManagerFeedbackMessage> messageCaptor =
-                ArgumentCaptor.forClass(SyncManagerFeedbackMessage.class);
-        verify(mSyncManagerFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(SyncManagerFeedbackMessageType.SPLITS_UPDATED, messageCaptor.getValue().getMessage());
+        ArgumentCaptor<SplitsChangeNotification> messageCaptor =
+                ArgumentCaptor.forClass(SplitsChangeNotification.class);
+        verify(mSplitsChangeQueue, times(1)).offer(messageCaptor.capture());
+        Assert.assertEquals(NotificationType.SPLIT_UPDATE, messageCaptor.getValue().getType());
+        Assert.assertEquals(100L, messageCaptor.getValue().getChangeNumber());
     }
 
     @Test
@@ -99,7 +110,7 @@ public class NotificationProcessorTest {
 
         mNotificationProcessor.process("somenotification");
 
-        verify(mSyncManagerFeedbackChannel, never()).pushMessage(any());
+        verify(mSplitsChangeQueue, never()).offer(any());
         verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask();
         verify(mSplitTaskExecutor, times(1)).submit(any(), isNull());
     }
@@ -113,16 +124,17 @@ public class NotificationProcessorTest {
 
         IncomingNotification incomingNotification = Mockito.mock(IncomingNotification.class);
         when(incomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE);
+        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE);
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(mySegmentChangeNotification);
 
         mNotificationProcessor.process("somenotification");
 
         verify(mSplitTaskFactory, never()).createMySegmentsUpdateTask();
-        ArgumentCaptor<SyncManagerFeedbackMessage> messageCaptor =
-                ArgumentCaptor.forClass(SyncManagerFeedbackMessage.class);
-        verify(mSyncManagerFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(SyncManagerFeedbackMessageType.MY_SEGMENTS_UPDATED, messageCaptor.getValue().getMessage());
+        ArgumentCaptor<MySegmentChangeNotification> messageCaptor =
+                ArgumentCaptor.forClass(MySegmentChangeNotification.class);
+        verify(mMySegmentChangeQueue, times(1)).offer(messageCaptor.capture());
+        Assert.assertEquals(NotificationType.MY_SEGMENTS_UPDATE, messageCaptor.getValue().getType());
     }
 
     @Test
@@ -135,7 +147,7 @@ public class NotificationProcessorTest {
 
         mNotificationProcessor.process("somenotification");
 
-        verify(mSyncManagerFeedbackChannel, never()).pushMessage(any());
+        verify(mMySegmentChangeQueue, never()).offer(any());
         verify(mSplitTaskFactory, times(1)).createSplitKillTask();
         verify(mSplitTaskExecutor, times(1)).submit(any(), isNull());
     }

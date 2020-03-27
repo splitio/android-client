@@ -5,5 +5,5 @@ public enum SyncManagerFeedbackMessageType {
      * Types of messages that can be pushed to the
      * Synchronization feedback channel
      */
-    PUSH_ENABLED, PUSH_DISABLED, SPLITS_UPDATED, MY_SEGMENTS_UPDATED
+    PUSH_ENABLED, PUSH_DISABLED
 }
