@@ -82,6 +82,7 @@ public class NotificationProcessor {
         split.changeNumber = notification.getChangeNumber();
         task.setParam(split);
         mSplitTaskExecutor.submit(task, null);
+        mSplitsUpdateNotificationsQueue.offer(new SplitsChangeNotification(split.changeNumber));
     }
 
     private void processMySegmentUpdate(MySegmentChangeNotification notification) {
