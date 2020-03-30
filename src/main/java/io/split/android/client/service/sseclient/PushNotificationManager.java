@@ -8,6 +8,7 @@ import androidx.core.util.Pair;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -16,24 +17,35 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
+import io.split.android.client.service.sseclient.notifications.IncomingNotification;
+import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener{
 
+    private final static String DATA_FIELD = "data";
+    private final static int SSE_RECONNECT_TIME_IN_SECONDS = 70;
+
     private final SseClient mSseClient;
     private final SplitTaskExecutor mTaskExecutor;
     private final SyncManagerFeedbackChannel mSyncManagerFeedbackChannel;
     private final SplitTaskFactory mSplitTaskFactory;
+    private final NotificationProcessor mNotificationProcessor;
+
+    private String mReconnectTaskId = null;
+
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
                                    @NonNull SplitTaskFactory splitTaskFactory,
+                                   @NonNull NotificationProcessor notificationProcessor,
                                    @NonNull SyncManagerFeedbackChannel syncManagerFeedbackChannel) {
         mSseClient = checkNotNull(sseClient);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTaskExecutor = checkNotNull(taskExecutor);
+        mNotificationProcessor = checkNotNull(notificationProcessor);
         mSyncManagerFeedbackChannel = checkNotNull(syncManagerFeedbackChannel);
         mSseClient.setListener(this);
     }
@@ -42,6 +54,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mTaskExecutor.submit(
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 this);
+
+        scheduleReconnection();
     }
 
     public void stop() {
@@ -50,6 +64,17 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     private void connectToSse(String token, List<String> channels) {
         mSseClient.connect(token, channels);
+    }
+
+    private void scheduleReconnection() {
+        if(mReconnectTaskId != null) {
+            mTaskExecutor.stopTask(mReconnectTaskId);
+
+        }
+        mReconnectTaskId = mTaskExecutor.schedule(
+                mSplitTaskFactory.createSseAuthenticationTask(),
+                0, SSE_RECONNECT_TIME_IN_SECONDS,
+                this);
     }
 
     private void notifyPushEnabled() {
@@ -70,10 +95,19 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
         @Override
         public void onMessage(Map<String, String> values) {
-            // TODO: Process message and notify channel
+            String messageData = values.get(DATA_FIELD);
+            if (messageData != null) {
+                mNotificationProcessor.process(messageData);
+            }
+            scheduleReconnection();
         }
 
-        @Override
+    @Override
+    public void onKeepAlive() {
+        scheduleReconnection();
+    }
+
+    @Override
         public void onError() {
             notifyPushDisabled();
         }

@@ -105,6 +105,13 @@ public class SseClient {
         }
     }
 
+    private void triggerOnKeepAlive() {
+        SseClientListener listener = mListener.get();
+        if (listener != null) {
+            listener.onKeepAlive();
+        }
+    }
+
     private void triggerOnError() {
         SseClientListener listener = mListener.get();
         if (listener != null) {
@@ -156,7 +163,11 @@ public class SseClient {
                     Map<String, String> values = new HashMap<>();
                     while ((inputLine = bufferedReader.readLine()) != null) {
                         if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
-                            triggerOnMessage(values);
+                            if(mEventStreamParser.isKeepAlive(values)) {
+
+                            } else {
+                                triggerOnMessage(values);
+                            }
                             values = new HashMap<>();
                         }
                     }

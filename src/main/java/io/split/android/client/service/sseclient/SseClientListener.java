@@ -6,4 +6,5 @@ public interface SseClientListener {
     void onOpen();
     void onMessage(Map<String, String> values);
     void onError();
+    void onKeepAlive();
 }

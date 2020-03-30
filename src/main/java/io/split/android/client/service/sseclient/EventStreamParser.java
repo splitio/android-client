@@ -5,9 +5,9 @@ import androidx.annotation.VisibleForTesting;
 import java.util.Map;
 
 public class EventStreamParser {
+    public final static String EVENT_FIELD = "event";
+    public final static String KEEP_ALIVE_EVENT = "keepalive";
     private final static String FIELD_SEPARATOR = ":";
-    private final static String EVENT_FIELD = "event";
-    private final static String KEEP_ALIVE_EVENT = "keepalive";
     private final static String KEEP_ALIVE_TOKEN = ":" + KEEP_ALIVE_EVENT;
 
     /**
@@ -59,5 +59,9 @@ public class EventStreamParser {
             messageValues.put(trimmedLine.trim(), "");
         }
         return false;
+    }
+
+    public boolean isKeepAlive(Map<String, String> values) {
+        return KEEP_ALIVE_EVENT.equals(EVENT_FIELD);
     }
 }

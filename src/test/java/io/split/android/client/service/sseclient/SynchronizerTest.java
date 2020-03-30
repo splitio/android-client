@@ -424,6 +424,11 @@ public class SynchronizerTest {
         }
 
         @Override
+        public void stopTask(String taskId) {
+
+        }
+
+        @Override
         public void stopTasks(List<String> taskIds) {
 
         }
