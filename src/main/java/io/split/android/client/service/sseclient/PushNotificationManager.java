@@ -2,7 +2,6 @@ package io.split.android.client.service.sseclient;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 import androidx.core.util.Pair;
 
 import java.util.List;
@@ -17,11 +16,11 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
-import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
+import static io.split.android.client.service.executor.SplitTaskType.SSE_DOWN_NOTIFICATOR;
 
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener{
 
@@ -34,7 +33,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
 
-    private String mReconnectTaskId = null;
+    private String mSseDownNotificatorTaskId = null;
 
 
     public PushNotificationManager(@NonNull SseClient sseClient,
@@ -55,7 +54,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 this);
 
-        scheduleReconnection();
+        scheduleSseDownNotification();
     }
 
     public void stop() {
@@ -66,13 +65,13 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mSseClient.connect(token, channels);
     }
 
-    private void scheduleReconnection() {
-        if(mReconnectTaskId != null) {
-            mTaskExecutor.stopTask(mReconnectTaskId);
+    private void scheduleSseDownNotification() {
+        if(mSseDownNotificatorTaskId != null) {
+            mTaskExecutor.stopTask(mSseDownNotificatorTaskId);
 
         }
-        mReconnectTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createSseAuthenticationTask(),
+        mSseDownNotificatorTaskId = mTaskExecutor.schedule(
+                new SseDownNotificator(),
                 0, SSE_RECONNECT_TIME_IN_SECONDS,
                 this);
     }
@@ -99,12 +98,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
             if (messageData != null) {
                 mNotificationProcessor.process(messageData);
             }
-            scheduleReconnection();
+            scheduleSseDownNotification();
         }
 
     @Override
     public void onKeepAlive() {
-        scheduleReconnection();
+        scheduleSseDownNotification();
     }
 
     @Override
@@ -149,5 +148,15 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 Logger.e("Couldn't connect to SSE server. Streaming is disabled.");
             }
             return null;
+        }
+
+        private class SseDownNotificator implements SplitTask {
+            @NonNull
+            @Override
+            public SplitTaskExecutionInfo execute() {
+                mSyncManagerFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(
+                                SyncManagerFeedbackMessageType.PUSH_DISABLED));
+                return SplitTaskExecutionInfo.success(SSE_DOWN_NOTIFICATOR);
+            }
         }
 }

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -156,7 +157,7 @@ public class PushNotificationManagerTest {
         mPushManager.onMessage(message(data));
 
         verify(mNotificationProcessor, times(1)).process(data);
-        verify(mTaskExecutor, times(1)).schedule(any(SseAuthenticationTask.class), anyLong(), anyLong(), any());
+        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), anyLong(), any());
     }
 
     @Test
@@ -172,7 +173,7 @@ public class PushNotificationManagerTest {
 
         mPushManager.onKeepAlive();
 
-        verify(mTaskExecutor, times(1)).schedule(any(SseAuthenticationTask.class), anyLong(), anyLong(), any());
+        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), anyLong(), any());
     }
 
     @After
