@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.service.executor.ParameterizableSplitTask;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -17,7 +16,7 @@ import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class MySegmentsUpdateTask implements ParameterizableSplitTask<List<String>> {
+public class MySegmentsUpdateTask implements SplitTask {
 
     private List<String> mMySegments;
     private final MySegmentsStorage mMySegmentsStorage;
@@ -27,9 +26,8 @@ public class MySegmentsUpdateTask implements ParameterizableSplitTask<List<Strin
 
     }
 
-    @Override
-    public void setParam(List<String> parameter) {
-        mMySegments = parameter;
+    public void setSegments(List<String> segments) {
+        mMySegments = segments;
     }
 
     @Override

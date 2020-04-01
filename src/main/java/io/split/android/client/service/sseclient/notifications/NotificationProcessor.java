@@ -8,9 +8,10 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.service.executor.ParameterizableSplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
+import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -72,12 +73,12 @@ public class NotificationProcessor {
     }
 
     private void processSplitKill(SplitKillNotification notification) {
-        ParameterizableSplitTask<Split> task = mSplitTaskFactory.createSplitKillTask();
+        SplitKillTask task = (SplitKillTask) mSplitTaskFactory.createSplitKillTask();
         Split split = new Split();
         split.name = notification.getSplitName();
         split.defaultTreatment = notification.getDefaultTreatment();
         split.changeNumber = notification.getChangeNumber();
-        task.setParam(split);
+        task.setSplit(split);
         mSplitTaskExecutor.submit(task, null);
         mSplitsUpdateNotificationsQueue.offer(new SplitsChangeNotification(split.changeNumber));
     }
@@ -87,9 +88,9 @@ public class NotificationProcessor {
             mMySegmentUpdateNotificationsQueue.offer(notification);
         } else {
             List<String> segmentList = notification.getSegmentList();
-            if (segmentList != null && segmentList.size() > 0) {
-                ParameterizableSplitTask<List<String>> task = mSplitTaskFactory.createMySegmentsUpdateTask();
-                task.setParam(notification.getSegmentList());
+            if (segmentList != null) {
+                MySegmentsUpdateTask task = (MySegmentsUpdateTask) mSplitTaskFactory.createMySegmentsUpdateTask();
+                task.setSegments(notification.getSegmentList());
                 mSplitTaskExecutor.submit(task, null);
             }
         }

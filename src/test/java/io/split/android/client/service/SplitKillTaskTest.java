@@ -50,7 +50,7 @@ public class SplitKillTaskTest {
         split.name = "split1";
         split.defaultTreatment = "on";
         split.changeNumber = 1001;
-        mTask.setParam(split);
+        mTask.setSplit(split);
 
         when(mSplitsStorage.getTill()).thenReturn(1000L);
 
@@ -72,7 +72,7 @@ public class SplitKillTaskTest {
         split.name = "split1";
         split.defaultTreatment = "on";
         split.changeNumber = 1001;
-        mTask.setParam(split);
+        mTask.setSplit(split);
 
         when(mSplitsStorage.getTill()).thenReturn(1002L);
 
@@ -85,7 +85,7 @@ public class SplitKillTaskTest {
 
     @Test
     public void nullParam() throws HttpFetcherException {
-        mTask.setParam(null);
+        mTask.setSplit(null);
         SplitTaskExecutionInfo result = mTask.execute();
         verify(mSplitsStorage, never()).updateWithoutChecks(any());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
@@ -96,7 +96,7 @@ public class SplitKillTaskTest {
         Split split = new Split();
         split.changeNumber = 2000L;
         when(mSplitsStorage.getTill()).thenReturn(1000L);
-        mTask.setParam(split);
+        mTask.setSplit(split);
         doThrow(NullPointerException.class).when(mSplitsStorage).updateWithoutChecks(any());
         SplitTaskExecutionInfo result = mTask.execute();
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());

@@ -19,10 +19,10 @@ public interface SplitTaskFactory {
 
     SplitTask createSseAuthenticationTask();
 
-    ParameterizableSplitTask<Split> createSplitKillTask();
+    SplitTask createSplitKillTask();
 
-    ParameterizableSplitTask<List<String>> createMySegmentsUpdateTask();
+    SplitTask createMySegmentsUpdateTask();
 
-    ParameterizableSplitTask<Long> createSplitsUpdateTask();
+    SplitTask createSplitsUpdateTask();
 
 }

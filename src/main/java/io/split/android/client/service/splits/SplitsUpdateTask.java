@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.service.executor.ParameterizableSplitTask;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -16,7 +15,7 @@ import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SplitsUpdateTask implements ParameterizableSplitTask<Long> {
+public class SplitsUpdateTask implements SplitTask {
 
     static final String SINCE_PARAM = "since";
     private final HttpFetcher<SplitChange> mSplitFetcher;
@@ -33,28 +32,28 @@ public class SplitsUpdateTask implements ParameterizableSplitTask<Long> {
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
     }
 
-    @Override
-    public void setParam(Long parameter) {
-        mChangeNumber = parameter;
+    public void setSince(long since) {
+        mChangeNumber = since;
     }
 
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
 
-        if(mChangeNumber == null || mChangeNumber == 0) {
+        if (mChangeNumber == null || mChangeNumber == 0) {
             logError("Could not update split. Invalid change number " + mChangeNumber);
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         }
 
-        if(mChangeNumber <= mSplitsStorage.getTill()) {
+        long storedChangeNumber = mSplitsStorage.getTill();
+        if (mChangeNumber <= storedChangeNumber) {
             Logger.d("Received change number is previous than stored one. " +
                     "Avoiding update.");
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         }
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put(SINCE_PARAM, mChangeNumber);
+            params.put(SINCE_PARAM, storedChangeNumber);
             SplitChange splitChange = mSplitFetcher.execute(params);
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
         } catch (Exception e) {

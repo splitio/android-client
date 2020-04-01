@@ -13,12 +13,13 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.executor.ParameterizableSplitTask;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
 
@@ -85,9 +86,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeSplits(long since) {
-        ParameterizableSplitTask<Long> splitsUpdateTask
-                = mSplitTaskFactory.createSplitsUpdateTask();
-        splitsUpdateTask.setParam(since);
+        SplitsUpdateTask splitsUpdateTask
+                = (SplitsUpdateTask) mSplitTaskFactory.createSplitsUpdateTask();
+        splitsUpdateTask.setSince(since);
         mTaskExecutor.submit(splitsUpdateTask, mSplitsSyncTaskListener);
     }
 
@@ -100,7 +101,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void syncronizeMySegments() {
-        submitMySegmentsLoadingTask(mMySegmentsSyncTaskListener);
+        mTaskExecutor.submit(
+                mSplitTaskFactory.createMySegmentsSyncTask(),
+                mMySegmentsSyncTaskListener);
     }
 
     @Override
