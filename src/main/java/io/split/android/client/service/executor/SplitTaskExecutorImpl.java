@@ -87,7 +87,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         }
     }
 
-    private class TaskWrapper implements Runnable {
+    private static class TaskWrapper implements Runnable {
         private final SplitTask mTask;
         private WeakReference<SplitTaskExecutionListener> mExecutionListener;
 
