@@ -3,7 +3,7 @@ package io.split.android.client.service.splits;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.service.executor.ParameterizableSplitTask;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -11,7 +11,7 @@ import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SplitKillTask implements ParameterizableSplitTask<Split> {
+public class SplitKillTask implements SplitTask {
 
     private Split mKilledSplit;
     private final SplitsStorage mSplitsStorage;
@@ -20,9 +20,8 @@ public class SplitKillTask implements ParameterizableSplitTask<Split> {
         mSplitsStorage = checkNotNull(splitsStorage);
     }
 
-    @Override
-    public void setParam(Split parameter) {
-        mKilledSplit = parameter;
+    public void setSplit(Split split) {
+        mKilledSplit = split;
     }
 
     @Override

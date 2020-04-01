@@ -40,7 +40,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void correctExecution() throws HttpFetcherException {
         List<String> segments = dummySegments();
-        mTask.setParam(segments);
+        mTask.setSegments(segments);
         SplitTaskExecutionInfo result = mTask.execute();
 
         verify(mySegmentsStorage, times(1)).set(any());
@@ -52,7 +52,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void storageException() {
         List<String> segments = dummySegments();
-        mTask.setParam(segments);
+        mTask.setSegments(segments);
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(segments);
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -63,7 +63,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void nullParameter() {
 
-        mTask.setParam(null);
+        mTask.setSegments(null);
 
         SplitTaskExecutionInfo result = mTask.execute();
 

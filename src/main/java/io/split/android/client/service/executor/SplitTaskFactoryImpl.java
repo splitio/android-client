@@ -93,12 +93,12 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public ParameterizableSplitTask createSplitKillTask() {
+    public SplitTask createSplitKillTask() {
         return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage());
     }
 
     @Override
-    public ParameterizableSplitTask createMySegmentsUpdateTask() {
+    public SplitTask createMySegmentsUpdateTask() {
         return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage());
     }
 }
