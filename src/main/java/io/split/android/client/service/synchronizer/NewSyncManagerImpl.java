@@ -6,6 +6,8 @@ import androidx.annotation.VisibleForTesting;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.dtos.Event;
+import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackListener;
@@ -14,8 +16,6 @@ import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeed
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// TODO: Will be renamed to SyncManagerImpl on final integration
-@VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class NewSyncManagerImpl implements NewSyncManager, SyncManagerFeedbackListener {
 
     private final SplitClientConfig mSplitClientConfig;
@@ -41,13 +41,13 @@ public class NewSyncManagerImpl implements NewSyncManager, SyncManagerFeedbackLi
     @Override
     public void start() {
 
-        mSynchronizer.doInitialLoadFromCache();
+        mSynchronizer.loadSplitsFromCache();
+        mSynchronizer.loadMySegmentsFromCache();
 
-        //TODO: Replace following variable with push config when initial setup implemented
-        mIsPushEnabled.set(true);
-        //
-
-        if (mIsPushEnabled.get()) {
+        mIsPushEnabled.set(mSplitClientConfig.streamingEnabled());
+        if (mSplitClientConfig.streamingEnabled()) {
+            mSynchronizer.synchronizeSplits();
+            mSynchronizer.syncronizeMySegments();
             mSyncManagerFeedbackChannel.register(this);
             mPushNotificationManager.start();
         } else {
@@ -67,8 +67,25 @@ public class NewSyncManagerImpl implements NewSyncManager, SyncManagerFeedbackLi
     }
 
     @Override
+    public void flush() {
+        mSynchronizer.flush();
+    }
+
+    @Override
+    public void pushEvent(Event event) {
+        mSynchronizer.pushEvent(event);
+    }
+
+    @Override
+    public void pushImpression(Impression impression) {
+        mSynchronizer.pushImpression(impression);
+    }
+
+    @Override
     public void stop() {
-        mSynchronizer.stop();
+        mSynchronizer.stopPeriodicFetching();
+        mSynchronizer.stopPeriodicRecording();
+        mSynchronizer.destroy();
         mPushNotificationManager.stop();
     }
 

@@ -11,9 +11,6 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.ParameterizableSplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;

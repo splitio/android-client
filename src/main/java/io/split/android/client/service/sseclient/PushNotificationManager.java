@@ -2,13 +2,11 @@ package io.split.android.client.service.sseclient;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 import androidx.core.util.Pair;
 
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -17,7 +15,6 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
-import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 

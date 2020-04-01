@@ -62,6 +62,6 @@ public class EventStreamParser {
     }
 
     public boolean isKeepAlive(Map<String, String> values) {
-        return KEEP_ALIVE_EVENT.equals(EVENT_FIELD);
+        return KEEP_ALIVE_EVENT.equals(values.get(EVENT_FIELD));
     }
 }

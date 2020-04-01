@@ -10,6 +10,10 @@ import io.split.android.client.utils.Logger;
  */
 public class SplitClientConfig {
 
+    private static final String API_ENDPOINT = "https://sdk.split.io/api";
+    private static final String EVENTS_ENDPOINT = "https://events.split.io/api";
+    private static final String SSE_AUTH_SERVICE_URL = "https://auth.split-stage.io/api";
+    private static final String STREAMING_SERVICE_URL = "https://realtime.ably.io/sse";
     private static final int MIN_FEATURES_REFRESH_RATE = 30;
     private static final int MIN_MYSEGMENTS_REFRESH_RATE = 30;
     private static final int MIN_IMPRESSIONS_REFRESH_RATE = 30;
@@ -90,8 +94,8 @@ public class SplitClientConfig {
     private boolean _streamingEnabled;
     private int _authRetryBackoffBase;
     private int _streamingReconnectBackoffBase;
-    private String _authServiceURL;
-    private String _streamingServiceURL;
+    private String _authServiceUrl;
+    private String _streamingServiceUrl;
 
 
     // To be set during startup
@@ -130,10 +134,10 @@ public class SplitClientConfig {
                               boolean backgroundSyncWhenBatteryNotLow,
                               boolean backgroundSyncWhenWifiOnly,
                               boolean streamingEnabled,
-                              int  authRetryBackoffBase,
+                              int authRetryBackoffBase,
                               int streamingReconnectBackoffBase,
-                              String authServiceURL,
-                              String streamingServiceURL) {
+                              String authServiceUrl,
+                              String streamingServiceUrl) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -165,8 +169,8 @@ public class SplitClientConfig {
         _streamingEnabled = streamingEnabled;
         _authRetryBackoffBase = authRetryBackoffBase;
         _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
-        _authServiceURL = authServiceURL;
-        _streamingServiceURL = streamingServiceURL;
+        _authServiceUrl = authServiceUrl;
+        _streamingServiceUrl = streamingServiceUrl;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -375,19 +379,19 @@ public class SplitClientConfig {
         return _streamingReconnectBackoffBase;
     }
 
-    public String authServiceURL() {
-        return _authServiceURL;
+    public String authServiceUrl() {
+        return _authServiceUrl;
     }
 
-    public String streamingServiceURL() {
-        return _streamingServiceURL;
+    public String streamingServiceUrl() {
+        return _streamingServiceUrl;
     }
 
     public static final class Builder {
 
-        private String _endpoint = "https://sdk.split.io/api";
+        private String _endpoint = API_ENDPOINT;
         private boolean _endpointSet = false;
-        private String _eventsEndpoint = "https://events.split.io/api";
+        private String _eventsEndpoint = EVENTS_ENDPOINT;
         private boolean _eventsEndpointSet = false;
 
         private int _featuresRefreshRate = DEFAULT_FEATURES_REFRESH_RATE_SECS;
@@ -424,8 +428,8 @@ public class SplitClientConfig {
         private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
         private int _streamingReconnectBackoffBase
                 = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
-        private String _authServiceURL;
-        private String _streamingServiceURL;
+        private String _authServiceURL = SSE_AUTH_SERVICE_URL;
+        private String _streamingServiceURL = STREAMING_SERVICE_URL;
 
         public Builder() {
         }
@@ -779,7 +783,6 @@ public class SplitClientConfig {
         }
 
         /**
-         *
          * How many seconds to wait before re attempting to authenticate for push notifications.
          * Minimum: 1 seconds
          *
@@ -794,6 +797,7 @@ public class SplitClientConfig {
 
         /**
          * How many seconds to wait before re attempting to connect to streaming.
+         *
          * @return: This builder
          * @default: 1 Second
          */
@@ -805,6 +809,7 @@ public class SplitClientConfig {
 
         /**
          * Authentication service URL. Should only be adjusted for playing well in test environments.
+         *
          * @param authServiceURL String
          * @return this builder
          */
@@ -815,6 +820,7 @@ public class SplitClientConfig {
 
         /**
          * Streaming service URL. Should only be adjusted for playing well in test environments.
+         *
          * @param streamingServiceURL String
          * @return
          */
@@ -872,6 +878,16 @@ public class SplitClientConfig {
 
             if (_numThreadsForSegmentFetch <= 0) {
                 throw new IllegalArgumentException("Number of threads for fetching segments MUST be greater than zero");
+            }
+
+            if(_authRetryBackoffBase < 1) {
+                throw new IllegalArgumentException("Re attempting time to authenticate " +
+                        "for push notifications MUST be greater than zero");
+            }
+
+            if(_authRetryBackoffBase < 1) {
+                throw new IllegalArgumentException("Re attempting time to connect to " +
+                        "streaming notifications MUST be greater than zero");
             }
 
             if (_backgroundSyncPeriod < DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES) {

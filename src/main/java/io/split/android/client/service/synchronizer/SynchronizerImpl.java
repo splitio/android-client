@@ -46,6 +46,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private String mSplitsFetcherTaskId;
     private String mMySegmentsFetcherTaskId;
+    private String mEventsRecorderTaskId;
+    private String mImpressionsRecorderTaskId;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -72,8 +74,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
-    public void doInitialLoadFromCache() {
+    public void loadSplitsFromCache() {
         submitSplitLoadingTask(mLoadLocalSplitsListener);
+    }
+
+    @Override
+    public void loadMySegmentsFromCache() {
         submitMySegmentsLoadingTask(mLoadLocalMySegmentsListener);
     }
 
@@ -82,12 +88,19 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         ParameterizableSplitTask<Long> splitsUpdateTask
                 = mSplitTaskFactory.createSplitsUpdateTask();
         splitsUpdateTask.setParam(since);
-        mTaskExecutor.submit(splitsUpdateTask, null);
+        mTaskExecutor.submit(splitsUpdateTask, mSplitsSyncTaskListener);
+    }
+
+    @Override
+    public void synchronizeSplits() {
+        mTaskExecutor.submit(
+                mSplitTaskFactory.createSplitsSyncTask(),
+                mSplitsSyncTaskListener);
     }
 
     @Override
     public void syncronizeMySegments() {
-        submitMySegmentsLoadingTask(null);
+        submitMySegmentsLoadingTask(mMySegmentsSyncTaskListener);
     }
 
     @Override
@@ -110,6 +123,14 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         scheduleEventsRecorderTask();
         scheduleImpressionsRecorderTask();
         Logger.i("Synchronization tasks scheduled");
+    }
+
+    @Override
+    public void stopPeriodicRecording() {
+        List<String> taskIds = new ArrayList<>();
+        taskIds.add(mEventsRecorderTaskId);
+        taskIds.add(mImpressionsRecorderTaskId);
+        mTaskExecutor.stopTasks(taskIds);
     }
 
     private void setupListeners() {
@@ -147,8 +168,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mTaskExecutor.resume();
     }
 
-
-    public void stop() {
+    @Override
+    public void destroy() {
         flush();
         mTaskExecutor.stop();
     }
@@ -195,19 +216,17 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void scheduleEventsRecorderTask() {
-        mTaskExecutor.schedule(mSplitTaskFactory.createEventsRecorderTask(),
+        mEventsRecorderTaskId = mTaskExecutor.schedule(
+                mSplitTaskFactory.createEventsRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
                 mSplitClientConfig.eventFlushInterval(), mEventsSyncHelper);
     }
 
     private void scheduleImpressionsRecorderTask() {
-        mTaskExecutor.schedule(mSplitTaskFactory.createImpressionsRecorderTask(), ServiceConstants.NO_INITIAL_DELAY,
+        mImpressionsRecorderTaskId = mTaskExecutor.schedule(
+                mSplitTaskFactory.createImpressionsRecorderTask(),
+                ServiceConstants.NO_INITIAL_DELAY,
                 mSplitClientConfig.impressionsRefreshRate(), mImpressionsSyncHelper);
-    }
-
-    private void submitInitialDataLoadingTasks() {
-        submitSplitLoadingTask(mLoadLocalSplitsListener);
-        submitMySegmentsLoadingTask(mLoadLocalMySegmentsListener);
     }
 
     private void submitSplitLoadingTask(SplitTaskExecutionListener listener) {
