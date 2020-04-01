@@ -60,7 +60,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("test1"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("test1"), splitsStorage);
 
         assertThat(client.getTreatment(null), is(equalTo(Treatments.CONTROL)));
 

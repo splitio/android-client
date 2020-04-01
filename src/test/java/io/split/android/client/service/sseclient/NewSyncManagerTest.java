@@ -6,7 +6,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannelImpl;
+import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
 import io.split.android.client.service.synchronizer.NewSyncManager;
