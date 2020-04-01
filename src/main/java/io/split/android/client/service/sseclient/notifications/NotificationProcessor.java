@@ -73,7 +73,7 @@ public class NotificationProcessor {
     }
 
     private void processSplitKill(SplitKillNotification notification) {
-        SplitKillTask task = (SplitKillTask) mSplitTaskFactory.createSplitKillTask();
+        SplitKillTask task = mSplitTaskFactory.createSplitKillTask();
         Split split = new Split();
         split.name = notification.getSplitName();
         split.defaultTreatment = notification.getDefaultTreatment();
@@ -89,7 +89,7 @@ public class NotificationProcessor {
         } else {
             List<String> segmentList = notification.getSegmentList();
             if (segmentList != null) {
-                MySegmentsUpdateTask task = (MySegmentsUpdateTask) mSplitTaskFactory.createMySegmentsUpdateTask();
+                MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask();
                 task.setSegments(notification.getSegmentList());
                 mSplitTaskExecutor.submit(task, null);
             }

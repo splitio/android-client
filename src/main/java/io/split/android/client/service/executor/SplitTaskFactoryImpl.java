@@ -44,7 +44,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createEventsRecorderTask() {
+    public EventsRecorderTask createEventsRecorderTask() {
         return new EventsRecorderTask(
                 mSplitApiFacade.getEventsRecorder(),
                 mSplitsStorageContainer.getEventsStorage(),
@@ -52,7 +52,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createImpressionsRecorderTask() {
+    public ImpressionsRecorderTask createImpressionsRecorderTask() {
         return new ImpressionsRecorderTask(
                 mSplitApiFacade.getImpressionsRecorder(),
                 mSplitsStorageContainer.getImpressionsStorage(),
@@ -62,7 +62,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createSplitsSyncTask() {
+    public SplitsSyncTask createSplitsSyncTask() {
         return new SplitsSyncTask(
                 mSplitApiFacade.getSplitFetcher(),
                 mSplitsStorageContainer.getSplitsStorage(),
@@ -70,35 +70,35 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createMySegmentsSyncTask() {
+    public MySegmentsSyncTask createMySegmentsSyncTask() {
         return new MySegmentsSyncTask(
                 mSplitApiFacade.getMySegmentsFetcher(),
                 mSplitsStorageContainer.getMySegmentsStorage());
     }
 
     @Override
-    public SplitTask createLoadMySegmentsTask() {
+    public LoadMySegmentsTask createLoadMySegmentsTask() {
         return new LoadMySegmentsTask(mSplitsStorageContainer.getMySegmentsStorage());
     }
 
     @Override
-    public SplitTask createLoadSplitsTask() {
+    public LoadSplitsTask createLoadSplitsTask() {
         return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage());
     }
 
     @Override
-    public SplitTask createSseAuthenticationTask() {
+    public SseAuthenticationTask createSseAuthenticationTask() {
         return new SseAuthenticationTask(mSplitApiFacade.getSseAuthenticationFetcher(),
                 mApiKey, mUserKey, new SseChannelsParser());
     }
 
     @Override
-    public SplitTask createSplitKillTask() {
+    public SplitKillTask createSplitKillTask() {
         return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage());
     }
 
     @Override
-    public SplitTask createMySegmentsUpdateTask() {
+    public MySegmentsUpdateTask createMySegmentsUpdateTask() {
         return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage());
     }
 }
