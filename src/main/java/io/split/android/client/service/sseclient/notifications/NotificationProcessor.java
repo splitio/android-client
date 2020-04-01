@@ -88,7 +88,7 @@ public class NotificationProcessor {
             mMySegmentUpdateNotificationsQueue.offer(notification);
         } else {
             List<String> segmentList = notification.getSegmentList();
-            if (segmentList != null && segmentList.size() > 0) {
+            if (segmentList != null) {
                 MySegmentsUpdateTask task = (MySegmentsUpdateTask) mSplitTaskFactory.createMySegmentsUpdateTask();
                 task.setSegments(notification.getSegmentList());
                 mSplitTaskExecutor.submit(task, null);
