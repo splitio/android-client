@@ -11,7 +11,6 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
-import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -73,13 +72,11 @@ public class NotificationProcessor {
     }
 
     private void processSplitKill(SplitKillNotification notification) {
-        SplitKillTask task = mSplitTaskFactory.createSplitKillTask();
         Split split = new Split();
         split.name = notification.getSplitName();
         split.defaultTreatment = notification.getDefaultTreatment();
         split.changeNumber = notification.getChangeNumber();
-        task.setSplit(split);
-        mSplitTaskExecutor.submit(task, null);
+        mSplitTaskExecutor.submit(mSplitTaskFactory.createSplitKillTask(split), null);
         mSplitsUpdateNotificationsQueue.offer(new SplitsChangeNotification(split.changeNumber));
     }
 
@@ -89,8 +86,8 @@ public class NotificationProcessor {
         } else {
             List<String> segmentList = notification.getSegmentList();
             if (segmentList != null) {
-                MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask();
-                task.setSegments(notification.getSegmentList());
+                MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask(
+                        notification.getSegmentList());
                 mSplitTaskExecutor.submit(task, null);
             }
         }

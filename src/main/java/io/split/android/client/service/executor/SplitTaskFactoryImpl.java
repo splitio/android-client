@@ -2,7 +2,10 @@ package io.split.android.client.service.executor;
 
 import androidx.annotation.NonNull;
 
+import java.util.List;
+
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.dtos.Split;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRecorderTask;
@@ -93,12 +96,12 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitKillTask createSplitKillTask() {
-        return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage());
+    public SplitKillTask createSplitKillTask(Split split) {
+        return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage(), split);
     }
 
     @Override
-    public MySegmentsUpdateTask createMySegmentsUpdateTask() {
-        return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage());
+    public MySegmentsUpdateTask createMySegmentsUpdateTask(List<String> segments) {
+        return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage(), segments);
     }
 }

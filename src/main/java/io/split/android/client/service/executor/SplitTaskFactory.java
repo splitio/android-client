@@ -29,8 +29,8 @@ public interface SplitTaskFactory {
 
     SseAuthenticationTask createSseAuthenticationTask();
 
-    SplitKillTask createSplitKillTask();
+    SplitKillTask createSplitKillTask(Split split);
 
-    MySegmentsUpdateTask createMySegmentsUpdateTask();
+    MySegmentsUpdateTask createMySegmentsUpdateTask(List<String> segments);
 
 }
