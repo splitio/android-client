@@ -24,7 +24,6 @@ public class SplitUpdatesWorker extends UpdateWorker {
         super();
         mSynchronizer = checkNotNull(synchronizer);
         mNotificationsQueue = checkNotNull(notificationsQueue);
-        waitForNotifications();
     }
 
     @Override

@@ -9,10 +9,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.service.Synchronizer;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannelImpl;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 
@@ -34,6 +30,7 @@ public class MySegmentsUpdateWorkerTest {
         MockitoAnnotations.initMocks(this);
         mNotificationQueue = new ArrayBlockingQueue<>(50);
         mWorker = new MySegmentsUpdateWorker(mSynchronizer, mNotificationQueue);
+        mWorker.start();
     }
 
     @Test
@@ -47,7 +44,15 @@ public class MySegmentsUpdateWorkerTest {
         Thread.sleep(1000);
 
         verify(mSynchronizer, times(4)).syncronizeMySegments();
+    }
 
+    @Test
+    public void stopped() throws InterruptedException {
+        mWorker.stop();
+        mNotificationQueue.offer(new MySegmentChangeNotification());
 
+        Thread.sleep(1000);
+
+        verify(mSynchronizer, never()).syncronizeMySegments();
     }
 }

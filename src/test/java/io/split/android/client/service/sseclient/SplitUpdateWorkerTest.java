@@ -16,6 +16,7 @@ import io.split.android.client.service.sseclient.notifications.SplitsChangeNotif
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +35,7 @@ public class SplitUpdateWorkerTest {
         MockitoAnnotations.initMocks(this);
         mNotificationsQueue = new ArrayBlockingQueue<>(50);
         mWorker = new SplitUpdatesWorker(mSynchronizer, mNotificationsQueue);
+        mWorker.start();
     }
 
     @Test
@@ -64,6 +66,20 @@ public class SplitUpdateWorkerTest {
         Thread.sleep(2000);
 
         verify(mSynchronizer, times(4))
+                .synchronizeSplits(anyLong());
+    }
+
+    @Test
+    public void stopped() throws InterruptedException {
+        mWorker.stop();
+        Long changeNumber = 1000L;
+        SplitsChangeNotification notification = Mockito.mock(SplitsChangeNotification.class);
+        when(notification.getChangeNumber()).thenReturn(changeNumber);
+        mNotificationsQueue.offer(notification);
+
+        Thread.sleep(2000);
+
+        verify(mSynchronizer, never())
                 .synchronizeSplits(anyLong());
     }
 }
