@@ -81,8 +81,6 @@ public class SplitFactoryImpl implements SplitFactory {
     private FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
     private LifecycleManager _lifecyleManager;
     private NewSyncManager _syncManager;
-    private SplitUpdatesWorker _splitUpdateWorker;
-    private MySegmentsUpdateWorker _mySegmentUpdateWorker;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
@@ -145,20 +143,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
                 context, config, apiToken, key.matchingKey(), databaseName));
 
-        BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue
-                = new LinkedBlockingDeque<>();
-
-        BlockingQueue<MySegmentChangeNotification> mySegmentChangeNotificationQueue
-                = new LinkedBlockingDeque<>();
-
-        _splitUpdateWorker = new SplitUpdatesWorker(synchronizer,
-                splitsUpdateNotificationQueue);
-        _mySegmentUpdateWorker = new MySegmentsUpdateWorker(synchronizer,
-                mySegmentChangeNotificationQueue);
-
         _syncManager = factoryHelper.buildSyncManager(config, _splitTaskExecutor,
-                splitTaskFactory, httpClient, synchronizer,
-                splitsUpdateNotificationQueue, mySegmentChangeNotificationQueue);
+                splitTaskFactory, httpClient, synchronizer);
 
         _syncManager.start();
 

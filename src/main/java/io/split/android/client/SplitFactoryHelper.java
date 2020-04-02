@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEventsManager;
@@ -25,6 +26,8 @@ import io.split.android.client.service.sseclient.notifications.MySegmentChangeNo
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
+import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.synchronizer.NewSyncManager;
 import io.split.android.client.service.synchronizer.NewSyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -95,9 +98,18 @@ class SplitFactoryHelper {
                                     SplitTaskExecutor splitTaskExecutor,
                                     SplitTaskFactory splitTaskFactory,
                                     HttpClient httpClient,
-                                    Synchronizer synchronizer,
-                                    BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue,
-                                    BlockingQueue<MySegmentChangeNotification> mySegmentChangeNotificationQueue) {
+                                    Synchronizer synchronizer) {
+
+        BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue
+                = new LinkedBlockingDeque<>();
+
+        BlockingQueue<MySegmentChangeNotification> mySegmentChangeNotificationQueue
+                = new LinkedBlockingDeque<>();
+
+        SplitUpdatesWorker splitUpdateWorker = new SplitUpdatesWorker(synchronizer,
+                splitsUpdateNotificationQueue);
+        MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(synchronizer,
+                mySegmentChangeNotificationQueue);
 
         NotificationProcessor notificationProcessor =
                 new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
@@ -113,6 +125,7 @@ class SplitFactoryHelper {
                         splitTaskFactory, notificationProcessor, syncManagerFeedbackChannel);
 
         return new NewSyncManagerImpl(
-                config, synchronizer, pushNotificationManager, syncManagerFeedbackChannel);
+                config, synchronizer, pushNotificationManager, splitUpdateWorker,
+                mySegmentUpdateWorker, syncManagerFeedbackChannel);
     }
 }

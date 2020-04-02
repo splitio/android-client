@@ -1,7 +1,6 @@
 package io.split.android.client.service.synchronizer;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -13,6 +12,8 @@ import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeed
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackListener;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
+import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -22,18 +23,26 @@ public class NewSyncManagerImpl implements NewSyncManager, SyncManagerFeedbackLi
     private final SyncManagerFeedbackChannel mSyncManagerFeedbackChannel;
     private final Synchronizer mSynchronizer;
     private final PushNotificationManager mPushNotificationManager;
+    private SplitUpdatesWorker mSplitUpdateWorker;
+    private MySegmentsUpdateWorker mMySegmentUpdateWorker;
+
 
     private AtomicBoolean mIsPushEnabled;
 
     public NewSyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                               @NonNull Synchronizer synchronizer,
                               @NonNull PushNotificationManager pushNotificationManager,
+                              @NonNull SplitUpdatesWorker splitUpdateWorker,
+                              @NonNull MySegmentsUpdateWorker mySegmentUpdateWorker,
                               @NonNull SyncManagerFeedbackChannel syncManagerFeedbackChannel) {
 
-        mSyncManagerFeedbackChannel = checkNotNull(syncManagerFeedbackChannel);
         mSynchronizer = checkNotNull(synchronizer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mPushNotificationManager = checkNotNull(pushNotificationManager);
+        mSplitUpdateWorker = checkNotNull(splitUpdateWorker);
+        mMySegmentUpdateWorker = checkNotNull(mySegmentUpdateWorker);
+        mSyncManagerFeedbackChannel = checkNotNull(syncManagerFeedbackChannel);
+
         mIsPushEnabled = new AtomicBoolean(false);
     }
 
@@ -49,7 +58,10 @@ public class NewSyncManagerImpl implements NewSyncManager, SyncManagerFeedbackLi
             mSynchronizer.synchronizeSplits();
             mSynchronizer.syncronizeMySegments();
             mSyncManagerFeedbackChannel.register(this);
+            mSplitUpdateWorker.start();
+            mMySegmentUpdateWorker.start();
             mPushNotificationManager.start();
+
         } else {
             mSynchronizer.startPeriodicFetching();
         }
@@ -87,6 +99,8 @@ public class NewSyncManagerImpl implements NewSyncManager, SyncManagerFeedbackLi
         mSynchronizer.stopPeriodicRecording();
         mSynchronizer.destroy();
         mPushNotificationManager.stop();
+        mSplitUpdateWorker.stop();
+        mMySegmentUpdateWorker.stop();
     }
 
     @Override
