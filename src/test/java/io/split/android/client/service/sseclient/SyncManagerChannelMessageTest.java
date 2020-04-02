@@ -22,7 +22,7 @@ public class SyncManagerChannelMessageTest {
 
     @Before
     public void setup() {
-        mChannel = new SyncManagerFeedbackChannelImpl();
+        mChannel = new SyncManagerFeedbackChannel();
     }
 
     @Test

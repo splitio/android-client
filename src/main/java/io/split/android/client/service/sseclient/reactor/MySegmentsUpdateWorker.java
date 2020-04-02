@@ -27,7 +27,6 @@ public class MySegmentsUpdateWorker extends UpdateWorker {
         super();
         mSynchronizer = checkNotNull(synchronizer);
         mNotificationsQueue = checkNotNull(notificationsQueue);
-        waitForNotifications();
     }
 
     @Override

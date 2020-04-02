@@ -13,14 +13,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitKillTask implements SplitTask {
 
-    private Split mKilledSplit;
+    private final Split mKilledSplit;
     private final SplitsStorage mSplitsStorage;
 
-    public SplitKillTask(@NonNull SplitsStorage splitsStorage) {
+    public SplitKillTask(@NonNull SplitsStorage splitsStorage, Split split) {
         mSplitsStorage = checkNotNull(splitsStorage);
-    }
-
-    public void setSplit(Split split) {
         mKilledSplit = split;
     }
 
@@ -28,13 +25,13 @@ public class SplitKillTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
         try {
-            if(mKilledSplit == null) {
+            if (mKilledSplit == null) {
                 logError("Split name to kill could not be null.");
                 return SplitTaskExecutionInfo.error(SplitTaskType.SPLIT_KILL);
             }
             long changeNumber = mSplitsStorage.getTill();
 
-            if(mKilledSplit.changeNumber <= changeNumber) {
+            if (mKilledSplit.changeNumber <= changeNumber) {
                 Logger.d("Skipping killed split notification for old change number: "
                         + mKilledSplit.changeNumber);
                 return SplitTaskExecutionInfo.success(SplitTaskType.SPLIT_KILL);

@@ -428,8 +428,8 @@ public class SplitClientConfig {
         private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
         private int _streamingReconnectBackoffBase
                 = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
-        private String _authServiceURL = SSE_AUTH_SERVICE_URL;
-        private String _streamingServiceURL = STREAMING_SERVICE_URL;
+        private String _authServiceUrl = SSE_AUTH_SERVICE_URL;
+        private String _streamingServiceUrl = STREAMING_SERVICE_URL;
 
         public Builder() {
         }
@@ -810,22 +810,22 @@ public class SplitClientConfig {
         /**
          * Authentication service URL. Should only be adjusted for playing well in test environments.
          *
-         * @param authServiceURL String
+         * @param authServiceUrl String
          * @return this builder
          */
-        public Builder authServiceURL(String authServiceURL) {
-            _authServiceURL = authServiceURL;
+        public Builder authServiceUrl(String authServiceUrl) {
+            _authServiceUrl = authServiceUrl;
             return this;
         }
 
         /**
          * Streaming service URL. Should only be adjusted for playing well in test environments.
          *
-         * @param streamingServiceURL String
+         * @param streamingServiceUrl String
          * @return
          */
-        public Builder streamingServiceURL(String streamingServiceURL) {
-            _streamingServiceURL = streamingServiceURL;
+        public Builder streamingServiceUrl(String streamingServiceUrl) {
+            _streamingServiceUrl = streamingServiceUrl;
             return this;
         }
 
@@ -927,8 +927,8 @@ public class SplitClientConfig {
                     _streamingEnabled,
                     _authRetryBackoffBase,
                     _streamingReconnectBackoffBase,
-                    _authServiceURL,
-                    _streamingServiceURL);
+                    _authServiceUrl,
+                    _streamingServiceUrl);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

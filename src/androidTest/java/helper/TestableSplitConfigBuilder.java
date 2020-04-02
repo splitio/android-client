@@ -31,9 +31,15 @@ public class TestableSplitConfigBuilder {
     private long mEventFlushInterval = 1800;
     private String mTrafficType = null;
     private boolean mSynchronizeInBackground = false;
-    private long mBackgroundSyncPeriod;
+    private long mBackgroundSyncPeriod = 15;
     private boolean mBackgroundSyncWhenBatteryNotLow = true;
     private boolean mBackgroundSyncWhenWifiOnly = false;
+
+    private boolean mStreamingEnabled = true;
+    private int mAuthRetryBackoffBase = 1;
+    private int mStreamingReconnectBackoffBase = 1;
+    private String mAuthServiceUrl = "";
+    private String mStreamingServiceUrl = "";
 
     public TestableSplitConfigBuilder endpoint(String endpoint, String eventsEndpoint) {
         this.mEndpoint = endpoint;
@@ -148,6 +154,32 @@ public class TestableSplitConfigBuilder {
 
     public TestableSplitConfigBuilder impressionsPerPush(int impressionsPerPush) {
         this.mImpressionsPerPush = impressionsPerPush;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder streamingEnabled(boolean streamingEnabled) {
+        mStreamingEnabled = streamingEnabled;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder authRetryBackoffBase(int authRetryBackoffBase) {
+        mAuthRetryBackoffBase = authRetryBackoffBase;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder streamingReconnectBackoffBase(int streamingReconnectBackoffBase) {
+        mStreamingReconnectBackoffBase = streamingReconnectBackoffBase;
+        return this;
+    }
+
+
+    public TestableSplitConfigBuilder authServiceURL(String authServiceUrl) {
+        mAuthServiceUrl = authServiceUrl;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder streamingServiceURL(String streamingServiceUrl) {
+        mStreamingServiceUrl = streamingServiceUrl;
         return this;
     }
 

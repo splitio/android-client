@@ -2,15 +2,11 @@ package io.split.android.client.service.mysegments;
 
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.utils.Logger;
 
@@ -18,23 +14,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class MySegmentsUpdateTask implements SplitTask {
 
-    private List<String> mMySegments;
+    private final List<String> mMySegments;
     private final MySegmentsStorage mMySegmentsStorage;
 
-    public MySegmentsUpdateTask(@NonNull MySegmentsStorage mySegmentsStorage) {
+    public MySegmentsUpdateTask(@NonNull MySegmentsStorage mySegmentsStorage,
+                                List<String> mySegments) {
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
-
-    }
-
-    public void setSegments(List<String> segments) {
-        mMySegments = segments;
+        mMySegments = mySegments;
     }
 
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
         try {
-            if(mMySegments == null) {
+            if (mMySegments == null) {
                 logError("My segment list could not be null.");
                 return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_UPDATE);
             }
