@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.service.executor.ParameterizableSplitTask;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -16,7 +15,7 @@ import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SplitsUpdateTask implements ParameterizableSplitTask<Long> {
+public class SplitsUpdateTask implements SplitTask {
 
     static final String SINCE_PARAM = "since";
     private final HttpFetcher<SplitChange> mSplitFetcher;
@@ -27,15 +26,12 @@ public class SplitsUpdateTask implements ParameterizableSplitTask<Long> {
 
     public SplitsUpdateTask(HttpFetcher<SplitChange> splitFetcher,
                             SplitsStorage splitsStorage,
-                            SplitChangeProcessor splitChangeProcessor) {
+                            SplitChangeProcessor splitChangeProcessor,
+                            long since) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
-    }
-
-    @Override
-    public void setParam(Long parameter) {
-        mChangeNumber = parameter;
+        mChangeNumber = since;
     }
 
     @Override

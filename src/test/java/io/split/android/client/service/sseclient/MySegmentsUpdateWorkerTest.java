@@ -7,7 +7,6 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -30,6 +29,7 @@ public class MySegmentsUpdateWorkerTest {
         MockitoAnnotations.initMocks(this);
         mNotificationQueue = new ArrayBlockingQueue<>(50);
         mWorker = new MySegmentsUpdateWorker(mSynchronizer, mNotificationQueue);
+        mWorker.start();
     }
 
     @Test
@@ -43,7 +43,15 @@ public class MySegmentsUpdateWorkerTest {
         Thread.sleep(1000);
 
         verify(mSynchronizer, times(4)).syncronizeMySegments();
+    }
 
+    @Test
+    public void stopped() throws InterruptedException {
+        mWorker.stop();
+        mNotificationQueue.offer(new MySegmentChangeNotification());
 
+        Thread.sleep(1000);
+
+        verify(mSynchronizer, never()).syncronizeMySegments();
     }
 }

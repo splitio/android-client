@@ -13,7 +13,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.executor.ParameterizableSplitTask;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -79,9 +79,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeSplits(long since) {
-        ParameterizableSplitTask<Long> splitsUpdateTask
-                = mSplitTaskFactory.createSplitsUpdateTask();
-        splitsUpdateTask.setParam(since);
+        SplitTask splitsUpdateTask
+                = mSplitTaskFactory.createSplitsUpdateTask(since);
         mTaskExecutor.submit(splitsUpdateTask, null);
     }
 

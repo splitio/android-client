@@ -13,6 +13,8 @@ import java.util.List;
 
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
@@ -29,7 +31,6 @@ public class MySegmentsUpdateTaskTest {
     @Mock
     MySegmentsStorage mySegmentsStorage;
 
-    @InjectMocks
     MySegmentsUpdateTask mTask;
 
     @Before
@@ -40,7 +41,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void correctExecution() throws HttpFetcherException {
         List<String> segments = dummySegments();
-        mTask.setParam(segments);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, segments);
         SplitTaskExecutionInfo result = mTask.execute();
 
         verify(mySegmentsStorage, times(1)).set(any());
@@ -52,7 +53,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void storageException() {
         List<String> segments = dummySegments();
-        mTask.setParam(segments);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, segments);
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(segments);
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -63,7 +64,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void nullParameter() {
 
-        mTask.setParam(null);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, null);
 
         SplitTaskExecutionInfo result = mTask.execute();
 
