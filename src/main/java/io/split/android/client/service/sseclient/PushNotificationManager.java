@@ -37,9 +37,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
 
-    private String mSseDownNotificatorTaskId = null;
-    private String mReconnectTaskId = null;
-
     private long mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
@@ -72,16 +69,10 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mSseClient.connect(token, channels);
     }
 
-    private void scheduleReconnection() {
-        if (mReconnectTaskId != null) {
-            mTaskExecutor.stopTask(mReconnectTaskId);
-
-        }
-
-        mReconnectTaskId = mTaskExecutor.schedule(
+    private void scheduleConnection() {
+        mTaskExecutor.schedule(
                 mSplitTaskFactory.createSseAuthenticationTask(),
-                getRetryPeriod(), SSE_RECONNECT_TIME_IN_SECONDS,
-                this);
+                getRetryPeriod(),this);
     }
 
     private synchronized long getRetryPeriod() {
@@ -95,13 +86,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void scheduleSseDownNotification() {
-        if (mSseDownNotificatorTaskId != null) {
-            mTaskExecutor.stopTask(mSseDownNotificatorTaskId);
-
-        }
-        mSseDownNotificatorTaskId = mTaskExecutor.schedule(
+        mTaskExecutor.schedule(
                 new SseDownNotificator(),
-                0, SSE_RECONNECT_TIME_IN_SECONDS,
+                SSE_RECONNECT_TIME_IN_SECONDS,
                 this);
     }
 
@@ -138,7 +125,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     @Override
     public void onError() {
-        scheduleReconnection();
+        scheduleConnection();
         notifyPushDisabled();
     }
 
@@ -151,6 +138,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         if (unpackedResult != null && unpackedResult.second.size() > 0) {
             connectToSse(unpackedResult.first, unpackedResult.second);
         } else {
+            scheduleConnection();
             notifyPushDisabled();
         }
     }
@@ -186,7 +174,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
-            scheduleReconnection();
+            scheduleConnection();
             mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(
                     BroadcastedEventType.PUSH_DISABLED));
             return SplitTaskExecutionInfo.success(SSE_DOWN_NOTIFICATOR);
