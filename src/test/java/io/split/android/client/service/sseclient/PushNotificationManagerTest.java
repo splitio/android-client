@@ -157,7 +157,7 @@ public class PushNotificationManagerTest {
         mPushManager.onMessage(message(data));
 
         verify(mNotificationProcessor, times(1)).process(data);
-        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), anyLong(), any());
+        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), any());
     }
 
     @Test
@@ -173,7 +173,7 @@ public class PushNotificationManagerTest {
 
         mPushManager.onKeepAlive();
 
-        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), anyLong(), any());
+        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), any());
     }
 
     @After

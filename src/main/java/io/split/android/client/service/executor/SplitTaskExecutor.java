@@ -11,6 +11,10 @@ public interface SplitTaskExecutor {
                   long periodInSecs,
                   @Nullable SplitTaskExecutionListener executionListener);
 
+    void schedule(@NonNull SplitTask task,
+                    long initialDelayInSecs,
+                    @Nullable SplitTaskExecutionListener executionListener);
+
     void submit(@NonNull SplitTask task,
                 @Nullable SplitTaskExecutionListener executionListener);
 

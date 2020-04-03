@@ -33,8 +33,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
 
-    private String mSseDownNotificatorTaskId = null;
-
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -66,13 +64,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void scheduleSseDownNotification() {
-        if(mSseDownNotificatorTaskId != null) {
-            mTaskExecutor.stopTask(mSseDownNotificatorTaskId);
-
-        }
-        mSseDownNotificatorTaskId = mTaskExecutor.schedule(
+        mTaskExecutor.schedule(
                 new SseDownNotificator(),
-                0, SSE_RECONNECT_TIME_IN_SECONDS,
+                SSE_RECONNECT_TIME_IN_SECONDS,
                 this);
     }
 

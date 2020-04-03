@@ -9,11 +9,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -42,9 +38,9 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     @Nullable
     @Override
     public String schedule(@NonNull SplitTask task,
-                         long initialDelayInSecs,
-                         long periodInSecs,
-                         @Nullable SplitTaskExecutionListener executionListener
+                           long initialDelayInSecs,
+                           long periodInSecs,
+                           @Nullable SplitTaskExecutionListener executionListener
     ) {
         checkNotNull(task);
         checkArgument(periodInSecs > 0);
@@ -58,6 +54,20 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
             mScheduledTasks.put(taskId, taskFuture);
         }
         return taskId;
+    }
+
+    @Override
+    public void schedule(@NonNull SplitTask task,
+                         long initialDelayInSecs,
+                         @Nullable SplitTaskExecutionListener executionListener
+    ) {
+        checkNotNull(task);
+
+        if (!mScheduler.isShutdown()) {
+            mScheduler.schedule(
+                    new TaskWrapper(task, executionListener),
+                    initialDelayInSecs, TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -78,7 +88,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     @Override
     public void stopTasks(List<String> taskIds) {
-        for(String taskId : taskIds) {
+        for (String taskId : taskIds) {
             stopTask(taskId);
         }
     }
