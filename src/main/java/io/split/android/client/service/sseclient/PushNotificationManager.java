@@ -12,9 +12,9 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
+import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 
@@ -27,7 +27,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     private final SseClient mSseClient;
     private final SplitTaskExecutor mTaskExecutor;
-    private final SyncManagerFeedbackChannel mSyncManagerFeedbackChannel;
+    private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
 
@@ -38,12 +38,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                                    @NonNull SplitTaskExecutor taskExecutor,
                                    @NonNull SplitTaskFactory splitTaskFactory,
                                    @NonNull NotificationProcessor notificationProcessor,
-                                   @NonNull SyncManagerFeedbackChannel syncManagerFeedbackChannel) {
+                                   @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster) {
         mSseClient = checkNotNull(sseClient);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTaskExecutor = checkNotNull(taskExecutor);
         mNotificationProcessor = checkNotNull(notificationProcessor);
-        mSyncManagerFeedbackChannel = checkNotNull(syncManagerFeedbackChannel);
+        mPushManagerEventBroadcaster = checkNotNull(pushManagerEventBroadcaster);
         mSseClient.setListener(this);
     }
 
@@ -75,11 +75,11 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void notifyPushEnabled() {
-        mSyncManagerFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_ENABLED));
+        mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED));
     }
 
     private void notifyPushDisabled() {
-        mSyncManagerFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
+        mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_DISABLED));
     }
 
 //

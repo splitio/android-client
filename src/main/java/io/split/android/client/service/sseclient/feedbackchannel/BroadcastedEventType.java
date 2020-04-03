@@ -1,6 +1,6 @@
 package io.split.android.client.service.sseclient.feedbackchannel;
 
-public enum SyncManagerFeedbackMessageType {
+public enum BroadcastedEventType {
     /***
      * Types of messages that can be pushed to the
      * Synchronization feedback channel
