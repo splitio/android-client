@@ -4,10 +4,13 @@ import androidx.annotation.NonNull;
 
 import com.google.gson.JsonSyntaxException;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
+import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -16,15 +19,21 @@ public class NotificationProcessor {
 
     private final NotificationParser mNotificationParser;
     private final SplitTaskExecutor mSplitTaskExecutor;
-    private final Map<Long, SplitsChangeNotification> mSplitUpdateNotificationBuffer;
-    private final Map<Long, MySegmentChangeNotification> mMySegmentUpdateNotificationBuffer;
+    private final SplitTaskFactory mSplitTaskFactory;
+    private final BlockingQueue<MySegmentChangeNotification> mMySegmentUpdateNotificationsQueue;
+    private final BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationsQueue;
 
-    public NotificationProcessor(@NonNull SplitTaskExecutor splitTaskExecutor,
-                                 @NonNull NotificationParser notificationParser) {
-        mSplitTaskExecutor = splitTaskExecutor;
+    public NotificationProcessor(
+            @NonNull SplitTaskExecutor splitTaskExecutor,
+            @NonNull SplitTaskFactory splitTaskFactory,
+            @NonNull NotificationParser notificationParser,
+            @NonNull BlockingQueue<MySegmentChangeNotification> mySegmentUpdateNotificationsQueue,
+            @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue) {
+        mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
+        mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mNotificationParser = checkNotNull(notificationParser);
-        mSplitUpdateNotificationBuffer = new ConcurrentHashMap<>();
-        mMySegmentUpdateNotificationBuffer = new ConcurrentHashMap<>();
+        mMySegmentUpdateNotificationsQueue = checkNotNull(mySegmentUpdateNotificationsQueue);
+        mSplitsUpdateNotificationsQueue = checkNotNull(splitsUpdateNotificationsQueue);
     }
 
     public void process(String rawJson) {
@@ -59,15 +68,29 @@ public class NotificationProcessor {
     }
 
     private void processSplitUpdate(SplitsChangeNotification notification) {
-
+        mSplitsUpdateNotificationsQueue.offer(notification);
     }
 
     private void processSplitKill(SplitKillNotification notification) {
-
+        Split split = new Split();
+        split.name = notification.getSplitName();
+        split.defaultTreatment = notification.getDefaultTreatment();
+        split.changeNumber = notification.getChangeNumber();
+        mSplitTaskExecutor.submit(mSplitTaskFactory.createSplitKillTask(split), null);
+        mSplitsUpdateNotificationsQueue.offer(new SplitsChangeNotification(split.changeNumber));
     }
 
     private void processMySegmentUpdate(MySegmentChangeNotification notification) {
-
+        if (!notification.isIncludesPayload()) {
+            mMySegmentUpdateNotificationsQueue.offer(notification);
+        } else {
+            List<String> segmentList = notification.getSegmentList();
+            if (segmentList != null) {
+                MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask(
+                        notification.getSegmentList());
+                mSplitTaskExecutor.submit(task, null);
+            }
+        }
     }
 
     private void processControl() {

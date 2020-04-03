@@ -2,7 +2,10 @@ package io.split.android.client.service.executor;
 
 import androidx.annotation.NonNull;
 
+import java.util.List;
+
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.dtos.Split;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRecorderTask;
@@ -11,8 +14,10 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.SseChannelsParser;
@@ -42,7 +47,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createEventsRecorderTask() {
+    public EventsRecorderTask createEventsRecorderTask() {
         return new EventsRecorderTask(
                 mSplitApiFacade.getEventsRecorder(),
                 mSplitsStorageContainer.getEventsStorage(),
@@ -50,7 +55,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createImpressionsRecorderTask() {
+    public ImpressionsRecorderTask createImpressionsRecorderTask() {
         return new ImpressionsRecorderTask(
                 mSplitApiFacade.getImpressionsRecorder(),
                 mSplitsStorageContainer.getImpressionsStorage(),
@@ -60,7 +65,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createSplitsSyncTask() {
+    public SplitsSyncTask createSplitsSyncTask() {
         return new SplitsSyncTask(
                 mSplitApiFacade.getSplitFetcher(),
                 mSplitsStorageContainer.getSplitsStorage(),
@@ -68,25 +73,35 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createMySegmentsSyncTask() {
+    public MySegmentsSyncTask createMySegmentsSyncTask() {
         return new MySegmentsSyncTask(
                 mSplitApiFacade.getMySegmentsFetcher(),
                 mSplitsStorageContainer.getMySegmentsStorage());
     }
 
     @Override
-    public SplitTask createLoadMySegmentsTask() {
+    public LoadMySegmentsTask createLoadMySegmentsTask() {
         return new LoadMySegmentsTask(mSplitsStorageContainer.getMySegmentsStorage());
     }
 
     @Override
-    public SplitTask createLoadSplitsTask() {
+    public LoadSplitsTask createLoadSplitsTask() {
         return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage());
     }
 
     @Override
-    public SplitTask createSseAuthenticationTask() {
+    public SseAuthenticationTask createSseAuthenticationTask() {
         return new SseAuthenticationTask(mSplitApiFacade.getSseAuthenticationFetcher(),
                 mApiKey, mUserKey, new SseChannelsParser());
+    }
+
+    @Override
+    public SplitKillTask createSplitKillTask(Split split) {
+        return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage(), split);
+    }
+
+    @Override
+    public MySegmentsUpdateTask createMySegmentsUpdateTask(List<String> segments) {
+        return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage(), segments);
     }
 }

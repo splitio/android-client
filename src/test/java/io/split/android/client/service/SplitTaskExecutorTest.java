@@ -9,6 +9,8 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -283,6 +285,32 @@ public class SplitTaskExecutorTest {
         public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
             taskExecutedCalled = true;
             mLatch.countDown();
+        }
+    }
+
+    private static class TestQueueTask implements SplitTask {
+        public CountDownLatch mLatch;
+        public static Map<String, List<Integer>> EXECUTED_TASKS = new ConcurrentHashMap<>();
+        private final String mQueueName;
+        private final int mId;
+
+        public TestQueueTask(String queueName, int id, CountDownLatch latch) {
+            mQueueName = queueName;
+            mId = id;
+            mLatch = latch;
+        }
+
+        @NonNull
+        @Override
+        public SplitTaskExecutionInfo execute() {
+            List<Integer> ids = EXECUTED_TASKS.get(mQueueName);
+            if (ids == null) {
+                ids = new ArrayList<>();
+                EXECUTED_TASKS.put(mQueueName, ids);
+            }
+            ids.add(mId);
+            mLatch.countDown();
+            return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
         }
     }
 }

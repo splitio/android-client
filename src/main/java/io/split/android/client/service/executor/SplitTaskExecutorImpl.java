@@ -6,6 +6,12 @@ import androidx.annotation.Nullable;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.lang.ref.WeakReference;
+import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.utils.Logger;
@@ -81,13 +87,12 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         }
     }
 
-    static class TaskWrapper implements Runnable {
+    private static class TaskWrapper implements Runnable {
         private final SplitTask mTask;
         private WeakReference<SplitTaskExecutionListener> mExecutionListener;
 
         TaskWrapper(SplitTask task,
                     SplitTaskExecutionListener executionListener) {
-
             mTask = checkNotNull(task);
             mExecutionListener = new WeakReference<>(executionListener);
         }

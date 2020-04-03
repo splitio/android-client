@@ -13,7 +13,6 @@ import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeed
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -43,9 +42,9 @@ public class SyncManagerChannelMessageTest {
         mChannel.register(l3);
         mChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
 
-        verify(l1, times(4)).onFedbackMessage(any(SyncManagerFeedbackMessage.class));
-        verify(l2, times(2)).onFedbackMessage(any(SyncManagerFeedbackMessage.class));
-        verify(l3, times(1)).onFedbackMessage(any(SyncManagerFeedbackMessage.class));
+        verify(l1, times(4)).onFeedbackMessage(any(SyncManagerFeedbackMessage.class));
+        verify(l2, times(2)).onFeedbackMessage(any(SyncManagerFeedbackMessage.class));
+        verify(l3, times(1)).onFeedbackMessage(any(SyncManagerFeedbackMessage.class));
     }
 
     @Test
@@ -62,9 +61,9 @@ public class SyncManagerChannelMessageTest {
         mChannel.pushMessage(m1);
         mChannel.pushMessage(m2);
 
-        verify(l1, never()).onFedbackMessage(m0);
-        verify(l1, times(1)).onFedbackMessage(m1);
-        verify(l1, times(1)).onFedbackMessage(m2);
+        verify(l1, never()).onFeedbackMessage(m0);
+        verify(l1, times(1)).onFeedbackMessage(m1);
+        verify(l1, times(1)).onFeedbackMessage(m2);
     }
 
     @Test
@@ -81,7 +80,7 @@ public class SyncManagerChannelMessageTest {
         l1 = null;
         mChannel.pushMessage(m1);
 
-        verify(l2, times(1)).onFedbackMessage(m1);
+        verify(l2, times(1)).onFeedbackMessage(m1);
         Assert.assertNull(l1);
     }
 

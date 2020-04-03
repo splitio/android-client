@@ -3,11 +3,7 @@ package io.split.android.client.service.sseclient.feedbackchannel;
 import androidx.annotation.NonNull;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SyncManagerFeedbackChannelImpl implements SyncManagerFeedbackChannel {
@@ -23,7 +19,7 @@ public class SyncManagerFeedbackChannelImpl implements SyncManagerFeedbackChanne
         for(WeakReference<SyncManagerFeedbackListener> listenerRef : mListeners) {
             SyncManagerFeedbackListener listener = listenerRef.get();
             if(listener != null) {
-                listener.onFedbackMessage(message);
+                listener.onFeedbackMessage(message);
             }
         }
     }

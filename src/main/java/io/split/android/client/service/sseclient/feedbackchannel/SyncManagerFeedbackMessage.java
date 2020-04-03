@@ -1,7 +1,11 @@
 package io.split.android.client.service.sseclient.feedbackchannel;
 
 public class SyncManagerFeedbackMessage {
-    private SyncManagerFeedbackMessageType message;
+    /***
+     * This class represents a message to be pushed in the feedback channel
+     */
+
+    final private SyncManagerFeedbackMessageType message;
 
     public SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType message) {
         this.message = message;
@@ -10,4 +14,5 @@ public class SyncManagerFeedbackMessage {
     public SyncManagerFeedbackMessageType getMessage() {
         return message;
     }
+
 }
