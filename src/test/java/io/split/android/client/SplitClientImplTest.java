@@ -39,7 +39,9 @@ import static io.split.android.engine.ConditionsTestUtil.partition;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -64,7 +66,7 @@ public class SplitClientImplTest {
 
         assertThat(client.getTreatment(null), is(equalTo(Treatments.CONTROL)));
 
-        verifyZeroInteractions(splitsStorage);
+        verify(splitsStorage, never()).get(anyString());
     }
 
     @Test

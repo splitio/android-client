@@ -6,16 +6,15 @@ import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
-import io.split.android.client.service.synchronizer.NewSyncManager;
 import io.split.android.client.service.synchronizer.SyncManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class LifecycleManager implements LifecycleObserver {
 
-    NewSyncManager mSyncManager;
+    SyncManager mSyncManager;
 
-    public LifecycleManager(@NonNull NewSyncManager syncManager) {
+    public LifecycleManager(@NonNull SyncManager syncManager) {
         mSyncManager = checkNotNull(syncManager);
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
     }

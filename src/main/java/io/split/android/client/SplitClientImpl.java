@@ -6,9 +6,8 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
-import io.split.android.client.service.synchronizer.NewSyncManager;
-import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
@@ -43,7 +42,7 @@ public final class SplitClientImpl implements SplitClient {
     private final TreatmentManager mTreatmentManager;
     private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
-    private final NewSyncManager mSyncManager;
+    private final SyncManager mSyncManager;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -58,7 +57,7 @@ public final class SplitClientImpl implements SplitClient {
                            SplitEventsManager eventsManager,
                            SplitsStorage splitsStorage,
                            EventPropertiesProcessor eventPropertiesProcessor,
-                           NewSyncManager syncManager) {
+                           SyncManager syncManager) {
 
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
