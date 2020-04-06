@@ -56,25 +56,29 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         return taskId;
     }
 
+    @Nullable
     @Override
-    public void schedule(@NonNull SplitTask task,
-                         long initialDelayInSecs,
-                         @Nullable SplitTaskExecutionListener executionListener
+    public String schedule(@NonNull SplitTask task,
+                           long initialDelayInSecs,
+                           @Nullable SplitTaskExecutionListener executionListener
     ) {
         checkNotNull(task);
-
+        String taskId = null;
         if (!mScheduler.isShutdown()) {
-            mScheduler.schedule(
+            ScheduledFuture taskFuture = mScheduler.schedule(
                     new TaskWrapper(task, executionListener),
                     initialDelayInSecs, TimeUnit.SECONDS);
+            taskId = UUID.randomUUID().toString();
+            mScheduledTasks.put(taskId, taskFuture);
         }
+        return taskId;
     }
 
     @Override
     public void submit(@NonNull SplitTask task,
                        @Nullable SplitTaskExecutionListener executionListener) {
         checkNotNull(task);
-        if (task != null && !mScheduler.isShutdown()) {
+        if (!mScheduler.isShutdown()) {
             mScheduler.submit(new TaskWrapper(task, executionListener));
         }
     }
