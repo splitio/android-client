@@ -1,7 +1,5 @@
 package io.split.android.client.service;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -393,8 +391,8 @@ public class SyncManagerTest {
 
         @Override
         public String schedule(@NonNull SplitTask task, long initialDelayInSecs,
-                             long periodInSecs,
-                             @Nullable SplitTaskExecutionListener executionListener) {
+                               long periodInSecs,
+                               @Nullable SplitTaskExecutionListener executionListener) {
             return UUID.randomUUID().toString();
 
         }
@@ -434,8 +432,8 @@ public class SyncManagerTest {
         }
 
         @Override
-        public void schedule(@NonNull SplitTask task, long initialDelayInSecs, @Nullable SplitTaskExecutionListener executionListener) {
-
+        public String schedule(@NonNull SplitTask task, long initialDelayInSecs, @Nullable SplitTaskExecutionListener executionListener) {
+            return null;
         }
     }
 }
