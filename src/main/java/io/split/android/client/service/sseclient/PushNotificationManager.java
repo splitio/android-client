@@ -36,8 +36,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
-
     private long mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
+    private String mSseDownNotificatorTaskId = null;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -86,7 +86,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void scheduleSseDownNotification() {
-        mTaskExecutor.schedule(
+        mSseDownNotificatorTaskId = mTaskExecutor.schedule(
                 new SseDownNotificator(),
                 SSE_RECONNECT_TIME_IN_SECONDS,
                 this);
@@ -107,6 +107,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     public void onOpen() {
         resetRetryPeriod();
         notifyPushEnabled();
+        scheduleSseDownNotification();
     }
 
     @Override
@@ -126,7 +127,14 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     @Override
     public void onError() {
         scheduleConnection();
+        cancelSseDownNotificator();
         notifyPushDisabled();
+    }
+
+    private void cancelSseDownNotificator() {
+        if (mSseDownNotificatorTaskId != null) {
+            mTaskExecutor.stopTask(mSseDownNotificatorTaskId);
+        }
     }
 
     //

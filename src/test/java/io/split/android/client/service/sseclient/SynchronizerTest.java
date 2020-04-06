@@ -404,8 +404,8 @@ public class SynchronizerTest {
         }
 
         @Override
-        public void schedule(@NonNull SplitTask task, long initialDelayInSecs, @Nullable SplitTaskExecutionListener executionListener) {
-
+        public String schedule(@NonNull SplitTask task, long initialDelayInSecs, @Nullable SplitTaskExecutionListener executionListener) {
+            return null;
         }
 
         @Override
