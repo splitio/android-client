@@ -84,6 +84,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @Override
         public void onOpen() {
             notifyPushEnabled();
+            scheduleSseDownNotification();
         }
 
         @Override
