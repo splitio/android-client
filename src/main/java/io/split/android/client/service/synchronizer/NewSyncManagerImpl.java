@@ -11,6 +11,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeed
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackListener;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
+import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -74,13 +75,19 @@ public class NewSyncManagerImpl implements NewSyncManager, SyncManagerFeedbackLi
 
     @Override
     public void onFeedbackMessage(SyncManagerFeedbackMessage message) {
-        if (SyncManagerFeedbackMessageType.PUSH_DISABLED.equals(message.getMessage())
-                && mIsPushEnabled.get()) {
-            mIsPushEnabled.set(false);
-            mSynchronizer.startPeriodicFetching();
-        } else {
-            mSynchronizer.stopPeriodicFetching();
-            mIsPushEnabled.set(true);
+        switch(message.getMessage()) {
+            case PUSH_DISABLED:
+                if(mIsPushEnabled.get()) {
+                    mIsPushEnabled.set(false);
+                    mSynchronizer.startPeriodicFetching();
+                }
+                break;
+            case PUSH_ENABLED:
+                mSynchronizer.stopPeriodicFetching();
+                mIsPushEnabled.set(true);
+                break;
+                default:
+                    Logger.e("Invalide SSE event received: " + message.getMessage());
         }
     }
 }
