@@ -91,14 +91,14 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
-    public void startPeriodicFetching() {
+    synchronized public void startPeriodicFetching() {
         scheduleSplitsFetcherTask();
         scheduleMySegmentsFetcherTask();
         Logger.i("Synchronization tasks scheduled");
     }
 
     @Override
-    public void stopPeriodicFetching() {
+    synchronized public void stopPeriodicFetching() {
         mTaskExecutor.stopTask(mSplitsFetcherTaskId);
         mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
     }
