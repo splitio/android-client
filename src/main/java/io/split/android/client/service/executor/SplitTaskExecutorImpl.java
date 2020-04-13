@@ -70,12 +70,15 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     }
 
     @Override
-    public void stopTasks(List<String> taskIds) {
-        for(String taskId : taskIds) {
-            ScheduledFuture taskFuture = mScheduledTasks.get(taskId);
-            taskFuture.cancel(false);
-            mScheduledTasks.remove(taskId);
+    public void stopTask(String taskId) {
+        if(taskId == null ) {
+            return;
         }
+        ScheduledFuture taskFuture = mScheduledTasks.get(taskId);
+        if(taskFuture != null) {
+            taskFuture.cancel(false);
+        }
+        mScheduledTasks.remove(taskId);
     }
 
     public void pause() {

@@ -98,10 +98,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void stopPeriodicFetching() {
-        List<String> taskIds = new ArrayList<>();
-        taskIds.add(mSplitsFetcherTaskId);
-        taskIds.add(mMySegmentsFetcherTaskId);
-        mTaskExecutor.stopTasks(taskIds);
+        mTaskExecutor.stopTask(mSplitsFetcherTaskId);
+        mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
     }
 
     @Override

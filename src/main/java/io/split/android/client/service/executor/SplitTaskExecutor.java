@@ -18,7 +18,7 @@ public interface SplitTaskExecutor {
 
     void resume();
 
-    void stopTasks(List<String> taskIds);
+    void stopTask(String taskId);
 
     void stop();
 }

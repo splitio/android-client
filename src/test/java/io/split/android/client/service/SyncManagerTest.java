@@ -419,7 +419,7 @@ public class SyncManagerTest {
         }
 
         @Override
-        public void stopTasks(List<String> taskIds) {
+        public void stopTask(String taskId) {
 
         }
 
