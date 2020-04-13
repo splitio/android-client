@@ -32,6 +32,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final SplitClientConfig mSplitClientConfig;
     private final SplitEventsManager mSplitEventsManager;
     private final SplitTaskFactory mSplitTaskFactory;
+    private final WorkManagerWrapper mWorkManagerWrapper;
 
     private RecorderSyncHelper<Event> mEventsSyncHelper;
     private RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
@@ -42,7 +43,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private LoadLocalDataListener mLoadLocalSplitsListener;
     private LoadLocalDataListener mLoadLocalMySegmentsListener;
 
-    private WorkManagerWrapper mWorkManagerWrapper;
+
 
     private String mSplitsFetcherTaskId;
     private String mMySegmentsFetcherTaskId;
