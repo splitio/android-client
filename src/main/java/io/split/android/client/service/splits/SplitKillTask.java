@@ -3,7 +3,7 @@ package io.split.android.client.service.splits;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.service.executor.ParameterizableSplitTask;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -11,31 +11,27 @@ import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SplitKillTask implements ParameterizableSplitTask<Split> {
+public class SplitKillTask implements SplitTask {
 
-    private Split mKilledSplit;
+    private final Split mKilledSplit;
     private final SplitsStorage mSplitsStorage;
 
-    public SplitKillTask(@NonNull SplitsStorage splitsStorage) {
+    public SplitKillTask(@NonNull SplitsStorage splitsStorage, Split split) {
         mSplitsStorage = checkNotNull(splitsStorage);
-    }
-
-    @Override
-    public void setParam(Split parameter) {
-        mKilledSplit = parameter;
+        mKilledSplit = split;
     }
 
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
         try {
-            if(mKilledSplit == null) {
+            if (mKilledSplit == null) {
                 logError("Split name to kill could not be null.");
                 return SplitTaskExecutionInfo.error(SplitTaskType.SPLIT_KILL);
             }
             long changeNumber = mSplitsStorage.getTill();
 
-            if(mKilledSplit.changeNumber <= changeNumber) {
+            if (mKilledSplit.changeNumber <= changeNumber) {
                 Logger.d("Skipping killed split notification for old change number: "
                         + mKilledSplit.changeNumber);
                 return SplitTaskExecutionInfo.success(SplitTaskType.SPLIT_KILL);

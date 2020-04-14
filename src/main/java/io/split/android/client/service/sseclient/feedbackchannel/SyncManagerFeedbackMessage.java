@@ -5,24 +5,14 @@ public class SyncManagerFeedbackMessage {
      * This class represents a message to be pushed in the feedback channel
      */
 
-    private SyncManagerFeedbackMessageType message;
-    private Object data;
+    final private SyncManagerFeedbackMessageType message;
 
     public SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType message) {
-        this(message, null);
-    }
-
-    public SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType message,
-                                      Object data) {
         this.message = message;
-        this.data = data;
     }
 
     public SyncManagerFeedbackMessageType getMessage() {
         return message;
     }
 
-    public Object getData() {
-        return data;
-    }
 }

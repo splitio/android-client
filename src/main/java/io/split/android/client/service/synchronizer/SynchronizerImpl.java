@@ -13,7 +13,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.executor.ParameterizableSplitTask;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -32,6 +32,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final SplitClientConfig mSplitClientConfig;
     private final SplitEventsManager mSplitEventsManager;
     private final SplitTaskFactory mSplitTaskFactory;
+    private final WorkManagerWrapper mWorkManagerWrapper;
 
     private RecorderSyncHelper<Event> mEventsSyncHelper;
     private RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
@@ -42,7 +43,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private LoadLocalDataListener mLoadLocalSplitsListener;
     private LoadLocalDataListener mLoadLocalMySegmentsListener;
 
-    private WorkManagerWrapper mWorkManagerWrapper;
+
 
     private String mSplitsFetcherTaskId;
     private String mMySegmentsFetcherTaskId;
@@ -79,9 +80,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeSplits(long since) {
-        ParameterizableSplitTask<Long> splitsUpdateTask
-                = mSplitTaskFactory.createSplitsUpdateTask();
-        splitsUpdateTask.setParam(since);
+        SplitTask splitsUpdateTask
+                = mSplitTaskFactory.createSplitsUpdateTask(since);
         mTaskExecutor.submit(splitsUpdateTask, null);
     }
 
@@ -91,18 +91,16 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
-    public void startPeriodicFetching() {
+    synchronized public void startPeriodicFetching() {
         scheduleSplitsFetcherTask();
         scheduleMySegmentsFetcherTask();
         Logger.i("Synchronization tasks scheduled");
     }
 
     @Override
-    public void stopPeriodicFetching() {
-        List<String> taskIds = new ArrayList<>();
-        taskIds.add(mSplitsFetcherTaskId);
-        taskIds.add(mMySegmentsFetcherTaskId);
-        mTaskExecutor.stopTasks(taskIds);
+    synchronized public void stopPeriodicFetching() {
+        mTaskExecutor.stopTask(mSplitsFetcherTaskId);
+        mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
     }
 
     @Override

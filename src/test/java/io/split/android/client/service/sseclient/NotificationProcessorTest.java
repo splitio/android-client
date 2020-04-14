@@ -64,9 +64,9 @@ public class NotificationProcessorTest {
 
         when(mNotificationParser.parseRawNotification(anyString())).thenReturn(rawNotification);
 
-        when(mSplitTaskFactory.createMySegmentsUpdateTask())
+        when(mSplitTaskFactory.createMySegmentsUpdateTask(any()))
                 .thenReturn(Mockito.mock(MySegmentsUpdateTask.class));
-        when(mSplitTaskFactory.createSplitKillTask())
+        when(mSplitTaskFactory.createSplitKillTask(any()))
                 .thenReturn(Mockito.mock(SplitKillTask.class));
 
         mNotificationProcessor = new NotificationProcessor(mSplitTaskExecutor,
@@ -111,7 +111,7 @@ public class NotificationProcessorTest {
         mNotificationProcessor.process("somenotification");
 
         verify(mSplitsChangeQueue, never()).offer(any());
-        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask();
+        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(any());
         verify(mSplitTaskExecutor, times(1)).submit(any(), isNull());
     }
 
@@ -130,7 +130,7 @@ public class NotificationProcessorTest {
 
         mNotificationProcessor.process("somenotification");
 
-        verify(mSplitTaskFactory, never()).createMySegmentsUpdateTask();
+        verify(mSplitTaskFactory, never()).createMySegmentsUpdateTask(any());
         ArgumentCaptor<MySegmentChangeNotification> messageCaptor =
                 ArgumentCaptor.forClass(MySegmentChangeNotification.class);
         verify(mMySegmentChangeQueue, times(1)).offer(messageCaptor.capture());
@@ -148,7 +148,7 @@ public class NotificationProcessorTest {
         mNotificationProcessor.process("somenotification");
 
         verify(mMySegmentChangeQueue, never()).offer(any());
-        verify(mSplitTaskFactory, times(1)).createSplitKillTask();
+        verify(mSplitTaskFactory, times(1)).createSplitKillTask(any());
         verify(mSplitTaskExecutor, times(1)).submit(any(), isNull());
     }
 }
