@@ -15,7 +15,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
-import io.split.android.client.service.sseclient.SseChannelsParser;
+import io.split.android.client.service.sseclient.SseJwtParser;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -31,7 +31,7 @@ public class SseAuthenticationTaskTest {
 
     SseAuthenticationTask mTask;
 
-    SseChannelsParser mChannelParser;
+    SseJwtParser mChannelParser;
 
     private final String JWT = "eyJhbGciOiJIUzI1NiIsImtpZCI6ImtleUlkIiwidHlwIjoiSldUIn0.eyJvcmdJ" +
             "ZCI6ImY3ZjAzNTIwLTVkZjctMTFlOC04NDc2LTBlYzU0NzFhM2NlYyIsImVudklkIjoiZjdmN" +
@@ -44,7 +44,7 @@ public class SseAuthenticationTaskTest {
 
     @Before
     public void setup() {
-        mChannelParser = Mockito.mock(SseChannelsParser.class);
+        mChannelParser = Mockito.mock(SseJwtParser.class);
         mFetcher = (HttpFetcher<SseAuthenticationResponse>) Mockito.mock(HttpFetcher.class);
         mAuthResponse = Mockito.mock(SseAuthenticationResponse.class);
         mTask = new SseAuthenticationTask(mFetcher, "userKey", mChannelParser);
