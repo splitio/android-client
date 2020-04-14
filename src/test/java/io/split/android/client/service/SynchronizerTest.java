@@ -419,5 +419,10 @@ public class SynchronizerTest {
         public void stop() {
 
         }
+
+        @Override
+        public String schedule(@NonNull SplitTask task, long initialDelayInSecs, @Nullable SplitTaskExecutionListener executionListener) {
+            return null;
+        }
     }
 }

@@ -2,10 +2,12 @@ package io.split.android.client.service.sseclient;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -19,26 +21,31 @@ import io.split.android.client.service.sseclient.notifications.NotificationProce
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
+import static io.split.android.client.service.executor.SplitTaskType.GENERIC_TASK;
+import static java.lang.reflect.Modifier.PRIVATE;
 
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
 
     private final static String DATA_FIELD = "data";
     private final static int SSE_RECONNECT_TIME_IN_SECONDS = 70;
+    private final static int INITIAL_CONNECTION_RETRY_IN_SECONDS = 1;
+    private final static int RETRY_EXPONENTIAL_BASE = 2;
 
     private final SseClient mSseClient;
     private final SplitTaskExecutor mTaskExecutor;
     private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
-
-    private String mReconnectTaskId = null;
-
+    private long mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
+    private String mSseDownNotificatorTaskId = null;
+    private String mSseTokenCaducatedNotificatorTaskId = null;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
                                    @NonNull SplitTaskFactory splitTaskFactory,
                                    @NonNull NotificationProcessor notificationProcessor,
                                    @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster) {
+
         mSseClient = checkNotNull(sseClient);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTaskExecutor = checkNotNull(taskExecutor);
@@ -52,7 +59,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 this);
 
-        scheduleReconnection();
+        scheduleSseDownNotification();
     }
 
     public void stop() {
@@ -63,15 +70,34 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mSseClient.connect(token, channels);
     }
 
-    private void scheduleReconnection() {
-        if (mReconnectTaskId != null) {
-            mTaskExecutor.stopTask(mReconnectTaskId);
-
-        }
-        mReconnectTaskId = mTaskExecutor.schedule(
+    private void scheduleConnection() {
+        mTaskExecutor.schedule(
                 mSplitTaskFactory.createSseAuthenticationTask(),
-                0, SSE_RECONNECT_TIME_IN_SECONDS,
-                this);
+                getRetryPeriod(), this);
+    }
+
+    private synchronized long getRetryPeriod() {
+        long currentValue = mNextRetryPeriod;
+        mNextRetryPeriod = mNextRetryPeriod * RETRY_EXPONENTIAL_BASE;
+        return currentValue;
+    }
+
+    private synchronized void resetRetryPeriod() {
+        mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
+    }
+
+    private void scheduleSseDownNotification() {
+        mSseDownNotificatorTaskId = mTaskExecutor.schedule(
+                new SseDownNotificator(),
+                SSE_RECONNECT_TIME_IN_SECONDS,
+                null);
+    }
+
+    private void scheduleSseTokenCaducation(long expirationTime) {
+        mSseTokenCaducatedNotificatorTaskId = mTaskExecutor.schedule(
+                new SseTokenCaducationNotificator(),
+                expirationTime - System.currentTimeMillis() / 1000,
+                null);
     }
 
     private void notifyPushEnabled() {
@@ -87,7 +113,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 //
     @Override
     public void onOpen() {
+        resetRetryPeriod();
         notifyPushEnabled();
+        scheduleSseDownNotification();
     }
 
     @Override
@@ -96,17 +124,25 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         if (messageData != null) {
             mNotificationProcessor.process(messageData);
         }
-        scheduleReconnection();
+        scheduleSseDownNotification();
     }
 
     @Override
     public void onKeepAlive() {
-        scheduleReconnection();
+        scheduleSseDownNotification();
     }
 
     @Override
     public void onError() {
+        scheduleConnection();
+        cancelSseDownNotificator();
         notifyPushDisabled();
+    }
+
+    private void cancelSseDownNotificator() {
+        if (mSseDownNotificatorTaskId != null) {
+            mTaskExecutor.stopTask(mSseDownNotificatorTaskId);
+        }
     }
 
     //
@@ -119,6 +155,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
             if (jwtToken != null && jwtToken.getChannels().size() > 0) {
                 connectToSse(jwtToken.getRawJwt(), jwtToken.getChannels());
             } else {
+                scheduleConnection();
                 notifyPushDisabled();
             }
         }
@@ -146,5 +183,24 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
             Logger.e("Couldn't connect to SSE server. Streaming is disabled.");
         }
         return null;
+    }
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    public class ScheduledAlarmTask implements SplitTask {
+
+        private final int mAlarmType;
+
+        public ScheduledAlarmTask(int alarmType) {
+            this.mAlarmType = alarmType;
+        }
+
+        @NonNull
+        @Override
+        public SplitTaskExecutionInfo execute() {
+            scheduleConnection();
+            mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(
+                    BroadcastedEventType.PUSH_DISABLED));
+            return SplitTaskExecutionInfo.success(GENERIC_TASK);
+        }
     }
 }

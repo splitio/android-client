@@ -7,9 +7,13 @@ import java.util.List;
 
 public interface SplitTaskExecutor {
     String schedule(@NonNull SplitTask task,
-                  long initialDelayInSecs,
-                  long periodInSecs,
-                  @Nullable SplitTaskExecutionListener executionListener);
+                    long initialDelayInSecs,
+                    long periodInSecs,
+                    @Nullable SplitTaskExecutionListener executionListener);
+
+    String schedule(@NonNull SplitTask task,
+                    long initialDelayInSecs,
+                    @Nullable SplitTaskExecutionListener executionListener);
 
     void submit(@NonNull SplitTask task,
                 @Nullable SplitTaskExecutionListener executionListener);
