@@ -13,7 +13,6 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
@@ -55,15 +54,18 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     public void start() {
-        mTaskExecutor.submit(
-                mSplitTaskFactory.createSseAuthenticationTask(),
-                this);
-
+        doSseAuthentication();
         scheduleSseDownNotification();
     }
 
     public void stop() {
         mSseClient.disconnect();
+    }
+
+    private void doSseAuthentication() {
+        mTaskExecutor.submit(
+                mSplitTaskFactory.createSseAuthenticationTask(),
+                this);
     }
 
     private void connectToSse(String token, List<String> channels) {
@@ -88,16 +90,16 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     private void scheduleSseDownNotification() {
         mSseDownNotificatorTaskId = mTaskExecutor.schedule(
-                new SseDownNotificator(),
+                new SseDownNotificatorTask(),
                 SSE_RECONNECT_TIME_IN_SECONDS,
-                null);
+                this);
     }
 
-    private void scheduleSseTokenCaducation(long expirationTime) {
+    private void scheduleSseTokenExpiredTask(long expirationTime) {
         mSseTokenCaducatedNotificatorTaskId = mTaskExecutor.schedule(
-                new SseTokenCaducationNotificator(),
+                new SseTokenExpiredNotificatorTask(),
                 expirationTime - System.currentTimeMillis() / 1000,
-                null);
+                this);
     }
 
     private void notifyPushEnabled() {
@@ -145,19 +147,30 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         }
     }
 
+    private void refreshSseToken() {
+        cancelSseDownNotificator();
+        mSseClient.disconnect();
+        doSseAuthentication();
+    }
+
     //
 //      Split Task Executor Listener implementation
 //
     @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-        if (SplitTaskType.SSE_AUTHENTICATION_TASK.equals(taskInfo.getTaskType())) {
-            SseJwtToken jwtToken = unpackResult(taskInfo);
-            if (jwtToken != null && jwtToken.getChannels().size() > 0) {
-                connectToSse(jwtToken.getRawJwt(), jwtToken.getChannels());
-            } else {
-                scheduleConnection();
-                notifyPushDisabled();
-            }
+
+        switch (taskInfo.getTaskType()) {
+            case SSE_AUTHENTICATION_TASK:
+                SseJwtToken jwtToken = unpackResult(taskInfo);
+                if (jwtToken != null && jwtToken.getChannels().size() > 0) {
+                    connectToSse(jwtToken.getRawJwt(), jwtToken.getChannels());
+                } else {
+                    scheduleConnection();
+                    notifyPushDisabled();
+                }
+                break;
+            default:
+                Logger.e("Push notification manager unknown task");
         }
     }
 
@@ -186,14 +199,19 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public class ScheduledAlarmTask implements SplitTask {
-
-        private final int mAlarmType;
-
-        public ScheduledAlarmTask(int alarmType) {
-            this.mAlarmType = alarmType;
+    public class SseDownNotificatorTask implements SplitTask {
+        @NonNull
+        @Override
+        public SplitTaskExecutionInfo execute() {
+            scheduleConnection();
+            mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(
+                    BroadcastedEventType.PUSH_DISABLED));
+            return SplitTaskExecutionInfo.success(GENERIC_TASK);
         }
+    }
 
+    @VisibleForTesting(otherwise = PRIVATE)
+    public class SseTokenExpiredNotificatorTask implements SplitTask {
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
