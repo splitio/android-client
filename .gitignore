@@ -1,4 +1,5 @@
 .idea
+.project
 /build
 gradlew.bat
 local.properties

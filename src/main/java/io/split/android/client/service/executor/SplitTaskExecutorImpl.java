@@ -6,12 +6,15 @@ import androidx.annotation.Nullable;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.utils.Logger;
@@ -26,16 +29,19 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final int MIN_THREADPOOL_SIZE_WHEN_IDLE = 1;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
+    private final Map<String, ScheduledFuture> mScheduledTasks;
 
     public SplitTaskExecutorImpl() {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
         mScheduler = new PausableScheduledThreadPoolExecutorImpl(MIN_THREADPOOL_SIZE_WHEN_IDLE, threadFactoryBuilder.build());
+        mScheduledTasks = new ConcurrentHashMap<>();
     }
 
+    @Nullable
     @Override
-    public void schedule(@NonNull SplitTask task,
+    public String schedule(@NonNull SplitTask task,
                          long initialDelayInSecs,
                          long periodInSecs,
                          @Nullable SplitTaskExecutionListener executionListener
@@ -43,11 +49,15 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         checkNotNull(task);
         checkArgument(periodInSecs > 0);
 
+        String taskId = null;
         if (!mScheduler.isShutdown()) {
-            mScheduler.scheduleAtFixedRate(
+            ScheduledFuture taskFuture = mScheduler.scheduleAtFixedRate(
                     new TaskWrapper(task, executionListener),
                     initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
+            taskId = UUID.randomUUID().toString();
+            mScheduledTasks.put(taskId, taskFuture);
         }
+        return taskId;
     }
 
     @Override
@@ -60,6 +70,17 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     }
 
     @Override
+    public void stopTask(String taskId) {
+        if(taskId == null ) {
+            return;
+        }
+        ScheduledFuture taskFuture = mScheduledTasks.get(taskId);
+        if(taskFuture != null) {
+            taskFuture.cancel(false);
+        }
+        mScheduledTasks.remove(taskId);
+    }
+
     public void pause() {
         mScheduler.pause();
     }

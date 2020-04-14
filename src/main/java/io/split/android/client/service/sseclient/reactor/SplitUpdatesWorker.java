@@ -4,8 +4,8 @@ import androidx.annotation.NonNull;
 
 import java.util.concurrent.BlockingQueue;
 
-import io.split.android.client.service.Synchronizer;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;

@@ -11,6 +11,7 @@ import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 
@@ -32,5 +33,7 @@ public interface SplitTaskFactory {
     SplitKillTask createSplitKillTask(Split split);
 
     MySegmentsUpdateTask createMySegmentsUpdateTask(List<String> segments);
+
+    SplitsUpdateTask createSplitsUpdateTask(long since);
 
 }
