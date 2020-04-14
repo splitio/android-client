@@ -164,7 +164,7 @@ public class SseClient {
                     while ((inputLine = bufferedReader.readLine()) != null) {
                         if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
                             if(mEventStreamParser.isKeepAlive(values)) {
-
+                                triggerOnKeepAlive();
                             } else {
                                 triggerOnMessage(values);
                             }
