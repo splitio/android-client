@@ -17,6 +17,7 @@ public class SplitTaskExecutionInfo {
     public static final String IS_STREAMING_ENABLED = "IS_STREAMING_ENABLED";
     public static final String IS_VALID_API_KEY = "IS_VALID_API_KEY";
     public static final String SSE_TOKEN = "SSE_TOKEN";
+    public static final String JWT_EXPIRATION_TIME = "JWT_EXPIRATION_TIME";
 
     final private SplitTaskType taskType;
     final private SplitTaskExecutionStatus status;
