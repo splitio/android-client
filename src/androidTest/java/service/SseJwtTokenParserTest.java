@@ -33,6 +33,7 @@ public class SseJwtTokenParserTest {
         List<String> channels = parsedToken.getChannels();
 
         Assert.assertEquals(1583947812L, parsedToken.getExpirationTime());
+        Assert.assertEquals(jwtToken, parsedToken.getRawJwt());
         Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_MTcwNTI2MTM0Mg==_mySegments",
                 channels.get(0));
         Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_splits",
@@ -75,6 +76,7 @@ public class SseJwtTokenParserTest {
         List<String> channels = parsedToken.getChannels();
 
         Assert.assertEquals(1583947812L, parsedToken.getExpirationTime());
+        Assert.assertEquals(jwtToken, parsedToken.getRawJwt());
         Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_MTcwNTI2MTM0Mg==_mySegments",
                 channels.get(0));
         Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_splits",

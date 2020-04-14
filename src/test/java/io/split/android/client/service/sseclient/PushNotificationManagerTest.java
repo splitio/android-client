@@ -183,8 +183,10 @@ public class PushNotificationManagerTest {
     private Map<String, Object> buildAuthMap(String token, List<String> channels,
                                              boolean isApiKeyValid, boolean isStreamingEnabled) {
         Map<String, Object> data = new HashMap<>();
-        data.put(SplitTaskExecutionInfo.SSE_TOKEN, token);
-        data.put(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM, channels);
+
+
+        SseJwtToken jwtToken = new SseJwtToken(9999999L, channels, TOKEN);
+        data.put(SplitTaskExecutionInfo.PARSED_SSE_JWT, jwtToken);
         data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, isApiKeyValid);
         data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, isStreamingEnabled);
         return data;

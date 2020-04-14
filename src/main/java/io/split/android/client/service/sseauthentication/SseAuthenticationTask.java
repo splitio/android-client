@@ -58,9 +58,7 @@ public class SseAuthenticationTask implements SplitTask {
 
         Logger.d("SSE Authentication done, now parsing token...");
         Map<String, Object> data = new HashMap<>();
-        data.put(SplitTaskExecutionInfo.SSE_TOKEN, authResponse.getToken());
-        data.put(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM, jwt.getChannels());
-        data.put(SplitTaskExecutionInfo.JWT_EXPIRATION_TIME, jwt.getExpirationTime());
+        data.put(SplitTaskExecutionInfo.PARSED_SSE_JWT, jwt);
         data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, authResponse.isValidApiKey());
         data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, authResponse.isStreamingEnabled());
         return SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK, data);

@@ -60,7 +60,7 @@ public class SseAuthenticationTaskTest {
         mockChannelList.add("channel2");
         mockChannelList.add("channel3");
 
-        SseJwtToken jwt = new SseJwtToken(9999999L, mockChannelList);
+        SseJwtToken jwt = new SseJwtToken(9999999L, mockChannelList, JWT);
 
         when(mAuthResponse.isValidApiKey()).thenReturn(true);
         when(mAuthResponse.isStreamingEnabled()).thenReturn(true);
@@ -75,20 +75,19 @@ public class SseAuthenticationTaskTest {
         verify(mFetcher, times(1)).execute(any());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, info.getStatus());
 
-        List<String> channelList = (List<String>) info.getObjectValue(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM);
-        Assert.assertEquals(3, channelList.size());
-        Assert.assertEquals("channel1", channelList.get(0));
+        SseJwtToken jwtToken = (SseJwtToken) info.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT);
+        Assert.assertEquals(3, jwtToken.getChannels().size());
+        Assert.assertEquals("channel1", jwtToken.getChannels().get(0));
         Assert.assertEquals(true, info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
         Assert.assertEquals(true, info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
-        Assert.assertEquals(9999999L, info.getLongValue(SplitTaskExecutionInfo.JWT_EXPIRATION_TIME).longValue());
-        Assert.assertEquals(JWT, info.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN));
+        Assert.assertEquals(9999999L, jwtToken.getExpirationTime());
     }
 
     @Test
     public void correctExecutionInvalidApiAndKey() throws HttpFetcherException, InvalidJwtTokenException {
 
         List<String> mockList = new ArrayList<>();
-        SseJwtToken jwt = new SseJwtToken(9999999L, mockList);
+        SseJwtToken jwt = new SseJwtToken(9999999L, mockList, JWT);
         when(mAuthResponse.isValidApiKey()).thenReturn(false);
         when(mAuthResponse.isStreamingEnabled()).thenReturn(false);
         when(mAuthResponse.getToken()).thenReturn(null);
@@ -100,15 +99,14 @@ public class SseAuthenticationTaskTest {
 
         SplitTaskExecutionInfo info = mTask.execute();
 
-        List<String> channelList = (List<String>) info.getObjectValue(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM);
+        SseJwtToken jwtToken = (SseJwtToken) info.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT);
 
         verify(mFetcher, times(1)).execute(any());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, info.getStatus());
-        Assert.assertEquals(0, channelList.size());
+        Assert.assertEquals(0, jwtToken.getChannels().size());
         Assert.assertEquals(false, info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
         Assert.assertEquals(false, info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
-        Assert.assertEquals(9999999L, info.getLongValue(SplitTaskExecutionInfo.JWT_EXPIRATION_TIME).longValue());
-        Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN));
+        Assert.assertEquals(9999999L, jwtToken.getExpirationTime());
     }
 
     @Test
@@ -117,11 +115,9 @@ public class SseAuthenticationTaskTest {
 
         SplitTaskExecutionInfo info = mTask.execute();
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, info.getStatus());
-        Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM));
+        Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.PARSED_SSE_JWT));
         Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
         Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
-        Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.JWT_EXPIRATION_TIME));
-        Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN));
     }
 
     @After

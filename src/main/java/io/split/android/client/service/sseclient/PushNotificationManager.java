@@ -2,7 +2,6 @@ package io.split.android.client.service.sseclient;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.util.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -12,15 +11,16 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 
-public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener{
+public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
 
     private final static String DATA_FIELD = "data";
     private final static int SSE_RECONNECT_TIME_IN_SECONDS = 70;
@@ -64,7 +64,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void scheduleReconnection() {
-        if(mReconnectTaskId != null) {
+        if (mReconnectTaskId != null) {
             mTaskExecutor.stopTask(mReconnectTaskId);
 
         }
@@ -82,22 +82,22 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_DISABLED));
     }
 
-//
+    //
 //     SSE client listener implementation
 //
-        @Override
-        public void onOpen() {
-            notifyPushEnabled();
-        }
+    @Override
+    public void onOpen() {
+        notifyPushEnabled();
+    }
 
-        @Override
-        public void onMessage(Map<String, String> values) {
-            String messageData = values.get(DATA_FIELD);
-            if (messageData != null) {
-                mNotificationProcessor.process(messageData);
-            }
-            scheduleReconnection();
+    @Override
+    public void onMessage(Map<String, String> values) {
+        String messageData = values.get(DATA_FIELD);
+        if (messageData != null) {
+            mNotificationProcessor.process(messageData);
         }
+        scheduleReconnection();
+    }
 
     @Override
     public void onKeepAlive() {
@@ -105,46 +105,46 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     @Override
-        public void onError() {
-            notifyPushDisabled();
-        }
+    public void onError() {
+        notifyPushDisabled();
+    }
 
-//
+    //
 //      Split Task Executor Listener implementation
 //
-        @Override
-        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-            Pair<String, List<String>> unpackedResult = unpackResult(taskInfo);
-            if (unpackedResult != null && unpackedResult.second.size() > 0) {
-                connectToSse(unpackedResult.first, unpackedResult.second);
+    @Override
+    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+        if (SplitTaskType.SSE_AUTHENTICATION_TASK.equals(taskInfo.getTaskType())) {
+            SseJwtToken jwtToken = unpackResult(taskInfo);
+            if (jwtToken != null && jwtToken.getChannels().size() > 0) {
+                connectToSse(jwtToken.getRawJwt(), jwtToken.getChannels());
             } else {
                 notifyPushDisabled();
             }
         }
+    }
 
-        @Nullable
-        private Pair<String, List<String>> unpackResult(SplitTaskExecutionInfo taskInfo) {
-            if (!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())) {
-                return null;
-            }
-            Boolean isStreamingEnabled = taskInfo.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED);
-            if (isStreamingEnabled != null && isStreamingEnabled.booleanValue()) {
-                String token = taskInfo.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN);
-                Object channelsObject = taskInfo.getObjectValue(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM);
-                if (token != null && channelsObject != null) {
-                    try {
-                        List<String> channels = (List<String>) channelsObject;
-                        return new Pair(token, channels);
-                    } catch (ClassCastException e) {
-                        Logger.e("Sse authentication error. Channels not valid: " +
-                                e.getLocalizedMessage());
-                    }
-                } else {
-                    Logger.e("Sse authentication error. Token or Channels not available.");
-                }
-            } else {
-                Logger.e("Couldn't connect to SSE server. Streaming is disabled.");
-            }
+    @Nullable
+    private SseJwtToken unpackResult(SplitTaskExecutionInfo taskInfo) {
+        if (!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())) {
             return null;
         }
+        Boolean isStreamingEnabled = taskInfo.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED);
+        if (isStreamingEnabled != null && isStreamingEnabled.booleanValue()) {
+            Object token = taskInfo.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT);
+            if (token != null) {
+                try {
+                    return (SseJwtToken) token;
+                } catch (ClassCastException e) {
+                    Logger.e("Sse authentication error. JWT not valid: " +
+                            e.getLocalizedMessage());
+                }
+            } else {
+                Logger.e("Sse authentication error. Token not available.");
+            }
+        } else {
+            Logger.e("Couldn't connect to SSE server. Streaming is disabled.");
+        }
+        return null;
+    }
 }

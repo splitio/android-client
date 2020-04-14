@@ -28,6 +28,12 @@ public class SseJwtParser {
     }.getType();
 
     public SseJwtToken parse(String rawToken) throws InvalidJwtTokenException {
+
+        if (rawToken == null) {
+            Logger.e("Error: JWT is null.");
+            throw  new InvalidJwtTokenException();
+        }
+
         final String encodedPayload = extractTokenData(rawToken);
         if (encodedPayload == null) {
             Logger.e("SSE authentication JWT payload is not valid.");
@@ -63,7 +69,7 @@ public class SseJwtParser {
             Logger.e("Unknonwn error while parsing SSE authentication JWT: " + e.getLocalizedMessage());
             throw  new InvalidJwtTokenException();
         }
-        return new SseJwtToken(expirationTime, new ArrayList<>(channels.keySet()));
+        return new SseJwtToken(expirationTime, new ArrayList<>(channels.keySet()), rawToken);
     }
 
     @Nullable
