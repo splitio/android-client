@@ -26,6 +26,7 @@ import io.split.android.client.service.sseclient.notifications.NotificationProce
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -187,17 +188,67 @@ public class PushNotificationManagerTest {
         Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
     }
 
+    @Test
+    public void setupSseTokenExpirationTimerOnAuth() throws InterruptedException {
+        List<String> channels = dummyChannels();
+        String data = "{}";
+
+        long expirationTime = System.currentTimeMillis() / 1000 + 3;
+
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mPushManager.start();
+        reset(mTaskExecutor);
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                buildAuthMap(TOKEN, channels, true, true, expirationTime
+                        )));
+
+        verify(mSseClient, times(1)).connect(TOKEN, channels);
+        ArgumentCaptor<Long> expirationCaptor = ArgumentCaptor.forClass(Long.class);
+        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseTokenExpiredTimer.class), expirationCaptor.capture(), any());
+        Assert.assertEquals(3, expirationCaptor.getValue().longValue());
+    }
+
+    @Test
+    public void refreshSseToken() throws InterruptedException {
+        String keepAliveTaskId = "keepAliveTaskId";
+        List<String> channels = dummyChannels();
+        String data = "{}";
+        mPushManager.start();
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        when(mTaskExecutor.schedule(
+                any(PushNotificationManager.SseKeepAliveTimer.class), anyLong(), any()))
+                .thenReturn(keepAliveTaskId);
+
+
+        PushNotificationManager.SseTokenExpiredTimer tokenExpiredTimerTask
+                = mPushManager.new SseTokenExpiredTimer();
+
+        mPushManager.onKeepAlive();
+        tokenExpiredTimerTask.execute();
+        verify(mTaskExecutor, times(1)).stopTask(keepAliveTaskId);
+        verify(mSseClient, times(1)).disconnect();
+        verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
+    }
+
     @After
     public void teardDown() {
         reset();
     }
 
+    private Map<String, Object> buildAuthMap(String token,
+                                             List<String> channels,
+                                             boolean isApiKeyValid,
+                                             boolean isStreamingEnabled) {
+        return buildAuthMap(token, channels, isApiKeyValid, isStreamingEnabled,
+                9999999L);
+    }
+
+
     private Map<String, Object> buildAuthMap(String token, List<String> channels,
-                                             boolean isApiKeyValid, boolean isStreamingEnabled) {
+                                             boolean isApiKeyValid, boolean isStreamingEnabled,
+                                             long expirationTime) {
         Map<String, Object> data = new HashMap<>();
-
-
-        SseJwtToken jwtToken = new SseJwtToken(9999999L, channels, TOKEN);
+        SseJwtToken jwtToken = new SseJwtToken(expirationTime, channels, TOKEN);
         data.put(SplitTaskExecutionInfo.PARSED_SSE_JWT, jwtToken);
         data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, isApiKeyValid);
         data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, isStreamingEnabled);

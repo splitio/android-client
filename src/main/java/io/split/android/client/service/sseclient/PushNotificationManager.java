@@ -37,7 +37,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private final NotificationProcessor mNotificationProcessor;
     private long mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
     private String mResetSseKeepAliveTimerTaskId = null;
-    private String mSseTokenCaducatedNotificatorTaskId = null;
+    private String mSseTokenExpiredTimerTaskId = null;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -96,7 +96,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void resetSseTokenExpiredTimer(long expirationTime) {
-        mSseTokenCaducatedNotificatorTaskId = mTaskExecutor.schedule(
+        mSseTokenExpiredTimerTaskId = mTaskExecutor.schedule(
                 new SseTokenExpiredTimer(),
                 expirationTime - System.currentTimeMillis() / 1000,
                 null);
