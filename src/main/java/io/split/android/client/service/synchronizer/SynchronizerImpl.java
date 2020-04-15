@@ -128,10 +128,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void stopPeriodicRecording() {
-        List<String> taskIds = new ArrayList<>();
-        taskIds.add(mEventsRecorderTaskId);
-        taskIds.add(mImpressionsRecorderTaskId);
-        mTaskExecutor.stopTasks(taskIds);
+        mTaskExecutor.stopTask(mEventsRecorderTaskId);
+        mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
     }
 
     private void setupListeners() {
