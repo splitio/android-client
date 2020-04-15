@@ -165,7 +165,7 @@ public class PushNotificationManagerTest {
 
         verify(mNotificationProcessor, times(1)).process(data);
         ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
-        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseDownNotificator.class), downNotificationTime.capture(), any());
+        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseKeepAliveTimer.class), downNotificationTime.capture(), any());
         Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
     }
 
@@ -183,7 +183,7 @@ public class PushNotificationManagerTest {
         mPushManager.onKeepAlive();
 
         ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
-        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseDownNotificator.class), downNotificationTime.capture(), any());
+        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseKeepAliveTimer.class), downNotificationTime.capture(), any());
         Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
     }
 

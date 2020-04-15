@@ -36,7 +36,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
     private long mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
-    private String mSseDownNotificatorTaskId = null;
+    private String mResetSseKeepAliveTimerTaskId = null;
     private String mSseTokenCaducatedNotificatorTaskId = null;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
@@ -54,15 +54,15 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     public void start() {
-        doSseAuthentication();
-        scheduleSseDownNotification();
+        triggerSseAuthentication();
+        resetSseKeepAliveTimer();
     }
 
     public void stop() {
         mSseClient.disconnect();
     }
 
-    private void doSseAuthentication() {
+    private void triggerSseAuthentication() {
         mTaskExecutor.submit(
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 this);
@@ -72,7 +72,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mSseClient.connect(token, channels);
     }
 
-    private void scheduleConnection() {
+    private void setupReconnectionTimer() {
         mTaskExecutor.schedule(
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 getRetryPeriod(), this);
@@ -88,18 +88,18 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
     }
 
-    private void scheduleSseDownNotification() {
-        mSseDownNotificatorTaskId = mTaskExecutor.schedule(
-                new SseDownNotificatorTask(),
+    private void resetSseKeepAliveTimer() {
+        mResetSseKeepAliveTimerTaskId = mTaskExecutor.schedule(
+                new SseKeepAliveTimer(),
                 SSE_RECONNECT_TIME_IN_SECONDS,
-                this);
+                null);
     }
 
-    private void scheduleSseTokenExpiredTask(long expirationTime) {
+    private void resetSseTokenExpiredTimer(long expirationTime) {
         mSseTokenCaducatedNotificatorTaskId = mTaskExecutor.schedule(
-                new SseTokenExpiredNotificatorTask(),
+                new SseTokenExpiredTimer(),
                 expirationTime - System.currentTimeMillis() / 1000,
-                this);
+                null);
     }
 
     private void notifyPushEnabled() {
@@ -117,7 +117,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     public void onOpen() {
         resetRetryPeriod();
         notifyPushEnabled();
-        scheduleSseDownNotification();
+        resetSseKeepAliveTimer();
     }
 
     @Override
@@ -126,31 +126,31 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         if (messageData != null) {
             mNotificationProcessor.process(messageData);
         }
-        scheduleSseDownNotification();
+        resetSseKeepAliveTimer();
     }
 
     @Override
     public void onKeepAlive() {
-        scheduleSseDownNotification();
+        resetSseKeepAliveTimer();
     }
 
     @Override
     public void onError() {
-        scheduleConnection();
-        cancelSseDownNotificator();
+        setupReconnectionTimer();
+        cancelSseKeepAliveTimer();
         notifyPushDisabled();
     }
 
-    private void cancelSseDownNotificator() {
-        if (mSseDownNotificatorTaskId != null) {
-            mTaskExecutor.stopTask(mSseDownNotificatorTaskId);
+    private void cancelSseKeepAliveTimer() {
+        if (mResetSseKeepAliveTimerTaskId != null) {
+            mTaskExecutor.stopTask(mResetSseKeepAliveTimerTaskId);
         }
     }
 
     private void refreshSseToken() {
-        cancelSseDownNotificator();
+        cancelSseKeepAliveTimer();
         mSseClient.disconnect();
-        doSseAuthentication();
+        triggerSseAuthentication();
     }
 
     //
@@ -164,8 +164,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 SseJwtToken jwtToken = unpackResult(taskInfo);
                 if (jwtToken != null && jwtToken.getChannels().size() > 0) {
                     connectToSse(jwtToken.getRawJwt(), jwtToken.getChannels());
+                    resetSseTokenExpiredTimer(jwtToken.getExpirationTime());
                 } else {
-                    scheduleConnection();
+                    setupReconnectionTimer();
                     notifyPushDisabled();
                 }
                 break;
@@ -199,11 +200,11 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public class SseDownNotificatorTask implements SplitTask {
+    public class SseKeepAliveTimer implements SplitTask {
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
-            scheduleConnection();
+            setupReconnectionTimer();
             mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(
                     BroadcastedEventType.PUSH_DISABLED));
             return SplitTaskExecutionInfo.success(GENERIC_TASK);
@@ -211,13 +212,11 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public class SseTokenExpiredNotificatorTask implements SplitTask {
+    public class SseTokenExpiredTimer implements SplitTask {
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
-            scheduleConnection();
-            mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(
-                    BroadcastedEventType.PUSH_DISABLED));
+            refreshSseToken();
             return SplitTaskExecutionInfo.success(GENERIC_TASK);
         }
     }
