@@ -107,10 +107,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createSplitsUpdateTask() {
+    public SplitsUpdateTask createSplitsUpdateTask(long since) {
         return new SplitsUpdateTask(
                 mSplitApiFacade.getSplitFetcher(),
                 mSplitsStorageContainer.getSplitsStorage(),
-                new SplitChangeProcessor());
+                new SplitChangeProcessor(), since);
     }
 }

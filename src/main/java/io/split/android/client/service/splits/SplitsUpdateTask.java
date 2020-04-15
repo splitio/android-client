@@ -26,13 +26,11 @@ public class SplitsUpdateTask implements SplitTask {
 
     public SplitsUpdateTask(HttpFetcher<SplitChange> splitFetcher,
                             SplitsStorage splitsStorage,
-                            SplitChangeProcessor splitChangeProcessor) {
+                            SplitChangeProcessor splitChangeProcessor,
+                            long since) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
-    }
-
-    public void setSince(long since) {
         mChangeNumber = since;
     }
 

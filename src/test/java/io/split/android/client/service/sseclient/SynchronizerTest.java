@@ -406,6 +406,11 @@ public class SynchronizerTest {
         }
 
         @Override
+        public String schedule(@NonNull SplitTask task, long initialDelayInSecs, @Nullable SplitTaskExecutionListener executionListener) {
+            return null;
+        }
+
+        @Override
         public void submit(@NonNull SplitTask task,
                            @Nullable SplitTaskExecutionListener executionListener) {
 
@@ -426,11 +431,6 @@ public class SynchronizerTest {
 
         @Override
         public void stopTask(String taskId) {
-
-        }
-
-        @Override
-        public void stopTasks(List<String> taskIds) {
 
         }
 
