@@ -8,12 +8,12 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.sseclient.PushNotificationManager;
-import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType;
+import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
+import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -105,13 +105,19 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
 
     @Override
     public void onEvent(BroadcastedEvent message) {
-        if (BroadcastedEventType.PUSH_DISABLED.equals(message.getMessage())
-                && mIsPushEnabled.get()) {
-            mIsPushEnabled.set(false);
-            mSynchronizer.startPeriodicFetching();
-        } else {
-            mSynchronizer.stopPeriodicFetching();
-            mIsPushEnabled.set(true);
+        switch (message.getMessage()) {
+            case PUSH_DISABLED:
+                if (mIsPushEnabled.get()) {
+                    mIsPushEnabled.set(false);
+                    mSynchronizer.startPeriodicFetching();
+                }
+                break;
+            case PUSH_ENABLED:
+                mSynchronizer.stopPeriodicFetching();
+                mIsPushEnabled.set(true);
+                break;
+            default:
+                Logger.e("Invalide SSE event received: " + message.getMessage());
         }
     }
 }
