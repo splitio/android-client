@@ -163,7 +163,7 @@ public class SseClient {
                     Map<String, String> values = new HashMap<>();
                     while ((inputLine = bufferedReader.readLine()) != null) {
                         if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
-                            if (mEventStreamParser.isKeepAlive(values)) {
+                            if(mEventStreamParser.isKeepAlive(values)) {
                                 triggerOnKeepAlive();
                             } else {
                                 triggerOnMessage(values);

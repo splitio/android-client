@@ -33,6 +33,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final SplitClientConfig mSplitClientConfig;
     private final SplitEventsManager mSplitEventsManager;
     private final SplitTaskFactory mSplitTaskFactory;
+    private final WorkManagerWrapper mWorkManagerWrapper;
 
     private RecorderSyncHelper<Event> mEventsSyncHelper;
     private RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
@@ -43,7 +44,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private LoadLocalDataListener mLoadLocalSplitsListener;
     private LoadLocalDataListener mLoadLocalMySegmentsListener;
 
-    private WorkManagerWrapper mWorkManagerWrapper;
+
 
     private String mSplitsFetcherTaskId;
     private String mMySegmentsFetcherTaskId;
@@ -87,8 +88,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void synchronizeSplits(long since) {
         SplitsUpdateTask splitsUpdateTask
-                = (SplitsUpdateTask) mSplitTaskFactory.createSplitsUpdateTask();
-        splitsUpdateTask.setSince(since);
+                = mSplitTaskFactory.createSplitsUpdateTask(since);
         mTaskExecutor.submit(splitsUpdateTask, mSplitsSyncTaskListener);
     }
 
@@ -107,18 +107,16 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
-    public void startPeriodicFetching() {
+    synchronized public void startPeriodicFetching() {
         scheduleSplitsFetcherTask();
         scheduleMySegmentsFetcherTask();
         Logger.i("Synchronization tasks scheduled");
     }
 
     @Override
-    public void stopPeriodicFetching() {
-        List<String> taskIds = new ArrayList<>();
-        taskIds.add(mSplitsFetcherTaskId);
-        taskIds.add(mMySegmentsFetcherTaskId);
-        mTaskExecutor.stopTasks(taskIds);
+    synchronized public void stopPeriodicFetching() {
+        mTaskExecutor.stopTask(mSplitsFetcherTaskId);
+        mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
     }
 
     @Override
@@ -130,10 +128,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void stopPeriodicRecording() {
-        List<String> taskIds = new ArrayList<>();
-        taskIds.add(mEventsRecorderTaskId);
-        taskIds.add(mImpressionsRecorderTaskId);
-        mTaskExecutor.stopTasks(taskIds);
+        mTaskExecutor.stopTask(mEventsRecorderTaskId);
+        mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
     }
 
     private void setupListeners() {
