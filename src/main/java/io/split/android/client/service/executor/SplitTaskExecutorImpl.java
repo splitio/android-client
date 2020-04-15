@@ -9,11 +9,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -42,9 +38,9 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     @Nullable
     @Override
     public String schedule(@NonNull SplitTask task,
-                         long initialDelayInSecs,
-                         long periodInSecs,
-                         @Nullable SplitTaskExecutionListener executionListener
+                           long initialDelayInSecs,
+                           long periodInSecs,
+                           @Nullable SplitTaskExecutionListener executionListener
     ) {
         checkNotNull(task);
         checkArgument(periodInSecs > 0);
@@ -60,11 +56,29 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         return taskId;
     }
 
+    @Nullable
+    @Override
+    public String schedule(@NonNull SplitTask task,
+                           long initialDelayInSecs,
+                           @Nullable SplitTaskExecutionListener executionListener
+    ) {
+        checkNotNull(task);
+        String taskId = null;
+        if (!mScheduler.isShutdown()) {
+            ScheduledFuture taskFuture = mScheduler.schedule(
+                    new TaskWrapper(task, executionListener),
+                    initialDelayInSecs, TimeUnit.SECONDS);
+            taskId = UUID.randomUUID().toString();
+            mScheduledTasks.put(taskId, taskFuture);
+        }
+        return taskId;
+    }
+
     @Override
     public void submit(@NonNull SplitTask task,
                        @Nullable SplitTaskExecutionListener executionListener) {
         checkNotNull(task);
-        if (task != null && !mScheduler.isShutdown()) {
+        if (!mScheduler.isShutdown()) {
             mScheduler.submit(new TaskWrapper(task, executionListener));
         }
     }

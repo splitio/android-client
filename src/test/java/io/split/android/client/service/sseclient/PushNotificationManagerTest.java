@@ -1,7 +1,5 @@
 package io.split.android.client.service.sseclient;
 
-import androidx.annotation.NonNull;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -15,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.impressions.Impression;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -24,8 +22,10 @@ import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
+import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -48,6 +48,9 @@ public class PushNotificationManagerTest {
     @Mock
     SseAuthenticationTask mSseAuthTask;
 
+    @Mock
+    NotificationProcessor mNotificationProcessor;
+
 
     PushNotificationManager mPushManager;
 
@@ -56,7 +59,7 @@ public class PushNotificationManagerTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         mPushManager = new PushNotificationManager(mSseClient, mTaskExecutor,
-                mSplitTaskFactory, mFeedbackChannel);
+                mSplitTaskFactory, mNotificationProcessor, mFeedbackChannel);
     }
 
     @Test
@@ -66,7 +69,7 @@ public class PushNotificationManagerTest {
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
         mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
-                buildAuthMap(TOKEN,  channels, true, true)));
+                buildAuthMap(TOKEN, channels, true, true)));
         mPushManager.onOpen();
 
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
@@ -98,7 +101,7 @@ public class PushNotificationManagerTest {
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
         mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
-                buildAuthMap(TOKEN,  channels, true, true)));
+                buildAuthMap(TOKEN, channels, true, true)));
         mPushManager.onError();
 
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
@@ -115,7 +118,7 @@ public class PushNotificationManagerTest {
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
         mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
-                buildAuthMap(TOKEN,  channels, true, false)));
+                buildAuthMap(TOKEN, channels, true, false)));
 
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
         verify(mSseClient, never()).connect(TOKEN, channels);
@@ -131,13 +134,46 @@ public class PushNotificationManagerTest {
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
         mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
-                buildAuthMap(TOKEN,  channels, true, true)));
+                buildAuthMap(TOKEN, channels, true, true)));
 
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
         verify(mSseClient, never()).connect(TOKEN, channels);
         ArgumentCaptor<SyncManagerFeedbackMessage> messageCaptor = ArgumentCaptor.forClass(SyncManagerFeedbackMessage.class);
         verify(mFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(SyncManagerFeedbackMessageType.PUSH_DISABLED, messageCaptor.getValue().getMessage());
+    }
+
+    @Test
+    public void onMessage() {
+        List<String> channels = new ArrayList<>();
+        String data = "{}";
+
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mPushManager.start();
+        reset(mTaskExecutor);
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                buildAuthMap(TOKEN, channels, true, true)));
+
+        mPushManager.onMessage(message(data));
+
+        verify(mNotificationProcessor, times(1)).process(data);
+        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), any());
+    }
+
+    @Test
+    public void onKeepAlive() {
+        List<String> channels = new ArrayList<>();
+        String data = "{}";
+
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mPushManager.start();
+        reset(mTaskExecutor);
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                buildAuthMap(TOKEN, channels, true, true)));
+
+        mPushManager.onKeepAlive();
+
+        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), any());
     }
 
     @After
@@ -152,7 +188,7 @@ public class PushNotificationManagerTest {
         data.put(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM, channels);
         data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, isApiKeyValid);
         data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, isStreamingEnabled);
-        return  data;
+        return data;
     }
 
     private List<String> dummyChannels() {
@@ -160,5 +196,11 @@ public class PushNotificationManagerTest {
         channels.add("channel1");
         channels.add("channel2");
         return channels;
+    }
+
+    private Map<String, String> message(String data) {
+        Map<String, String> values = new HashMap<>();
+        values.put("data", data);
+        return values;
     }
 }
