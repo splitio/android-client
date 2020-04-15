@@ -38,19 +38,20 @@ public class SplitsUpdateTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
 
-        if(mChangeNumber == null || mChangeNumber == 0) {
+        if (mChangeNumber == null || mChangeNumber == 0) {
             logError("Could not update split. Invalid change number " + mChangeNumber);
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         }
 
-        if(mChangeNumber <= mSplitsStorage.getTill()) {
+        long storedChangeNumber = mSplitsStorage.getTill();
+        if (mChangeNumber <= storedChangeNumber) {
             Logger.d("Received change number is previous than stored one. " +
                     "Avoiding update.");
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         }
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put(SINCE_PARAM, mChangeNumber);
+            params.put(SINCE_PARAM, storedChangeNumber);
             SplitChange splitChange = mSplitFetcher.execute(params);
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
         } catch (Exception e) {

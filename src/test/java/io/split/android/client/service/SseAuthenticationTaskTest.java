@@ -47,7 +47,7 @@ public class SseAuthenticationTaskTest {
         mChannelParser = Mockito.mock(SseChannelsParser.class);
         mFetcher = (HttpFetcher<SseAuthenticationResponse>) Mockito.mock(HttpFetcher.class);
         mAuthResponse = Mockito.mock(SseAuthenticationResponse.class);
-        mTask = new SseAuthenticationTask(mFetcher, "api", "userKey", mChannelParser);
+        mTask = new SseAuthenticationTask(mFetcher, "userKey", mChannelParser);
     }
 
     @Test

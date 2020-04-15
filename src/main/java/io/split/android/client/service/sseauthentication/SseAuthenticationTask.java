@@ -18,19 +18,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SseAuthenticationTask implements SplitTask {
 
     private static final String API_KEY_PARAM = "apiKey";
-    private static final String USER_KEY_PARAM = "userKey";
+    private static final String USER_KEY_PARAM = "users";
 
     private final HttpFetcher<SseAuthenticationResponse> mAuthFetcher;
-    private final String mApiKey;
     private final String mUserKey;
     private final SseChannelsParser mChannelParser;
 
     public SseAuthenticationTask(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
-                                 @NonNull String apiKey,
                                  @NonNull String userKey,
                                  @NonNull SseChannelsParser channelsParser) {
         mAuthFetcher = checkNotNull(authFetcher);
-        mApiKey = checkNotNull(apiKey);
         mUserKey = checkNotNull(userKey);
         mChannelParser = checkNotNull(channelsParser);
     }
@@ -41,7 +38,6 @@ public class SseAuthenticationTask implements SplitTask {
         SseAuthenticationResponse authResponse;
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put(API_KEY_PARAM, mApiKey);
             params.put(USER_KEY_PARAM, mUserKey);
             authResponse = mAuthFetcher.execute(params);
 

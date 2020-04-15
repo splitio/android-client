@@ -10,6 +10,10 @@ import io.split.android.client.utils.Logger;
  */
 public class SplitClientConfig {
 
+    private static final String API_ENDPOINT = "https://sdk.split.io/api";
+    private static final String EVENTS_ENDPOINT = "https://events.split.io/api";
+    private static final String SSE_AUTH_SERVICE_URL = "https://auth.split-stage.io/api";
+    private static final String STREAMING_SERVICE_URL = "https://realtime.ably.io/sse";
     private static final int MIN_FEATURES_REFRESH_RATE = 30;
     private static final int MIN_MYSEGMENTS_REFRESH_RATE = 30;
     private static final int MIN_IMPRESSIONS_REFRESH_RATE = 30;
@@ -34,6 +38,9 @@ public class SplitClientConfig {
     private static final int DEFAULT_EVENTS_FLUSH_INTERVAL = 1800;
     private static final int DEFAULT_EVENTS_PER_PUSH = 2000;
     private static final int DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES = 15;
+
+    private static final int DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS = 1;
+    private static final int DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS = 1;
 
     private static final int IMPRESSIONS_MAX_SENT_ATTEMPTS = 3;
     private static final int IMPRESSIONS_CHUNK_OUTDATED_TIME = 3600 * 1000; // One day millis
@@ -74,7 +81,7 @@ public class SplitClientConfig {
     // Background sync
     private boolean _synchronizeInBackground;
     private long _backgroundSyncPeriod;
-    private boolean _backgroundSyncWhenBatteryNotLow ;
+    private boolean _backgroundSyncWhenBatteryNotLow;
     private boolean _backgroundSyncWhenWifiOnly;
 
     //.Track configuration
@@ -82,6 +89,14 @@ public class SplitClientConfig {
     private final int _eventsPerPush;
     private final long _eventFlushInterval;
     private final String _trafficType;
+
+    // Push notification settings
+    private boolean _streamingEnabled;
+    private int _authRetryBackoffBase;
+    private int _streamingReconnectBackoffBase;
+    private String _authServiceUrl;
+    private String _streamingServiceUrl;
+
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -117,7 +132,12 @@ public class SplitClientConfig {
                               boolean synchronizeInBackground,
                               long backgroundSyncPeriod,
                               boolean backgroundSyncWhenBatteryNotLow,
-                              boolean backgroundSyncWhenWifiOnly) {
+                              boolean backgroundSyncWhenWifiOnly,
+                              boolean streamingEnabled,
+                              int authRetryBackoffBase,
+                              int streamingReconnectBackoffBase,
+                              String authServiceUrl,
+                              String streamingServiceUrl) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -146,6 +166,11 @@ public class SplitClientConfig {
         _backgroundSyncPeriod = backgroundSyncPeriod;
         _backgroundSyncWhenBatteryNotLow = backgroundSyncWhenBatteryNotLow;
         _backgroundSyncWhenWifiOnly = backgroundSyncWhenWifiOnly;
+        _streamingEnabled = streamingEnabled;
+        _authRetryBackoffBase = authRetryBackoffBase;
+        _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
+        _authServiceUrl = authServiceUrl;
+        _streamingServiceUrl = streamingServiceUrl;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -345,11 +370,28 @@ public class SplitClientConfig {
         return _backgroundSyncWhenWifiOnly;
     }
 
+    // Push notification settings
+    public boolean streamingEnabled() {
+        return _streamingEnabled;
+    }
+
+    public int streamingReconnectBackoffBase() {
+        return _streamingReconnectBackoffBase;
+    }
+
+    public String authServiceUrl() {
+        return _authServiceUrl;
+    }
+
+    public String streamingServiceUrl() {
+        return _streamingServiceUrl;
+    }
+
     public static final class Builder {
 
-        private String _endpoint = "https://sdk.split.io/api";
+        private String _endpoint = API_ENDPOINT;
         private boolean _endpointSet = false;
-        private String _eventsEndpoint = "https://events.split.io/api";
+        private String _eventsEndpoint = EVENTS_ENDPOINT;
         private boolean _eventsEndpointSet = false;
 
         private int _featuresRefreshRate = DEFAULT_FEATURES_REFRESH_RATE_SECS;
@@ -380,6 +422,14 @@ public class SplitClientConfig {
         private long _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
         private boolean _backgroundSyncWhenBatteryNotLow = true;
         private boolean _backgroundSyncWhenWifiOnly = false;
+
+        // Push notification settings
+        private boolean _streamingEnabled = true;
+        private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
+        private int _streamingReconnectBackoffBase
+                = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
+        private String _authServiceUrl = SSE_AUTH_SERVICE_URL;
+        private String _streamingServiceUrl = STREAMING_SERVICE_URL;
 
         public Builder() {
         }
@@ -689,6 +739,7 @@ public class SplitClientConfig {
          * Period in minutes to execute background synchronization
          * Default values is 15 minutes and is the minimum allowed.
          * Is a lower value is especified default value will be used.
+         *
          * @return this builder
          */
         public Builder sychronizeInBackgroundPeriod(long backgroundSyncPeriod) {
@@ -716,6 +767,65 @@ public class SplitClientConfig {
          */
         public Builder backgroundSyncWhenWifiOnly(boolean backgroundSyncWhenWifiOnly) {
             _backgroundSyncWhenWifiOnly = backgroundSyncWhenWifiOnly;
+            return this;
+        }
+
+        /**
+         * Whether we should attempt to use streaming or not.
+         * If the variable is false, the SDK will start in polling mode and stay that way.
+         *
+         * @return This builder
+         * @default: True
+         */
+        public Builder streamingEnabled(boolean streamingEnabled) {
+            _streamingEnabled = streamingEnabled;
+            return this;
+        }
+
+        /**
+         * How many seconds to wait before re attempting to authenticate for push notifications.
+         * Minimum: 1 seconds
+         *
+         * @param authRetryBackoffBase
+         * @return this builder
+         * @default: 1 second
+         */
+        public Builder authRetryBackoffBase(int authRetryBackoffBase) {
+            _authRetryBackoffBase = authRetryBackoffBase;
+            return this;
+        }
+
+        /**
+         * How many seconds to wait before re attempting to connect to streaming.
+         *
+         * @return: This builder
+         * @default: 1 Second
+         */
+        public Builder streamingReconnectBackoffBase(int streamingReconnectBackoffBase) {
+            _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
+            return this;
+        }
+
+
+        /**
+         * Authentication service URL. Should only be adjusted for playing well in test environments.
+         *
+         * @param authServiceUrl String
+         * @return this builder
+         */
+        public Builder authServiceUrl(String authServiceUrl) {
+            _authServiceUrl = authServiceUrl;
+            return this;
+        }
+
+        /**
+         * Streaming service URL. Should only be adjusted for playing well in test environments.
+         *
+         * @param streamingServiceUrl String
+         * @return
+         */
+        public Builder streamingServiceUrl(String streamingServiceUrl) {
+            _streamingServiceUrl = streamingServiceUrl;
             return this;
         }
 
@@ -770,6 +880,16 @@ public class SplitClientConfig {
                 throw new IllegalArgumentException("Number of threads for fetching segments MUST be greater than zero");
             }
 
+            if(_authRetryBackoffBase < 1) {
+                throw new IllegalArgumentException("Re attempting time to authenticate " +
+                        "for push notifications MUST be greater than zero");
+            }
+
+            if(_authRetryBackoffBase < 1) {
+                throw new IllegalArgumentException("Re attempting time to connect to " +
+                        "streaming notifications MUST be greater than zero");
+            }
+
             if (_backgroundSyncPeriod < DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES) {
                 Logger.w("Background sync period is lower than allowed. " +
                         "Setting to default value.");
@@ -803,7 +923,12 @@ public class SplitClientConfig {
                     _synchronizeInBackground,
                     _backgroundSyncPeriod,
                     _backgroundSyncWhenBatteryNotLow,
-                    _backgroundSyncWhenWifiOnly);
+                    _backgroundSyncWhenWifiOnly,
+                    _streamingEnabled,
+                    _authRetryBackoffBase,
+                    _streamingReconnectBackoffBase,
+                    _authServiceUrl,
+                    _streamingServiceUrl);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

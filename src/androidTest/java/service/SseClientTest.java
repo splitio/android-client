@@ -93,6 +93,11 @@ public class SseClientTest {
         public void onError() {
             System.out.println("SseClientTest: OnError!!!!");
         }
+
+        @Override
+        public void onKeepAlive() {
+
+        }
     }
 
 

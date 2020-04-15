@@ -1,5 +1,7 @@
 package io.split.android.client.network;
 
+import android.util.ArrayMap;
+
 import androidx.annotation.NonNull;
 
 import java.io.BufferedReader;
@@ -10,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -24,7 +27,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     HttpStreamRequestImpl(@NonNull URI uri,
                           @NonNull Map<String, String> headers) {
         mUri = checkNotNull(uri);
-        mHeaders = checkNotNull(headers);
+        mHeaders = new HashMap<>(checkNotNull(headers));
     }
 
     @Override

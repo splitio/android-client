@@ -44,13 +44,11 @@ public class SseClient {
 
     public SseClient(@NonNull URI uri,
                      @NonNull HttpClient httpClient,
-                     @NonNull EventStreamParser eventStreamParser,
-                     @NonNull SseClientListener listener) {
+                     @NonNull EventStreamParser eventStreamParser) {
         mTargetUrl = checkNotNull(uri);
         mHttpClient = checkNotNull(httpClient);
         mEventStreamParser = checkNotNull(eventStreamParser);
         mReadyState = new AtomicInteger(CLOSED);
-        mListener = new WeakReference<>(checkNotNull(listener));
         mExecutor = Executors.newFixedThreadPool(POOL_SIZE);
         mReadyState.set(CLOSED);
     }
@@ -99,6 +97,9 @@ public class SseClient {
     }
 
     private void triggerOnMessage(Map<String, String> messageValues) {
+        if (mListener == null) {
+            return;
+        }
         SseClientListener listener = mListener.get();
         if (listener != null) {
             listener.onMessage(messageValues);
@@ -131,7 +132,6 @@ public class SseClient {
         private static final String PUSH_NOTIFICATION_TOKEN_PARAM = "accessToken";
         private static final String PUSH_NOTIFICATION_VERSION_PARAM = "v";
         private static final String PUSH_NOTIFICATION_VERSION_VALUE = "1.1";
-
 
         private final StringHelper mStringHelper;
         private final List<String> mChannels;

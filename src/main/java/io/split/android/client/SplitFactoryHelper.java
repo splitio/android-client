@@ -1,18 +1,37 @@
 package io.split.android.client;
 
-import android.app.Service;
 import android.content.Context;
 
 import androidx.work.WorkManager;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.sseclient.EventStreamParser;
+import io.split.android.client.service.sseclient.PushNotificationManager;
+import io.split.android.client.service.sseclient.SseClient;
+import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
+import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
+import io.split.android.client.service.sseclient.notifications.NotificationParser;
+import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
+import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
+import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
+import io.split.android.client.service.synchronizer.NewSyncManager;
+import io.split.android.client.service.synchronizer.NewSyncManagerImpl;
+import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -59,10 +78,9 @@ class SplitFactoryHelper {
                 ServiceFactory.getSplitsFetcher(networkHelper, httpClient,
                         splitClientConfig.endpoint(), cachedFireAndForgetMetrics),
                 ServiceFactory.getMySegmentsFetcher(networkHelper, httpClient,
-                        splitClientConfig.endpoint(), key.matchingKey(),   cachedFireAndForgetMetrics),
-                // TODO: Replace by auth url config
+                        splitClientConfig.endpoint(), key.matchingKey(), cachedFireAndForgetMetrics),
                 ServiceFactory.getSseAuthenticationFetcher(networkHelper, httpClient,
-                        "https://auth.split-stage.io/api"),
+                        splitClientConfig.authServiceUrl()),
                 ServiceFactory.getEventsRecorder(networkHelper, httpClient,
                         splitClientConfig.eventsEndpoint()),
                 ServiceFactory.getImpressionsRecorder(networkHelper, httpClient,
@@ -74,5 +92,40 @@ class SplitFactoryHelper {
         return new WorkManagerWrapper(
                 WorkManager.getInstance(context), splitClientConfig, apiKey, key, databaseName);
 
+    }
+
+    NewSyncManager buildSyncManager(SplitClientConfig config,
+                                    SplitTaskExecutor splitTaskExecutor,
+                                    SplitTaskFactory splitTaskFactory,
+                                    HttpClient httpClient,
+                                    Synchronizer synchronizer) {
+
+        BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue
+                = new LinkedBlockingDeque<>();
+
+        BlockingQueue<MySegmentChangeNotification> mySegmentChangeNotificationQueue
+                = new LinkedBlockingDeque<>();
+
+        SplitUpdatesWorker splitUpdateWorker = new SplitUpdatesWorker(synchronizer,
+                splitsUpdateNotificationQueue);
+        MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(synchronizer,
+                mySegmentChangeNotificationQueue);
+
+        NotificationProcessor notificationProcessor =
+                new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
+                        new NotificationParser(), mySegmentChangeNotificationQueue,
+                        splitsUpdateNotificationQueue);
+        SyncManagerFeedbackChannel syncManagerFeedbackChannel = new SyncManagerFeedbackChannel();
+
+        URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
+        EventStreamParser eventStreamParser = new EventStreamParser();
+        SseClient sseClient = new SseClient(streamingServiceUrl, httpClient, eventStreamParser);
+        PushNotificationManager pushNotificationManager =
+                new PushNotificationManager(sseClient, splitTaskExecutor,
+                        splitTaskFactory, notificationProcessor, syncManagerFeedbackChannel);
+
+        return new NewSyncManagerImpl(
+                config, synchronizer, pushNotificationManager, splitUpdateWorker,
+                mySegmentUpdateWorker, syncManagerFeedbackChannel);
     }
 }

@@ -9,7 +9,10 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HttpRequestImpl implements HttpRequest {
 
@@ -22,7 +25,7 @@ public class HttpRequestImpl implements HttpRequest {
         mUri = uri;
         mHttpMethod = httpMethod;
         mBody = body;
-        mHeaders = headers;
+        mHeaders = new HashMap<>(checkNotNull(headers));
     }
 
     @Override

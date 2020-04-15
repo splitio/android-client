@@ -93,7 +93,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SseAuthenticationTask createSseAuthenticationTask() {
         return new SseAuthenticationTask(mSplitApiFacade.getSseAuthenticationFetcher(),
-                mApiKey, mUserKey, new SseChannelsParser());
+                mUserKey, new SseChannelsParser());
     }
 
     @Override

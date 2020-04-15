@@ -359,7 +359,8 @@ public class SynchronizerTest {
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
         mSynchronizer = new SynchronizerImpl(config, executor,
                 mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper);
-        mSynchronizer.doInitialLoadFromCache();
+        mSynchronizer.loadSplitsFromCache();
+        mSynchronizer.loadMySegmentsFromCache();
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
         verify(mEventsManager, times(1))

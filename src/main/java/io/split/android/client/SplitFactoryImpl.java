@@ -2,13 +2,13 @@ package io.split.android.client;
 
 import android.content.Context;
 
-import androidx.work.WorkManager;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
@@ -32,8 +32,14 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
-import io.split.android.client.service.synchronizer.SyncManager;
-import io.split.android.client.service.synchronizer.SyncManagerImpl;
+import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
+import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
+import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
+import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
+import io.split.android.client.service.synchronizer.NewSyncManager;
+import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
@@ -62,7 +68,6 @@ import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
-import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.SplitParser;
 
 public class SplitFactoryImpl implements SplitFactory {
@@ -75,7 +80,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
     private FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
     private LifecycleManager _lifecyleManager;
-    private SyncManager _syncManager;
+    private NewSyncManager _syncManager;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
@@ -133,10 +138,13 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, storageContainer, apiToken, key.matchingKey());
 
-        _syncManager = new SyncManagerImpl(
+        Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
-                        context, config, apiToken, key.matchingKey(), databaseName));
+                context, config, apiToken, key.matchingKey(), databaseName));
+
+        _syncManager = factoryHelper.buildSyncManager(config, _splitTaskExecutor,
+                splitTaskFactory, httpClient, synchronizer);
 
         _syncManager.start();
 

@@ -2,15 +2,32 @@ package io.split.android.client.service.sseclient.feedbackchannel;
 
 import androidx.annotation.NonNull;
 
-public interface SyncManagerFeedbackChannel {
-    /***
-     * This interface  defines the methods to be implemented by a feedback
-     * channel to handle the communication between synchronization components
-     */
+import java.lang.ref.WeakReference;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-    void pushMessage(@NonNull SyncManagerFeedbackMessage message);
+public class SyncManagerFeedbackChannel {
 
-    void register(@NonNull SyncManagerFeedbackListener listener);
+    private List<WeakReference<SyncManagerFeedbackListener>> mListeners;
 
-    void close();
+    public SyncManagerFeedbackChannel() {
+        mListeners = new CopyOnWriteArrayList<>();
+    }
+
+    public void pushMessage(@NonNull SyncManagerFeedbackMessage message) {
+        for (WeakReference<SyncManagerFeedbackListener> listenerRef : mListeners) {
+            SyncManagerFeedbackListener listener = listenerRef.get();
+            if (listener != null) {
+                listener.onFeedbackMessage(message);
+            }
+        }
+    }
+
+    public void register(@NonNull SyncManagerFeedbackListener listener) {
+        mListeners.add(new WeakReference<>(listener));
+    }
+
+    public void close() {
+        mListeners.clear();
+    }
 }
