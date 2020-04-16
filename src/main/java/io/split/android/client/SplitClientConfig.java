@@ -10,10 +10,6 @@ import io.split.android.client.utils.Logger;
  */
 public class SplitClientConfig {
 
-    private static final String API_ENDPOINT = "https://sdk.split.io/api";
-    private static final String EVENTS_ENDPOINT = "https://events.split.io/api";
-    private static final String SSE_AUTH_SERVICE_URL = "https://auth.split-stage.io/api";
-    private static final String STREAMING_SERVICE_URL = "https://realtime.ably.io/sse";
     private static final int MIN_FEATURES_REFRESH_RATE = 30;
     private static final int MIN_MYSEGMENTS_REFRESH_RATE = 30;
     private static final int MIN_IMPRESSIONS_REFRESH_RATE = 30;
@@ -54,8 +50,8 @@ public class SplitClientConfig {
     // Data folder
     private static final String DEFAULT_DATA_FOLDER = "split_data";
 
-    private final String _endpoint;
-    private final String _eventsEndpoint;
+    private String _endpoint;
+    private String _eventsEndpoint;
     private static String _hostname;
     private static String _ip;
 
@@ -96,7 +92,6 @@ public class SplitClientConfig {
     private int _streamingReconnectBackoffBase;
     private String _authServiceUrl;
     private String _streamingServiceUrl;
-
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -389,11 +384,7 @@ public class SplitClientConfig {
 
     public static final class Builder {
 
-        private String _endpoint = API_ENDPOINT;
-        private boolean _endpointSet = false;
-        private String _eventsEndpoint = EVENTS_ENDPOINT;
-        private boolean _eventsEndpointSet = false;
-
+        private ServiceEndpoints _serviceEndpoints = null;
         private int _featuresRefreshRate = DEFAULT_FEATURES_REFRESH_RATE_SECS;
         private int _segmentsRefreshRate = DEFAULT_SEGMENTS_REFRESH_RATE_SECS;
         private int _impressionsRefreshRate = DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS;
@@ -428,10 +419,9 @@ public class SplitClientConfig {
         private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
         private int _streamingReconnectBackoffBase
                 = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
-        private String _authServiceUrl = SSE_AUTH_SERVICE_URL;
-        private String _streamingServiceUrl = STREAMING_SERVICE_URL;
 
         public Builder() {
+            _serviceEndpoints = ServiceEndpoints.builder().build();
         }
 
         /**
@@ -478,17 +468,6 @@ public class SplitClientConfig {
             return this;
         }
 
-        /**
-         * The rest endpoint that sdk will hit for latest features and segments.
-         *
-         * @param endpoint MUST NOT be null
-         * @return this builder
-         */
-        public Builder endpoint(String endpoint, String eventsEndpoint) {
-            _endpoint = endpoint;
-            _eventsEndpoint = eventsEndpoint;
-            return this;
-        }
 
         /**
          * The SDK will poll the endpoint for changes to features at this period.
@@ -808,24 +787,13 @@ public class SplitClientConfig {
 
 
         /**
-         * Authentication service URL. Should only be adjusted for playing well in test environments.
+         * Alternative service enpoints URL. Should only be adjusted for playing well in test environments.
          *
-         * @param authServiceUrl String
+         * @param serviceEndpoints ServiceEndpoints
          * @return this builder
          */
-        public Builder authServiceUrl(String authServiceUrl) {
-            _authServiceUrl = authServiceUrl;
-            return this;
-        }
-
-        /**
-         * Streaming service URL. Should only be adjusted for playing well in test environments.
-         *
-         * @param streamingServiceUrl String
-         * @return
-         */
-        public Builder streamingServiceUrl(String streamingServiceUrl) {
-            _streamingServiceUrl = streamingServiceUrl;
+        public Builder serviceEndpoints(ServiceEndpoints serviceEndpoints) {
+            _serviceEndpoints = serviceEndpoints;
             return this;
         }
 
@@ -864,28 +832,16 @@ public class SplitClientConfig {
                 throw new IllegalArgumentException("readTimeout must be > 0: " + _readTimeout);
             }
 
-            if (_endpoint == null) {
-                throw new IllegalArgumentException("endpoint must not be null");
-            }
-
-            if (_eventsEndpoint == null) {
-                throw new IllegalArgumentException("events endpoint must not be null");
-            }
-
-            if (_endpointSet && !_eventsEndpointSet) {
-                throw new IllegalArgumentException("If endpoint is set, you must also set the events endpoint");
-            }
-
             if (_numThreadsForSegmentFetch <= 0) {
                 throw new IllegalArgumentException("Number of threads for fetching segments MUST be greater than zero");
             }
 
-            if(_authRetryBackoffBase < 1) {
+            if (_authRetryBackoffBase < 1) {
                 throw new IllegalArgumentException("Re attempting time to authenticate " +
                         "for push notifications MUST be greater than zero");
             }
 
-            if(_authRetryBackoffBase < 1) {
+            if (_authRetryBackoffBase < 1) {
                 throw new IllegalArgumentException("Re attempting time to connect to " +
                         "streaming notifications MUST be greater than zero");
             }
@@ -897,8 +853,8 @@ public class SplitClientConfig {
             }
 
             return new SplitClientConfig(
-                    _endpoint,
-                    _eventsEndpoint,
+                    _serviceEndpoints.getApiEndpoint(),
+                    _serviceEndpoints.getEventsEndpoint(),
                     _featuresRefreshRate,
                     _segmentsRefreshRate,
                     _impressionsRefreshRate,
@@ -927,8 +883,8 @@ public class SplitClientConfig {
                     _streamingEnabled,
                     _authRetryBackoffBase,
                     _streamingReconnectBackoffBase,
-                    _authServiceUrl,
-                    _streamingServiceUrl);
+                    _serviceEndpoints.getAuthServiceEndpoint(),
+                    _serviceEndpoints.getStreamingServiceEndpoint());
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
