@@ -14,14 +14,14 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 import static io.split.android.client.service.executor.SplitTaskType.SSE_DOWN_NOTIFICATOR;
-import static io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType.PUSH_DISABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
 
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
 
@@ -72,11 +72,11 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void notifyPushEnabled() {
-        mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED));
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PUSH_ENABLED));
     }
 
     private void notifyPushDisabled() {
-        mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(PUSH_DISABLED));
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PUSH_DISABLED));
     }
 
     //
@@ -157,7 +157,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
-            mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(
+            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(
                     PUSH_DISABLED));
             return SplitTaskExecutionInfo.success(SSE_DOWN_NOTIFICATOR);
         }

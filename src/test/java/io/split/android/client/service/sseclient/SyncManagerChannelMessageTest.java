@@ -8,9 +8,10 @@ import org.mockito.Mockito;
 
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -32,27 +33,27 @@ public class SyncManagerChannelMessageTest {
         BroadcastedEventListener l3 = Mockito.mock(BroadcastedEventListener.class);
 
         mChannel.register(l1);
-        mChannel.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED));
-        mChannel.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED));
+        mChannel.pushMessage(new PushStatusEvent(PUSH_ENABLED));
+        mChannel.pushMessage(new PushStatusEvent(PUSH_ENABLED));
 
         mChannel.register(l2);
-        mChannel.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_DISABLED));
+        mChannel.pushMessage(new PushStatusEvent(PUSH_DISABLED));
 
         mChannel.register(l3);
-        mChannel.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_DISABLED));
+        mChannel.pushMessage(new PushStatusEvent(PUSH_DISABLED));
 
-        verify(l1, times(4)).onEvent(any(BroadcastedEvent.class));
-        verify(l2, times(2)).onEvent(any(BroadcastedEvent.class));
-        verify(l3, times(1)).onEvent(any(BroadcastedEvent.class));
+        verify(l1, times(4)).onEvent(any(PushStatusEvent.class));
+        verify(l2, times(2)).onEvent(any(PushStatusEvent.class));
+        verify(l3, times(1)).onEvent(any(PushStatusEvent.class));
     }
 
     @Test
     public void correctMessage() {
         BroadcastedEventListener l1 = Mockito.mock(BroadcastedEventListener.class);
 
-        BroadcastedEvent m0 = new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED);
-        BroadcastedEvent m1 = new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED);
-        BroadcastedEvent m2 = new BroadcastedEvent(BroadcastedEventType.PUSH_DISABLED);
+        PushStatusEvent m0 = new PushStatusEvent(PUSH_ENABLED);
+        PushStatusEvent m1 = new PushStatusEvent(PUSH_ENABLED);
+        PushStatusEvent m2 = new PushStatusEvent(PUSH_DISABLED);
 
         mChannel.pushMessage(m0);
 
@@ -70,7 +71,7 @@ public class SyncManagerChannelMessageTest {
         BroadcastedEventListener l1 = Mockito.mock(BroadcastedEventListener.class);
         BroadcastedEventListener l2 = Mockito.mock(BroadcastedEventListener.class);
 
-        BroadcastedEvent m1 = new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED);
+        PushStatusEvent m1 = new PushStatusEvent(PUSH_ENABLED);
 
         mChannel.pushMessage(m1);
 
