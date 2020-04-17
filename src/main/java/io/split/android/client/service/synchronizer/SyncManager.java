@@ -5,7 +5,6 @@ import androidx.annotation.VisibleForTesting;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
 
-// TODO: Will be renamed to SyncManager on final integration
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public interface SyncManager {
     void start();
