@@ -13,10 +13,9 @@ public class SplitTaskExecutionInfo {
 
     public static final String NON_SENT_RECORDS = "NON_SENT_RECORDS";
     public static final String NON_SENT_BYTES = "NON_SENT_BYTES";
-    public static final String CHANNEL_LIST_PARAM = "CHANNEL_LIST";
     public static final String IS_STREAMING_ENABLED = "IS_STREAMING_ENABLED";
     public static final String IS_VALID_API_KEY = "IS_VALID_API_KEY";
-    public static final String SSE_TOKEN = "SSE_TOKEN";
+    public static final String PARSED_SSE_JWT = "PARSED_SSE_JWT";
 
     final private SplitTaskType taskType;
     final private SplitTaskExecutionStatus status;

@@ -6,17 +6,19 @@ import org.junit.Test;
 
 import java.util.List;
 
-import io.split.android.client.service.sseclient.SseChannelsParser;
+import io.split.android.client.service.sseclient.InvalidJwtTokenException;
+import io.split.android.client.service.sseclient.SseJwtParser;
+import io.split.android.client.service.sseclient.SseJwtToken;
 
 
-public class SseChannelsParserTest {
+public class SseJwtTokenParserTest {
 
     @Before
-    public void setup()  {
+    public void setup() {
     }
 
     @Test
-    public void testOkToken() {
+    public void testOkToken() throws InvalidJwtTokenException {
         String jwtToken = "eyJhbGciOiJIUzI1NiIsImtpZCI6ImtleUlkIiwidHlwIjoiSldUIn0.eyJvcmdJ" +
                 "ZCI6ImY3ZjAzNTIwLTVkZjctMTFlOC04NDc2LTBlYzU0NzFhM2NlYyIsImVudklkIjoiZjdmN" +
                 "jI4OTAtNWRmNy0xMWU4LTg0NzYtMGVjNTQ3MWEzY2VjIiwidXNlcktleXMiOlsiamF2aSJdLC" +
@@ -26,9 +28,12 @@ public class SseChannelsParserTest {
                 "cIjpbXCJzdWJzY3JpYmVcIl19IiwieC1hYmx5LWNsaWVudElkIjoiY2xpZW50SWQiLCJleHAiOj" +
                 "E1ODM5NDc4MTIsImlhdCI6MTU4Mzk0NDIxMn0.bSkxugrXKLaJJkvlND1QEd7vrwqWiPjn77pkrJOl4t8";
 
-        SseChannelsParser parser = new SseChannelsParser();
-        List<String> channels = parser.parse(jwtToken);
+        SseJwtParser parser = new SseJwtParser();
+        SseJwtToken parsedToken = parser.parse(jwtToken);
+        List<String> channels = parsedToken.getChannels();
 
+        Assert.assertEquals(1583947812L, parsedToken.getExpirationTime());
+        Assert.assertEquals(jwtToken, parsedToken.getRawJwt());
         Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_MTcwNTI2MTM0Mg==_mySegments",
                 channels.get(0));
         Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_splits",
@@ -41,14 +46,22 @@ public class SseChannelsParserTest {
     public void onlyHeader() {
         String jwtToken = "eyJhbGciOiJIUzI1NiIsImtpZCI6ImtleUlkIiwidHlwIjoiSldUIn0.";
 
-        SseChannelsParser parser = new SseChannelsParser();
-        List<String> channels = parser.parse(jwtToken);
+        SseJwtParser parser = new SseJwtParser();
+        Exception thrownEx = null;
 
-        Assert.assertEquals(0, channels.size());
+        SseJwtToken parsedToken = null;
+        try {
+            parsedToken = parser.parse(jwtToken);
+        } catch (InvalidJwtTokenException e) {
+            thrownEx = e;
+        }
+
+        Assert.assertNull(parsedToken);
+        Assert.assertNotNull(thrownEx);
     }
 
     @Test
-    public void testOnlyChannelsWithSeparator() {
+    public void testOnlyChannelsWithSeparator() throws InvalidJwtTokenException {
         String jwtToken = ".eyJvcmdJ" +
                 "ZCI6ImY3ZjAzNTIwLTVkZjctMTFlOC04NDc2LTBlYzU0NzFhM2NlYyIsImVudklkIjoiZjdmN" +
                 "jI4OTAtNWRmNy0xMWU4LTg0NzYtMGVjNTQ3MWEzY2VjIiwidXNlcktleXMiOlsiamF2aSJdLC" +
@@ -58,9 +71,12 @@ public class SseChannelsParserTest {
                 "cIjpbXCJzdWJzY3JpYmVcIl19IiwieC1hYmx5LWNsaWVudElkIjoiY2xpZW50SWQiLCJleHAiOj" +
                 "E1ODM5NDc4MTIsImlhdCI6MTU4Mzk0NDIxMn0.bSkxugrXKLaJJkvlND1QEd7vrwqWiPjn77pkrJOl4t8";
 
-        SseChannelsParser parser = new SseChannelsParser();
-        List<String> channels = parser.parse(jwtToken);
+        SseJwtParser parser = new SseJwtParser();
+        SseJwtToken parsedToken = parser.parse(jwtToken);
+        List<String> channels = parsedToken.getChannels();
 
+        Assert.assertEquals(1583947812L, parsedToken.getExpirationTime());
+        Assert.assertEquals(jwtToken, parsedToken.getRawJwt());
         Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_MTcwNTI2MTM0Mg==_mySegments",
                 channels.get(0));
         Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_splits",
@@ -80,40 +96,72 @@ public class SseChannelsParserTest {
                 "cIjpbXCJzdWJzY3JpYmVcIl19IiwieC1hYmx5LWNsaWVudElkIjoiY2xpZW50SWQiLCJleHAiOj" +
                 "E1ODM5NDc4MTIsImlhdCI6MTU4Mzk0NDIxMn0.bSkxugrXKLaJJkvlND1QEd7vrwqWiPjn77pkrJOl4t8";
 
-        SseChannelsParser parser = new SseChannelsParser();
-        List<String> channels = parser.parse(jwtToken);
+        SseJwtParser parser = new SseJwtParser();
+        Exception thrownEx = null;
 
-        Assert.assertEquals(0, channels.size());
+        SseJwtToken parsedToken = null;
+        try {
+            parsedToken = parser.parse(jwtToken);
+        } catch (InvalidJwtTokenException e) {
+            thrownEx = e;
+        }
+
+        Assert.assertNull(parsedToken);
+        Assert.assertNotNull(thrownEx);
     }
 
     @Test
     public void garbageToken() {
         String jwtToken = "novalidtoken";
 
-        SseChannelsParser parser = new SseChannelsParser();
-        List<String> channels = parser.parse(jwtToken);
+        SseJwtParser parser = new SseJwtParser();
+        Exception thrownEx = null;
 
-        Assert.assertEquals(0, channels.size());
+        SseJwtToken parsedToken = null;
+        try {
+            parsedToken = parser.parse(jwtToken);
+        } catch (InvalidJwtTokenException e) {
+            thrownEx = e;
+        }
+
+        Assert.assertNull(parsedToken);
+        Assert.assertNotNull(thrownEx);
     }
 
     @Test
     public void emptyToken() {
         String jwtToken = "";
 
-        SseChannelsParser parser = new SseChannelsParser();
-        List<String> channels = parser.parse(jwtToken);
+        SseJwtParser parser = new SseJwtParser();
+        Exception thrownEx = null;
 
-        Assert.assertEquals(0, channels.size());
+        SseJwtToken parsedToken = null;
+        try {
+            parsedToken = parser.parse(jwtToken);
+        } catch (InvalidJwtTokenException e) {
+            thrownEx = e;
+        }
+
+        Assert.assertNull(parsedToken);
+        Assert.assertNotNull(thrownEx);
     }
 
     @Test
     public void nullToken() {
         String jwtToken = "";
 
-        SseChannelsParser parser = new SseChannelsParser();
-        List<String> channels = parser.parse(jwtToken);
+        SseJwtParser parser = new SseJwtParser();
+        Exception thrownEx = null;
 
-        Assert.assertEquals(0, channels.size());
+        SseJwtToken parsedToken = null;
+        try {
+            parsedToken = parser.parse(jwtToken);
+        } catch (InvalidJwtTokenException e) {
+            thrownEx = e;
+        }
+
+        Assert.assertNull(parsedToken);
+        Assert.assertNotNull(thrownEx);
     }
 
 }
