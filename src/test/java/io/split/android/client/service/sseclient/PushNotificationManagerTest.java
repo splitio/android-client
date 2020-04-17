@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -26,7 +25,6 @@ import io.split.android.client.service.sseclient.notifications.NotificationProce
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -161,7 +159,7 @@ public class PushNotificationManagerTest {
 
         verify(mNotificationProcessor, times(1)).process(data);
         ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
-        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseKeepAliveTimer.class), downNotificationTime.capture(), any());
+        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseReconnectionTimer.class), downNotificationTime.capture(), any());
         Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
     }
 
@@ -179,7 +177,7 @@ public class PushNotificationManagerTest {
         mPushManager.onKeepAlive();
 
         ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
-        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseKeepAliveTimer.class), downNotificationTime.capture(), any());
+        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseReconnectionTimer.class), downNotificationTime.capture(), any());
         Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
     }
 
