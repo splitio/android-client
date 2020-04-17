@@ -7,8 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
@@ -32,12 +30,7 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
-import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
-import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
-import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
-import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
-import io.split.android.client.service.synchronizer.NewSyncManager;
+import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -80,7 +73,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
     private FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
     private LifecycleManager _lifecyleManager;
-    private NewSyncManager _syncManager;
+    private SyncManager _syncManager;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {

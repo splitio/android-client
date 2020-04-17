@@ -13,8 +13,8 @@ import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeed
 import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
-import io.split.android.client.service.synchronizer.NewSyncManager;
-import io.split.android.client.service.synchronizer.NewSyncManagerImpl;
+import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
 
 import static org.mockito.Mockito.never;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class NewSyncManagerTest {
+public class SyncManagerTest {
 
 
     @Mock
@@ -43,13 +43,13 @@ public class NewSyncManagerTest {
     MySegmentsUpdateWorker mMySegmentUpdateWorker;
 
 
-    NewSyncManager mSyncManager;
+    SyncManager mSyncManager;
 
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        mSyncManager = new NewSyncManagerImpl(
+        mSyncManager = new SyncManagerImpl(
                 mConfig, mSynchronizer, mPushNotificationManager,
                 mSplitsUpdateWorker, mMySegmentUpdateWorker, mSyncManagerFeedbackChannel);
         when(mConfig.streamingEnabled()).thenReturn(true);

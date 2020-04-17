@@ -1,14 +1,14 @@
 package io.split.android.client.impressions;
 
-import io.split.android.client.service.synchronizer.NewSyncManager;
+import io.split.android.client.service.synchronizer.SyncManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SyncImpressionListener implements ImpressionListener {
 
-    private final NewSyncManager mSyncManager;
+    private final SyncManager mSyncManager;
 
-    public SyncImpressionListener(NewSyncManager syncManager) {
+    public SyncImpressionListener(SyncManager syncManager) {
         mSyncManager = checkNotNull(syncManager);
     }
 

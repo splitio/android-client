@@ -11,7 +11,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
@@ -28,10 +27,9 @@ import io.split.android.client.service.sseclient.notifications.NotificationProce
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
-import io.split.android.client.service.synchronizer.NewSyncManager;
-import io.split.android.client.service.synchronizer.NewSyncManagerImpl;
+import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
-import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -94,11 +92,11 @@ class SplitFactoryHelper {
 
     }
 
-    NewSyncManager buildSyncManager(SplitClientConfig config,
-                                    SplitTaskExecutor splitTaskExecutor,
-                                    SplitTaskFactory splitTaskFactory,
-                                    HttpClient httpClient,
-                                    Synchronizer synchronizer) {
+    SyncManager buildSyncManager(SplitClientConfig config,
+                                 SplitTaskExecutor splitTaskExecutor,
+                                 SplitTaskFactory splitTaskFactory,
+                                 HttpClient httpClient,
+                                 Synchronizer synchronizer) {
 
         BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue
                 = new LinkedBlockingDeque<>();
@@ -124,7 +122,7 @@ class SplitFactoryHelper {
                 new PushNotificationManager(sseClient, splitTaskExecutor,
                         splitTaskFactory, notificationProcessor, syncManagerFeedbackChannel);
 
-        return new NewSyncManagerImpl(
+        return new SyncManagerImpl(
                 config, synchronizer, pushNotificationManager, splitUpdateWorker,
                 mySegmentUpdateWorker, syncManagerFeedbackChannel);
     }
