@@ -13,14 +13,15 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 import static io.split.android.client.service.executor.SplitTaskType.SSE_DOWN_NOTIFICATOR;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
 
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
 
@@ -29,7 +30,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     private final SseClient mSseClient;
     private final SplitTaskExecutor mTaskExecutor;
-    private final SyncManagerFeedbackChannel mSyncManagerFeedbackChannel;
+    private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
     private String mResetSseKeepAliveTimerTaskId = null;
@@ -38,12 +39,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                                    @NonNull SplitTaskExecutor taskExecutor,
                                    @NonNull SplitTaskFactory splitTaskFactory,
                                    @NonNull NotificationProcessor notificationProcessor,
-                                   @NonNull SyncManagerFeedbackChannel syncManagerFeedbackChannel) {
+                                   @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster) {
         mSseClient = checkNotNull(sseClient);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTaskExecutor = checkNotNull(taskExecutor);
         mNotificationProcessor = checkNotNull(notificationProcessor);
-        mSyncManagerFeedbackChannel = checkNotNull(syncManagerFeedbackChannel);
+        mPushManagerEventBroadcaster = checkNotNull(pushManagerEventBroadcaster);
         mSseClient.setListener(this);
     }
 
@@ -71,11 +72,11 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void notifyPushEnabled() {
-        mSyncManagerFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_ENABLED));
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PUSH_ENABLED));
     }
 
     private void notifyPushDisabled() {
-        mSyncManagerFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PUSH_DISABLED));
     }
 
     //
@@ -156,8 +157,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
-            mSyncManagerFeedbackChannel.pushMessage(new SyncManagerFeedbackMessage(
-                    SyncManagerFeedbackMessageType.PUSH_DISABLED));
+            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(
+                    PUSH_DISABLED));
             return SplitTaskExecutionInfo.success(SSE_DOWN_NOTIFICATOR);
         }
     }

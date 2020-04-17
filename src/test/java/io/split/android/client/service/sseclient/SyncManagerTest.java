@@ -7,16 +7,17 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackListener;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessageType;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
 
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,7 +35,7 @@ public class SyncManagerTest {
     PushNotificationManager mPushNotificationManager;
 
     @Spy
-    SyncManagerFeedbackChannel mSyncManagerFeedbackChannel;
+    PushManagerEventBroadcaster mPushManagerEventBroadcaster;
 
     @Mock
     SplitUpdatesWorker mSplitsUpdateWorker;
@@ -51,7 +52,7 @@ public class SyncManagerTest {
         MockitoAnnotations.initMocks(this);
         mSyncManager = new SyncManagerImpl(
                 mConfig, mSynchronizer, mPushNotificationManager,
-                mSplitsUpdateWorker, mMySegmentUpdateWorker, mSyncManagerFeedbackChannel);
+                mSplitsUpdateWorker, mMySegmentUpdateWorker, mPushManagerEventBroadcaster);
         when(mConfig.streamingEnabled()).thenReturn(true);
 
     }
@@ -66,7 +67,7 @@ public class SyncManagerTest {
         verify(mSynchronizer, times(1)).synchronizeSplits();
         verify(mSynchronizer, never()).startPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicRecording();
-        verify(mSyncManagerFeedbackChannel, times(1)).register((SyncManagerFeedbackListener) mSyncManager);
+        verify(mPushManagerEventBroadcaster, times(1)).register((BroadcastedEventListener) mSyncManager);
         verify(mPushNotificationManager, times(1)).start();
     }
 
@@ -81,15 +82,15 @@ public class SyncManagerTest {
         verify(mSynchronizer, never()).synchronizeSplits();
         verify(mSynchronizer, times(1)).startPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicRecording();
-        verify(mSyncManagerFeedbackChannel, never()).register((SyncManagerFeedbackListener) mSyncManager);
+        verify(mPushManagerEventBroadcaster, never()).register((BroadcastedEventListener) mSyncManager);
         verify(mPushNotificationManager, never()).start();
     }
 
     @Test
     public void disablePushNotificationReceived() {
         mSyncManager.start();
-        mSyncManagerFeedbackChannel.pushMessage(
-                new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
+        mPushManagerEventBroadcaster.pushMessage(
+                new PushStatusEvent(PUSH_DISABLED));
 
         verify(mSynchronizer, times(1)).startPeriodicFetching();
         verify(mSynchronizer, never()).stopPeriodicFetching();
@@ -98,11 +99,11 @@ public class SyncManagerTest {
     @Test
     public void disableAndEnablePushNotificationReceived() {
         mSyncManager.start();
-        mSyncManagerFeedbackChannel.pushMessage(
-                new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_DISABLED));
+        mPushManagerEventBroadcaster.pushMessage(
+                new PushStatusEvent(PUSH_DISABLED));
 
-        mSyncManagerFeedbackChannel.pushMessage(
-                new SyncManagerFeedbackMessage(SyncManagerFeedbackMessageType.PUSH_ENABLED));
+        mPushManagerEventBroadcaster.pushMessage(
+                new PushStatusEvent(PUSH_ENABLED));
 
         verify(mSynchronizer, times(1)).stopPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicFetching();

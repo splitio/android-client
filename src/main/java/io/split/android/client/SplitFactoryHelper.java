@@ -20,7 +20,7 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.SseClient;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
@@ -113,17 +113,17 @@ class SplitFactoryHelper {
                 new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
                         new NotificationParser(), mySegmentChangeNotificationQueue,
                         splitsUpdateNotificationQueue);
-        SyncManagerFeedbackChannel syncManagerFeedbackChannel = new SyncManagerFeedbackChannel();
+        PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
 
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
         EventStreamParser eventStreamParser = new EventStreamParser();
         SseClient sseClient = new SseClient(streamingServiceUrl, httpClient, eventStreamParser);
         PushNotificationManager pushNotificationManager =
                 new PushNotificationManager(sseClient, splitTaskExecutor,
-                        splitTaskFactory, notificationProcessor, syncManagerFeedbackChannel);
+                        splitTaskFactory, notificationProcessor, pushManagerEventBroadcaster);
 
         return new SyncManagerImpl(
                 config, synchronizer, pushNotificationManager, splitUpdateWorker,
-                mySegmentUpdateWorker, syncManagerFeedbackChannel);
+                mySegmentUpdateWorker, pushManagerEventBroadcaster);
     }
 }
