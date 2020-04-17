@@ -5,5 +5,5 @@ public interface BroadcastedEventListener {
      *  Interface to be implemented by a component to be registered
      *  in the feedback channel to listen to incomming messages
      */
-    void onEvent(BroadcastedEvent message);
+    void onEvent(PushStatusEvent message);
 }

@@ -14,15 +14,16 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 import static io.split.android.client.service.executor.SplitTaskType.SSE_DOWN_NOTIFICATOR;
 import static java.lang.reflect.Modifier.PRIVATE;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
 
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
 
@@ -38,6 +39,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private final NotificationProcessor mNotificationProcessor;
     private long mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
     private String mSseDownNotificatorTaskId = null;
+    private String mResetSseKeepAliveTimerTaskId = null;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -58,7 +60,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 this);
 
-        scheduleSseDownNotification();
+        resetSseKeepAliveTimer();
     }
 
     public void stop() {
@@ -85,19 +87,19 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
     }
 
-    private void scheduleSseDownNotification() {
-        mSseDownNotificatorTaskId = mTaskExecutor.schedule(
-                new SseDownNotificator(),
+    private void resetSseKeepAliveTimer() {
+        mResetSseKeepAliveTimerTaskId = mTaskExecutor.schedule(
+                new SseKeepAliveTimer(),
                 SSE_RECONNECT_TIME_IN_SECONDS,
                 this);
     }
 
     private void notifyPushEnabled() {
-        mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED));
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PUSH_ENABLED));
     }
 
     private void notifyPushDisabled() {
-        mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_DISABLED));
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PUSH_DISABLED));
     }
 
     //
@@ -107,7 +109,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     public void onOpen() {
         resetRetryPeriod();
         notifyPushEnabled();
-        scheduleSseDownNotification();
+        resetSseKeepAliveTimer();
     }
 
     @Override
@@ -116,12 +118,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         if (messageData != null) {
             mNotificationProcessor.process(messageData);
         }
-        scheduleSseDownNotification();
+        resetSseKeepAliveTimer();
     }
 
     @Override
     public void onKeepAlive() {
-        scheduleSseDownNotification();
+        resetSseKeepAliveTimer();
     }
 
     @Override
@@ -132,8 +134,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void cancelSseDownNotificator() {
-        if (mSseDownNotificatorTaskId != null) {
-            mTaskExecutor.stopTask(mSseDownNotificatorTaskId);
+        if (mResetSseKeepAliveTimerTaskId != null) {
+            mTaskExecutor.stopTask(mResetSseKeepAliveTimerTaskId);
         }
     }
 
@@ -178,13 +180,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public class SseDownNotificator implements SplitTask {
+    public class SseKeepAliveTimer implements SplitTask {
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
-            scheduleConnection();
-            mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(
-                    BroadcastedEventType.PUSH_DISABLED));
+            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(
+                    PUSH_DISABLED));
             return SplitTaskExecutionInfo.success(SSE_DOWN_NOTIFICATOR);
         }
     }

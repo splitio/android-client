@@ -14,7 +14,7 @@ public class PushManagerEventBroadcaster {
         mListeners = new CopyOnWriteArrayList<>();
     }
 
-    public void pushMessage(@NonNull BroadcastedEvent message) {
+    public void pushMessage(@NonNull PushStatusEvent message) {
         for (WeakReference<BroadcastedEventListener> listenerRef : mListeners) {
             BroadcastedEventListener listener = listenerRef.get();
             if (listener != null) {

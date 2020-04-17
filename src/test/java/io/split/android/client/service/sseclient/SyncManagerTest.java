@@ -9,14 +9,15 @@ import org.mockito.Spy;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
 
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -89,7 +90,7 @@ public class SyncManagerTest {
     public void disablePushNotificationReceived() {
         mSyncManager.start();
         mPushManagerEventBroadcaster.pushMessage(
-                new BroadcastedEvent(BroadcastedEventType.PUSH_DISABLED));
+                new PushStatusEvent(PUSH_DISABLED));
 
         verify(mSynchronizer, times(1)).startPeriodicFetching();
         verify(mSynchronizer, never()).stopPeriodicFetching();
@@ -99,10 +100,10 @@ public class SyncManagerTest {
     public void disableAndEnablePushNotificationReceived() {
         mSyncManager.start();
         mPushManagerEventBroadcaster.pushMessage(
-                new BroadcastedEvent(BroadcastedEventType.PUSH_DISABLED));
+                new PushStatusEvent(PUSH_DISABLED));
 
         mPushManagerEventBroadcaster.pushMessage(
-                new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED));
+                new PushStatusEvent(PUSH_ENABLED));
 
         verify(mSynchronizer, times(1)).stopPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicFetching();
