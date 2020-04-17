@@ -27,15 +27,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     private final static String DATA_FIELD = "data";
     private final static int SSE_RECONNECT_TIME_IN_SECONDS = 70;
-    private final static int INITIAL_CONNECTION_RETRY_IN_SECONDS = 1;
-    private final static int RETRY_EXPONENTIAL_BASE = 2;
 
     private final SseClient mSseClient;
     private final SplitTaskExecutor mTaskExecutor;
     private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
-    private long mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
     private String mResetSseKeepAliveTimerTaskId = null;
     private String mSseTokenExpiredTimerTaskId = null;
 
@@ -72,22 +69,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mSseClient.connect(token, channels);
     }
 
-    private void setupReconnectionTimer() {
-        mTaskExecutor.schedule(
-                mSplitTaskFactory.createSseAuthenticationTask(),
-                getRetryPeriod(), this);
-    }
-
-    private synchronized long getRetryPeriod() {
-        long currentValue = mNextRetryPeriod;
-        mNextRetryPeriod = mNextRetryPeriod * RETRY_EXPONENTIAL_BASE;
-        return currentValue;
-    }
-
-    private synchronized void resetRetryPeriod() {
-        mNextRetryPeriod = INITIAL_CONNECTION_RETRY_IN_SECONDS;
-    }
-
     private void resetSseKeepAliveTimer() {
         mResetSseKeepAliveTimerTaskId = mTaskExecutor.schedule(
                 new SseKeepAliveTimer(),
@@ -115,7 +96,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 //
     @Override
     public void onOpen() {
-        resetRetryPeriod();
         notifyPushEnabled();
         resetSseKeepAliveTimer();
     }
@@ -136,7 +116,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     @Override
     public void onError() {
-        setupReconnectionTimer();
         cancelSseKeepAliveTimer();
         notifyPushDisabled();
     }
@@ -166,7 +145,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     connectToSse(jwtToken.getRawJwt(), jwtToken.getChannels());
                     resetSseTokenExpiredTimer(jwtToken.getExpirationTime());
                 } else {
-                    setupReconnectionTimer();
                     notifyPushDisabled();
                 }
                 break;
@@ -204,7 +182,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
-            setupReconnectionTimer();
             mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(
                     BroadcastedEventType.PUSH_DISABLED));
             return SplitTaskExecutionInfo.success(GENERIC_TASK);
