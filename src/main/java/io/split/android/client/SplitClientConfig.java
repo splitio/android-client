@@ -370,6 +370,10 @@ public class SplitClientConfig {
         return _streamingEnabled;
     }
 
+    public int authRetryBackoffBase() {
+        return _authRetryBackoffBase;
+    }
+
     public int streamingReconnectBackoffBase() {
         return _streamingReconnectBackoffBase;
     }

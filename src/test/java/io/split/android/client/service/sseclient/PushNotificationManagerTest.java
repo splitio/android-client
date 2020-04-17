@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -26,7 +25,6 @@ import io.split.android.client.service.sseclient.notifications.NotificationProce
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -88,7 +86,9 @@ public class PushNotificationManagerTest {
         mPushManager.start();
         mPushManager.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK));
 
+        ArgumentCaptor<Long> reconnectTime = ArgumentCaptor.forClass(Long.class);
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
+        verify(mTaskExecutor, times(1)).schedule(any(SseAuthenticationTask.class), reconnectTime.capture() , any(PushNotificationManager.class));
         verify(mSseClient, never()).connect(any(), any());
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
@@ -158,7 +158,9 @@ public class PushNotificationManagerTest {
         mPushManager.onMessage(message(data));
 
         verify(mNotificationProcessor, times(1)).process(data);
-        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), any());
+        ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
+        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseReconnectionTimer.class), downNotificationTime.capture(), any());
+        Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
     }
 
     @Test
@@ -174,7 +176,9 @@ public class PushNotificationManagerTest {
 
         mPushManager.onKeepAlive();
 
-        verify(mTaskExecutor, times(1)).schedule(any(SplitTask.class), anyLong(), any());
+        ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
+        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseReconnectionTimer.class), downNotificationTime.capture(), any());
+        Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
     }
 
     @After
