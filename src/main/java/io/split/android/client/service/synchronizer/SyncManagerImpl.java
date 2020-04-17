@@ -8,19 +8,19 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.sseclient.PushNotificationManager;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackChannel;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackListener;
-import io.split.android.client.service.sseclient.feedbackchannel.SyncManagerFeedbackMessage;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SyncManagerImpl implements SyncManager, SyncManagerFeedbackListener {
+public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
 
     private final SplitClientConfig mSplitClientConfig;
-    private final SyncManagerFeedbackChannel mSyncManagerFeedbackChannel;
+    private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final Synchronizer mSynchronizer;
     private final PushNotificationManager mPushNotificationManager;
     private SplitUpdatesWorker mSplitUpdateWorker;
@@ -34,14 +34,14 @@ public class SyncManagerImpl implements SyncManager, SyncManagerFeedbackListener
                            @NonNull PushNotificationManager pushNotificationManager,
                            @NonNull SplitUpdatesWorker splitUpdateWorker,
                            @NonNull MySegmentsUpdateWorker mySegmentUpdateWorker,
-                           @NonNull SyncManagerFeedbackChannel syncManagerFeedbackChannel) {
+                           @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster) {
 
         mSynchronizer = checkNotNull(synchronizer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mPushNotificationManager = checkNotNull(pushNotificationManager);
         mSplitUpdateWorker = checkNotNull(splitUpdateWorker);
         mMySegmentUpdateWorker = checkNotNull(mySegmentUpdateWorker);
-        mSyncManagerFeedbackChannel = checkNotNull(syncManagerFeedbackChannel);
+        mPushManagerEventBroadcaster = checkNotNull(pushManagerEventBroadcaster);
 
         mIsPushEnabled = new AtomicBoolean(false);
     }
@@ -57,7 +57,7 @@ public class SyncManagerImpl implements SyncManager, SyncManagerFeedbackListener
         if (mSplitClientConfig.streamingEnabled()) {
             mSynchronizer.synchronizeSplits();
             mSynchronizer.syncronizeMySegments();
-            mSyncManagerFeedbackChannel.register(this);
+            mPushManagerEventBroadcaster.register(this);
             mSplitUpdateWorker.start();
             mMySegmentUpdateWorker.start();
             mPushNotificationManager.start();
@@ -104,7 +104,7 @@ public class SyncManagerImpl implements SyncManager, SyncManagerFeedbackListener
     }
 
     @Override
-    public void onFeedbackMessage(SyncManagerFeedbackMessage message) {
+    public void onEvent(PushStatusEvent message) {
         switch (message.getMessage()) {
             case PUSH_DISABLED:
                 if (mIsPushEnabled.get()) {

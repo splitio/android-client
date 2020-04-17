@@ -87,9 +87,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeSplits(long since) {
-        SplitsUpdateTask splitsUpdateTask
-                = mSplitTaskFactory.createSplitsUpdateTask(since);
-        mTaskExecutor.submit(splitsUpdateTask, mSplitsSyncTaskListener);
+      SplitTask splitsUpdateTask
+              = mSplitTaskFactory.createSplitsUpdateTask(since);
+      mTaskExecutor.submit(splitsUpdateTask, null);
     }
 
     @Override
