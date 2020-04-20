@@ -20,6 +20,8 @@ public class SseJwtParser {
 
     final static String CHANNEL_LIST_FIELD = "x-ably-capability";
     final static String EXPIRATION_FIELD = "exp";
+    private final static String PUBLISHERS_CHANNEL_METADATA = "channel-metadata:publishers";
+    private final static String PUBLISHERS_CHANNEL_PREFIX = "[?occupancy=metrics.publishers]";
 
     final static Type ALL_TOKEN_TYPE = new TypeToken<Map<String, Object>>() {
     }.getType();
@@ -69,7 +71,18 @@ public class SseJwtParser {
             Logger.e("Unknonwn error while parsing SSE authentication JWT: " + e.getLocalizedMessage());
             throw  new InvalidJwtTokenException();
         }
-        return new SseJwtToken(expirationTime, new ArrayList<>(channels.keySet()), rawToken);
+
+        List<String> processedChannels = new ArrayList<>();
+        for(String channel : channels.keySet()) {
+            List<String> channelInfo = channels.get(channel);
+            if(channelInfo != null && channelInfo.contains(PUBLISHERS_CHANNEL_METADATA)) {
+                processedChannels.add(PUBLISHERS_CHANNEL_PREFIX + channel);
+            } else {
+                processedChannels.add(channel);
+            }
+        }
+
+        return new SseJwtToken(expirationTime, processedChannels, rawToken);
     }
 
     @Nullable
