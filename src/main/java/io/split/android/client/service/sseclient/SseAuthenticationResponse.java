@@ -8,6 +8,13 @@ public class SseAuthenticationResponse {
     private boolean isStreamingEnabled;
     private String token;
 
+    public SseAuthenticationResponse() {
+    }
+
+    public SseAuthenticationResponse(boolean isValidApiKey) {
+        this.isValidApiKey = isValidApiKey;
+    }
+
     public boolean isValidApiKey() {
         return isValidApiKey;
     }

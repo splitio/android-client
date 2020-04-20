@@ -4,11 +4,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 
-public interface HttpStreamResponse {
-
-    boolean isSuccess();
-
-    int getHttpStatus();
-
+public interface HttpStreamResponse extends BaseHttpResponse {
     @Nullable BufferedReader getBufferedReader();
 }
