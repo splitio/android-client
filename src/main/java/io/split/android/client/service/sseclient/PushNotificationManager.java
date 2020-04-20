@@ -78,13 +78,13 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void resetSseTokenExpiredTimer(long expirationTime) {
-        long recconectTime
+        long reconnectTime
                 = Math.max(expirationTime - RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS
                 - System.currentTimeMillis() / 1000L, 0L);
 
         mSseTokenExpiredTimerTaskId = mTaskExecutor.schedule(
                 new SseTokenExpiredTimer(),
-                expirationTime - System.currentTimeMillis() / 1000,
+                reconnectTime,
                 null);
     }
 
