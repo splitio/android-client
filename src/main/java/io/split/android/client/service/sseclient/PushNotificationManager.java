@@ -13,14 +13,15 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventType;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 import static io.split.android.client.service.executor.SplitTaskType.GENERIC_TASK;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
 import static java.lang.reflect.Modifier.PRIVATE;
 
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
@@ -52,7 +53,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     public void start() {
         triggerSseAuthentication();
-        resetSseKeepAliveTimer();
     }
 
     public void stop() {
@@ -84,11 +84,11 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void notifyPushEnabled() {
-        mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_ENABLED));
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PUSH_ENABLED));
     }
 
     private void notifyPushDisabled() {
-        mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(BroadcastedEventType.PUSH_DISABLED));
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PUSH_DISABLED));
     }
 
     //
@@ -182,8 +182,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
-            mPushManagerEventBroadcaster.pushMessage(new BroadcastedEvent(
-                    BroadcastedEventType.PUSH_DISABLED));
+            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(
+                    PUSH_DISABLED));
             return SplitTaskExecutionInfo.success(GENERIC_TASK);
         }
     }

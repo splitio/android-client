@@ -8,9 +8,9 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.sseclient.PushNotificationManager;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEvent;
-import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.utils.Logger;
@@ -104,7 +104,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
     }
 
     @Override
-    public void onEvent(BroadcastedEvent message) {
+    public void onEvent(PushStatusEvent message) {
         switch (message.getMessage()) {
             case PUSH_DISABLED:
                 if (mIsPushEnabled.get()) {
