@@ -3,7 +3,7 @@ package io.split.android.client.service.sseclient;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class ReconnectBackoffCounter {
-    private final static int MAX_TIME_LIMIT = 2;
+    private final static int MAX_TIME_LIMIT = 30;
     private final static int RETRY_EXPONENTIAL_BASE = 2;
     private final int mBackoffBase;
     private AtomicLong mAttemptCount;
