@@ -21,7 +21,7 @@ import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
-import io.split.android.client.service.sseclient.SseChannelsParser;
+import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.storage.SplitStorageContainer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -31,19 +31,16 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageContainer mSplitsStorageContainer;
     private final SplitClientConfig mSplitClientConfig;
-    private final String mApiKey;
     private final String mUserKey;
 
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
                                 @NonNull SplitApiFacade splitApiFacade,
                                 @NonNull SplitStorageContainer splitStorageContainer,
-                                @NonNull String apiKey,
                                 @NonNull String userKey) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
-        mApiKey = checkNotNull(apiKey);
         mUserKey = checkNotNull(userKey);
     }
 
@@ -93,7 +90,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SseAuthenticationTask createSseAuthenticationTask() {
         return new SseAuthenticationTask(mSplitApiFacade.getSseAuthenticationFetcher(),
-                mUserKey, new SseChannelsParser());
+                mUserKey, new SseJwtParser());
     }
 
     @Override

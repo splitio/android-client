@@ -19,7 +19,6 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
 
@@ -87,9 +86,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeSplits(long since) {
-      SplitTask splitsUpdateTask
-              = mSplitTaskFactory.createSplitsUpdateTask(since);
-      mTaskExecutor.submit(splitsUpdateTask, null);
+        SplitTask splitsUpdateTask
+                = mSplitTaskFactory.createSplitsUpdateTask(since);
+        mTaskExecutor.submit(splitsUpdateTask, null);
     }
 
     @Override
@@ -161,7 +160,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     public void pause() {
         mTaskExecutor.pause();
     }
-
 
     public void resume() {
         mTaskExecutor.resume();

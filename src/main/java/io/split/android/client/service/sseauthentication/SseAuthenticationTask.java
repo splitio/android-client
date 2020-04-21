@@ -9,8 +9,10 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
-import io.split.android.client.service.sseclient.SseChannelsParser;
+import io.split.android.client.service.sseclient.SseJwtParser;
+import io.split.android.client.service.sseclient.SseJwtToken;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -22,14 +24,14 @@ public class SseAuthenticationTask implements SplitTask {
 
     private final HttpFetcher<SseAuthenticationResponse> mAuthFetcher;
     private final String mUserKey;
-    private final SseChannelsParser mChannelParser;
+    private final SseJwtParser mJwtParser;
 
     public SseAuthenticationTask(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
                                  @NonNull String userKey,
-                                 @NonNull SseChannelsParser channelsParser) {
+                                 @NonNull SseJwtParser channelsParser) {
         mAuthFetcher = checkNotNull(authFetcher);
         mUserKey = checkNotNull(userKey);
-        mChannelParser = checkNotNull(channelsParser);
+        mJwtParser = checkNotNull(channelsParser);
     }
 
     @Override
@@ -45,10 +47,17 @@ public class SseAuthenticationTask implements SplitTask {
             logError("Unexpected " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK);
         }
-        Logger.d("SSE Authentication done");
+        Logger.d("SSE Authentication done, now parsing token...");
+
+        SseJwtToken jwt = null;
+        try {
+            jwt = mJwtParser.parse(authResponse.getToken());
+        } catch (InvalidJwtTokenException e) {
+            return SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK);
+        }
+
         Map<String, Object> data = new HashMap<>();
-        data.put(SplitTaskExecutionInfo.SSE_TOKEN, authResponse.getToken());
-        data.put(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM, mChannelParser.parse(authResponse.getToken()));
+        data.put(SplitTaskExecutionInfo.PARSED_SSE_JWT, jwt);
         data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, authResponse.isValidApiKey());
         data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, authResponse.isStreamingEnabled());
         return SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK, data);
