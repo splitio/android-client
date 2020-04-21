@@ -19,7 +19,7 @@ public class NotificationParser {
             return new IncomingNotification(CONTROL, rawNotification.getChannel(), rawNotification.getData());
         }
 
-        IncomingNotificationType type = Json.fromJson(jsonData, IncomingNotificationType.class);
+        IncomingNotificationType type = Json.fromJson(rawNotification.getData(), IncomingNotificationType.class);
         return new IncomingNotification(type.getType(), rawNotification.getChannel(), rawNotification.getData());
     }
 
