@@ -189,7 +189,7 @@ public class PushNotificationManagerTest {
         List<String> channels = dummyChannels();
         String data = "{}";
 
-        long expirationTime = System.currentTimeMillis() / 1000 + 3;
+        long expirationTime = System.currentTimeMillis() / 1000 + 603 ;
 
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
