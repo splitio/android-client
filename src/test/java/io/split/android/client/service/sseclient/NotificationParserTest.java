@@ -37,22 +37,18 @@ public class NotificationParserTest {
 
     @Test
     public void processSplitUpdate() {
-        RawNotification raw = mParser.parseRawNotification(SPLIT_UPDATE_NOTIFICATION);
-        IncomingNotification incoming = mParser.parseIncoming(raw.getData());
-        SplitsChangeNotification splitUpdate = mParser.parseSplitUpdate(raw.getData());
+        IncomingNotification incoming = mParser.parseIncoming(SPLIT_UPDATE_NOTIFICATION);
+        SplitsChangeNotification splitUpdate = mParser.parseSplitUpdate(incoming.getJsonData());
 
-        Assert.assertEquals("NDEzMTY5Mzg0MA==:MjU4MzkwNDA2NA==", raw.getClientId());
         Assert.assertEquals(NotificationType.SPLIT_UPDATE, incoming.getType());
         Assert.assertEquals(1584554772108L, splitUpdate.getChangeNumber());
     }
 
     @Test
     public void processSplitKill() {
-        RawNotification raw = mParser.parseRawNotification(SPLIT_KILL_NOTIFICATION);
-        IncomingNotification incoming = mParser.parseIncoming(raw.getData());
-        SplitKillNotification splitKill = mParser.parseSplitKill(raw.getData());
-
-        Assert.assertEquals("NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==", raw.getClientId());
+        IncomingNotification incoming = mParser.parseIncoming(SPLIT_KILL_NOTIFICATION);
+        SplitKillNotification splitKill = mParser.parseSplitKill(incoming.getJsonData());
+        
         Assert.assertEquals(NotificationType.SPLIT_KILL, incoming.getType());
         Assert.assertEquals("dep_split", splitKill.getSplitName());
         Assert.assertEquals("off", splitKill.getDefaultTreatment());
@@ -60,11 +56,9 @@ public class NotificationParserTest {
 
     @Test
     public void processMySegmentUpdate() {
-        RawNotification raw = mParser.parseRawNotification(MY_SEGMENT_UDATE_NOTIFICATION);
-        IncomingNotification incoming = mParser.parseIncoming(raw.getData());
-        MySegmentChangeNotification mySegmentUpdate = mParser.parseMySegmentUpdate(raw.getData());
+        IncomingNotification incoming = mParser.parseIncoming(MY_SEGMENT_UDATE_NOTIFICATION);
+        MySegmentChangeNotification mySegmentUpdate = mParser.parseMySegmentUpdate(incoming.getJsonData());
 
-        Assert.assertEquals("NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz", raw.getClientId());
         Assert.assertEquals(NotificationType.MY_SEGMENTS_UPDATE, incoming.getType());
         Assert.assertEquals(1584647532812L, mySegmentUpdate.getChangeNumber());
         Assert.assertFalse(mySegmentUpdate.isIncludesPayload());
@@ -72,11 +66,9 @@ public class NotificationParserTest {
 
     @Test
     public void processMySegmentUpdateInline() {
-        RawNotification raw = mParser.parseRawNotification(MY_SEGMENT_UDATE_INLINE_NOTIFICATION);
-        IncomingNotification incoming = mParser.parseIncoming(raw.getData());
-        MySegmentChangeNotification mySegmentUpdate = mParser.parseMySegmentUpdate(raw.getData());
+        IncomingNotification incoming = mParser.parseIncoming(MY_SEGMENT_UDATE_INLINE_NOTIFICATION);
+        MySegmentChangeNotification mySegmentUpdate = mParser.parseMySegmentUpdate(incoming.getJsonData());
 
-        Assert.assertEquals("NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz", raw.getClientId());
         Assert.assertEquals(NotificationType.MY_SEGMENTS_UPDATE, incoming.getType());
         Assert.assertEquals(1584647532812L, mySegmentUpdate.getChangeNumber());
         Assert.assertTrue(mySegmentUpdate.isIncludesPayload());
