@@ -21,6 +21,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
+import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
@@ -300,7 +301,7 @@ public class PushNotificationManagerTest {
     }
 
     @Test
-    public void onMessagePrimaryControl() {
+    public void onMessagePrimaryOccupancy() {
         List<String> channels = new ArrayList<>();
         channels.add("dummychannel");
         String data = "{\"metrics\": {\"publishers\": 1}}";
@@ -337,7 +338,7 @@ public class PushNotificationManagerTest {
     }
 
     @Test
-    public void onMessageNoPrimaryControl() {
+    public void onMessageNoPrimaryOccupancy() {
         List<String> channels = new ArrayList<>();
         channels.add("dummychannel");
         String data = "{\"metrics\": {\"publishers\": 1}}";
@@ -359,6 +360,53 @@ public class PushNotificationManagerTest {
         mPushManager.onMessage(message(data));
 
         verify(mBroadcasterChannel, never()).pushMessage(any());
+    }
+
+    @Test
+    public void onMessageError() {
+        genericTestOnMessage(new IncomingNotification(NotificationType.ERROR,
+                "", "", 1L));
+    }
+
+    @Test
+    public void onMessageStreamingDisabled() {
+        genericTestOnMessage(new IncomingNotification(NotificationType.CONTROL,
+                "control_pri", "", 100L));
+    }
+
+    private void genericTestOnMessage(IncomingNotification incomingNotification) {
+        ControlNotification streamingDisabledNotification
+                = Json.fromJson("{\"type\":\"CONTROL\",\"controlType\":\"STREAMING_DISABLED\"}", ControlNotification.class);
+        String keepAliveTaskId = "id1";
+        String refreshTokenTaskId = "id2";
+        List<String> channels = new ArrayList<>();
+        channels.add("dummychannel");
+        String data = "{\"metrics\": {\"publishers\": 1}}";
+        OccupancyNotification occupancyNotification = Json.fromJson(data, OccupancyNotification.class);
+        when(mNotificationParser.parseIncoming(anyString()))
+                .thenReturn(incomingNotification);
+        when(mNotificationParser.parseControl(anyString()))
+                .thenReturn(streamingDisabledNotification);
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        when(mTaskExecutor.schedule(
+                any(PushNotificationManager.SseKeepAliveTimer.class), anyLong(), any()))
+                .thenReturn(keepAliveTaskId);
+
+        mPushManager.start();
+        when(mTaskExecutor.schedule(
+                any(PushNotificationManager.SseTokenExpiredTimer.class), anyLong(), any()))
+                .thenReturn(refreshTokenTaskId);
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                buildAuthMap(TOKEN, channels, true, true)));
+        mPushManager.onOpen();
+        reset(mBroadcasterChannel);
+        mPushManager.onMessage(message(data));
+
+        verify(mTaskExecutor, times(1)).stopTask(keepAliveTaskId);
+        verify(mTaskExecutor, times(1)).stopTask(refreshTokenTaskId);
+        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
+        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
     }
 
     @Test
