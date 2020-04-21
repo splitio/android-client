@@ -110,9 +110,10 @@ class SplitFactoryHelper {
         MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(synchronizer,
                 mySegmentChangeNotificationQueue);
 
+        NotificationParser notificationParser = new NotificationParser();
         NotificationProcessor notificationProcessor =
                 new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
-                        new NotificationParser(), mySegmentChangeNotificationQueue,
+                        notificationParser, mySegmentChangeNotificationQueue,
                         splitsUpdateNotificationQueue);
         PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
 
@@ -121,7 +122,8 @@ class SplitFactoryHelper {
         SseClient sseClient = new SseClient(streamingServiceUrl, httpClient, eventStreamParser);
         PushNotificationManager pushNotificationManager =
                 new PushNotificationManager(sseClient, splitTaskExecutor,
-                        splitTaskFactory, notificationProcessor, pushManagerEventBroadcaster,
+                        splitTaskFactory, notificationParser,
+                        notificationProcessor, pushManagerEventBroadcaster,
                         new ReconnectBackoffCounter(config.authRetryBackoffBase()),
                         new ReconnectBackoffCounter(config.streamingReconnectBackoffBase()));
 

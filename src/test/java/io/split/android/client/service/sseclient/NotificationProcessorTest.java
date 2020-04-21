@@ -81,7 +81,7 @@ public class NotificationProcessorTest {
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
         when(mNotificationParser.parseSplitUpdate(anyString())).thenReturn(updateNotification);
 
-        mNotificationProcessor.process("somenotification");
+        mNotificationProcessor.process(mIncomingNotification);
 
         ArgumentCaptor<SplitsChangeNotification> messageCaptor =
                 ArgumentCaptor.forClass(SplitsChangeNotification.class);
@@ -102,7 +102,7 @@ public class NotificationProcessorTest {
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
         when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(mySegmentChangeNotification);
 
-        mNotificationProcessor.process("somenotification");
+        mNotificationProcessor.process(mIncomingNotification);
 
         verify(mSplitsChangeQueue, never()).offer(any());
         verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(any());
@@ -120,7 +120,7 @@ public class NotificationProcessorTest {
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
         when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(mySegmentChangeNotification);
 
-        mNotificationProcessor.process("somenotification");
+        mNotificationProcessor.process(mIncomingNotification);
 
         verify(mSplitTaskFactory, never()).createMySegmentsUpdateTask(any());
         ArgumentCaptor<MySegmentChangeNotification> messageCaptor =
@@ -135,7 +135,7 @@ public class NotificationProcessorTest {
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
         when(mNotificationParser.parseSplitKill(anyString())).thenReturn(new SplitKillNotification());
 
-        mNotificationProcessor.process("somenotification");
+        mNotificationProcessor.process(mIncomingNotification);
 
         verify(mMySegmentChangeQueue, never()).offer(any());
         verify(mSplitTaskFactory, times(1)).createSplitKillTask(any());

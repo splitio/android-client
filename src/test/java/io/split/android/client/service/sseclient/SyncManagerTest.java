@@ -16,8 +16,8 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
 
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -90,7 +90,7 @@ public class SyncManagerTest {
     public void disablePushNotificationReceived() {
         mSyncManager.start();
         mPushManagerEventBroadcaster.pushMessage(
-                new PushStatusEvent(PUSH_DISABLED));
+                new PushStatusEvent(ENABLE_POLLING));
 
         verify(mSynchronizer, times(1)).startPeriodicFetching();
         verify(mSynchronizer, never()).stopPeriodicFetching();
@@ -100,10 +100,10 @@ public class SyncManagerTest {
     public void disableAndEnablePushNotificationReceived() {
         mSyncManager.start();
         mPushManagerEventBroadcaster.pushMessage(
-                new PushStatusEvent(PUSH_DISABLED));
+                new PushStatusEvent(ENABLE_POLLING));
 
         mPushManagerEventBroadcaster.pushMessage(
-                new PushStatusEvent(PUSH_ENABLED));
+                new PushStatusEvent(DISABLE_POLLING));
 
         verify(mSynchronizer, times(1)).stopPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicFetching();
