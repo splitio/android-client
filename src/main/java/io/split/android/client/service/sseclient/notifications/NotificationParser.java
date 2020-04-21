@@ -6,16 +6,21 @@ import com.google.gson.JsonSyntaxException;
 
 import io.split.android.client.utils.Json;
 
+import static io.split.android.client.service.sseclient.notifications.NotificationType.CONTROL;
+
 public class NotificationParser {
     private final static String CONTROL_CHANNEL_TAG = "control";
-    @NonNull
-    public RawNotification parseRawNotification(String jsonData) throws JsonSyntaxException {
-        return Json.fromJson(jsonData, RawNotification.class);
-    }
 
     @NonNull
     public IncomingNotification parseIncoming(String jsonData) throws JsonSyntaxException {
-        return Json.fromJson(jsonData, IncomingNotification.class);
+        RawNotification rawNotification = Json.fromJson(jsonData, RawNotification.class);
+
+        if (isControlChannel(rawNotification.getChannel())) {
+            return new IncomingNotification(CONTROL, rawNotification.getChannel(), rawNotification.getData());
+        }
+
+        IncomingNotificationType type = Json.fromJson(jsonData, IncomingNotificationType.class);
+        return new IncomingNotification(type.getType(), rawNotification.getChannel(), rawNotification.getData());
     }
 
     @NonNull
@@ -36,7 +41,7 @@ public class NotificationParser {
         return Json.fromJson(jsonData, ControlNotification.class);
     }
 
-    private boolean isControlNotification(String channel) {
+    private boolean isControlChannel(String channel) {
         return channel != null && channel.contains(CONTROL_CHANNEL_TAG);
     }
 }

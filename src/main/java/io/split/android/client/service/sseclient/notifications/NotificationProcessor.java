@@ -38,10 +38,8 @@ public class NotificationProcessor {
 
     public void process(String rawJson) {
         try {
-            String notificationJson = mNotificationParser.parseRawNotification(rawJson).getData();
-
-            IncomingNotification incomingNotification =
-                    mNotificationParser.parseIncoming(notificationJson);
+            IncomingNotification incomingNotification = mNotificationParser.parseIncoming(rawJson);
+            String notificationJson = incomingNotification.getJsonData();
             switch (incomingNotification.getType()) {
                 case SPLIT_UPDATE:
                     processSplitUpdate(mNotificationParser.parseSplitUpdate(notificationJson));
