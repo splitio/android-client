@@ -32,7 +32,11 @@ public class NotificationParser {
         return Json.fromJson(jsonData, MySegmentChangeNotification.class);
     }
 
-    public boolean isControlNotification(String channel) {
-            return channel != null && channel.contains(CONTROL_CHANNEL_TAG);
+    public ControlNotification parseControl(String jsonData) throws JsonSyntaxException {
+        return Json.fromJson(jsonData, ControlNotification.class);
+    }
+
+    private boolean isControlNotification(String channel) {
+        return channel != null && channel.contains(CONTROL_CHANNEL_TAG);
     }
 }
