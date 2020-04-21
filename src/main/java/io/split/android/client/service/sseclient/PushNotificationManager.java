@@ -9,6 +9,7 @@ import com.google.gson.JsonSyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -22,13 +23,13 @@ import io.split.android.client.service.sseclient.notifications.ControlNotificati
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
+import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 import static io.split.android.client.service.executor.SplitTaskType.GENERIC_TASK;
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
-import static io.split.android.client.service.sseclient.notifications.NotificationType.CONTROL;
 import static java.lang.reflect.Modifier.PRIVATE;
 
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
@@ -51,6 +52,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private String mSseTokenExpiredTimerTaskId = null;
     private SseJwtToken mLastJwtTokenObtained = null;
     private AtomicBoolean mIsPollingEnabled;
+    private AtomicLong mLastControlNotificationTime;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -70,6 +72,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mAuthBackoffCounter = checkNotNull(authBackoffCounter);
         mSseBackoffCounter = checkNotNull(sseBackoffCounter);
         mIsPollingEnabled = new AtomicBoolean(false);
+        mLastControlNotificationTime = new AtomicLong(0L);
         mSseClient.setListener(this);
 
     }
@@ -157,10 +160,18 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 return;
             }
 
-            if (CONTROL.equals(incomingNotification.getType())) {
-                processControlNotification(incomingNotification);
-            } else {
-                mNotificationProcessor.process(incomingNotification);
+            switch (incomingNotification.getType()) {
+                case ERROR:
+                    shutdownStreaming();
+                    break;
+                case CONTROL:
+                    processControlNotification(incomingNotification);
+                    break;
+                case OCCUPANCY:
+                    processOccupancyNotification(incomingNotification);
+                    break;
+                default:
+                    mNotificationProcessor.process(incomingNotification);
             }
         }
         resetSseKeepAliveTimer();
@@ -181,6 +192,47 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     private void processControlNotification(IncomingNotification incomingNotification) {
+        try {
+            if (mLastControlNotificationTime.get() > incomingNotification.getTimestamp()) {
+                return;
+            }
+
+            mLastControlNotificationTime.set(incomingNotification.getTimestamp());
+            ControlNotification controlNotification
+                    = mNotificationParser.parseControl(incomingNotification.getJsonData());
+            switch (controlNotification.getControlType()) {
+                case STREAMING_DISABLED:
+                    shutdownStreaming();
+                    break;
+                case STREAMING_ENABLED:
+                    if(mSseClient.readyState() == SseClient.CLOSED) {
+                        triggerSseAuthentication();
+                    }
+                    notifyPollingDisabled();
+                    break;
+                case STREAMING_PAUSED:
+                    notifyPollingEnabled();
+                    break;
+                default:
+                    mNotificationProcessor.process(incomingNotification);
+            }
+        } catch (JsonSyntaxException e) {
+            Logger.e("Could not parse control notification: "
+                    + incomingNotification.getJsonData() + " -> " + e.getLocalizedMessage());
+        } catch (Exception e) {
+            Logger.e("Unexpected error while processing control notification: " +
+                    e.getLocalizedMessage());
+        }
+    }
+
+    private void shutdownStreaming() {
+        cancelRefreshTokenTimer();
+        cancelSseKeepAliveTimer();
+        mSseClient.disconnect();
+        notifyPollingEnabled();
+    }
+
+    private void processOccupancyNotification(IncomingNotification incomingNotification) {
 
         // Using only primary control channel for now
         if (!PRIMARY_CONTROL_CHANNEL.equals(incomingNotification.getChannel())) {
@@ -188,18 +240,18 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         }
 
         try {
-            ControlNotification controlNotification
-                    = mNotificationParser.parseControl(incomingNotification.getJsonData());
-            if (controlNotification.getMetrics().getPublishers() < 1) {
+            OccupancyNotification occupancyNotification
+                    = mNotificationParser.parseOccupancy(incomingNotification.getJsonData());
+            if (occupancyNotification.getMetrics().getPublishers() < 1) {
                 notifyPollingEnabled();
             } else {
                 notifyPollingDisabled();
             }
         } catch (JsonSyntaxException e) {
-            Logger.e("Could not parse control notification: "
+            Logger.e("Could not parse occupancy notification: "
                     + incomingNotification.getJsonData() + " -> " + e.getLocalizedMessage());
         } catch (Exception e) {
-            Logger.e("Unexpected erro while processing control notification: " +
+            Logger.e("Unexpected error while processing occupancy notification: " +
                     e.getLocalizedMessage());
         }
     }
@@ -207,6 +259,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private void cancelSseKeepAliveTimer() {
         if (mResetSseKeepAliveTimerTaskId != null) {
             mTaskExecutor.stopTask(mResetSseKeepAliveTimerTaskId);
+        }
+    }
+
+    private void cancelRefreshTokenTimer() {
+        if (mSseTokenExpiredTimerTaskId != null) {
+            mTaskExecutor.stopTask(mSseTokenExpiredTimerTaskId);
         }
     }
 

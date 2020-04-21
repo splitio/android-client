@@ -21,7 +21,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
-import io.split.android.client.service.sseclient.notifications.ControlNotification;
+import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
@@ -278,7 +278,7 @@ public class PushNotificationManagerTest {
         String data = "{}";
         when(mNotificationParser.parseIncoming(anyString()))
                 .thenReturn(new IncomingNotification(NotificationType.SPLIT_KILL,
-                        "channel", "{}"));
+                        "channel", "{}", 1L));
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
         reset(mTaskExecutor);
@@ -304,12 +304,12 @@ public class PushNotificationManagerTest {
         List<String> channels = new ArrayList<>();
         channels.add("dummychannel");
         String data = "{\"metrics\": {\"publishers\": 1}}";
-        ControlNotification controlNotification = Json.fromJson(data, ControlNotification.class);
+        OccupancyNotification occupancyNotification = Json.fromJson(data, OccupancyNotification.class);
         when(mNotificationParser.parseIncoming(anyString()))
                 .thenReturn(new IncomingNotification(NotificationType.CONTROL,
-                        "control_pri", data));
-        when(mNotificationParser.parseControl(anyString()))
-                .thenReturn(controlNotification);
+                        "control_pri", data, 1L));
+        when(mNotificationParser.parseOccupancy(anyString()))
+                .thenReturn(occupancyNotification);
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
         reset(mTaskExecutor);
@@ -341,12 +341,12 @@ public class PushNotificationManagerTest {
         List<String> channels = new ArrayList<>();
         channels.add("dummychannel");
         String data = "{\"metrics\": {\"publishers\": 1}}";
-        ControlNotification controlNotification = Json.fromJson(data, ControlNotification.class);
+        OccupancyNotification occupancyNotification = Json.fromJson(data, OccupancyNotification.class);
         when(mNotificationParser.parseIncoming(anyString()))
                 .thenReturn(new IncomingNotification(NotificationType.CONTROL,
-                        "control_sec", data));
-        when(mNotificationParser.parseControl(anyString()))
-                .thenReturn(controlNotification);
+                        "control_sec", data, 1L));
+        when(mNotificationParser.parseOccupancy(anyString()))
+                .thenReturn(occupancyNotification);
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
 

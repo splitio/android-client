@@ -6,21 +6,30 @@ import com.google.gson.JsonSyntaxException;
 
 import io.split.android.client.utils.Json;
 
-import static io.split.android.client.service.sseclient.notifications.NotificationType.CONTROL;
+import static io.split.android.client.service.sseclient.notifications.NotificationType.ERROR;
+import static io.split.android.client.service.sseclient.notifications.NotificationType.OCCUPANCY;
 
 public class NotificationParser {
     private final static String CONTROL_CHANNEL_TAG = "control";
+    private final static String NAME_ERROR = "error";
 
     @NonNull
     public IncomingNotification parseIncoming(String jsonData) throws JsonSyntaxException {
+        NotificationType type;
         RawNotification rawNotification = Json.fromJson(jsonData, RawNotification.class);
 
-        if (isControlChannel(rawNotification.getChannel())) {
-            return new IncomingNotification(CONTROL, rawNotification.getChannel(), rawNotification.getData());
+        if(isError(rawNotification)) {
+            return new IncomingNotification(ERROR, "", "", 0L);
         }
-
-        IncomingNotificationType type = Json.fromJson(rawNotification.getData(), IncomingNotificationType.class);
-        return new IncomingNotification(type.getType(), rawNotification.getChannel(), rawNotification.getData());
+        try {
+            IncomingNotificationType notificationType
+                    = Json.fromJson(rawNotification.getData(), IncomingNotificationType.class);
+            type = notificationType.getType();
+        } catch (JsonSyntaxException e) {
+            type = OCCUPANCY;
+        }
+        return new IncomingNotification(type, rawNotification.getChannel(),
+                rawNotification.getData(), rawNotification.getTimestamp());
     }
 
     @NonNull
@@ -37,11 +46,15 @@ public class NotificationParser {
         return Json.fromJson(jsonData, MySegmentChangeNotification.class);
     }
 
+    public OccupancyNotification parseOccupancy(String jsonData) throws JsonSyntaxException {
+        return Json.fromJson(jsonData, OccupancyNotification.class);
+    }
+
     public ControlNotification parseControl(String jsonData) throws JsonSyntaxException {
         return Json.fromJson(jsonData, ControlNotification.class);
     }
 
-    private boolean isControlChannel(String channel) {
-        return channel != null && channel.contains(CONTROL_CHANNEL_TAG);
+    private boolean isError(RawNotification rawNotification) {
+        return NAME_ERROR.equals(rawNotification.getName());
     }
 }
