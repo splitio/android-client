@@ -56,7 +56,6 @@ public class SseAuthenticationTask implements SplitTask {
             return SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK);
         }
 
-        Logger.d("SSE Authentication done, now parsing token...");
         Map<String, Object> data = new HashMap<>();
         data.put(SplitTaskExecutionInfo.PARSED_SSE_JWT, jwt);
         data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, authResponse.isValidApiKey());

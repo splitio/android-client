@@ -96,7 +96,6 @@ public class PushNotificationManagerTest {
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
-//        Assert.assertEquals(1L, reconnectTime.getValue().longValue());
     }
 
     @Test
@@ -111,13 +110,9 @@ public class PushNotificationManagerTest {
 
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
         verify(mSseClient, times(1)).connect(TOKEN, channels);
-        ArgumentCaptor<Long> reconnectTime = ArgumentCaptor.forClass(Long.class);
-//        verify(mTaskExecutor, times(1)).schedule(any(SseAuthenticationTask.class), reconnectTime.capture() , any(PushNotificationManager.class));
-
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
-//        Assert.assertEquals(1L, reconnectTime.getValue().longValue());
     }
 
     @Test
@@ -194,7 +189,7 @@ public class PushNotificationManagerTest {
         List<String> channels = dummyChannels();
         String data = "{}";
 
-        long expirationTime = System.currentTimeMillis() / 1000 + 3;
+        long expirationTime = System.currentTimeMillis() / 1000 + 603 ;
 
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();

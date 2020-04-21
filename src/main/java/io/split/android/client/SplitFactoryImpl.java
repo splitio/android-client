@@ -129,7 +129,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
-                config, splitApiFacade, storageContainer, apiToken, key.matchingKey());
+                config, splitApiFacade, storageContainer, key.matchingKey());
 
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
