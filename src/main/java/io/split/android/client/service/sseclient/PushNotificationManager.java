@@ -28,7 +28,8 @@ import static java.lang.reflect.Modifier.PRIVATE;
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
 
     private final static String DATA_FIELD = "data";
-    private final static int SSE_RECONNECT_TIME_IN_SECONDS = 70;
+    private final static int SSE_KEEPALIVE_TIME_IN_SECONDS = 70;
+    private final static int RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS = 600;
 
     private final SseClient mSseClient;
     private final SplitTaskExecutor mTaskExecutor;
@@ -63,7 +64,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     public void start() {
         triggerSseAuthentication();
-        resetSseKeepAliveTimer();
     }
 
     public void stop() {
@@ -96,14 +96,18 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private void resetSseKeepAliveTimer() {
         mResetSseKeepAliveTimerTaskId = mTaskExecutor.schedule(
                 new SseKeepAliveTimer(),
-                SSE_RECONNECT_TIME_IN_SECONDS,
+                SSE_KEEPALIVE_TIME_IN_SECONDS,
                 null);
     }
 
     private void resetSseTokenExpiredTimer(long expirationTime) {
+        long reconnectTime
+                = Math.max(expirationTime - RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS
+                - System.currentTimeMillis() / 1000L, 0L);
+
         mSseTokenExpiredTimerTaskId = mTaskExecutor.schedule(
                 new SseTokenExpiredTimer(),
-                expirationTime - System.currentTimeMillis() / 1000,
+                reconnectTime,
                 null);
     }
 
