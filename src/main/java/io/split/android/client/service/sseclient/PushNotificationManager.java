@@ -53,6 +53,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private SseJwtToken mLastJwtTokenObtained = null;
     private AtomicBoolean mIsPollingEnabled;
     private AtomicLong mLastControlNotificationTime;
+    private AtomicBoolean mIsStreamingPaused;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -73,6 +74,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mSseBackoffCounter = checkNotNull(sseBackoffCounter);
         mIsPollingEnabled = new AtomicBoolean(false);
         mLastControlNotificationTime = new AtomicLong(0L);
+        mIsStreamingPaused = new AtomicBoolean(false);
         mSseClient.setListener(this);
 
     }
@@ -171,7 +173,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     processOccupancyNotification(incomingNotification);
                     break;
                 default:
-                    mNotificationProcessor.process(incomingNotification);
+                    if (!mIsStreamingPaused.get()) {
+                        mNotificationProcessor.process(incomingNotification);
+                    }
             }
         }
         resetSseKeepAliveTimer();
@@ -205,12 +209,14 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     shutdownStreaming();
                     break;
                 case STREAMING_ENABLED:
-                    if(mSseClient.readyState() == SseClient.CLOSED) {
+                    mIsStreamingPaused.set(false);
+                    if (mSseClient.readyState() == SseClient.CLOSED) {
                         triggerSseAuthentication();
                     }
                     notifyPollingDisabled();
                     break;
                 case STREAMING_PAUSED:
+                    mIsStreamingPaused.set(true);
                     notifyPollingEnabled();
                     break;
                 default:
