@@ -9,7 +9,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
@@ -26,8 +25,10 @@ import io.split.android.client.utils.Logger;
 public class IntegrationHelper {
     public static final int NEVER_REFRESH_RATE = 999999;
 
-    private final static Type EVENT_LIST_TYPE = new TypeToken<List<Event>>(){}.getType();
-    private final static Type IMPRESSIONS_LIST_TYPE = new TypeToken<List<TestImpressions>>(){}.getType();
+    private final static Type EVENT_LIST_TYPE = new TypeToken<List<Event>>() {
+    }.getType();
+    private final static Type IMPRESSIONS_LIST_TYPE = new TypeToken<List<TestImpressions>>() {
+    }.getType();
     private final static Gson mGson = new GsonBuilder().create();
 
     public static List<Event> buildEventsFromJson(String attributesJson) {
@@ -36,7 +37,7 @@ public class IntegrationHelper {
         try {
             events = mGson.fromJson(attributesJson, EVENT_LIST_TYPE);
         } catch (Exception e) {
-            events =  Collections.emptyList();
+            events = Collections.emptyList();
         }
 
         return events;
@@ -48,7 +49,7 @@ public class IntegrationHelper {
         try {
             impressions = mGson.fromJson(attributesJson, IMPRESSIONS_LIST_TYPE);
         } catch (Exception e) {
-            impressions =  Collections.emptyList();
+            impressions = Collections.emptyList();
         }
 
         return impressions;
@@ -59,7 +60,7 @@ public class IntegrationHelper {
     }
 
     public static void logSeparator(String tag) {
-        Log.i(tag, Strings.repeat("-", 200) );
+        Log.i(tag, Strings.repeat("-", 200));
     }
 
     public static String emptySplitChanges(long since, long till) {
@@ -69,7 +70,7 @@ public class IntegrationHelper {
     public static SplitFactory buidFactory(String apiToken, Key key, SplitClientConfig config,
                                            Context context, HttpClient httpClient) {
         Constructor[] c = SplitFactoryImpl.class.getDeclaredConstructors();
-        Constructor constructor =c [1];
+        Constructor constructor = c[1];
         constructor.setAccessible(true);
         SplitFactory factory = null;
         try {
@@ -102,15 +103,31 @@ public class IntegrationHelper {
     }
 
     public static SplitClientConfig lowRefreshRateConfig() {
+        return lowRefreshRateConfig(true);
+    }
+    public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled) {
         TestableSplitConfigBuilder builder = new TestableSplitConfigBuilder()
                 .ready(30000)
                 .featuresRefreshRate(5)
                 .segmentsRefreshRate(5)
                 .impressionsRefreshRate(5)
                 .impressionsChunkSize(999999)
+                .streamingEnabled(streamingEnabled)
                 .enableDebug()
                 .trafficType("account");
         return builder.build();
+    }
+
+    public static String streamingEnabledToken() {
+        return "{" +
+                "    \"pushEnabled\": true," +
+                "    \"token\": \"eyJhbGciOiJIUzI1NiIsImtpZCI6IjVZOU05US45QnJtR0EiLCJ0eXAiOiJKV1QifQ.eyJ4LWFibHktY2FwYWJpbGl0eSI6IntcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X01UY3dOVEkyTVRNME1nPT1fbXlTZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X3NwbGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xfcHJpXCI6W1wic3Vic2NyaWJlXCIsXCJjaGFubmVsLW1ldGFkYXRhOnB1Ymxpc2hlcnNcIl0sXCJjb250cm9sX3NlY1wiOltcInN1YnNjcmliZVwiLFwiY2hhbm5lbC1tZXRhZGF0YTpwdWJsaXNoZXJzXCJdfSIsIngtYWJseS1jbGllbnRJZCI6ImNsaWVudElkIiwiZXhwIjoxNTg3NDA3OTg4LCJpYXQiOjE1ODc0MDQzODh9.TLjpDHcXfSTQ70CqxT1hnIAtVQfxjvdKZ4NnKwrmkHs\"" +
+                "}";
+
+    }
+
+    public static String streamingDisabledToken() {
+        return "{\"pushEnabled\": false }";
     }
 
 }

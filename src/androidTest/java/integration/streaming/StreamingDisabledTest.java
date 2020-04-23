@@ -28,32 +28,36 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.Logger;
 
-public class StreamingInitializationTest {
+public class StreamingDisabledTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
-    CountDownLatch mSseAuthLatch;
-    CountDownLatch mSseConnectLatch;
+    CountDownLatch mMySegmentsHitsCountLatch;
+    CountDownLatch mSplitsHitsCountLatch;
+
     boolean mIsStreamingAuth;
     boolean mIsStreamingConnected;
+    int mySegmentsHitsCountHit;
+    int mSplitsHitsCountHit;
 
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mStreamingData = new LinkedBlockingDeque<>();
-        mSseAuthLatch = new CountDownLatch(1);
-        mSseConnectLatch = new CountDownLatch(1);
+        mSplitsHitsCountLatch = new CountDownLatch(3);
+        mMySegmentsHitsCountLatch = new CountDownLatch(3);
         mIsStreamingAuth = false;
         mIsStreamingConnected = false;
+        mySegmentsHitsCountHit = 0;
+        mSplitsHitsCountHit = 0;
     }
 
     @Test
-    public void sdkReady() throws IOException, InterruptedException {
+    public void streamingDisabled() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.basicConfig();
+        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(false);
 
         SplitFactory splitFactory = IntegrationHelper.buidFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
@@ -61,26 +65,28 @@ public class StreamingInitializationTest {
 
         SplitClient client = splitFactory.client();
 
-        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(readyFromCacheLatch);
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
-        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
-        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
-        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
 
-        readyFromCacheLatch.await(40, TimeUnit.SECONDS);
         latch.await(40, TimeUnit.SECONDS);
-        mSseAuthLatch.await(40, TimeUnit.SECONDS);
-        mSseConnectLatch.await(40, TimeUnit.SECONDS);
+        mMySegmentsHitsCountLatch.await(40, TimeUnit.SECONDS);
+        mSplitsHitsCountLatch.await(40, TimeUnit.SECONDS);
+
 
         Assert.assertTrue(client.isReady());
         Assert.assertTrue(splitFactory.isReady());
-        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
-        Assert.assertTrue(mIsStreamingAuth);
-        Assert.assertTrue(mIsStreamingConnected);
+
+        // No streaming auth is made
+        Assert.assertFalse(mIsStreamingAuth);
+
+        // Checking no streaming connection
+        Assert.assertFalse(mIsStreamingConnected);
+
+        // More than 1 hits means polling enabled
+        Assert.assertEquals(3, mySegmentsHitsCountHit);
+        Assert.assertEquals(3, mSplitsHitsCountHit);
 
         splitFactory.destroy();
     }
@@ -99,16 +105,19 @@ public class StreamingInitializationTest {
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/mySegments")) {
                     Logger.i("** My segments hit");
+                    mMySegmentsHitsCountLatch.countDown();
+                    mySegmentsHitsCountHit++;
                     return createResponse(200, IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     Logger.i("** Split Changes hit");
+                    mSplitsHitsCountLatch.countDown();
+                    mSplitsHitsCountHit++;
                     String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
                     mIsStreamingAuth = true;
-                    mSseAuthLatch.countDown();
-                    return createResponse(200, IntegrationHelper.streamingEnabledToken());
+                    return createResponse(200, IntegrationHelper.streamingDisabledToken());
                 } else {
                     return new HttpResponseMock(200);
                 }
@@ -119,7 +128,6 @@ public class StreamingInitializationTest {
                 try {
                     Logger.i("** SSE Connect hit");
                     mIsStreamingConnected = true;
-                    mSseConnectLatch.countDown();
                     return createStreamResponse(200, mStreamingData);
                 } catch (Exception e) {
                 }
@@ -127,4 +135,6 @@ public class StreamingInitializationTest {
             }
         };
     }
+
+
 }

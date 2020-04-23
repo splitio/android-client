@@ -120,7 +120,7 @@ public class SseAuthFail4xxTest {
                     Logger.i("** SSE Auth hit");
                     mIsStreamingAuth = true;
                     mSseAuthLatch.countDown();
-                    return createResponse(401, sseAuthTokenBody());
+                    return createResponse(401, null);
                 } else {
                     return new HttpResponseMock(200);
                 }
@@ -137,12 +137,5 @@ public class SseAuthFail4xxTest {
                 return null;
             }
         };
-    }
-
-    public String sseAuthTokenBody() {
-        return "{" +
-                "    \"pushEnabled\": true," +
-                "    \"token\": \"eyJhbGciOiJIUzI1NiIsImtpZCI6IjVZOU05US45QnJtR0EiLCJ0eXAiOiJKV1QifQ.eyJ4LWFibHktY2FwYWJpbGl0eSI6IntcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X01UY3dOVEkyTVRNME1nPT1fbXlTZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X3NwbGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xfcHJpXCI6W1wic3Vic2NyaWJlXCIsXCJjaGFubmVsLW1ldGFkYXRhOnB1Ymxpc2hlcnNcIl0sXCJjb250cm9sX3NlY1wiOltcInN1YnNjcmliZVwiLFwiY2hhbm5lbC1tZXRhZGF0YTpwdWJsaXNoZXJzXCJdfSIsIngtYWJseS1jbGllbnRJZCI6ImNsaWVudElkIiwiZXhwIjoxNTg3NDA3OTg4LCJpYXQiOjE1ODc0MDQzODh9.TLjpDHcXfSTQ70CqxT1hnIAtVQfxjvdKZ4NnKwrmkHs\"" +
-                "}";
     }
 }
