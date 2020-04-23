@@ -77,6 +77,12 @@ public class SplitFactoryImpl implements SplitFactory {
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
+        this(apiToken, key, config, context, new HttpClientImpl());
+    }
+
+    private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
+                             Context context, HttpClient httpClient)
+            throws URISyntaxException {
 
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
         setupValidations(config);
@@ -104,7 +110,6 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, splitRoomDatabase);
 
-        final HttpClient httpClient = new HttpClientImpl();
         httpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
 
         URI eventsRootTarget = URI.create(config.eventsEndpoint());

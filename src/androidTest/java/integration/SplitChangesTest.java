@@ -22,6 +22,7 @@ import helper.ImpressionListenerHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
+import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -134,7 +135,7 @@ public class SplitChangesTest {
 
         Key key = new Key("CUSTOMER_ID", null);
         SplitClientConfig config = new TestableSplitConfigBuilder()
-                .endpoint(url, url)
+                .serviceEndpoints(ServiceEndpoints.builder().apiEndpoint(url).eventsEndpoint(url).build())
                 .ready(30000)
                 .featuresRefreshRate(5)
                 .segmentsRefreshRate(5)

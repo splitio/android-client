@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import helper.FileHelper;
 import helper.ImpressionListenerHelper;
 import helper.SplitEventTaskHelper;
+import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -121,10 +122,11 @@ public class IntegrationTest {
         SplitManager manager;
 
         final String url = mWebServer.url("/").url().toString();
-
+        ServiceEndpoints endpoints = ServiceEndpoints.builder()
+                .apiEndpoint(url).eventsEndpoint(url).build();
         Key key = new Key("CUSTOMER_ID");
         SplitClientConfig config = SplitClientConfig.builder()
-                .endpoint(url, url)
+                .serviceEndpoints(endpoints)
                 .ready(30000)
                 .featuresRefreshRate(30)
                 .segmentsRefreshRate(30)
@@ -254,10 +256,11 @@ public class IntegrationTest {
         SplitManager manager;
 
         final String url = mWebServer.url("/").url().toString();
-
+        ServiceEndpoints endpoints = ServiceEndpoints.builder()
+                .apiEndpoint(url).eventsEndpoint(url).build();
         Key key = new Key("CUSTOMER_ID", null);
         SplitClientConfig config = SplitClientConfig.builder()
-                .endpoint(url, url)
+                .serviceEndpoints(endpoints)
                 .ready(30000)
                 .featuresRefreshRate(30)
                 .segmentsRefreshRate(30)

@@ -8,7 +8,7 @@ private static final int HTTP_OK = 200;
 
     private int mHttpStatus;
 
-    BaseHttpResponseImpl(int httpStatus) {
+    protected BaseHttpResponseImpl(int httpStatus) {
         mHttpStatus = httpStatus;
     }
 
