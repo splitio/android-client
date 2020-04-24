@@ -857,7 +857,7 @@ public class SplitClientConfig {
             }
 
             return new SplitClientConfig(
-                    _serviceEndpoints.getApiEndpoint(),
+                    _serviceEndpoints.getSdkEndpoint(),
                     _serviceEndpoints.getEventsEndpoint(),
                     _featuresRefreshRate,
                     _segmentsRefreshRate,
