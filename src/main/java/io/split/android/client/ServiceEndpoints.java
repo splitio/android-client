@@ -23,7 +23,7 @@ public class ServiceEndpoints {
         return mSdkEndpoint;
     }
 
-    private void setApiEndpoint(String endpoint) {
+    private void setSdkEndpoint(String endpoint) {
         this.mSdkEndpoint = endpoint;
     }
 
@@ -66,11 +66,11 @@ public class ServiceEndpoints {
         /**
          * The rest endpoint that sdk will hit for latest features and segments.
          *
-         * @param apiEndpoint MUST NOT be null
+         * @param Endpoint MUST NOT be null
          * @return this builder
          */
         public Builder apiEndpoint(@NonNull String url) {
-            mServiceEndpoints.setApiEndpoint(checkNotNull(url));
+            mServiceEndpoints.setSdkEndpoint(checkNotNull(url));
             return this;
         }
 
