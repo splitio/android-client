@@ -97,7 +97,7 @@ public class PushNotificationManagerTest {
 
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
         verify(mSseClient, times(1)).connect(TOKEN, channels);
-        verify(mBroadcasterChannel, never()).pushMessage(any());
+        verify(mBroadcasterChannel, times(1)).pushMessage(any());
         verify(mAuthBackoffCounter, times(1)).resetCounter();
         verify(mSseBackoffCounter, times(1)).resetCounter();
     }
@@ -176,16 +176,12 @@ public class PushNotificationManagerTest {
         verify(mTaskExecutor, times(1)).schedule(
                 any(PushNotificationManager.SseReconnectionTimer.class),
                 anyLong(),
-                any(PushNotificationManager.class));
+                isNull());
         verify(mSseClient, times(1)).connect(TOKEN, channels);
         ArgumentCaptor<String> keepAliveId = ArgumentCaptor.forClass(String.class);
         // Fist time connecting should not be called because keepalive timer is not set yet
         verify(mTaskExecutor, never()).stopTask(anyString());
 
-        verify(mTaskExecutor, times(1)).schedule(
-                any(PushNotificationManager.SseReconnectionTimer.class),
-                anyLong(),
-                any(PushNotificationManager.class));
         verify(mSseBackoffCounter, times(1)).getNextRetryTime();
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
@@ -215,7 +211,7 @@ public class PushNotificationManagerTest {
         verify(mTaskExecutor, times(1)).schedule(
                 any(PushNotificationManager.SseReconnectionTimer.class),
                 anyLong(),
-                any(PushNotificationManager.class));
+                isNull());
         verify(mSseBackoffCounter, times(1)).getNextRetryTime();
         verify(mSseClient, times(1)).connect(TOKEN, channels);
         ArgumentCaptor<String> keepAliveId = ArgumentCaptor.forClass(String.class);
