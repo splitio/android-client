@@ -30,6 +30,7 @@ import static androidx.core.util.Preconditions.checkNotNull;
 import static io.split.android.client.service.executor.SplitTaskType.GENERIC_TASK;
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.STREAMING_CONNECTED;
 import static java.lang.reflect.Modifier.PRIVATE;
 
 public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
@@ -142,6 +143,10 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         }
     }
 
+    public void notifyStreamingConnected() {
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(STREAMING_CONNECTED));
+    }
+
     //
 //     SSE client listener implementation
 //
@@ -150,6 +155,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mSseBackoffCounter.resetCounter();
         notifyPollingDisabled();
         resetSseKeepAliveTimer();
+        notifyStreamingConnected();
     }
 
     @Override

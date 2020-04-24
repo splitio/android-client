@@ -120,6 +120,9 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
                 isPollingEnabled.set(false);
                 Logger.i("Polling disabled.");
                 break;
+            case STREAMING_CONNECTED:
+                mSynchronizer.synchronizeSplits();
+                mSynchronizer.syncronizeMySegments();
             default:
                 Logger.e("Invalide SSE event received: " + message.getMessage());
         }
