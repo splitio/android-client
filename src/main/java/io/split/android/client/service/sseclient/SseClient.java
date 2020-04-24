@@ -156,6 +156,8 @@ public class SseClient {
                 mHttpStreamRequest.addHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE_STREAM);
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
+                    Logger.i("Streaming connection opened");
+                    triggerOnOpen();
                     mReadyState.set(OPEN);
                     BufferedReader bufferedReader = response.getBufferedReader();
                     String inputLine;
@@ -170,8 +172,11 @@ public class SseClient {
                             values = new HashMap<>();
                         }
                     }
+                    Logger.d("Closing buffered reader");
                     bufferedReader.close();
                 } else {
+                    Logger.e("Streaming connection error. Http return code "
+                            + response.getHttpStatus());
                     triggerOnError(!response.isCredentialsError());
                 }
             } catch (URISyntaxException e) {
@@ -179,7 +184,7 @@ public class SseClient {
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                 triggerOnError(true);
             } catch (HttpException e) {
-                Logger.e("An error has ocurred while trying to connecting to stream " +
+                Logger.e("Unexpected error has ocurred while trying to connecting to stream " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                 triggerOnError(true);
             } catch (IOException e) {

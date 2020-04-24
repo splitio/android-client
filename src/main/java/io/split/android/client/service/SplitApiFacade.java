@@ -10,6 +10,7 @@ import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
+import io.split.android.client.service.http.HttpSseAuthTokenFetcher;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -23,7 +24,7 @@ public class SplitApiFacade {
 
     public SplitApiFacade(@NonNull HttpFetcher<SplitChange> splitFetcher,
                           @NonNull HttpFetcher<List<MySegment>> mySegmentsFetcher,
-                          @NonNull HttpFetcher<SseAuthenticationResponse> sseAuthenticationFetcher,
+                          @NonNull HttpSseAuthTokenFetcher sseAuthenticationFetcher,
                           @NonNull HttpRecorder<List<Event>> eventsRecorder,
                           @NonNull HttpRecorder<List<KeyImpression>> impressionsRecorder) {
         mSplitFetcher = checkNotNull(splitFetcher);

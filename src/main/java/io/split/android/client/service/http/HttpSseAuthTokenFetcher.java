@@ -14,7 +14,7 @@ import io.split.android.client.utils.NetworkHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class HttpSseAuthTokenFetcher<T> implements HttpFetcher<SseAuthenticationResponse> {
+public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationResponse> {
 
     private final HttpClient mClient;
     private final URI mTarget;

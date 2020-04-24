@@ -39,8 +39,10 @@ public class HttpStreamResponseMock extends BaseHttpResponseImpl implements Http
             public void run () {
                 try {
                     while(true) {
-                        String data = mStreamingResponseData.take();
-                        mOutputStream.write(data.getBytes());
+                        if(mStreamingResponseData != null) {
+                            String data = mStreamingResponseData.take();
+                            mOutputStream.write(data.getBytes());
+                        }
                     }
                 }
                 catch (IOException e) {

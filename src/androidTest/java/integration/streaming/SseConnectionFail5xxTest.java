@@ -28,36 +28,43 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.Logger;
 
-public class StreamingDisabledTest {
+import static java.lang.Thread.sleep;
+
+public class SseConnectionFail5xxTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
-    CountDownLatch mMySegmentsHitsCountLatch;
-    CountDownLatch mSplitsHitsCountLatch;
+    CountDownLatch mSseConnLatch;
 
-    boolean mIsStreamingAuth;
     boolean mIsStreamingConnected;
-    int mySegmentsHitsCountHit;
+    int mMySegmentsHitsCountHit;
     int mSplitsHitsCountHit;
+    int mSseConnHits;
+    int mMySegmentsHitsCountHitAfterSseConn = 0;
+    int mSplitsHitsCountHitAfterSseConn = 0;
+
+    private static final int MAX_SSE_CONN_RETRIES = 3;
 
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mStreamingData = new LinkedBlockingDeque<>();
-        mSplitsHitsCountLatch = new CountDownLatch(3);
-        mMySegmentsHitsCountLatch = new CountDownLatch(3);
-        mIsStreamingAuth = false;
+        mSseConnLatch = new CountDownLatch(1);
         mIsStreamingConnected = false;
-        mySegmentsHitsCountHit = 0;
+        mMySegmentsHitsCountHit = 0;
         mSplitsHitsCountHit = 0;
+        mMySegmentsHitsCountHitAfterSseConn = 0;
+        mSplitsHitsCountHitAfterSseConn = 0;
+
+        mSseConnHits = 0;
     }
 
     @Test
-    public void streamingDisabled() throws IOException, InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
+    public void retryOnSseConn5xx() throws IOException, InterruptedException {
+        CountDownLatch readyLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(false);
+        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig();
 
         SplitFactory splitFactory = IntegrationHelper.buidFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
@@ -65,28 +72,32 @@ public class StreamingDisabledTest {
 
         SplitClient client = splitFactory.client();
 
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
 
-        latch.await(40, TimeUnit.SECONDS);
-        mMySegmentsHitsCountLatch.await(40, TimeUnit.SECONDS);
-        mSplitsHitsCountLatch.await(40, TimeUnit.SECONDS);
+        readyLatch.await(40, TimeUnit.SECONDS);
 
+        mSseConnLatch.await(40, TimeUnit.SECONDS);
+
+        sleep(5000);
 
         Assert.assertTrue(client.isReady());
         Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
 
-        // No streaming auth is made
-        Assert.assertFalse(mIsStreamingAuth);
-
-        // Checking no streaming connection
-        Assert.assertFalse(mIsStreamingConnected);
-
         // More than 1 hits means polling enabled
-        Assert.assertTrue( mySegmentsHitsCountHit > 1);
+        Assert.assertTrue(mMySegmentsHitsCountHit > 1);
         Assert.assertTrue(mSplitsHitsCountHit > 1);
+
+        // Checking sse auth retries
+        Assert.assertEquals(MAX_SSE_CONN_RETRIES + 1, mSseConnHits);
+        // Checking streaming connection
+        Assert.assertTrue(mIsStreamingConnected);
+
+        // More than 0 hits means polling still working after sse auth
+        Assert.assertEquals(0, mMySegmentsHitsCountHitAfterSseConn);
+        Assert.assertEquals(0, mSplitsHitsCountHitAfterSseConn);
 
         splitFactory.destroy();
     }
@@ -100,24 +111,30 @@ public class StreamingDisabledTest {
     }
 
     private HttpResponseMockDispatcher createBasicResponseDispatcher() {
-        return new HttpResponseMockDispatcher(){
+        return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/mySegments")) {
-                    Logger.i("** My segments hit");
-                    mMySegmentsHitsCountLatch.countDown();
-                    mySegmentsHitsCountHit++;
+                    Logger.i("** My segments hit: " + mMySegmentsHitsCountHit);
+                    if (!mIsStreamingConnected) {
+                        mMySegmentsHitsCountHit++;
+                    } else {
+                        mMySegmentsHitsCountHitAfterSseConn++;
+                    }
                     return createResponse(200, IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
-                    Logger.i("** Split Changes hit");
-                    mSplitsHitsCountLatch.countDown();
-                    mSplitsHitsCountHit++;
+                    Logger.i("** Split Changes hit: " + mSplitsHitsCountHit);
+                    if (!mIsStreamingConnected) {
+                        mSplitsHitsCountHit++;
+                    } else {
+                        mSplitsHitsCountHitAfterSseConn++;
+                    }
                     String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
-                    mIsStreamingAuth = true;
-                    return createResponse(200, IntegrationHelper.streamingDisabledToken());
+                    return createResponse(200, IntegrationHelper.streamingEnabledToken());
+
                 } else {
                     return new HttpResponseMock(200);
                 }
@@ -127,14 +144,18 @@ public class StreamingDisabledTest {
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
                     Logger.i("** SSE Connect hit");
-                    mIsStreamingConnected = true;
-                    return createStreamResponse(200, mStreamingData);
+                    if (mSseConnHits <= MAX_SSE_CONN_RETRIES) {
+                        mSseConnHits++;
+                        return createStreamResponse(500, null);
+                    } else {
+                        mIsStreamingConnected = true;
+                        mSseConnLatch.countDown();
+                        return createStreamResponse(200, mStreamingData);
+                    }
                 } catch (Exception e) {
                 }
                 return null;
             }
         };
     }
-
-
 }
