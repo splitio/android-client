@@ -97,7 +97,7 @@ public class PushNotificationManagerTest {
 
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
         verify(mSseClient, times(1)).connect(TOKEN, channels);
-        verify(mBroadcasterChannel, times(1)).pushMessage(any());
+        verify(mBroadcasterChannel, times(2)).pushMessage(any());
         verify(mAuthBackoffCounter, times(1)).resetCounter();
         verify(mSseBackoffCounter, times(1)).resetCounter();
     }

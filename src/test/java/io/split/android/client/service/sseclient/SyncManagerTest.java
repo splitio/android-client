@@ -18,7 +18,9 @@ import io.split.android.client.service.synchronizer.Synchronizer;
 
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.STREAMING_CONNECTED;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -107,5 +109,16 @@ public class SyncManagerTest {
 
         verify(mSynchronizer, times(1)).stopPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicFetching();
+    }
+
+    @Test
+    public void streamingConnected() {
+        mSyncManager.start();
+        reset(mSynchronizer);
+        mPushManagerEventBroadcaster.pushMessage(
+                new PushStatusEvent(STREAMING_CONNECTED));
+
+        verify(mSynchronizer, times(1)).synchronizeSplits();
+        verify(mSynchronizer, times(1)).syncronizeMySegments();
     }
 }
