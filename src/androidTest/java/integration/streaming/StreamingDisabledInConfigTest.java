@@ -28,7 +28,7 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.Logger;
 
-public class StreamingDisabledTest {
+public class StreamingDisabledInConfigTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
     CountDownLatch mMySegmentsHitsCountLatch;
@@ -59,7 +59,7 @@ public class StreamingDisabledTest {
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig();
+        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(false);
 
         SplitFactory splitFactory = IntegrationHelper.buidFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
@@ -80,8 +80,10 @@ public class StreamingDisabledTest {
         Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
 
+        Assert.assertEquals(0, mSseAuthHits);
+
         // No streaming auth is made
-        Assert.assertEquals(1, mSseAuthHits);
+        Assert.assertFalse(mIsStreamingAuth);
 
         // Checking no streaming connection
         Assert.assertFalse(mIsStreamingConnected);
@@ -118,7 +120,6 @@ public class StreamingDisabledTest {
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
-                    mIsStreamingAuth = true;
                     mSseAuthHits++;
                     return createResponse(200, IntegrationHelper.streamingDisabledToken());
                 } else {
