@@ -50,6 +50,7 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -104,8 +105,8 @@ public class SynchronizerTest {
         when(mSplitStorageContainer.getEventsStorage()).thenReturn(mEventsStorage);
         when(mSplitStorageContainer.getImpressionsStorage()).thenReturn(mImpressionsStorage);
 
-        when(mTaskFactory.createSplitsSyncTask()).thenReturn(Mockito.mock(SplitsSyncTask.class));
-        when(mTaskFactory.createMySegmentsSyncTask()).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
+        when(mTaskFactory.createSplitsSyncTask(anyBoolean())).thenReturn(Mockito.mock(SplitsSyncTask.class));
+        when(mTaskFactory.createMySegmentsSyncTask(anyBoolean())).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
 

@@ -94,14 +94,14 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void synchronizeSplits() {
         mTaskExecutor.submit(
-                mSplitTaskFactory.createSplitsSyncTask(),
+                mSplitTaskFactory.createSplitsSyncTask(true),
                 mSplitsSyncTaskListener);
     }
 
     @Override
     public void syncronizeMySegments() {
         mTaskExecutor.submit(
-                mSplitTaskFactory.createMySegmentsSyncTask(),
+                mSplitTaskFactory.createMySegmentsSyncTask(true),
                 mMySegmentsSyncTaskListener);
     }
 
@@ -201,7 +201,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void scheduleSplitsFetcherTask() {
         mSplitsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createSplitsSyncTask(),
+                mSplitTaskFactory.createSplitsSyncTask(false),
                 ServiceConstants.NO_INITIAL_DELAY,
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitsSyncTaskListener);
@@ -209,7 +209,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void scheduleMySegmentsFetcherTask() {
         mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createMySegmentsSyncTask(),
+                mSplitTaskFactory.createMySegmentsSyncTask(false),
                 ServiceConstants.NO_INITIAL_DELAY,
                 mSplitClientConfig.segmentsRefreshRate(), mMySegmentsSyncTaskListener);
     }
