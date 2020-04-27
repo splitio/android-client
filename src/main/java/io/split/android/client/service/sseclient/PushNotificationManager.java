@@ -7,7 +7,6 @@ import androidx.annotation.VisibleForTesting;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -147,7 +146,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     public void onError(boolean isRecoverable) {
         cancelSseKeepAliveTimer();
         notifyPushDisabled();
-        if(isRecoverable) {
+        if (isRecoverable) {
             scheduleSseReconnection();
         }
     }
@@ -173,18 +172,22 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         switch (taskInfo.getTaskType()) {
             case SSE_AUTHENTICATION_TASK:
 
-                if(isUnexepectedError(taskInfo)) {
+                if (isUnexepectedError(taskInfo)) {
                     scheduleReconnection();
                     notifyPushDisabled();
                     return;
                 }
 
                 if ((!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
-                        && !isApiKeyValid(taskInfo)) ||
-                        SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
-                                && !isStreamingEnabled(taskInfo)) {
-                    Logger.e("Couldn't connect to SSE server. " +
-                                    "API invalid or streaming is disabled.");
+                        && !isApiKeyValid(taskInfo))) {
+                    Logger.e("Couldn't connect to SSE server. Invalid apikey ");
+                    notifyPushDisabled();
+                    return;
+                }
+
+                if (SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
+                        && !isStreamingEnabled(taskInfo)) {
+                    Logger.e("Will not connect to SSE server. Streaming disabled.");
                     notifyPushDisabled();
                     return;
                 }
@@ -204,6 +207,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 Logger.e("Push notification manager unknown task");
         }
     }
+
     private boolean isUnexepectedError(SplitTaskExecutionInfo taskInfo) {
         Boolean unexpectedErrorOcurred =
                 taskInfo.getBoolValue(SplitTaskExecutionInfo.UNEXPECTED_ERROR);
@@ -234,17 +238,17 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private SseJwtToken unpackResult(SplitTaskExecutionInfo taskInfo) {
 
 
-            Object token = taskInfo.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT);
-            if (token != null) {
-                try {
-                    return (SseJwtToken) token;
-                } catch (ClassCastException e) {
-                    Logger.e("Sse authentication error. JWT not valid: " +
-                            e.getLocalizedMessage());
-                }
-            } else {
-                Logger.e("Sse authentication error. Token not available.");
+        Object token = taskInfo.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT);
+        if (token != null) {
+            try {
+                return (SseJwtToken) token;
+            } catch (ClassCastException e) {
+                Logger.e("Sse authentication error. JWT not valid: " +
+                        e.getLocalizedMessage());
             }
+        } else {
+            Logger.e("Sse authentication error. Token not available.");
+        }
 
         return null;
     }
