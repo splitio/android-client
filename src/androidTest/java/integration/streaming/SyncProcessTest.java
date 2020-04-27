@@ -41,6 +41,8 @@ public class SyncProcessTest {
     CountDownLatch mMySegmentsSyncLatch;
     String mApiKey;
 
+    final static String
+
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
@@ -125,13 +127,17 @@ public class SyncProcessTest {
         };
     }
 
-//    private void loadSplitUpdate() {
-//        FileHelper fileHelper = new FileHelper();
-//        mJsonChanges = new ArrayList<>();
-//        String jsonChange = fileHelper.loadFileContent(mContext, "splitchanges_int_test.json");
-//        long prevChangeNumber = 0;
-//        for (int i = 0; i < 4; i++) {
-//            SplitChange change = Json.fromJson(jsonChange, SplitChange.class);
-//
-//        }
-//    }
+    private String loadMockedMessage(String fileName) {
+        FileHelper fileHelper = new FileHelper();
+        return fileHelper.loadFileContent(mContext, fileName);
+    }
+
+    private void pushMessage(String fileName) {
+        String message = loadMockedMessage(fileName);
+        try {
+            mStreamingData.put(message);
+            Logger.d("Pushed message: " + message);
+        } catch (InterruptedException e) {
+        }
+    }
+}
