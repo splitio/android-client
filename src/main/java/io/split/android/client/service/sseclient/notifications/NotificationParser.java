@@ -6,16 +6,21 @@ import com.google.gson.JsonSyntaxException;
 
 import io.split.android.client.utils.Json;
 
-public class NotificationParser {
+import static io.split.android.client.service.sseclient.notifications.NotificationType.CONTROL;
 
-    @NonNull
-    public RawNotification parseRawNotification(String jsonData) throws JsonSyntaxException {
-        return Json.fromJson(jsonData, RawNotification.class);
-    }
+public class NotificationParser {
+    private final static String CONTROL_CHANNEL_TAG = "control";
 
     @NonNull
     public IncomingNotification parseIncoming(String jsonData) throws JsonSyntaxException {
-        return Json.fromJson(jsonData, IncomingNotification.class);
+        RawNotification rawNotification = Json.fromJson(jsonData, RawNotification.class);
+
+        if (isControlChannel(rawNotification.getChannel())) {
+            return new IncomingNotification(CONTROL, rawNotification.getChannel(), rawNotification.getData());
+        }
+
+        IncomingNotificationType type = Json.fromJson(rawNotification.getData(), IncomingNotificationType.class);
+        return new IncomingNotification(type.getType(), rawNotification.getChannel(), rawNotification.getData());
     }
 
     @NonNull
@@ -30,5 +35,13 @@ public class NotificationParser {
 
     public MySegmentChangeNotification parseMySegmentUpdate(String jsonData) throws JsonSyntaxException {
         return Json.fromJson(jsonData, MySegmentChangeNotification.class);
+    }
+
+    public ControlNotification parseControl(String jsonData) throws JsonSyntaxException {
+        return Json.fromJson(jsonData, ControlNotification.class);
+    }
+
+    private boolean isControlChannel(String channel) {
+        return channel != null && channel.contains(CONTROL_CHANNEL_TAG);
     }
 }

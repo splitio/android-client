@@ -50,17 +50,16 @@ public class NotificationProcessorTest {
     @Mock
     BlockingQueue<SplitsChangeNotification> mSplitsChangeQueue;
 
+    @Mock
+    IncomingNotification mIncomingNotification;
+
     NotificationProcessor mNotificationProcessor;
 
     @Before
     public void setup() {
 
-        RawNotification rawNotification = Mockito.mock(RawNotification.class);
         MockitoAnnotations.initMocks(this);
-        when(rawNotification.getData()).thenReturn("{}");
-
-        when(mNotificationParser.parseRawNotification(anyString())).thenReturn(rawNotification);
-
+        when(mIncomingNotification.getJsonData()).thenReturn("{}");
         when(mSplitTaskFactory.createMySegmentsUpdateTask(any()))
                 .thenReturn(Mockito.mock(MySegmentsUpdateTask.class));
         when(mSplitTaskFactory.createSplitKillTask(any()))
@@ -76,14 +75,13 @@ public class NotificationProcessorTest {
 
         SplitsChangeNotification updateNotification =  Mockito.mock(SplitsChangeNotification.class);
 
-        IncomingNotification incomingNotification = Mockito.mock(IncomingNotification.class);
-        when(incomingNotification.getType()).thenReturn(NotificationType.SPLIT_UPDATE);
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.SPLIT_UPDATE);
         when(updateNotification.getType()).thenReturn(NotificationType.SPLIT_UPDATE);
         when(updateNotification.getChangeNumber()).thenReturn(100L);
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
         when(mNotificationParser.parseSplitUpdate(anyString())).thenReturn(updateNotification);
 
-        mNotificationProcessor.process("somenotification");
+        mNotificationProcessor.process(mIncomingNotification);
 
         ArgumentCaptor<SplitsChangeNotification> messageCaptor =
                 ArgumentCaptor.forClass(SplitsChangeNotification.class);
@@ -100,12 +98,11 @@ public class NotificationProcessorTest {
                 = Mockito.mock(MySegmentChangeNotification.class);
         when(mySegmentChangeNotification.isIncludesPayload()).thenReturn(true);
         when(mySegmentChangeNotification.getSegmentList()).thenReturn(segments);
-        IncomingNotification incomingNotification = Mockito.mock(IncomingNotification.class);
-        when(incomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE);
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE);
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
         when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(mySegmentChangeNotification);
 
-        mNotificationProcessor.process("somenotification");
+        mNotificationProcessor.process(mIncomingNotification);
 
         verify(mSplitsChangeQueue, never()).offer(any());
         verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(any());
@@ -118,14 +115,12 @@ public class NotificationProcessorTest {
         MySegmentChangeNotification mySegmentChangeNotification
                 = Mockito.mock(MySegmentChangeNotification.class);
         when(mySegmentChangeNotification.isIncludesPayload()).thenReturn(false);
-
-        IncomingNotification incomingNotification = Mockito.mock(IncomingNotification.class);
-        when(incomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE);
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE);
         when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE);
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
         when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(mySegmentChangeNotification);
 
-        mNotificationProcessor.process("somenotification");
+        mNotificationProcessor.process(mIncomingNotification);
 
         verify(mSplitTaskFactory, never()).createMySegmentsUpdateTask(any());
         ArgumentCaptor<MySegmentChangeNotification> messageCaptor =
@@ -136,13 +131,11 @@ public class NotificationProcessorTest {
 
     @Test
     public void splitKillNotification() {
-
-        IncomingNotification incomingNotification = Mockito.mock(IncomingNotification.class);
-        when(incomingNotification.getType()).thenReturn(NotificationType.SPLIT_KILL);
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.SPLIT_KILL);
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
         when(mNotificationParser.parseSplitKill(anyString())).thenReturn(new SplitKillNotification());
 
-        mNotificationProcessor.process("somenotification");
+        mNotificationProcessor.process(mIncomingNotification);
 
         verify(mMySegmentChangeQueue, never()).offer(any());
         verify(mSplitTaskFactory, times(1)).createSplitKillTask(any());

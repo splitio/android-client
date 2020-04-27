@@ -10,8 +10,8 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEven
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -33,14 +33,14 @@ public class SyncManagerChannelMessageTest {
         BroadcastedEventListener l3 = Mockito.mock(BroadcastedEventListener.class);
 
         mChannel.register(l1);
-        mChannel.pushMessage(new PushStatusEvent(PUSH_ENABLED));
-        mChannel.pushMessage(new PushStatusEvent(PUSH_ENABLED));
+        mChannel.pushMessage(new PushStatusEvent(DISABLE_POLLING));
+        mChannel.pushMessage(new PushStatusEvent(DISABLE_POLLING));
 
         mChannel.register(l2);
-        mChannel.pushMessage(new PushStatusEvent(PUSH_DISABLED));
+        mChannel.pushMessage(new PushStatusEvent(ENABLE_POLLING));
 
         mChannel.register(l3);
-        mChannel.pushMessage(new PushStatusEvent(PUSH_DISABLED));
+        mChannel.pushMessage(new PushStatusEvent(ENABLE_POLLING));
 
         verify(l1, times(4)).onEvent(any(PushStatusEvent.class));
         verify(l2, times(2)).onEvent(any(PushStatusEvent.class));
@@ -51,9 +51,9 @@ public class SyncManagerChannelMessageTest {
     public void correctMessage() {
         BroadcastedEventListener l1 = Mockito.mock(BroadcastedEventListener.class);
 
-        PushStatusEvent m0 = new PushStatusEvent(PUSH_ENABLED);
-        PushStatusEvent m1 = new PushStatusEvent(PUSH_ENABLED);
-        PushStatusEvent m2 = new PushStatusEvent(PUSH_DISABLED);
+        PushStatusEvent m0 = new PushStatusEvent(DISABLE_POLLING);
+        PushStatusEvent m1 = new PushStatusEvent(DISABLE_POLLING);
+        PushStatusEvent m2 = new PushStatusEvent(ENABLE_POLLING);
 
         mChannel.pushMessage(m0);
 
@@ -71,7 +71,7 @@ public class SyncManagerChannelMessageTest {
         BroadcastedEventListener l1 = Mockito.mock(BroadcastedEventListener.class);
         BroadcastedEventListener l2 = Mockito.mock(BroadcastedEventListener.class);
 
-        PushStatusEvent m1 = new PushStatusEvent(PUSH_ENABLED);
+        PushStatusEvent m1 = new PushStatusEvent(DISABLE_POLLING);
 
         mChannel.pushMessage(m1);
 

@@ -10,7 +10,7 @@ public class PushStatusEvent {
          * Types of messages that can be pushed to the
          * Synchronization feedback channel
          */
-        PUSH_ENABLED, PUSH_DISABLED
+        DISABLE_POLLING, ENABLE_POLLING
     }
 
     final private EventType message;

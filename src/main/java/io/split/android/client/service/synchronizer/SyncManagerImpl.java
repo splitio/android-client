@@ -106,13 +106,13 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
     @Override
     public void onEvent(PushStatusEvent message) {
         switch (message.getMessage()) {
-            case PUSH_DISABLED:
+            case ENABLE_POLLING:
                 if (mIsPushEnabled.get()) {
                     mIsPushEnabled.set(false);
                     mSynchronizer.startPeriodicFetching();
                 }
                 break;
-            case PUSH_ENABLED:
+            case DISABLE_POLLING:
                 mSynchronizer.stopPeriodicFetching();
                 mIsPushEnabled.set(true);
                 break;

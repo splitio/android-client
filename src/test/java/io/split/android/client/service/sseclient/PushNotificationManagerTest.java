@@ -1,7 +1,5 @@
 package io.split.android.client.service.sseclient;
 
-import com.google.common.base.Verify;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,10 +21,15 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
+import io.split.android.client.service.sseclient.notifications.ControlNotification;
+import io.split.android.client.service.sseclient.notifications.IncomingNotification;
+import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
+import io.split.android.client.service.sseclient.notifications.NotificationType;
+import io.split.android.client.utils.Json;
 
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_DISABLED;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.PUSH_ENABLED;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
+import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -57,6 +60,9 @@ public class PushNotificationManagerTest {
     SseAuthenticationTask mSseAuthTask;
 
     @Mock
+    NotificationParser mNotificationParser;
+
+    @Mock
     NotificationProcessor mNotificationProcessor;
 
     @Mock
@@ -74,7 +80,7 @@ public class PushNotificationManagerTest {
         when(mAuthBackoffCounter.getNextRetryTime()).thenReturn(1L);
         when(mSseBackoffCounter.getNextRetryTime()).thenReturn(1L);
         mPushManager = new PushNotificationManager(mSseClient, mTaskExecutor,
-                mSplitTaskFactory, mNotificationProcessor, mBroadcasterChannel,
+                mSplitTaskFactory, mNotificationParser, mNotificationProcessor, mBroadcasterChannel,
                 mAuthBackoffCounter, mSseBackoffCounter);
     }
 
@@ -90,9 +96,7 @@ public class PushNotificationManagerTest {
 
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
         verify(mSseClient, times(1)).connect(TOKEN, channels);
-        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
-        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(PUSH_ENABLED, messageCaptor.getValue().getMessage());
+        verify(mBroadcasterChannel, never()).pushMessage(any());
         verify(mAuthBackoffCounter, times(1)).resetCounter();
         verify(mSseBackoffCounter, times(1)).resetCounter();
     }
@@ -114,7 +118,7 @@ public class PushNotificationManagerTest {
         verify(mSseClient, never()).connect(any(), any());
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
         verify(mAuthBackoffCounter, never()).getNextRetryTime();
     }
 
@@ -134,7 +138,7 @@ public class PushNotificationManagerTest {
         verify(mSseClient, never()).connect(any(), any());
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
         verify(mAuthBackoffCounter, times(1)).getNextRetryTime();
     }
 
@@ -155,7 +159,7 @@ public class PushNotificationManagerTest {
         verify(mSseClient, never()).connect(any(), any());
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
         verify(mAuthBackoffCounter, times(1)).getNextRetryTime();
     }
 
@@ -185,7 +189,7 @@ public class PushNotificationManagerTest {
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
 
         verify(mAuthBackoffCounter, times(1)).resetCounter();
 
@@ -218,7 +222,7 @@ public class PushNotificationManagerTest {
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
 
     }
 
@@ -244,7 +248,7 @@ public class PushNotificationManagerTest {
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
 
         verify(mAuthBackoffCounter, times(1)).resetCounter();
 
@@ -263,14 +267,16 @@ public class PushNotificationManagerTest {
         verify(mSseClient, never()).connect(TOKEN, channels);
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
     }
 
     @Test
-    public void onMessage() {
+    public void onMessageToProcess() {
         List<String> channels = new ArrayList<>();
         String data = "{}";
-
+        when(mNotificationParser.parseIncoming(anyString()))
+                .thenReturn(new IncomingNotification(NotificationType.SPLIT_KILL,
+                        "channel", "{}"));
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
         reset(mTaskExecutor);
@@ -279,7 +285,8 @@ public class PushNotificationManagerTest {
 
         mPushManager.onMessage(message(data));
 
-        verify(mNotificationProcessor, times(1)).process(data);
+        verify(mNotificationProcessor, times(1))
+                .process(any(IncomingNotification.class));
         ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
         verify(mTaskExecutor, times(1))
                 .schedule(any(PushNotificationManager.SseKeepAliveTimer.class),
@@ -288,6 +295,68 @@ public class PushNotificationManagerTest {
                 .schedule(any(PushNotificationManager.SseKeepAliveTimer.class),
                         downNotificationTime.capture(), isNull());
         Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
+    }
+
+    @Test
+    public void onMessagePrimaryControl() {
+        List<String> channels = new ArrayList<>();
+        channels.add("dummychannel");
+        String data = "{\"metrics\": {\"publishers\": 1}}";
+        ControlNotification controlNotification = Json.fromJson(data, ControlNotification.class);
+        when(mNotificationParser.parseIncoming(anyString()))
+                .thenReturn(new IncomingNotification(NotificationType.CONTROL,
+                        "control_pri", data));
+        when(mNotificationParser.parseControl(anyString()))
+                .thenReturn(controlNotification);
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mPushManager.start();
+        reset(mTaskExecutor);
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                buildAuthMap(TOKEN, channels, true, true)));
+
+        // Enable polling prior to disable it
+        mPushManager.notifyPollingEnabled();
+        reset(mBroadcasterChannel);
+        mPushManager.onMessage(message(data));
+
+        verify(mNotificationProcessor, times(0))
+                .process(any(IncomingNotification.class));
+        ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
+        verify(mTaskExecutor, times(1))
+                .schedule(any(PushNotificationManager.SseKeepAliveTimer.class),
+                        downNotificationTime.capture(), isNull());
+        verify(mTaskExecutor, times(1))
+                .schedule(any(PushNotificationManager.SseKeepAliveTimer.class),
+                        downNotificationTime.capture(), isNull());
+        Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
+        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
+        Assert.assertEquals(DISABLE_POLLING, messageCaptor.getValue().getMessage());
+    }
+
+    @Test
+    public void onMessageNoPrimaryControl() {
+        List<String> channels = new ArrayList<>();
+        channels.add("dummychannel");
+        String data = "{\"metrics\": {\"publishers\": 1}}";
+        ControlNotification controlNotification = Json.fromJson(data, ControlNotification.class);
+        when(mNotificationParser.parseIncoming(anyString()))
+                .thenReturn(new IncomingNotification(NotificationType.CONTROL,
+                        "control_sec", data));
+        when(mNotificationParser.parseControl(anyString()))
+                .thenReturn(controlNotification);
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mPushManager.start();
+
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                buildAuthMap(TOKEN, channels, true, true)));
+
+        // Enable polling prior to disable it
+        mPushManager.notifyPollingEnabled();
+        reset(mBroadcasterChannel);
+        mPushManager.onMessage(message(data));
+
+        verify(mBroadcasterChannel, never()).pushMessage(any());
     }
 
     @Test
