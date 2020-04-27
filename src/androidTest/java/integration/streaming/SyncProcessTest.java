@@ -41,7 +41,12 @@ public class SyncProcessTest {
     CountDownLatch mMySegmentsSyncLatch;
     String mApiKey;
 
-    final static String
+    CountDownLatch mSplitsUpdateLatch;
+    CountDownLatch mMySegmentsUpdateLatch;
+
+    final static String MSG_SEGMENT_UPDATE = "push_msg-segment_update.json";
+    final static String MSG_SPLIT_UPDATE = "push_msg-split_update.json";
+    final static String MSG_SPLIT_KILL = "push_msg-split_kill.json";
 
     @Before
     public void setup() {
@@ -78,6 +83,13 @@ public class SyncProcessTest {
 
         latch.await(40, TimeUnit.SECONDS);
         mSplitsSyncLatch.await(40, TimeUnit.SECONDS);
+        mMySegmentsSyncLatch.await(40, TimeUnit.SECONDS);
+
+
+        mMySegmentsUpdateLatch = new CountDownLatch(1);
+        pushMessage(MSG_SEGMENT_UPDATE);
+        mMySegmentsSyncLatch.await(40, TimeUnit.SECONDS);
+
 
         Assert.assertTrue(client.isReady());
         Assert.assertTrue(splitFactory.isReady());
