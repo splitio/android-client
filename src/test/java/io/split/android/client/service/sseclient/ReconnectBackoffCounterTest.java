@@ -45,7 +45,7 @@ public class ReconnectBackoffCounterTest {
         Assert.assertEquals(2L, v2);
         Assert.assertEquals(4L, v3);
         Assert.assertEquals(8L, v4);
-        Assert.assertEquals(30L, vMax);
+        Assert.assertEquals(1800L, vMax);
         Assert.assertEquals(1L, vReset);
     }
 
