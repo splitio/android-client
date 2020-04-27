@@ -6,25 +6,25 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ServiceEndpoints {
 
-    private static final String API_ENDPOINT = "https://sdk.split.io/api";
+    private static final String SDK_ENDPOINT = "https://sdk.split.io/api";
     private static final String EVENTS_ENDPOINT = "https://events.split.io/api";
-    private static final String SSE_AUTH_SERVICE_ENDPOINT = "https://auth.split-stage.io/api";
+    private static final String AUTH_SERVICE_ENDPOINT = "https://auth.split-stage.io/api";
     private static final String STREAMING_SERVICE_ENDPOINT = "https://realtime.ably.io/sse";
 
-    private String mApiEndpoint = API_ENDPOINT;
+    private String mSdkEndpoint = SDK_ENDPOINT;
     private String mEventsEndpoint = EVENTS_ENDPOINT;
-    private String mSseAuthServiceEndpoint = SSE_AUTH_SERVICE_ENDPOINT;
+    private String mAuthServiceEndpoint = AUTH_SERVICE_ENDPOINT;
     private String mStreamingServiceEndpoint = STREAMING_SERVICE_ENDPOINT;
 
     private ServiceEndpoints() {
     }
 
-    public String getApiEndpoint() {
-        return mApiEndpoint;
+    public String getSdkEndpoint() {
+        return mSdkEndpoint;
     }
 
-    private void setApiEndpoint(String endpoint) {
-        this.mApiEndpoint = endpoint;
+    private void setSdkEndpoint(String endpoint) {
+        this.mSdkEndpoint = endpoint;
     }
 
     public String getEventsEndpoint() {
@@ -36,11 +36,11 @@ public class ServiceEndpoints {
     }
 
     public String getAuthServiceEndpoint() {
-        return mSseAuthServiceEndpoint;
+        return mAuthServiceEndpoint;
     }
 
     private void setAuthServiceEndpoint(String endpoint) {
-        this.mSseAuthServiceEndpoint = endpoint;
+        this.mAuthServiceEndpoint = endpoint;
     }
 
     public String getStreamingServiceEndpoint() {
@@ -66,11 +66,11 @@ public class ServiceEndpoints {
         /**
          * The rest endpoint that sdk will hit for latest features and segments.
          *
-         * @param apiEndpoint MUST NOT be null
+         * @param Endpoint MUST NOT be null
          * @return this builder
          */
         public Builder apiEndpoint(@NonNull String url) {
-            mServiceEndpoints.setApiEndpoint(checkNotNull(url));
+            mServiceEndpoints.setSdkEndpoint(checkNotNull(url));
             return this;
         }
 
@@ -110,13 +110,6 @@ public class ServiceEndpoints {
         }
 
         public ServiceEndpoints build() {
-            if ((API_ENDPOINT.equals(mServiceEndpoints.getApiEndpoint()) &&
-                    !EVENTS_ENDPOINT.equals(mServiceEndpoints.getEventsEndpoint())) ||
-                    (!API_ENDPOINT.equals(mServiceEndpoints.getApiEndpoint()) &&
-                            EVENTS_ENDPOINT.equals(mServiceEndpoints.getEventsEndpoint()))
-            ) {
-                throw new IllegalArgumentException("If endpoint is set, you must also set the events endpoint");
-            }
             return mServiceEndpoints;
         }
     }
