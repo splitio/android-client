@@ -181,7 +181,7 @@ public class TestableSplitConfigBuilder {
         try {
 
             SplitClientConfig config = (SplitClientConfig) constructor.newInstance(
-                    mServiceEndpoints.getApiEndpoint(),
+                    mServiceEndpoints.getSdkEndpoint(),
                     mServiceEndpoints.getEventsEndpoint(),
                     mFeaturesRefreshRate,
                     mSegmentsRefreshRate,
