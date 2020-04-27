@@ -1,7 +1,8 @@
 package helper;
 
 import android.content.Context;
-import android.util.Log;
+
+import androidx.core.util.Pair;
 
 import com.google.common.base.Strings;
 import com.google.common.reflect.TypeToken;
@@ -60,7 +61,7 @@ public class IntegrationHelper {
     }
 
     public static void logSeparator(String tag) {
-        Log.i(tag, Strings.repeat("-", 200));
+        Logger.i(tag, Strings.repeat("-", 200));
     }
 
     public static String emptySplitChanges(long since, long till) {
@@ -88,6 +89,15 @@ public class IntegrationHelper {
 
     public static String dummyApiKey() {
         return "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
+    }
+
+    /***
+     * Returns api key and its corresponding db name (encripted api key)
+     * @return
+     */
+    public static Pair<String, String> dummyApiKeyAndDb() {
+        return new Pair<>(dummyApiKey(),
+                "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS");
     }
 
     public static Key dummyUserKey() {
