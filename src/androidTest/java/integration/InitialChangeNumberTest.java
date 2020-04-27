@@ -116,11 +116,7 @@ public class InitialChangeNumberTest {
 
         Key key = new Key("CUSTOMER_ID",null);
         SplitClientConfig config = SplitClientConfig.builder()
-<<<<<<< HEAD
                 .serviceEndpoints(endpoints)
-=======
-                .serviceEndpoints(ServiceEndpoints.builder().apiEndpoint(url).eventsEndpoint(url).build())
->>>>>>> push_notification_baseline
                 .ready(30000)
                 .featuresRefreshRate(30)
                 .segmentsRefreshRate(30)
