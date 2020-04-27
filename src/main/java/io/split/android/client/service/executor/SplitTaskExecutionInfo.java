@@ -16,6 +16,7 @@ public class SplitTaskExecutionInfo {
     public static final String IS_STREAMING_ENABLED = "IS_STREAMING_ENABLED";
     public static final String IS_VALID_API_KEY = "IS_VALID_API_KEY";
     public static final String PARSED_SSE_JWT = "PARSED_SSE_JWT";
+    public static final String UNEXPECTED_ERROR = "UNEXPECTED_ERROR";
 
     final private SplitTaskType taskType;
     final private SplitTaskExecutionStatus status;

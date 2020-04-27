@@ -35,21 +35,30 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final SplitTaskFactory mSplitTaskFactory;
     private final NotificationProcessor mNotificationProcessor;
+    private final ReconnectBackoffCounter mAuthBackoffCounter;
+    private final ReconnectBackoffCounter mSseBackoffCounter;
+
     private String mResetSseKeepAliveTimerTaskId = null;
     private String mSseTokenExpiredTimerTaskId = null;
+    private SseJwtToken mLastJwtTokenObtained = null;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
                                    @NonNull SplitTaskFactory splitTaskFactory,
                                    @NonNull NotificationProcessor notificationProcessor,
-                                   @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster) {
+                                   @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                                   @NonNull ReconnectBackoffCounter authBackoffCounter,
+                                   @NonNull ReconnectBackoffCounter sseBackoffCounter) {
 
         mSseClient = checkNotNull(sseClient);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTaskExecutor = checkNotNull(taskExecutor);
         mNotificationProcessor = checkNotNull(notificationProcessor);
         mPushManagerEventBroadcaster = checkNotNull(pushManagerEventBroadcaster);
+        mAuthBackoffCounter = checkNotNull(authBackoffCounter);
+        mSseBackoffCounter = checkNotNull(sseBackoffCounter);
         mSseClient.setListener(this);
+
     }
 
     public void start() {
@@ -60,15 +69,28 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mSseClient.disconnect();
     }
 
+    private void connectToSse(String token, List<String> channels) {
+        mSseClient.connect(token, channels);
+    }
+
+    private void scheduleReconnection() {
+        mTaskExecutor.schedule(
+                mSplitTaskFactory.createSseAuthenticationTask(),
+                mAuthBackoffCounter.getNextRetryTime(), this);
+    }
+
+    private void scheduleSseReconnection() {
+        mTaskExecutor.schedule(
+                new SseReconnectionTimer(),
+                mSseBackoffCounter.getNextRetryTime(), this);
+    }
+
     private void triggerSseAuthentication() {
         mTaskExecutor.submit(
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 this);
     }
 
-    private void connectToSse(String token, List<String> channels) {
-        mSseClient.connect(token, channels);
-    }
 
     private void resetSseKeepAliveTimer() {
         mResetSseKeepAliveTimerTaskId = mTaskExecutor.schedule(
@@ -101,6 +123,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 //
     @Override
     public void onOpen() {
+        mSseBackoffCounter.resetCounter();
         notifyPushEnabled();
         resetSseKeepAliveTimer();
     }
@@ -120,9 +143,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     @Override
-    public void onError() {
+    public void onError(boolean isRecoverable) {
         cancelSseKeepAliveTimer();
         notifyPushDisabled();
+        if (isRecoverable) {
+            scheduleSseReconnection();
+        }
     }
 
     private void cancelSseKeepAliveTimer() {
@@ -145,11 +171,35 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
         switch (taskInfo.getTaskType()) {
             case SSE_AUTHENTICATION_TASK:
+
+                if (isUnexepectedError(taskInfo)) {
+                    scheduleReconnection();
+                    notifyPushDisabled();
+                    return;
+                }
+
+                if ((!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
+                        && !isApiKeyValid(taskInfo))) {
+                    Logger.e("Couldn't connect to SSE server. Invalid apikey ");
+                    notifyPushDisabled();
+                    return;
+                }
+
+                if (SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
+                        && !isStreamingEnabled(taskInfo)) {
+                    Logger.e("Will not connect to SSE server. Streaming disabled.");
+                    notifyPushDisabled();
+                    return;
+                }
+
                 SseJwtToken jwtToken = unpackResult(taskInfo);
                 if (jwtToken != null && jwtToken.getChannels().size() > 0) {
+                    mAuthBackoffCounter.resetCounter();
+                    storeJwt(jwtToken);
                     connectToSse(jwtToken.getRawJwt(), jwtToken.getChannels());
                     resetSseTokenExpiredTimer(jwtToken.getExpirationTime());
                 } else {
+                    scheduleReconnection();
                     notifyPushDisabled();
                 }
                 break;
@@ -158,27 +208,48 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         }
     }
 
+    private boolean isUnexepectedError(SplitTaskExecutionInfo taskInfo) {
+        Boolean unexpectedErrorOcurred =
+                taskInfo.getBoolValue(SplitTaskExecutionInfo.UNEXPECTED_ERROR);
+        return unexpectedErrorOcurred != null && unexpectedErrorOcurred.booleanValue();
+    }
+
+    private boolean isApiKeyValid(SplitTaskExecutionInfo taskInfo) {
+        Boolean isApiKeyValid =
+                taskInfo.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY);
+        return isApiKeyValid != null && isApiKeyValid.booleanValue();
+    }
+
+    private boolean isStreamingEnabled(SplitTaskExecutionInfo taskInfo) {
+        Boolean isStreamingEnabled =
+                taskInfo.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED);
+        return isStreamingEnabled != null && isStreamingEnabled.booleanValue();
+    }
+
+    synchronized private void storeJwt(SseJwtToken token) {
+        mLastJwtTokenObtained = token;
+    }
+
+    synchronized private SseJwtToken getLastJwt() {
+        return mLastJwtTokenObtained;
+    }
+
     @Nullable
     private SseJwtToken unpackResult(SplitTaskExecutionInfo taskInfo) {
-        if (!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())) {
-            return null;
-        }
-        Boolean isStreamingEnabled = taskInfo.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED);
-        if (isStreamingEnabled != null && isStreamingEnabled.booleanValue()) {
-            Object token = taskInfo.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT);
-            if (token != null) {
-                try {
-                    return (SseJwtToken) token;
-                } catch (ClassCastException e) {
-                    Logger.e("Sse authentication error. JWT not valid: " +
-                            e.getLocalizedMessage());
-                }
-            } else {
-                Logger.e("Sse authentication error. Token not available.");
+
+
+        Object token = taskInfo.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT);
+        if (token != null) {
+            try {
+                return (SseJwtToken) token;
+            } catch (ClassCastException e) {
+                Logger.e("Sse authentication error. JWT not valid: " +
+                        e.getLocalizedMessage());
             }
         } else {
-            Logger.e("Couldn't connect to SSE server. Streaming is disabled.");
+            Logger.e("Sse authentication error. Token not available.");
         }
+
         return null;
     }
 
@@ -199,6 +270,17 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @Override
         public SplitTaskExecutionInfo execute() {
             refreshSseToken();
+            return SplitTaskExecutionInfo.success(GENERIC_TASK);
+        }
+    }
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    public class SseReconnectionTimer implements SplitTask {
+        @NonNull
+        @Override
+        public SplitTaskExecutionInfo execute() {
+            SseJwtToken token = getLastJwt();
+            connectToSse(token.getRawJwt(), token.getChannels());
             return SplitTaskExecutionInfo.success(GENERIC_TASK);
         }
     }

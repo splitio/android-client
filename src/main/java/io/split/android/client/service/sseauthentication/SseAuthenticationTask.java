@@ -45,25 +45,56 @@ public class SseAuthenticationTask implements SplitTask {
 
         } catch (Exception e) {
             logError("Unexpected " + e.getLocalizedMessage());
-            return SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK);
+            return unexectedError();
         }
         Logger.d("SSE Authentication done, now parsing token...");
 
-        SseJwtToken jwt = null;
-        try {
-            jwt = mJwtParser.parse(authResponse.getToken());
-        } catch (InvalidJwtTokenException e) {
-            return SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK);
+        if(!authResponse.isValidApiKey()) {
+            return invalidApiKeyError();
         }
 
-        Map<String, Object> data = new HashMap<>();
-        data.put(SplitTaskExecutionInfo.PARSED_SSE_JWT, jwt);
-        data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, authResponse.isValidApiKey());
-        data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, authResponse.isStreamingEnabled());
-        return SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK, data);
+        if(!authResponse.isStreamingEnabled()) {
+            return streamingDisabledInfo();
+        }
+
+        try {
+            return success(mJwtParser.parse(authResponse.getToken()));
+        } catch (InvalidJwtTokenException e) {
+            Logger.e("Error while parsing Jwt");
+            return unexectedError();
+        }
     }
 
     private void logError(String message) {
         Logger.e("Error while authenticating to SSE server: " + message);
+    }
+
+    private SplitTaskExecutionInfo unexectedError() {
+        return SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                oneValueMap(SplitTaskExecutionInfo.UNEXPECTED_ERROR, true));
+    }
+    private SplitTaskExecutionInfo invalidApiKeyError() {
+        return SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                oneValueMap(SplitTaskExecutionInfo.IS_VALID_API_KEY, false));
+    }
+
+    private SplitTaskExecutionInfo streamingDisabledInfo() {
+        return SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                oneValueMap(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, true));
+    }
+
+    private SplitTaskExecutionInfo success(SseJwtToken jwt) {
+        Logger.d("SSE Authentication done, now parsing token...");
+        Map<String, Object> data = new HashMap<>();
+        data.put(SplitTaskExecutionInfo.PARSED_SSE_JWT, jwt);
+        data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, true);
+        data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, true);
+        return SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK, data);
+    }
+
+    private Map<String, Object> oneValueMap(String key, Object value) {
+        Map<String, Object> data = new HashMap<>();
+        data.put(key, value);
+        return data;
     }
 }

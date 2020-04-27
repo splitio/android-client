@@ -1,5 +1,7 @@
 package io.split.android.client.service.sseclient;
 
+import com.google.common.base.Verify;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -28,6 +30,7 @@ import static io.split.android.client.service.sseclient.feedbackchannel.PushStat
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -39,13 +42,16 @@ public class PushNotificationManagerTest {
     private static final String TOKEN = "THETOKEN";
 
     @Mock
+    SplitClientConfig mSplitClientConfig;
+
+    @Mock
     SseClient mSseClient;
     @Mock
     SplitTaskExecutor mTaskExecutor;
     @Mock
     SplitTaskFactory mSplitTaskFactory;
     @Mock
-    PushManagerEventBroadcaster mFeedbackChannel;
+    PushManagerEventBroadcaster mBroadcasterChannel;
 
     @Mock
     SseAuthenticationTask mSseAuthTask;
@@ -53,15 +59,23 @@ public class PushNotificationManagerTest {
     @Mock
     NotificationProcessor mNotificationProcessor;
 
+    @Mock
+    ReconnectBackoffCounter mAuthBackoffCounter;
+
+    @Mock
+    ReconnectBackoffCounter mSseBackoffCounter;
 
     PushNotificationManager mPushManager;
 
-
     @Before
     public void setup() {
+
         MockitoAnnotations.initMocks(this);
+        when(mAuthBackoffCounter.getNextRetryTime()).thenReturn(1L);
+        when(mSseBackoffCounter.getNextRetryTime()).thenReturn(1L);
         mPushManager = new PushNotificationManager(mSseClient, mTaskExecutor,
-                mSplitTaskFactory, mNotificationProcessor, mFeedbackChannel);
+                mSplitTaskFactory, mNotificationProcessor, mBroadcasterChannel,
+                mAuthBackoffCounter, mSseBackoffCounter);
     }
 
     @Test
@@ -77,58 +91,163 @@ public class PushNotificationManagerTest {
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
         verify(mSseClient, times(1)).connect(TOKEN, channels);
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
-        verify(mFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(PUSH_ENABLED, messageCaptor.getValue().getMessage());
+        verify(mAuthBackoffCounter, times(1)).resetCounter();
+        verify(mSseBackoffCounter, times(1)).resetCounter();
     }
 
     @Test
-    public void sseAuthError() {
+    public void sseAuthCredentialsError() {
         List<String> channels = dummyChannels();
 
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
-        mPushManager.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK));
+
+        Map<String, Object> respData = new HashMap<>();
+        respData.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, false);
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK, respData));
 
         ArgumentCaptor<Long> reconnectTime = ArgumentCaptor.forClass(Long.class);
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
-        //verify(mTaskExecutor, times(1)).schedule(any(SseAuthenticationTask.class), reconnectTime.capture() , any(PushNotificationManager.class));
+        verify(mTaskExecutor, never()).schedule(any(SseAuthenticationTask.class), reconnectTime.capture() , any(PushNotificationManager.class));
         verify(mSseClient, never()).connect(any(), any());
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
-        verify(mFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        verify(mAuthBackoffCounter, never()).getNextRetryTime();
     }
 
     @Test
-    public void authOkAndSubscritionToSseError() {
+    public void sseAuthUnexpectedError() {
         List<String> channels = dummyChannels();
 
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mPushManager.start();
+        Map<String, Object> respData = new HashMap<>();
+        respData.put(SplitTaskExecutionInfo.UNEXPECTED_ERROR, true);
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK, respData));
+
+        ArgumentCaptor<Long> reconnectTime = ArgumentCaptor.forClass(Long.class);
+        verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
+        verify(mTaskExecutor, times(1)).schedule(any(SseAuthenticationTask.class), reconnectTime.capture() , any(PushNotificationManager.class));
+        verify(mSseClient, never()).connect(any(), any());
+        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
+        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        verify(mAuthBackoffCounter, times(1)).getNextRetryTime();
+    }
+
+    @Test
+    public void sseAuthStreamingDisabled() {
+        List<String> channels = dummyChannels();
+
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mPushManager.start();
+        Map<String, Object> respData = new HashMap<>();
+        respData.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, true);
+        respData.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, false);
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK, respData));
+
+        ArgumentCaptor<Long> reconnectTime = ArgumentCaptor.forClass(Long.class);
+        verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
+        verify(mTaskExecutor, times(1)).schedule(any(SseAuthenticationTask.class), reconnectTime.capture() , any(PushNotificationManager.class));
+        verify(mSseClient, never()).connect(any(), any());
+        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
+        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+        verify(mAuthBackoffCounter, times(1)).getNextRetryTime();
+    }
+
+    @Test
+    public void authOkAndSubscritionToSseRecoverableError() {
+        List<String> channels = dummyChannels();
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
         mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
                 buildAuthMap(TOKEN, channels, true, true)));
-        mPushManager.onError();
+        mPushManager.onError(true);
 
-        verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
+        verify(mTaskExecutor, times(1)).schedule(
+                any(PushNotificationManager.SseReconnectionTimer.class),
+                anyLong(),
+                any(PushNotificationManager.class));
         verify(mSseClient, times(1)).connect(TOKEN, channels);
+        ArgumentCaptor<String> keepAliveId = ArgumentCaptor.forClass(String.class);
+        // Fist time connecting should not be called because keepalive timer is not set yet
+        verify(mTaskExecutor, never()).stopTask(anyString());
+
+        verify(mTaskExecutor, times(1)).schedule(
+                any(PushNotificationManager.SseReconnectionTimer.class),
+                anyLong(),
+                any(PushNotificationManager.class));
+        verify(mSseBackoffCounter, times(1)).getNextRetryTime();
+
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
-        verify(mFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+
+        verify(mAuthBackoffCounter, times(1)).resetCounter();
+
     }
 
     @Test
-    public void authOkAndChannelsPushDisabled() {
+    public void recoverableSseErrorWhileConnected() {
         List<String> channels = dummyChannels();
+        String keepAliveTaskId = "id1";
+        when(mTaskExecutor.schedule(any(PushNotificationManager.SseKeepAliveTimer.class),
+                anyLong(), isNull())).thenReturn(keepAliveTaskId);
+        mPushManager.start();
+        mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
+                buildAuthMap(TOKEN, channels, true, true)));
 
+        mPushManager.onOpen();
+        // Reset broadcaster channel to count only messages delivered after on error
+        reset(mBroadcasterChannel);
+        reset(mSseBackoffCounter);
+        mPushManager.onError(true);
+
+        verify(mTaskExecutor, times(1)).schedule(
+                any(PushNotificationManager.SseReconnectionTimer.class),
+                anyLong(),
+                any(PushNotificationManager.class));
+        verify(mSseBackoffCounter, times(1)).getNextRetryTime();
+        verify(mSseClient, times(1)).connect(TOKEN, channels);
+        ArgumentCaptor<String> keepAliveId = ArgumentCaptor.forClass(String.class);
+        verify(mTaskExecutor, times(1)).stopTask(keepAliveTaskId);
+
+        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
+        Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+
+    }
+
+    @Test
+    public void authOkAndSubscritionToSseUnrecoverableError() {
+        List<String> channels = dummyChannels();
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mPushManager.start();
         mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
-                buildAuthMap(TOKEN, channels, true, false)));
+                buildAuthMap(TOKEN, channels, true, true)));
+        mPushManager.onError(false);
 
-        verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
-        verify(mSseClient, never()).connect(TOKEN, channels);
+        verify(mTaskExecutor, never()).schedule(
+                any(PushNotificationManager.SseReconnectionTimer.class),
+                anyLong(),
+                any(PushNotificationManager.class));
+        verify(mSseClient, times(1)).connect(TOKEN, channels);
+        ArgumentCaptor<String> keepAliveId = ArgumentCaptor.forClass(String.class);
+        // Fist time connecting should not be called because keepalive timer is not set yet
+        verify(mTaskExecutor, never()).stopTask(anyString());
+
+        verify(mSseBackoffCounter, never()).getNextRetryTime();
+
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
-        verify(mFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
+
+        verify(mAuthBackoffCounter, times(1)).resetCounter();
+
     }
 
     @Test
@@ -143,7 +262,7 @@ public class PushNotificationManagerTest {
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
         verify(mSseClient, never()).connect(TOKEN, channels);
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
-        verify(mFeedbackChannel, times(1)).pushMessage(messageCaptor.capture());
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(PUSH_DISABLED, messageCaptor.getValue().getMessage());
     }
 
@@ -162,7 +281,12 @@ public class PushNotificationManagerTest {
 
         verify(mNotificationProcessor, times(1)).process(data);
         ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
-        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseKeepAliveTimer.class), downNotificationTime.capture(), any());
+        verify(mTaskExecutor, times(1))
+                .schedule(any(PushNotificationManager.SseKeepAliveTimer.class),
+                        downNotificationTime.capture(), isNull());
+        verify(mTaskExecutor, times(1))
+                .schedule(any(PushNotificationManager.SseKeepAliveTimer.class),
+                        downNotificationTime.capture(), isNull());
         Assert.assertEquals(70L, downNotificationTime.getValue().longValue());
     }
 
@@ -196,7 +320,7 @@ public class PushNotificationManagerTest {
         reset(mTaskExecutor);
         mPushManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
                 buildAuthMap(TOKEN, channels, true, true, expirationTime
-                        )));
+                )));
 
         verify(mSseClient, times(1)).connect(TOKEN, channels);
         ArgumentCaptor<Long> expirationCaptor = ArgumentCaptor.forClass(Long.class);
