@@ -1,16 +1,14 @@
 package io.split.android.client.service.sseclient.notifications;
 
-public class ControlNotification {
-    public static class Metrics {
-        private int publishers;
-        public int getPublishers() {
-            return publishers;
-        }
+public class ControlNotification extends IncomingNotification {
+    public static enum ControlType {
+        STREAMING_ENABLED, STREAMING_DISABLED, STREAMING_PAUSED
     }
 
-    private Metrics metrics;
+    private ControlType controlType;
 
-    public Metrics getMetrics() {
-        return metrics;
+    public ControlType getControlType() {
+        return controlType;
     }
 }
+
