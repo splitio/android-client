@@ -93,7 +93,6 @@ public class SseClient {
 
     private void setCloseStatus() {
         mReadyState.set(CLOSED);
-        triggerOnError();
     }
 
     private void triggerOnMessage(Map<String, String> messageValues) {
@@ -113,10 +112,10 @@ public class SseClient {
         }
     }
 
-    private void triggerOnError() {
+    private void triggerOnError(boolean isRecoverable) {
         SseClientListener listener = mListener.get();
         if (listener != null) {
-            listener.onError();
+            listener.onError(isRecoverable);
         }
     }
 
@@ -157,6 +156,8 @@ public class SseClient {
                 mHttpStreamRequest.addHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE_STREAM);
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
+                    Logger.i("Streaming connection opened");
+                    triggerOnOpen();
                     mReadyState.set(OPEN);
                     BufferedReader bufferedReader = response.getBufferedReader();
                     String inputLine;
@@ -171,20 +172,29 @@ public class SseClient {
                             values = new HashMap<>();
                         }
                     }
+                    Logger.d("Closing buffered reader");
                     bufferedReader.close();
+                } else {
+                    Logger.e("Streaming connection error. Http return code "
+                            + response.getHttpStatus());
+                    triggerOnError(!response.isCredentialsError());
                 }
             } catch (URISyntaxException e) {
                 Logger.e("An error has ocurred while creating stream Url " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+                triggerOnError(true);
             } catch (HttpException e) {
-                Logger.e("An error has ocurred while trying to connecting to stream " +
+                Logger.e("Unexpected error has ocurred while trying to connecting to stream " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+                triggerOnError(true);
             } catch (IOException e) {
                 Logger.e("An error has ocurred while parsing stream from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+                triggerOnError(true);
             } catch (Exception e) {
                 Logger.e("An unexpected error has ocurred while receiving stream events from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+                triggerOnError(true);
             } finally {
                 setCloseStatus();
             }

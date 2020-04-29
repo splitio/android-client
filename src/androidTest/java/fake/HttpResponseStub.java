@@ -1,20 +1,21 @@
 package fake;
 
+import io.split.android.client.network.BaseHttpResponseImpl;
 import io.split.android.client.network.HttpResponse;
 
 @SuppressWarnings("ConstantConditions")
-public class HttpResponseStub implements HttpResponse {
+public class HttpResponseStub extends BaseHttpResponseImpl implements HttpResponse {
+
 
     private boolean isSuccess;
-    private int code = 200;
     private String data;
 
     public HttpResponseStub(int status, boolean isSuccess) {
-       this(status, isSuccess, null);
+        this(status, isSuccess, null);
     }
 
     private HttpResponseStub(int status, boolean isSuccess, String data) {
-        this.code = code;
+        super(status);
         this.isSuccess = isSuccess;
         this.data = data;
     }
@@ -22,11 +23,6 @@ public class HttpResponseStub implements HttpResponse {
     @Override
     public boolean isSuccess() {
         return isSuccess;
-    }
-
-    @Override
-    public int getHttpStatus() {
-        return code;
     }
 
     @Override

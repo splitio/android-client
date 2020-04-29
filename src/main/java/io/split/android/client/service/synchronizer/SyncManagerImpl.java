@@ -27,7 +27,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
     private MySegmentsUpdateWorker mMySegmentUpdateWorker;
 
 
-    private AtomicBoolean mIsPushEnabled;
+    private AtomicBoolean isPollingEnabled;
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull Synchronizer synchronizer,
@@ -43,7 +43,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
         mMySegmentUpdateWorker = checkNotNull(mySegmentUpdateWorker);
         mPushManagerEventBroadcaster = checkNotNull(pushManagerEventBroadcaster);
 
-        mIsPushEnabled = new AtomicBoolean(false);
+        isPollingEnabled = new AtomicBoolean(false);
     }
 
 
@@ -53,7 +53,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
         mSynchronizer.loadSplitsFromCache();
         mSynchronizer.loadMySegmentsFromCache();
 
-        mIsPushEnabled.set(mSplitClientConfig.streamingEnabled());
+        isPollingEnabled.set(!mSplitClientConfig.streamingEnabled());
         if (mSplitClientConfig.streamingEnabled()) {
             mSynchronizer.synchronizeSplits();
             mSynchronizer.syncronizeMySegments();
@@ -106,16 +106,23 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
     @Override
     public void onEvent(PushStatusEvent message) {
         switch (message.getMessage()) {
-            case PUSH_DISABLED:
-                if (mIsPushEnabled.get()) {
-                    mIsPushEnabled.set(false);
+            case ENABLE_POLLING:
+                Logger.d("Disable polling event message received.");
+                if (!isPollingEnabled.get()) {
+                    isPollingEnabled.set(true);
                     mSynchronizer.startPeriodicFetching();
+                    Logger.i("Polling enabled.");
                 }
                 break;
-            case PUSH_ENABLED:
+            case DISABLE_POLLING:
+                Logger.d("Disable polling event message received.");
                 mSynchronizer.stopPeriodicFetching();
-                mIsPushEnabled.set(true);
+                isPollingEnabled.set(false);
+                Logger.i("Polling disabled.");
                 break;
+            case STREAMING_CONNECTED:
+                mSynchronizer.synchronizeSplits();
+                mSynchronizer.syncronizeMySegments();
             default:
                 Logger.e("Invalide SSE event received: " + message.getMessage());
         }

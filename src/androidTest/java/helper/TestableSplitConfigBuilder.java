@@ -2,13 +2,14 @@ package helper;
 
         import java.lang.reflect.Constructor;
 
+        import io.split.android.client.ServiceEndpoints;
         import io.split.android.client.SplitClientConfig;
         import io.split.android.client.impressions.ImpressionListener;
+        import io.split.android.client.utils.Logger;
 
 public class TestableSplitConfigBuilder {
 
-    private String mEndpoint = "https://sdk.split.io/api";
-    private String mEventsEndpoint = "https://events.split.io/api";
+    private ServiceEndpoints mServiceEndpoints = null;
     private int mFeaturesRefreshRate = 3600;
     private int mSegmentsRefreshRate = 1800;
     private int mImpressionsRefreshRate = 1800;
@@ -38,14 +39,11 @@ public class TestableSplitConfigBuilder {
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
     private int mStreamingReconnectBackoffBase = 1;
-    private String mAuthServiceUrl = "";
-    private String mStreamingServiceUrl = "";
 
-    public TestableSplitConfigBuilder endpoint(String endpoint, String eventsEndpoint) {
-        this.mEndpoint = endpoint;
-        this.mEventsEndpoint = eventsEndpoint;
-        return this;
+    public TestableSplitConfigBuilder() {
+        mServiceEndpoints = ServiceEndpoints.builder().build();
     }
+
 
     public TestableSplitConfigBuilder featuresRefreshRate(int featuresRefreshRate) {
         this.mFeaturesRefreshRate = featuresRefreshRate;
@@ -172,14 +170,8 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
-
-    public TestableSplitConfigBuilder authServiceURL(String authServiceUrl) {
-        mAuthServiceUrl = authServiceUrl;
-        return this;
-    }
-
-    public TestableSplitConfigBuilder streamingServiceURL(String streamingServiceUrl) {
-        mStreamingServiceUrl = streamingServiceUrl;
+    public TestableSplitConfigBuilder serviceEndpoints(ServiceEndpoints serviceEndpoints) {
+        mServiceEndpoints = serviceEndpoints;
         return this;
     }
 
@@ -189,8 +181,8 @@ public class TestableSplitConfigBuilder {
         try {
 
             SplitClientConfig config = (SplitClientConfig) constructor.newInstance(
-                    mEndpoint,
-                    mEventsEndpoint,
+                    mServiceEndpoints.getSdkEndpoint(),
+                    mServiceEndpoints.getEventsEndpoint(),
                     mFeaturesRefreshRate,
                     mSegmentsRefreshRate,
                     mImpressionsRefreshRate,
@@ -215,10 +207,16 @@ public class TestableSplitConfigBuilder {
                     mSynchronizeInBackground,
                     mBackgroundSyncPeriod,
                     mBackgroundSyncWhenBatteryNotLow,
-                    mBackgroundSyncWhenWifiOnly);
+                    mBackgroundSyncWhenWifiOnly,
+                    mStreamingEnabled,
+                    mAuthRetryBackoffBase,
+                    mStreamingReconnectBackoffBase,
+                    mServiceEndpoints.getAuthServiceEndpoint(),
+                    mServiceEndpoints.getStreamingServiceEndpoint());
             return config;
         } catch (Exception e) {
-            System.out.println(e.getLocalizedMessage());
+            Logger.e("Error creating Testable Split client builder: "
+                    + e.getLocalizedMessage());
         }
         return null;
     }

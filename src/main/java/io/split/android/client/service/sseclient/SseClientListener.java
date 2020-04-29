@@ -5,6 +5,6 @@ import java.util.Map;
 public interface SseClientListener {
     void onOpen();
     void onMessage(Map<String, String> values);
-    void onError();
+    void onError(boolean isRecoverable);
     void onKeepAlive();
 }

@@ -22,7 +22,7 @@ public class SplitsSyncWorker extends SplitWorker {
                     ServiceFactory.getSplitsFetcher(getNetworkHelper(), getHttpClient(),
                             getEndPoint(), getMetrics()),
                     StorageFactory.getSplitsStorage(getDatabase()),
-                    new SplitChangeProcessor());
+                    new SplitChangeProcessor(), false);
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
         }

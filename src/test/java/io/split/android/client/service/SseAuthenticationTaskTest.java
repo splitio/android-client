@@ -14,8 +14,10 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
+import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
-import io.split.android.client.service.sseclient.SseChannelsParser;
+import io.split.android.client.service.sseclient.SseJwtParser;
+import io.split.android.client.service.sseclient.SseJwtToken;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -31,7 +33,7 @@ public class SseAuthenticationTaskTest {
 
     SseAuthenticationTask mTask;
 
-    SseChannelsParser mChannelParser;
+    SseJwtParser mJwtParser;
 
     private final String JWT = "eyJhbGciOiJIUzI1NiIsImtpZCI6ImtleUlkIiwidHlwIjoiSldUIn0.eyJvcmdJ" +
             "ZCI6ImY3ZjAzNTIwLTVkZjctMTFlOC04NDc2LTBlYzU0NzFhM2NlYyIsImVudklkIjoiZjdmN" +
@@ -44,19 +46,21 @@ public class SseAuthenticationTaskTest {
 
     @Before
     public void setup() {
-        mChannelParser = Mockito.mock(SseChannelsParser.class);
+        mJwtParser = Mockito.mock(SseJwtParser.class);
         mFetcher = (HttpFetcher<SseAuthenticationResponse>) Mockito.mock(HttpFetcher.class);
         mAuthResponse = Mockito.mock(SseAuthenticationResponse.class);
-        mTask = new SseAuthenticationTask(mFetcher, "userKey", mChannelParser);
+        mTask = new SseAuthenticationTask(mFetcher, "userKey", mJwtParser);
     }
 
     @Test
-    public void correctExecutionOk() throws HttpFetcherException {
+    public void correctExecutionOk() throws HttpFetcherException, InvalidJwtTokenException {
 
         List<String> mockChannelList = new ArrayList<>();
         mockChannelList.add("channel1");
         mockChannelList.add("channel2");
         mockChannelList.add("channel3");
+
+        SseJwtToken jwt = new SseJwtToken(9999999L, mockChannelList, JWT);
 
         when(mAuthResponse.isValidApiKey()).thenReturn(true);
         when(mAuthResponse.isStreamingEnabled()).thenReturn(true);
@@ -64,57 +68,83 @@ public class SseAuthenticationTaskTest {
 
         when(mFetcher.execute(any())).thenReturn(mAuthResponse);
 
-        when(mChannelParser.parse(any())).thenReturn(mockChannelList);
+        when(mJwtParser.parse(any())).thenReturn(jwt);
 
         SplitTaskExecutionInfo info = mTask.execute();
 
         verify(mFetcher, times(1)).execute(any());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, info.getStatus());
 
-        List<String> channelList = (List<String>) info.getObjectValue(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM);
-        Assert.assertEquals(3, channelList.size());
-        Assert.assertEquals("channel1", channelList.get(0));
+        SseJwtToken jwtToken = (SseJwtToken) info.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT);
+        Assert.assertEquals(3, jwtToken.getChannels().size());
+        Assert.assertEquals("channel1", jwtToken.getChannels().get(0));
         Assert.assertEquals(true, info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
         Assert.assertEquals(true, info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
-        Assert.assertEquals(JWT, info.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN));
+        Assert.assertEquals(9999999L, jwtToken.getExpirationTime());
+        Assert.assertNull(info.getObjectValue(SplitTaskExecutionInfo.UNEXPECTED_ERROR));
     }
 
     @Test
-    public void correctExecutionInvalidApiAndKey() throws HttpFetcherException {
+    public void invalidApiAndKey() throws HttpFetcherException, InvalidJwtTokenException {
 
         List<String> mockList = new ArrayList<>();
-
+        SseJwtToken jwt = new SseJwtToken(9999999L, mockList, JWT);
         when(mAuthResponse.isValidApiKey()).thenReturn(false);
         when(mAuthResponse.isStreamingEnabled()).thenReturn(false);
         when(mAuthResponse.getToken()).thenReturn(null);
 
         when(mFetcher.execute(any())).thenReturn(mAuthResponse);
 
-        when(mChannelParser.parse(any())).thenReturn(mockList);
+        when(mJwtParser.parse(any())).thenReturn(jwt);
 
 
         SplitTaskExecutionInfo info = mTask.execute();
 
-        List<String> channelList = (List<String>) info.getObjectValue(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM);
-
         verify(mFetcher, times(1)).execute(any());
-        Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, info.getStatus());
-        Assert.assertEquals(0, channelList.size());
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, info.getStatus());
         Assert.assertEquals(false, info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
-        Assert.assertEquals(false, info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
-        Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN));
+        Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
+        Assert.assertNull(info.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT));
+        Assert.assertNull(info.getObjectValue(SplitTaskExecutionInfo.UNEXPECTED_ERROR));
     }
 
     @Test
-    public void fetcherException() throws HttpFetcherException {
-        doThrow(NullPointerException.class).when(mFetcher).execute(any());
+    public void fetcherException() throws HttpFetcherException, InvalidJwtTokenException {
+
+        when(mFetcher.execute(any())).thenThrow(HttpFetcherException.class);
 
         SplitTaskExecutionInfo info = mTask.execute();
+
+        verify(mFetcher, times(1)).execute(any());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, info.getStatus());
-        Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.CHANNEL_LIST_PARAM));
+        Assert.assertEquals(true, info.getBoolValue(SplitTaskExecutionInfo.UNEXPECTED_ERROR));
+        Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
+        Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
+        Assert.assertNull(info.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT));
+    }
+
+    @Test
+    public void invalidToken() throws HttpFetcherException, InvalidJwtTokenException {
+
+        List<String> mockList = new ArrayList<>();
+        when(mAuthResponse.isValidApiKey()).thenReturn(true);
+        when(mAuthResponse.isStreamingEnabled()).thenReturn(true);
+        when(mAuthResponse.getToken()).thenReturn(null);
+
+        when(mFetcher.execute(any())).thenReturn(mAuthResponse);
+
+        when(mJwtParser.parse(any())).thenThrow(InvalidJwtTokenException.class);
+
+
+        SplitTaskExecutionInfo info = mTask.execute();
+
+        SseJwtToken jwtToken = (SseJwtToken) info.getObjectValue(SplitTaskExecutionInfo.PARSED_SSE_JWT);
+
+        verify(mFetcher, times(1)).execute(any());
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, info.getStatus());
+        Assert.assertNull(jwtToken);
         Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.IS_VALID_API_KEY));
         Assert.assertNull(info.getBoolValue(SplitTaskExecutionInfo.IS_STREAMING_ENABLED));
-        Assert.assertNull(info.getStringValue(SplitTaskExecutionInfo.SSE_TOKEN));
     }
 
     @After

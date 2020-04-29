@@ -19,9 +19,9 @@ public interface SplitTaskFactory {
 
     ImpressionsRecorderTask createImpressionsRecorderTask();
 
-    SplitsSyncTask createSplitsSyncTask();
+    SplitsSyncTask createSplitsSyncTask(boolean retryOnFail);
 
-    MySegmentsSyncTask createMySegmentsSyncTask();
+    MySegmentsSyncTask createMySegmentsSyncTask(boolean retryOnFail);
 
     LoadMySegmentsTask createLoadMySegmentsTask();
 

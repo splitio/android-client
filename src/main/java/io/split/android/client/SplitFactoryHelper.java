@@ -19,6 +19,7 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.PushNotificationManager;
+import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseClient;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
@@ -109,9 +110,10 @@ class SplitFactoryHelper {
         MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(synchronizer,
                 mySegmentChangeNotificationQueue);
 
+        NotificationParser notificationParser = new NotificationParser();
         NotificationProcessor notificationProcessor =
                 new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
-                        new NotificationParser(), mySegmentChangeNotificationQueue,
+                        notificationParser, mySegmentChangeNotificationQueue,
                         splitsUpdateNotificationQueue);
         PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
 
@@ -120,7 +122,10 @@ class SplitFactoryHelper {
         SseClient sseClient = new SseClient(streamingServiceUrl, httpClient, eventStreamParser);
         PushNotificationManager pushNotificationManager =
                 new PushNotificationManager(sseClient, splitTaskExecutor,
-                        splitTaskFactory, notificationProcessor, pushManagerEventBroadcaster);
+                        splitTaskFactory, notificationParser,
+                        notificationProcessor, pushManagerEventBroadcaster,
+                        new ReconnectBackoffCounter(config.authRetryBackoffBase()),
+                        new ReconnectBackoffCounter(config.streamingReconnectBackoffBase()));
 
         return new SyncManagerImpl(
                 config, synchronizer, pushNotificationManager, splitUpdateWorker,

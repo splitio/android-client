@@ -10,6 +10,8 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
@@ -22,7 +24,7 @@ public class SplitsUpdateTask implements SplitTask {
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
     private Long mChangeNumber;
-
+    private static final int RETRY_BASE = 1;
 
     public SplitsUpdateTask(HttpFetcher<SplitChange> splitFetcher,
                             SplitsStorage splitsStorage,
@@ -49,14 +51,29 @@ public class SplitsUpdateTask implements SplitTask {
                     "Avoiding update.");
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         }
-        try {
-            Map<String, Object> params = new HashMap<>();
-            params.put(SINCE_PARAM, storedChangeNumber);
-            SplitChange splitChange = mSplitFetcher.execute(params);
-            mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
-        } catch (Exception e) {
-            logError("unexpected " + e.getLocalizedMessage());
-            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
+
+        ReconnectBackoffCounter backoffCounter = new ReconnectBackoffCounter(RETRY_BASE);
+        boolean success = false;
+        Map<String, Object> params = new HashMap<>();
+        params.put(SINCE_PARAM, storedChangeNumber);
+        while(!success) {
+            try {
+
+                SplitChange splitChange = mSplitFetcher.execute(params);
+                mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
+                success = true;
+            } catch (HttpFetcherException e) {
+                logError("Network error while updating splits" + e.getLocalizedMessage());
+                try {
+                    Thread.sleep(backoffCounter.getNextRetryTime());
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
+                }
+            } catch (Exception e) {
+                logError("Unexpected error while updating splits" + e.getLocalizedMessage());
+                return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
+            }
         }
         Logger.d("Features have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);

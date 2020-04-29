@@ -80,7 +80,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 

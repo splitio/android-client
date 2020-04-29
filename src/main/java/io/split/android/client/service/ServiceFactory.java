@@ -16,6 +16,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherImpl;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderImpl;
+import io.split.android.client.service.http.HttpSseAuthTokenFetcher;
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
@@ -82,12 +83,12 @@ public class ServiceFactory {
                 new ImpressionsRequestBodySerializer());
     }
 
-    public static HttpFetcher<SseAuthenticationResponse> getSseAuthenticationFetcher(
+    public static HttpSseAuthTokenFetcher getSseAuthenticationFetcher(
             NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint) throws URISyntaxException {
 
-        return new HttpFetcherImpl<SseAuthenticationResponse>(httpClient,
+        return new HttpSseAuthTokenFetcher(httpClient,
                 SdkTargetPath.sseAuthentication(endPoint),
                 networkHelper, new SseAuthenticationResponseParser());
     }

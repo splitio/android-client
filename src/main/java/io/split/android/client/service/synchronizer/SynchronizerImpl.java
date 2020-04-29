@@ -19,7 +19,6 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
 
@@ -87,22 +86,22 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeSplits(long since) {
-      SplitTask splitsUpdateTask
-              = mSplitTaskFactory.createSplitsUpdateTask(since);
-      mTaskExecutor.submit(splitsUpdateTask, null);
+        SplitTask splitsUpdateTask
+                = mSplitTaskFactory.createSplitsUpdateTask(since);
+        mTaskExecutor.submit(splitsUpdateTask, null);
     }
 
     @Override
     public void synchronizeSplits() {
         mTaskExecutor.submit(
-                mSplitTaskFactory.createSplitsSyncTask(),
+                mSplitTaskFactory.createSplitsSyncTask(true),
                 mSplitsSyncTaskListener);
     }
 
     @Override
     public void syncronizeMySegments() {
         mTaskExecutor.submit(
-                mSplitTaskFactory.createMySegmentsSyncTask(),
+                mSplitTaskFactory.createMySegmentsSyncTask(true),
                 mMySegmentsSyncTaskListener);
     }
 
@@ -110,26 +109,29 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     synchronized public void startPeriodicFetching() {
         scheduleSplitsFetcherTask();
         scheduleMySegmentsFetcherTask();
-        Logger.i("Synchronization tasks scheduled");
+        Logger.i("Periodic fetcher tasks scheduled");
     }
 
     @Override
     synchronized public void stopPeriodicFetching() {
         mTaskExecutor.stopTask(mSplitsFetcherTaskId);
         mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
+        Logger.i(String.format("Stoping periodic fetching tasks %s, %s ", mSplitsFetcherTaskId
+        , mMySegmentsFetcherTaskId));
     }
 
     @Override
     public void startPeriodicRecording() {
         scheduleEventsRecorderTask();
         scheduleImpressionsRecorderTask();
-        Logger.i("Synchronization tasks scheduled");
+        Logger.i("Peridic recording tasks scheduled");
     }
 
     @Override
     public void stopPeriodicRecording() {
         mTaskExecutor.stopTask(mEventsRecorderTaskId);
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
+        Logger.i("Stoping periodic recording tasks. " + mEventsRecorderTaskId);
     }
 
     private void setupListeners() {
@@ -161,7 +163,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     public void pause() {
         mTaskExecutor.pause();
     }
-
 
     public void resume() {
         mTaskExecutor.resume();
@@ -201,7 +202,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void scheduleSplitsFetcherTask() {
         mSplitsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createSplitsSyncTask(),
+                mSplitTaskFactory.createSplitsSyncTask(false),
                 ServiceConstants.NO_INITIAL_DELAY,
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitsSyncTaskListener);
@@ -209,7 +210,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void scheduleMySegmentsFetcherTask() {
         mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createMySegmentsSyncTask(),
+                mSplitTaskFactory.createMySegmentsSyncTask(false),
                 ServiceConstants.NO_INITIAL_DELAY,
                 mSplitClientConfig.segmentsRefreshRate(), mMySegmentsSyncTaskListener);
     }

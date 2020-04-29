@@ -1,7 +1,6 @@
 package service;
 
 import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -14,7 +13,7 @@ import java.util.Map;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.sseclient.EventStreamParser;
-import io.split.android.client.service.sseclient.SseChannelsParser;
+import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.SseClient;
 import io.split.android.client.service.sseclient.SseClientListener;
 import okhttp3.mockwebserver.MockWebServer;
@@ -36,9 +35,9 @@ public class SseClientTest {
         // ************ WIP ******************
 
 
-        SseChannelsParser channelsParser = new SseChannelsParser();
-        List<String> channelList = channelsParser.parse(JWT);
-        String channels = String.join(",", channelList);
+        SseJwtParser channelsParser = new SseJwtParser();
+       // List<String> channelList = channelsParser.parse(JWT);
+       // String channels = String.join(",", channelList);
 
         //URI uri = new URI("https://realtime.ably.io/sse?v=1.1&channel=" + channels + "&accessToken=" + JWT);
         URI uri = new URI("https://realtime.ably.io/sse");
@@ -47,14 +46,14 @@ public class SseClientTest {
 
         httpClient.setHeader("Content-Type","text/event-stream");
 
-        mSseClient = new SseClient(uri, httpClient, new EventStreamParser(), new Listener());
-        mSseClient.connect(JWT, channelList);
-        Thread.sleep(1000000);
-
-        mSseClient.disconnect();
-
-        mSseClient = new SseClient(uri, new HttpClientImpl(), new EventStreamParser(), new Listener());
-        Thread.sleep(100000);
+//        mSseClient = new SseClient(uri, httpClient, new EventStreamParser(), new Listener());
+//        mSseClient.connect(JWT, channelList);
+//        Thread.sleep(1000000);
+//
+//        mSseClient.disconnect();
+//
+//        mSseClient = new SseClient(uri, new HttpClientImpl(), new EventStreamParser(), new Listener());
+//        Thread.sleep(100000);
     }
 
     private void setupServer() throws IOException {
@@ -90,7 +89,7 @@ public class SseClientTest {
         }
 
         @Override
-        public void onError() {
+        public void onError(boolean isRecoverable) {
             System.out.println("SseClientTest: OnError!!!!");
         }
 

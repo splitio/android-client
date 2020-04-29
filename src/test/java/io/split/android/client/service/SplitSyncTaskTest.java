@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.network.HttpException;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -43,7 +44,7 @@ public class SplitSyncTaskTest {
         mSplitsFetcher = (HttpFetcher<SplitChange>) Mockito.mock(HttpFetcher.class);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
         mSplitChangeProcessor = Mockito.spy(SplitChangeProcessor.class);
-        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor);
+        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, false);
         loadSplitChanges();
     }
 
@@ -78,7 +79,39 @@ public class SplitSyncTaskTest {
 
 
     @Test
-    public void fetcherException() throws HttpFetcherException {
+    public void fetcherExceptionRetryOff() throws HttpFetcherException {
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+        when(mSplitsFetcher.execute(mDefaultParams)).thenThrow(HttpFetcherException.class);
+
+        mTask.execute();
+
+        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
+        verify(mSplitsStorage, never()).update(any());
+        verify(mSplitChangeProcessor, never()).process(mSplitChange);
+    }
+
+    @Test
+    public void fetcherExceptionRetryOn() throws HttpFetcherException {
+        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage,
+                mSplitChangeProcessor, true);
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+        when(mSplitsFetcher.execute(mDefaultParams))
+                .thenThrow(HttpFetcherException.class)
+                .thenThrow(HttpFetcherException.class)
+                .thenThrow(HttpFetcherException.class)
+                .thenReturn(mSplitChange);
+
+        mTask.execute();
+
+        verify(mSplitsFetcher, times(4)).execute(mDefaultParams);
+        verify(mSplitsStorage, times(1)).update(any());
+        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+    }
+
+    @Test
+    public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
+        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage,
+                mSplitChangeProcessor, true);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
         when(mSplitsFetcher.execute(mDefaultParams)).thenThrow(IllegalStateException.class);
 

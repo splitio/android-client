@@ -370,6 +370,10 @@ public class SplitClientConfig {
         return _streamingEnabled;
     }
 
+    public int authRetryBackoffBase() {
+        return _authRetryBackoffBase;
+    }
+
     public int streamingReconnectBackoffBase() {
         return _streamingReconnectBackoffBase;
     }
@@ -853,7 +857,7 @@ public class SplitClientConfig {
             }
 
             return new SplitClientConfig(
-                    _serviceEndpoints.getApiEndpoint(),
+                    _serviceEndpoints.getSdkEndpoint(),
                     _serviceEndpoints.getEventsEndpoint(),
                     _featuresRefreshRate,
                     _segmentsRefreshRate,

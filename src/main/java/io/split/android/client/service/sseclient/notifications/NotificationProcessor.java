@@ -36,12 +36,9 @@ public class NotificationProcessor {
         mSplitsUpdateNotificationsQueue = checkNotNull(splitsUpdateNotificationsQueue);
     }
 
-    public void process(String rawJson) {
+    public void process(IncomingNotification incomingNotification) {
         try {
-            String notificationJson = mNotificationParser.parseRawNotification(rawJson).getData();
-
-            IncomingNotification incomingNotification =
-                    mNotificationParser.parseIncoming(notificationJson);
+            String notificationJson = incomingNotification.getJsonData();
             switch (incomingNotification.getType()) {
                 case SPLIT_UPDATE:
                     processSplitUpdate(mNotificationParser.parseSplitUpdate(notificationJson));
@@ -51,9 +48,6 @@ public class NotificationProcessor {
                     break;
                 case MY_SEGMENTS_UPDATE:
                     processMySegmentUpdate(mNotificationParser.parseMySegmentUpdate(notificationJson));
-                    break;
-                case CONTROL:
-                    processControl();
                     break;
                 default:
                     Logger.e("Unknow notification arrived: " + notificationJson);
@@ -91,9 +85,5 @@ public class NotificationProcessor {
                 mSplitTaskExecutor.submit(task, null);
             }
         }
-    }
-
-    private void processControl() {
-        // TODO: What to do here?
     }
 }
