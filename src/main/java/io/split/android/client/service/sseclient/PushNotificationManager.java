@@ -100,10 +100,11 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private void scheduleSseReconnection() {
         mTaskExecutor.schedule(
                 new SseReconnectionTimer(),
-                mSseBackoffCounter.getNextRetryTime(), this);
+                mSseBackoffCounter.getNextRetryTime(), null);
     }
 
     private void triggerSseAuthentication() {
+        Logger.d("Connecting to SSE server");
         mTaskExecutor.submit(
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 this);
@@ -130,9 +131,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     @VisibleForTesting(otherwise = PRIVATE)
     public void notifyPollingDisabled() {
-        if (mIsPollingEnabled.getAndSet(false)) {
-            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(DISABLE_POLLING));
-        }
+        Logger.i("Sending polling disabled message through event broadcaster.");
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(DISABLE_POLLING));
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
@@ -294,7 +294,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     notifyPollingEnabled();
                     return;
                 }
-
+Logger.d("Streaming enabled: " + isStreamingEnabled(taskInfo));
                 if ((!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
                         && !isApiKeyValid(taskInfo))) {
                     Logger.e("Couldn't connect to SSE server. Invalid apikey ");
@@ -321,7 +321,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 }
                 break;
             default:
-                Logger.e("Push notification manager unknown task");
+                Logger.e("Push notification manager unknown task: "
+                        + taskInfo.getTaskType());
         }
     }
 
@@ -375,6 +376,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
+            triggerSseAuthentication();
             mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(
                     ENABLE_POLLING));
             return SplitTaskExecutionInfo.success(GENERIC_TASK);
@@ -386,6 +388,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
+            Logger.d("Refreshing sse token");
             refreshSseToken();
             return SplitTaskExecutionInfo.success(GENERIC_TASK);
         }
@@ -396,6 +399,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
+            Logger.d("Reconnecting to SSE server");
             SseJwtToken token = getLastJwt();
             connectToSse(token.getRawJwt(), token.getChannels());
             return SplitTaskExecutionInfo.success(GENERIC_TASK);

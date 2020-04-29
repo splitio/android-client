@@ -89,7 +89,7 @@ public class SseClientTest {
         }
 
         @Override
-        public void onError() {
+        public void onError(boolean isRecoverable) {
             System.out.println("SseClientTest: OnError!!!!");
         }
 
