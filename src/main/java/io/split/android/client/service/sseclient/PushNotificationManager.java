@@ -139,11 +139,13 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     @VisibleForTesting(otherwise = PRIVATE)
     public void notifyPollingEnabled() {
         if (!mIsPollingEnabled.getAndSet(true)) {
+            Logger.i("Enabling polling");
             mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(ENABLE_POLLING));
         }
     }
 
     public void notifyStreamingConnected() {
+        Logger.i("Disabling polling");
         mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(STREAMING_CONNECTED));
     }
 
@@ -179,7 +181,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     processOccupancyNotification(incomingNotification);
                     break;
                 default:
+                    Logger.d("incoming process");
                     if (!mIsStreamingPaused.get()) {
+                        Logger.d("incoming process no if pause");
                         mNotificationProcessor.process(incomingNotification);
                     }
             }
@@ -212,6 +216,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     = mNotificationParser.parseControl(incomingNotification.getJsonData());
             switch (controlNotification.getControlType()) {
                 case STREAMING_DISABLED:
+                    mIsStreamingPaused.set(true);
                     shutdownStreaming();
                     break;
                 case STREAMING_ENABLED:
@@ -226,7 +231,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     notifyPollingEnabled();
                     break;
                 default:
-                    mNotificationProcessor.process(incomingNotification);
+                    Logger.e("Unknown message received" + controlNotification.getControlType());
             }
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse control notification: "
@@ -247,7 +252,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private void processOccupancyNotification(IncomingNotification incomingNotification) {
 
         // Using only primary control channel for now
-        if (!PRIMARY_CONTROL_CHANNEL.equals(incomingNotification.getChannel())) {
+        if (!incomingNotification.getChannel().contains(PRIMARY_CONTROL_CHANNEL)) {
+            Logger.d("Ignoring occupancy notification in channel: "
+                    + incomingNotification.getChannel());
             return;
         }
 
@@ -255,6 +262,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
             OccupancyNotification occupancyNotification
                     = mNotificationParser.parseOccupancy(incomingNotification.getJsonData());
             if (occupancyNotification.getMetrics().getPublishers() < 1) {
+                Logger.i("No publishers available for streaming channel: "
+                        + incomingNotification.getChannel());
                 notifyPollingEnabled();
             } else {
                 notifyPollingDisabled();

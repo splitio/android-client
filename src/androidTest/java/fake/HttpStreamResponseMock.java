@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 
 import io.split.android.client.network.BaseHttpResponseImpl;
 import io.split.android.client.network.HttpStreamResponse;
@@ -18,6 +19,9 @@ public class HttpStreamResponseMock extends BaseHttpResponseImpl implements Http
     final private PipedOutputStream mOutputStream;
     final private BufferedReader mBufferedReader;
     private Thread mRedirectionThread;
+    private boolean mIsClosed;
+
+    private CountDownLatch mClosedLatch;
 
     public HttpStreamResponseMock(int status, BlockingQueue<String> streamingResponseData) throws IOException {
         super(status);
@@ -36,16 +40,15 @@ public class HttpStreamResponseMock extends BaseHttpResponseImpl implements Http
     private void startOutputRedirection() throws IOException {
 
         mRedirectionThread = new Thread(new Runnable() {
-            public void run () {
+            public void run() {
                 try {
-                    while(true) {
-                        if(mStreamingResponseData != null) {
+                    while (true) {
+                        if (mStreamingResponseData != null) {
                             String data = mStreamingResponseData.take();
                             mOutputStream.write(data.getBytes());
                         }
                     }
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } finally {
@@ -63,11 +66,23 @@ public class HttpStreamResponseMock extends BaseHttpResponseImpl implements Http
     }
 
     public void close() {
+        mIsClosed = true;
+        if (mClosedLatch != null) {
+            mClosedLatch.countDown();
+        }
         mRedirectionThread.interrupt();
         try {
             mBufferedReader.close();
             mOutputStream.close();
         } catch (IOException e) {
         }
+    }
+
+    public void setClosedLatch(CountDownLatch latch) {
+        mClosedLatch = latch;
+    }
+
+    public boolean isClosed() {
+        return mIsClosed;
     }
 }
