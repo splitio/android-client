@@ -64,7 +64,7 @@ public class SyncManagerTest {
         mSyncManager.start();
         verify(mSynchronizer, times(1)).loadSplitsFromCache();
         verify(mSynchronizer, times(1)).loadMySegmentsFromCache();
-        verify(mSynchronizer, times(1)).syncronizeMySegments();
+        verify(mSynchronizer, times(1)).synchronizeMySegments();
         verify(mSynchronizer, times(1)).synchronizeSplits();
         verify(mSynchronizer, times(1)).synchronizeSplits();
         verify(mSynchronizer, never()).startPeriodicFetching();
@@ -79,7 +79,7 @@ public class SyncManagerTest {
         mSyncManager.start();
         verify(mSynchronizer, times(1)).loadSplitsFromCache();
         verify(mSynchronizer, times(1)).loadMySegmentsFromCache();
-        verify(mSynchronizer, never()).syncronizeMySegments();
+        verify(mSynchronizer, never()).synchronizeMySegments();
         verify(mSynchronizer, never()).synchronizeSplits();
         verify(mSynchronizer, never()).synchronizeSplits();
         verify(mSynchronizer, times(1)).startPeriodicFetching();
@@ -119,6 +119,6 @@ public class SyncManagerTest {
                 new PushStatusEvent(STREAMING_CONNECTED));
 
         verify(mSynchronizer, times(1)).synchronizeSplits();
-        verify(mSynchronizer, times(1)).syncronizeMySegments();
+        verify(mSynchronizer, times(1)).synchronizeMySegments();
     }
 }

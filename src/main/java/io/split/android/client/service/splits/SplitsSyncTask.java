@@ -23,8 +23,9 @@ public class SplitsSyncTask implements SplitTask {
     private final HttpFetcher<SplitChange> mSplitFetcher;
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
-    private boolean mRetryOnFail;
-    private int mCacheExpirationInDays;
+    private final boolean mRetryOnFail;
+    private final boolean mCheckCacheExpiration;
+    private final long mCacheExpirationInSeconds;
 
     private static final int RETRY_BASE = 1;
 
@@ -32,22 +33,28 @@ public class SplitsSyncTask implements SplitTask {
                           SplitsStorage splitsStorage,
                           SplitChangeProcessor splitChangeProcessor,
                           boolean retryOnFail,
-                          int cacheExpirationInDays) {
+                          boolean checkCacheExpiration,
+                          long cacheExpirationInSeconds) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
         mRetryOnFail = retryOnFail;
-        mCacheExpirationInDays = cacheExpirationInDays;
+        mCacheExpirationInSeconds = cacheExpirationInSeconds;
+        mCheckCacheExpiration = checkCacheExpiration;
     }
 
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
+        long storedChangeNumber = mSplitsStorage.getTill();
+        if(mCheckCacheExpiration && (now() - storedChangeNumber > mCacheExpirationInSeconds)) {
+            mSplitsStorage.clear();
+        }
         // TODO: Add some reusable logic for tasks retrying on error.
         ReconnectBackoffCounter backoffCounter = new ReconnectBackoffCounter(RETRY_BASE);
         boolean success = false;
         Map<String, Object> params = new HashMap<>();
-        params.put(SINCE_PARAM, mSplitsStorage.getTill());
+        params.put(SINCE_PARAM, storedChangeNumber);
         while(!success) {
             try {
                 SplitChange splitChange = mSplitFetcher.execute(params);
@@ -75,6 +82,9 @@ public class SplitsSyncTask implements SplitTask {
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
+    private long now() {
+        return System.currentTimeMillis() / 1000;
+    }
     private void logError(String message) {
         Logger.e("Error while executing splits sync task: " + message);
     }

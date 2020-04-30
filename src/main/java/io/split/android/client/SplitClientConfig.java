@@ -191,7 +191,7 @@ public class SplitClientConfig {
         return _trafficType;
     }
 
-    public int cacheExpirationInDays() {
+    public long cacheExpirationInSeconds() {
         return CACHE_EXPIRATION_IN_SECONDS;
     }
 

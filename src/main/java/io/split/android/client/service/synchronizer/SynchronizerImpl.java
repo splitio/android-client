@@ -94,12 +94,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void synchronizeSplits() {
         mTaskExecutor.submit(
-                mSplitTaskFactory.createSplitsSyncTask(true),
+                mSplitTaskFactory.createSplitsSyncTask(true, true),
                 mSplitsSyncTaskListener);
     }
 
     @Override
-    public void syncronizeMySegments() {
+    public void synchronizeMySegments() {
         mTaskExecutor.submit(
                 mSplitTaskFactory.createMySegmentsSyncTask(true),
                 mMySegmentsSyncTaskListener);

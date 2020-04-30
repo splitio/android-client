@@ -56,7 +56,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
         isPollingEnabled.set(!mSplitClientConfig.streamingEnabled());
         if (mSplitClientConfig.streamingEnabled()) {
             mSynchronizer.synchronizeSplits();
-            mSynchronizer.syncronizeMySegments();
+            mSynchronizer.synchronizeMySegments();
             mPushManagerEventBroadcaster.register(this);
             mSplitUpdateWorker.start();
             mMySegmentUpdateWorker.start();
@@ -122,7 +122,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
                 break;
             case STREAMING_CONNECTED:
                 mSynchronizer.synchronizeSplits();
-                mSynchronizer.syncronizeMySegments();
+                mSynchronizer.synchronizeMySegments();
             default:
                 Logger.e("Invalide SSE event received: " + message.getMessage());
         }

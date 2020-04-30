@@ -42,7 +42,7 @@ public class MySegmentsUpdateWorkerTest {
 
         Thread.sleep(1000);
 
-        verify(mSynchronizer, times(4)).syncronizeMySegments();
+        verify(mSynchronizer, times(4)).synchronizeMySegments();
     }
 
     @Test
@@ -52,6 +52,6 @@ public class MySegmentsUpdateWorkerTest {
 
         Thread.sleep(1000);
 
-        verify(mSynchronizer, never()).syncronizeMySegments();
+        verify(mSynchronizer, never()).synchronizeMySegments();
     }
 }

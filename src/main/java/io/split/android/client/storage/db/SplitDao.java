@@ -17,4 +17,7 @@ public interface SplitDao {
 
     @Query("SELECT name, body, updated_at FROM splits")
     List<SplitEntity> getAll();
+
+    @Query("DELETE FROM splits")
+    void deleteAll();
 }

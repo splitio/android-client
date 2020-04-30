@@ -10,5 +10,6 @@ public interface PersistentSplitsStorage {
     boolean update(ProcessedSplitChange splitChange);
     SplitsSnapshot getSnapshot();
     void update(Split splitName);
+    void clear();
     void close();
 }
