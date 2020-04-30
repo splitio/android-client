@@ -21,8 +21,6 @@ public class SplitTaskExecutionInfo {
     final private SplitTaskType taskType;
     final private SplitTaskExecutionStatus status;
     final private Map<String, Object> data;
-//    final private int nonSentRecords;
-//    final private long nonSentBytes;
 
     public static SplitTaskExecutionInfo success(SplitTaskType taskType) {
         return new SplitTaskExecutionInfo(
@@ -49,7 +47,7 @@ public class SplitTaskExecutionInfo {
     private SplitTaskExecutionInfo(SplitTaskType taskType,
                                    @NonNull SplitTaskExecutionStatus status,
                                    @NonNull Map<String, Object> data) {
-        this.taskType = taskType;
+        this.taskType = checkNotNull(taskType);
         this.status = checkNotNull(status);
         this.data = checkNotNull(data);
     }
