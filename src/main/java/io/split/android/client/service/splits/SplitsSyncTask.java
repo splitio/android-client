@@ -24,17 +24,20 @@ public class SplitsSyncTask implements SplitTask {
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
     private boolean mRetryOnFail;
+    private int mCacheExpirationInDays;
 
     private static final int RETRY_BASE = 1;
 
     public SplitsSyncTask(HttpFetcher<SplitChange> splitFetcher,
                           SplitsStorage splitsStorage,
                           SplitChangeProcessor splitChangeProcessor,
-                          boolean retryOnFail) {
+                          boolean retryOnFail,
+                          int cacheExpirationInDays) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
         mRetryOnFail = retryOnFail;
+        mCacheExpirationInDays = cacheExpirationInDays;
     }
 
     @Override

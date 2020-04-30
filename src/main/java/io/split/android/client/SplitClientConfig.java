@@ -50,6 +50,8 @@ public class SplitClientConfig {
     // Data folder
     private static final String DEFAULT_DATA_FOLDER = "split_data";
 
+    private static final long CACHE_EXPIRATION_IN_SECONDS = 864000; // 10 días
+
     private String _endpoint;
     private String _eventsEndpoint;
     private static String _hostname;
@@ -187,6 +189,10 @@ public class SplitClientConfig {
 
     public String trafficType() {
         return _trafficType;
+    }
+
+    public int cacheExpirationInDays() {
+        return CACHE_EXPIRATION_IN_SECONDS;
     }
 
     public long eventFlushInterval() {
