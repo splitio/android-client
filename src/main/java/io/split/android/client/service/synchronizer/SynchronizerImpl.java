@@ -116,7 +116,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     synchronized public void stopPeriodicFetching() {
         mTaskExecutor.stopTask(mSplitsFetcherTaskId);
         mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
-        Logger.i("Stoping periodic fetching tasks. " + mSplitsFetcherTaskId);
+        Logger.i(String.format("Stoping periodic fetching tasks %s, %s ", mSplitsFetcherTaskId
+        , mMySegmentsFetcherTaskId));
     }
 
     @Override
