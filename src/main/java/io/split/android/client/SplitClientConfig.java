@@ -35,6 +35,9 @@ public class SplitClientConfig {
     private static final int DEFAULT_EVENTS_PER_PUSH = 2000;
     private static final int DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES = 15;
 
+    private static final int DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS = 1;
+    private static final int DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS = 1;
+
     private static final int IMPRESSIONS_MAX_SENT_ATTEMPTS = 3;
     private static final int IMPRESSIONS_CHUNK_OUTDATED_TIME = 3600 * 1000; // One day millis
     private final static int EVENTS_MAX_SENT_ATTEMPS = 3;
@@ -47,8 +50,8 @@ public class SplitClientConfig {
     // Data folder
     private static final String DEFAULT_DATA_FOLDER = "split_data";
 
-    private final String _endpoint;
-    private final String _eventsEndpoint;
+    private String _endpoint;
+    private String _eventsEndpoint;
     private static String _hostname;
     private static String _ip;
 
@@ -74,7 +77,7 @@ public class SplitClientConfig {
     // Background sync
     private boolean _synchronizeInBackground;
     private long _backgroundSyncPeriod;
-    private boolean _backgroundSyncWhenBatteryNotLow ;
+    private boolean _backgroundSyncWhenBatteryNotLow;
     private boolean _backgroundSyncWhenWifiOnly;
 
     //.Track configuration
@@ -82,6 +85,13 @@ public class SplitClientConfig {
     private final int _eventsPerPush;
     private final long _eventFlushInterval;
     private final String _trafficType;
+
+    // Push notification settings
+    private boolean _streamingEnabled;
+    private int _authRetryBackoffBase;
+    private int _streamingReconnectBackoffBase;
+    private String _authServiceUrl;
+    private String _streamingServiceUrl;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -117,7 +127,12 @@ public class SplitClientConfig {
                               boolean synchronizeInBackground,
                               long backgroundSyncPeriod,
                               boolean backgroundSyncWhenBatteryNotLow,
-                              boolean backgroundSyncWhenWifiOnly) {
+                              boolean backgroundSyncWhenWifiOnly,
+                              boolean streamingEnabled,
+                              int authRetryBackoffBase,
+                              int streamingReconnectBackoffBase,
+                              String authServiceUrl,
+                              String streamingServiceUrl) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -146,6 +161,11 @@ public class SplitClientConfig {
         _backgroundSyncPeriod = backgroundSyncPeriod;
         _backgroundSyncWhenBatteryNotLow = backgroundSyncWhenBatteryNotLow;
         _backgroundSyncWhenWifiOnly = backgroundSyncWhenWifiOnly;
+        _streamingEnabled = streamingEnabled;
+        _authRetryBackoffBase = authRetryBackoffBase;
+        _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
+        _authServiceUrl = authServiceUrl;
+        _streamingServiceUrl = streamingServiceUrl;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -345,13 +365,30 @@ public class SplitClientConfig {
         return _backgroundSyncWhenWifiOnly;
     }
 
+    // Push notification settings
+    public boolean streamingEnabled() {
+        return _streamingEnabled;
+    }
+
+    public int authRetryBackoffBase() {
+        return _authRetryBackoffBase;
+    }
+
+    public int streamingReconnectBackoffBase() {
+        return _streamingReconnectBackoffBase;
+    }
+
+    public String authServiceUrl() {
+        return _authServiceUrl;
+    }
+
+    public String streamingServiceUrl() {
+        return _streamingServiceUrl;
+    }
+
     public static final class Builder {
 
-        private String _endpoint = "https://sdk.split.io/api";
-        private boolean _endpointSet = false;
-        private String _eventsEndpoint = "https://events.split.io/api";
-        private boolean _eventsEndpointSet = false;
-
+        private ServiceEndpoints _serviceEndpoints = null;
         private int _featuresRefreshRate = DEFAULT_FEATURES_REFRESH_RATE_SECS;
         private int _segmentsRefreshRate = DEFAULT_SEGMENTS_REFRESH_RATE_SECS;
         private int _impressionsRefreshRate = DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS;
@@ -381,7 +418,14 @@ public class SplitClientConfig {
         private boolean _backgroundSyncWhenBatteryNotLow = true;
         private boolean _backgroundSyncWhenWifiOnly = false;
 
+        // Push notification settings
+        private boolean _streamingEnabled = true;
+        private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
+        private int _streamingReconnectBackoffBase
+                = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
+
         public Builder() {
+            _serviceEndpoints = ServiceEndpoints.builder().build();
         }
 
         /**
@@ -428,17 +472,6 @@ public class SplitClientConfig {
             return this;
         }
 
-        /**
-         * The rest endpoint that sdk will hit for latest features and segments.
-         *
-         * @param endpoint MUST NOT be null
-         * @return this builder
-         */
-        public Builder endpoint(String endpoint, String eventsEndpoint) {
-            _endpoint = endpoint;
-            _eventsEndpoint = eventsEndpoint;
-            return this;
-        }
 
         /**
          * The SDK will poll the endpoint for changes to features at this period.
@@ -689,6 +722,7 @@ public class SplitClientConfig {
          * Period in minutes to execute background synchronization
          * Default values is 15 minutes and is the minimum allowed.
          * Is a lower value is especified default value will be used.
+         *
          * @return this builder
          */
         public Builder sychronizeInBackgroundPeriod(long backgroundSyncPeriod) {
@@ -716,6 +750,54 @@ public class SplitClientConfig {
          */
         public Builder backgroundSyncWhenWifiOnly(boolean backgroundSyncWhenWifiOnly) {
             _backgroundSyncWhenWifiOnly = backgroundSyncWhenWifiOnly;
+            return this;
+        }
+
+        /**
+         * Whether we should attempt to use streaming or not.
+         * If the variable is false, the SDK will start in polling mode and stay that way.
+         *
+         * @return This builder
+         * @default: True
+         */
+        public Builder streamingEnabled(boolean streamingEnabled) {
+            _streamingEnabled = streamingEnabled;
+            return this;
+        }
+
+        /**
+         * How many seconds to wait before re attempting to authenticate for push notifications.
+         * Minimum: 1 seconds
+         *
+         * @param authRetryBackoffBase
+         * @return this builder
+         * @default: 1 second
+         */
+        public Builder authRetryBackoffBase(int authRetryBackoffBase) {
+            _authRetryBackoffBase = authRetryBackoffBase;
+            return this;
+        }
+
+        /**
+         * How many seconds to wait before re attempting to connect to streaming.
+         *
+         * @return: This builder
+         * @default: 1 Second
+         */
+        public Builder streamingReconnectBackoffBase(int streamingReconnectBackoffBase) {
+            _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
+            return this;
+        }
+
+
+        /**
+         * Alternative service enpoints URL. Should only be adjusted for playing well in test environments.
+         *
+         * @param serviceEndpoints ServiceEndpoints
+         * @return this builder
+         */
+        public Builder serviceEndpoints(ServiceEndpoints serviceEndpoints) {
+            _serviceEndpoints = serviceEndpoints;
             return this;
         }
 
@@ -754,20 +836,18 @@ public class SplitClientConfig {
                 throw new IllegalArgumentException("readTimeout must be > 0: " + _readTimeout);
             }
 
-            if (_endpoint == null) {
-                throw new IllegalArgumentException("endpoint must not be null");
-            }
-
-            if (_eventsEndpoint == null) {
-                throw new IllegalArgumentException("events endpoint must not be null");
-            }
-
-            if (_endpointSet && !_eventsEndpointSet) {
-                throw new IllegalArgumentException("If endpoint is set, you must also set the events endpoint");
-            }
-
             if (_numThreadsForSegmentFetch <= 0) {
                 throw new IllegalArgumentException("Number of threads for fetching segments MUST be greater than zero");
+            }
+
+            if (_authRetryBackoffBase < 1) {
+                throw new IllegalArgumentException("Re attempting time to authenticate " +
+                        "for push notifications MUST be greater than zero");
+            }
+
+            if (_authRetryBackoffBase < 1) {
+                throw new IllegalArgumentException("Re attempting time to connect to " +
+                        "streaming notifications MUST be greater than zero");
             }
 
             if (_backgroundSyncPeriod < DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES) {
@@ -777,8 +857,8 @@ public class SplitClientConfig {
             }
 
             return new SplitClientConfig(
-                    _endpoint,
-                    _eventsEndpoint,
+                    _serviceEndpoints.getSdkEndpoint(),
+                    _serviceEndpoints.getEventsEndpoint(),
                     _featuresRefreshRate,
                     _segmentsRefreshRate,
                     _impressionsRefreshRate,
@@ -803,7 +883,12 @@ public class SplitClientConfig {
                     _synchronizeInBackground,
                     _backgroundSyncPeriod,
                     _backgroundSyncWhenBatteryNotLow,
-                    _backgroundSyncWhenWifiOnly);
+                    _backgroundSyncWhenWifiOnly,
+                    _streamingEnabled,
+                    _authRetryBackoffBase,
+                    _streamingReconnectBackoffBase,
+                    _serviceEndpoints.getAuthServiceEndpoint(),
+                    _serviceEndpoints.getStreamingServiceEndpoint());
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

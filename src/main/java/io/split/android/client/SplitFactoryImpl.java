@@ -2,8 +2,6 @@ package io.split.android.client;
 
 import android.content.Context;
 
-import androidx.work.WorkManager;
-
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,7 +31,8 @@ import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
-import io.split.android.client.service.synchronizer.SyncManagerImpl;
+import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
@@ -62,7 +61,6 @@ import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
-import io.split.android.engine.SDKReadinessGates;
 import io.split.android.engine.experiments.SplitParser;
 
 public class SplitFactoryImpl implements SplitFactory {
@@ -78,6 +76,12 @@ public class SplitFactoryImpl implements SplitFactory {
     private SyncManager _syncManager;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
+            throws URISyntaxException {
+        this(apiToken, key, config, context, new HttpClientImpl());
+    }
+
+    private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
+                             Context context, HttpClient httpClient)
             throws URISyntaxException {
 
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
@@ -106,7 +110,6 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, splitRoomDatabase);
 
-        final HttpClient httpClient = new HttpClientImpl();
         httpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
 
         URI eventsRootTarget = URI.create(config.eventsEndpoint());
@@ -130,12 +133,16 @@ public class SplitFactoryImpl implements SplitFactory {
                 httpClient, cachedFireAndForgetMetrics);
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
-        SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(config, splitApiFacade, storageContainer);;
+        SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
+                config, splitApiFacade, storageContainer, key.matchingKey());
 
-        _syncManager = new SyncManagerImpl(
+        Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
-                        context, config, apiToken, key.matchingKey(), databaseName));
+                context, config, apiToken, key.matchingKey(), databaseName));
+
+        _syncManager = factoryHelper.buildSyncManager(config, _splitTaskExecutor,
+                splitTaskFactory, httpClient, synchronizer);
 
         _syncManager.start();
 

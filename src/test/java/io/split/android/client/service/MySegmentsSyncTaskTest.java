@@ -33,12 +33,12 @@ public class MySegmentsSyncTaskTest {
 
     List<MySegment> mMySegments = null;
 
-    @InjectMocks
     MySegmentsSyncTask mTask;
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false);
         loadMySegments();
     }
 
@@ -53,7 +53,34 @@ public class MySegmentsSyncTaskTest {
     }
 
     @Test
-    public void fetcherException() throws HttpFetcherException {
+    public void fetcherExceptionRetryOff() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(new HashMap<>())).thenThrow(HttpFetcherException.class);
+
+        mTask.execute();
+
+        verify(mMySegmentsFetcher, times(1)).execute(new HashMap<>());
+        verify(mySegmentsStorage, never()).set(any());
+    }
+
+    @Test
+    public void fetcherExceptionRetryOn() throws HttpFetcherException {
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true);
+
+        when(mMySegmentsFetcher.execute(new HashMap<>()))
+                .thenThrow(HttpFetcherException.class)
+                .thenThrow(HttpFetcherException.class)
+                .thenThrow(HttpFetcherException.class)
+                .thenReturn(mMySegments);
+
+        mTask.execute();
+
+        verify(mMySegmentsFetcher, times(4)).execute(new HashMap<>());
+        verify(mySegmentsStorage, times(1)).set(any());
+    }
+
+    @Test
+    public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true);
         when(mMySegmentsFetcher.execute(new HashMap<>())).thenThrow(IllegalStateException.class);
 
         mTask.execute();
@@ -82,7 +109,7 @@ public class MySegmentsSyncTaskTest {
     private void loadMySegments() {
         if (mMySegments == null) {
             mMySegments = new ArrayList<>();
-            for(int i=0; i<5; i++) {
+            for (int i = 0; i < 5; i++) {
                 MySegment s = new MySegment();
                 s.id = "id_" + i;
                 s.id = "segment_" + i;

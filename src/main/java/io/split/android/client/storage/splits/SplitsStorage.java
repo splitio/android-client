@@ -1,11 +1,11 @@
 package io.split.android.client.storage.splits;
 
-        import androidx.annotation.NonNull;
+import androidx.annotation.NonNull;
 
-        import java.util.List;
-        import java.util.Map;
+import java.util.List;
+import java.util.Map;
 
-        import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.Split;
 
 public interface SplitsStorage {
     void loadLocal();
@@ -17,6 +17,8 @@ public interface SplitsStorage {
     Map<String, Split> getAll();
 
     void update(ProcessedSplitChange splitChange);
+
+    void updateWithoutChecks(Split split);
 
     boolean isValidTrafficType(@NonNull String name);
 

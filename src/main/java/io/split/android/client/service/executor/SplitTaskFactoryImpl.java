@@ -2,7 +2,10 @@ package io.split.android.client.service.executor;
 
 import androidx.annotation.NonNull;
 
+import java.util.List;
+
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.dtos.Split;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRecorderTask;
@@ -11,9 +14,14 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.service.splits.SplitsUpdateTask;
+import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
+import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.storage.SplitStorageContainer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -23,17 +31,21 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageContainer mSplitsStorageContainer;
     private final SplitClientConfig mSplitClientConfig;
+    private final String mUserKey;
 
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
                                 @NonNull SplitApiFacade splitApiFacade,
-                                @NonNull SplitStorageContainer splitStorageContainer) {
+                                @NonNull SplitStorageContainer splitStorageContainer,
+                                @NonNull String userKey) {
+
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
+        mUserKey = checkNotNull(userKey);
     }
 
     @Override
-    public SplitTask createEventsRecorderTask() {
+    public EventsRecorderTask createEventsRecorderTask() {
         return new EventsRecorderTask(
                 mSplitApiFacade.getEventsRecorder(),
                 mSplitsStorageContainer.getEventsStorage(),
@@ -41,7 +53,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createImpressionsRecorderTask() {
+    public ImpressionsRecorderTask createImpressionsRecorderTask() {
         return new ImpressionsRecorderTask(
                 mSplitApiFacade.getImpressionsRecorder(),
                 mSplitsStorageContainer.getImpressionsStorage(),
@@ -51,27 +63,51 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitTask createSplitsSyncTask() {
+    public SplitsSyncTask createSplitsSyncTask(boolean retryOnFail) {
         return new SplitsSyncTask(
                 mSplitApiFacade.getSplitFetcher(),
                 mSplitsStorageContainer.getSplitsStorage(),
-                new SplitChangeProcessor());
+                new SplitChangeProcessor(), retryOnFail);
     }
 
     @Override
-    public SplitTask createMySegmentsSyncTask() {
+    public MySegmentsSyncTask createMySegmentsSyncTask(boolean retryOnFail) {
         return new MySegmentsSyncTask(
                 mSplitApiFacade.getMySegmentsFetcher(),
-                mSplitsStorageContainer.getMySegmentsStorage());
+                mSplitsStorageContainer.getMySegmentsStorage(), retryOnFail);
     }
 
     @Override
-    public SplitTask createLoadMySegmentsTask() {
+    public LoadMySegmentsTask createLoadMySegmentsTask() {
         return new LoadMySegmentsTask(mSplitsStorageContainer.getMySegmentsStorage());
     }
 
     @Override
-    public SplitTask createLoadSplitsTask() {
+    public LoadSplitsTask createLoadSplitsTask() {
         return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage());
+    }
+
+    @Override
+    public SseAuthenticationTask createSseAuthenticationTask() {
+        return new SseAuthenticationTask(mSplitApiFacade.getSseAuthenticationFetcher(),
+                mUserKey, new SseJwtParser());
+    }
+
+    @Override
+    public SplitKillTask createSplitKillTask(Split split) {
+        return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage(), split);
+    }
+
+    @Override
+    public MySegmentsUpdateTask createMySegmentsUpdateTask(List<String> segments) {
+        return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage(), segments);
+    }
+
+    @Override
+    public SplitsUpdateTask createSplitsUpdateTask(long since) {
+        return new SplitsUpdateTask(
+                mSplitApiFacade.getSplitFetcher(),
+                mSplitsStorageContainer.getSplitsStorage(),
+                new SplitChangeProcessor(), since);
     }
 }

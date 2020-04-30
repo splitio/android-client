@@ -52,8 +52,10 @@ class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHe
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
         if (mTaskType.equals(taskInfo.getTaskType()) &&
                 taskInfo.getStatus().equals(SplitTaskExecutionStatus.ERROR)) {
-            mPushedCount.addAndGet(taskInfo.getNonSentRecords());
-            mTotalPushedSizeInBytes.addAndGet(taskInfo.getNonSentBytes());
+            mPushedCount.addAndGet(taskInfo.getIntegerValue(
+                    SplitTaskExecutionInfo.NON_SENT_RECORDS));
+            mTotalPushedSizeInBytes.addAndGet(taskInfo.getLongValue(
+                    SplitTaskExecutionInfo.NON_SENT_BYTES));
         }
     }
 

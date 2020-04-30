@@ -39,7 +39,9 @@ import static io.split.android.engine.ConditionsTestUtil.partition;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
@@ -60,11 +62,11 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("test1"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("test1"), splitsStorage);
 
         assertThat(client.getTreatment(null), is(equalTo(Treatments.CONTROL)));
 
-        verifyZeroInteractions(splitsStorage);
+        verify(splitsStorage, never()).get(anyString());
     }
 
     @Test
@@ -78,7 +80,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 

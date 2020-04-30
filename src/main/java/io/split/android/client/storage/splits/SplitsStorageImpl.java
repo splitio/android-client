@@ -92,6 +92,12 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
+    public void updateWithoutChecks(Split split) {
+        mInMemorySplits.put(split.name, split);
+        mPersistentStorage.update(split);
+    }
+
+    @Override
     public long getTill() {
         return mChangeNumber;
     }

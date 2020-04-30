@@ -13,11 +13,12 @@ public interface SyncManager {
 
     void resume();
 
-    void stop();
-
     void flush();
 
     void pushEvent(Event event);
 
     void pushImpression(Impression impression);
+
+    void stop();
+
 }
