@@ -40,7 +40,6 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
 
         mClient = checkNotNull(client);
         mTarget = checkNotNull(target);
-
         mNetworkHelper = checkNotNull(networkHelper);
         mResponseParser = checkNotNull(responseParser);
         mMetrics = metrics;
