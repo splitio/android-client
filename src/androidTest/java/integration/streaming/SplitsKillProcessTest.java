@@ -118,8 +118,10 @@ public class SplitsKillProcessTest {
 
         Assert.assertEquals(2, splitCount);
         Assert.assertEquals(CHANGE_NUMBER, split.changeNumber);
+        Assert.assertEquals("off", split.defaultTreatment);
         Assert.assertTrue(split.killed);
         Assert.assertFalse(splitOld.killed);
+        Assert.assertEquals("yes", splitOld.defaultTreatment);
         Assert.assertEquals(3, mSplitChangesHitCount);
         Assert.assertEquals(CHANGE_NUMBER, storedChangeNumber);
         Assert.assertEquals(CHANGE_NUMBER - 1000, mLastChangeNumber);
@@ -231,6 +233,7 @@ public class SplitsKillProcessTest {
         Split split = getSplitByName(mSplitChange.splits, "test_feature");
         split.changeNumber = CHANGE_NUMBER;
         split.killed = true;
+        split.defaultTreatment = "off";
         mSplitChange.till = CHANGE_NUMBER;
         return Json.toJson(mSplitChange);
     }
