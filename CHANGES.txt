@@ -1,6 +1,6 @@
 
 2.6.0: (Apr 30, 2020)
-- Added definitions update through a streaming connnection
+- Added support for the new Split streaming architecture. When enabled, the SDK will not poll for updates but instead receive notifications every time there's a change in your environments, allowing to process those much quicker. If disabled (default) or in the event of an issue, the SDK will fallback to the known polling mechanism to provide a seamless experience.
 
 2.5.0: (Mar 13, 2020)
 - Replaced disk files by Room to handle cache data
