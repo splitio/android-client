@@ -447,8 +447,8 @@ public class BCrypt {
      * Decode a string encoded using bcrypt's base64 scheme to a
      * byte array. Note that this is *not* compatible with
      * the standard MIME-base64 encoding.
-     * @param s the string to decode
-     * @param maxolen the maximum number of bytes to decode
+     * @param s the string to parse
+     * @param maxolen the maximum number of bytes to parse
      * @return  an array containing the decoded bytes
      */
     private static byte[] decode_base64(String s, int maxolen) {

@@ -1,7 +1,5 @@
 package io.split.android.client.service;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -19,6 +17,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
@@ -41,8 +40,8 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
-import io.split.android.client.service.synchronizer.SyncManager;
-import io.split.android.client.service.synchronizer.SyncManagerImpl;
+import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
@@ -51,6 +50,7 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -59,9 +59,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class SyncManagerTest {
+public class SynchronizerTest {
 
-    SyncManager mSyncManager;
+    Synchronizer mSynchronizer;
     @Mock
     SplitTaskExecutor mTaskExecutor;
     @Mock
@@ -105,16 +105,14 @@ public class SyncManagerTest {
         when(mSplitStorageContainer.getEventsStorage()).thenReturn(mEventsStorage);
         when(mSplitStorageContainer.getImpressionsStorage()).thenReturn(mImpressionsStorage);
 
-        when(mTaskFactory.createSplitsSyncTask()).thenReturn(Mockito.mock(SplitsSyncTask.class));
-        when(mTaskFactory.createMySegmentsSyncTask()).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
+        when(mTaskFactory.createSplitsSyncTask(anyBoolean())).thenReturn(Mockito.mock(SplitsSyncTask.class));
+        when(mTaskFactory.createMySegmentsSyncTask(anyBoolean())).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
 
-        //when(WorkManager.getInstance(any(Context.class))).thenReturn(mWorkManager);
-
         when(mWorkManager.getWorkInfoByIdLiveData(any())).thenReturn(mock(LiveData.class));
 
-        mSyncManager = new SyncManagerImpl(splitClientConfig, mTaskExecutor,
+        mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor,
                 mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper);
     }
 
@@ -126,7 +124,8 @@ public class SyncManagerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
-        mSyncManager.start();
+        mSynchronizer.startPeriodicFetching();
+        mSynchronizer.startPeriodicRecording();
         verify(mTaskExecutor, times(1)).schedule(
                 any(SplitsSyncTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
@@ -172,19 +171,6 @@ public class SyncManagerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
-        mSyncManager.start();
-        verify(mTaskExecutor, times(1)).schedule(
-                any(SplitsSyncTask.class), anyLong(), anyLong(),
-                any(SplitTaskExecutionListener.class));
-        verify(mTaskExecutor, times(1)).schedule(
-                any(MySegmentsSyncTask.class), anyLong(), anyLong(),
-                any(SplitTaskExecutionListener.class));
-        verify(mTaskExecutor, times(1)).schedule(
-                any(EventsRecorderTask.class), anyLong(), anyLong(),
-                any(SplitTaskExecutionListener.class));
-        verify(mTaskExecutor, times(1)).schedule(
-                any(ImpressionsRecorderTask.class), anyLong(), anyLong(),
-                any(SplitTaskExecutionListener.class));
 
         verify(mWorkManagerWrapper, times(1)).scheduleWork();
         verify(mWorkManagerWrapper, never()).removeWork();
@@ -198,8 +184,9 @@ public class SyncManagerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
-        mSyncManager.start();
-        mSyncManager.pause();
+        mSynchronizer.startPeriodicFetching();
+        mSynchronizer.startPeriodicRecording();
+        mSynchronizer.pause();
         verify(mTaskExecutor, times(1)).pause();
     }
 
@@ -211,9 +198,10 @@ public class SyncManagerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
-        mSyncManager.start();
-        mSyncManager.pause();
-        mSyncManager.resume();
+        mSynchronizer.startPeriodicFetching();
+        mSynchronizer.startPeriodicRecording();
+        mSynchronizer.pause();
+        mSynchronizer.resume();
         verify(mTaskExecutor, times(1)).resume();
     }
 
@@ -226,8 +214,8 @@ public class SyncManagerTest {
                 .build();
         setup(config);
         Event event = new Event();
-        mSyncManager.start();
-        mSyncManager.pushEvent(event);
+        mSynchronizer.startPeriodicRecording();
+        mSynchronizer.pushEvent(event);
         Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
                 any(EventsRecorderTask.class),
@@ -243,9 +231,9 @@ public class SyncManagerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
-        mSyncManager.start();
+        mSynchronizer.startPeriodicRecording();
         for (int i = 0; i < 22; i++) {
-            mSyncManager.pushEvent(new Event());
+            mSynchronizer.pushEvent(new Event());
         }
         Thread.sleep(200);
         verify(mEventsStorage, times(22)).push(any(Event.class));
@@ -262,11 +250,11 @@ public class SyncManagerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
-        mSyncManager.start();
+        mSynchronizer.startPeriodicRecording();
         for (int i = 0; i < 6; i++) {
             Event event = new Event();
             event.setSizeInBytes(2000000);
-            mSyncManager.pushEvent(event);
+            mSynchronizer.pushEvent(event);
         }
         Thread.sleep(200);
         verify(mEventsStorage, times(6)).push(any(Event.class));
@@ -285,8 +273,8 @@ public class SyncManagerTest {
         setup(config);
         Impression impression = createImpression();
         ArgumentCaptor<KeyImpression> impressionCaptor = ArgumentCaptor.forClass(KeyImpression.class);
-        mSyncManager.start();
-        mSyncManager.pushImpression(impression);
+        mSynchronizer.startPeriodicRecording();
+        mSynchronizer.pushImpression(impression);
         Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
                 any(ImpressionsRecorderTask.class),
@@ -309,9 +297,9 @@ public class SyncManagerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
-        mSyncManager.start();
+        mSynchronizer.startPeriodicRecording();
         for (int i = 0; i < 8; i++) {
-            mSyncManager.pushImpression(createImpression());
+            mSynchronizer.pushImpression(createImpression());
         }
         Thread.sleep(200);
         verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
@@ -329,9 +317,9 @@ public class SyncManagerTest {
                 .build();
         setup(config);
 
-        mSyncManager.start();
+        mSynchronizer.startPeriodicRecording();
         for (int i = 0; i < 10; i++) {
-            mSyncManager.pushImpression(createImpression());
+            mSynchronizer.pushImpression(createImpression());
         }
         Thread.sleep(200);
         verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
@@ -351,9 +339,10 @@ public class SyncManagerTest {
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
-        mSyncManager = new SyncManagerImpl(config, executor,
+        mSynchronizer = new SynchronizerImpl(config, executor,
                 mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper);
-        mSyncManager.start();
+        mSynchronizer.loadSplitsFromCache();
+        mSynchronizer.loadMySegmentsFromCache();
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
         verify(mEventsManager, times(1))
@@ -391,9 +380,10 @@ public class SyncManagerTest {
         }
 
         @Override
-        public void schedule(@NonNull SplitTask task, long initialDelayInSecs,
-                             long periodInSecs,
-                             @Nullable SplitTaskExecutionListener executionListener) {
+        public String schedule(@NonNull SplitTask task, long initialDelayInSecs,
+                               long periodInSecs,
+                               @Nullable SplitTaskExecutionListener executionListener) {
+            return UUID.randomUUID().toString();
 
         }
 
@@ -417,8 +407,18 @@ public class SyncManagerTest {
         }
 
         @Override
+        public void stopTask(String taskId) {
+
+        }
+
+        @Override
         public void stop() {
 
+        }
+
+        @Override
+        public String schedule(@NonNull SplitTask task, long initialDelayInSecs, @Nullable SplitTaskExecutionListener executionListener) {
+            return null;
         }
     }
 }

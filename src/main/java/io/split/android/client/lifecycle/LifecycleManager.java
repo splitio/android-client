@@ -5,6 +5,7 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
+
 import io.split.android.client.service.synchronizer.SyncManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;

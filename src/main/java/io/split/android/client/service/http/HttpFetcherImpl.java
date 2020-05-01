@@ -19,24 +19,34 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
 
     private final HttpClient mClient;
     private final URI mTarget;
-    private final Metrics mMetrics;
-    private final FetcherMetricsConfig mFetcherMetricsConfig;
+    private Metrics mMetrics;
+    private FetcherMetricsConfig mFetcherMetricsConfig;
     private final NetworkHelper mNetworkHelper;
     private HttpResponseParser<T> mResponseParser;
 
     public HttpFetcherImpl(@NonNull HttpClient client,
                            @NonNull URI target,
-                           @NonNull Metrics metrics,
-                           @NonNull FetcherMetricsConfig fetcherMetricsConfig,
+                           @NonNull NetworkHelper networkHelper,
+                           @NonNull HttpResponseParser<T> responseParser) {
+        this(client, target, null, null, networkHelper, responseParser);
+    }
+
+    public HttpFetcherImpl(@NonNull HttpClient client,
+                           @NonNull URI target,
+                           Metrics metrics,
+                           FetcherMetricsConfig fetcherMetricsConfig,
                            @NonNull NetworkHelper networkHelper,
                            @NonNull HttpResponseParser<T> responseParser) {
 
         mClient = checkNotNull(client);
         mTarget = checkNotNull(target);
-        mMetrics = checkNotNull(metrics);
         mNetworkHelper = checkNotNull(networkHelper);
-        mFetcherMetricsConfig = checkNotNull(fetcherMetricsConfig);
         mResponseParser = checkNotNull(responseParser);
+        mMetrics = metrics;
+        mFetcherMetricsConfig = fetcherMetricsConfig;
+        if(metrics != null) {
+            checkNotNull(fetcherMetricsConfig);
+        }
     }
 
     @Override
@@ -59,7 +69,9 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET).execute();
 
             if (!response.isSuccess()) {
-                mMetrics.count(String.format(mFetcherMetricsConfig.getStatusLabel(), response.getHttpStatus()), 1);
+                if(mMetrics != null) {
+                    mMetrics.count(String.format(mFetcherMetricsConfig.getStatusLabel(), response.getHttpStatus()), 1);
+                }
                 throw new IllegalStateException("http return code " + response.getHttpStatus());
             }
 
@@ -69,10 +81,14 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                 throw new IllegalStateException("Wrong data received from split changes server");
             }
         } catch (Exception e) {
-            mMetrics.count(mFetcherMetricsConfig.getExceptionLabel(), 1);
+            if(mMetrics != null) {
+                mMetrics.count(mFetcherMetricsConfig.getExceptionLabel(), 1);
+            }
             throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage());
         } finally {
-            mMetrics.time(mFetcherMetricsConfig.getTimeLabel(), System.currentTimeMillis() - start);
+            if(mMetrics != null) {
+                mMetrics.time(mFetcherMetricsConfig.getTimeLabel(), System.currentTimeMillis() - start);
+            }
         }
         return responseData;
     }

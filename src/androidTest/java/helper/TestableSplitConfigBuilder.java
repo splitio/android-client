@@ -2,13 +2,14 @@ package helper;
 
         import java.lang.reflect.Constructor;
 
+        import io.split.android.client.ServiceEndpoints;
         import io.split.android.client.SplitClientConfig;
         import io.split.android.client.impressions.ImpressionListener;
+        import io.split.android.client.utils.Logger;
 
 public class TestableSplitConfigBuilder {
 
-    private String mEndpoint = "https://sdk.split.io/api";
-    private String mEventsEndpoint = "https://events.split.io/api";
+    private ServiceEndpoints mServiceEndpoints = null;
     private int mFeaturesRefreshRate = 3600;
     private int mSegmentsRefreshRate = 1800;
     private int mImpressionsRefreshRate = 1800;
@@ -31,15 +32,18 @@ public class TestableSplitConfigBuilder {
     private long mEventFlushInterval = 1800;
     private String mTrafficType = null;
     private boolean mSynchronizeInBackground = false;
-    private long mBackgroundSyncPeriod;
+    private long mBackgroundSyncPeriod = 15;
     private boolean mBackgroundSyncWhenBatteryNotLow = true;
     private boolean mBackgroundSyncWhenWifiOnly = false;
 
-    public TestableSplitConfigBuilder endpoint(String endpoint, String eventsEndpoint) {
-        this.mEndpoint = endpoint;
-        this.mEventsEndpoint = eventsEndpoint;
-        return this;
+    private boolean mStreamingEnabled = true;
+    private int mAuthRetryBackoffBase = 1;
+    private int mStreamingReconnectBackoffBase = 1;
+
+    public TestableSplitConfigBuilder() {
+        mServiceEndpoints = ServiceEndpoints.builder().build();
     }
+
 
     public TestableSplitConfigBuilder featuresRefreshRate(int featuresRefreshRate) {
         this.mFeaturesRefreshRate = featuresRefreshRate;
@@ -151,14 +155,34 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder streamingEnabled(boolean streamingEnabled) {
+        mStreamingEnabled = streamingEnabled;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder authRetryBackoffBase(int authRetryBackoffBase) {
+        mAuthRetryBackoffBase = authRetryBackoffBase;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder streamingReconnectBackoffBase(int streamingReconnectBackoffBase) {
+        mStreamingReconnectBackoffBase = streamingReconnectBackoffBase;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder serviceEndpoints(ServiceEndpoints serviceEndpoints) {
+        mServiceEndpoints = serviceEndpoints;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
         try {
 
             SplitClientConfig config = (SplitClientConfig) constructor.newInstance(
-                    mEndpoint,
-                    mEventsEndpoint,
+                    mServiceEndpoints.getSdkEndpoint(),
+                    mServiceEndpoints.getEventsEndpoint(),
                     mFeaturesRefreshRate,
                     mSegmentsRefreshRate,
                     mImpressionsRefreshRate,
@@ -183,10 +207,16 @@ public class TestableSplitConfigBuilder {
                     mSynchronizeInBackground,
                     mBackgroundSyncPeriod,
                     mBackgroundSyncWhenBatteryNotLow,
-                    mBackgroundSyncWhenWifiOnly);
+                    mBackgroundSyncWhenWifiOnly,
+                    mStreamingEnabled,
+                    mAuthRetryBackoffBase,
+                    mStreamingReconnectBackoffBase,
+                    mServiceEndpoints.getAuthServiceEndpoint(),
+                    mServiceEndpoints.getStreamingServiceEndpoint());
             return config;
         } catch (Exception e) {
-            System.out.println(e.getLocalizedMessage());
+            Logger.e("Error creating Testable Split client builder: "
+                    + e.getLocalizedMessage());
         }
         return null;
     }
