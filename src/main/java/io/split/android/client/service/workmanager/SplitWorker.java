@@ -37,7 +37,6 @@ public abstract class SplitWorker extends Worker {
     private final String mEndpoint;
     private final Metrics mMetrics;
     private final long mCacheExpirationInSeconds;
-    private final static long DEFAULT_e
 
 
     protected SplitTask mSplitTask;
