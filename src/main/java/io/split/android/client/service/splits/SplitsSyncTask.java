@@ -50,6 +50,7 @@ public class SplitsSyncTask implements SplitTask {
         if (mCheckCacheExpiration && storedChangeNumber > -1
                 && (now() - storedChangeNumber > mCacheExpirationInSeconds)){
             mSplitsStorage.clear();
+            storedChangeNumber  = -1;
         }
         // TODO: Add some reusable logic for tasks retrying on error.
         ReconnectBackoffCounter backoffCounter = new ReconnectBackoffCounter(RETRY_BASE);
