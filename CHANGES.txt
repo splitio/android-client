@@ -1,3 +1,17 @@
+
+2.6.0: (Apr 30, 2020)
+- Added support for the new Split streaming architecture. When enabled, the SDK will not poll for updates but instead receive notifications every time there's a change in your environments, allowing to process those much quicker. If disabled (default) or in the event of an issue, the SDK will fallback to the known polling mechanism to provide a seamless experience.
+
+2.5.0: (Mar 13, 2020)
+- Replaced disk files by Room to handle cache data
+- Improved sync architecture
+- Improved thread management
+- Fixed isReady flag
+- Removed some unused tags in manifest
+
+2.4.5: (Oct 8, 2019)
+- Fixed concurrency issue when parsing events from disk
+
 2.4.4: (Sep 26, 2019)
 - Fixed issue when load events from disk
 
