@@ -1,5 +1,6 @@
 package io.split.android.client.service.workmanager;
 
+import android.app.Service;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -36,6 +37,8 @@ public abstract class SplitWorker extends Worker {
     private final String mEndpoint;
     private final Metrics mMetrics;
     private final long mCacheExpirationInSeconds;
+    private final static long DEFAULT_e
+
 
     protected SplitTask mSplitTask;
 
@@ -49,7 +52,8 @@ public abstract class SplitWorker extends Worker {
         mEndpoint = inputData.getString(ServiceConstants.WORKER_PARAM_ENDPOINT);
         String metricsEndpoint = inputData.getString(ServiceConstants.WORKER_PARAM_EVENTS_ENDPOINT);
         mDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
-        mCacheExpirationInSeconds = inputData.getLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION, 0);
+        mCacheExpirationInSeconds = inputData.getLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION,
+                ServiceConstants.DEFAULT_CACHE_EXPIRATION_IN_SECONDS);
         SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
         headersBuilder.setClientVersion(BuildConfig.VERSION_NAME);
         headersBuilder.setApiToken(apiKey);
