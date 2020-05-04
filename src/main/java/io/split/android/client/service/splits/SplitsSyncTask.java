@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
@@ -13,7 +14,6 @@ import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.service.executor.SplitTask;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -47,7 +47,8 @@ public class SplitsSyncTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
         long storedChangeNumber = mSplitsStorage.getTill();
-        if(mCheckCacheExpiration && (now() - storedChangeNumber > mCacheExpirationInSeconds)) {
+        if (mCheckCacheExpiration && storedChangeNumber > -1
+                && (now() - storedChangeNumber > mCacheExpirationInSeconds)){
             mSplitsStorage.clear();
         }
         // TODO: Add some reusable logic for tasks retrying on error.
@@ -55,14 +56,14 @@ public class SplitsSyncTask implements SplitTask {
         boolean success = false;
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
-        while(!success) {
+        while (!success) {
             try {
                 SplitChange splitChange = mSplitFetcher.execute(params);
                 mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
                 success = true;
             } catch (HttpFetcherException e) {
                 logError("Newtwork error while fetching splits" + e.getLocalizedMessage());
-                if(mRetryOnFail) {
+                if (mRetryOnFail) {
                     try {
                         logError("Retrying...");
                         Thread.sleep(backoffCounter.getNextRetryTime());
@@ -85,6 +86,7 @@ public class SplitsSyncTask implements SplitTask {
     private long now() {
         return System.currentTimeMillis() / 1000;
     }
+
     private void logError(String message) {
         Logger.e("Error while executing splits sync task: " + message);
     }

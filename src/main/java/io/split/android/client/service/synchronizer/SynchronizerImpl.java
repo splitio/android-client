@@ -202,7 +202,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void scheduleSplitsFetcherTask() {
         mSplitsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createSplitsSyncTask(false),
+                mSplitTaskFactory.createSplitsSyncTask(false, false),
                 ServiceConstants.NO_INITIAL_DELAY,
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitsSyncTaskListener);

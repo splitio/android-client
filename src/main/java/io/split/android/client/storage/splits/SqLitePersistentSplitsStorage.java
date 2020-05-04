@@ -73,8 +73,14 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public void clear() {
-        mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
-        mDatabase.splitDao().deleteAll();
+        mDatabase.runInTransaction(new Runnable() {
+            @Override
+            public void run() {
+                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
+                mDatabase.splitDao().deleteAll();
+            }
+        });
+
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
