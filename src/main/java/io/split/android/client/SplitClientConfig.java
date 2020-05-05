@@ -3,6 +3,7 @@ package io.split.android.client;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.Logger;
 
 /**
@@ -50,7 +51,7 @@ public class SplitClientConfig {
     // Data folder
     private static final String DEFAULT_DATA_FOLDER = "split_data";
 
-    private static final long CACHE_EXPIRATION_IN_SECONDS = 864000; // 10 días
+    private static final long CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_CACHE_EXPIRATION_IN_SECONDS; // 10 días
 
     private String _endpoint;
     private String _eventsEndpoint;

@@ -178,7 +178,7 @@ public class SplitSyncTaskTest {
     public void cleanOldCacheEnabledNotExpiredChangeNumber() throws HttpFetcherException {
         mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
                 true, true, 18000);
-        when(mSplitsStorage.getTill()).thenReturn(System.currentTimeMillis() / 100 - 3600);
+        when(mSplitsStorage.getTill()).thenReturn(System.currentTimeMillis() - 3600);
         when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
 
         mTask.execute();
