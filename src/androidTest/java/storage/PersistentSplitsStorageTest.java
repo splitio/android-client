@@ -71,11 +71,12 @@ public class PersistentSplitsStorageTest {
             split.status = Status.ACTIVE;
             splits.add(split);
         }
-        mPersistentSplitsStorage.update(new ProcessedSplitChange(splits, new ArrayList<>(), 1L));
+        mPersistentSplitsStorage.update(new ProcessedSplitChange(splits, new ArrayList<>(), 1L, 0L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
         long changeNumber = snapshot.getChangeNumber();
+        long timestamp = snapshot.getUpdateTimestamp();
 
         for (int i = 0; i < 10; i++) {
             String splitName = "split-test-" + i;
@@ -84,16 +85,18 @@ public class PersistentSplitsStorageTest {
             Assert.assertEquals(splitName, splitTest.name);
         }
         Assert.assertEquals(1L, changeNumber);
+        Assert.assertEquals(0L, timestamp);
     }
 
     @Test
     public void updateEmptySplit() {
         List<Split> splits = new ArrayList<>();
-        mPersistentSplitsStorage.update(new ProcessedSplitChange(splits, splits, 1L));
+        mPersistentSplitsStorage.update(new ProcessedSplitChange(splits, splits, 1L, 0L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
         long changeNumber = snapshot.getChangeNumber();
+        long timestamp = snapshot.getUpdateTimestamp();
 
         for (int i = 0; i < 10; i++) {
             String splitName = "split-" + i;
@@ -102,16 +105,18 @@ public class PersistentSplitsStorageTest {
             Assert.assertEquals(splitName, splitTest.name);
         }
         Assert.assertEquals(1L, changeNumber);
+        Assert.assertEquals(0L, timestamp);
     }
 
     @Test
     public void addNullSplitList() {
         List<Split> splits = new ArrayList<>();
-        boolean res = mPersistentSplitsStorage.update(new ProcessedSplitChange(null, splits,1L));
+        boolean res = mPersistentSplitsStorage.update(new ProcessedSplitChange(null, splits,1L, 0L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
         long changeNumber = snapshot.getChangeNumber();
+        long timestamp = snapshot.getUpdateTimestamp();
 
         for (int i = 0; i < 10; i++) {
             String splitName = "split-" + i;
@@ -121,16 +126,18 @@ public class PersistentSplitsStorageTest {
         }
         Assert.assertTrue(res);
         Assert.assertEquals(1L, changeNumber);
+        Assert.assertEquals(0L, timestamp);
     }
 
     @Test
     public void deleteNullSplitList() {
         List<Split> splits = new ArrayList<>();
-        boolean res = mPersistentSplitsStorage.update(new ProcessedSplitChange(splits, null,1L));
+        boolean res = mPersistentSplitsStorage.update(new ProcessedSplitChange(splits, null,1L, 0L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
         long changeNumber = snapshot.getChangeNumber();
+        long timestamp = snapshot.getUpdateTimestamp();
 
         for (int i = 0; i < 10; i++) {
             String splitName = "split-" + i;
@@ -140,6 +147,7 @@ public class PersistentSplitsStorageTest {
         }
         Assert.assertTrue(res);
         Assert.assertEquals(1L, changeNumber);
+        Assert.assertEquals(0L, timestamp);
     }
 
     @Test
@@ -152,11 +160,12 @@ public class PersistentSplitsStorageTest {
             split.status = Status.ARCHIVED;
             splits.add(split);
         }
-        mPersistentSplitsStorage.update(new ProcessedSplitChange(null, splits, 1L));
+        mPersistentSplitsStorage.update(new ProcessedSplitChange(null, splits, 1L, 0L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         Map<String, Split> splitMap = listToMap(snapshot.getSplits());
         long changeNumber = snapshot.getChangeNumber();
+        long timestamp = snapshot.getUpdateTimestamp();
 
         for (int i = 0; i < 4; i++) {
             String splitName = "split-" + i;
@@ -169,6 +178,7 @@ public class PersistentSplitsStorageTest {
             }
         }
         Assert.assertEquals(1L, changeNumber);
+        Assert.assertEquals(0L, timestamp);
     }
 
     @Test
@@ -187,7 +197,7 @@ public class PersistentSplitsStorageTest {
             split.status = Status.ARCHIVED;
             splits.add(split);
         }
-        mPersistentSplitsStorage.update(new ProcessedSplitChange(null, splits, 1L));
+        mPersistentSplitsStorage.update(new ProcessedSplitChange(null, splits, 1L, 0L));
 
         SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
         List<Split> loadedSlits = snapshot.getSplits();

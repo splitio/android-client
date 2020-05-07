@@ -47,8 +47,14 @@ public class SplitsSyncTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
         long storedChangeNumber = mSplitsStorage.getTill();
+        long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
+        long now = now();
+        long elepased = now - updateTimestamp;
+        Logger.d("now" + now);
+        Logger.d("timestamp: " + updateTimestamp);
+        Logger.d("elapsed: " + elepased);
         if (mCheckCacheExpiration && storedChangeNumber > -1
-                && (System.currentTimeMillis() - storedChangeNumber > mCacheExpirationInSeconds * 1000)){
+                && (now() - updateTimestamp > mCacheExpirationInSeconds)){
             mSplitsStorage.clear();
             storedChangeNumber  = -1;
         }
@@ -82,6 +88,10 @@ public class SplitsSyncTask implements SplitTask {
         }
         Logger.d("Features have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
+    }
+
+    private long now() {
+        return System.currentTimeMillis() / 1000;
     }
 
     private void logError(String message) {

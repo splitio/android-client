@@ -166,7 +166,8 @@ public class SplitSyncTaskTest {
     public void cleanOldCacheEnabled() throws HttpFetcherException {
         mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
                 true, true, 60);
-        when(mSplitsStorage.getTill()).thenReturn(OLD_TIMESTAMP);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(OLD_TIMESTAMP);
         when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
 
         mTask.execute();
@@ -178,7 +179,8 @@ public class SplitSyncTaskTest {
     public void cleanOldCacheEnabledNotExpiredChangeNumber() throws HttpFetcherException {
         mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
                 true, true, 18000);
-        when(mSplitsStorage.getTill()).thenReturn(System.currentTimeMillis() - 3600);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(System.currentTimeMillis() / 1000 - 3600);
         when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
 
         mTask.execute();
@@ -191,6 +193,7 @@ public class SplitSyncTaskTest {
         mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
                 true, true, 18000);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(OLD_TIMESTAMP);
         when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
 
         mTask.execute();
