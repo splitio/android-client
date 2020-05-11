@@ -79,6 +79,8 @@ public class SplitsKillProcessTest {
         mSplitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
         mSplitRoomDatabase.clearAllTables();
         mUserKey = IntegrationHelper.dummyUserKey();
+        mSplitRoomDatabase.generalInfoDao().update(
+                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000 - 30));
         loadSplitChanges();
     }
 

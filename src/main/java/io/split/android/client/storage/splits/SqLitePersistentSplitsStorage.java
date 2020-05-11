@@ -1,7 +1,6 @@
 package io.split.android.client.storage.splits;
 
 import androidx.annotation.NonNull;
-import androidx.core.util.Pair;
 
 import com.google.gson.JsonSyntaxException;
 
@@ -9,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -38,9 +36,12 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         mDatabase.runInTransaction(new Runnable() {
             @Override
             public void run() {
-                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, splitChange.getChangeNumber()));
+                mDatabase.generalInfoDao().update(
+                        new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, splitChange.getChangeNumber()));
                 mDatabase.splitDao().insert(splitEntities);
                 mDatabase.splitDao().delete(removedSplits);
+                mDatabase.generalInfoDao().update(
+                        new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, splitChange.getUpdateTimestamp()));
             }
         });
 
@@ -49,13 +50,11 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public SplitsSnapshot getSnapshot() {
-        Long changeNumber = -1L;
-        GeneralInfoEntity info = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
-        if (info != null) {
-            changeNumber = info.getLongValue();
-        }
 
-        return new SplitsSnapshot(convertEntitiesToSplitList(mDatabase.splitDao().getAll()), changeNumber);
+        SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase);
+        mDatabase.runInTransaction(loader);
+        return new SplitsSnapshot(
+                convertEntitiesToSplitList(mDatabase.splitDao().getAll()), loader.getChangeNumber(), loader.getUpdateTimestamp());
     }
 
     @Override
@@ -69,6 +68,18 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public void close() {
+    }
+
+    @Override
+    public void clear() {
+        mDatabase.runInTransaction(new Runnable() {
+            @Override
+            public void run() {
+                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
+                mDatabase.splitDao().deleteAll();
+            }
+        });
+
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
@@ -112,5 +123,41 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             names.add(split.name);
         }
         return names;
+    }
+
+    private static class SplitsSnapshotLoader implements Runnable {
+        private SplitRoomDatabase mDatabase;
+        private Long mChangeNumber = -1L;
+        private Long mUpdateTimestamp = 0L;
+        private List<SplitEntity> mSplitEntities;
+
+        public SplitsSnapshotLoader(SplitRoomDatabase database) {
+            mDatabase = database;
+        }
+
+        @Override
+        public void run() {
+            GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
+            GeneralInfoEntity changeNumberEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
+            if (changeNumberEntity != null) {
+                mChangeNumber = changeNumberEntity.getLongValue();
+            }
+
+            if (timestampEntity != null) {
+                mUpdateTimestamp = timestampEntity.getLongValue();
+            }
+        }
+
+        public Long getChangeNumber() {
+            return mChangeNumber;
+        }
+
+        public Long getUpdateTimestamp() {
+            return mUpdateTimestamp;
+        }
+
+        public List<SplitEntity> getSplitEntities() {
+            return mSplitEntities;
+        }
     }
 }

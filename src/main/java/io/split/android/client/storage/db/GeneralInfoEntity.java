@@ -9,6 +9,7 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "general_info")
 public class GeneralInfoEntity {
 
+    public static final String SPLITS_UPDATE_TIMESTAMP = "splitsUpdateTimestamp";
     public static final String CHANGE_NUMBER_INFO = "splitChangesChangeNumber";
     public static final String DATBASE_MIGRATION_STATUS = "databaseMigrationStatus";
 

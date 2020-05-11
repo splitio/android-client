@@ -3,8 +3,6 @@ package io.split.android.client.service.sseclient.reactor;
 import androidx.annotation.NonNull;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -33,7 +31,7 @@ public class MySegmentsUpdateWorker extends UpdateWorker {
     protected void onWaitForNotificationLoop() {
         try {
             mNotificationsQueue.take();
-            mSynchronizer.syncronizeMySegments();
+            mSynchronizer.synchronizeMySegments();
             Logger.d("A new notification to update segments has been received. " +
                     "Enqueing polling task.");
         } catch (InterruptedException e) {

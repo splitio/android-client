@@ -82,6 +82,8 @@ public class SplitsSyncProcessTest {
         String dataFolderName = apiKeyAndDb.second;
         mSplitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
         mSplitRoomDatabase.clearAllTables();
+        mSplitRoomDatabase.generalInfoDao().update(
+                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000 - 30));
         mUserKey = IntegrationHelper.dummyUserKey();
         loadSplitChanges();
     }

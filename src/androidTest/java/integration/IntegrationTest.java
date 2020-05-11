@@ -331,6 +331,7 @@ public class IntegrationTest {
                 .segmentsRefreshRate(99999)
                 .impressionsRefreshRate(99999)
                 .trafficType("account")
+                .streamingEnabled(false)
                 .build();
 
 

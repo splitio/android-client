@@ -24,5 +24,7 @@ public interface SplitsStorage {
 
     long getTill();
 
+    long getUpdateTimestamp();
+
     void clear();
 }
