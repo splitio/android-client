@@ -71,6 +71,7 @@ dependencies {
 
     implementation "org.yaml:snakeyaml:1.24"
     implementation 'org.jetbrains:annotations:15.0'
+    implementation "com.squareup.okhttp3:okhttp:4.7.2"
 
     // Test
     testImplementation 'junit:junit:4.12'
@@ -97,6 +98,13 @@ google()
 }
 
 buildscript {
+
+    configurations.all {
+        resolutionStrategy {
+            force("net.sf.proguard:proguard-base:6.1.0")
+        }
+    }
+
     repositories {
     google()
         jcenter()

@@ -122,6 +122,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
             case STREAMING_CONNECTED:
                 mSynchronizer.synchronizeSplits();
                 mSynchronizer.synchronizeMySegments();
+                break;
             default:
                 Logger.e("Invalide SSE event received: " + message.getMessage());
         }

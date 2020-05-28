@@ -50,9 +50,6 @@ public class SplitsSyncTask implements SplitTask {
         long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
         long now = now();
         long elepased = now - updateTimestamp;
-        Logger.d("now" + now);
-        Logger.d("timestamp: " + updateTimestamp);
-        Logger.d("elapsed: " + elepased);
         if (mCheckCacheExpiration && storedChangeNumber > -1
                 && (now() - updateTimestamp > mCacheExpirationInSeconds)){
             mSplitsStorage.clear();
