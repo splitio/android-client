@@ -8,21 +8,17 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 
 public class HttpClientImpl implements HttpClient {
-
+    private static final long STREAMING_CONNECTION_TIMEOUT_IN_SECONDS = 80;
     private OkHttpClient mOkHttpClient;
+    private OkHttpClient mOkHttpClientStreaming;
     private Map<String, String> mHeaders;
 
     public HttpClientImpl() {
-       this(0);
-    }
-
-    public HttpClientImpl(long readTimeout) {
         mHeaders = new HashMap<>();
-        OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
-        if(readTimeout > 0) {
-            okHttpClientBuilder.readTimeout(80, TimeUnit.SECONDS);
-        }
-        mOkHttpClient = okHttpClientBuilder.build();
+        mOkHttpClient = new OkHttpClient();
+        mOkHttpClientStreaming  = new OkHttpClient.Builder()
+                .readTimeout(STREAMING_CONNECTION_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+                .build();
     }
 
     @Override
@@ -37,7 +33,7 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpStreamRequest streamRequest(URI uri) {
-        return new HttpStreamRequestImpl(mOkHttpClient, uri, mHeaders);
+        return new HttpStreamRequestImpl(mOkHttpClientStreaming, uri, mHeaders);
     }
 
     @Override
@@ -55,10 +51,9 @@ public class HttpClientImpl implements HttpClient {
         }
     }
 
-
-
     @Override
     public void close() {
-        // TODO: Cleanup code here
+        mOkHttpClient.connectionPool().evictAll();
+        mOkHttpClientStreaming.connectionPool().evictAll();
     }
 }

@@ -53,8 +53,6 @@ public class SplitClientConfig {
 
     private static final long CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_CACHE_EXPIRATION_IN_SECONDS; // 10 días
 
-    private static final long STREAMING_CONNECTION_TIMEOUT_IN_SECONDS = 80;
-
     private String _endpoint;
     private String _eventsEndpoint;
     private static String _hostname;
@@ -393,10 +391,6 @@ public class SplitClientConfig {
 
     public String streamingServiceUrl() {
         return _streamingServiceUrl;
-    }
-
-    long getStreamingConnectionTimeout() {
-        return STREAMING_CONNECTION_TIMEOUT_IN_SECONDS;
     }
 
     public static final class Builder {

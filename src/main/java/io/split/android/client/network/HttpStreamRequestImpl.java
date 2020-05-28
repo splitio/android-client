@@ -60,7 +60,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
             Request.Builder requestBuilder = new Request.Builder()
                     .url(url);
             addHeaders(requestBuilder);
-            Request okHttpRequest = requestBuilder.build();
+            Request okHttpRequest = requestBuilder. build();
             Response okHttpResponse = mOkHttpClient.newCall(okHttpRequest).execute();
             response = buildResponse(okHttpResponse);
 
