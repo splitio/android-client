@@ -111,7 +111,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 this);
     }
 
-
     private void resetSseKeepAliveTimer() {
         cancelSseKeepAliveTimer();
         mResetSseKeepAliveTimerTaskId = mTaskExecutor.schedule(
@@ -164,6 +163,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     @Override
     public void onMessage(Map<String, String> values) {
         String messageData = values.get(DATA_FIELD);
+        resetSseKeepAliveTimer();
         if (messageData != null) {
             IncomingNotification incomingNotification
                     = mNotificationParser.parseIncoming(messageData);
@@ -180,12 +180,10 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     break;
                 case OCCUPANCY:
                     processOccupancyNotification(incomingNotification);
-                    resetSseKeepAliveTimer();
                     break;
                 default:
                     if (!mIsStreamingPaused.get()) {
                         mNotificationProcessor.process(incomingNotification);
-                        resetSseKeepAliveTimer();
                     }
             }
         }
