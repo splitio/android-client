@@ -30,7 +30,6 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private OkHttpClient mOkHttpClient;
     private URI mUri;
     private Map<String, String> mHeaders;
-    HttpURLConnection mConnection;
 
     HttpStreamRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
                           @NonNull Map<String, String> headers) {
@@ -51,7 +50,6 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     @Override
     public void close() {
-        mConnection.disconnect();
     }
 
     private HttpStreamResponse getRequest() throws HttpException {
