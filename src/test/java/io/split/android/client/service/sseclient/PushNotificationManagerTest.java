@@ -394,7 +394,7 @@ public class PushNotificationManagerTest {
         reset(mBroadcasterChannel);
         mPushManager.onMessage(message(""));
 
-        verify(mTaskExecutor, times(1)).stopTask(keepAliveTaskId);
+        verify(mTaskExecutor, times(2)).stopTask(keepAliveTaskId);
         verify(mTaskExecutor, times(1)).stopTask(refreshTokenTaskId);
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
@@ -431,7 +431,7 @@ public class PushNotificationManagerTest {
         reset(mBroadcasterChannel);
         mPushManager.onMessage(message(""));
 
-        verify(mTaskExecutor, never()).stopTask(anyString());
+        verify(mTaskExecutor, times(1)).stopTask(anyString());
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());

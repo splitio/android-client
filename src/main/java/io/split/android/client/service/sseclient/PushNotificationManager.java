@@ -111,8 +111,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 this);
     }
 
-
     private void resetSseKeepAliveTimer() {
+        cancelSseKeepAliveTimer();
         mResetSseKeepAliveTimerTaskId = mTaskExecutor.schedule(
                 new SseKeepAliveTimer(),
                 SSE_KEEPALIVE_TIME_IN_SECONDS,
@@ -163,6 +163,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     @Override
     public void onMessage(Map<String, String> values) {
         String messageData = values.get(DATA_FIELD);
+        resetSseKeepAliveTimer();
         if (messageData != null) {
             IncomingNotification incomingNotification
                     = mNotificationParser.parseIncoming(messageData);
@@ -181,14 +182,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     processOccupancyNotification(incomingNotification);
                     break;
                 default:
-                    Logger.d("incoming process");
                     if (!mIsStreamingPaused.get()) {
-                        Logger.d("incoming process no if pause");
                         mNotificationProcessor.process(incomingNotification);
                     }
             }
         }
-        resetSseKeepAliveTimer();
+
     }
 
     @Override
@@ -309,7 +308,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     notifyPollingEnabled();
                     return;
                 }
-Logger.d("Streaming enabled: " + isStreamingEnabled(taskInfo));
+                Logger.d("Streaming enabled: " + isStreamingEnabled(taskInfo));
                 if ((!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
                         && !isApiKeyValid(taskInfo))) {
                     Logger.e("Couldn't connect to SSE server. Invalid apikey ");

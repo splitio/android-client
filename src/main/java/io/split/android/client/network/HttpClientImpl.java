@@ -3,13 +3,22 @@ package io.split.android.client.network;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
 
 public class HttpClientImpl implements HttpClient {
-
+    private static final long STREAMING_CONNECTION_TIMEOUT_IN_SECONDS = 80;
+    private OkHttpClient mOkHttpClient;
+    private OkHttpClient mOkHttpClientStreaming;
     private Map<String, String> mHeaders;
 
     public HttpClientImpl() {
         mHeaders = new HashMap<>();
+        mOkHttpClient = new OkHttpClient();
+        mOkHttpClientStreaming  = new OkHttpClient.Builder()
+                .readTimeout(STREAMING_CONNECTION_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)
+                .build();
     }
 
     @Override
@@ -19,12 +28,12 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpRequest request(URI uri, HttpMethod requestMethod, String body) {
-        return new HttpRequestImpl(uri, requestMethod, body, mHeaders);
+        return new HttpRequestImpl(mOkHttpClient, uri, requestMethod, body, mHeaders);
     }
 
     @Override
     public HttpStreamRequest streamRequest(URI uri) {
-        return new HttpStreamRequestImpl(uri, mHeaders);
+        return new HttpStreamRequestImpl(mOkHttpClientStreaming, uri, mHeaders);
     }
 
     @Override
@@ -42,10 +51,9 @@ public class HttpClientImpl implements HttpClient {
         }
     }
 
-
-
     @Override
     public void close() {
-        // TODO: Cleanup code here
+        mOkHttpClient.connectionPool().evictAll();
+        mOkHttpClientStreaming.connectionPool().evictAll();
     }
 }
