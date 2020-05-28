@@ -98,13 +98,6 @@ google()
 }
 
 buildscript {
-
-    configurations.all {
-        resolutionStrategy {
-            force("net.sf.proguard:proguard-base:6.1.0")
-        }
-    }
-
     repositories {
     google()
         jcenter()
