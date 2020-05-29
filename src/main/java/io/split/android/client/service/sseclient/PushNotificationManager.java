@@ -39,7 +39,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private final static String DATA_FIELD = "data";
     private final static int SSE_KEEPALIVE_TIME_IN_SECONDS = 70;
     private final static int RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS = 600;
-    private final static int DISCONNECT_ON_BG_TIME_IN_SECONDS = 5;
+    private final static int DISCONNECT_ON_BG_TIME_IN_SECONDS = 60;
     private final static String PRIMARY_CONTROL_CHANNEL = "control_pri";
 
     private final SseClient mSseClient;
