@@ -163,6 +163,7 @@ public class SseClient {
         @Override
         public void run() {
             String channels = mStringHelper.join(",", mChannels);
+            BufferedReader bufferedReader = null;
             try {
                 URI url = new URIBuilder(mTargetUrl)
                         .addParameter(PUSH_NOTIFICATION_VERSION_PARAM, PUSH_NOTIFICATION_VERSION_VALUE)
@@ -173,7 +174,7 @@ public class SseClient {
                 mHttpStreamRequest.addHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE_STREAM);
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
-                    BufferedReader bufferedReader = response.getBufferedReader();
+                    bufferedReader = response.getBufferedReader();
                     if (bufferedReader != null) {
                         Logger.i("Streaming connection opened");
                         triggerOnOpen();
@@ -191,8 +192,6 @@ public class SseClient {
                                 values = new HashMap<>();
                             }
                         }
-                        Logger.d("Closing buffered reader");
-                        bufferedReader.close();
                     } else {
                         throw (new IOException("Buffer is null"));
                     }
@@ -220,6 +219,13 @@ public class SseClient {
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                 triggerOnError(true);
             } finally {
+                if (bufferedReader != null) {
+                    try {
+                        bufferedReader.close();
+                    } catch (IOException e) {
+                        Logger.w("Error closing streaming buffer");
+                    }
+                }
                 setCloseStatus();
             }
         }
