@@ -78,7 +78,7 @@ public class SseClient {
     }
 
     public void disconnect() {
-        if(readyState() == OPEN) {
+        if (readyState() == OPEN) {
             isDisconnectCalled.set(true);
             setCloseStatus();
             mHttpStreamRequest.close();
@@ -174,7 +174,7 @@ public class SseClient {
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
                     BufferedReader bufferedReader = response.getBufferedReader();
-                    if(bufferedReader != null) {
+                    if (bufferedReader != null) {
                         Logger.i("Streaming connection opened");
                         triggerOnOpen();
                         mReadyState.set(OPEN);
@@ -194,7 +194,7 @@ public class SseClient {
                         Logger.d("Closing buffered reader");
                         bufferedReader.close();
                     } else {
-                        throw(new IOException("Buffer is null"));
+                        throw (new IOException("Buffer is null"));
                     }
                 } else {
                     Logger.e("Streaming connection error. Http return code "
@@ -210,7 +210,7 @@ public class SseClient {
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                 triggerOnError(true);
             } catch (IOException e) {
-                if(!isDisconnectCalled.getAndSet(false)) {
+                if (!isDisconnectCalled.getAndSet(false)) {
                     Logger.e("An error has ocurred while parsing stream from " +
                             mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                     triggerOnError(true);
@@ -234,9 +234,9 @@ public class SseClient {
     public boolean cancelDisconnectionTimer() {
         boolean taskWasCancelled = false;
         if (mDisconnectionTimerTaskRef != null) {
-                mDisconnectionTimerTaskRef.cancel(false);
-                taskWasCancelled = mDisconnectionTimerTaskRef.isCancelled();
-                mDisconnectionTimerTaskRef = null;
+            mDisconnectionTimerTaskRef.cancel(false);
+            taskWasCancelled = mDisconnectionTimerTaskRef.isCancelled();
+            mDisconnectionTimerTaskRef = null;
         }
         return taskWasCancelled;
     }
