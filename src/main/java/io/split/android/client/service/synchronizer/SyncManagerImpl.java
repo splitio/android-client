@@ -70,11 +70,17 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
     @Override
     public void pause() {
         mSynchronizer.pause();
+        if(mSplitClientConfig.streamingEnabled()) {
+            mPushNotificationManager.pause();
+        }
     }
 
     @Override
     public void resume() {
         mSynchronizer.resume();
+        if(mSplitClientConfig.streamingEnabled()) {
+            mPushNotificationManager.resume();
+        }
     }
 
     @Override

@@ -10,9 +10,11 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.split.android.client.network.HttpClient;
@@ -29,14 +31,16 @@ public class SseClient {
 
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private static final String CONTENT_TYPE_VALUE_STREAM = "text/event-stream";
-    private final static int POOL_SIZE = 1;
+    private final static int POOL_SIZE = 2;
     private final URI mTargetUrl;
     private AtomicInteger mReadyState;
     private final HttpClient mHttpClient;
     private HttpStreamRequest mHttpStreamRequest = null;
     private EventStreamParser mEventStreamParser;
     private WeakReference<SseClientListener> mListener;
-    private final ExecutorService mExecutor;
+    private final ScheduledExecutorService mExecutor;
+    private ScheduledFuture mDisconnectionTimerTaskRef = null;
+    private AtomicBoolean isDisconnectCalled;
 
     final static int CONNECTING = 0;
     final static int CLOSED = 2;
@@ -49,7 +53,8 @@ public class SseClient {
         mHttpClient = checkNotNull(httpClient);
         mEventStreamParser = checkNotNull(eventStreamParser);
         mReadyState = new AtomicInteger(CLOSED);
-        mExecutor = Executors.newFixedThreadPool(POOL_SIZE);
+        isDisconnectCalled = new AtomicBoolean(false);
+        mExecutor = new ScheduledThreadPoolExecutor(POOL_SIZE);
         mReadyState.set(CLOSED);
     }
 
@@ -63,8 +68,11 @@ public class SseClient {
     }
 
     public void disconnect() {
-        setCloseStatus();
-        mHttpStreamRequest.close();
+        if(readyState() == OPEN) {
+            isDisconnectCalled.set(true);
+            setCloseStatus();
+            mHttpStreamRequest.close();
+        }
     }
 
     public void setListener(SseClientListener listener) {
@@ -72,8 +80,7 @@ public class SseClient {
     }
 
     public void close() {
-        setCloseStatus();
-        mHttpStreamRequest.close();
+        disconnect();
         shutdownAndAwaitTermination();
     }
 
@@ -188,9 +195,11 @@ public class SseClient {
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                 triggerOnError(true);
             } catch (IOException e) {
-                Logger.e("An error has ocurred while parsing stream from " +
-                        mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                triggerOnError(true);
+                if(!isDisconnectCalled.getAndSet(false)) {
+                    Logger.e("An error has ocurred while parsing stream from " +
+                            mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+                    triggerOnError(true);
+                }
             } catch (Exception e) {
                 Logger.e("An unexpected error has ocurred while receiving stream events from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
@@ -198,6 +207,29 @@ public class SseClient {
             } finally {
                 setCloseStatus();
             }
+        }
+    }
+
+    public void disconnect(long delayInSecods) {
+        Logger.d(String.format("Streaming will be disconnected in %d seconds", delayInSecods));
+        mDisconnectionTimerTaskRef = mExecutor.schedule(new DisconnectionTimer(), delayInSecods, TimeUnit.SECONDS);
+    }
+
+    public boolean cancelDisconnectionTimer() {
+        boolean taskWasCancelled = false;
+        if (mDisconnectionTimerTaskRef != null) {
+                mDisconnectionTimerTaskRef.cancel(false);
+                taskWasCancelled = mDisconnectionTimerTaskRef.isCancelled();
+                mDisconnectionTimerTaskRef = null;
+        }
+        return taskWasCancelled;
+    }
+
+    private class DisconnectionTimer implements Runnable {
+        @Override
+        public void run() {
+            Logger.d("Disconnecting while in background");
+            disconnect();
         }
     }
 }

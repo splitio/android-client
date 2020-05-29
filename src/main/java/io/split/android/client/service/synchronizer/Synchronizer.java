@@ -2,8 +2,9 @@ package io.split.android.client.service.synchronizer;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.lifecycle.SplitLifecycleAware;
 
-public interface Synchronizer {
+public interface Synchronizer extends SplitLifecycleAware {
     void loadSplitsFromCache();
 
     void loadMySegmentsFromCache();
@@ -27,10 +28,6 @@ public interface Synchronizer {
     void pushImpression(Impression impression);
 
     void flush();
-
-    void pause();
-
-    void resume();
 
     void destroy();
 }

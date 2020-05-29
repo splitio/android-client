@@ -9,12 +9,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import fake.SyncManagerStub;
-import io.split.android.client.lifecycle.LifecycleManager;
+import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.service.synchronizer.SyncManager;
 
 public class LifecyleOnBGTest {
 
-    LifecycleManager mLifecycleManager;
+    SplitLifecycleManager mSplitLifecycleManager;
     SyncManagerStub mSyncManagerStub;
 
     @Before
@@ -23,13 +23,13 @@ public class LifecyleOnBGTest {
         mSyncManagerStub = (SyncManagerStub) syncManager;
         mSyncManagerStub.pauseCalled = false;
         mSyncManagerStub.resumeCalled = false;
-        mLifecycleManager = new LifecycleManager(syncManager);
+        mSplitLifecycleManager = new SplitLifecycleManager(syncManager);
     }
 
     @Test
     public void onResume() {
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());
-        lfRegistry.addObserver(mLifecycleManager);
+        lfRegistry.addObserver(mSplitLifecycleManager);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME);
@@ -40,7 +40,7 @@ public class LifecyleOnBGTest {
     @Test
     public void onPause() {
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());
-        lfRegistry.addObserver(mLifecycleManager);
+        lfRegistry.addObserver(mSplitLifecycleManager);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME);
@@ -53,7 +53,7 @@ public class LifecyleOnBGTest {
     @Test
     public void onPauseAndResume() {
         LifecycleRegistry lfRegistry = new LifecycleRegistry(ProcessLifecycleOwner.get());
-        lfRegistry.addObserver(mLifecycleManager);
+        lfRegistry.addObserver(mSplitLifecycleManager);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START);
         lfRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME);
