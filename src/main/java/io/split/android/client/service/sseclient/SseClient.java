@@ -1,6 +1,7 @@
 package io.split.android.client.service.sseclient;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,6 +27,7 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
 
 import static androidx.core.util.Preconditions.checkNotNull;
+import static java.lang.reflect.Modifier.PRIVATE;
 
 public class SseClient {
 
@@ -49,12 +51,20 @@ public class SseClient {
     public SseClient(@NonNull URI uri,
                      @NonNull HttpClient httpClient,
                      @NonNull EventStreamParser eventStreamParser) {
+        this(uri, httpClient, eventStreamParser, new ScheduledThreadPoolExecutor(POOL_SIZE));
+    }
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    public SseClient(@NonNull URI uri,
+                     @NonNull HttpClient httpClient,
+                     @NonNull EventStreamParser eventStreamParser,
+                     @NonNull ScheduledExecutorService executor) {
         mTargetUrl = checkNotNull(uri);
         mHttpClient = checkNotNull(httpClient);
         mEventStreamParser = checkNotNull(eventStreamParser);
         mReadyState = new AtomicInteger(CLOSED);
         isDisconnectCalled = new AtomicBoolean(false);
-        mExecutor = new ScheduledThreadPoolExecutor(POOL_SIZE);
+        mExecutor = checkNotNull(executor);
         mReadyState.set(CLOSED);
     }
 
@@ -163,24 +173,29 @@ public class SseClient {
                 mHttpStreamRequest.addHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE_STREAM);
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
-                    Logger.i("Streaming connection opened");
-                    triggerOnOpen();
-                    mReadyState.set(OPEN);
                     BufferedReader bufferedReader = response.getBufferedReader();
-                    String inputLine;
-                    Map<String, String> values = new HashMap<>();
-                    while ((inputLine = bufferedReader.readLine()) != null) {
-                        if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
-                            if(mEventStreamParser.isKeepAlive(values)) {
-                                triggerOnKeepAlive();
-                            } else {
-                                triggerOnMessage(values);
+                    if(bufferedReader != null) {
+                        Logger.i("Streaming connection opened");
+                        triggerOnOpen();
+                        mReadyState.set(OPEN);
+
+                        String inputLine;
+                        Map<String, String> values = new HashMap<>();
+                        while ((inputLine = bufferedReader.readLine()) != null) {
+                            if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
+                                if (mEventStreamParser.isKeepAlive(values)) {
+                                    triggerOnKeepAlive();
+                                } else {
+                                    triggerOnMessage(values);
+                                }
+                                values = new HashMap<>();
                             }
-                            values = new HashMap<>();
                         }
+                        Logger.d("Closing buffered reader");
+                        bufferedReader.close();
+                    } else {
+                        throw(new IOException("Buffer is null"));
                     }
-                    Logger.d("Closing buffered reader");
-                    bufferedReader.close();
                 } else {
                     Logger.e("Streaming connection error. Http return code "
                             + response.getHttpStatus());
