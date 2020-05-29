@@ -1,42 +1,159 @@
-package service;
+package io.split.android.client.service.sseclient;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
+import static java.lang.Thread.sleep;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.network.HttpClient;
-import io.split.android.client.network.HttpClientImpl;
-import io.split.android.client.service.sseclient.EventStreamParser;
-import io.split.android.client.service.sseclient.SseJwtParser;
-import io.split.android.client.service.sseclient.SseClient;
-import io.split.android.client.service.sseclient.SseClientListener;
-import okhttp3.mockwebserver.MockWebServer;
+import io.split.android.client.network.HttpException;
+import io.split.android.client.network.HttpStreamRequest;
+import io.split.android.client.network.HttpStreamResponse;
 
 public class SseClientTest {
 
+    @Mock
+    HttpClient mHttpClient;
+
+    @Mock
+    ScheduledThreadPoolExecutor mExecutor;
+
+    @Mock
+    EventStreamParser mParser;
+
+    @Mock
+    SseClientListener mListener;
+
+    SseClient mClient;
+
+    URI mUri;
+
+
+    private static long DUMMY_DELAY  = 1;
+    private static int POOL_SIZE  = 2;
 
     @Before
-    public void setup() throws IOException {
+    public void setup() throws URISyntaxException {
+        MockitoAnnotations.initMocks(this);
+        mUri = new URI("http://api/sse");
+        mClient = new SseClient(mUri, mHttpClient, mParser, mExecutor);
     }
 
     @Test
-    public void test() {
+    public void onConnect() throws InterruptedException, HttpException {
+        CountDownLatch onOpenLatch = new CountDownLatch(1);
+        Listener listener = new Listener(onOpenLatch);
+        listener = spy(listener);
+        List<String> dummyChannels = new ArrayList<String>();
+        dummyChannels.add("dummychanel");
+        HttpStreamRequest request = Mockito.mock(HttpStreamRequest.class);
+        HttpStreamResponse response = Mockito.mock(HttpStreamResponse.class);
 
+        when(response.isSuccess()).thenReturn(true);
+        when(response.getBufferedReader()).thenReturn(dummyData());
+        when(request.execute()).thenReturn(response);
+        when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
+        SseClient client = new SseClient(mUri, mHttpClient, mParser, new ScheduledThreadPoolExecutor(POOL_SIZE));
+        client.setListener(mListener);
+        client.connect("pepetoken", dummyChannels);
 
+        onOpenLatch.await(1000, TimeUnit.MILLISECONDS);
 
+        long readyState = client.readyState();
+
+        verify(mListener, times(1)).onOpen();
+    }
+
+    @Test
+    public void scheduleDisconnect() {
+        when(mExecutor.schedule(any(Runnable.class), anyLong(), any(TimeUnit.class))).thenReturn(Mockito.mock(ScheduledFuture.class));
+        mClient.scheduleDisconnection(DUMMY_DELAY);
+        verify(mExecutor, times(1)).schedule(any(Runnable.class), anyLong(), any(TimeUnit.class));
+    }
+
+    @Test
+    public void cancelScheduledDisconnectTimer() throws InterruptedException {
+        mClient = new SseClient(mUri, mHttpClient, mParser, new ScheduledThreadPoolExecutor(POOL_SIZE));
+        mClient.scheduleDisconnection(50);
+        sleep(1000);
+        boolean result = mClient.cancelDisconnectionTimer();
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    public void failedCancelScheduledDisconnectTimer() throws InterruptedException {
+        SseClient client = new SseClient(mUri, mHttpClient, mParser, new ScheduledThreadPoolExecutor(POOL_SIZE));
+        client.scheduleDisconnection(DUMMY_DELAY);
+        sleep(DUMMY_DELAY + 2000);
+        boolean result = client.cancelDisconnectionTimer();
+        Assert.assertFalse(result);
+    }
+
+    @Test
+    public void disconnectTriggered() throws InterruptedException {
+        SseClient client = new SseClient(mUri, mHttpClient, mParser, new ScheduledThreadPoolExecutor(POOL_SIZE));
+        client.setListener(mListener);
+        client =  spy(client);
+        client.scheduleDisconnection(DUMMY_DELAY);
+        sleep(DUMMY_DELAY + 2000);
+        long readyState = client.readyState();
+
+        verify(client, times(1)).disconnect();
+        verify(mListener, never()).onError(anyBoolean());
+        Assert.assertEquals(readyState, SseClient.CLOSED);
     }
 
     private class Listener implements SseClientListener {
+        CountDownLatch mOnOpenLatch;
+        public Listener() {
+        }
+
+        public Listener(CountDownLatch mOnOpenLatch) {
+            mOnOpenLatch = mOnOpenLatch;
+        }
+
         @Override
         public void onOpen() {
             System.out.println("SseClientTest: OnOPEN!!!!");
+            if(mOnOpenLatch != null) {
+                mOnOpenLatch.countDown();
+            }
         }
 
         @Override
@@ -53,6 +170,12 @@ public class SseClientTest {
         public void onKeepAlive() {
 
         }
+    }
+
+    private BufferedReader dummyData() {
+        InputStream inputStream = new ByteArrayInputStream("hola".getBytes(Charset.forName("UTF-8")));
+
+        return new BufferedReader(new InputStreamReader(inputStream));
     }
 
 
