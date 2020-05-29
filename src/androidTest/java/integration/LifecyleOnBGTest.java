@@ -23,7 +23,8 @@ public class LifecyleOnBGTest {
         mSyncManagerStub = (SyncManagerStub) syncManager;
         mSyncManagerStub.pauseCalled = false;
         mSyncManagerStub.resumeCalled = false;
-        mSplitLifecycleManager = new SplitLifecycleManager(syncManager);
+        mSplitLifecycleManager = new SplitLifecycleManager();
+        mSplitLifecycleManager.register(syncManager);
     }
 
     @Test
