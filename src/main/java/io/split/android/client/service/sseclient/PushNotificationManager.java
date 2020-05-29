@@ -91,7 +91,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     @Override
     public void pause() {
-        mSseClient.disconnect(DISCONNECT_ON_BG_TIME_IN_SECONDS);
+        mSseClient.scheduleDisconnection(DISCONNECT_ON_BG_TIME_IN_SECONDS);
     }
 
     @Override

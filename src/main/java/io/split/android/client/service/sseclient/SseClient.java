@@ -210,7 +210,8 @@ public class SseClient {
         }
     }
 
-    public void disconnect(long delayInSecods) {
+    public void scheduleDisconnection
+            (long delayInSecods) {
         Logger.d(String.format("Streaming will be disconnected in %d seconds", delayInSecods));
         mDisconnectionTimerTaskRef = mExecutor.schedule(new DisconnectionTimer(), delayInSecods, TimeUnit.SECONDS);
     }

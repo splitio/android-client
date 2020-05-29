@@ -545,7 +545,7 @@ public class PushNotificationManagerTest {
     public void disconnectOnBg() throws InterruptedException {
         mPushManager.start();
         mPushManager.pause();
-        verify(mSseClient, times(1)).disconnect(anyLong());
+        verify(mSseClient, times(1)).scheduleDisconnection(anyLong());
     }
 
     @Test
