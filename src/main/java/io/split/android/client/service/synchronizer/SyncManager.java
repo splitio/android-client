@@ -4,14 +4,11 @@ import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.lifecycle.SplitLifecycleAware;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-public interface SyncManager {
+public interface SyncManager extends SplitLifecycleAware {
     void start();
-
-    void pause();
-
-    void resume();
 
     void flush();
 

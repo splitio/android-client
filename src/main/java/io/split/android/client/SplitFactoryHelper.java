@@ -12,6 +12,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
@@ -119,7 +120,8 @@ class SplitFactoryHelper {
 
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
         EventStreamParser eventStreamParser = new EventStreamParser();
-        SseClient sseClient = new SseClient(streamingServiceUrl, httpClient, eventStreamParser);
+        SseClient sseClient =
+                new SseClient(streamingServiceUrl,httpClient, eventStreamParser);
         PushNotificationManager pushNotificationManager =
                 new PushNotificationManager(sseClient, splitTaskExecutor,
                         splitTaskFactory, notificationParser,

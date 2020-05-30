@@ -12,7 +12,8 @@ import io.split.android.client.service.sseclient.SseJwtToken;
 
 
 public class SseJwtTokenParserTest {
-
+    // This class is tested as an instrumented test because of
+    // the behavior of the Base64.decode funcion is not correct in unit test
     @Before
     public void setup() {
     }
