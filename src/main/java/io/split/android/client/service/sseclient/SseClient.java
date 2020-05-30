@@ -33,7 +33,8 @@ public class SseClient {
 
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private static final String CONTENT_TYPE_VALUE_STREAM = "text/event-stream";
-    private final static int POOL_SIZE = 2;
+    private final static int POOL_SIZE = 10;
+    private final static long AWAIT_SHUTDOWN_TIME = 60;
     private final URI mTargetUrl;
     private AtomicInteger mReadyState;
     private final HttpClient mHttpClient;
@@ -81,6 +82,7 @@ public class SseClient {
         if (readyState() == OPEN) {
             isDisconnectCalled.set(true);
             setCloseStatus();
+            triggerOnDisconnect();
             mHttpStreamRequest.close();
         }
     }
@@ -97,9 +99,9 @@ public class SseClient {
     private void shutdownAndAwaitTermination() {
         mExecutor.shutdown();
         try {
-            if (!mExecutor.awaitTermination(60, TimeUnit.SECONDS)) {
+            if (!mExecutor.awaitTermination(AWAIT_SHUTDOWN_TIME, TimeUnit.SECONDS)) {
                 mExecutor.shutdownNow();
-                if (!mExecutor.awaitTermination(60, TimeUnit.SECONDS))
+                if (!mExecutor.awaitTermination(AWAIT_SHUTDOWN_TIME, TimeUnit.SECONDS))
                     System.err.println("Pool did not terminate");
             }
         } catch (InterruptedException ie) {
@@ -133,6 +135,13 @@ public class SseClient {
         SseClientListener listener = mListener.get();
         if (listener != null) {
             listener.onError(isRecoverable);
+        }
+    }
+
+    private void triggerOnDisconnect() {
+        SseClientListener listener = mListener.get();
+        if (listener != null) {
+            listener.onDisconnect();
         }
     }
 

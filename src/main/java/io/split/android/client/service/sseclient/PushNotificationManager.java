@@ -57,6 +57,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private AtomicBoolean mIsPollingEnabled;
     private AtomicLong mLastControlNotificationTime;
     private AtomicBoolean mIsStreamingPaused;
+    private AtomicBoolean mIsHostAppInBackground;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -78,6 +79,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mIsPollingEnabled = new AtomicBoolean(false);
         mLastControlNotificationTime = new AtomicLong(0L);
         mIsStreamingPaused = new AtomicBoolean(false);
+        mIsHostAppInBackground = new AtomicBoolean(false);
         mSseClient.setListener(this);
     }
 
@@ -91,6 +93,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     @Override
     public void pause() {
+        mIsHostAppInBackground.set(true);
         mSseClient.scheduleDisconnection(DISCONNECT_ON_BG_TIME_IN_SECONDS);
     }
 
@@ -218,6 +221,12 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         if (isRecoverable) {
             scheduleSseReconnection();
         }
+    }
+
+    @Override
+    public void onDisconnect() {
+        cancelSseKeepAliveTimer();
+        cancelRefreshTokenTimer();
     }
 
     private void processControlNotification(IncomingNotification incomingNotification) {
