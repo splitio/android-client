@@ -33,7 +33,7 @@ public class SseClient {
 
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private static final String CONTENT_TYPE_VALUE_STREAM = "text/event-stream";
-    private final static int POOL_SIZE = 10;
+    private final static int POOL_SIZE = 4;
     private final static long AWAIT_SHUTDOWN_TIME = 60;
     private final URI mTargetUrl;
     private AtomicInteger mReadyState;
