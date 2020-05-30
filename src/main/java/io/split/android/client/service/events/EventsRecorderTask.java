@@ -2,6 +2,7 @@ package io.split.android.client.service.events;
 
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class EventsRecorderTask implements SplitTask {
         int nonSentRecords = 0;
         long nonSentBytes = 0;
         List<Event> events;
+        List<Event> failingEvents = new ArrayList<>();
         do {
             events = mPersistenEventsStorage.pop(mConfig.getEventsPerPush());
             if (events.size() > 0) {
@@ -53,10 +55,11 @@ public class EventsRecorderTask implements SplitTask {
                     Logger.e("Event recorder task: Some events couldn't be sent" +
                             "Saving to send them in a new iteration: " +
                             e.getLocalizedMessage());
-                    mPersistenEventsStorage.setActive(events);
+                    failingEvents.addAll(events);
                 }
             }
         } while (events.size() == mConfig.getEventsPerPush());
+        mPersistenEventsStorage.setActive(failingEvents);
 
         if (status == SplitTaskExecutionStatus.ERROR) {
             Map<String, Object> data = new HashMap<>();

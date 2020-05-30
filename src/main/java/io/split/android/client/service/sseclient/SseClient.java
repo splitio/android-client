@@ -1,6 +1,7 @@
 package io.split.android.client.service.sseclient;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,9 +11,11 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.split.android.client.network.HttpClient;
@@ -24,19 +27,23 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
 
 import static androidx.core.util.Preconditions.checkNotNull;
+import static java.lang.reflect.Modifier.PRIVATE;
 
 public class SseClient {
 
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private static final String CONTENT_TYPE_VALUE_STREAM = "text/event-stream";
-    private final static int POOL_SIZE = 1;
+    private final static int POOL_SIZE = 4;
+    private final static long AWAIT_SHUTDOWN_TIME = 60;
     private final URI mTargetUrl;
     private AtomicInteger mReadyState;
     private final HttpClient mHttpClient;
     private HttpStreamRequest mHttpStreamRequest = null;
     private EventStreamParser mEventStreamParser;
     private WeakReference<SseClientListener> mListener;
-    private final ExecutorService mExecutor;
+    private final ScheduledExecutorService mExecutor;
+    private ScheduledFuture mDisconnectionTimerTaskRef = null;
+    private AtomicBoolean isDisconnectCalled;
 
     final static int CONNECTING = 0;
     final static int CLOSED = 2;
@@ -45,11 +52,20 @@ public class SseClient {
     public SseClient(@NonNull URI uri,
                      @NonNull HttpClient httpClient,
                      @NonNull EventStreamParser eventStreamParser) {
+        this(uri, httpClient, eventStreamParser, new ScheduledThreadPoolExecutor(POOL_SIZE));
+    }
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    public SseClient(@NonNull URI uri,
+                     @NonNull HttpClient httpClient,
+                     @NonNull EventStreamParser eventStreamParser,
+                     @NonNull ScheduledExecutorService executor) {
         mTargetUrl = checkNotNull(uri);
         mHttpClient = checkNotNull(httpClient);
         mEventStreamParser = checkNotNull(eventStreamParser);
         mReadyState = new AtomicInteger(CLOSED);
-        mExecutor = Executors.newFixedThreadPool(POOL_SIZE);
+        isDisconnectCalled = new AtomicBoolean(false);
+        mExecutor = checkNotNull(executor);
         mReadyState.set(CLOSED);
     }
 
@@ -63,8 +79,12 @@ public class SseClient {
     }
 
     public void disconnect() {
-        setCloseStatus();
-        mHttpStreamRequest.close();
+        if (readyState() == OPEN) {
+            isDisconnectCalled.set(true);
+            setCloseStatus();
+            triggerOnDisconnect();
+            mHttpStreamRequest.close();
+        }
     }
 
     public void setListener(SseClientListener listener) {
@@ -72,17 +92,16 @@ public class SseClient {
     }
 
     public void close() {
-        setCloseStatus();
-        mHttpStreamRequest.close();
+        disconnect();
         shutdownAndAwaitTermination();
     }
 
     private void shutdownAndAwaitTermination() {
         mExecutor.shutdown();
         try {
-            if (!mExecutor.awaitTermination(60, TimeUnit.SECONDS)) {
+            if (!mExecutor.awaitTermination(AWAIT_SHUTDOWN_TIME, TimeUnit.SECONDS)) {
                 mExecutor.shutdownNow();
-                if (!mExecutor.awaitTermination(60, TimeUnit.SECONDS))
+                if (!mExecutor.awaitTermination(AWAIT_SHUTDOWN_TIME, TimeUnit.SECONDS))
                     System.err.println("Pool did not terminate");
             }
         } catch (InterruptedException ie) {
@@ -119,6 +138,13 @@ public class SseClient {
         }
     }
 
+    private void triggerOnDisconnect() {
+        SseClientListener listener = mListener.get();
+        if (listener != null) {
+            listener.onDisconnect();
+        }
+    }
+
     private void triggerOnOpen() {
         SseClientListener listener = mListener.get();
         if (listener != null) {
@@ -146,6 +172,7 @@ public class SseClient {
         @Override
         public void run() {
             String channels = mStringHelper.join(",", mChannels);
+            BufferedReader bufferedReader = null;
             try {
                 URI url = new URIBuilder(mTargetUrl)
                         .addParameter(PUSH_NOTIFICATION_VERSION_PARAM, PUSH_NOTIFICATION_VERSION_VALUE)
@@ -156,24 +183,27 @@ public class SseClient {
                 mHttpStreamRequest.addHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE_STREAM);
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
-                    Logger.i("Streaming connection opened");
-                    triggerOnOpen();
-                    mReadyState.set(OPEN);
-                    BufferedReader bufferedReader = response.getBufferedReader();
-                    String inputLine;
-                    Map<String, String> values = new HashMap<>();
-                    while ((inputLine = bufferedReader.readLine()) != null) {
-                        if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
-                            if(mEventStreamParser.isKeepAlive(values)) {
-                                triggerOnKeepAlive();
-                            } else {
-                                triggerOnMessage(values);
+                    bufferedReader = response.getBufferedReader();
+                    if (bufferedReader != null) {
+                        Logger.i("Streaming connection opened");
+                        triggerOnOpen();
+                        mReadyState.set(OPEN);
+
+                        String inputLine;
+                        Map<String, String> values = new HashMap<>();
+                        while ((inputLine = bufferedReader.readLine()) != null) {
+                            if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
+                                if (mEventStreamParser.isKeepAlive(values)) {
+                                    triggerOnKeepAlive();
+                                } else {
+                                    triggerOnMessage(values);
+                                }
+                                values = new HashMap<>();
                             }
-                            values = new HashMap<>();
                         }
+                    } else {
+                        throw (new IOException("Buffer is null"));
                     }
-                    Logger.d("Closing buffered reader");
-                    bufferedReader.close();
                 } else {
                     Logger.e("Streaming connection error. Http return code "
                             + response.getHttpStatus());
@@ -188,16 +218,49 @@ public class SseClient {
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                 triggerOnError(true);
             } catch (IOException e) {
-                Logger.e("An error has ocurred while parsing stream from " +
-                        mTargetUrl.toString() + " : " + e.getLocalizedMessage());
-                triggerOnError(true);
+                if (!isDisconnectCalled.getAndSet(false)) {
+                    Logger.e("An error has ocurred while parsing stream from " +
+                            mTargetUrl.toString() + " : " + e.getLocalizedMessage());
+                    triggerOnError(true);
+                }
             } catch (Exception e) {
                 Logger.e("An unexpected error has ocurred while receiving stream events from " +
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                 triggerOnError(true);
             } finally {
+                if (bufferedReader != null) {
+                    try {
+                        bufferedReader.close();
+                    } catch (IOException e) {
+                        Logger.w("Error closing streaming buffer");
+                    }
+                }
                 setCloseStatus();
             }
+        }
+    }
+
+    public void scheduleDisconnection
+            (long delayInSecods) {
+        Logger.d(String.format("Streaming will be disconnected in %d seconds", delayInSecods));
+        mDisconnectionTimerTaskRef = mExecutor.schedule(new DisconnectionTimer(), delayInSecods, TimeUnit.SECONDS);
+    }
+
+    public boolean cancelDisconnectionTimer() {
+        boolean taskWasCancelled = false;
+        if (mDisconnectionTimerTaskRef != null) {
+            mDisconnectionTimerTaskRef.cancel(false);
+            taskWasCancelled = mDisconnectionTimerTaskRef.isCancelled();
+            mDisconnectionTimerTaskRef = null;
+        }
+        return taskWasCancelled;
+    }
+
+    private class DisconnectionTimer implements Runnable {
+        @Override
+        public void run() {
+            Logger.d("Disconnecting while in background");
+            disconnect();
         }
     }
 }

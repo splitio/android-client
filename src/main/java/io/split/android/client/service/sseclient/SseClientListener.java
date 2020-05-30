@@ -7,4 +7,5 @@ public interface SseClientListener {
     void onMessage(Map<String, String> values);
     void onError(boolean isRecoverable);
     void onKeepAlive();
+    void onDisconnect();
 }

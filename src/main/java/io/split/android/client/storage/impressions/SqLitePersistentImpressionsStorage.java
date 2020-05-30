@@ -8,16 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.impressions.Impression;
-import io.split.android.client.storage.db.EventDao;
-import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionDao;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.StringHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -35,7 +31,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
 
     @Override
     public void push(@NonNull KeyImpression impression) {
-        if(impression == null) {
+        if (impression == null) {
             return;
         }
         mImpressionDao.insert(entityForImpression(impression));
@@ -43,11 +39,11 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
 
     @Override
     public void pushMany(@NonNull List<KeyImpression> impressions) {
-        if(impressions == null || impressions.size() == 0) {
+        if (impressions == null || impressions.size() == 0) {
             return;
         }
         List<ImpressionEntity> entities = new ArrayList<>();
-        for(KeyImpression keyImpression : impressions) {
+        for (KeyImpression keyImpression : impressions) {
             entities.add(entityForImpression(keyImpression));
         }
         mImpressionDao.insert(entities);
@@ -58,7 +54,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
 
         List<ImpressionEntity> entities = new ArrayList<>();
         mDatabase.runInTransaction(
-            new GetAndUpdateTransaction(mImpressionDao, entities, count, mExpirationPeriod)
+                new GetAndUpdateTransaction(mImpressionDao, entities, count, mExpirationPeriod)
         );
         return entitiesToImpressions(entities);
     }
@@ -66,6 +62,9 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
     @Override
     public void setActive(@NonNull List<KeyImpression> impressions) {
         checkNotNull(impressions);
+        if (impressions.size() == 0) {
+            return;
+        }
         List<Long> ids = getImpressionsId(impressions);
         mImpressionDao.updateStatus(ids, StorageRecordStatus.ACTIVE);
     }
@@ -77,7 +76,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
 
     private List<KeyImpression> entitiesToImpressions(List<ImpressionEntity> entities) {
         List<KeyImpression> impressions = new ArrayList<>();
-        for(ImpressionEntity entity : entities) {
+        for (ImpressionEntity entity : entities) {
             try {
                 KeyImpression impression = Json.fromJson(entity.getBody(), KeyImpression.class);
                 impression.storageId = entity.getId();
@@ -106,7 +105,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         if (impressions == null) {
             return ids;
         }
-        for(KeyImpression impression : impressions) {
+        for (KeyImpression impression : impressions) {
             ids.add(impression.storageId);
         }
         return ids;
@@ -141,7 +140,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
             if (entities == null) {
                 return ids;
             }
-            for(ImpressionEntity entity : entities) {
+            for (ImpressionEntity entity : entities) {
                 ids.add(entity.getId());
             }
             return ids;

@@ -30,6 +30,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private OkHttpClient mOkHttpClient;
     private URI mUri;
     private Map<String, String> mHeaders;
+    private Response mOkHttpResponse;
 
     HttpStreamRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
                           @NonNull Map<String, String> headers) {
@@ -50,6 +51,9 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     @Override
     public void close() {
+        if(mOkHttpResponse != null && mOkHttpResponse.body() != null) {
+            mOkHttpResponse.body().close();
+        }
     }
 
     private HttpStreamResponse getRequest() throws HttpException {
@@ -61,8 +65,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                     .url(url);
             addHeaders(requestBuilder);
             Request okHttpRequest = requestBuilder. build();
-            Response okHttpResponse = mOkHttpClient.newCall(okHttpRequest).execute();
-            response = buildResponse(okHttpResponse);
+            mOkHttpResponse = mOkHttpClient.newCall(okHttpRequest).execute();
+            response = buildResponse(mOkHttpResponse);
 
         } catch (MalformedURLException e) {
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
@@ -82,7 +86,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     private HttpStreamResponse buildResponse(Response okHttpResponse) throws IOException {
         int responseCode = okHttpResponse.code();
-        if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < 300) {
+        if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < 300 && okHttpResponse.body() != null) {
             return new HttpStreamResponseImpl(responseCode, new BufferedReader(new InputStreamReader(
                     okHttpResponse.body().byteStream())));
         }

@@ -4,6 +4,8 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.Map;
 
+import io.split.android.client.utils.Logger;
+
 public class EventStreamParser {
     public final static String EVENT_FIELD = "event";
     public final static String KEEP_ALIVE_EVENT = "keepalive";
@@ -23,13 +25,13 @@ public class EventStreamParser {
     @VisibleForTesting
     public boolean parseLineAndAppendValue(String streamLine, Map<String, String> messageValues) {
 
-        if(streamLine == null) {
+        if (streamLine == null) {
             return false;
         }
 
         String trimmedLine = streamLine.trim();
 
-        if(KEEP_ALIVE_TOKEN.equals(trimmedLine)) {
+        if (KEEP_ALIVE_TOKEN.equals(trimmedLine)) {
             messageValues.put(EVENT_FIELD, KEEP_ALIVE_EVENT);
             return true;
         }
@@ -38,13 +40,13 @@ public class EventStreamParser {
             return false;
         }
 
-        if (trimmedLine.isEmpty() && messageValues.size() == 3) {
+        if (trimmedLine.isEmpty()) {
             return true;
         }
 
         int separatorIndex = trimmedLine.indexOf(FIELD_SEPARATOR);
 
-        if(separatorIndex == 0) {
+        if (separatorIndex == 0) {
             return false;
         }
 

@@ -541,6 +541,67 @@ public class PushNotificationManagerTest {
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
     }
 
+    @Test
+    public void disconnectOnBg() throws InterruptedException {
+        mPushManager.start();
+        mPushManager.pause();
+        verify(mSseClient, times(1)).scheduleDisconnection(anyLong());
+    }
+
+    @Test
+    public void connectOnFg() throws InterruptedException {
+        when(mSseClient.cancelDisconnectionTimer()).thenReturn(true);
+        when(mSseClient.readyState()).thenReturn(SseClient.CLOSED);
+        mPushManager.start();
+        mPushManager.pause();
+        mPushManager.resume();
+        verify(mSseClient, times(0)).cancelDisconnectionTimer();
+    }
+
+    @Test
+    public void noConnectOnFgWhileStillConnected() throws InterruptedException {
+        when(mSseClient.cancelDisconnectionTimer()).thenReturn(true);
+        when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
+        mPushManager.start();
+        mPushManager.pause();
+        mPushManager.resume();
+        verify(mSseClient, times(1)).cancelDisconnectionTimer();
+        verify(mTaskExecutor, never()).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
+    }
+
+    @Test
+    public void connectOnFgWhileOpenAndCancelFail() throws InterruptedException {
+        // Tests that connection is triggered if ready state is open
+        // but couldn't cancel scheduled disconnection because it was triggered
+        when(mSseClient.cancelDisconnectionTimer()).thenReturn(false);
+        when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
+        mPushManager.start();
+        // Should be here to avoid counting start two
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mPushManager.pause();
+        mPushManager.resume();
+        verify(mSseClient, times(1)).cancelDisconnectionTimer();
+        verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
+    }
+
+
+    @Test
+    public void sseClientError() throws InterruptedException {
+        when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
+        mPushManager.start();
+        mPushManager.onError(true);
+        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseReconnectionTimer.class), anyLong(), isNull());
+    }
+
+    @Test
+    public void sseClientErrorOnBg() throws InterruptedException {
+        when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
+        mPushManager.start();
+        mPushManager.pause();
+        mPushManager.onError(true);
+        verify(mTaskExecutor, never()).schedule(any(PushNotificationManager.SseReconnectionTimer.class), anyLong(), isNull());
+    }
+
     @After
     public void teardDown() {
         reset();

@@ -55,6 +55,9 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
     @Override
     public void setActive(@NonNull List<Event> events) {
         checkNotNull(events);
+        if (events.size() == 0) {
+            return;
+        }
         List<Long> ids = getEventsId(events);
         mEventDao.updateStatus(ids, StorageRecordStatus.ACTIVE);
     }
