@@ -584,6 +584,24 @@ public class PushNotificationManagerTest {
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(PushNotificationManager.class));
     }
 
+
+    @Test
+    public void sseClientError() throws InterruptedException {
+        when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
+        mPushManager.start();
+        mPushManager.onError(true);
+        verify(mTaskExecutor, times(1)).schedule(any(PushNotificationManager.SseReconnectionTimer.class), anyLong(), isNull());
+    }
+
+    @Test
+    public void sseClientErrorOnBg() throws InterruptedException {
+        when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
+        mPushManager.start();
+        mPushManager.pause();
+        mPushManager.onError(true);
+        verify(mTaskExecutor, never()).schedule(any(PushNotificationManager.SseReconnectionTimer.class), anyLong(), isNull());
+    }
+
     @After
     public void teardDown() {
         reset();

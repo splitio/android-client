@@ -216,6 +216,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     @Override
     public void onError(boolean isRecoverable) {
+        if(mIsHostAppInBackground.get()) {
+            return;
+        }
         cancelSseKeepAliveTimer();
         notifyPollingEnabled();
         if (isRecoverable) {
