@@ -9,6 +9,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
@@ -17,7 +18,10 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +30,7 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpStreamRequest;
 import io.split.android.client.network.HttpStreamResponse;
+import io.split.android.fake.HttpStreamResponseMock;
 
 import static java.lang.Thread.sleep;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,9 +56,13 @@ public class SseClientTest {
     @Mock
     SseClientListener mListener;
 
+    BlockingQueue mData;
+
     SseClient mClient;
 
     URI mUri;
+
+
 
 
     private static long DUMMY_DELAY = 1;
@@ -64,6 +73,7 @@ public class SseClientTest {
         MockitoAnnotations.initMocks(this);
         mUri = new URI("http://api/sse");
         mClient = new SseClient(mUri, mHttpClient, mParser, mExecutor);
+        mData = new LinkedBlockingDeque();
     }
 
     @Test
@@ -117,18 +127,34 @@ public class SseClientTest {
     }
 
     @Test
-    public void disconnectTriggered() throws InterruptedException {
+    public void disconnectTriggered() throws InterruptedException, HttpException, IOException {
+        Listener listener = new Listener();
+
+        CountDownLatch onCloseLatch = new CountDownLatch(1);
+        listener.mOnCloseLatch = onCloseLatch;
+        listener = spy(listener);
+
+
+        List<String> dummyChannels = new ArrayList<String>();
+        dummyChannels.add("dummychanel");
+        HttpStreamRequest request = Mockito.mock(HttpStreamRequest.class);
+        HttpStreamResponse response = new HttpStreamResponseMock(200, mData);
+
+        when(request.execute()).thenReturn(response);
+        when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
         SseClient client = new SseClient(mUri, mHttpClient, mParser, new ScheduledThreadPoolExecutor(POOL_SIZE));
-        client.setListener(mListener);
+        client.setListener(listener);
+        client.connect("pepetoken", dummyChannels);
+
         client = spy(client);
         client.scheduleDisconnection(DUMMY_DELAY);
-        sleep(DUMMY_DELAY + 2000);
+        onCloseLatch.await(4, TimeUnit.SECONDS);
         long readyState = client.readyState();
 
         verify(client, times(1)).disconnect();
-        verify(mListener, never()).onError(anyBoolean());
-        verify(mListener, times(1)).onDisconnect();
-        Assert.assertEquals(readyState, SseClient.CLOSED);
+        verify(listener, never()).onError(anyBoolean());
+        verify(listener, times(1)).onDisconnect();
+        Assert.assertEquals(SseClient.CLOSED, readyState);
     }
 
     private class Listener implements SseClientListener {
