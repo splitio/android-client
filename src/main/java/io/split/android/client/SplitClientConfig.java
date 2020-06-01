@@ -3,6 +3,7 @@ package io.split.android.client;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.Logger;
 
@@ -59,6 +60,10 @@ public class SplitClientConfig {
     private String _eventsEndpoint;
     private static String _hostname;
     private static String _ip;
+
+    private HttpProxy _proxy = null;
+    private String _proxyUsername = null;
+    private String _proxyPassword = null;
 
     private final int _featuresRefreshRate;
     private final int _segmentsRefreshRate;
@@ -125,6 +130,9 @@ public class SplitClientConfig {
                               int waitBeforeShutdown,
                               String hostname,
                               String ip,
+                              HttpProxy proxy,
+                              String proxyUsername,
+                              String proxyPassword,
                               int eventsQueueSize,
                               int eventsPerPush,
                               long eventFlushInterval,
@@ -157,6 +165,10 @@ public class SplitClientConfig {
         _impressionsChunkSize = impressionsChunkSize;
         _hostname = hostname;
         _ip = ip;
+
+        _proxy = proxy;
+        _proxyUsername = proxyUsername;
+        _proxyPassword = proxyPassword;
 
         _eventsQueueSize = eventsQueueSize;
         _eventsPerPush = eventsPerPush;
@@ -276,6 +288,18 @@ public class SplitClientConfig {
 
     public int waitBeforeShutdown() {
         return _waitBeforeShutdown;
+    }
+
+    public HttpProxy proxy() {
+        return _proxy;
+    }
+
+    public String proxyUsername() {
+        return _proxyUsername;
+    }
+
+    public String proxyPassword() {
+        return _proxyPassword;
     }
 
     public String hostname() {
@@ -426,6 +450,12 @@ public class SplitClientConfig {
 
         private String _hostname = "unknown";
         private String _ip = "unknown";
+
+        private String _proxyHost = null;
+        private int _proxyPort = 0;
+        private String _proxyUsername = null;
+        private String _proxyPassword = null;
+
         private boolean _synchronizeInBackground = false;
         private long _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
         private boolean _backgroundSyncWhenBatteryNotLow = true;
@@ -686,6 +716,50 @@ public class SplitClientConfig {
         }
 
         /**
+         * The host location of the proxy. Default is localhost.
+         *
+         * @param proxyHost location of the proxy
+         * @return this builder
+         */
+        public Builder proxyHost(String proxyHost) {
+            _proxyHost = proxyHost;
+            return this;
+        }
+
+        /**
+         * The port of the proxy. Default is -1.
+         *
+         * @param proxyPort port for the proxy
+         * @return this builder
+         */
+        public Builder proxyPort(int proxyPort) {
+            _proxyPort = proxyPort;
+            return this;
+        }
+
+        /**
+         * Set the username for authentication against the proxy (if proxy settings are enabled). (Optional).
+         *
+         * @param proxyUsername
+         * @return this builder
+         */
+        public Builder proxyUsername(String proxyUsername) {
+            _proxyUsername = proxyUsername;
+            return this;
+        }
+
+        /**
+         * Set the password for authentication against the proxy (if proxy settings are enabled). (Optional).
+         *
+         * @param proxyPassword
+         * @return this builder
+         */
+        public Builder proxyPassword(String proxyPassword) {
+            _proxyPassword = proxyPassword;
+            return this;
+        }
+
+        /**
          * Maximum size for impressions chunk to dump to storage and post.
          *
          * @param size MUST be > 0.
@@ -869,6 +943,11 @@ public class SplitClientConfig {
                 _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
             }
 
+            HttpProxy proxy = null;
+            if(_proxyHost != null) {
+                proxy = new HttpProxy(_proxyHost, _proxyPort, _proxyUsername, _proxyPassword);
+            }
+
             return new SplitClientConfig(
                     _serviceEndpoints.getSdkEndpoint(),
                     _serviceEndpoints.getEventsEndpoint(),
@@ -889,6 +968,9 @@ public class SplitClientConfig {
                     _waitBeforeShutdown,
                     _hostname,
                     _ip,
+                    proxy,
+                    _proxyUsername,
+                    _proxyPassword,
                     _eventsQueueSize,
                     _eventsPerPush,
                     _eventFlushInterval,

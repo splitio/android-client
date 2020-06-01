@@ -11,6 +11,7 @@ public class HttpClientImpl implements HttpClient {
 
     private OkHttpClient mOkHttpClient;
     private Map<String, String> mHeaders;
+    private HttpProxy mProxy;
 
     public HttpClientImpl() {
        this(0);
@@ -55,6 +56,10 @@ public class HttpClientImpl implements HttpClient {
         }
     }
 
+    @Override
+    public void setProxy(HttpProxy proxy) {
+        mProxy = proxy;
+    }
 
 
     @Override
