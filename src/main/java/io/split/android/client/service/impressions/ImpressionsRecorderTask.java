@@ -2,6 +2,7 @@ package io.split.android.client.service.impressions;
 
 import androidx.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class ImpressionsRecorderTask implements SplitTask {
         int nonSentRecords = 0;
         long nonSentBytes = 0;
         List<KeyImpression> impressions;
+        List<KeyImpression> failingImpressions = new ArrayList<>();
         do {
             impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
             if (impressions.size() > 0) {
@@ -53,10 +55,11 @@ public class ImpressionsRecorderTask implements SplitTask {
                     Logger.e("Impressions recorder task: Some impressions couldn't be sent." +
                             "Saving to send them in a new iteration" +
                             e.getLocalizedMessage());
-                    mPersistenImpressionsStorage.setActive(impressions);
+                    failingImpressions.addAll(impressions);
                 }
             }
         } while (impressions.size() == mConfig.getImpressionsPerPush());
+        mPersistenImpressionsStorage.setActive(failingImpressions);
 
         if (status == SplitTaskExecutionStatus.ERROR) {
             Map<String, Object> data = new HashMap<>();

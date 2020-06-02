@@ -9,7 +9,7 @@ public class ServiceEndpoints {
     private static final String SDK_ENDPOINT = "https://sdk.split.io/api";
     private static final String EVENTS_ENDPOINT = "https://events.split.io/api";
     private static final String AUTH_SERVICE_ENDPOINT = "https://auth.split.io/api";
-    private static final String STREAMING_SERVICE_ENDPOINT = "https://split-realtime.ably.io/sse";
+    private static final String STREAMING_SERVICE_ENDPOINT = "https://streaming.split.io/sse";
 
     private String mSdkEndpoint = SDK_ENDPOINT;
     private String mEventsEndpoint = EVENTS_ENDPOINT;

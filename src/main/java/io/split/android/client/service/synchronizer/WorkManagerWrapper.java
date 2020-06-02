@@ -170,6 +170,7 @@ public class WorkManagerWrapper {
 
     private Data buildSplitSyncInputData() {
         Data.Builder dataBuilder = new Data.Builder();
+        dataBuilder.putLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION, mSplitClientConfig.cacheExpirationInSeconds());
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
         return buildInputData(dataBuilder.build());
     }

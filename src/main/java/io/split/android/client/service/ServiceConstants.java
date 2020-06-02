@@ -7,6 +7,7 @@ public class ServiceConstants {
     public static final long NO_INITIAL_DELAY = 0;
     public static final long DEFAULT_INITIAL_DELAY = 15L;
     public static final int DEFAULT_RECORDS_PER_PUSH = 100;
+    public static final long DEFAULT_CACHE_EXPIRATION_IN_SECONDS = 864000; // 10 days
 
     public final static String TASK_INFO_FIELD_STATUS = "taskStatus";
     public final static String TASK_INFO_FIELD_TYPE = "taskType";
@@ -20,4 +21,5 @@ public class ServiceConstants {
     public final static String WORKER_PARAM_EVENTS_ENDPOINT = "eventsEndpoint";
     public final static String WORKER_PARAM_IMPRESSIONS_PER_PUSH = "impressionsPerPush";
     public final static String WORKER_PARAM_EVENTS_PER_PUSH = "eventsPerPush";
+    public final static String WORKER_PARAM_SPLIT_CACHE_EXPIRATION = "splitCacheExpiration";
 }

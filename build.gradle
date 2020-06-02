@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '2.6.0'
+    splitVersion = '2.6.1'
 }
 
 allprojects {
@@ -71,6 +71,7 @@ dependencies {
 
     implementation "org.yaml:snakeyaml:1.24"
     implementation 'org.jetbrains:annotations:15.0'
+    implementation "com.squareup.okhttp3:okhttp:4.5.0"
 
     // Test
     testImplementation 'junit:junit:4.12'

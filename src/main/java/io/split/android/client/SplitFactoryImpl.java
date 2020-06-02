@@ -19,7 +19,7 @@ import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.SyncImpressionListener;
-import io.split.android.client.lifecycle.LifecycleManager;
+import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.metrics.CachedMetrics;
 import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
@@ -72,7 +72,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final String _apiKey;
 
     private FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
-    private LifecycleManager _lifecyleManager;
+    private SplitLifecycleManager _lifecyleManager;
     private SyncManager _syncManager;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
@@ -159,7 +159,8 @@ public class SplitFactoryImpl implements SplitFactory {
             customerImpressionListener = splitImpressionListener;
         }
 
-        _lifecyleManager = new LifecycleManager(_syncManager);
+        _lifecyleManager = new SplitLifecycleManager();
+        _lifecyleManager.register(_syncManager);
 
         destroyer = new Runnable() {
             public void run() {

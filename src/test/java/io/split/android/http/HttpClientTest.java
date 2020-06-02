@@ -73,13 +73,13 @@ public class HttpClientTest {
 
         // Test post with response data
         url = mWebServer.url("/post_resp/");
-        HttpRequest postDataReq = client.request(url.uri(), HttpMethod.POST);
+        HttpRequest postDataReq = client.request(url.uri(), HttpMethod.POST, "{}");
         HttpResponse postDataResp = postDataReq.execute();
         recReq = mWebServer.takeRequest();
 
         // Test post no response data
         url = mWebServer.url("/post_no_resp/");
-        HttpRequest postNoDataReq = client.request(url.uri(), HttpMethod.POST);
+        HttpRequest postNoDataReq = client.request(url.uri(), HttpMethod.POST, "{}");
         HttpResponse postNoDataResp = postNoDataReq.execute();
         recReq = mWebServer.takeRequest();
 

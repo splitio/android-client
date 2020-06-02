@@ -128,7 +128,7 @@ public class ControlTest {
 
         Assert.assertEquals("segment_ready", mySegmentEntityReady.getSegmentList());
         Assert.assertEquals("segment1", mySegmentEntityOne.getSegmentList());
-        Assert.assertNull(mySegmentEntityNone);
+        Assert.assertEquals("dummy", mySegmentEntityNone.getSegmentList());
         Assert.assertEquals("segment1", mySegmentEntityPayload.getSegmentList());
         Assert.assertTrue(mStreamingResponse.isClosed());
     }
