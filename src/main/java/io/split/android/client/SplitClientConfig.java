@@ -3,6 +3,10 @@ package io.split.android.client;
 
 import com.google.common.base.Strings;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.HttpProxy;
@@ -133,8 +137,6 @@ public class SplitClientConfig {
                               String hostname,
                               String ip,
                               HttpProxy proxy,
-                              String proxyUsername,
-                              String proxyPassword,
                               Authenticator proxyAuthenticator,
                               int eventsQueueSize,
                               int eventsPerPush,
@@ -170,8 +172,6 @@ public class SplitClientConfig {
         _ip = ip;
 
         _proxy = proxy;
-        _proxyUsername = proxyUsername;
-        _proxyPassword = proxyPassword;
         _proxyAuthenticator = proxyAuthenticator;
 
         _eventsQueueSize = eventsQueueSize;
@@ -441,7 +441,6 @@ public class SplitClientConfig {
         private ImpressionListener _impressionListener;
         private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
-        static final String PROXY_FIELD_SEPARATOR = ":";
         static final int PROXY_PORT_DEFAULT = 80;
 
         //.track configuration
@@ -454,8 +453,6 @@ public class SplitClientConfig {
         private String _ip = "unknown";
 
         private String _proxyHost = null;
-        private String _proxyUsername = null;
-        private String _proxyPassword = null;
         private Authenticator _proxyAuthenticator = null;
 
         private boolean _synchronizeInBackground = false;
@@ -718,38 +715,14 @@ public class SplitClientConfig {
         }
 
         /**
-         * The proxy host and port in 'address:port' format. Default is null.
+         * The proxy URI in standard "scheme://user:password@domain:port/path format. Default is null.
          * If no port is provided default is 80
          *
-         * @param proxyHost location of the proxy
+         * @param proxyHost proxy URI
          * @return this builder
          */
         public Builder proxyHost(String proxyHost) {
             _proxyHost = proxyHost;
-            return this;
-        }
-
-        /**
-         * Set the username for authentication against the proxy (if proxy settings are available). (Optional).
-         * Only Basic authentication is  supported.
-         *
-         * @param proxyUsername
-         * @return this builder
-         */
-        public Builder proxyUsername(String proxyUsername) {
-            _proxyUsername = proxyUsername;
-            return this;
-        }
-
-        /**
-         * Set the password for authentication against the proxy (if proxy settings are available). (Optional).
-         * Only Basic authentication is  supported.
-         *
-         * @param proxyPassword
-         * @return this builder
-         */
-        public Builder proxyPassword(String proxyPassword) {
-            _proxyPassword = proxyPassword;
             return this;
         }
 
@@ -949,7 +922,7 @@ public class SplitClientConfig {
                 _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
             }
 
-            HttpProxy proxy = parseProxyHost(_proxyHost, _proxyUsername, _proxyPassword);
+            HttpProxy proxy = parseProxyHost(_proxyHost);
 
             return new SplitClientConfig(
                     _serviceEndpoints.getSdkEndpoint(),
@@ -972,8 +945,6 @@ public class SplitClientConfig {
                     _hostname,
                     _ip,
                     proxy,
-                    _proxyUsername,
-                    _proxyPassword,
                     _proxyAuthenticator,
                     _eventsQueueSize,
                     _eventsPerPush,
@@ -994,18 +965,30 @@ public class SplitClientConfig {
             this._impressionsChunkSize = _impressionsChunkSize;
         }
 
-        private HttpProxy parseProxyHost(String proxyHost, String username, String password) {
-            if (!Strings.isNullOrEmpty(proxyHost)) {
-                int proxyPort = PROXY_PORT_DEFAULT;
-                String[] proxyConfig = proxyHost.split(PROXY_FIELD_SEPARATOR);
-                if (proxyConfig.length > 1) {
-                    try {
-                        proxyPort = Integer.parseInt(proxyConfig[1]);
-                    } catch (NumberFormatException e) {
-                        Logger.e("Could not parse proxy port. Using default: " + PROXY_PORT_DEFAULT);
+        private HttpProxy parseProxyHost(String proxyUri) {
+            if (!Strings.isNullOrEmpty(proxyUri)) {
+                try {
+                    String username = null;
+                    String password = null;
+                    URI uri = URI.create(proxyUri);
+                    int port = uri.getPort() != -1 ? uri.getPort() : PROXY_PORT_DEFAULT;
+                    String userInfo = uri.getUserInfo();
+                    if(!Strings.isNullOrEmpty(userInfo)) {
+                        String[] userInfoComponents = userInfo.split(":");
+                        if(userInfoComponents.length > 1) {
+                            username = userInfoComponents[0];
+                            password = userInfoComponents[1];
+                        }
                     }
+                    String host = String.format("%s%s", uri.getHost(), uri.getPath());
+                    return new HttpProxy(host, port, username, password);
+                } catch (IllegalArgumentException e) {
+                    Logger.e("Proxy URI not valid: " + e.getLocalizedMessage());
+                    throw new IllegalArgumentException();
+                } catch (Exception e) {
+                    Logger.e("Unknown error while parsing proxy URI: " + e.getLocalizedMessage());
+                    throw new IllegalArgumentException();
                 }
-                return new HttpProxy(proxyConfig[0], proxyPort, username, password);
             }
             return null;
         }
