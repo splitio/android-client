@@ -22,7 +22,7 @@ import okhttp3.Route;
 
 public class HttpClientImpl implements HttpClient {
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
-    private static final long STREAMING_CONNECTION_TIMEOUT_IN_SECONDS = 80;
+    private static final long STREAMING_READ_TIMEOUT_IN_SECONDS = 80;
     private OkHttpClient mOkHttpClient;
     private OkHttpClient mOkHttpClientStreaming;
     private Map<String, String> mHeaders;
@@ -72,6 +72,8 @@ public class HttpClientImpl implements HttpClient {
     public static class Builder {
         private Authenticator mProxyAuthenticator;
         private HttpProxy mProxy;
+        private long readTimeout = -1;
+        private long connectionTimeout = -1;
 
         public Builder setProxy(HttpProxy proxy) {
             mProxy = proxy;
@@ -80,6 +82,16 @@ public class HttpClientImpl implements HttpClient {
 
         public Builder setProxyAuthenticator(Authenticator authenticator) {
             mProxyAuthenticator = authenticator;
+            return this;
+        }
+
+        public Builder setReadTimeout(long readTimeout) {
+            this.readTimeout = readTimeout;
+            return this;
+        }
+
+        public Builder setConnectionTimeout(long connectionTimeout) {
+            this.connectionTimeout = connectionTimeout;
             return this;
         }
 
@@ -97,14 +109,15 @@ public class HttpClientImpl implements HttpClient {
 
             // Avoiding newBuilder on purpose to use different thread pool and resources
             return new HttpClientImpl(
-                    createOkHttpClient(proxy, proxyAuthenticator, null),
-                    createOkHttpClient(proxy, proxyAuthenticator,STREAMING_CONNECTION_TIMEOUT_IN_SECONDS)
+                    createOkHttpClient(proxy, proxyAuthenticator, readTimeout, connectionTimeout),
+                    createOkHttpClient(proxy, proxyAuthenticator, STREAMING_READ_TIMEOUT_IN_SECONDS, connectionTimeout)
             );
         }
 
         private OkHttpClient createOkHttpClient(Proxy proxy,
                                                 Authenticator proxyAuthenticator,
-                                                Long readTimeout) {
+                                                Long readTimeout,
+                                                Long connectionTimeout) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
             if(proxy != null) {
@@ -117,6 +130,10 @@ public class HttpClientImpl implements HttpClient {
 
             if(readTimeout != null) {
                 builder.readTimeout(readTimeout, TimeUnit.SECONDS);
+            }
+
+            if(connectionTimeout != null) {
+                builder.connectTimeout(connectionTimeout, TimeUnit.SECONDS);
             }
 
             return builder.build();

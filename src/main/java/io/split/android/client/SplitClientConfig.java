@@ -1,6 +1,8 @@
 package io.split.android.client;
 
 
+import com.google.common.base.Strings;
+
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.HttpProxy;
@@ -439,6 +441,8 @@ public class SplitClientConfig {
         private ImpressionListener _impressionListener;
         private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
+        static final String PROXY_FIELD_SEPARATOR = ":";
+        static final int PROXY_PORT_DEFAULT = 80;
 
         //.track configuration
         private int _eventsQueueSize = DEFAULT_EVENTS_QUEUE_SIZE;
@@ -450,7 +454,6 @@ public class SplitClientConfig {
         private String _ip = "unknown";
 
         private String _proxyHost = null;
-        private int _proxyPort = 0;
         private String _proxyUsername = null;
         private String _proxyPassword = null;
         private Authenticator _proxyAuthenticator = null;
@@ -715,24 +718,14 @@ public class SplitClientConfig {
         }
 
         /**
-         * The host location of the proxy. Default is null.
+         * The proxy host and port in 'address:port' format. Default is null.
+         * If no port is provided default is 80
          *
          * @param proxyHost location of the proxy
          * @return this builder
          */
         public Builder proxyHost(String proxyHost) {
             _proxyHost = proxyHost;
-            return this;
-        }
-
-        /**
-         * The port of the proxy. Default is 0.
-         *
-         * @param proxyPort port for the proxy
-         * @return this builder
-         */
-        public Builder proxyPort(int proxyPort) {
-            _proxyPort = proxyPort;
             return this;
         }
 
@@ -956,10 +949,7 @@ public class SplitClientConfig {
                 _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
             }
 
-            HttpProxy proxy = null;
-            if (_proxyHost != null) {
-                proxy = new HttpProxy(_proxyHost, _proxyPort, _proxyUsername, _proxyPassword);
-            }
+            HttpProxy proxy = parseProxyHost(_proxyHost, _proxyUsername, _proxyPassword);
 
             return new SplitClientConfig(
                     _serviceEndpoints.getSdkEndpoint(),
@@ -1002,6 +992,22 @@ public class SplitClientConfig {
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
             this._impressionsChunkSize = _impressionsChunkSize;
+        }
+
+        private HttpProxy parseProxyHost(String proxyHost, String username, String password) {
+            if (!Strings.isNullOrEmpty(proxyHost)) {
+                int proxyPort = PROXY_PORT_DEFAULT;
+                String[] proxyConfig = proxyHost.split(PROXY_FIELD_SEPARATOR);
+                if (proxyConfig.length > 1) {
+                    try {
+                        proxyPort = Integer.parseInt(proxyConfig[1]);
+                    } catch (NumberFormatException e) {
+                        Logger.e("Could not parse proxy port. Using default: " + PROXY_PORT_DEFAULT);
+                    }
+                }
+                return new HttpProxy(proxyConfig[0], proxyPort, username, password);
+            }
+            return null;
         }
     }
 }

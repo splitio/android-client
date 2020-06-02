@@ -79,6 +79,8 @@ public class SplitFactoryImpl implements SplitFactory {
             throws URISyntaxException {
         this(apiToken, key, config, context,
                 new HttpClientImpl.Builder()
+                        .setConnectionTimeout(config.connectionTimeout())
+                        .setReadTimeout(config.readTimeout())
                         .setProxy(config.proxy())
                         .setProxyAuthenticator(config.authenticator()).build());
     }
