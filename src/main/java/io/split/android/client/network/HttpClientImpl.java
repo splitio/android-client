@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
-import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +21,7 @@ import okhttp3.Response;
 import okhttp3.Route;
 
 public class HttpClientImpl implements HttpClient {
-    private static final String BASIC_AUTHENTICATION_HEADER = "Authorization";
+    private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
     private static final long STREAMING_CONNECTION_TIMEOUT_IN_SECONDS = 80;
     private OkHttpClient mOkHttpClient;
     private OkHttpClient mOkHttpClientStreaming;
@@ -86,25 +85,25 @@ public class HttpClientImpl implements HttpClient {
 
         public HttpClient build() {
             Proxy proxy = null;
-            Authenticator authenticator = null;
+            Authenticator proxyAuthenticator = null;
             if(mProxy != null) {
                 proxy = createProxy(mProxy);
                 if(mProxyAuthenticator != null) {
-                    authenticator = mProxyAuthenticator;
+                    proxyAuthenticator = mProxyAuthenticator;
                 } else if(!Strings.isNullOrEmpty(mProxy.getUsername())) {
-                    authenticator = createBasicAuthenticator(mProxy.getUsername(), mProxy.getPassword());
+                    proxyAuthenticator = createBasicAuthenticator(mProxy.getUsername(), mProxy.getPassword());
                 }
             }
 
             // Avoiding newBuilder on purpose to use different thread pool and resources
             return new HttpClientImpl(
-                    createOkHttpClient(proxy, mProxyAuthenticator, null),
-                    createOkHttpClient(proxy, mProxyAuthenticator,STREAMING_CONNECTION_TIMEOUT_IN_SECONDS)
+                    createOkHttpClient(proxy, proxyAuthenticator, null),
+                    createOkHttpClient(proxy, proxyAuthenticator,STREAMING_CONNECTION_TIMEOUT_IN_SECONDS)
             );
         }
 
         private OkHttpClient createOkHttpClient(Proxy proxy,
-                                                Authenticator authenticator,
+                                                Authenticator proxyAuthenticator,
                                                 Long readTimeout) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
@@ -112,8 +111,8 @@ public class HttpClientImpl implements HttpClient {
                 builder.proxy(proxy);
             }
 
-            if(authenticator != null) {
-                builder.proxyAuthenticator(authenticator);
+            if(proxyAuthenticator != null) {
+                builder.proxyAuthenticator(proxyAuthenticator);
             }
 
             if(readTimeout != null) {
@@ -136,7 +135,7 @@ public class HttpClientImpl implements HttpClient {
                 @Override
                 public Request authenticate(@Nullable Route route, @NotNull Response response) throws IOException {
                     String credential = Credentials.basic(username, password);
-                    return response.request().newBuilder().header(BASIC_AUTHENTICATION_HEADER, credential).build();
+                    return response.request().newBuilder().header(PROXY_AUTHORIZATION_HEADER, credential).build();
                 }
             };
         }
