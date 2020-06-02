@@ -6,6 +6,7 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.Logger;
+import okhttp3.Authenticator;
 
 /**
  * Configurations for the SplitClient.
@@ -54,8 +55,6 @@ public class SplitClientConfig {
 
     private static final long CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_CACHE_EXPIRATION_IN_SECONDS; // 10 días
 
-    private static final long STREAMING_CONNECTION_TIMEOUT_IN_SECONDS = 80;
-
     private String _endpoint;
     private String _eventsEndpoint;
     private static String _hostname;
@@ -64,6 +63,7 @@ public class SplitClientConfig {
     private HttpProxy _proxy = null;
     private String _proxyUsername = null;
     private String _proxyPassword = null;
+    private Authenticator _proxyAuthenticator = null;
 
     private final int _featuresRefreshRate;
     private final int _segmentsRefreshRate;
@@ -133,6 +133,7 @@ public class SplitClientConfig {
                               HttpProxy proxy,
                               String proxyUsername,
                               String proxyPassword,
+                              Authenticator proxyAuthenticator,
                               int eventsQueueSize,
                               int eventsPerPush,
                               long eventFlushInterval,
@@ -169,6 +170,7 @@ public class SplitClientConfig {
         _proxy = proxy;
         _proxyUsername = proxyUsername;
         _proxyPassword = proxyPassword;
+        _proxyAuthenticator = proxyAuthenticator;
 
         _eventsQueueSize = eventsQueueSize;
         _eventsPerPush = eventsPerPush;
@@ -294,12 +296,8 @@ public class SplitClientConfig {
         return _proxy;
     }
 
-    public String proxyUsername() {
-        return _proxyUsername;
-    }
-
-    public String proxyPassword() {
-        return _proxyPassword;
+    public Authenticator proxyAuthenticator() {
+        return _proxyAuthenticator;
     }
 
     public String hostname() {
@@ -419,8 +417,8 @@ public class SplitClientConfig {
         return _streamingServiceUrl;
     }
 
-    long getStreamingConnectionTimeout() {
-        return STREAMING_CONNECTION_TIMEOUT_IN_SECONDS;
+    public Authenticator authenticator() {
+        return _proxyAuthenticator;
     }
 
     public static final class Builder {
@@ -455,6 +453,7 @@ public class SplitClientConfig {
         private int _proxyPort = 0;
         private String _proxyUsername = null;
         private String _proxyPassword = null;
+        private Authenticator _proxyAuthenticator = null;
 
         private boolean _synchronizeInBackground = false;
         private long _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
@@ -462,7 +461,7 @@ public class SplitClientConfig {
         private boolean _backgroundSyncWhenWifiOnly = false;
 
         // Push notification settings
-        private boolean _streamingEnabled = true;
+        private boolean _streamingEnabled = false;
         private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
         private int _streamingReconnectBackoffBase
                 = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
@@ -716,7 +715,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * The host location of the proxy. Default is localhost.
+         * The host location of the proxy. Default is null.
          *
          * @param proxyHost location of the proxy
          * @return this builder
@@ -727,7 +726,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * The port of the proxy. Default is -1.
+         * The port of the proxy. Default is 0.
          *
          * @param proxyPort port for the proxy
          * @return this builder
@@ -738,7 +737,8 @@ public class SplitClientConfig {
         }
 
         /**
-         * Set the username for authentication against the proxy (if proxy settings are enabled). (Optional).
+         * Set the username for authentication against the proxy (if proxy settings are available). (Optional).
+         * Only Basic authentication is  supported.
          *
          * @param proxyUsername
          * @return this builder
@@ -749,13 +749,26 @@ public class SplitClientConfig {
         }
 
         /**
-         * Set the password for authentication against the proxy (if proxy settings are enabled). (Optional).
+         * Set the password for authentication against the proxy (if proxy settings are available). (Optional).
+         * Only Basic authentication is  supported.
          *
          * @param proxyPassword
          * @return this builder
          */
         public Builder proxyPassword(String proxyPassword) {
             _proxyPassword = proxyPassword;
+            return this;
+        }
+
+        /**
+         * Set a custom authenticator for the proxy. This feature is experimental and
+         * and unsupported. It could be removed from the SDK
+         *
+         * @param proxyAuthenticator
+         * @return this builder
+         */
+        public Builder proxyAuthenticator(Authenticator proxyAuthenticator) {
+            _proxyAuthenticator = proxyAuthenticator;
             return this;
         }
 
@@ -944,7 +957,7 @@ public class SplitClientConfig {
             }
 
             HttpProxy proxy = null;
-            if(_proxyHost != null) {
+            if (_proxyHost != null) {
                 proxy = new HttpProxy(_proxyHost, _proxyPort, _proxyUsername, _proxyPassword);
             }
 
@@ -971,6 +984,7 @@ public class SplitClientConfig {
                     proxy,
                     _proxyUsername,
                     _proxyPassword,
+                    _proxyAuthenticator,
                     _eventsQueueSize,
                     _eventsPerPush,
                     _eventFlushInterval,

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.split.android.client.lifecycle.SplitLifecycleAware;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -33,11 +34,12 @@ import static io.split.android.client.service.sseclient.feedbackchannel.PushStat
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.STREAMING_CONNECTED;
 import static java.lang.reflect.Modifier.PRIVATE;
 
-public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener {
-
+public class PushNotificationManager implements SplitTaskExecutionListener, SseClientListener, SplitLifecycleAware {
+    // TODO: Split this class in smaller pieces
     private final static String DATA_FIELD = "data";
     private final static int SSE_KEEPALIVE_TIME_IN_SECONDS = 70;
     private final static int RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS = 600;
+    private final static int DISCONNECT_ON_BG_TIME_IN_SECONDS = 60;
     private final static String PRIMARY_CONTROL_CHANNEL = "control_pri";
 
     private final SseClient mSseClient;
@@ -55,6 +57,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private AtomicBoolean mIsPollingEnabled;
     private AtomicLong mLastControlNotificationTime;
     private AtomicBoolean mIsStreamingPaused;
+    private AtomicBoolean mIsHostAppInBackground;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -76,8 +79,8 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mIsPollingEnabled = new AtomicBoolean(false);
         mLastControlNotificationTime = new AtomicLong(0L);
         mIsStreamingPaused = new AtomicBoolean(false);
+        mIsHostAppInBackground = new AtomicBoolean(false);
         mSseClient.setListener(this);
-
     }
 
     public void start() {
@@ -86,6 +89,22 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     public void stop() {
         mSseClient.disconnect();
+    }
+
+    @Override
+    public void pause() {
+        mIsHostAppInBackground.set(true);
+        mSseClient.scheduleDisconnection(DISCONNECT_ON_BG_TIME_IN_SECONDS);
+    }
+
+    @Override
+    public void resume() {
+        // Checking sse client status, cancel scheduled disconnect if necessary
+        // and check if cancel was successful
+        if(mSseClient.readyState() == SseClient.CLOSED ||
+                (mSseClient.readyState() == SseClient.OPEN && !mSseClient.cancelDisconnectionTimer())) {
+            triggerSseAuthentication();
+        }
     }
 
     private void connectToSse(String token, List<String> channels) {
@@ -110,7 +129,6 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 this);
     }
-
 
     private void resetSseKeepAliveTimer() {
         cancelSseKeepAliveTimer();
@@ -164,6 +182,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     @Override
     public void onMessage(Map<String, String> values) {
         String messageData = values.get(DATA_FIELD);
+        resetSseKeepAliveTimer();
         if (messageData != null) {
             IncomingNotification incomingNotification
                     = mNotificationParser.parseIncoming(messageData);
@@ -180,12 +199,10 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                     break;
                 case OCCUPANCY:
                     processOccupancyNotification(incomingNotification);
-                    resetSseKeepAliveTimer();
                     break;
                 default:
                     if (!mIsStreamingPaused.get()) {
                         mNotificationProcessor.process(incomingNotification);
-                        resetSseKeepAliveTimer();
                     }
             }
         }
@@ -200,10 +217,20 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     @Override
     public void onError(boolean isRecoverable) {
         cancelSseKeepAliveTimer();
+        if(mIsHostAppInBackground.get()) {
+            mSseClient.cancelDisconnectionTimer();
+            return;
+        }
         notifyPollingEnabled();
         if (isRecoverable) {
             scheduleSseReconnection();
         }
+    }
+
+    @Override
+    public void onDisconnect() {
+        cancelSseKeepAliveTimer();
+        cancelRefreshTokenTimer();
     }
 
     private void processControlNotification(IncomingNotification incomingNotification) {
@@ -281,12 +308,14 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private void cancelSseKeepAliveTimer() {
         if (mResetSseKeepAliveTimerTaskId != null) {
             mTaskExecutor.stopTask(mResetSseKeepAliveTimerTaskId);
+            mResetSseKeepAliveTimerTaskId = null;
         }
     }
 
     private void cancelRefreshTokenTimer() {
         if (mSseTokenExpiredTimerTaskId != null) {
             mTaskExecutor.stopTask(mSseTokenExpiredTimerTaskId);
+            mSseTokenExpiredTimerTaskId = null;
         }
     }
 

@@ -107,6 +107,7 @@ public class IntegrationHelper {
     public static SplitClientConfig basicConfig() {
         return SplitClientConfig.builder()
                 .ready(30000)
+                .streamingEnabled(true)
                 .enableDebug()
                 .trafficType("account")
                 .build();

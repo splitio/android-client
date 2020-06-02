@@ -8,8 +8,6 @@ public interface HttpClient {
 
     void addHeaders(Map<String, String> headers);
 
-    void setProxy(HttpProxy proxy);
-
     HttpRequest request(URI uri, HttpMethod httpMethod);
 
     HttpRequest request(URI uri, HttpMethod httpMethod, String body);

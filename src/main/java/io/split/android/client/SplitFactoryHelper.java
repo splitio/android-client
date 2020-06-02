@@ -121,7 +121,7 @@ class SplitFactoryHelper {
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
         EventStreamParser eventStreamParser = new EventStreamParser();
         SseClient sseClient =
-                new SseClient(streamingServiceUrl, new HttpClientImpl(config.getStreamingConnectionTimeout()), eventStreamParser);
+                new SseClient(streamingServiceUrl,httpClient, eventStreamParser);
         PushNotificationManager pushNotificationManager =
                 new PushNotificationManager(sseClient, splitTaskExecutor,
                         splitTaskFactory, notificationParser,
