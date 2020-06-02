@@ -128,11 +128,11 @@ public class HttpClientImpl implements HttpClient {
                 builder.proxyAuthenticator(proxyAuthenticator);
             }
 
-            if(readTimeout != null) {
+            if(readTimeout != null && readTimeout.longValue() > 0) {
                 builder.readTimeout(readTimeout, TimeUnit.SECONDS);
             }
 
-            if(connectionTimeout != null) {
+            if(connectionTimeout != null && connectionTimeout.longValue() > 0) {
                 builder.connectTimeout(connectionTimeout, TimeUnit.SECONDS);
             }
 
