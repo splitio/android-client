@@ -20,7 +20,7 @@ import io.split.android.client.utils.Logger;
  * An implementation of SplitClient that considers all partitions
  * passed in the constructor to be 100% on for all users, and
  * any other split to be 100% off for all users. This implementation
- * is useful for using Codigo in localhost environment.
+ * is useful for using Codigo in all.localhost environment.
  *
  */
 public final class LocalhostSplitFactory implements SplitFactory {

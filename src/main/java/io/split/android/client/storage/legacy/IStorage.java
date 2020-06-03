@@ -10,7 +10,7 @@ import java.util.List;
 public interface IStorage {
 
     /**
-     * Reads an element from the storage
+     * Reads an element from the all.storage
      *
      * @param elementId Identifier for the element to be read
      * @return JSON representation of the element
@@ -18,7 +18,7 @@ public interface IStorage {
     String read(String elementId) throws IOException;
 
     /**
-     * Writes an element into the storage
+     * Writes an element into the all.storage
      *
      * @param elementId Identifier for the element to be written
      * @param content   JSON representation of the element
@@ -48,7 +48,7 @@ public interface IStorage {
     List<String> getAllIds(String fileNamePrefix);
 
     /**
-     * Changes the Id for an element in the storage
+     * Changes the Id for an element in the all.storage
      * @param currentId Current Id
      * @param newId New Id for the element
      * @return Whether the rename was successful or not
@@ -56,7 +56,7 @@ public interface IStorage {
     boolean rename(String currentId, String newId);
 
     /**
-     * Checks existence of an element in the storage
+     * Checks existence of an element in the all.storage
      * @param elementId Element Id
      * @return Whether the file exists or not
      */

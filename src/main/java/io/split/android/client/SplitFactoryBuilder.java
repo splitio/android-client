@@ -38,7 +38,7 @@ public class SplitFactoryBuilder {
      *
      * @param apiToken the API token. MUST NOT be null
      * @return a SplitFactory
-     * @throws IOException                           if the SDK was being started in 'localhost' mode, but
+     * @throws IOException                           if the SDK was being started in 'all.localhost' mode, but
      *                                               there were problems reading the override file from disk.
      * @throws java.lang.InterruptedException        if you asked to block until the sdk was
      *                                               ready and the block was interrupted.
@@ -53,7 +53,7 @@ public class SplitFactoryBuilder {
      * @param apiToken the API token. MUST NOT be null
      * @param config   parameters to control sdk construction. MUST NOT be null.
      * @return a SplitFactory
-     * @throws java.io.IOException                   if the SDK was being started in 'localhost' mode, but
+     * @throws java.io.IOException                   if the SDK was being started in 'all.localhost' mode, but
      *                                               there were problems reading the override file from disk.
      * @throws InterruptedException                  if you asked to block until the sdk was
      *                                               ready and the block was interrupted.

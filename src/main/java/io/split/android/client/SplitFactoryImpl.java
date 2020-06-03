@@ -255,7 +255,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase);
         if (!storageMigrator.isMigrationDone()) {
-            Logger.i("Migrating cache to new storage implementation");
+            Logger.i("Migrating cache to new all.storage implementation");
             IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
             SplitCacheMigrator splitCacheMigrator = new SplitCache(fileStore);
             MySegmentsCacheMigrator mySegmentsCacheMigrator = new MySegmentsCache(fileStore);

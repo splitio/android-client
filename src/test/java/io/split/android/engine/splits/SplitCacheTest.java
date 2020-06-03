@@ -110,7 +110,7 @@ public class SplitCacheTest {
 
         File rootFolder = new File(ROOT_FOLDER);
         IStorage storage = new FileStorage(rootFolder, FOLDER);
-        //IStorage storage = new MemoryStorage();
+        //IStorage all.storage = new MemoryStorage();
         CountDownLatch latch = new CountDownLatch(2);
 
         for(int i = 0; i < 10000; i++) {

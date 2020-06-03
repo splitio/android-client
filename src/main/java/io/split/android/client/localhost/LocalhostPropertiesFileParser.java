@@ -33,7 +33,7 @@ public class LocalhostPropertiesFileParser implements LocalhostFileParser {
         } catch (FileNotFoundException e) {
             Logger.e("Localhost property file not found. Add split.properties in your application assets");
         } catch (Exception e){
-            Logger.e("Error loading localhost property file");
+            Logger.e("Error loading all.localhost property file");
         }
         return splits;
     }

@@ -739,7 +739,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * Maximum size for impressions chunk to dump to storage and post.
+         * Maximum size for impressions chunk to dump to all.storage and post.
          *
          * @param size MUST be > 0.
          * @return this builder
@@ -857,7 +857,7 @@ public class SplitClientConfig {
 
 
         /**
-         * Alternative service enpoints URL. Should only be adjusted for playing well in test environments.
+         * Alternative all.service enpoints URL. Should only be adjusted for playing well in test environments.
          *
          * @param serviceEndpoints ServiceEndpoints
          * @return this builder

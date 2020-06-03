@@ -112,7 +112,7 @@ public class StorageMigrator {
         @Override
         public void run() {
             // If migration fails, data is erased and
-            // new storage is used anyway to avoid trying to migrate
+            // new all.storage is used anyway to avoid trying to migrate
             // every time sdk is initialized
             mGeneralInfoDao.update(new GeneralInfoEntity(
                     GeneralInfoEntity.DATBASE_MIGRATION_STATUS,
