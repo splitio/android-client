@@ -13,6 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.SSLSocketFactory;
+
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
@@ -74,6 +76,7 @@ public class HttpClientImpl implements HttpClient {
         private HttpProxy mProxy;
         private long readTimeout = -1;
         private long connectionTimeout = -1;
+        private boolean isSslDevelopmentMode = false;
 
         public Builder setProxy(HttpProxy proxy) {
             mProxy = proxy;
@@ -95,52 +98,68 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
+        public Builder enableSslDevelopmentMode(boolean enableSslDevelopmentMode) {
+            isSslDevelopmentMode = enableSslDevelopmentMode;
+            return this;
+        }
+
         public HttpClient build() {
             Proxy proxy = null;
             Authenticator proxyAuthenticator = null;
-            if(mProxy != null) {
+            if (mProxy != null) {
                 proxy = createProxy(mProxy);
-                if(mProxyAuthenticator != null) {
+                if (mProxyAuthenticator != null) {
                     proxyAuthenticator = mProxyAuthenticator;
-                } else if(!Strings.isNullOrEmpty(mProxy.getUsername())) {
+                } else if (!Strings.isNullOrEmpty(mProxy.getUsername())) {
                     proxyAuthenticator = createBasicAuthenticator(mProxy.getUsername(), mProxy.getPassword());
                 }
             }
 
             // Avoiding newBuilder on purpose to use different thread pool and resources
             return new HttpClientImpl(
-                    createOkHttpClient(proxy, proxyAuthenticator, readTimeout, connectionTimeout),
-                    createOkHttpClient(proxy, proxyAuthenticator, STREAMING_READ_TIMEOUT_IN_SECONDS, connectionTimeout)
+                    createOkHttpClient(proxy, proxyAuthenticator, readTimeout, connectionTimeout, isSslDevelopmentMode),
+                    createOkHttpClient(proxy, proxyAuthenticator, STREAMING_READ_TIMEOUT_IN_SECONDS, connectionTimeout, isSslDevelopmentMode)
             );
         }
 
         private OkHttpClient createOkHttpClient(Proxy proxy,
                                                 Authenticator proxyAuthenticator,
                                                 Long readTimeout,
-                                                Long connectionTimeout) {
+                                                Long connectionTimeout,
+                                                boolean enableSslDevelopmentMode) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
-            if(proxy != null) {
+            if (proxy != null) {
                 builder.proxy(proxy);
             }
 
-            if(proxyAuthenticator != null) {
+            if (proxyAuthenticator != null) {
                 builder.proxyAuthenticator(proxyAuthenticator);
             }
 
-            if(readTimeout != null && readTimeout.longValue() > 0) {
+            if (readTimeout != null && readTimeout.longValue() > 0) {
                 builder.readTimeout(readTimeout, TimeUnit.SECONDS);
             }
 
-            if(connectionTimeout != null && connectionTimeout.longValue() > 0) {
+            if (connectionTimeout != null && connectionTimeout.longValue() > 0) {
                 builder.connectTimeout(connectionTimeout, TimeUnit.SECONDS);
+            }
+
+            if (enableSslDevelopmentMode) {
+                DevelopmentSSLFactory developmentSSLFactory = new DevelopmentSSLFactory();
+                SSLSocketFactory socketFactory = developmentSSLFactory.sslSocketFactory();
+
+                if (socketFactory != null) {
+                    builder.sslSocketFactory(socketFactory, developmentSSLFactory.x509TrustManager());
+                    builder.hostnameVerifier(developmentSSLFactory.hostnameVerifier());
+                }
             }
 
             return builder.build();
         }
 
         private Proxy createProxy(HttpProxy proxy) {
-            if(proxy == null) {
+            if (proxy == null) {
                 return null;
             }
             return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxy.getHost(), proxy.getPort()));

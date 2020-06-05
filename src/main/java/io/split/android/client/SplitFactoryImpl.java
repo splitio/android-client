@@ -82,6 +82,7 @@ public class SplitFactoryImpl implements SplitFactory {
                         .setConnectionTimeout(config.connectionTimeout())
                         .setReadTimeout(config.readTimeout())
                         .setProxy(config.proxy())
+                        .enableSslDevelopmentMode(config.isSslDevelopmentModeEnabled())
                         .setProxyAuthenticator(config.authenticator()).build());
     }
 

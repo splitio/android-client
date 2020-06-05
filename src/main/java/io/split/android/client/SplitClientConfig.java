@@ -3,9 +3,7 @@ package io.split.android.client;
 
 import com.google.common.base.Strings;
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
@@ -18,6 +16,8 @@ import okhttp3.Authenticator;
  * Configurations for the SplitClient.
  */
 public class SplitClientConfig {
+
+    // TODO: Refactor this huge class
 
     private static final int MIN_FEATURES_REFRESH_RATE = 30;
     private static final int MIN_MYSEGMENTS_REFRESH_RATE = 30;
@@ -108,6 +108,7 @@ public class SplitClientConfig {
     private int _streamingReconnectBackoffBase;
     private String _authServiceUrl;
     private String _streamingServiceUrl;
+    private boolean _isSslDevelopmentModeEnabled;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -150,7 +151,8 @@ public class SplitClientConfig {
                               int authRetryBackoffBase,
                               int streamingReconnectBackoffBase,
                               String authServiceUrl,
-                              String streamingServiceUrl) {
+                              String streamingServiceUrl,
+                              boolean enableSslDevelopmentMode) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -187,6 +189,7 @@ public class SplitClientConfig {
         _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
         _authServiceUrl = authServiceUrl;
         _streamingServiceUrl = streamingServiceUrl;
+        _isSslDevelopmentModeEnabled = enableSslDevelopmentMode;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -423,6 +426,10 @@ public class SplitClientConfig {
         return _proxyAuthenticator;
     }
 
+    public boolean isSslDevelopmentModeEnabled() {
+        return _isSslDevelopmentModeEnabled;
+    }
+
     public static final class Builder {
 
         private ServiceEndpoints _serviceEndpoints = null;
@@ -442,6 +449,7 @@ public class SplitClientConfig {
         private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
         static final int PROXY_PORT_DEFAULT = 80;
+
 
         //.track configuration
         private int _eventsQueueSize = DEFAULT_EVENTS_QUEUE_SIZE;
@@ -465,6 +473,8 @@ public class SplitClientConfig {
         private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
         private int _streamingReconnectBackoffBase
                 = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
+
+        private boolean _isSslDevelopmentModeEnabled = false;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -857,7 +867,7 @@ public class SplitClientConfig {
 
 
         /**
-         * Alternative all.service enpoints URL. Should only be adjusted for playing well in test environments.
+         * Alternative service enpoints URL. Should only be adjusted for playing well in test environments.
          *
          * @param serviceEndpoints ServiceEndpoints
          * @return this builder
@@ -866,6 +876,18 @@ public class SplitClientConfig {
             _serviceEndpoints = serviceEndpoints;
             return this;
         }
+
+        /**
+         * Avoid SSL checks while app on development. Do not activate this feature in production.
+         *
+         * @return: This builder
+         * @default: false
+         */
+        public Builder enableSslDevelopmentMode() {
+            _isSslDevelopmentModeEnabled = true;
+            return this;
+        }
+
 
         public SplitClientConfig build() {
 
@@ -958,7 +980,8 @@ public class SplitClientConfig {
                     _authRetryBackoffBase,
                     _streamingReconnectBackoffBase,
                     _serviceEndpoints.getAuthServiceEndpoint(),
-                    _serviceEndpoints.getStreamingServiceEndpoint());
+                    _serviceEndpoints.getStreamingServiceEndpoint(),
+                    _isSslDevelopmentModeEnabled);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
