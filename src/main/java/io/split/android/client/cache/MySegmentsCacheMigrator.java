@@ -9,7 +9,7 @@ public interface MySegmentsCacheMigrator {
     /**
      * Returns all segments without filtering by key.
      * This methods is inteded to reuse legacy code
-     * while migrating to new all.storage implementation
+     * while migrating to new storage implementation
      */
     Map<String, List<MySegment>> getAllMySegments();
 
