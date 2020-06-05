@@ -1,4 +1,4 @@
-2.6.1:
+2.6.1: (Jun 2, 2020)
 - Added expiration policy to split cache
 - Replaced HttpUrlConnection by OkHttp
 - Fixed some issues on streaming while host app in background
