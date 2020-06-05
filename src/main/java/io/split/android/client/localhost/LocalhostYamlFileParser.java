@@ -33,7 +33,7 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
         try {
             content = mFileStorage.read(fileName);
         } catch (IOException e) {
-            Logger.e("Error reading all.localhost yaml file");
+            Logger.e("Error reading localhost yaml file");
             return null;
         }
 
@@ -77,7 +77,7 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
                 }
             }
         } catch (Exception e) {
-            Logger.e("An error has ocurred while parsing all.localhost splits content");
+            Logger.e("An error has ocurred while parsing localhost splits content");
         }
         return splits;
     }

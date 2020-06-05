@@ -749,7 +749,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * Maximum size for impressions chunk to dump to all.storage and post.
+         * Maximum size for impressions chunk to dump to storage and post.
          *
          * @param size MUST be > 0.
          * @return this builder
