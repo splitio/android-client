@@ -24,7 +24,7 @@ import okhttp3.Route;
 
 public class HttpClientImpl implements HttpClient {
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
-    private static final long STREAMING_READ_TIMEOUT_IN_SECONDS = 80000;
+    private static final long STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
     private OkHttpClient mOkHttpClient;
     private OkHttpClient mOkHttpClientStreaming;
     private Map<String, String> mHeaders;
@@ -118,7 +118,7 @@ public class HttpClientImpl implements HttpClient {
             // Avoiding newBuilder on purpose to use different thread pool and resources
             return new HttpClientImpl(
                     createOkHttpClient(proxy, proxyAuthenticator, readTimeout, connectionTimeout, isSslDevelopmentMode),
-                    createOkHttpClient(proxy, proxyAuthenticator, STREAMING_READ_TIMEOUT_IN_SECONDS, connectionTimeout, isSslDevelopmentMode)
+                    createOkHttpClient(proxy, proxyAuthenticator, STREAMING_READ_TIMEOUT_IN_MILLISECONDS, connectionTimeout, isSslDevelopmentMode)
             );
         }
 
