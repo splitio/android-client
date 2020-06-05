@@ -42,6 +42,7 @@ public class TestableSplitConfigBuilder {
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
     private int mStreamingReconnectBackoffBase = 1;
+    private boolean mEnableSslDevelopmentMode = false;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -178,6 +179,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder enableSslDevelopmentMode() {
+        mEnableSslDevelopmentMode = true;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -217,7 +223,8 @@ public class TestableSplitConfigBuilder {
                     mAuthRetryBackoffBase,
                     mStreamingReconnectBackoffBase,
                     mServiceEndpoints.getAuthServiceEndpoint(),
-                    mServiceEndpoints.getStreamingServiceEndpoint());
+                    mServiceEndpoints.getStreamingServiceEndpoint(),
+                    mEnableSslDevelopmentMode);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "
