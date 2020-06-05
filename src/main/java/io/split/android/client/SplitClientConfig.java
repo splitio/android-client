@@ -1,10 +1,18 @@
 package io.split.android.client;
 
 
+import com.google.common.base.Strings;
+
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.Logger;
+import okhttp3.Authenticator;
 
 /**
  * Configurations for the SplitClient.
@@ -57,6 +65,11 @@ public class SplitClientConfig {
     private String _eventsEndpoint;
     private static String _hostname;
     private static String _ip;
+
+    private HttpProxy _proxy = null;
+    private String _proxyUsername = null;
+    private String _proxyPassword = null;
+    private Authenticator _proxyAuthenticator = null;
 
     private final int _featuresRefreshRate;
     private final int _segmentsRefreshRate;
@@ -123,6 +136,8 @@ public class SplitClientConfig {
                               int waitBeforeShutdown,
                               String hostname,
                               String ip,
+                              HttpProxy proxy,
+                              Authenticator proxyAuthenticator,
                               int eventsQueueSize,
                               int eventsPerPush,
                               long eventFlushInterval,
@@ -155,6 +170,9 @@ public class SplitClientConfig {
         _impressionsChunkSize = impressionsChunkSize;
         _hostname = hostname;
         _ip = ip;
+
+        _proxy = proxy;
+        _proxyAuthenticator = proxyAuthenticator;
 
         _eventsQueueSize = eventsQueueSize;
         _eventsPerPush = eventsPerPush;
@@ -276,6 +294,14 @@ public class SplitClientConfig {
         return _waitBeforeShutdown;
     }
 
+    public HttpProxy proxy() {
+        return _proxy;
+    }
+
+    public Authenticator proxyAuthenticator() {
+        return _proxyAuthenticator;
+    }
+
     public String hostname() {
         return _hostname;
     }
@@ -393,6 +419,10 @@ public class SplitClientConfig {
         return _streamingServiceUrl;
     }
 
+    public Authenticator authenticator() {
+        return _proxyAuthenticator;
+    }
+
     public static final class Builder {
 
         private ServiceEndpoints _serviceEndpoints = null;
@@ -411,6 +441,7 @@ public class SplitClientConfig {
         private ImpressionListener _impressionListener;
         private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
+        static final int PROXY_PORT_DEFAULT = 80;
 
         //.track configuration
         private int _eventsQueueSize = DEFAULT_EVENTS_QUEUE_SIZE;
@@ -420,6 +451,10 @@ public class SplitClientConfig {
 
         private String _hostname = "unknown";
         private String _ip = "unknown";
+
+        private String _proxyHost = null;
+        private Authenticator _proxyAuthenticator = null;
+
         private boolean _synchronizeInBackground = false;
         private long _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
         private boolean _backgroundSyncWhenBatteryNotLow = true;
@@ -680,6 +715,30 @@ public class SplitClientConfig {
         }
 
         /**
+         * The proxy URI in standard "scheme://user:password@domain:port/path format. Default is null.
+         * If no port is provided default is 80
+         *
+         * @param proxyHost proxy URI
+         * @return this builder
+         */
+        public Builder proxyHost(String proxyHost) {
+            _proxyHost = proxyHost;
+            return this;
+        }
+
+        /**
+         * Set a custom authenticator for the proxy. This feature is experimental and
+         * and unsupported. It could be removed from the SDK
+         *
+         * @param proxyAuthenticator
+         * @return this builder
+         */
+        public Builder proxyAuthenticator(Authenticator proxyAuthenticator) {
+            _proxyAuthenticator = proxyAuthenticator;
+            return this;
+        }
+
+        /**
          * Maximum size for impressions chunk to dump to storage and post.
          *
          * @param size MUST be > 0.
@@ -863,6 +922,8 @@ public class SplitClientConfig {
                 _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
             }
 
+            HttpProxy proxy = parseProxyHost(_proxyHost);
+
             return new SplitClientConfig(
                     _serviceEndpoints.getSdkEndpoint(),
                     _serviceEndpoints.getEventsEndpoint(),
@@ -883,6 +944,8 @@ public class SplitClientConfig {
                     _waitBeforeShutdown,
                     _hostname,
                     _ip,
+                    proxy,
+                    _proxyAuthenticator,
                     _eventsQueueSize,
                     _eventsPerPush,
                     _eventFlushInterval,
@@ -900,6 +963,34 @@ public class SplitClientConfig {
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
             this._impressionsChunkSize = _impressionsChunkSize;
+        }
+
+        private HttpProxy parseProxyHost(String proxyUri) {
+            if (!Strings.isNullOrEmpty(proxyUri)) {
+                try {
+                    String username = null;
+                    String password = null;
+                    URI uri = URI.create(proxyUri);
+                    int port = uri.getPort() != -1 ? uri.getPort() : PROXY_PORT_DEFAULT;
+                    String userInfo = uri.getUserInfo();
+                    if(!Strings.isNullOrEmpty(userInfo)) {
+                        String[] userInfoComponents = userInfo.split(":");
+                        if(userInfoComponents.length > 1) {
+                            username = userInfoComponents[0];
+                            password = userInfoComponents[1];
+                        }
+                    }
+                    String host = String.format("%s%s", uri.getHost(), uri.getPath());
+                    return new HttpProxy(host, port, username, password);
+                } catch (IllegalArgumentException e) {
+                    Logger.e("Proxy URI not valid: " + e.getLocalizedMessage());
+                    throw new IllegalArgumentException();
+                } catch (Exception e) {
+                    Logger.e("Unknown error while parsing proxy URI: " + e.getLocalizedMessage());
+                    throw new IllegalArgumentException();
+                }
+            }
+            return null;
         }
     }
 }

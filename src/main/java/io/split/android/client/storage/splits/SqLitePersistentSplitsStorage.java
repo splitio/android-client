@@ -59,7 +59,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public void update(Split split) {
-        // Using this database method
+        // Using this all.database method
         // to avoid introducing breaking changes in db schema
         List<Split> splits = new ArrayList<>();
         splits.add(split);

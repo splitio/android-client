@@ -6,6 +6,7 @@ package helper;
         import io.split.android.client.SplitClientConfig;
         import io.split.android.client.impressions.ImpressionListener;
         import io.split.android.client.utils.Logger;
+        import okhttp3.Authenticator;
 
 public class TestableSplitConfigBuilder {
 
@@ -27,6 +28,8 @@ public class TestableSplitConfigBuilder {
     private int mWaitBeforeShutdown = 5000;
     private String mHostname;
     private String mIp;
+    private String mProxy = null;
+    private Authenticator mAuthenticator = null;
     private int mEventsQueueSize = 10000;
     private int mEventsPerPush = 2000;
     private long mEventFlushInterval = 1800;
@@ -200,6 +203,8 @@ public class TestableSplitConfigBuilder {
                     mWaitBeforeShutdown,
                     mHostname,
                     mIp,
+                    mProxy,
+                    mAuthenticator,
                     mEventsQueueSize,
                     mEventsPerPush,
                     mEventFlushInterval,
