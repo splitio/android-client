@@ -24,7 +24,7 @@ import okhttp3.Route;
 
 public class HttpClientImpl implements HttpClient {
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
-    private static final long STREAMING_READ_TIMEOUT_IN_SECONDS = 80;
+    private static final long STREAMING_READ_TIMEOUT_IN_SECONDS = 80000;
     private OkHttpClient mOkHttpClient;
     private OkHttpClient mOkHttpClientStreaming;
     private Map<String, String> mHeaders;
@@ -138,11 +138,11 @@ public class HttpClientImpl implements HttpClient {
             }
 
             if (readTimeout != null && readTimeout.longValue() > 0) {
-                builder.readTimeout(readTimeout, TimeUnit.SECONDS);
+                builder.readTimeout(readTimeout, TimeUnit.MILLISECONDS);
             }
 
             if (connectionTimeout != null && connectionTimeout.longValue() > 0) {
-                builder.connectTimeout(connectionTimeout, TimeUnit.SECONDS);
+                builder.connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS);
             }
 
             if (enableSslDevelopmentMode) {
