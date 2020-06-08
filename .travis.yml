@@ -6,8 +6,8 @@ sudo: false
 
 android:
   components:
-    - build-tools-28.0.3
-    - android-28
+    - build-tools-15
+    - android-15
 
   licenses:
     - android-sdk-preview-license-.+
