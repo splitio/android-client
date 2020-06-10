@@ -1,3 +1,8 @@
+2.6.2: (Jun 15, 2020)
+- Added proxy support with base authentication
+- Fixed read and connection timeout issues
+- Adding some experimental settings for testing
+
 2.6.1: (Jun 2, 2020)
 - Added expiration policy to split cache
 - Replaced HttpUrlConnection by OkHttp

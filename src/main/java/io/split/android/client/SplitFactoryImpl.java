@@ -25,6 +25,7 @@ import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
+import io.split.android.client.network.LegacyTlsUpdater;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
@@ -83,6 +84,7 @@ public class SplitFactoryImpl implements SplitFactory {
                         .setReadTimeout(config.readTimeout())
                         .setProxy(config.proxy())
                         .enableSslDevelopmentMode(config.isSslDevelopmentModeEnabled())
+                        .setContext(context)
                         .setProxyAuthenticator(config.authenticator()).build());
     }
 

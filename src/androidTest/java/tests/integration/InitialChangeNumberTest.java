@@ -2,6 +2,7 @@ package tests.integration;
 
 import android.content.Context;
 
+import androidx.core.util.Pair;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
@@ -86,8 +88,9 @@ public class InitialChangeNumberTest {
     public void firstRequestChangeNumber() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
         CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
-        String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
-        String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
+        Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
+        String apiKey = apiKeyAndDb.first;
+        String dataFolderName = apiKeyAndDb.second;
         SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
