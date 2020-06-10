@@ -2,6 +2,7 @@
 - Added proxy support with base authentication
 - Fixed read and connection timeout issues
 - Adding some experimental settings for testing
+- Adding support for TLSv1.2 in Android 4.x
 
 2.6.1: (Jun 2, 2020)
 - Added expiration policy to split cache
