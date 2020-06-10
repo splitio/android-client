@@ -164,10 +164,9 @@ public class HttpClientImpl implements HttpClient {
             // Both options overides SSLSocketFactory
             if (enableSslDevelopmentMode) {
                 setupDevelopmentSslSocketFactory(builder);
-            } else {
+            } else if (LegacyTlsUpdater.couldBeOld()) {
                 forceTls12OnOldAndroid(builder, context);
             }
-
             return builder.build();
         }
 
@@ -200,12 +199,7 @@ public class HttpClientImpl implements HttpClient {
 
         private void forceTls12OnOldAndroid(OkHttpClient.Builder okHttpBuilder, Context context) {
 
-            if (!LegacyTlsUpdater.couldBeOld()) {
-                return;
-            }
-
             LegacyTlsUpdater.update(context);
-
             try {
                 Tls12OnlySocketFactory factory = new Tls12OnlySocketFactory();
                 okHttpBuilder.sslSocketFactory(factory, factory.defaultTrustManager());
