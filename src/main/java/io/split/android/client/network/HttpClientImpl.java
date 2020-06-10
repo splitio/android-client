@@ -1,5 +1,7 @@
 package io.split.android.client.network;
 
+import android.content.Context;
+
 import com.google.common.base.Strings;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,18 +11,24 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
+import java.security.GeneralSecurityException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLSocketFactory;
 
+import io.split.android.client.utils.Logger;
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
+
+import static androidx.core.util.Preconditions.checkNotNull;
 
 public class HttpClientImpl implements HttpClient {
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
@@ -77,6 +85,12 @@ public class HttpClientImpl implements HttpClient {
         private long readTimeout = -1;
         private long connectionTimeout = -1;
         private boolean isSslDevelopmentMode = false;
+        private Context mHostAppContext;
+
+        public Builder setContext(Context context) {
+            mHostAppContext = context;
+            return this;
+        }
 
         public Builder setProxy(HttpProxy proxy) {
             mProxy = proxy;
@@ -117,8 +131,9 @@ public class HttpClientImpl implements HttpClient {
 
             // Avoiding newBuilder on purpose to use different thread pool and resources
             return new HttpClientImpl(
-                    createOkHttpClient(proxy, proxyAuthenticator, readTimeout, connectionTimeout, isSslDevelopmentMode),
-                    createOkHttpClient(proxy, proxyAuthenticator, STREAMING_READ_TIMEOUT_IN_MILLISECONDS, connectionTimeout, isSslDevelopmentMode)
+                    createOkHttpClient(proxy, proxyAuthenticator, readTimeout, connectionTimeout, isSslDevelopmentMode, mHostAppContext),
+                    createOkHttpClient(proxy, proxyAuthenticator, STREAMING_READ_TIMEOUT_IN_MILLISECONDS,
+                            connectionTimeout, isSslDevelopmentMode, mHostAppContext)
             );
         }
 
@@ -126,7 +141,8 @@ public class HttpClientImpl implements HttpClient {
                                                 Authenticator proxyAuthenticator,
                                                 Long readTimeout,
                                                 Long connectionTimeout,
-                                                boolean enableSslDevelopmentMode) {
+                                                boolean enableSslDevelopmentMode,
+                                                Context context) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
             if (proxy != null) {
@@ -145,14 +161,11 @@ public class HttpClientImpl implements HttpClient {
                 builder.connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS);
             }
 
+            // Both options overides SSLSocketFactory
             if (enableSslDevelopmentMode) {
-                DevelopmentSSLFactory developmentSSLFactory = new DevelopmentSSLFactory();
-                SSLSocketFactory socketFactory = developmentSSLFactory.sslSocketFactory();
-
-                if (socketFactory != null) {
-                    builder.sslSocketFactory(socketFactory, developmentSSLFactory.x509TrustManager());
-                    builder.hostnameVerifier(developmentSSLFactory.hostnameVerifier());
-                }
+                setupDevelopmentSslSocketFactory(builder);
+            } else {
+                forceTls12OnOldAndroid(builder, context);
             }
 
             return builder.build();
@@ -174,6 +187,35 @@ public class HttpClientImpl implements HttpClient {
                     return response.request().newBuilder().header(PROXY_AUTHORIZATION_HEADER, credential).build();
                 }
             };
+        }
+
+        private void setupDevelopmentSslSocketFactory(OkHttpClient.Builder okHttpBuilder) {
+            DevelopmentSSLFactory developmentSSLFactory = new DevelopmentSSLFactory();
+            SSLSocketFactory socketFactory = developmentSSLFactory.sslSocketFactory();
+            if (socketFactory != null) {
+                okHttpBuilder.sslSocketFactory(socketFactory, developmentSSLFactory.x509TrustManager());
+                okHttpBuilder.hostnameVerifier(developmentSSLFactory.hostnameVerifier());
+            }
+        }
+
+        private void forceTls12OnOldAndroid(OkHttpClient.Builder okHttpBuilder, Context context) {
+
+            if (!LegacyTlsUpdater.couldBeOld()) {
+                return;
+            }
+
+            LegacyTlsUpdater.update(context);
+
+            try {
+                Tls12OnlySocketFactory factory = new Tls12OnlySocketFactory();
+                okHttpBuilder.sslSocketFactory(factory, factory.defaultTrustManager());
+            } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                Logger.e("TLS v12 algorithm not available: " + e.getLocalizedMessage());
+            } catch (GeneralSecurityException e) {
+                Logger.e("TLS v12 security error: " + e.getLocalizedMessage());
+            } catch (Exception e) {
+                Logger.e("Unknown TLS v12 error: " + e.getLocalizedMessage());
+            }
         }
     }
 }
