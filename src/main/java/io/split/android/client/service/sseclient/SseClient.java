@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -44,6 +45,7 @@ public class SseClient {
     private final ScheduledExecutorService mExecutor;
     private ScheduledFuture mDisconnectionTimerTaskRef = null;
     private AtomicBoolean isDisconnectCalled;
+    private Future mConnectionTask;
 
     final static int CONNECTING = 0;
     final static int CLOSED = 2;
@@ -74,8 +76,9 @@ public class SseClient {
     }
 
     public void connect(String token, List<String> channels) {
+        disconnect();
         mReadyState.set(CONNECTING);
-        mExecutor.execute(new PersistentConnectionExecutor(token, channels));
+        mConnectionTask = mExecutor.submit(new PersistentConnectionExecutor(token, channels));
     }
 
     public void disconnect() {
@@ -84,6 +87,9 @@ public class SseClient {
             setCloseStatus();
             triggerOnDisconnect();
             mHttpStreamRequest.close();
+            if(mConnectionTask != null) {
+                mConnectionTask.cancel(true);
+            }
         }
     }
 
@@ -161,6 +167,7 @@ public class SseClient {
         private final StringHelper mStringHelper;
         private final List<String> mChannels;
         private final String mToken;
+        private BufferedReader mBufferedReader;
 
         public PersistentConnectionExecutor(@NonNull String token,
                                             @NonNull List<String> channels) {
@@ -172,7 +179,7 @@ public class SseClient {
         @Override
         public void run() {
             String channels = mStringHelper.join(",", mChannels);
-            BufferedReader bufferedReader = null;
+            mBufferedReader = null;
             try {
                 URI url = new URIBuilder(mTargetUrl)
                         .addParameter(PUSH_NOTIFICATION_VERSION_PARAM, PUSH_NOTIFICATION_VERSION_VALUE)
@@ -183,15 +190,15 @@ public class SseClient {
                 mHttpStreamRequest.addHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE_STREAM);
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
-                    bufferedReader = response.getBufferedReader();
-                    if (bufferedReader != null) {
+                    mBufferedReader = response.getBufferedReader();
+                    if (mBufferedReader != null) {
                         Logger.i("Streaming connection opened");
                         triggerOnOpen();
                         mReadyState.set(OPEN);
 
                         String inputLine;
                         Map<String, String> values = new HashMap<>();
-                        while ((inputLine = bufferedReader.readLine()) != null) {
+                        while ((inputLine = mBufferedReader.readLine()) != null) {
                             if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
                                 if (mEventStreamParser.isKeepAlive(values)) {
                                     triggerOnKeepAlive();
@@ -228,9 +235,9 @@ public class SseClient {
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                 triggerOnError(true);
             } finally {
-                if (bufferedReader != null) {
+                if (mBufferedReader != null) {
                     try {
-                        bufferedReader.close();
+                        mBufferedReader.close();
                     } catch (IOException e) {
                         Logger.w("Error closing streaming buffer");
                     }
