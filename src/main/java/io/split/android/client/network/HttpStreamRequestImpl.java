@@ -50,10 +50,14 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     @Override
     public void close() {
         if (mOkHttpResponse != null && mOkHttpResponse.body() != null) {
-            try {
-                mResponseBufferedReader.close();
-            } catch (IOException e) {
-                Logger.i("Buffer already closed");
+            if(mResponseBufferedReader != null) {
+                try {
+                    mResponseBufferedReader.close();
+                } catch (IOException e) {
+                    Logger.i("Buffer already closed");
+                } catch (Exception e) {
+                    Logger.i("Unknown error closing buffer");
+                }
             }
             mOkHttpResponse.close();
             mOkHttpResponse.body().close();
