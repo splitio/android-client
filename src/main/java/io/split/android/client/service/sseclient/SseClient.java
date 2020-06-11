@@ -167,7 +167,7 @@ public class SseClient {
         private final StringHelper mStringHelper;
         private final List<String> mChannels;
         private final String mToken;
-        private BufferedReader mBuffererReader;
+        private BufferedReader mBufferedReader;
 
         public PersistentConnectionExecutor(@NonNull String token,
                                             @NonNull List<String> channels) {
@@ -179,7 +179,7 @@ public class SseClient {
         @Override
         public void run() {
             String channels = mStringHelper.join(",", mChannels);
-            mBuffererReader = null;
+            mBufferedReader = null;
             try {
                 URI url = new URIBuilder(mTargetUrl)
                         .addParameter(PUSH_NOTIFICATION_VERSION_PARAM, PUSH_NOTIFICATION_VERSION_VALUE)
@@ -190,15 +190,15 @@ public class SseClient {
                 mHttpStreamRequest.addHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE_STREAM);
                 HttpStreamResponse response = mHttpStreamRequest.execute();
                 if (response.isSuccess()) {
-                    mBuffererReader = response.getBufferedReader();
-                    if (mBuffererReader != null) {
+                    mBufferedReader = response.getBufferedReader();
+                    if (mBufferedReader != null) {
                         Logger.i("Streaming connection opened");
                         triggerOnOpen();
                         mReadyState.set(OPEN);
 
                         String inputLine;
                         Map<String, String> values = new HashMap<>();
-                        while ((inputLine = mBuffererReader.readLine()) != null) {
+                        while ((inputLine = mBufferedReader.readLine()) != null) {
                             if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
                                 if (mEventStreamParser.isKeepAlive(values)) {
                                     triggerOnKeepAlive();
@@ -235,9 +235,9 @@ public class SseClient {
                         mTargetUrl.toString() + " : " + e.getLocalizedMessage());
                 triggerOnError(true);
             } finally {
-                if (mBuffererReader != null) {
+                if (mBufferedReader != null) {
                     try {
-                        mBuffererReader.close();
+                        mBufferedReader.close();
                     } catch (IOException e) {
                         Logger.w("Error closing streaming buffer");
                     }
