@@ -469,7 +469,7 @@ public class SplitClientConfig {
         private boolean _backgroundSyncWhenWifiOnly = false;
 
         // Push notification settings
-        private boolean _streamingEnabled = false;
+        private boolean _streamingEnabled = true;
         private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
         private int _streamingReconnectBackoffBase
                 = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
