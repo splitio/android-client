@@ -28,7 +28,7 @@ public abstract class UpdateWorker {
             try {
                 mExecutorService.shutdownNow();
                 if (!mExecutorService.awaitTermination(SHUTDOWN_WAIT_TIME, TimeUnit.SECONDS)) {
-                    Logger.e("Split task executor did not terminate");
+                    Logger.e("Update worker did not terminate");
                 }
             } catch (InterruptedException ie) {
                 mExecutorService.shutdownNow();
@@ -41,12 +41,15 @@ public abstract class UpdateWorker {
         mExecutorService.execute(new Runnable() {
             @Override
             public void run() {
-                while (true) {
-                    onWaitForNotificationLoop();
+                try {
+                    while (true) {
+                        onWaitForNotificationLoop();
+                    }
+                } catch (InterruptedException e) {
                 }
             }
         });
     }
 
-    protected abstract void onWaitForNotificationLoop();
+    protected abstract void onWaitForNotificationLoop() throws InterruptedException;
 }
