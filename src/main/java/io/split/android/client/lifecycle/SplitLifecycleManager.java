@@ -1,6 +1,5 @@
 package io.split.android.client.lifecycle;
 
-import androidx.annotation.NonNull;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
@@ -11,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.service.sseclient.PushNotificationManager;
-import io.split.android.client.service.synchronizer.SyncManager;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

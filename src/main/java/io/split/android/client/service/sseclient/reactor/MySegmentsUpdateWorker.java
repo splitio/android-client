@@ -28,15 +28,15 @@ public class MySegmentsUpdateWorker extends UpdateWorker {
     }
 
     @Override
-    protected void onWaitForNotificationLoop() {
+    protected void onWaitForNotificationLoop() throws InterruptedException {
         try {
             mNotificationsQueue.take();
             mSynchronizer.synchronizeMySegments();
             Logger.d("A new notification to update segments has been received. " +
                     "Enqueing polling task.");
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return;
+            Logger.d("My segments update worker has been interrupted");
+            throw (e);
         }
     }
 }

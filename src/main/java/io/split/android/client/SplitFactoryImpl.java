@@ -25,7 +25,6 @@ import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
-import io.split.android.client.network.LegacyTlsUpdater;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
@@ -190,6 +189,9 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of httpclient");
                     _manager.destroy();
                     Logger.i("Successful shutdown of manager");
+
+                    _splitTaskExecutor.stop();
+                    Logger.i("Successful shutdown of task executor");
 
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");

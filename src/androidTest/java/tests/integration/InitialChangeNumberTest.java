@@ -5,8 +5,8 @@ import android.content.Context;
 import androidx.core.util.Pair;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.Assert;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -58,13 +58,13 @@ public class InitialChangeNumberTest {
         final Dispatcher dispatcher = new Dispatcher() {
 
             @Override
-            public MockResponse dispatch (RecordedRequest request) throws InterruptedException {
+            public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 if (request.getPath().contains("/mySegments")) {
                     return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
                 } else if (request.getPath().contains("/splitChanges")) {
 
                     long changeNumber = -1;
-                    if(mIsFirstChangeNumber) {
+                    if (mIsFirstChangeNumber) {
                         String path = request.getPath();
                         changeNumber = Long.valueOf(path.substring(path.indexOf("=") + 1));
                         mFirstChangeNumberReceived = changeNumber;
@@ -104,7 +104,7 @@ public class InitialChangeNumberTest {
         ServiceEndpoints endpoints = ServiceEndpoints.builder()
                 .apiEndpoint(url).eventsEndpoint(url).build();
 
-        Key key = new Key("CUSTOMER_ID",null);
+        Key key = new Key("CUSTOMER_ID", null);
         SplitClientConfig config = SplitClientConfig.builder()
                 .serviceEndpoints(endpoints)
                 .ready(30000)

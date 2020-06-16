@@ -140,11 +140,6 @@ public class TrackDaoTest {
         performance(1000);
     }
 
-    @Test
-    public void performance10000() {
-        performance(10000);
-    }
-
     private void performance(int count) {
 
         final String TAG = "TrackEventDaoTest_performance";

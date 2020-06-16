@@ -27,15 +27,15 @@ public class SplitUpdatesWorker extends UpdateWorker {
     }
 
     @Override
-    protected void onWaitForNotificationLoop() {
+    protected void onWaitForNotificationLoop() throws InterruptedException {
         try {
             SplitsChangeNotification notification = mNotificationsQueue.take();
             mSynchronizer.synchronizeSplits(notification.getChangeNumber());
             Logger.d("A new notification to update splits has been received. " +
                     "Enqueing polling task.");
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return;
+            Logger.d("Splits update worker has been interrupted");
+            throw (e);
         }
     }
 }
