@@ -30,6 +30,8 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 
+import static java.lang.Thread.sleep;
+
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class InitialChangeNumberTest {
 

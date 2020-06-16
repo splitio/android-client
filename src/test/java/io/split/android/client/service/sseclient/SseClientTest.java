@@ -129,10 +129,9 @@ public class SseClientTest {
     public void disconnectTriggered() throws InterruptedException, HttpException, IOException {
         Listener listener = new Listener();
 
-        CountDownLatch onCloseLatch = new CountDownLatch(1);
-        listener.mOnCloseLatch = onCloseLatch;
+        CountDownLatch onDisconnectLatch = new CountDownLatch(1);
+        listener.mOnDisconnectLatch = onDisconnectLatch;
         listener = spy(listener);
-
 
         List<String> dummyChannels = new ArrayList<String>();
         dummyChannels.add("dummychanel");
@@ -147,7 +146,7 @@ public class SseClientTest {
 
         client = spy(client);
         client.scheduleDisconnection(DUMMY_DELAY);
-        onCloseLatch.await(4, TimeUnit.SECONDS);
+        onDisconnectLatch.await(10, TimeUnit.SECONDS);
         long readyState = client.readyState();
 
         verify(client, times(1)).disconnect();
@@ -159,7 +158,9 @@ public class SseClientTest {
     private class Listener implements SseClientListener {
         CountDownLatch mOnOpenLatch;
         CountDownLatch mOnErrorLatch;
-        CountDownLatch mOnCloseLatch;
+        CountDownLatch mOnDisconnectLatch;
+
+        boolean onDisconnectCalled = false;
 
         public Listener() {
         }
@@ -196,8 +197,9 @@ public class SseClientTest {
 
         @Override
         public void onDisconnect() {
-            if (mOnCloseLatch != null) {
-                mOnCloseLatch.countDown();
+            onDisconnectCalled = true;
+            if (mOnDisconnectLatch != null) {
+                mOnDisconnectLatch.countDown();
             }
         }
     }

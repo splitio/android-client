@@ -116,8 +116,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     synchronized public void stopPeriodicFetching() {
         mTaskExecutor.stopTask(mSplitsFetcherTaskId);
         mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
-        Logger.i(String.format("Stoping periodic fetching tasks %s, %s ", mSplitsFetcherTaskId
-        , mMySegmentsFetcherTaskId));
     }
 
     @Override
@@ -131,7 +129,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     public void stopPeriodicRecording() {
         mTaskExecutor.stopTask(mEventsRecorderTaskId);
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
-        Logger.i("Stoping periodic recording tasks. " + mEventsRecorderTaskId);
     }
 
     private void setupListeners() {
@@ -171,7 +168,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void destroy() {
         flush();
-        mTaskExecutor.stop();
     }
 
     public void flush() {
