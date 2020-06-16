@@ -42,7 +42,7 @@ public class SseClient {
     private ScheduledFuture mDisconnectionTimerTaskRef = null;
     private AtomicBoolean isDisconnectCalled;
     private Future mConnectionTask;
-    private PersistentConnectionExecutor mCurrentConnection;
+    private PersistentConnection mCurrentConnection;
 
     final static int CONNECTING = 0;
     final static int CLOSED = 2;
@@ -74,7 +74,7 @@ public class SseClient {
 
     public void connect(String token, List<String> channels) {
         mReadyState.set(CONNECTING);
-        mCurrentConnection = new PersistentConnectionExecutor(token, channels);
+        mCurrentConnection = new PersistentConnection(token, channels);
         mConnectionTask = mExecutor.submit(mCurrentConnection);
     }
 
@@ -85,7 +85,7 @@ public class SseClient {
                 mCurrentConnection.close();
             }
             if (mConnectionTask != null) {
-                mConnectionTask.cancel(true);
+                mConnectionTask.cancel(false);
             }
             setCloseStatus();
             triggerOnDisconnect();
@@ -157,7 +157,7 @@ public class SseClient {
         }
     }
 
-    private class PersistentConnectionExecutor implements Runnable {
+    private class PersistentConnection implements Runnable {
         private static final String CONTENT_TYPE_HEADER = "Content-Type";
         private static final String CONTENT_TYPE_VALUE_STREAM = "text/event-stream";
         private static final String PUSH_NOTIFICATION_CHANNELS_PARAM = "channel";
@@ -173,7 +173,7 @@ public class SseClient {
 
         private final WeakReference<SseClient> mSseClientReference;
 
-        public PersistentConnectionExecutor(@NonNull String token, @NonNull List<String> channels) {
+        public PersistentConnection(@NonNull String token, @NonNull List<String> channels) {
 
             mSseClientReference = new WeakReference<>(checkNotNull(SseClient.this));
             mToken = checkNotNull(token);
