@@ -123,7 +123,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         }
     }
 
-    void connectToSse(String token, List<String> channels) {
+    private void connectToSse(String token, List<String> channels) {
         mSseClient.connect(token, channels);
     }
 
@@ -139,7 +139,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 mSseBackoffCounter.getNextRetryTime(), null);
     }
 
-    void triggerSseAuthentication() {
+    private void triggerSseAuthentication() {
         Logger.d("Connecting to SSE server");
         mTaskExecutor.submit(
                 mSplitTaskFactory.createSseAuthenticationTask(),
@@ -347,7 +347,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         }
     }
 
-    void refreshSseToken() {
+    private void refreshSseToken() {
         cancelSseKeepAliveTimer();
         mSseClient.disconnect();
         triggerSseAuthentication();
@@ -424,7 +424,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mLastJwtTokenObtained = token;
     }
 
-    synchronized SseJwtToken getLastJwt() {
+    synchronized private SseJwtToken getLastJwt() {
         return mLastJwtTokenObtained;
     }
 
