@@ -46,6 +46,7 @@ public class SplitsSyncTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
+
         long storedChangeNumber = mSplitsStorage.getTill();
         long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
         long now = now();

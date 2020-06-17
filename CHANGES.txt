@@ -1,3 +1,12 @@
+2.6.2: (Jun 17, 2020)
+- Added proxy support with base authentication
+- Fixed read and connection timeout issues
+- Added experimental SSL settings for development
+- Added support for TLSv1.2 in Android 4.x
+- Added proguard rules to fix issues with streaming dtos
+- Fixed Interruption handling on workers
+
+
 2.6.1: (Jun 2, 2020)
 - Added expiration policy to split cache
 - Replaced HttpUrlConnection by OkHttp

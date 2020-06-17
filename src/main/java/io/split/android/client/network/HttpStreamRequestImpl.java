@@ -1,9 +1,6 @@
 package io.split.android.client.network;
 
-import android.util.ArrayMap;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,13 +13,13 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.utils.Logger;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static io.split.android.client.network.HttpMethod.GET;
 
 public class HttpStreamRequestImpl implements HttpStreamRequest {
     private static final MediaType JSON
@@ -31,6 +28,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private URI mUri;
     private Map<String, String> mHeaders;
     private Response mOkHttpResponse;
+    private BufferedReader mResponseBufferedReader;
 
     HttpStreamRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
                           @NonNull Map<String, String> headers) {
@@ -51,7 +49,17 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     @Override
     public void close() {
-        if(mOkHttpResponse != null && mOkHttpResponse.body() != null) {
+        if (mOkHttpResponse != null && mOkHttpResponse.body() != null) {
+            if(mResponseBufferedReader != null) {
+                try {
+                    mResponseBufferedReader.close();
+                } catch (IOException e) {
+                    Logger.i("Buffer already closed");
+                } catch (Exception e) {
+                    Logger.i("Unknown error closing buffer");
+                }
+            }
+            mOkHttpResponse.close();
             mOkHttpResponse.body().close();
         }
     }
@@ -64,7 +72,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
             Request.Builder requestBuilder = new Request.Builder()
                     .url(url);
             addHeaders(requestBuilder);
-            Request okHttpRequest = requestBuilder. build();
+            Request okHttpRequest = requestBuilder.build();
+
             mOkHttpResponse = mOkHttpClient.newCall(okHttpRequest).execute();
             response = buildResponse(mOkHttpResponse);
 
@@ -87,8 +96,9 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private HttpStreamResponse buildResponse(Response okHttpResponse) throws IOException {
         int responseCode = okHttpResponse.code();
         if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < 300 && okHttpResponse.body() != null) {
-            return new HttpStreamResponseImpl(responseCode, new BufferedReader(new InputStreamReader(
-                    okHttpResponse.body().byteStream())));
+            mResponseBufferedReader = new BufferedReader(new InputStreamReader(
+                    okHttpResponse.body().byteStream()));
+            return new HttpStreamResponseImpl(responseCode, mResponseBufferedReader);
         }
         return new HttpStreamResponseImpl(responseCode);
     }

@@ -91,7 +91,7 @@ public class HttpRequestImpl implements HttpRequest {
         }
 
         URL url = mUri.toURL();
-        RequestBody body = RequestBody.create(mBody, JSON);
+        RequestBody body = RequestBody.create(JSON, mBody);
         Request.Builder builder = new Request.Builder()
                 .url(url)
                 .post(body);

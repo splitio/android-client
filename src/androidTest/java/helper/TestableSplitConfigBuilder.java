@@ -6,6 +6,7 @@ package helper;
         import io.split.android.client.SplitClientConfig;
         import io.split.android.client.impressions.ImpressionListener;
         import io.split.android.client.utils.Logger;
+        import okhttp3.Authenticator;
 
 public class TestableSplitConfigBuilder {
 
@@ -27,6 +28,8 @@ public class TestableSplitConfigBuilder {
     private int mWaitBeforeShutdown = 5000;
     private String mHostname;
     private String mIp;
+    private String mProxy = null;
+    private Authenticator mAuthenticator = null;
     private int mEventsQueueSize = 10000;
     private int mEventsPerPush = 2000;
     private long mEventFlushInterval = 1800;
@@ -39,6 +42,7 @@ public class TestableSplitConfigBuilder {
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
     private int mStreamingReconnectBackoffBase = 1;
+    private boolean mEnableSslDevelopmentMode = false;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -175,6 +179,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder enableSslDevelopmentMode() {
+        mEnableSslDevelopmentMode = true;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -200,6 +209,8 @@ public class TestableSplitConfigBuilder {
                     mWaitBeforeShutdown,
                     mHostname,
                     mIp,
+                    mProxy,
+                    mAuthenticator,
                     mEventsQueueSize,
                     mEventsPerPush,
                     mEventFlushInterval,
@@ -212,7 +223,8 @@ public class TestableSplitConfigBuilder {
                     mAuthRetryBackoffBase,
                     mStreamingReconnectBackoffBase,
                     mServiceEndpoints.getAuthServiceEndpoint(),
-                    mServiceEndpoints.getStreamingServiceEndpoint());
+                    mServiceEndpoints.getStreamingServiceEndpoint(),
+                    mEnableSslDevelopmentMode);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

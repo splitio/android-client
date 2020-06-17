@@ -77,7 +77,14 @@ public class SplitFactoryImpl implements SplitFactory {
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
-        this(apiToken, key, config, context, new HttpClientImpl());
+        this(apiToken, key, config, context,
+                new HttpClientImpl.Builder()
+                        .setConnectionTimeout(config.connectionTimeout())
+                        .setReadTimeout(config.readTimeout())
+                        .setProxy(config.proxy())
+                        .enableSslDevelopmentMode(config.isSslDevelopmentModeEnabled())
+                        .setContext(context)
+                        .setProxyAuthenticator(config.authenticator()).build());
     }
 
     private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
@@ -182,6 +189,9 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of httpclient");
                     _manager.destroy();
                     Logger.i("Successful shutdown of manager");
+
+                    _splitTaskExecutor.stop();
+                    Logger.i("Successful shutdown of task executor");
 
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");

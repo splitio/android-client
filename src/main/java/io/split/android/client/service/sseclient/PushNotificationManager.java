@@ -58,6 +58,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     private AtomicLong mLastControlNotificationTime;
     private AtomicBoolean mIsStreamingPaused;
     private AtomicBoolean mIsHostAppInBackground;
+    private AtomicBoolean mIsStopped;
 
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull SplitTaskExecutor taskExecutor,
@@ -80,6 +81,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
         mLastControlNotificationTime = new AtomicLong(0L);
         mIsStreamingPaused = new AtomicBoolean(false);
         mIsHostAppInBackground = new AtomicBoolean(false);
+        mIsStopped = new AtomicBoolean(false);
         mSseClient.setListener(this);
     }
 
@@ -88,20 +90,29 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
     }
 
     public void stop() {
-        mSseClient.disconnect();
+        mIsStopped.set(true);
+        cancelRefreshTokenTimer();
+        cancelSseKeepAliveTimer();
+        mSseClient.close();
     }
 
     @Override
     public void pause() {
+        if (mIsStopped.get()) {
+            return;
+        }
         mIsHostAppInBackground.set(true);
         mSseClient.scheduleDisconnection(DISCONNECT_ON_BG_TIME_IN_SECONDS);
     }
 
     @Override
     public void resume() {
+        if (mIsStopped.get()) {
+            return;
+        }
         // Checking sse client status, cancel scheduled disconnect if necessary
         // and check if cancel was successful
-        if(mSseClient.readyState() == SseClient.CLOSED ||
+        if (mSseClient.readyState() == SseClient.CLOSED ||
                 (mSseClient.readyState() == SseClient.OPEN && !mSseClient.cancelDisconnectionTimer())) {
             triggerSseAuthentication();
         }
@@ -173,6 +184,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 //
     @Override
     public void onOpen() {
+        if (mIsStopped.get()) {
+            return;
+        }
         mSseBackoffCounter.resetCounter();
         notifyPollingDisabled();
         resetSseKeepAliveTimer();
@@ -181,6 +195,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     @Override
     public void onMessage(Map<String, String> values) {
+        if (mIsStopped.get()) {
+            return;
+        }
         String messageData = values.get(DATA_FIELD);
         resetSseKeepAliveTimer();
         if (messageData != null) {
@@ -216,8 +233,11 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     @Override
     public void onError(boolean isRecoverable) {
+        if (mIsStopped.get()) {
+            return;
+        }
         cancelSseKeepAliveTimer();
-        if(mIsHostAppInBackground.get()) {
+        if (mIsHostAppInBackground.get()) {
             mSseClient.cancelDisconnectionTimer();
             return;
         }
@@ -229,6 +249,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 
     @Override
     public void onDisconnect() {
+        if (mIsStopped.get()) {
+            return;
+        }
         cancelSseKeepAliveTimer();
         cancelRefreshTokenTimer();
     }
@@ -330,6 +353,9 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
 //
     @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+        if (mIsStopped.get()) {
+            return;
+        }
 
         switch (taskInfo.getTaskType()) {
             case SSE_AUTHENTICATION_TASK:
@@ -343,6 +369,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 if ((!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
                         && !isApiKeyValid(taskInfo))) {
                     Logger.e("Couldn't connect to SSE server. Invalid apikey ");
+                    stop();
                     notifyPollingEnabled();
                     return;
                 }
@@ -350,6 +377,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 if (SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
                         && !isStreamingEnabled(taskInfo)) {
                     Logger.e("Will not connect to SSE server. Streaming disabled.");
+                    stop();
                     notifyPollingEnabled();
                     return;
                 }

@@ -110,6 +110,24 @@ public class NotificationProcessorTest {
     }
 
     @Test
+    public void mySegmentsUpdateWithNullSegmentListNotification() {
+        List<String> segments = null;
+        MySegmentChangeNotification mySegmentChangeNotification
+                = Mockito.mock(MySegmentChangeNotification.class);
+        when(mySegmentChangeNotification.isIncludesPayload()).thenReturn(true);
+        when(mySegmentChangeNotification.getSegmentList()).thenReturn(segments);
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE);
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
+        when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(mySegmentChangeNotification);
+
+        mNotificationProcessor.process(mIncomingNotification);
+
+        verify(mSplitsChangeQueue, never()).offer(any());
+        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(any());
+        verify(mSplitTaskExecutor, times(1)).submit(any(), isNull());
+    }
+
+    @Test
     public void mySegmentsUpdateNoSegmentListNotification() {
 
         MySegmentChangeNotification mySegmentChangeNotification

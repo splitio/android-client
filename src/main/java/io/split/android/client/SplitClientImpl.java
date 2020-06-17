@@ -1,5 +1,9 @@
 package io.split.android.client;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
@@ -21,16 +25,10 @@ import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.metrics.Metrics;
 
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * A basic implementation of SplitClient.
- *
  */
 public final class SplitClientImpl implements SplitClient {
 
@@ -119,11 +117,11 @@ public final class SplitClientImpl implements SplitClient {
         return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed);
     }
 
-    public void on(SplitEvent event, SplitEventTask task){
+    public void on(SplitEvent event, SplitEventTask task) {
         checkNotNull(event);
         checkNotNull(task);
 
-        if(!event.equals(SplitEvent.SDK_READY_FROM_CACHE) && mEventsManager.eventAlreadyTriggered(event)) {
+        if (!event.equals(SplitEvent.SDK_READY_FROM_CACHE) && mEventsManager.eventAlreadyTriggered(event)) {
             Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event.toString()));
             return;
         }
@@ -173,10 +171,11 @@ public final class SplitClientImpl implements SplitClient {
 
     // Estimated event size without properties
     private final static int ESTIMATED_EVENT_SIZE_WITHOUT_PROPS = 1024;
+
     private boolean track(String key, String trafficType, String eventType, double value, Map<String, Object> properties) {
         final String validationTag = "track";
         final boolean isSdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
-        if(mIsClientDestroyed) {
+        if (mIsClientDestroyed) {
             mValidationLogger.e("Client has already been destroyed - no calls possible", validationTag);
             return false;
         }
@@ -192,7 +191,7 @@ public final class SplitClientImpl implements SplitClient {
         ValidationErrorInfo errorInfo = mEventValidator.validate(event, isSdkReady);
         if (errorInfo != null) {
 
-            if(errorInfo.isError()) {
+            if (errorInfo.isError()) {
                 mValidationLogger.e(errorInfo, validationTag);
                 return false;
             }
@@ -202,7 +201,7 @@ public final class SplitClientImpl implements SplitClient {
 
         ProcessedEventProperties processedProperties =
                 mEventPropertiesProcessor.process(event.properties);
-        if(!processedProperties.isValid()) {
+        if (!processedProperties.isValid()) {
             return false;
         }
         event.properties = processedProperties.getProperties();

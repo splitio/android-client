@@ -6,7 +6,6 @@ import androidx.annotation.Nullable;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.lang.ref.WeakReference;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitTaskExecutorImpl implements SplitTaskExecutor {
-    private static final int SHUTDOWN_WAIT_TIME = 60;
+    private static final int SHUTDOWN_WAIT_TIME = 15;
     private static final int MIN_THREADPOOL_SIZE_WHEN_IDLE = 4;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;

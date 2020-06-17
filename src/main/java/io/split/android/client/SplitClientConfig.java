@@ -1,15 +1,23 @@
 package io.split.android.client;
 
 
+import com.google.common.base.Strings;
+
+import java.net.URI;
+
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.Logger;
+import okhttp3.Authenticator;
 
 /**
  * Configurations for the SplitClient.
  */
 public class SplitClientConfig {
+
+    // TODO: Refactor this huge class
 
     private static final int MIN_FEATURES_REFRESH_RATE = 30;
     private static final int MIN_MYSEGMENTS_REFRESH_RATE = 30;
@@ -58,6 +66,11 @@ public class SplitClientConfig {
     private static String _hostname;
     private static String _ip;
 
+    private HttpProxy _proxy = null;
+    private String _proxyUsername = null;
+    private String _proxyPassword = null;
+    private Authenticator _proxyAuthenticator = null;
+
     private final int _featuresRefreshRate;
     private final int _segmentsRefreshRate;
     private final int _impressionsRefreshRate;
@@ -95,6 +108,7 @@ public class SplitClientConfig {
     private int _streamingReconnectBackoffBase;
     private String _authServiceUrl;
     private String _streamingServiceUrl;
+    private boolean _isSslDevelopmentModeEnabled;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -123,6 +137,8 @@ public class SplitClientConfig {
                               int waitBeforeShutdown,
                               String hostname,
                               String ip,
+                              HttpProxy proxy,
+                              Authenticator proxyAuthenticator,
                               int eventsQueueSize,
                               int eventsPerPush,
                               long eventFlushInterval,
@@ -135,7 +151,8 @@ public class SplitClientConfig {
                               int authRetryBackoffBase,
                               int streamingReconnectBackoffBase,
                               String authServiceUrl,
-                              String streamingServiceUrl) {
+                              String streamingServiceUrl,
+                              boolean enableSslDevelopmentMode) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -156,6 +173,9 @@ public class SplitClientConfig {
         _hostname = hostname;
         _ip = ip;
 
+        _proxy = proxy;
+        _proxyAuthenticator = proxyAuthenticator;
+
         _eventsQueueSize = eventsQueueSize;
         _eventsPerPush = eventsPerPush;
         _eventFlushInterval = eventFlushInterval;
@@ -169,6 +189,7 @@ public class SplitClientConfig {
         _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
         _authServiceUrl = authServiceUrl;
         _streamingServiceUrl = streamingServiceUrl;
+        _isSslDevelopmentModeEnabled = enableSslDevelopmentMode;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -274,6 +295,14 @@ public class SplitClientConfig {
 
     public int waitBeforeShutdown() {
         return _waitBeforeShutdown;
+    }
+
+    public HttpProxy proxy() {
+        return _proxy;
+    }
+
+    public Authenticator proxyAuthenticator() {
+        return _proxyAuthenticator;
     }
 
     public String hostname() {
@@ -393,6 +422,14 @@ public class SplitClientConfig {
         return _streamingServiceUrl;
     }
 
+    public Authenticator authenticator() {
+        return _proxyAuthenticator;
+    }
+
+    public boolean isSslDevelopmentModeEnabled() {
+        return _isSslDevelopmentModeEnabled;
+    }
+
     public static final class Builder {
 
         private ServiceEndpoints _serviceEndpoints = null;
@@ -411,6 +448,8 @@ public class SplitClientConfig {
         private ImpressionListener _impressionListener;
         private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
+        static final int PROXY_PORT_DEFAULT = 80;
+
 
         //.track configuration
         private int _eventsQueueSize = DEFAULT_EVENTS_QUEUE_SIZE;
@@ -420,16 +459,22 @@ public class SplitClientConfig {
 
         private String _hostname = "unknown";
         private String _ip = "unknown";
+
+        private String _proxyHost = null;
+        private Authenticator _proxyAuthenticator = null;
+
         private boolean _synchronizeInBackground = false;
         private long _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
         private boolean _backgroundSyncWhenBatteryNotLow = true;
         private boolean _backgroundSyncWhenWifiOnly = false;
 
         // Push notification settings
-        private boolean _streamingEnabled = false;
+        private boolean _streamingEnabled = true;
         private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
         private int _streamingReconnectBackoffBase
                 = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
+
+        private boolean _isSslDevelopmentModeEnabled = false;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -680,6 +725,30 @@ public class SplitClientConfig {
         }
 
         /**
+         * The proxy URI in standard "scheme://user:password@domain:port/path format. Default is null.
+         * If no port is provided default is 80
+         *
+         * @param proxyHost proxy URI
+         * @return this builder
+         */
+        public Builder proxyHost(String proxyHost) {
+            _proxyHost = proxyHost;
+            return this;
+        }
+
+        /**
+         * Set a custom authenticator for the proxy. This feature is experimental and
+         * and unsupported. It could be removed from the SDK
+         *
+         * @param proxyAuthenticator
+         * @return this builder
+         */
+        public Builder proxyAuthenticator(Authenticator proxyAuthenticator) {
+            _proxyAuthenticator = proxyAuthenticator;
+            return this;
+        }
+
+        /**
          * Maximum size for impressions chunk to dump to storage and post.
          *
          * @param size MUST be > 0.
@@ -808,6 +877,18 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Avoid SSL checks while app on development. Do not activate this feature in production.
+         *
+         * @return: This builder
+         * @default: false
+         */
+        public Builder enableSslDevelopmentMode() {
+            _isSslDevelopmentModeEnabled = true;
+            return this;
+        }
+
+
         public SplitClientConfig build() {
 
 
@@ -863,6 +944,8 @@ public class SplitClientConfig {
                 _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
             }
 
+            HttpProxy proxy = parseProxyHost(_proxyHost);
+
             return new SplitClientConfig(
                     _serviceEndpoints.getSdkEndpoint(),
                     _serviceEndpoints.getEventsEndpoint(),
@@ -883,6 +966,8 @@ public class SplitClientConfig {
                     _waitBeforeShutdown,
                     _hostname,
                     _ip,
+                    proxy,
+                    _proxyAuthenticator,
                     _eventsQueueSize,
                     _eventsPerPush,
                     _eventFlushInterval,
@@ -895,11 +980,40 @@ public class SplitClientConfig {
                     _authRetryBackoffBase,
                     _streamingReconnectBackoffBase,
                     _serviceEndpoints.getAuthServiceEndpoint(),
-                    _serviceEndpoints.getStreamingServiceEndpoint());
+                    _serviceEndpoints.getStreamingServiceEndpoint(),
+                    _isSslDevelopmentModeEnabled);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
             this._impressionsChunkSize = _impressionsChunkSize;
+        }
+
+        private HttpProxy parseProxyHost(String proxyUri) {
+            if (!Strings.isNullOrEmpty(proxyUri)) {
+                try {
+                    String username = null;
+                    String password = null;
+                    URI uri = URI.create(proxyUri);
+                    int port = uri.getPort() != -1 ? uri.getPort() : PROXY_PORT_DEFAULT;
+                    String userInfo = uri.getUserInfo();
+                    if(!Strings.isNullOrEmpty(userInfo)) {
+                        String[] userInfoComponents = userInfo.split(":");
+                        if(userInfoComponents.length > 1) {
+                            username = userInfoComponents[0];
+                            password = userInfoComponents[1];
+                        }
+                    }
+                    String host = String.format("%s%s", uri.getHost(), uri.getPath());
+                    return new HttpProxy(host, port, username, password);
+                } catch (IllegalArgumentException e) {
+                    Logger.e("Proxy URI not valid: " + e.getLocalizedMessage());
+                    throw new IllegalArgumentException();
+                } catch (Exception e) {
+                    Logger.e("Unknown error while parsing proxy URI: " + e.getLocalizedMessage());
+                    throw new IllegalArgumentException();
+                }
+            }
+            return null;
         }
     }
 }

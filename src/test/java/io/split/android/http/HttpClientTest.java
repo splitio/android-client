@@ -45,7 +45,7 @@ public class HttpClientTest {
     @Test
     public void severalRequest() throws Exception {
         RecordedRequest recReq;
-        HttpClient client = new HttpClientImpl();
+        HttpClient client = new HttpClientImpl.Builder().build();
 
         // Test dummy request and response
         HttpUrl url = mWebServer.url("/test1/");
