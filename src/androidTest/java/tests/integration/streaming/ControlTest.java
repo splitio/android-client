@@ -53,6 +53,7 @@ public class ControlTest {
     private SplitClient mClient;
 
     private CountDownLatch mRequestClosedLatch;
+    private CountDownLatch mPushLatch;
 
     private SplitRoomDatabase mSplitRoomDatabase;
 
@@ -102,7 +103,7 @@ public class ControlTest {
 
         // Update segments to test initial data ok
         pushMySegmentsUpdatePayload();
-        sleep(1000);
+        sleep(2000);
         MySegmentEntity mySegmentEntityOne = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
 
         // Remove data, pause streaming and then retrieve segments to assert that no one is available
@@ -110,14 +111,16 @@ public class ControlTest {
         /// Pause streaming
         pushControl("STREAMING_PAUSED");
         pushMySegmentsUpdatePayload();
-        sleep(1000);
+        sleep(2000);
         MySegmentEntity mySegmentEntityNone = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
 
         // Enable streaming, push a new my segments payload update and check data again
+        mSseConnectedLatch = new CountDownLatch(1);
         pushControl("STREAMING_ENABLED");
+        mSseConnectedLatch.await(10, TimeUnit.SECONDS);
         mSplitRoomDatabase.mySegmentDao().update(dummySegmenteEntity);
         pushMySegmentsUpdatePayload();
-        sleep(1000);
+        sleep(2000);
         MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
 
 
@@ -133,9 +136,10 @@ public class ControlTest {
         Assert.assertTrue(mStreamingResponse.isClosed());
     }
 
-
     private void pushMySegmentsUpdatePayload() throws IOException, InterruptedException {
+        mPushLatch = new CountDownLatch(1);
         pushMessage(MSG_SEGMENT_UPDATE_PAYLOAD);
+        mPushLatch.await(5, TimeUnit.SECONDS);
     }
 
     @After
@@ -205,7 +209,8 @@ public class ControlTest {
         String message = loadMockedData(fileName);
         try {
             mStreamingData.put(message + "" + "\n");
-
+            sleep(200);
+            mPushLatch.countDown();
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException e) {
         }
