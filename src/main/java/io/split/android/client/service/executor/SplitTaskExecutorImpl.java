@@ -6,11 +6,9 @@ import androidx.annotation.Nullable;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.lang.ref.WeakReference;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.FutureTask;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
