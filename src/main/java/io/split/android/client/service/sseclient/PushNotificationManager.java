@@ -374,6 +374,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 if ((!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
                         && !isApiKeyValid(taskInfo))) {
                     Logger.e("Couldn't connect to SSE server. Invalid apikey ");
+                    stop();
                     notifyPollingEnabled();
                     return;
                 }
@@ -381,6 +382,7 @@ public class PushNotificationManager implements SplitTaskExecutionListener, SseC
                 if (SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
                         && !isStreamingEnabled(taskInfo)) {
                     Logger.e("Will not connect to SSE server. Streaming disabled.");
+                    stop();
                     notifyPollingEnabled();
                     return;
                 }

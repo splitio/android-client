@@ -45,9 +45,11 @@ public class MySegmentsSyncProcessTest {
     Key mUserKey;
 
     CountDownLatch mMySegmentsUpdateLatch;
+    CountDownLatch mMySegmentsPushLatch;
 
     final static String MSG_SEGMENT_UPDATE = "push_msg-segment_update.txt";
     final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
+    final static String MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD = "push_msg-segment_update_empty_payload.txt";
 
     private int mSplitChangesHitCount = 0;
     private int mMySegmentsHitCount = 0;
@@ -99,12 +101,17 @@ public class MySegmentsSyncProcessTest {
         sleep(500);
         MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
 
-        pushMessage(MSG_SEGMENT_UPDATE_PAYLOAD);
+        testMySegmentsPush(MSG_SEGMENT_UPDATE_PAYLOAD);
         sleep(500);
         MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
 
+        testMySegmentsPush(MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD);
+        sleep(1000);
+        MySegmentEntity mySegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
+
         Assert.assertEquals("segment1,segment2,segment3", mySegmentEntity.getSegmentList());
         Assert.assertEquals("segment1", mySegmentEntityPayload.getSegmentList());
+        Assert.assertEquals("", mySegmentEntityEmptyPayload.getSegmentList());
 
     }
 
@@ -114,6 +121,13 @@ public class MySegmentsSyncProcessTest {
         pushMessage(MSG_SEGMENT_UPDATE);
         mMySegmentsUpdateLatch.await(40, TimeUnit.SECONDS);
     }
+
+    private void testMySegmentsPush(String message) throws IOException, InterruptedException {
+        mMySegmentsPushLatch = new CountDownLatch(1);
+        pushMessage(message);
+        mMySegmentsPushLatch.await(40, TimeUnit.SECONDS);
+    }
+
 
     @After
     public void tearDown() {
@@ -180,7 +194,9 @@ public class MySegmentsSyncProcessTest {
         String message = loadMockedData(fileName);
         try {
             mStreamingData.put(message + "" + "\n");
-
+            if(mMySegmentsPushLatch != null) {
+                mMySegmentsPushLatch.countDown();
+            }
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException e) {
         }
