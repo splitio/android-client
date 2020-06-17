@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.google.gson.JsonSyntaxException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
@@ -78,12 +79,9 @@ public class NotificationProcessor {
         if (!notification.isIncludesPayload()) {
             mMySegmentUpdateNotificationsQueue.offer(notification);
         } else {
-            List<String> segmentList = notification.getSegmentList();
-            if (segmentList != null) {
-                MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask(
-                        notification.getSegmentList());
-                mSplitTaskExecutor.submit(task, null);
-            }
+            List<String> segmentList = notification.getSegmentList() != null ? notification.getSegmentList() : new ArrayList<>();
+            MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask(segmentList);
+            mSplitTaskExecutor.submit(task, null);
         }
     }
 }
