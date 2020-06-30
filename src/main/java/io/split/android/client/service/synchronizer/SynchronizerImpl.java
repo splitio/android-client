@@ -14,6 +14,7 @@ import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskEnqueued;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -82,6 +83,14 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void loadMySegmentsFromCache() {
         submitMySegmentsLoadingTask(mLoadLocalMySegmentsListener);
+    }
+
+    @Override
+    public void loadAndSynchronizeSplits() {
+        List<SplitTaskEnqueued> enqueued = new ArrayList<>();
+        enqueued.add(new SplitTaskEnqueued(mSplitTaskFactory.createLoadSplitsTask(), mLoadLocalSplitsListener));
+        enqueued.add(new SplitTaskEnqueued(mSplitTaskFactory.createSplitsSyncTask(true, true), mSplitsSyncTaskListener));
+        mTaskExecutor.executeSerially(enqueued);
     }
 
     @Override

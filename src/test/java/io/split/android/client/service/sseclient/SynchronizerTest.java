@@ -30,6 +30,7 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskEnqueued;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -416,6 +417,11 @@ public class SynchronizerTest {
             SplitTaskExecutionInfo info = mInfoList.get(mRequestIndex);
             mRequestIndex++;
             executionListener.taskExecuted(info);
+        }
+
+        @Override
+        public void executeSerially(List<SplitTaskEnqueued> tasks) {
+
         }
 
         @Override

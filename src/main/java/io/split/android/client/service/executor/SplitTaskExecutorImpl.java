@@ -6,9 +6,12 @@ import androidx.annotation.Nullable;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.lang.ref.WeakReference;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -94,6 +97,12 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         mScheduledTasks.remove(taskId);
     }
 
+    @Override
+    public void executeSerially(List<SplitTaskEnqueued> taskQueue) {
+        SerialTaskQueueWrapper queue = new SerialTaskQueueWrapper(taskQueue);
+        mScheduler.submit(queue);
+    }
+
     public void pause() {
         mScheduler.pause();
     }
@@ -139,6 +148,31 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                 if (listener != null) {
                     listener.taskExecuted(info);
                 }
+            } catch (Exception e) {
+                Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
+            }
+
+        }
+    }
+
+    private static class SerialTaskQueueWrapper implements Runnable {
+        List<SplitTaskEnqueued> mTaskQueue;
+
+        SerialTaskQueueWrapper(List<SplitTaskEnqueued> taskQueue) {
+            mTaskQueue = checkNotNull(taskQueue);
+        }
+
+        @Override
+        public void run() {
+            try {
+                for(SplitTaskEnqueued enqueued : mTaskQueue) {
+                    SplitTaskExecutionInfo info = enqueued.getTask().execute();
+                    SplitTaskExecutionListener listener = enqueued.getListener();
+                    if (listener != null) {
+                        listener.taskExecuted(info);
+                    }
+                }
+
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
             }

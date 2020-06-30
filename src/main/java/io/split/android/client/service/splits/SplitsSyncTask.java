@@ -16,6 +16,7 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Thread.sleep;
 
 public class SplitsSyncTask implements SplitTask {
 
@@ -49,12 +50,13 @@ public class SplitsSyncTask implements SplitTask {
 
         long storedChangeNumber = mSplitsStorage.getTill();
         long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
-        long now = now();
-        long elepased = now - updateTimestamp;
+        long elepased = now() - updateTimestamp;
         if (mCheckCacheExpiration && storedChangeNumber > -1
-                && (now() - updateTimestamp > mCacheExpirationInSeconds)){
+                && updateTimestamp > 0
+                && (elepased > mCacheExpirationInSeconds)) {
+            Logger.d("Removing expirated cache");
             mSplitsStorage.clear();
-            storedChangeNumber  = -1;
+            storedChangeNumber = -1;
         }
         // TODO: Add some reusable logic for tasks retrying on error.
         ReconnectBackoffCounter backoffCounter = new ReconnectBackoffCounter(RETRY_BASE);
@@ -71,7 +73,7 @@ public class SplitsSyncTask implements SplitTask {
                 if (mRetryOnFail) {
                     try {
                         logError("Retrying...");
-                        Thread.sleep(backoffCounter.getNextRetryTime());
+                        sleep(backoffCounter.getNextRetryTime());
                     } catch (InterruptedException ex) {
                         Thread.currentThread().interrupt();
                         return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
