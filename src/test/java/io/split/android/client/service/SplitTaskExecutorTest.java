@@ -15,7 +15,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskEnqueued;
+import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -337,9 +337,9 @@ public class SplitTaskExecutorTest {
         // Enqueing 4 task to run serially
         // Listener is identified by an integer
         CountDownLatch latch = new CountDownLatch(taskCount);
-        List<SplitTaskEnqueued> taskList = new ArrayList<>();
+        List<SplitTaskBatchItem> taskList = new ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
-            taskList.add(new SplitTaskEnqueued(new TestTask(latch), new SerialListener(i)));
+            taskList.add(new SplitTaskBatchItem(new TestTask(latch), new SerialListener(i)));
         }
 
         // Executing tasks serially

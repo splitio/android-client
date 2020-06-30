@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -98,8 +96,8 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     }
 
     @Override
-    public void executeSerially(List<SplitTaskEnqueued> taskQueue) {
-        SerialTaskQueueWrapper queue = new SerialTaskQueueWrapper(taskQueue);
+    public void executeSerially(List<SplitTaskBatchItem> taskQueue) {
+        SplitTaskBatchWrapper queue = new SplitTaskBatchWrapper(taskQueue);
         mScheduler.submit(queue);
     }
 
@@ -155,17 +153,17 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         }
     }
 
-    private static class SerialTaskQueueWrapper implements Runnable {
-        List<SplitTaskEnqueued> mTaskQueue;
+    private static class SplitTaskBatchWrapper implements Runnable {
+        List<SplitTaskBatchItem> mTaskQueue;
 
-        SerialTaskQueueWrapper(List<SplitTaskEnqueued> taskQueue) {
+        SplitTaskBatchWrapper(List<SplitTaskBatchItem> taskQueue) {
             mTaskQueue = checkNotNull(taskQueue);
         }
 
         @Override
         public void run() {
             try {
-                for(SplitTaskEnqueued enqueued : mTaskQueue) {
+                for(SplitTaskBatchItem enqueued : mTaskQueue) {
                     SplitTaskExecutionInfo info = enqueued.getTask().execute();
                     SplitTaskExecutionListener listener = enqueued.getListener();
                     if (listener != null) {

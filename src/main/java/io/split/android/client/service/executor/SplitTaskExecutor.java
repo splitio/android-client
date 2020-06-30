@@ -18,7 +18,7 @@ public interface SplitTaskExecutor {
     void submit(@NonNull SplitTask task,
                 @Nullable SplitTaskExecutionListener executionListener);
 
-    void executeSerially(List<SplitTaskEnqueued> tasks);
+    void executeSerially(List<SplitTaskBatchItem> tasks);
 
     void pause();
 
