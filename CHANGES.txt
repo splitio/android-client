@@ -1,5 +1,6 @@
 2.6.3: (Jul 01, 2020)
 - Fixed issue on initial cache loading
+- Fixed issue when updating many impressions and events non sent due to bad connection.
 
 2.6.2: (Jun 17, 2020)
 - Added proxy support with base authentication
