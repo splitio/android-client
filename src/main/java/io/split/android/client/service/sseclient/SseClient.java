@@ -27,6 +27,7 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
 
 import static androidx.core.util.Preconditions.checkNotNull;
+import static java.lang.Thread.sleep;
 import static java.lang.reflect.Modifier.PRIVATE;
 
 public class SseClient {
@@ -81,13 +82,13 @@ public class SseClient {
     public void disconnect() {
         if (readyState() != CLOSED) {
             isDisconnectCalled.set(true);
+            setCloseStatus();
             if (mCurrentConnection != null) {
                 mCurrentConnection.close();
             }
             if (mConnectionTask != null) {
-                mConnectionTask.cancel(false);
+                mConnectionTask.cancel(true);
             }
-            setCloseStatus();
             triggerOnDisconnect();
         }
     }
