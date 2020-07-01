@@ -15,6 +15,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -311,6 +312,46 @@ public class SplitTaskExecutorTest {
             ids.add(mId);
             mLatch.countDown();
             return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
+        }
+    }
+
+
+    static class SerialListener implements SplitTaskExecutionListener {
+        public static List<Integer> executedList = new ArrayList<>();
+        private int mTaskNumber = -1;
+
+        public SerialListener(int taskNumber) {
+            mTaskNumber = taskNumber;
+        }
+
+        @Override
+        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+            executedList.add(mTaskNumber);
+        }
+    }
+
+    @Test
+    public void executeSerially() throws InterruptedException {
+        final int taskCount = 4;
+
+        // Enqueing 4 task to run serially
+        // Listener is identified by an integer
+        CountDownLatch latch = new CountDownLatch(taskCount);
+        List<SplitTaskBatchItem> taskList = new ArrayList<>();
+        for (int i = 0; i < taskCount; i++) {
+            taskList.add(new SplitTaskBatchItem(new TestTask(latch), new SerialListener(i)));
+        }
+
+        // Executing tasks serially
+        mTaskExecutor.executeSerially(taskList);
+
+        // Awaiting to coundown latches in tasks
+        latch.await(10, TimeUnit.SECONDS);
+
+        // Variable in SerialListener should match 0,1,2,3
+        // to ensure correct execution order
+        for (int i = 0; i < taskCount; i++) {
+            Assert.assertEquals(i, SerialListener.executedList.get(i).intValue());
         }
     }
 }
