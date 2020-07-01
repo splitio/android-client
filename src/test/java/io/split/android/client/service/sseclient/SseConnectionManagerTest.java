@@ -316,7 +316,7 @@ public class SseConnectionManagerTest {
         mSseConnectionManager.start();
         mSseConnectionManager.pause();
         mSseConnectionManager.resume();
-        verify(mSseClient, times(0)).cancelDisconnectionTimer();
+        verify(mSseClient, times(1)).cancelDisconnectionTimer();
     }
 
     @Test
