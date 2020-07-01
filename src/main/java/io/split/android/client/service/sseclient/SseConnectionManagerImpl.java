@@ -9,22 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.split.android.client.lifecycle.SplitLifecycleAware;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
-import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
-import io.split.android.client.service.sseclient.notifications.NotificationParser;
-import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 import static io.split.android.client.service.executor.SplitTaskType.GENERIC_TASK;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
 import static java.lang.reflect.Modifier.PRIVATE;
 
 public class SseConnectionManagerImpl implements SseConnectionManager, SseClientListener, SplitTaskExecutionListener {
@@ -32,7 +26,6 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
     private final static int SSE_KEEPALIVE_TIME_IN_SECONDS = 70;
     private final static int RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS = 600;
     private final static int DISCONNECT_ON_BG_TIME_IN_SECONDS = 60;
-    private final static String PRIMARY_CONTROL_CHANNEL = "control_pri";
 
     private final SseClient mSseClient;
     private final SplitTaskExecutor mTaskExecutor;
@@ -48,6 +41,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
     private SseJwtToken mLastJwtTokenObtained = null;
     private AtomicBoolean mIsHostAppInBackground;
     private AtomicBoolean mIsStopped;
+    private AtomicBoolean mIsAuthenticating;
     private WeakReference<SseConnectionManagerListener> mListenerRef;
 
     public SseConnectionManagerImpl(@NonNull SseClient sseClient,
@@ -63,6 +57,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
         mSseBackoffCounter = checkNotNull(sseBackoffCounter);
         mIsHostAppInBackground = new AtomicBoolean(false);
         mIsStopped = new AtomicBoolean(false);
+        mIsAuthenticating = new AtomicBoolean(false);
         mSseClient.setListener(this);
     }
 
@@ -103,8 +98,9 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
         // Checking sse client status, cancel scheduled disconnect if necessary
         // and check if cancel was successful
         boolean isDisconnectionTimerCancelled = mSseClient.cancelDisconnectionTimer();
-        if (mSseClient.readyState() == SseClient.CLOSED ||
+        if (!mIsAuthenticating.get() && mSseClient.readyState() == SseClient.CLOSED ||
                 (mSseClient.readyState() == SseClient.OPEN && !isDisconnectionTimerCancelled)) {
+            mIsAuthenticating.set(true);
             triggerSseAuthentication();
         }
     }
@@ -267,6 +263,8 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
                     notifySseNotAvailable();
                     return;
                 }
+
+                mIsAuthenticating.set(false);
                 Logger.d("Streaming enabled: " + isStreamingEnabled(taskInfo));
                 if ((!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
                         && !isApiKeyValid(taskInfo))) {
