@@ -85,6 +85,9 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
             return;
         }
         mIsHostAppInBackground.set(true);
+        if(mAuthReconnectionTimerTaskId != null && mIsAuthenticating.get()) {
+            mIsAuthenticating.set(false);
+        }
         cancelAuthReconnectionTimer();
         cancelSseReconnectionTimer();
         mSseClient.scheduleDisconnection(DISCONNECT_ON_BG_TIME_IN_SECONDS);
@@ -95,6 +98,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
         if (mIsStopped.get()) {
             return;
         }
+        mIsHostAppInBackground.set(false);
         // Checking sse client status, cancel scheduled disconnect if necessary
         // and check if cancel was successful
         boolean isDisconnectionTimerCancelled = mSseClient.cancelDisconnectionTimer();
@@ -175,6 +179,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
 
     @Override
     public void onDisconnect() {
+        mIsAuthenticating.set(false);
         cancelSseKeepAliveTimer();
         cancelRefreshTokenTimer();
     }
@@ -234,6 +239,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
 
     private void scheduleReconnection() {
         cancelAuthReconnectionTimer();
+        mIsAuthenticating.set(true);
         mAuthReconnectionTimerTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createSseAuthenticationTask(),
                 mAuthBackoffCounter.getNextRetryTime(), this);
@@ -257,14 +263,16 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
 
         switch (taskInfo.getTaskType()) {
             case SSE_AUTHENTICATION_TASK:
-
+                mIsAuthenticating.set(false);
+                if(mIsHostAppInBackground.get()) {
+                    return;
+                }
                 if (isUnexepectedError(taskInfo)) {
                     scheduleReconnection();
                     notifySseNotAvailable();
                     return;
                 }
 
-                mIsAuthenticating.set(false);
                 Logger.d("Streaming enabled: " + isStreamingEnabled(taskInfo));
                 if ((!SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())
                         && !isApiKeyValid(taskInfo))) {

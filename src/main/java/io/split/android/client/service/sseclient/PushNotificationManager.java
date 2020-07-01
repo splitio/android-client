@@ -92,7 +92,9 @@ public class PushNotificationManager implements SseClientListener, SplitLifecycl
     @VisibleForTesting(otherwise = PRIVATE)
     public void notifyPollingDisabled() {
         Logger.i("Sending polling disabled message through event broadcaster.");
-        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(DISABLE_POLLING));
+        if (mIsPollingEnabled.getAndSet(false)) {
+            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(DISABLE_POLLING));
+        }
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
@@ -190,8 +192,8 @@ public class PushNotificationManager implements SseClientListener, SplitLifecycl
                     break;
                 case STREAMING_ENABLED:
                     mIsStreamingPaused.set(false);
-                    mSseConnectionManager.start();
                     notifyPollingDisabled();
+                    notifyStreamingConnected();
                     break;
                 case STREAMING_PAUSED:
                     mIsStreamingPaused.set(true);

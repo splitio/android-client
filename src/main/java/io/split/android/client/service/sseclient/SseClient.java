@@ -83,6 +83,7 @@ public class SseClient {
 
     public void disconnect() {
         if (readyState() != CLOSED) {
+            Logger.d("Disconnecting while in background");
             isDisconnectCalled.set(true);
             setCloseStatus();
             if (mCurrentConnection != null) {
@@ -158,7 +159,6 @@ public class SseClient {
     private class DisconnectionTimer implements Runnable {
         @Override
         public void run() {
-            Logger.d("Disconnecting while in background");
             disconnect();
         }
     }
