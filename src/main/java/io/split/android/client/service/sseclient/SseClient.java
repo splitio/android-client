@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,7 @@ public class SseClient {
     private AtomicInteger mReadyState;
     private final HttpClient mHttpClient;
     private EventStreamParser mEventStreamParser;
-    private WeakReference<SseClientListener> mListener;
+    private List<WeakReference<SseClientListener>> mListeners;
     private final ScheduledExecutorService mExecutor;
     private ScheduledFuture mDisconnectionTimerTaskRef = null;
     private AtomicBoolean isDisconnectCalled;
@@ -67,6 +68,7 @@ public class SseClient {
         isDisconnectCalled = new AtomicBoolean(false);
         mExecutor = checkNotNull(executor);
         mReadyState.set(CLOSED);
+        mListeners = new ArrayList<>();
     }
 
     public int readyState() {
@@ -94,7 +96,7 @@ public class SseClient {
     }
 
     public void setListener(SseClientListener listener) {
-        mListener = new WeakReference<>(listener);
+        mListeners.add(new WeakReference<>(listener));
     }
 
     public void close() {
@@ -118,9 +120,11 @@ public class SseClient {
     }
 
     private void triggerOnDisconnect() {
-        SseClientListener listener = mListener.get();
-        if (listener != null) {
-            listener.onDisconnect();
+        for(WeakReference<SseClientListener> listenerRef : mListeners) {
+            SseClientListener listener = listenerRef.get();
+            if (listener != null) {
+                listener.onDisconnect();
+            }
         }
     }
 
@@ -243,33 +247,38 @@ public class SseClient {
         }
 
         void triggerOnMessage(Map<String, String> messageValues) {
-            if (mListener == null) {
-                return;
-            }
-            SseClientListener listener = mListener.get();
-            if (listener != null) {
-                listener.onMessage(messageValues);
+            for(WeakReference<SseClientListener> listenerRef : mListeners) {
+                SseClientListener listener = listenerRef.get();
+                if (listener != null) {
+                    listener.onMessage(messageValues);
+                }
             }
         }
 
         void triggerOnKeepAlive() {
-            SseClientListener listener = mListener.get();
-            if (listener != null) {
-                listener.onKeepAlive();
+            for(WeakReference<SseClientListener> listenerRef : mListeners) {
+                SseClientListener listener = listenerRef.get();
+                if (listener != null) {
+                    listener.onKeepAlive();
+                }
             }
         }
 
         void triggerOnError(boolean isRecoverable) {
-            SseClientListener listener = mListener.get();
-            if (listener != null) {
-                listener.onError(isRecoverable);
+            for(WeakReference<SseClientListener> listenerRef : mListeners) {
+                SseClientListener listener = listenerRef.get();
+                if (listener != null) {
+                    listener.onError(isRecoverable);
+                }
             }
         }
 
         void triggerOnOpen() {
-            SseClientListener listener = mListener.get();
-            if (listener != null) {
-                listener.onOpen();
+            for(WeakReference<SseClientListener> listenerRef : mListeners) {
+                SseClientListener listener = listenerRef.get();
+                if (listener != null) {
+                    listener.onOpen();
+                }
             }
         }
 
