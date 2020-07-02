@@ -21,6 +21,7 @@ import io.split.android.client.storage.events.PersistentEventsStorage;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -62,6 +63,7 @@ public class EventsRecorderTaskTest {
 
         verify(mEventsRecorder, times(2)).execute(mDefaultParams);
         verify(mPersistentEventsStorage, times(3)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentEventsStorage, never()).setActive(any());
 
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
@@ -86,7 +88,8 @@ public class EventsRecorderTaskTest {
 
         verify(mEventsRecorder, times(1)).execute(mDefaultParams);
         verify(mPersistentEventsStorage, times(2)).pop(DEFAULT_POP_CONFIG);
-        verify(mPersistentEventsStorage, times(1)).setActive(any());
+        int setActiveTimes = DEFAULT_POP_CONFIG / EventsRecorderTask.FAILING_CHUNK_SIZE;
+        verify(mPersistentEventsStorage, times(setActiveTimes)).setActive(any());
 
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
@@ -110,6 +113,7 @@ public class EventsRecorderTaskTest {
 
         verify(mEventsRecorder, times(0)).execute(mDefaultParams);
         verify(mPersistentEventsStorage, times(1)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentEventsStorage, never()).setActive(any());
 
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());

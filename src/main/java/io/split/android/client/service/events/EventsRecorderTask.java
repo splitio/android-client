@@ -2,6 +2,8 @@ package io.split.android.client.service.events;
 
 import androidx.annotation.NonNull;
 
+import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +22,7 @@ import io.split.android.client.utils.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class EventsRecorderTask implements SplitTask {
-
+    public final static int FAILING_CHUNK_SIZE = 20;
     private final PersistentEventsStorage mPersistenEventsStorage;
     private final HttpRecorder<List<Event>> mHttpRecorder;
     private final EventsRecorderTaskConfig mConfig;
@@ -59,7 +61,12 @@ public class EventsRecorderTask implements SplitTask {
                 }
             }
         } while (events.size() == mConfig.getEventsPerPush());
-        mPersistenEventsStorage.setActive(failingEvents);
+
+        // Update events by chunks to avoid sqlite errors
+        List<List<Event>> failingChunks = Lists.partition(failingEvents, FAILING_CHUNK_SIZE);
+        for(List<Event> chunk : failingChunks) {
+            mPersistenEventsStorage.setActive(chunk);
+        }
 
         if (status == SplitTaskExecutionStatus.ERROR) {
             Map<String, Object> data = new HashMap<>();

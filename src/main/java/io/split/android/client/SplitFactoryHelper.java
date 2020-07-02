@@ -21,6 +21,8 @@ import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseClient;
+import io.split.android.client.service.sseclient.SseConnectionManager;
+import io.split.android.client.service.sseclient.SseConnectionManagerImpl;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
@@ -121,12 +123,14 @@ class SplitFactoryHelper {
         EventStreamParser eventStreamParser = new EventStreamParser();
         SseClient sseClient =
                 new SseClient(streamingServiceUrl,httpClient, eventStreamParser);
+
+        SseConnectionManager sseConnectionManager = new SseConnectionManagerImpl(sseClient, splitTaskExecutor, splitTaskFactory,
+                new ReconnectBackoffCounter(config.authRetryBackoffBase()),
+                new ReconnectBackoffCounter(config.streamingReconnectBackoffBase()));
+
         PushNotificationManager pushNotificationManager =
-                new PushNotificationManager(sseClient, splitTaskExecutor,
-                        splitTaskFactory, notificationParser,
-                        notificationProcessor, pushManagerEventBroadcaster,
-                        new ReconnectBackoffCounter(config.authRetryBackoffBase()),
-                        new ReconnectBackoffCounter(config.streamingReconnectBackoffBase()));
+                new PushNotificationManager(sseClient, notificationParser, notificationProcessor,
+                        pushManagerEventBroadcaster, sseConnectionManager);
 
         return new SyncManagerImpl(
                 config, synchronizer, pushNotificationManager, splitUpdateWorker,

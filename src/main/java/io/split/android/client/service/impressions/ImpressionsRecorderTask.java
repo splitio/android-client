@@ -2,6 +2,8 @@ package io.split.android.client.service.impressions;
 
 import androidx.annotation.NonNull;
 
+import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +22,7 @@ import io.split.android.client.utils.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ImpressionsRecorderTask implements SplitTask {
-
+    public final static int FAILING_CHUNK_SIZE = 20;
     private final PersistentImpressionsStorage mPersistenImpressionsStorage;
     private final HttpRecorder<List<KeyImpression>> mHttpRecorder;
     private final ImpressionsRecorderTaskConfig mConfig;
@@ -59,7 +61,12 @@ public class ImpressionsRecorderTask implements SplitTask {
                 }
             }
         } while (impressions.size() == mConfig.getImpressionsPerPush());
-        mPersistenImpressionsStorage.setActive(failingImpressions);
+
+        // Update impressions by chunks to avoid sqlite errors
+        List<List<KeyImpression>> failingChunks = Lists.partition(failingImpressions, FAILING_CHUNK_SIZE);
+        for(List<KeyImpression> chunk : failingChunks) {
+            mPersistenImpressionsStorage.setActive(chunk);
+        }
 
         if (status == SplitTaskExecutionStatus.ERROR) {
             Map<String, Object> data = new HashMap<>();

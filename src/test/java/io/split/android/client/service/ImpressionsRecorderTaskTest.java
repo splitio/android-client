@@ -20,7 +20,9 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -65,6 +67,7 @@ public class ImpressionsRecorderTaskTest {
 
         verify(mImpressionsRecorder, times(2)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(3)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentImpressionsStorage, never()).setActive(any());
 
         Assert.assertEquals(TASK_TYPE, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
@@ -89,6 +92,8 @@ public class ImpressionsRecorderTaskTest {
 
         verify(mImpressionsRecorder, times(1)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(2)).pop(DEFAULT_POP_CONFIG);
+        int setActiveTimes = DEFAULT_POP_CONFIG / ImpressionsRecorderTask.FAILING_CHUNK_SIZE;
+        verify(mPersistentImpressionsStorage, times(setActiveTimes)).setActive(any());
 
         Assert.assertEquals(TASK_TYPE, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
@@ -112,6 +117,7 @@ public class ImpressionsRecorderTaskTest {
 
         verify(mImpressionsRecorder, times(0)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(1)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentImpressionsStorage, never()).setActive(any());
 
         Assert.assertEquals(TASK_TYPE, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());

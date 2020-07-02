@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.service.executor.SplitTask;
@@ -289,69 +290,65 @@ public class SplitTaskExecutorTest {
         }
     }
 
-    private static class TestQueueTask implements SplitTask {
-        public CountDownLatch mLatch;
-        public static Map<String, List<Integer>> EXECUTED_TASKS = new ConcurrentHashMap<>();
-        private final String mQueueName;
-        private final int mId;
+    static class CompletionTracker {
+        private final LinkedBlockingQueue<Integer> _done;
 
-        public TestQueueTask(String queueName, int id, CountDownLatch latch) {
-            mQueueName = queueName;
-            mId = id;
-            mLatch = latch;
+        public CompletionTracker(int length) {
+            _done = new LinkedBlockingQueue<>(length);
         }
 
-        @NonNull
-        @Override
-        public SplitTaskExecutionInfo execute() {
-            List<Integer> ids = EXECUTED_TASKS.get(mQueueName);
-            if (ids == null) {
-                ids = new ArrayList<>();
-                EXECUTED_TASKS.put(mQueueName, ids);
-            }
-            ids.add(mId);
-            mLatch.countDown();
-            return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
+        void track(int i) {
+            _done.offer(i);
+        }
+
+        List<Integer> getAll() {
+            return new ArrayList<>(_done);
         }
     }
 
-
     static class SerialListener implements SplitTaskExecutionListener {
-        public static List<Integer> executedList = new ArrayList<>();
+        CompletionTracker _tracker;
         private int mTaskNumber = -1;
+        private CountDownLatch mLatch;
 
-        public SerialListener(int taskNumber) {
+        public SerialListener(int taskNumber, CompletionTracker tracker, CountDownLatch latch) {
             mTaskNumber = taskNumber;
+            _tracker = tracker;
+            mLatch = latch;
         }
 
         @Override
         public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-            executedList.add(mTaskNumber);
+            _tracker.track(mTaskNumber);
+            mLatch.countDown();
         }
     }
 
     @Test
     public void executeSerially() throws InterruptedException {
         final int taskCount = 4;
-
+        CompletionTracker tracker = new CompletionTracker(4);
+        List<SerialListener> listeners = new ArrayList<>();
         // Enqueing 4 task to run serially
         // Listener is identified by an integer
-        CountDownLatch latch = new CountDownLatch(taskCount);
+        CountDownLatch latch = new CountDownLatch(taskCount * 2);
         List<SplitTaskBatchItem> taskList = new ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
-            taskList.add(new SplitTaskBatchItem(new TestTask(latch), new SerialListener(i)));
+            listeners.add(new SerialListener(i, tracker, latch));
+            taskList.add(new SplitTaskBatchItem(new TestTask(latch), listeners.get(i)));
         }
 
         // Executing tasks serially
         mTaskExecutor.executeSerially(taskList);
 
         // Awaiting to coundown latches in tasks
-        latch.await(10, TimeUnit.SECONDS);
+        boolean result = latch.await(40, TimeUnit.SECONDS);
+        Assert.assertTrue(result);
 
-        // Variable in SerialListener should match 0,1,2,3
-        // to ensure correct execution order
+
+        List<Integer> tracked = tracker.getAll();
         for (int i = 0; i < taskCount; i++) {
-            Assert.assertEquals(i, SerialListener.executedList.get(i).intValue());
+            Assert.assertEquals(i, tracked.get(i).intValue());
         }
     }
 }
