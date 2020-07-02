@@ -1,5 +1,7 @@
 package io.split.android.client.service.sseclient;
 
+import androidx.annotation.NonNull;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -8,6 +10,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -303,14 +308,37 @@ public class SseConnectionManagerTest {
     }
 
     @Test
-    public void disconnectOnBg() throws InterruptedException {
+    public void scheduleDisconnectOnBg() throws InterruptedException {
+        // Connection manager has to schedule disconnection in x secs
         mSseConnectionManager.start();
         mSseConnectionManager.pause();
         verify(mSseClient, times(1)).scheduleDisconnection(anyLong());
     }
 
     @Test
-    public void connectOnFg() throws InterruptedException {
+    public void scheduledDisconnectFiredOnBg() throws InterruptedException {
+        // Disconnection is fired on bg after x secs.
+        // All timers should be cancelled
+        // On App FG authentication should be triggered
+
+        // Return id when scheduling task to make it possible to
+        // stop tasks
+        when(mTaskExecutor.schedule(
+                any(), anyLong(), any()))
+                .thenReturn("id2");
+        mSseConnectionManager.start();
+        mSseConnectionManager.pause();
+        mSseConnectionManager.onDisconnect();
+
+        verify(mSseClient, times(1)).scheduleDisconnection(anyLong());
+        // TODO: Figure out how to make this work
+        //verify(mTaskExecutor, times(2)).stopTask(anyString());
+    }
+
+    @Test
+    public void cancelTimerOnWhenNoDisconnectOnFg() throws InterruptedException {
+        // When comming to foreground disconnection timer should be
+        // cancelled if onDisconnect method from SSE client wasn't called
         when(mSseClient.cancelDisconnectionTimer()).thenReturn(true);
         when(mSseClient.readyState()).thenReturn(SseClient.CLOSED);
         mSseConnectionManager.start();
@@ -321,6 +349,7 @@ public class SseConnectionManagerTest {
 
     @Test
     public void noConnectOnFgWhileStillConnected() throws InterruptedException {
+        // If SSE connection is onpenned when app FG, avoid triggering auth
         when(mSseClient.cancelDisconnectionTimer()).thenReturn(true);
         when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
         mSseConnectionManager.start();
@@ -345,6 +374,51 @@ public class SseConnectionManagerTest {
         verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(SseConnectionManagerImpl.class));
     }
 
+    @Test
+    public void noTriggerAuthOnFgIfAlreadyTriggered() throws InterruptedException {
+        // If SSE auth was triggered when app FG, avoid triggering again
+        when(mSseClient.cancelDisconnectionTimer()).thenReturn(true);
+        when(mSseClient.readyState()).thenReturn(SseClient.CLOSED);
+        mSseConnectionManager.start();
+        mSseConnectionManager.pause();
+        mSseConnectionManager.resume();
+        verify(mSseClient, times(1)).cancelDisconnectionTimer();
+        verify(mTaskExecutor, never()).submit(any(SseAuthenticationTask.class), any(SseConnectionManagerImpl.class));
+    }
+
+    @Test
+    public void triggerAuthAgainIfSuccessResultOnBg() throws InterruptedException {
+        // This tests simulates app losting connection previous to go BG
+        // so SSE auth is triggered previous to go BG. It should be cancelled if
+        // getting success result while in BG (taskExecuted call)
+        // should stop auth/connection process
+        when(mSseClient.cancelDisconnectionTimer()).thenReturn(true);
+        when(mSseClient.readyState()).thenReturn(SseClient.CLOSED);
+        mSseConnectionManager.start();
+        mSseConnectionManager.pause();
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mSseConnectionManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK));
+        mSseConnectionManager.resume();
+        verify(mSseClient, times(1)).cancelDisconnectionTimer();
+        verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(SseConnectionManagerImpl.class));
+    }
+
+    @Test
+    public void triggerAuthAgainIfErrorResultOnBg() throws InterruptedException {
+        // This tests simulates app losting connection previous to go BG
+        // so SSE auth is triggered previous to go BG. It should be cancelled if
+        // getting error result while in BG (taskExecuted call)
+        // should stop auth/connection process
+        when(mSseClient.cancelDisconnectionTimer()).thenReturn(true);
+        when(mSseClient.readyState()).thenReturn(SseClient.CLOSED);
+        mSseConnectionManager.start();
+        mSseConnectionManager.pause();
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
+        mSseConnectionManager.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.SSE_AUTHENTICATION_TASK));
+        mSseConnectionManager.resume();
+        verify(mSseClient, times(1)).cancelDisconnectionTimer();
+        verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(SseConnectionManagerImpl.class));
+    }
 
     @Test
     public void sseClientError() throws InterruptedException {
@@ -394,4 +468,5 @@ public class SseConnectionManagerTest {
         channels.add("channel2");
         return channels;
     }
+
 }
