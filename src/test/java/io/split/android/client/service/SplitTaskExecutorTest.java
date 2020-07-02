@@ -325,13 +325,14 @@ public class SplitTaskExecutorTest {
     public void executeSerially() throws InterruptedException {
         final int taskCount = 4;
         CompletionTracker tracker = new CompletionTracker(4);
-
+        List<SerialListener> listeners = new ArrayList<>();
         // Enqueing 4 task to run serially
         // Listener is identified by an integer
         CountDownLatch latch = new CountDownLatch(taskCount);
         List<SplitTaskBatchItem> taskList = new ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
-            taskList.add(new SplitTaskBatchItem(new TestTask(latch), new SerialListener(i, tracker)));
+            listeners.add(new SerialListener(i, tracker));
+            taskList.add(new SplitTaskBatchItem(new TestTask(latch), listeners.get(i)));
         }
 
         // Executing tasks serially
