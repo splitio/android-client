@@ -346,7 +346,7 @@ public class SplitTaskExecutorTest {
         mTaskExecutor.executeSerially(taskList);
 
         // Awaiting to coundown latches in tasks
-        latch.await(10, TimeUnit.SECONDS);
+        latch.await(40, TimeUnit.SECONDS);
 
         // Variable in SerialListener should match 0,1,2,3
         // to ensure correct execution order
