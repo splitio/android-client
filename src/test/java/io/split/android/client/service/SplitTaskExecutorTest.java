@@ -309,15 +309,18 @@ public class SplitTaskExecutorTest {
     static class SerialListener implements SplitTaskExecutionListener {
         CompletionTracker _tracker;
         private int mTaskNumber = -1;
+        private CountDownLatch mLatch;
 
-        public SerialListener(int taskNumber, CompletionTracker tracker) {
+        public SerialListener(int taskNumber, CompletionTracker tracker, CountDownLatch latch) {
             mTaskNumber = taskNumber;
             _tracker = tracker;
+            mLatch = latch;
         }
 
         @Override
         public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
             _tracker.track(mTaskNumber);
+            mLatch.countDown();
         }
     }
 
@@ -328,10 +331,10 @@ public class SplitTaskExecutorTest {
         List<SerialListener> listeners = new ArrayList<>();
         // Enqueing 4 task to run serially
         // Listener is identified by an integer
-        CountDownLatch latch = new CountDownLatch(taskCount);
+        CountDownLatch latch = new CountDownLatch(taskCount * 2);
         List<SplitTaskBatchItem> taskList = new ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
-            listeners.add(new SerialListener(i, tracker));
+            listeners.add(new SerialListener(i, tracker, latch));
             taskList.add(new SplitTaskBatchItem(new TestTask(latch), listeners.get(i)));
         }
 
