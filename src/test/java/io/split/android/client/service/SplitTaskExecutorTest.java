@@ -317,29 +317,31 @@ public class SplitTaskExecutorTest {
 
 
     static class SerialListener implements SplitTaskExecutionListener {
-        public static List<Integer> executedList = new ArrayList<>();
+        List<Integer> mExecutedList;
         private int mTaskNumber = -1;
 
-        public SerialListener(int taskNumber) {
+        public SerialListener(int taskNumber, List<Integer> executedList) {
             mTaskNumber = taskNumber;
+            mExecutedList = executedList;
         }
 
         @Override
         public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-            executedList.add(mTaskNumber);
+            mExecutedList.add(mTaskNumber);
         }
     }
 
     @Test
     public void executeSerially() throws InterruptedException {
         final int taskCount = 4;
+        List<Integer> executedList = new ArrayList<>();
 
         // Enqueing 4 task to run serially
         // Listener is identified by an integer
         CountDownLatch latch = new CountDownLatch(taskCount);
         List<SplitTaskBatchItem> taskList = new ArrayList<>();
         for (int i = 0; i < taskCount; i++) {
-            taskList.add(new SplitTaskBatchItem(new TestTask(latch), new SerialListener(i)));
+            taskList.add(new SplitTaskBatchItem(new TestTask(latch), new SerialListener(i, executedList)));
         }
 
         // Executing tasks serially
@@ -351,7 +353,7 @@ public class SplitTaskExecutorTest {
         // Variable in SerialListener should match 0,1,2,3
         // to ensure correct execution order
         for (int i = 0; i < taskCount; i++) {
-            Assert.assertEquals(i, SerialListener.executedList.get(i).intValue());
+            Assert.assertEquals(i, executedList.get(i).intValue());
         }
     }
 }
