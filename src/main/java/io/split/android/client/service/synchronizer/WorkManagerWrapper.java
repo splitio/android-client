@@ -1,7 +1,6 @@
 package io.split.android.client.service.synchronizer;
 
 import android.os.Looper;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,7 +20,6 @@ import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
@@ -107,7 +105,7 @@ public class WorkManagerWrapper {
 
     private void observeWorkState(String tag) {
         Logger.d("Adding work manager observer for request id " + tag);
-        if(isCurrentThreadMain()) {
+        if (isCurrentThreadMain()) {
             mWorkManager.getWorkInfosByTagLiveData(tag)
                     .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
                         @Override
@@ -126,7 +124,7 @@ public class WorkManagerWrapper {
                     });
         } else {
             Logger.w("Split Client: Background synchronization monitoring can't be enabled if the SDK is instantiated in " +
-            " a background thread due to the inability to observe task state changes. Setting it to off.");
+                    " a background thread due to the inability to observe task state changes. Setting it to off.");
         }
     }
 
