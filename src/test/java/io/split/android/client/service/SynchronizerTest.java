@@ -29,6 +29,7 @@ import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -38,6 +39,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -109,6 +111,7 @@ public class SynchronizerTest {
         when(mTaskFactory.createMySegmentsSyncTask(anyBoolean())).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
+        when(mTaskFactory.createLoadSplitsTask()).thenReturn(Mockito.mock(LoadSplitsTask.class));
 
         when(mWorkManager.getWorkInfoByIdLiveData(any())).thenReturn(mock(LiveData.class));
 
@@ -349,6 +352,26 @@ public class SynchronizerTest {
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
     }
 
+    @Test
+    public void loadAndSynchronizeSplits() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .sychronizeInBackground(false)
+                .build();
+        setup(config);
+
+        List<SplitTaskExecutionInfo> list = new ArrayList<>();
+        list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
+        list.add(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
+        mSynchronizer = new SynchronizerImpl(config, executor,
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper);
+        mSynchronizer.loadAndSynchronizeSplits();
+        verify(mEventsManager, times(1))
+                .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        verify(mEventsManager, times(1))
+                .notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+    }
+
     @After
     public void tearDown() {
     }
@@ -394,6 +417,18 @@ public class SynchronizerTest {
             SplitTaskExecutionInfo info = mInfoList.get(mRequestIndex);
             mRequestIndex++;
             executionListener.taskExecuted(info);
+        }
+
+        @Override
+        public void executeSerially(List<SplitTaskBatchItem> tasks) {
+            for (SplitTaskBatchItem enqueued : tasks) {
+                SplitTaskExecutionInfo info = mInfoList.get(mRequestIndex);
+                mRequestIndex++;
+                SplitTaskExecutionListener executionListener = enqueued.getListener();
+                if (executionListener != null) {
+                    executionListener.taskExecuted(info);
+                }
+            }
         }
 
         @Override

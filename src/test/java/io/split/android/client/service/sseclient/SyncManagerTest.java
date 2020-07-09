@@ -62,11 +62,9 @@ public class SyncManagerTest {
     @Test
     public void pushNotificationSetupEnabled() {
         mSyncManager.start();
-        verify(mSynchronizer, times(1)).loadSplitsFromCache();
+        verify(mSynchronizer, times(1)).loadAndSynchronizeSplits();
         verify(mSynchronizer, times(1)).loadMySegmentsFromCache();
         verify(mSynchronizer, times(1)).synchronizeMySegments();
-        verify(mSynchronizer, times(1)).synchronizeSplits();
-        verify(mSynchronizer, times(1)).synchronizeSplits();
         verify(mSynchronizer, never()).startPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicRecording();
         verify(mPushManagerEventBroadcaster, times(1)).register((BroadcastedEventListener) mSyncManager);
@@ -77,10 +75,9 @@ public class SyncManagerTest {
     public void pushNotificationSetupDisabled() {
         when(mConfig.streamingEnabled()).thenReturn(false);
         mSyncManager.start();
-        verify(mSynchronizer, times(1)).loadSplitsFromCache();
+        verify(mSynchronizer, times(1)).loadAndSynchronizeSplits();
         verify(mSynchronizer, times(1)).loadMySegmentsFromCache();
         verify(mSynchronizer, times(1)).synchronizeMySegments();
-        verify(mSynchronizer, times(1)).synchronizeSplits();
         verify(mSynchronizer, times(1)).startPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicRecording();
         verify(mPushManagerEventBroadcaster, never()).register((BroadcastedEventListener) mSyncManager);

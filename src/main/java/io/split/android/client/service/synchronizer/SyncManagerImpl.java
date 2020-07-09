@@ -50,9 +50,8 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
     @Override
     public void start() {
 
-        mSynchronizer.loadSplitsFromCache();
+        mSynchronizer.loadAndSynchronizeSplits();
         mSynchronizer.loadMySegmentsFromCache();
-        mSynchronizer.synchronizeSplits();
         mSynchronizer.synchronizeMySegments();
         isPollingEnabled.set(!mSplitClientConfig.streamingEnabled());
         if (mSplitClientConfig.streamingEnabled()) {

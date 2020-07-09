@@ -5,6 +5,9 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.lifecycle.SplitLifecycleAware;
 
 public interface Synchronizer extends SplitLifecycleAware {
+
+    void loadAndSynchronizeSplits();
+
     void loadSplitsFromCache();
 
     void loadMySegmentsFromCache();
