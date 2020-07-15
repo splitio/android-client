@@ -430,6 +430,18 @@ public class SseConnectionManagerTest {
     }
 
     @Test
+    public void onTokenExpiredMessage() throws InterruptedException {
+        Map<String, String> tokenExpiredMessage = new HashMap<>();
+        tokenExpiredMessage.put("event", "error");
+        tokenExpiredMessage.put("data", "{\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}");
+
+        when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
+        mSseConnectionManager.start();
+        mSseConnectionManager.onMessage(tokenExpiredMessage);
+        verify(mTaskExecutor, times(1)).submit(any(SseAuthenticationTask.class), any(SseConnectionManagerImpl.class));
+    }
+
+    @Test
     public void sseClientErrorOnBg() throws InterruptedException {
         when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
         mSseConnectionManager.start();
