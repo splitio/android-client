@@ -270,13 +270,14 @@ public class SseConnectionManagerTest {
         List<String> channels = dummyChannels();
         String data = "{}";
 
-        long expirationTime = System.currentTimeMillis() / 1000 + 603;
+        long issuedAtTime = System.currentTimeMillis() / 1000;
+        long expirationTime = issuedAtTime + 603;
 
         when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         mSseConnectionManager.start();
         reset(mTaskExecutor);
         mSseConnectionManager.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SSE_AUTHENTICATION_TASK,
-                buildAuthMap(TOKEN, channels, true, true, expirationTime
+                buildAuthMap(TOKEN, channels, true, true, issuedAtTime, expirationTime
                 )));
 
         verify(mSseClient, times(1)).connect(TOKEN, channels);
@@ -437,6 +438,17 @@ public class SseConnectionManagerTest {
         verify(mTaskExecutor, never()).schedule(any(SseConnectionManagerImpl.SseReconnectionTimer.class), anyLong(), isNull());
     }
 
+    @Test
+    public void refreshTokenTime() {
+        long expectedTime = 3400;
+        long issuedAt = 1000;
+        long expirationTime = 5000;
+        long time = mSseConnectionManager.reconnectTimeBeforeTokenExpiration(issuedAt, expirationTime);
+
+        Assert.assertEquals(expectedTime, time);
+
+    }
+
     @After
     public void teardDown() {
         reset();
@@ -446,16 +458,19 @@ public class SseConnectionManagerTest {
                                              List<String> channels,
                                              boolean isApiKeyValid,
                                              boolean isStreamingEnabled) {
-        return buildAuthMap(token, channels, isApiKeyValid, isStreamingEnabled,
-                9999999L);
+
+        long iat = System.currentTimeMillis() / 1000;
+        long exp = iat + 10000;
+        return buildAuthMap(token, channels, isApiKeyValid, isStreamingEnabled, iat, exp);
     }
 
 
     private Map<String, Object> buildAuthMap(String token, List<String> channels,
                                              boolean isApiKeyValid, boolean isStreamingEnabled,
+                                             long issuedAt,
                                              long expirationTime) {
         Map<String, Object> data = new HashMap<>();
-        SseJwtToken jwtToken = new SseJwtToken(expirationTime, channels, TOKEN);
+        SseJwtToken jwtToken = new SseJwtToken(issuedAt, expirationTime, channels, TOKEN);
         data.put(SplitTaskExecutionInfo.PARSED_SSE_JWT, jwtToken);
         data.put(SplitTaskExecutionInfo.IS_VALID_API_KEY, isApiKeyValid);
         data.put(SplitTaskExecutionInfo.IS_STREAMING_ENABLED, isStreamingEnabled);

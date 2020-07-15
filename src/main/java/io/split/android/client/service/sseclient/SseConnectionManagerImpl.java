@@ -226,15 +226,16 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
                 null);
     }
 
-    private void resetSseTokenExpiredTimer(long expirationTime) {
-        long reconnectTime
-                = Math.max(expirationTime - RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS
-                - System.currentTimeMillis() / 1000L, 0L);
-
+    private void resetSseTokenExpiredTimer(long issueAtTime, long expirationTime) {
+        long reconnectTime = reconnectTimeBeforeTokenExpiration(issueAtTime, expirationTime);
         mSseTokenExpiredTimerTaskId = mTaskExecutor.schedule(
-                new SseTokenExpiredTimer(),
-                reconnectTime,
-                null);
+                new SseTokenExpiredTimer(), reconnectTime, null);
+    }
+
+    @VisibleForTesting(otherwise = PRIVATE)
+    public long reconnectTimeBeforeTokenExpiration(long issuedAtTime, long expirationTime) {
+        return Math.max(expirationTime - issuedAtTime - RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS
+                , 0L);
     }
 
     private void scheduleReconnection() {
@@ -297,7 +298,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
                     mAuthBackoffCounter.resetCounter();
                     storeJwt(jwtToken);
                     connectToSse(jwtToken.getRawJwt(), jwtToken.getChannels());
-                    resetSseTokenExpiredTimer(jwtToken.getExpirationTime());
+                    resetSseTokenExpiredTimer(jwtToken.getIssuedAtTime(), jwtToken.getExpirationTime());
                 } else {
                     scheduleReconnection();
                     notifySseNotAvailable();

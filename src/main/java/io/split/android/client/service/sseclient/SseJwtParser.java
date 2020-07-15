@@ -19,6 +19,7 @@ import io.split.android.client.utils.Logger;
 public class SseJwtParser {
 
     final static String CHANNEL_LIST_FIELD = "x-ably-capability";
+    final static String ISSUED_AT_FIELD = "iat";
     final static String EXPIRATION_FIELD = "exp";
     private final static String PUBLISHERS_CHANNEL_METADATA = "channel-metadata:publishers";
     private final static String PUBLISHERS_CHANNEL_PREFIX = "[?occupancy=metrics.publishers]";
@@ -48,6 +49,7 @@ public class SseJwtParser {
             throw  new InvalidJwtTokenException();
         }
 
+        long issuedAtTime = 0;
         long expirationTime = 0;
         Map<String, List<String>> channels = null;
         try {
@@ -63,6 +65,7 @@ public class SseJwtParser {
                 Logger.e("SSE JWT has not channels.");
                 throw  new InvalidJwtTokenException();
             }
+            issuedAtTime = new Double(allToken.get(ISSUED_AT_FIELD).toString()).longValue();
             expirationTime = new Double(allToken.get(EXPIRATION_FIELD).toString()).longValue();
         } catch (JsonSyntaxException e) {
             Logger.e("Error parsing SSE authentication JWT json " + e.getLocalizedMessage());
@@ -82,7 +85,7 @@ public class SseJwtParser {
             }
         }
 
-        return new SseJwtToken(expirationTime, processedChannels, rawToken);
+        return new SseJwtToken(issuedAtTime, expirationTime, processedChannels, rawToken);
     }
 
     @Nullable
