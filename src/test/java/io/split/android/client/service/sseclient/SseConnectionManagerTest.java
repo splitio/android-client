@@ -1,7 +1,5 @@
 package io.split.android.client.service.sseclient;
 
-import androidx.annotation.NonNull;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,9 +8,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,19 +19,13 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
-import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
-import io.split.android.client.service.sseclient.notifications.ControlNotification;
-import io.split.android.client.service.sseclient.notifications.IncomingNotification;
-import io.split.android.client.service.sseclient.notifications.NotificationType;
-import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
-import io.split.android.client.utils.Json;
+import io.split.android.client.service.sseclient.notifications.StreamingMessageParser;
 
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -66,6 +55,9 @@ public class SseConnectionManagerTest {
     SseAuthenticationTask mSseAuthTask;
 
     @Mock
+    StreamingMessageParser mStreamingMessageParser;
+
+    @Mock
     ReconnectBackoffCounter mAuthBackoffCounter;
 
     @Mock
@@ -80,7 +72,7 @@ public class SseConnectionManagerTest {
         when(mAuthBackoffCounter.getNextRetryTime()).thenReturn(1L);
         when(mSseBackoffCounter.getNextRetryTime()).thenReturn(1L);
         mSseConnectionManager = new SseConnectionManagerImpl(mSseClient, mTaskExecutor,
-                mSplitTaskFactory, mAuthBackoffCounter, mSseBackoffCounter);
+                mSplitTaskFactory, mStreamingMessageParser, mAuthBackoffCounter, mSseBackoffCounter);
 
         mSseConnectionManager.setListener(mSseConnectionManagerListener);
     }
@@ -435,6 +427,7 @@ public class SseConnectionManagerTest {
         tokenExpiredMessage.put("event", "error");
         tokenExpiredMessage.put("data", "{\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}");
 
+        when(mSplitTaskFactory.createSseAuthenticationTask()).thenReturn(mSseAuthTask);
         when(mSseClient.readyState()).thenReturn(SseClient.OPEN);
         mSseConnectionManager.start();
         mSseConnectionManager.onMessage(tokenExpiredMessage);

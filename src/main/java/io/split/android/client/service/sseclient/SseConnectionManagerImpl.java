@@ -15,6 +15,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.sseclient.notifications.StreamingError;
+import io.split.android.client.service.sseclient.notifications.StreamingMessageParser;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
@@ -26,6 +28,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
     private final static int SSE_KEEPALIVE_TIME_IN_SECONDS = 70;
     private final static int RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS = 600;
     private final static int DISCONNECT_ON_BG_TIME_IN_SECONDS = 60;
+    private final static int TOKEN_EXPIRED_ERROR_CODE = 40142;
 
     private final SseClient mSseClient;
     private final SplitTaskExecutor mTaskExecutor;
@@ -43,16 +46,19 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
     private AtomicBoolean mIsStopped;
     private AtomicBoolean mIsAuthenticating;
     private WeakReference<SseConnectionManagerListener> mListenerRef;
+    private StreamingMessageParser mStreamingMessageParser;
 
     public SseConnectionManagerImpl(@NonNull SseClient sseClient,
                                     @NonNull SplitTaskExecutor taskExecutor,
                                     @NonNull SplitTaskFactory splitTaskFactory,
+                                    @NonNull StreamingMessageParser streamingMessageParser,
                                     @NonNull ReconnectBackoffCounter authBackoffCounter,
                                     @NonNull ReconnectBackoffCounter sseBackoffCounter) {
 
         mSseClient = checkNotNull(sseClient);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTaskExecutor = checkNotNull(taskExecutor);
+        mStreamingMessageParser = checkNotNull(streamingMessageParser);
         mAuthBackoffCounter = checkNotNull(authBackoffCounter);
         mSseBackoffCounter = checkNotNull(sseBackoffCounter);
         mIsHostAppInBackground = new AtomicBoolean(false);
@@ -152,6 +158,22 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
             return;
         }
         resetSseKeepAliveTimer();
+        processEvent(values);
+    }
+
+    private void processEvent(Map<String, String> values) {
+        StreamingError error = mStreamingMessageParser.parseError(values);
+        if(error != null && error.getCode() == TOKEN_EXPIRED_ERROR_CODE) {
+            cancelSseReconnectionTimer();
+            cancelAuthReconnectionTimer();
+            cancelRefreshTokenTimer();
+            cancelSseKeepAliveTimer();
+            if (mIsHostAppInBackground.get()) {
+                mSseClient.cancelDisconnectionTimer();
+                return;
+            }
+            triggerSseAuthentication();
+        }
     }
 
     @Override

@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
@@ -30,7 +31,7 @@ import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 import static java.lang.Thread.sleep;
 
-public class SseConnectionExpiredToken {
+public class SseConnectionExpiredTokenTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
     CountDownLatch mSseExpiredTokenMessage;
@@ -83,7 +84,8 @@ public class SseConnectionExpiredToken {
         // Push token expired message and clouse connection
         pushTokenExpiredMessage();
         mSseExpiredTokenMessage.await(5, TimeUnit.SECONDS);
-        mExpiredStreamResponse.close();
+        mStreamingData.put("\0"); // This is currently what server sends when token is expired
+
 
         // Wait to sdk to react to stream closed
         sleep(1000);
@@ -93,8 +95,9 @@ public class SseConnectionExpiredToken {
 
         // Not considering hits when sending token expired
         // should be 1 hit for endpoint to count a full cycle
-        Assert.assertEquals(2, mSseConnHitCount);
         Assert.assertEquals(2, mSseConnAuthHitCount);
+        Assert.assertEquals(2, mSseConnHitCount);
+
 
 
         splitFactory.destroy();
@@ -148,12 +151,17 @@ public class SseConnectionExpiredToken {
     }
 
     private void pushTokenExpiredMessage() {
-        String message = "{\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}";
+        String message = loadMockedData("push_token-expired.txt");
         try {
             mStreamingData.put(message + "" + "\n");
             mSseExpiredTokenMessage.countDown();
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException e) {
         }
+    }
+
+    private String loadMockedData(String fileName) {
+        FileHelper fileHelper = new FileHelper();
+        return fileHelper.loadFileContent(mContext, fileName);
     }
 }
