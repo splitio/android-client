@@ -236,6 +236,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
 
     private void refreshSseToken() {
         cancelSseKeepAliveTimer();
+        cancelSseReconnectionTimer();
         mSseClient.disconnect();
         triggerSseAuthentication();
     }
