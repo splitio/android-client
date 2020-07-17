@@ -1,4 +1,4 @@
-2.6.3: (Jul 01, 2020)
+2.6.3: (Jul 02, 2020)
 - Fixed issue on initial cache loading
 - Fixed issue when updating many impressions and events non sent due to bad connection.
 
