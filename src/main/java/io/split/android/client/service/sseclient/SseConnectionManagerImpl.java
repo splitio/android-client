@@ -256,7 +256,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
 
     @VisibleForTesting(otherwise = PRIVATE)
     public long reconnectTimeBeforeTokenExpiration(long issuedAtTime, long expirationTime) {
-        return Math.max(expirationTime - issuedAtTime - RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS
+        return Math.max((expirationTime - issuedAtTime) - RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS
                 , 0L);
     }
 
