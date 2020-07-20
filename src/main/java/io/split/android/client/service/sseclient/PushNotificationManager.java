@@ -17,6 +17,7 @@ import io.split.android.client.service.sseclient.notifications.IncomingNotificat
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
+import io.split.android.client.service.sseclient.notifications.StreamingMessageParser;
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
@@ -34,6 +35,7 @@ public class PushNotificationManager implements SseClientListener, SplitLifecycl
     private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final NotificationParser mNotificationParser;
     private final NotificationProcessor mNotificationProcessor;
+    private final StreamingMessageParser mStreamingMessageParser;
 
 
     private AtomicBoolean mIsPollingEnabled;
@@ -46,12 +48,14 @@ public class PushNotificationManager implements SseClientListener, SplitLifecycl
     public PushNotificationManager(@NonNull SseClient sseClient,
                                    @NonNull NotificationParser notificationParser,
                                    @NonNull NotificationProcessor notificationProcessor,
+                                   @NonNull StreamingMessageParser streamingMessageParser,
                                    @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                    @NonNull SseConnectionManager sseConnectionManager) {
 
         mSseClient = checkNotNull(sseClient);
         mNotificationParser = checkNotNull(notificationParser);
         mNotificationProcessor = checkNotNull(notificationProcessor);
+        mStreamingMessageParser = checkNotNull(streamingMessageParser);
         mPushManagerEventBroadcaster = checkNotNull(pushManagerEventBroadcaster);
         mSseConnectionManager = checkNotNull(sseConnectionManager);
         mIsPollingEnabled = new AtomicBoolean(false);
@@ -137,6 +141,11 @@ public class PushNotificationManager implements SseClientListener, SplitLifecycl
         if (mIsStopped.get()) {
             return;
         }
+
+        if(mStreamingMessageParser.isError(values)) {
+            return;
+        }
+
         String messageData = values.get(DATA_FIELD);
 
         if (messageData != null) {

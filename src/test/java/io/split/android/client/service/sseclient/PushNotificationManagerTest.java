@@ -25,6 +25,7 @@ import io.split.android.client.service.sseclient.notifications.NotificationParse
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
+import io.split.android.client.service.sseclient.notifications.StreamingMessageParser;
 import io.split.android.client.utils.Json;
 
 import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
@@ -59,7 +60,11 @@ public class PushNotificationManagerTest {
     NotificationParser mNotificationParser;
 
     @Mock
+    StreamingMessageParser mStreamingMessageParser;
+
+    @Mock
     NotificationProcessor mNotificationProcessor;
+
 
 
     PushNotificationManager mPushManager;
@@ -69,8 +74,8 @@ public class PushNotificationManagerTest {
 
         MockitoAnnotations.initMocks(this);
 
-        mPushManager = new PushNotificationManager(mSseClient,
-                mNotificationParser, mNotificationProcessor, mBroadcasterChannel, mSseConnectionManager);
+        mPushManager = new PushNotificationManager(mSseClient, mNotificationParser,
+                 mNotificationProcessor, mStreamingMessageParser, mBroadcasterChannel, mSseConnectionManager);
     }
 
 

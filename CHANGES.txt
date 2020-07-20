@@ -1,4 +1,10 @@
-2.6.3: (Jul 02, 2020)
+2.6.5: (Jul 20, 2020)
+- Improved logic to refresh streaming token
+
+2.6.4: (Jul 13, 2020)
+- Fixed issue while observing background sync state when instantiating SDK in a background thread
+
+2.6.3: (Jul 01, 2020)
 - Fixed issue on initial cache loading
 - Fixed issue when updating many impressions and events non sent due to bad connection.
 
