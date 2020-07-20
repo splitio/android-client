@@ -172,6 +172,7 @@ public class SseConnectionManagerImpl implements SseConnectionManager, SseClient
                 mSseClient.cancelDisconnectionTimer();
                 return;
             }
+            Logger.d("Streaming token expired error received. Triggering authentication.");
             triggerSseAuthentication();
         }
     }
