@@ -110,6 +110,8 @@ public class SplitClientConfig {
     private String _streamingServiceUrl;
     private boolean _isSslDevelopmentModeEnabled;
 
+    private SyncConfig _syncConfig;
+
     // To be set during startup
     public static String splitSdkVersion;
 
@@ -152,7 +154,8 @@ public class SplitClientConfig {
                               int streamingReconnectBackoffBase,
                               String authServiceUrl,
                               String streamingServiceUrl,
-                              boolean enableSslDevelopmentMode) {
+                              boolean enableSslDevelopmentMode,
+                              SyncConfig syncConfig) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -190,6 +193,7 @@ public class SplitClientConfig {
         _authServiceUrl = authServiceUrl;
         _streamingServiceUrl = streamingServiceUrl;
         _isSslDevelopmentModeEnabled = enableSslDevelopmentMode;
+        _syncConfig = syncConfig;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -430,6 +434,10 @@ public class SplitClientConfig {
         return _isSslDevelopmentModeEnabled;
     }
 
+    public SyncConfig syncConfig() {
+        return _syncConfig;
+    }
+
     public static final class Builder {
 
         private ServiceEndpoints _serviceEndpoints = null;
@@ -475,6 +483,8 @@ public class SplitClientConfig {
                 = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
 
         private boolean _isSslDevelopmentModeEnabled = false;
+
+        private SyncConfig _syncConfig;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -888,6 +898,17 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Settings to customize how data sync is done
+         *
+         * @return: This builder
+         * @default: null
+         */
+        public Builder syncConfig(SyncConfig syncConfig) {
+            _syncConfig = syncConfig;
+            return this;
+        }
+
         public SplitClientConfig build() {
 
 
@@ -980,7 +1001,8 @@ public class SplitClientConfig {
                     _streamingReconnectBackoffBase,
                     _serviceEndpoints.getAuthServiceEndpoint(),
                     _serviceEndpoints.getStreamingServiceEndpoint(),
-                    _isSslDevelopmentModeEnabled);
+                    _isSslDevelopmentModeEnabled,
+                    _syncConfig);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
