@@ -38,6 +38,31 @@ public class SyncConfigTest {
     }
 
     @Test
+    public void addingNullValueList() {
+        // Null value list is not valid.
+        // Split filter should throw invalid argument exception
+        SplitFilter filterByName = null;
+        SplitFilter filterByPrefix = null;
+        boolean byNameExceptionThrown = false;
+        boolean byPrefixExceptionThrown = false;
+        try {
+            filterByName = SplitFilter.byName(null);
+        } catch (Exception e) {
+            byNameExceptionThrown = true;
+        }
+
+        try {
+            filterByPrefix = SplitFilter.byPrefix(null);
+        } catch (Exception e) {
+            byPrefixExceptionThrown = true;
+        }
+        Assert.assertTrue(byNameExceptionThrown);
+        Assert.assertTrue(byPrefixExceptionThrown);
+        Assert.assertNull(filterByName);
+        Assert.assertNull(filterByPrefix);
+    }
+
+    @Test
     public void testSyncBuilder() {
         // Testing basic sync config creation
         // by creating a filters having max allowed values
@@ -168,5 +193,22 @@ public class SyncConfigTest {
         }
 
         Assert.assertEquals(0, config.getFilters().size());
+    }
+
+    @Test
+    public void addingNullFilterToConfig() {
+        // Null filter is not valid.
+        // Sync config builder should throw invalid argument exception
+
+        boolean exceptionThrown = false;
+        SyncConfig config = null;
+        try {
+            config = SyncConfig.builder().addSplitFilter(null).build();
+        } catch (Exception e) {
+            exceptionThrown = true;
+        }
+
+        Assert.assertTrue(exceptionThrown);
+        Assert.assertNull(config);
     }
 }
