@@ -40,24 +40,20 @@ class SyncConfig {
             List<SplitFilter> filters = new ArrayList<>();
             for (SplitFilter filter : mBuilderFilters) {
 
-                Set<String> deduptedValues = new HashSet<>(filter.getValues());
-                if(deduptedValues.size() < filter.getValues().size()) {
-                    Logger.w("Warning: Some duplicated values for " + filter.getType().toString() + " filter  were removed.");
-                }
-
+                List<String> values = filter.getValues();
                 switch (filter.getType()) {
                     case BY_NAME:
-                        if (deduptedValues.size() > MAX_BY_NAME_VALUES) {
+                        if (values.size() > MAX_BY_NAME_VALUES) {
                             String message = "Error: 400 different split names can be specified at most. You passed " +
-                                    deduptedValues.size()
+                                    values.size()
                                     + ". Please consider reducing the amount or using prefixes to target specific groups of splits.";
                             throw new IllegalArgumentException(message);
                         }
                         break;
                     case BY_PREFIX:
-                        if (deduptedValues.size() > MAX_BY_PREFIX_VALUES) {
+                        if (values.size() > MAX_BY_PREFIX_VALUES) {
                             String message = "Error: 50 different prefixes can be specified at most. You passed %d." +
-                                    deduptedValues.size() +
+                                    values.size() +
                                     "Please consider using a lower number of prefixes and/or filtering by split name as well.";
 
                             throw new IllegalArgumentException(message);
@@ -68,7 +64,7 @@ class SyncConfig {
                 }
 
                 List<String> validValues = new ArrayList<>();
-                for (String value : deduptedValues) {
+                for (String value : values) {
                     if (mSplitValidator.validateName(value) != null) {
                         Logger.w(String.format("Warning: Malformed %s value. Filter ignored: %s", filter.getType().toString(), value));
                     } else {
