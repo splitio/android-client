@@ -2,9 +2,9 @@ package io.split.android.client;
 
 import androidx.annotation.NonNull;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static androidx.core.util.Preconditions.checkNotNull;
 
@@ -18,13 +18,13 @@ public class SplitFilter {
             switch(this) {
                 case BY_NAME: return "by split name";
                 case BY_PREFIX: return "by split prefix";
-                default: return "Invalid type";
+                default: return "Invalid mType";
             }
         }
     }
 
-    private final SplitFilter.Type type;
-    private final Set<String> values;
+    private final SplitFilter.Type mType;
+    private final List<String> mValues;
 
     static public SplitFilter byName(@NonNull List<String> values) {
         return new SplitFilter(Type.BY_NAME, values);
@@ -38,19 +38,20 @@ public class SplitFilter {
         if(values == null) {
             throw new IllegalArgumentException("Values can't be null for " + type.toString() + " filter");
         }
-        this.type = type;
-        this.values = new HashSet<>(values);
+        mType = type;
+        mValues = new ArrayList<>(values);
     }
 
     public Type getType() {
-        return type;
+        return mType;
     }
 
-    public Set<String> getValues() {
-        return values;
+    public List<String> getValues() {
+        return mValues;
     }
 
-    public void deleteValue(String value) {
-        values.remove(value);
+    public void updateValues(List<String> values) {
+        mValues.clear();
+        mValues.addAll(values);
     }
 }

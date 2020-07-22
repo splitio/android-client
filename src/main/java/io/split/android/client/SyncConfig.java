@@ -3,7 +3,9 @@ package io.split.android.client;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.SplitValidator;
@@ -37,19 +39,25 @@ class SyncConfig {
         public SyncConfig build() {
             List<SplitFilter> filters = new ArrayList<>();
             for (SplitFilter filter : mBuilderFilters) {
+
+                Set<String> deduptedValues = new HashSet<>(filter.getValues());
+                if(deduptedValues.size() < filter.getValues().size()) {
+                    Logger.w("Warning: Some duplicated values for " + filter.getType().toString() + " filter  were removed.");
+                }
+
                 switch (filter.getType()) {
                     case BY_NAME:
-                        if (filter.getValues().size() > MAX_BY_NAME_VALUES) {
+                        if (deduptedValues.size() > MAX_BY_NAME_VALUES) {
                             String message = "Error: 400 different split names can be specified at most. You passed " +
-                                    filter.getValues().size()
+                                    deduptedValues.size()
                                     + ". Please consider reducing the amount or using prefixes to target specific groups of splits.";
                             throw new IllegalArgumentException(message);
                         }
                         break;
                     case BY_PREFIX:
-                        if (filter.getValues().size() > MAX_BY_PREFIX_VALUES) {
+                        if (deduptedValues.size() > MAX_BY_PREFIX_VALUES) {
                             String message = "Error: 50 different prefixes can be specified at most. You passed %d." +
-                                    filter.getValues().size() +
+                                    deduptedValues.size() +
                                     "Please consider using a lower number of prefixes and/or filtering by split name as well.";
 
                             throw new IllegalArgumentException(message);
@@ -59,15 +67,17 @@ class SyncConfig {
                         Logger.e("Invalid Split filter!");
                 }
 
-                List<String> valuesToValidate = new ArrayList<>(filter.getValues());
-                for (String value : valuesToValidate) {
+                List<String> validValues = new ArrayList<>();
+                for (String value : deduptedValues) {
                     if (mSplitValidator.validateName(value) != null) {
                         Logger.w(String.format("Warning: Malformed %s value. Filter ignored: %s", filter.getType().toString(), value));
-                        filter.deleteValue(value);
+                    } else {
+                        validValues.add(value);
                     }
                 }
 
-                if (filter.getValues().size() > 0) {
+                if (validValues.size() > 0) {
+                    filter.updateValues(validValues);
                     filters.add(filter);
                 }
             }
