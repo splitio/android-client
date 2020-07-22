@@ -27,7 +27,7 @@ public class FilterBuilderTest {
     }
 
     @Test
-    public void testOnlyByNameQueryString() {
+    public void testOnlyOneTypeQueryString() {
         // When one filter is not present, it has to appear as empty in querystring
         // fields order has to be maintained in querystring
         SplitFilter byNameFilter = SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b"));
@@ -36,7 +36,45 @@ public class FilterBuilderTest {
         String onlyByNameQs = new FilterBuilder().addFilter(byNameFilter).build();
         String onlyByPrefixQs = new FilterBuilder().addFilter(byPrefixFilter).build();
 
-        Assert.assertEquals("names=nf_a,nf_b,nf_c&prefixes=", onlyByNameQs);
-        Assert.assertEquals("names=nf_a,nf_b,nf_c&prefixes=pf_a,pf_b,pf_c", onlyByPrefixQs);
+        Assert.assertEquals("names=nf_a,nf_b,nf_c", onlyByNameQs);
+        Assert.assertEquals("prefixes=pf_a,pf_b,pf_c", onlyByPrefixQs);
+    }
+
+    @Test
+    public void testMultiSameTypeFilter() {
+        // If many filters of the same type were added it should be consolidated
+        // when querystring created
+
+        String queryString = new FilterBuilder()
+                .addFilter(SplitFilter.byName(Arrays.asList("nf_a", "nf_c")))
+                .addFilter(SplitFilter.byName(Arrays.asList("nf_b", "nf_d")))
+                .addFilter(SplitFilter.byPrefix(Arrays.asList("pf_a", "pf_c")))
+                .addFilter(SplitFilter.byPrefix(Arrays.asList("pf_b", "pf_d")))
+                .build();
+
+        Assert.assertEquals("names=nf_a,nf_b,nf_c,nf_d&prefixes=pf_a,pf_b,pf_c,pf_d", queryString);
+    }
+
+    @Test
+    public void filterValuesDedupted() {
+        // Duplicated filter values should be removed on builing
+
+        String queryString = new FilterBuilder()
+                .addFilter(SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b")))
+                .addFilter(SplitFilter.byPrefix(Arrays.asList("pf_a", "pf_c")))
+                .addFilter(SplitFilter.byPrefix(Arrays.asList("pf_b", "pf_d", "pf_a")))
+                .addFilter(SplitFilter.byName(Arrays.asList("nf_b", "nf_d")))
+                .build();
+
+        Assert.assertEquals("names=nf_a,nf_b,nf_c,nf_d&prefixes=pf_a,pf_b,pf_c,pf_d", queryString);
+    }
+
+    @Test
+    public void testNoFilters() {
+        // When no filter added, query string has to be empty
+
+        String queryString = new FilterBuilder().build();
+
+        Assert.assertEquals("", queryString);
     }
 }
