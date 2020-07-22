@@ -6,19 +6,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static androidx.core.util.Preconditions.checkNotNull;
-
 public class SplitFilter {
     public enum Type {
+        // Filters here has to be defined in the order
+        // it will be in querystring
         BY_NAME,
         BY_PREFIX;
 
         @Override
         public String toString() {
-            switch(this) {
-                case BY_NAME: return "by split name";
-                case BY_PREFIX: return "by split prefix";
-                default: return "Invalid type";
+            switch (this) {
+                case BY_NAME:
+                    return "by split name";
+                case BY_PREFIX:
+                    return "by split prefix";
+                default:
+                    return "Invalid type";
             }
         }
     }
@@ -35,7 +38,7 @@ public class SplitFilter {
     }
 
     private SplitFilter(Type type, List<String> values) {
-        if(values == null) {
+        if (values == null) {
             throw new IllegalArgumentException("Values can't be null for " + type.toString() + " filter");
         }
         this.type = type;
