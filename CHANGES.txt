@@ -1,4 +1,4 @@
-2.6.5: (Jul 20, 2020)
+2.6.5: (Jul 23, 2020)
 - Improved logic to refresh streaming token
 
 2.6.4: (Jul 13, 2020)
