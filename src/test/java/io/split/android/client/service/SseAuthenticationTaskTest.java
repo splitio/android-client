@@ -60,7 +60,7 @@ public class SseAuthenticationTaskTest {
         mockChannelList.add("channel2");
         mockChannelList.add("channel3");
 
-        SseJwtToken jwt = new SseJwtToken(9999999L, mockChannelList, JWT);
+        SseJwtToken jwt = new SseJwtToken(9998999L, 9999999L, mockChannelList, JWT);
 
         when(mAuthResponse.isValidApiKey()).thenReturn(true);
         when(mAuthResponse.isStreamingEnabled()).thenReturn(true);
@@ -88,7 +88,7 @@ public class SseAuthenticationTaskTest {
     public void invalidApiAndKey() throws HttpFetcherException, InvalidJwtTokenException {
 
         List<String> mockList = new ArrayList<>();
-        SseJwtToken jwt = new SseJwtToken(9999999L, mockList, JWT);
+        SseJwtToken jwt = new SseJwtToken(9998999L, 9999999L, mockList, JWT);
         when(mAuthResponse.isValidApiKey()).thenReturn(false);
         when(mAuthResponse.isStreamingEnabled()).thenReturn(false);
         when(mAuthResponse.getToken()).thenReturn(null);
