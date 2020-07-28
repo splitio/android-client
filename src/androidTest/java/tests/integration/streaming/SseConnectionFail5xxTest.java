@@ -81,7 +81,7 @@ public class SseConnectionFail5xxTest {
         mSseConnLatch.await(40, TimeUnit.SECONDS);
 
         // Wait for pollling to be stopped
-        // and initil sse sync to finish
+        // and initil sse syncUntilSuccess to finish
         // and reset post sse connection countsers
         sleep(5000);
         mSplitsHitsCountHitAfterSseConn = 0;
@@ -102,7 +102,7 @@ public class SseConnectionFail5xxTest {
         // Checking streaming connection
         Assert.assertTrue(mIsStreamingConnected);
 
-        // More than 1 hit corresponding to full sync after streaming connection,
+        // More than 1 hit corresponding to full syncUntilSuccess after streaming connection,
         // means polling still working after sse auth
         Assert.assertFalse(mMySegmentsHitsCountHitAfterSseConn > 1);
         Assert.assertFalse(mSplitsHitsCountHitAfterSseConn > 1);

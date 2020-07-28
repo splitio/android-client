@@ -58,12 +58,14 @@ public class FilterBuilderTest {
     @Test
     public void filterValuesDedupted() {
         // Duplicated filter values should be removed on builing
+        List<SplitFilter> filters = Arrays.asList(
+                SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b")),
+                SplitFilter.byPrefix(Arrays.asList("pf_a", "pf_c")),
+                SplitFilter.byPrefix(Arrays.asList("pf_b", "pf_d", "pf_a")),
+                SplitFilter.byName(Arrays.asList("nf_b", "nf_d")));
 
         String queryString = new FilterBuilder()
-                .addFilter(SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b")))
-                .addFilter(SplitFilter.byPrefix(Arrays.asList("pf_a", "pf_c")))
-                .addFilter(SplitFilter.byPrefix(Arrays.asList("pf_b", "pf_d", "pf_a")))
-                .addFilter(SplitFilter.byName(Arrays.asList("nf_b", "nf_d")))
+                .addFilters(filters)
                 .build();
 
         Assert.assertEquals("names=nf_a,nf_b,nf_c,nf_d&prefixes=pf_a,pf_b,pf_c,pf_d", queryString);

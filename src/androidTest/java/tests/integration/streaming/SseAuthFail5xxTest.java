@@ -101,7 +101,7 @@ public class SseAuthFail5xxTest {
         Assert.assertTrue(mIsStreamingAuth);
         Assert.assertTrue(mIsStreamingConnected);
 
-        // More than 1 hit corresponding to full sync after streaming connection,
+        // More than 1 hit corresponding to full syncUntilSuccess after streaming connection,
         // means polling still working after sse auth
         Assert.assertEquals(1, mMySegmentsHitsCountHitAfterSseConn);
         Assert.assertEquals(1, mSplitsHitsCountHitAfterSseConn);

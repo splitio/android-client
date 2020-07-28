@@ -64,7 +64,7 @@ public class SyncConfigTest {
 
     @Test
     public void testSyncBuilder() {
-        // Testing basic sync config creation
+        // Testing basic syncUntilSuccess config creation
         // by creating a filters having max allowed values
 
         List<String> byPrefixValues = new ArrayList<String>();
@@ -101,7 +101,7 @@ public class SyncConfigTest {
     @Test
     public void testByNameCountValidationBuilder() {
         // Testing max by name values validation
-        // The builder has to throw an exception to prevent sync config creation
+        // The builder has to throw an exception to prevent syncUntilSuccess config creation
         List<String> byNameValues = new ArrayList<String>();
         for (int i = 1; i <= 401; i++) {
             byNameValues.add("f" + i);
@@ -124,7 +124,7 @@ public class SyncConfigTest {
     @Test
     public void testByPrefixCountValidationBuilder() {
         // Testing max by prefix values validation
-        // The builder has to throw an exception to prevent sync config creation
+        // The builder has to throw an exception to prevent syncUntilSuccess config creation
         List<String> byPrefixValues = new ArrayList<String>();
         for (int i = 1; i <= 51; i++) {
             byPrefixValues.add("f" + i);

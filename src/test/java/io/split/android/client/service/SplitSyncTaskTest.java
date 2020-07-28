@@ -1,6 +1,7 @@
 package io.split.android.client.service;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -9,15 +10,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -29,133 +34,90 @@ public class SplitSyncTaskTest {
 
     private static final long OLD_TIMESTAMP = 1546300800L; //2019-01-01
 
-    HttpFetcher<SplitChange> mSplitsFetcher;
     SplitsStorage mSplitsStorage;
     SplitChange mSplitChange = null;
-    SplitChangeProcessor mSplitChangeProcessor;
+    SplitsSyncHelper mSplitsSyncHelper;
 
     SplitsSyncTask mTask;
     Map<String, Object> mDefaultParams = new HashMap<>();
-
+    String mQueryString = "qs=1";
 
     @Before
     public void setup() {
         mDefaultParams.clear();
         mDefaultParams.put("since", -1L);
-        mSplitsFetcher = (HttpFetcher<SplitChange>) Mockito.mock(HttpFetcher.class);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
-        mSplitChangeProcessor = Mockito.spy(SplitChangeProcessor.class);
-        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
-                false, false, 1000);
+        mSplitsSyncHelper = Mockito.mock(SplitsSyncHelper.class);
         loadSplitChanges();
     }
 
     @Test
     public void correctExecution() throws HttpFetcherException {
+        // Check that syncing is done with changeNum retrieved from db
+        // Querystring is the same, so no clear sould be called
+        // And updateTimestamp is 0
+        // Retry is off, so splitSyncHelper.sync should be called
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                false, false, 1000, mQueryString);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
 
         mTask.execute();
 
-        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
-        verify(mSplitsStorage, times(1)).update(any());
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams);
     }
 
     @Test
-    public void correctChangeNumExecution() throws HttpFetcherException {
+    public void correctChangeNumExecutionRetryOff() throws HttpFetcherException {
+
+        // Check that syncing is done with changeNum retrieved from db
+        // Querystring is the same, so no clear sould be called
+        // And updateTimestamp is 0
+        // Retry is off, so splitSyncHelper.sync should be called
         long changeNum = 234567833L;
         Map<String, Object> params = new HashMap<>();
         params.put("since", changeNum);
 
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                false, false, 1000, mQueryString);
+
         when(mSplitsStorage.getTill()).thenReturn(changeNum);
-        when(mSplitsFetcher.execute(params)).thenReturn(mSplitChange);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
 
         mTask.execute();
 
-        verify(mSplitsFetcher, times(1)).execute(params);
-        verify(mSplitsStorage, times(1)).update(any());
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
-    }
-
-
-    @Test
-    public void fetcherExceptionRetryOff() throws HttpFetcherException {
-        when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsFetcher.execute(mDefaultParams)).thenThrow(HttpFetcherException.class);
-
-        mTask.execute();
-
-        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
-        verify(mSplitsStorage, never()).update(any());
-        verify(mSplitChangeProcessor, never()).process(mSplitChange);
+        verify(mSplitsSyncHelper, times(1)).sync(params);
     }
 
     @Test
-    public void fetcherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
-                true, false, 1000);
+    public void correctExecutionRetryOn() throws HttpFetcherException {
+        // Check that syncing is done with changeNum retrieved from db
+        // Querystring is the same, so no clear sould be called
+        // And updateTimestamp is 0
+        // Retry is on, so splitSyncHelper.syncUntilSuccess should be called
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                true, false, 1000, mQueryString);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsFetcher.execute(mDefaultParams))
-                .thenThrow(HttpFetcherException.class)
-                .thenThrow(HttpFetcherException.class)
-                .thenThrow(HttpFetcherException.class).thenReturn(mSplitChange);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
 
         mTask.execute();
 
-        verify(mSplitsFetcher, times(4)).execute(mDefaultParams);
-        verify(mSplitsStorage, times(1)).update(any());
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
-    }
-
-    @Test
-    public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
-                true, false, 1000);
-        when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsFetcher.execute(mDefaultParams)).thenThrow(IllegalStateException.class);
-
-        mTask.execute();
-
-        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
-        verify(mSplitsStorage, never()).update(any());
-        verify(mSplitChangeProcessor, never()).process(mSplitChange);
-    }
-
-    @Test
-    public void storageException() throws HttpFetcherException {
-        when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
-        doThrow(NullPointerException.class).when(mSplitsStorage).update(any(ProcessedSplitChange.class));
-
-        mTask.execute();
-
-        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
-        verify(mSplitsStorage, times(1)).update(any());
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
-    }
-
-
-
-    @After
-    public void tearDown() {
-        reset(mSplitsFetcher);
-        reset(mSplitsStorage);
-    }
-
-    private void loadSplitChanges() {
-        if (mSplitChange == null) {
-            FileHelper fileHelper = new FileHelper();
-            mSplitChange = fileHelper.loadSplitChangeFromFile("split_changes_1.json");
-        }
+        verify(mSplitsSyncHelper, times(1)).syncUntilSuccess(mDefaultParams);
     }
 
     @Test
     public void cleanOldCacheDisabled() throws HttpFetcherException {
-        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
-                true, false, 60);
-        when(mSplitsStorage.getTill()).thenReturn(OLD_TIMESTAMP);
-        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
+    // Cache should not be cleared when cache expired
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                false, false, 100L, mQueryString);
+        when(mSplitsStorage.getTill()).thenReturn(300L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(100L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        // This value function checks that cache is expired, here we simulate cache expired
+        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(true);
 
         mTask.execute();
 
@@ -164,11 +126,13 @@ public class SplitSyncTaskTest {
 
     @Test
     public void cleanOldCacheEnabled() throws HttpFetcherException {
-        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
-                true, true, 60);
+        // Cache should be cleared when cache expired
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                true, true, 100L, mQueryString);
         when(mSplitsStorage.getTill()).thenReturn(100L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(OLD_TIMESTAMP);
-        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(100L); // Dummy value clearing depends on cacheHasExpired function value
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(true);
 
         mTask.execute();
 
@@ -176,28 +140,31 @@ public class SplitSyncTaskTest {
     }
 
     @Test
-    public void cleanOldCacheEnabledNotExpiredChangeNumber() throws HttpFetcherException {
-        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
-                true, true, 18000);
+    public void cleanSplitsWhenQueryStringHasChanged() throws HttpFetcherException {
+        // Splits have to be cleared when query string on db is != than current one on current sdk client instance
+        // Setting up cache not expired
+
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                true, true, 100L, "q=other");
         when(mSplitsStorage.getTill()).thenReturn(100L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(System.currentTimeMillis() / 1000 - 3600);
-        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(false);
 
         mTask.execute();
 
-        verify(mSplitsStorage, never()).clear();
+        verify(mSplitsStorage, times(1)).clear();
     }
 
-    @Test
-    public void cleanOldCacheEnabledMinusOneCn() throws HttpFetcherException {
-        mTask = new SplitsSyncTask(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor,
-                true, true, 18000);
-        when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(OLD_TIMESTAMP);
-        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
+    @After
+    public void tearDown() {
+        reset(mSplitsStorage);
+    }
 
-        mTask.execute();
-
-        verify(mSplitsStorage, never()).clear();
+    private void loadSplitChanges() {
+        if (mSplitChange == null) {
+            FileHelper fileHelper = new FileHelper();
+            mSplitChange = fileHelper.loadSplitChangeFromFile("split_changes_1.json");
+        }
     }
 }
