@@ -70,15 +70,24 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase));
     }
 
+    String buildSplitsFilterQueryString(SplitClientConfig config) {
+        SyncConfig syncConfig = config.syncConfig();
+        if(syncConfig != null) {
+            return new FilterBuilder().addFilters(syncConfig.getFilters()).build();
+        }
+        return null;
+    }
+
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
                                   Key key,
                                   HttpClient httpClient,
-                                  Metrics cachedFireAndForgetMetrics) throws URISyntaxException {
+                                  Metrics cachedFireAndForgetMetrics,
+                                  String splitsFilterQueryString) throws URISyntaxException {
         NetworkHelper networkHelper = new NetworkHelper();
 
         return new SplitApiFacade(
                 ServiceFactory.getSplitsFetcher(networkHelper, httpClient,
-                        splitClientConfig.endpoint(), cachedFireAndForgetMetrics),
+                        splitClientConfig.endpoint(), cachedFireAndForgetMetrics, splitsFilterQueryString),
                 ServiceFactory.getMySegmentsFetcher(networkHelper, httpClient,
                         splitClientConfig.endpoint(), key.matchingKey(), cachedFireAndForgetMetrics),
                 ServiceFactory.getSseAuthenticationFetcher(networkHelper, httpClient,

@@ -13,8 +13,7 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
 
 public class FilterBuilder {
-    private final List<SplitFilter> filters = new ArrayList<>();
-    private final static String QUERYSTRING_TEMPLATE = "names=[by_name_filters]&prefixes=[by_prefix_filters]";
+    private final List<SplitFilter> mFilters = new ArrayList<>();
 
     static private class SplitFilterComparator implements Comparator<SplitFilter> {
         @Override
@@ -24,13 +23,18 @@ public class FilterBuilder {
     }
 
     public FilterBuilder addFilter(SplitFilter filter) {
-        filters.add(filter);
+        mFilters.add(filter);
+        return this;
+    }
+
+    public FilterBuilder addFilters(List<SplitFilter> filters) {
+        mFilters.addAll(filters);
         return this;
     }
 
     public String build() {
 
-        if(filters.size() == 0) {
+        if(mFilters.size() == 0) {
             return "";
         }
 
@@ -38,7 +42,7 @@ public class FilterBuilder {
         StringBuilder queryString = new StringBuilder("");
         Map<SplitFilter.Type, List<String>> allFilters = new HashMap<>();
 
-        List<SplitFilter> sortedFilters = new ArrayList(filters);
+        List<SplitFilter> sortedFilters = new ArrayList(mFilters);
         Collections.sort(sortedFilters, new SplitFilterComparator());
 
         // Grouping filters

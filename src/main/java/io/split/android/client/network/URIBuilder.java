@@ -26,6 +26,7 @@ public class URIBuilder {
             mPath = mPath.replace("//", "/");
         } else if (rootPath != null) {
             mPath = rootPath;
+            mQueryString = rootURI.getQuery();
         } else {
             mPath = path;
         }

@@ -1,6 +1,7 @@
 package io.split.android.client.service.executor;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitKillTask;
+import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
@@ -32,16 +34,23 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitStorageContainer mSplitsStorageContainer;
     private final SplitClientConfig mSplitClientConfig;
     private final String mUserKey;
+    private final SplitsSyncHelper mSplitsSyncHelper;
+    private final String mSplitsFilterQueryString;
 
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
                                 @NonNull SplitApiFacade splitApiFacade,
                                 @NonNull SplitStorageContainer splitStorageContainer,
-                                @NonNull String userKey) {
+                                @NonNull String userKey,
+                                @Nullable String splistFilterQueryString) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
         mUserKey = checkNotNull(userKey);
+        mSplitsFilterQueryString = splistFilterQueryString;
+        mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
+                mSplitsStorageContainer.getSplitsStorage(),
+                new SplitChangeProcessor());
     }
 
     @Override
@@ -64,11 +73,9 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public SplitsSyncTask createSplitsSyncTask(boolean retryOnFail, boolean checkCacheExpiration) {
-        return new SplitsSyncTask(
-                mSplitApiFacade.getSplitFetcher(),
-                mSplitsStorageContainer.getSplitsStorage(),
-                new SplitChangeProcessor(), retryOnFail, checkCacheExpiration,
-                mSplitClientConfig.cacheExpirationInSeconds());
+
+        return new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), retryOnFail, checkCacheExpiration,
+                mSplitClientConfig.cacheExpirationInSeconds(), mSplitsFilterQueryString);
     }
 
     @Override
@@ -106,9 +113,6 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public SplitsUpdateTask createSplitsUpdateTask(long since) {
-        return new SplitsUpdateTask(
-                mSplitApiFacade.getSplitFetcher(),
-                mSplitsStorageContainer.getSplitsStorage(),
-                new SplitChangeProcessor(), since);
+        return new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), since);
     }
 }

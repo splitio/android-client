@@ -2,16 +2,15 @@ package io.split.android.client.service.splits;
 
 import androidx.annotation.NonNull;
 
+import com.google.common.base.Strings;
+
 import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
-import io.split.android.client.service.http.HttpFetcherException;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
@@ -21,80 +20,56 @@ import static java.lang.Thread.sleep;
 public class SplitsSyncTask implements SplitTask {
 
     static final String SINCE_PARAM = "since";
-    private final HttpFetcher<SplitChange> mSplitFetcher;
+    private final String mSplitsFilterQueryString;
+
     private final SplitsStorage mSplitsStorage;
-    private final SplitChangeProcessor mSplitChangeProcessor;
     private final boolean mRetryOnFail;
     private final boolean mCheckCacheExpiration;
     private final long mCacheExpirationInSeconds;
+    private final SplitsSyncHelper mSplitsSyncHelper;
 
-    private static final int RETRY_BASE = 1;
-
-    public SplitsSyncTask(HttpFetcher<SplitChange> splitFetcher,
+    public SplitsSyncTask(SplitsSyncHelper splitsSyncHelper,
                           SplitsStorage splitsStorage,
-                          SplitChangeProcessor splitChangeProcessor,
                           boolean retryOnFail,
                           boolean checkCacheExpiration,
-                          long cacheExpirationInSeconds) {
-        mSplitFetcher = checkNotNull(splitFetcher);
+                          long cacheExpirationInSeconds,
+                          String splitsFilterQueryString) {
+
         mSplitsStorage = checkNotNull(splitsStorage);
-        mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
-        mRetryOnFail = retryOnFail;
+        mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
         mCacheExpirationInSeconds = cacheExpirationInSeconds;
         mCheckCacheExpiration = checkCacheExpiration;
+        mRetryOnFail = retryOnFail;
+        mSplitsFilterQueryString = splitsFilterQueryString;
     }
 
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
-
         long storedChangeNumber = mSplitsStorage.getTill();
         long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
-        long elepased = now() - updateTimestamp;
-        if (mCheckCacheExpiration && storedChangeNumber > -1
-                && updateTimestamp > 0
-                && (elepased > mCacheExpirationInSeconds)) {
+        String storedSplitsFilterQueryString = mSplitsStorage.getSplitsFilterQueryString();
+        if ((mCheckCacheExpiration &&
+                mSplitsSyncHelper.cacheHasExpired(storedChangeNumber, updateTimestamp, mCacheExpirationInSeconds)) ||
+                splitsFilterHasChanged(storedSplitsFilterQueryString)) {
             Logger.d("Removing expirated cache");
             mSplitsStorage.clear();
             storedChangeNumber = -1;
         }
-        // TODO: Add some reusable logic for tasks retrying on error.
-        ReconnectBackoffCounter backoffCounter = new ReconnectBackoffCounter(RETRY_BASE);
-        boolean success = false;
+
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
-        while (!success) {
-            try {
-                SplitChange splitChange = mSplitFetcher.execute(params);
-                mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
-                success = true;
-            } catch (HttpFetcherException e) {
-                logError("Newtwork error while fetching splits" + e.getLocalizedMessage());
-                if (mRetryOnFail) {
-                    try {
-                        logError("Retrying...");
-                        sleep(backoffCounter.getNextRetryTime());
-                    } catch (InterruptedException ex) {
-                        Thread.currentThread().interrupt();
-                        return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
-                    }
-                } else {
-                    return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
-                }
-            } catch (Exception e) {
-                logError("Unexpected while fetching splits" + e.getLocalizedMessage());
-                return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
-            }
+        if(mRetryOnFail) {
+            return mSplitsSyncHelper.syncUntilSuccess(params);
         }
-        Logger.d("Features have been updated");
-        return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
+        return mSplitsSyncHelper.sync(params);
     }
 
-    private long now() {
-        return System.currentTimeMillis() / 1000;
+    private boolean splitsFilterHasChanged(String storedSplitsFilterQueryString) {
+        return !sanitizeString(mSplitsFilterQueryString).equals(sanitizeString(storedSplitsFilterQueryString));
     }
 
-    private void logError(String message) {
-        Logger.e("Error while executing splits sync task: " + message);
+    private String sanitizeString(String string) {
+        return string != null ? string : "";
     }
 }

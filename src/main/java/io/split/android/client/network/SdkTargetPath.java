@@ -1,7 +1,12 @@
 package io.split.android.client.network;
 
+import com.google.common.base.Strings;
+
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import io.split.android.client.FilterBuilder;
+import io.split.android.client.SyncConfig;
 
 public class SdkTargetPath {
     public static final String SPLIT_CHANGES = "/splitChanges";
@@ -10,8 +15,8 @@ public class SdkTargetPath {
     public static final String IMPRESSIONS = "/testImpressions/bulk";
     public static final String SSE_AUTHENTICATION = "/auth";
 
-    public static final URI splitChanges(String baseUrl) throws URISyntaxException {
-        return buildUrl(baseUrl, SPLIT_CHANGES);
+    public static final URI splitChanges(String baseUrl, String queryString) throws URISyntaxException {
+        return buildUrl(baseUrl, SPLIT_CHANGES, queryString);
     }
 
     public static final URI mySegments(String baseUrl, String key) throws URISyntaxException {
@@ -31,6 +36,14 @@ public class SdkTargetPath {
     }
 
     private static URI buildUrl(String baseUrl, String path) throws URISyntaxException {
-        return new URI(baseUrl + path);
+        return buildUrl(baseUrl, path, null);
+    }
+
+    private static URI buildUrl(String baseUrl, String path, String queryString) throws URISyntaxException {
+        String urlString = baseUrl + path;
+        if (!Strings.isNullOrEmpty(queryString)) {
+            urlString = urlString + "?" + queryString;
+        }
+        return new URI(urlString);
     }
 }

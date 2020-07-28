@@ -90,7 +90,7 @@ public class SplitClientConfig {
     private final int _waitBeforeShutdown;
     private long _impressionsChunkSize;
 
-    // Background sync
+    // Background syncUntilSuccess
     private boolean _synchronizeInBackground;
     private long _backgroundSyncPeriod;
     private boolean _backgroundSyncWhenBatteryNotLow;
@@ -792,7 +792,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * When set to true app sync is done
+         * When set to true app syncUntilSuccess is done
          * using android resources event while app is in background.
          * Otherwise synchronization only occurs while app
          * is in foreground
@@ -899,7 +899,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * Settings to customize how data sync is done
+         * Settings to customize how data syncUntilSuccess is done
          *
          * @return: This builder
          * @default: null
@@ -959,7 +959,7 @@ public class SplitClientConfig {
             }
 
             if (_backgroundSyncPeriod < DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES) {
-                Logger.w("Background sync period is lower than allowed. " +
+                Logger.w("Background syncUntilSuccess period is lower than allowed. " +
                         "Setting to default value.");
                 _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
             }
