@@ -241,8 +241,3 @@ public class TestableSplitConfigBuilder {
         return null;
     }
 }
-
-git add src/main/java/io/split/android/client/storage/splits/SplitsSnapshot.java
-        git add  src/main/java/io/split/android/client/storage/splits/SplitsStorage.java
-        git add  src/main/java/io/split/android/client/storage/splits/SplitsStorageImpl.java
-        git add  src/main/java/io/split/android/client/storage/splits/SqLitePersistentSplitsStorage.java

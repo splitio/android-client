@@ -131,6 +131,11 @@ public class SplitsStorageImpl implements SplitsStorage {
         return (mTrafficTypes.get(name.toLowerCase()) != null);
     }
 
+    @Override
+    public void updateSplitsFilterQueryString(String queryString) {
+        mPersistentStorage.updateFilterQueryString(queryString);
+    }
+
     private void increaseTrafficTypeCount(@NonNull String name) {
         if (name == null) {
             return;

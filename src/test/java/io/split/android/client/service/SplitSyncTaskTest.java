@@ -23,6 +23,7 @@ import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -105,7 +106,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).syncUntilSuccess(mDefaultParams);
+        verify(mSplitsSyncHelper, times(1)).syncUntilSuccess(mDefaultParams, false);
     }
 
     @Test
@@ -144,8 +145,11 @@ public class SplitSyncTaskTest {
         // Splits have to be cleared when query string on db is != than current one on current sdk client instance
         // Setting up cache not expired
 
+        String otherQs = "q=other";
+        Map<String, Object> params = new HashMap<>();
+        params.put("since", 100L);
         mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                true, true, 100L, "q=other");
+                true, true, 100L, otherQs);
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -153,7 +157,28 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsStorage, times(1)).clear();
+        verify(mSplitsSyncHelper, times(1)).syncUntilSuccess(params, true);
+        verify(mSplitsStorage, times(1)).updateSplitsFilterQueryString(otherQs);
+    }
+
+    @Test
+    public void noClearSplitsWhenQueryStringHasNotChanged() throws HttpFetcherException {
+        // Splits have to be cleared when query string on db is != than current one on current sdk client instance
+        // Setting up cache not expired
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("since", 100L);
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                true, true, 100L, mQueryString);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(false);
+
+        mTask.execute();
+
+        verify(mSplitsSyncHelper, times(1)).syncUntilSuccess(params, false);
+        verify(mSplitsStorage, never()).updateSplitsFilterQueryString(anyString());
     }
 
     @After

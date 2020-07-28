@@ -28,5 +28,7 @@ public interface SplitsStorage {
 
     String getSplitsFilterQueryString();
 
+    void updateSplitsFilterQueryString(String queryString);
+
     void clear();
 }

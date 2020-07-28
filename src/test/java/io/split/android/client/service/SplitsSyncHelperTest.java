@@ -54,6 +54,8 @@ public class SplitsSyncHelperTest {
 
     @Test
     public void correctSyncExecution() throws HttpFetcherException {
+        // On correct execution without having clear param
+        // should execute fetcher, update storage and avoid clearing splits cache
         when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams);
@@ -61,6 +63,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+        verify(mSplitsStorage, never()).clear();
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
@@ -117,6 +120,60 @@ public class SplitsSyncHelperTest {
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
 
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+    }
+
+    @Test
+    public void shouldClearStorageAfterFetch() throws HttpFetcherException {
+        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
+
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.syncUntilSuccess(mDefaultParams, true);
+
+        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
+        verify(mSplitsStorage, times(1)).update(any());
+        verify(mSplitsStorage, times(1)).clear();
+        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+
+        Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+    }
+
+    @Test
+    public void cacheExpired() throws HttpFetcherException {
+
+        // change number > -1 should clear cache
+        // when cache expired
+
+        long cacheExpInSeconds = 10000;
+        long updateTimestamp = System.currentTimeMillis() / 1000 - cacheExpInSeconds - 1;
+        boolean expired = mSplitsSyncHelper.cacheHasExpired(100, updateTimestamp, cacheExpInSeconds);
+
+        Assert.assertTrue(expired);
+    }
+
+    @Test
+    public void cacheNotExpired() throws HttpFetcherException {
+
+        // change number > -1 should clear cache
+        // only when cache expired
+
+        long cacheExpInSeconds = 10000;
+        long updateTimestamp = System.currentTimeMillis() / 1000 - cacheExpInSeconds + 1000;
+        boolean expired = mSplitsSyncHelper.cacheHasExpired(100, updateTimestamp, cacheExpInSeconds);
+
+        Assert.assertFalse(expired);
+    }
+
+    @Test
+    public void cacheExpiredButChangeNumber() throws HttpFetcherException {
+
+        // change number = -1 means no previous cache available
+        // so, should no clear cache
+        // even if it's expired
+
+        long cacheExpInSeconds = 10000;
+        long updateTimestamp = System.currentTimeMillis() / 1000 - cacheExpInSeconds - 1000;
+        boolean expired = mSplitsSyncHelper.cacheHasExpired(-1, updateTimestamp, cacheExpInSeconds);
+
+        Assert.assertFalse(expired);
     }
 
     @After

@@ -8,6 +8,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
@@ -29,6 +30,10 @@ public class SplitsSyncHelper {
     }
 
     public SplitTaskExecutionInfo syncUntilSuccess(Map<String, Object> params) {
+        return syncUntilSuccess(params, false);
+    }
+
+    public SplitTaskExecutionInfo syncUntilSuccess(Map<String, Object> params, boolean clearBeforeUpdate) {
 
         ReconnectBackoffCounter backoffCounter = new ReconnectBackoffCounter(RETRY_BASE);
         boolean success = false;
@@ -36,7 +41,11 @@ public class SplitsSyncHelper {
         while (!success) {
             try {
                 SplitChange splitChange = mSplitFetcher.execute(params);
-                mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
+                ProcessedSplitChange processedSplitChange = mSplitChangeProcessor.process(splitChange);
+                if (clearBeforeUpdate) {
+                    mSplitsStorage.clear();
+                }
+                mSplitsStorage.update(processedSplitChange);
                 success = true;
             } catch (HttpFetcherException e) {
                 logError("Network error while updating splits" + e.getLocalizedMessage());
