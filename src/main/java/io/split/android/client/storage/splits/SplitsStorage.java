@@ -26,5 +26,7 @@ public interface SplitsStorage {
 
     long getUpdateTimestamp();
 
+    String getSplitsFilterQueryString();
+
     void clear();
 }
