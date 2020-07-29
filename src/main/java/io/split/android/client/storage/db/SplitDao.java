@@ -20,4 +20,11 @@ public interface SplitDao {
 
     @Query("DELETE FROM splits")
     void deleteAll();
+
+    @Query("DELETE FROM splits WHERE name NOT IN (:names)")
+    void deleteExceptNamed(List<String> names);
+
+    // The % char should be attached after the prefix when calling this function
+    @Query("DELETE FROM splits WHERE name IN (SELECT name FROM splits WHERE name LIKE :prefix)")
+    void deleteByPrefix(String prefix);
 }
