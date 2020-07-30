@@ -3,15 +3,13 @@ package io.split.android.client;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
-
-import static androidx.core.util.Preconditions.checkNotNull;
 
 class SyncConfig {
 
@@ -37,51 +35,35 @@ class SyncConfig {
         private final SplitValidator mSplitValidator = new SplitValidatorImpl();
 
         public SyncConfig build() {
-            List<SplitFilter> filters = new ArrayList<>();
+            Map<SplitFilter.Type, List<String>> groupedFilters = new HashMap<>();
             for (SplitFilter filter : mBuilderFilters) {
-
-                List<String> values = filter.getValues();
-                switch (filter.getType()) {
-                    case BY_NAME:
-                        if (values.size() > MAX_BY_NAME_VALUES) {
-                            String message = "Error: 400 different split names can be specified at most. You passed " +
-                                    values.size()
-                                    + ". Please consider reducing the amount or using prefixes to target specific groups of splits.";
-                            throw new IllegalArgumentException(message);
-                        }
-                        break;
-                    case BY_PREFIX:
-                        if (values.size() > MAX_BY_PREFIX_VALUES) {
-                            String message = "Error: 50 different prefixes can be specified at most. You passed %d." +
-                                    values.size() +
-                                    "Please consider using a lower number of prefixes and/or filtering by split name as well.";
-
-                            throw new IllegalArgumentException(message);
-                        }
-                        break;
-                    default:
-                        Logger.e("Invalid Split filter!");
+                List<String> groupedValues = groupedFilters.get(filter.getType());
+                if (groupedValues == null) {
+                    groupedValues = new ArrayList<>();
                 }
 
-                List<String> validValues = new ArrayList<>();
+                List<String> values = filter.getValues();
                 for (String value : values) {
                     if (mSplitValidator.validateName(value) != null) {
                         Logger.w(String.format("Warning: Malformed %s value. Filter ignored: %s", filter.getType().toString(), value));
                     } else {
-                        validValues.add(value);
+                        groupedValues.add(value);
                     }
                 }
+                groupedFilters.put(filter.getType(), groupedValues);
+            }
 
-                if (validValues.size() > 0) {
-                    filter.updateValues(validValues);
-                    filters.add(filter);
+            List<SplitFilter> filters = new ArrayList<>();
+            for (Map.Entry<SplitFilter.Type, List<String>> filterEntry : groupedFilters.entrySet()) {
+                if (filterEntry.getValue().size() > 0) {
+                    filters.add(new SplitFilter(filterEntry.getKey(), filterEntry.getValue()));
                 }
             }
             return new SyncConfig(filters);
         }
 
         public Builder addSplitFilter(@NonNull SplitFilter filter) {
-            if(filter == null) {
+            if (filter == null) {
                 throw new IllegalArgumentException("Filter can't be null");
             }
             mBuilderFilters.add(filter);

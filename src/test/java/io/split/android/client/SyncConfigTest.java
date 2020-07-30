@@ -99,52 +99,6 @@ public class SyncConfigTest {
     }
 
     @Test
-    public void testByNameCountValidationBuilder() {
-        // Testing max by name values validation
-        // The builder has to throw an exception to prevent sync config creation
-        List<String> byNameValues = new ArrayList<String>();
-        for (int i = 1; i <= 401; i++) {
-            byNameValues.add("f" + i);
-        }
-        SplitFilter byName = SplitFilter.byName(byNameValues);
-        SplitFilter byPrefix = SplitFilter.byPrefix(Arrays.asList("f1", "f2", "f3"));
-
-        boolean exceptionThrown = false;
-        SyncConfig config = null;
-        try {
-            config = SyncConfig.builder().addSplitFilter(byName).addSplitFilter(byPrefix).build();
-        } catch (Exception e) {
-            exceptionThrown = true;
-        }
-
-        Assert.assertNull(config);
-        Assert.assertTrue(exceptionThrown);
-    }
-
-    @Test
-    public void testByPrefixCountValidationBuilder() {
-        // Testing max by prefix values validation
-        // The builder has to throw an exception to prevent sync config creation
-        List<String> byPrefixValues = new ArrayList<String>();
-        for (int i = 1; i <= 51; i++) {
-            byPrefixValues.add("f" + i);
-        }
-        SplitFilter byPrefix = SplitFilter.byPrefix(byPrefixValues);
-        SplitFilter byName = SplitFilter.byName(Arrays.asList("f1", "f2", "f3"));
-
-        boolean exceptionThrown = false;
-        SyncConfig config = null;
-        try {
-            config = SyncConfig.builder().addSplitFilter(byName).addSplitFilter(byPrefix).build();
-        } catch (Exception e) {
-            exceptionThrown = true;
-        }
-
-        Assert.assertNull(config);
-        Assert.assertTrue(exceptionThrown);
-    }
-
-    @Test
     public void testInvalidFilterValuesDiscarded() {
         // Filters that doesn't pass split rules
         // has to be removed from the list

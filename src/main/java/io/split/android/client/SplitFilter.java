@@ -34,7 +34,9 @@ public class SplitFilter {
         return new SplitFilter(Type.BY_PREFIX, values);
     }
 
-    private SplitFilter(Type type, List<String> values) {
+    // This constructor is not private (but default) to allow Split Sync Config builder be agnostic when creating filters
+    // Also is not public to force SDK users to use static functions "byName" and "byPrefix"
+    SplitFilter(Type type, List<String> values) {
         if(values == null) {
             throw new IllegalArgumentException("Values can't be null for " + type.toString() + " filter");
         }
