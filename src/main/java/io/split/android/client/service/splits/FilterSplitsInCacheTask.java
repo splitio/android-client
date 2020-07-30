@@ -13,9 +13,7 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
-import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -55,19 +53,29 @@ public class FilterSplitsInCacheTask implements SplitTask {
             }
         }
 
-        if(queryStringHasChanged()) {
+        if (queryStringHasChanged()) {
             List<String> splitsToDelete = new ArrayList<>();
             List<Split> splitsInCache = mSplitsStorage.getAll();
-            for(Split split : splitsInCache) {
+            for (Split split : splitsInCache) {
                 String splitName = split.name;
-                String splitPrefix = splitName.substring(0, splitName.indexOf(PREFIX_SEPARATOR));
-                if(!namesToKeep.contains(split.name) && !prefixesToKeep.contains(splitPrefix)) {
+                String splitPrefix = getPrefix(splitName);
+                if (!namesToKeep.contains(split.name) && (splitPrefix == null || !prefixesToKeep.contains(splitPrefix))) {
                     splitsToDelete.add(splitName);
                 }
             }
-            mSplitsStorage.delete(splitsToDelete);
+            if (splitsToDelete.size() > 0) {
+                mSplitsStorage.delete(splitsToDelete);
+            }
         }
         return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
+    }
+
+    private String getPrefix(String splitName) {
+        int separatorIndex = splitName.indexOf(PREFIX_SEPARATOR);
+        if (separatorIndex < 1) {
+            return null;
+        }
+        return splitName.substring(0, separatorIndex);
     }
 
     private boolean queryStringHasChanged() {
