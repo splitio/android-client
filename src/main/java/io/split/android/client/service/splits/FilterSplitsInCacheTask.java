@@ -36,10 +36,13 @@ public class FilterSplitsInCacheTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
+
+        if (!queryStringHasChanged()) {
+            return SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE);
+        }
+
         Set<String> namesToKeep = new HashSet<>();
         Set<String> prefixesToKeep = new HashSet<>();
-
-
         for (SplitFilter filter : mSplitsFilter) {
             switch (filter.getType()) {
                 case BY_NAME:
@@ -53,21 +56,19 @@ public class FilterSplitsInCacheTask implements SplitTask {
             }
         }
 
-        if (queryStringHasChanged()) {
-            List<String> splitsToDelete = new ArrayList<>();
-            List<Split> splitsInCache = mSplitsStorage.getAll();
-            for (Split split : splitsInCache) {
-                String splitName = split.name;
-                String splitPrefix = getPrefix(splitName);
-                if (!namesToKeep.contains(split.name) && (splitPrefix == null || !prefixesToKeep.contains(splitPrefix))) {
-                    splitsToDelete.add(splitName);
-                }
-            }
-            if (splitsToDelete.size() > 0) {
-                mSplitsStorage.delete(splitsToDelete);
+        List<String> splitsToDelete = new ArrayList<>();
+        List<Split> splitsInCache = mSplitsStorage.getAll();
+        for (Split split : splitsInCache) {
+            String splitName = split.name;
+            String splitPrefix = getPrefix(splitName);
+            if (!namesToKeep.contains(split.name) && (splitPrefix == null || !prefixesToKeep.contains(splitPrefix))) {
+                splitsToDelete.add(splitName);
             }
         }
-        return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
+        if (splitsToDelete.size() > 0) {
+            mSplitsStorage.delete(splitsToDelete);
+        }
+        return SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE);
     }
 
     private String getPrefix(String splitName) {

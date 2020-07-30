@@ -88,6 +88,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void loadAndSynchronizeSplits() {
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
+        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createFilterSplitsInCacheTask(), null));
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(), mLoadLocalSplitsListener));
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createSplitsSyncTask(true, true), mSplitsSyncTaskListener));
         mTaskExecutor.executeSerially(enqueued);
