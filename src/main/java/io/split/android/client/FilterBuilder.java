@@ -12,7 +12,14 @@ import java.util.Set;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
 
+import static io.split.android.client.SplitFilter.Type.BY_NAME;
+import static io.split.android.client.SplitFilter.Type.BY_PREFIX;
+
 public class FilterBuilder {
+
+    private final static int MAX_BY_NAME_VALUES = 400;
+    private final static int MAX_BY_PREFIX_VALUES = 50;
+
     private final List<SplitFilter> filters = new ArrayList<>();
     private final static String QUERYSTRING_TEMPLATE = "names=[by_name_filters]&prefixes=[by_prefix_filters]";
 
@@ -36,41 +43,53 @@ public class FilterBuilder {
 
         StringHelper stringHelper = new StringHelper();
         StringBuilder queryString = new StringBuilder("");
-        Map<SplitFilter.Type, List<String>> allFilters = new HashMap<>();
 
         List<SplitFilter> sortedFilters = new ArrayList(filters);
         Collections.sort(sortedFilters, new SplitFilterComparator());
 
-        // Grouping filters
         for (SplitFilter splitFilter : sortedFilters) {
-            List<String> values = allFilters.get(splitFilter.getType());
-            if (values == null) {
-                values = new ArrayList<>();
-            }
-            values.addAll(splitFilter.getValues());
-            allFilters.put(splitFilter.getType(), values);
-        }
-
-        List<SplitFilter.Type> filterTypes = new ArrayList(allFilters.keySet());
-        // This step sorts based on enum wich is built to
-        Collections.sort(filterTypes);
-
-        for (SplitFilter.Type filterType : filterTypes) {
-            List<String> values = allFilters.get(filterType);
-            Set<String> deduptedValues = new HashSet<>(values);
-            if(deduptedValues.size() < values.size()) {
+            SplitFilter.Type filterType = splitFilter.getType();
+            Set<String> deduptedValues = new HashSet<>(splitFilter.getValues());
+            if(deduptedValues.size() < splitFilter.getValues().size()) {
                 Logger.w("Warning: Some duplicated values for " + filterType.toString() + " filter  were removed.");
             }
 
+            if(deduptedValues.size() == 0) {
+                continue;
+            }
+            validateFilterSize(filterType, deduptedValues.size());
+
             // Creating array list to sort values
-            values = new ArrayList<>(deduptedValues);
+            List<String> values = new ArrayList<>(deduptedValues);
             Collections.sort(values);
+            queryString.append("&");
             queryString.append(fieldNameByType(filterType));
             queryString.append("=");
             queryString.append(stringHelper.join(",", values));
-            queryString.append("&");
         }
-        return queryString.deleteCharAt(queryString.length() - 1).toString();
+        return queryString.toString();
+    }
+
+    private void validateFilterSize(SplitFilter.Type type, int size) {
+        switch (type) {
+            case BY_NAME:
+                if (size > MAX_BY_NAME_VALUES) {
+                    String message = "Error: 400 different split names can be specified at most. You passed " + size
+                            + ". Please consider reducing the amount or using prefixes to target specific groups of splits.";
+                    throw new IllegalArgumentException(message);
+                }
+                break;
+            case BY_PREFIX:
+                if (size > MAX_BY_PREFIX_VALUES) {
+                    String message = "Error: 50 different prefixes can be specified at most. You passed %d." + size +
+                            "Please consider using a lower number of prefixes and/or filtering by split name as well.";
+
+                    throw new IllegalArgumentException(message);
+                }
+                break;
+            default:
+                Logger.e("Invalid Split filter!");
+        }
     }
 
     private String fieldNameByType(SplitFilter.Type type) {

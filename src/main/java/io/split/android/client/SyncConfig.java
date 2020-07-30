@@ -13,8 +13,6 @@ import io.split.android.client.validators.SplitValidatorImpl;
 
 class SyncConfig {
 
-    private final static int MAX_BY_NAME_VALUES = 400;
-    private final static int MAX_BY_PREFIX_VALUES = 50;
     private final List<SplitFilter> mFilters;
 
 
