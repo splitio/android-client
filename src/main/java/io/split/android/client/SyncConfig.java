@@ -40,6 +40,7 @@ class SyncConfig {
                 List<String> groupedValues = groupedFilters.get(filter.getType());
                 if (groupedValues == null) {
                     groupedValues = new ArrayList<>();
+                    groupedFilters.put(filter.getType(), groupedValues);
                 }
 
                 List<String> values = filter.getValues();
@@ -50,7 +51,6 @@ class SyncConfig {
                         groupedValues.add(value);
                     }
                 }
-                groupedFilters.put(filter.getType(), groupedValues);
             }
 
             List<SplitFilter> filters = new ArrayList<>();
