@@ -63,7 +63,7 @@ public class URIBuilder {
 
         if (!Strings.isNullOrEmpty(mQueryString)) {
             if (!Strings.isNullOrEmpty(params)) {
-                params = mQueryString + "&" + params;
+                params = params + "&" + mQueryString;
             } else {
                 params = mQueryString;
             }
