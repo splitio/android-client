@@ -2,9 +2,9 @@ package io.split.android.client;
 
 import androidx.annotation.NonNull;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class SplitFilter {
     public enum Type {
@@ -26,8 +26,8 @@ public class SplitFilter {
         }
     }
 
-    private final SplitFilter.Type type;
-    private final Set<String> values;
+    private final SplitFilter.Type mType;
+    private final List<String> mValues;
 
     static public SplitFilter byName(@NonNull List<String> values) {
         return new SplitFilter(Type.BY_NAME, values);
@@ -37,23 +37,26 @@ public class SplitFilter {
         return new SplitFilter(Type.BY_PREFIX, values);
     }
 
-    private SplitFilter(Type type, List<String> values) {
-        if (values == null) {
+    // This constructor is not private (but default) to allow Split Sync Config builder be agnostic when creating filters
+    // Also is not public to force SDK users to use static functions "byName" and "byPrefix"
+    SplitFilter(Type type, List<String> values) {
+        if(values == null) {
             throw new IllegalArgumentException("Values can't be null for " + type.toString() + " filter");
         }
-        this.type = type;
-        this.values = new HashSet<>(values);
+        mType = type;
+        mValues = new ArrayList<>(values);
     }
 
     public Type getType() {
-        return type;
+        return mType;
     }
 
-    public Set<String> getValues() {
-        return values;
+    public List<String> getValues() {
+        return mValues;
     }
 
-    public void deleteValue(String value) {
-        values.remove(value);
+    public void updateValues(List<String> values) {
+        mValues.clear();
+        mValues.addAll(values);
     }
 }
