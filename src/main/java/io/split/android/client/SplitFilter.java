@@ -6,19 +6,44 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static androidx.core.util.Preconditions.checkNotNull;
-
 public class SplitFilter {
     public enum Type {
+        // Filters here has to be defined in the order
+        // it will be in querystring
         BY_NAME,
         BY_PREFIX;
 
         @Override
         public String toString() {
-            switch(this) {
-                case BY_NAME: return "by split name";
-                case BY_PREFIX: return "by split prefix";
-                default: return "Invalid mType";
+            switch (this) {
+                case BY_NAME:
+                    return "by split name";
+                case BY_PREFIX:
+                    return "by split prefix";
+                default:
+                    return "Invalid type";
+            }
+        }
+
+        public String queryStringField() {
+            switch (this) {
+                case BY_NAME:
+                    return "names";
+                case BY_PREFIX:
+                    return "prefixes";
+                default:
+                    return "unknown";
+            }
+        }
+
+        public int maxValuesCount() {
+            switch (this) {
+                case BY_NAME:
+                    return 400;
+                case BY_PREFIX:
+                    return 50;
+                default:
+                    return 0;
             }
         }
     }
