@@ -146,7 +146,7 @@ public class SplitFetchSpecificSplitTest {
 
         latch.await(10, TimeUnit.SECONDS);
 
-        Assert.assertEquals("names=ausgefüllt,split1,split2&prefixes=abc\u0223,pre1,pre2&since=-1", mReceivedQueryString);
+        Assert.assertEquals("since=-1&names=ausgefüllt,split1,split2&prefixes=abc\u0223,pre1,pre2", mReceivedQueryString);
 
         splitFactory.destroy();
     }
