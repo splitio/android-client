@@ -102,4 +102,48 @@ public class FilterBuilderTest {
 
         Assert.assertEquals("", queryString);
     }
+
+    @Test
+    public void testQueryStringWithSpecialChars1() {
+        SyncConfig config = SyncConfig.builder()
+                .addSplitFilter(SplitFilter.byName(Arrays.asList("\u0223abc", "abc\u0223asd", "abc\u0223")))
+                .addSplitFilter(SplitFilter.byName(Arrays.asList("ausgefüllt")))
+                .addSplitFilter(SplitFilter.byPrefix(Arrays.asList()))
+                .build();
+        String queryString = new FilterBuilder().addFilters(config.getFilters()).build();
+        Assert.assertEquals("&names=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
+//        Assert.assertEquals("&names=abc%C8%A3,abc%C8%A3asd,ausgef%C3%BCllt,%C8%A3abc", queryString);
+    }
+
+    @Test
+    public void testQueryStringWithSpecialChars2() {
+        SyncConfig config = SyncConfig.builder()
+                .addSplitFilter(SplitFilter.byPrefix(Arrays.asList("\u0223abc", "abc\u0223asd", "abc\u0223")))
+                .addSplitFilter(SplitFilter.byPrefix(Arrays.asList("ausgefüllt")))
+                .addSplitFilter(SplitFilter.byName(Arrays.asList()))
+                .build();
+        String queryString = new FilterBuilder().addFilters(config.getFilters()).build();
+        Assert.assertEquals("&prefixes=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
+    }
+    
+    @Test
+    public void testQueryStringWithSpecialChars3() {
+        SyncConfig config = SyncConfig.builder()
+                .addSplitFilter(SplitFilter.byName(Arrays.asList("\u0223abc", "abc\u0223asd", "abc\u0223")))
+                .addSplitFilter(SplitFilter.byName(Arrays.asList("ausgefüllt")))
+                .addSplitFilter(SplitFilter.byPrefix(Arrays.asList("\u0223abc", "abc\u0223asd", "abc\u0223")))
+                .addSplitFilter(SplitFilter.byPrefix(Arrays.asList("ausgefüllt")))
+                .build();
+        String queryString = new FilterBuilder().addFilters(config.getFilters()).build();
+        Assert.assertEquals("&names=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc&prefixes=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
+    }
+
+    @Test
+    public void testQueryStringWithSpecialChars4() {
+        SyncConfig config = SyncConfig.builder()
+                .addSplitFilter(SplitFilter.byName(Arrays.asList("__ш", "__a", "%", "%25", " __ш ", "%  ")))
+                .build();
+        String queryString = new FilterBuilder().addFilters(config.getFilters()).build();
+        Assert.assertEquals("&names=%,%25,__a,__ш", queryString);
+    }
 }
