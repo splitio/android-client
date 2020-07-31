@@ -108,8 +108,6 @@ public class URIBuilderTest {
         URI root = new URI("https://api.split.io/internal/api/v2/workspaces?p1=v1,v2,v3&p2=v1,v2");
         URI uri = new URIBuilder(root).addParameter("p3", "v3").build();
 
-        Assert.assertEquals("https://api.split.io/internal/api/v2/workspaces?p1=v1,v2,v3&p2=v1,v2&p3=v3", uri.toString());
+        Assert.assertEquals("https://api.split.io/internal/api/v2/workspaces?p3=v3&p1=v1,v2,v3&p2=v1,v2", uri.toString());
     }
-
 }
-
