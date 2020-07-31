@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -64,84 +63,36 @@ public class SyncConfigTest {
 
     @Test
     public void testSyncBuilder() {
-        // Testing basic syncUntilSuccess config creation
+        // Testing basic sync config creation
         // by creating a filters having max allowed values
 
-        List<String> byPrefixValues = new ArrayList<String>();
-        for (int i = 1; i <= 40; i++) {
-            byPrefixValues.add("f" + i);
-        }
-        SplitFilter byPrefixFilter = SplitFilter.byPrefix(byPrefixValues);
+        int byNameCount = 0;
+        int byPrefixCount = 0;
 
-        List<String> byNameValues = new ArrayList<String>();
-        for (int i = 1; i <= 400; i++) {
-            byNameValues.add("f" + i);
-        }
-        SplitFilter byNameFilter = SplitFilter.byName(byNameValues);
+        SplitFilter byPrefixFilter = SplitFilter.byPrefix(Arrays.asList("p1", "p2"));
+        SplitFilter byPrefixFilter1 = SplitFilter.byPrefix(Arrays.asList("p2", "p3", "p4"));
 
-        SyncConfig config = SyncConfig.builder().addSplitFilter(byNameFilter).addSplitFilter(byPrefixFilter).build();
+        SplitFilter byNameFilter = SplitFilter.byName(Arrays.asList("f1", "f2"));
+        SplitFilter byNameFilter1 = SplitFilter.byName(Arrays.asList("f2", "f3", "f4"));
 
-        SplitFilter byNameAdded = null;
-        SplitFilter byPrefixAdded = null;
+        SyncConfig config = SyncConfig.builder()
+                .addSplitFilter(byNameFilter).addSplitFilter(byNameFilter1)
+                .addSplitFilter(byPrefixFilter).addSplitFilter(byPrefixFilter1)
+                .build();
+
 
         List<SplitFilter> filters = config.getFilters();
         for (SplitFilter filter : filters) {
             if (SplitFilter.Type.BY_NAME.equals(filter.getType())) {
-                byNameAdded = filter;
+                byNameCount++;
             } else {
-                byPrefixAdded = filter;
+                byPrefixCount++;
             }
         }
 
-        Assert.assertEquals(2, filters.size());
-        Assert.assertNotNull(byNameAdded);
-        Assert.assertNotNull(byPrefixAdded);
-    }
-
-    @Test
-    public void testByNameCountValidationBuilder() {
-        // Testing max by name values validation
-        // The builder has to throw an exception to prevent syncUntilSuccess config creation
-        List<String> byNameValues = new ArrayList<String>();
-        for (int i = 1; i <= 401; i++) {
-            byNameValues.add("f" + i);
-        }
-        SplitFilter byName = SplitFilter.byName(byNameValues);
-        SplitFilter byPrefix = SplitFilter.byPrefix(Arrays.asList("f1", "f2", "f3"));
-
-        boolean exceptionThrown = false;
-        SyncConfig config = null;
-        try {
-            config = SyncConfig.builder().addSplitFilter(byName).addSplitFilter(byPrefix).build();
-        } catch (Exception e) {
-            exceptionThrown = true;
-        }
-
-        Assert.assertNull(config);
-        Assert.assertTrue(exceptionThrown);
-    }
-
-    @Test
-    public void testByPrefixCountValidationBuilder() {
-        // Testing max by prefix values validation
-        // The builder has to throw an exception to prevent syncUntilSuccess config creation
-        List<String> byPrefixValues = new ArrayList<String>();
-        for (int i = 1; i <= 51; i++) {
-            byPrefixValues.add("f" + i);
-        }
-        SplitFilter byPrefix = SplitFilter.byPrefix(byPrefixValues);
-        SplitFilter byName = SplitFilter.byName(Arrays.asList("f1", "f2", "f3"));
-
-        boolean exceptionThrown = false;
-        SyncConfig config = null;
-        try {
-            config = SyncConfig.builder().addSplitFilter(byName).addSplitFilter(byPrefix).build();
-        } catch (Exception e) {
-            exceptionThrown = true;
-        }
-
-        Assert.assertNull(config);
-        Assert.assertTrue(exceptionThrown);
+        Assert.assertEquals(4, filters.size());
+        Assert.assertEquals(2, byNameCount);
+        Assert.assertEquals(2, byPrefixCount);
     }
 
     @Test
