@@ -68,6 +68,11 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     @Override
+    public void updateFilterQueryString(String queryString) {
+        mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING, queryString));
+    }
+
+    @Override
     public void close() {
     }
 

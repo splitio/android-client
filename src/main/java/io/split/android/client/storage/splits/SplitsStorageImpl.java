@@ -117,6 +117,11 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
+    public void updateSplitsFilterQueryString(String queryString) {
+        mPersistentStorage.updateFilterQueryString(queryString);
+    }
+
+    @Override
     public void clear() {
         mInMemorySplits.clear();
         mChangeNumber = -1;
