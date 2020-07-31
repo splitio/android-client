@@ -63,7 +63,7 @@ public class SyncConfigTest {
 
     @Test
     public void testSyncBuilder() {
-        // Testing basic syncUntilSuccess config creation
+        // Testing basic sync config creation
         // by creating a filters having max allowed values
 
         int byNameCount = 0;
