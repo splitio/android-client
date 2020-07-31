@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 
+import io.split.android.client.FilterGrouper;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.ServiceConstants;
@@ -120,6 +121,6 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public FilterSplitsInCacheTask createFilterSplitsInCacheTask() {
         return new FilterSplitsInCacheTask(mSplitsStorageContainer.getPersistentSplitsStorage(),
-                mSplitClientConfig.syncConfig().getFilters(), mSplitsFilterQueryString);
+                new FilterGrouper().group(mSplitClientConfig.syncConfig().getFilters()), mSplitsFilterQueryString);
     }
 }
