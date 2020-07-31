@@ -33,31 +33,20 @@ class SyncConfig {
         private final SplitValidator mSplitValidator = new SplitValidatorImpl();
 
         public SyncConfig build() {
-            Map<SplitFilter.Type, List<String>> groupedFilters = new HashMap<>();
+            List<SplitFilter> validatedFilters = new ArrayList<>();
             for (SplitFilter filter : mBuilderFilters) {
-                List<String> groupedValues = groupedFilters.get(filter.getType());
-                if (groupedValues == null) {
-                    groupedValues = new ArrayList<>();
-                    groupedFilters.put(filter.getType(), groupedValues);
-                }
-
                 List<String> values = filter.getValues();
+                List<String> validatedValues = new ArrayList<>();
                 for (String value : values) {
                     if (mSplitValidator.validateName(value) != null) {
                         Logger.w(String.format("Warning: Malformed %s value. Filter ignored: %s", filter.getType().toString(), value));
                     } else {
-                        groupedValues.add(value);
+                        validatedValues.add(value);
                     }
                 }
+                validatedFilters.add(new SplitFilter(filter.getType(), validatedValues));
             }
-
-            List<SplitFilter> filters = new ArrayList<>();
-            for (Map.Entry<SplitFilter.Type, List<String>> filterEntry : groupedFilters.entrySet()) {
-                if (filterEntry.getValue().size() > 0) {
-                    filters.add(new SplitFilter(filterEntry.getKey(), filterEntry.getValue()));
-                }
-            }
-            return new SyncConfig(filters);
+            return new SyncConfig(validatedFilters);
         }
 
         public Builder addSplitFilter(@NonNull SplitFilter filter) {

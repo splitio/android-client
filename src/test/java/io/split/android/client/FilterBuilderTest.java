@@ -36,12 +36,14 @@ public class FilterBuilderTest {
     }
 
     @Test
-    public void filterValuesDedupted() {
+    public void filterValuesDeduptedAndGrouped() {
         // Duplicated filter values should be removed on builing
 
         String queryString = new FilterBuilder()
-                .addFilter(SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b", "nf_b", "nf_d")))
-                .addFilter(SplitFilter.byPrefix(Arrays.asList("pf_a", "pf_c", "pf_b", "pf_d", "pf_a")))
+                .addFilter(SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b")))
+                .addFilter(SplitFilter.byName(Arrays.asList("nf_b", "nf_d")))
+                .addFilter(SplitFilter.byPrefix(Arrays.asList("pf_a", "pf_c", "pf_b")))
+                .addFilter(SplitFilter.byPrefix(Arrays.asList("pf_d", "pf_a")))
                 .build();
 
         Assert.assertEquals("&names=nf_a,nf_b,nf_c,nf_d&prefixes=pf_a,pf_b,pf_c,pf_d", queryString);
