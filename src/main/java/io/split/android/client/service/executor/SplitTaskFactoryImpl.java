@@ -7,6 +7,7 @@ import java.util.List;
 
 import io.split.android.client.FilterGrouper;
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
@@ -120,7 +121,14 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public FilterSplitsInCacheTask createFilterSplitsInCacheTask() {
+
+        // Defensive code. Synchronizer checks if there are
+        // filters available before submiting this task
+        List<SplitFilter> filters = null;
+        if (mSplitClientConfig.syncConfig() != null) {
+            filters =  new FilterGrouper().group(mSplitClientConfig.syncConfig().getFilters());
+        }
         return new FilterSplitsInCacheTask(mSplitsStorageContainer.getPersistentSplitsStorage(),
-                new FilterGrouper().group(mSplitClientConfig.syncConfig().getFilters()), mSplitsFilterQueryString);
+               filters, mSplitsFilterQueryString);
     }
 }
