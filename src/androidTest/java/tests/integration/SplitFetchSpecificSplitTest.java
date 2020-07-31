@@ -112,7 +112,6 @@ public class SplitFetchSpecificSplitTest {
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 2));
         SplitClient client;
-        SplitManager manager;
 
         final String url = mWebServer.url("/").url().toString();
         ServiceEndpoints endpoints = ServiceEndpoints.builder()
