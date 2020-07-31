@@ -54,7 +54,7 @@ public class FilterBuilder {
             validateFilterSize(filterType, deduptedValues.size());
 
             queryString.append("&");
-            queryString.append(fieldNameByType(filterType));
+            queryString.append(filterType.queryStringField());
             queryString.append("=");
             queryString.append(stringHelper.join(",", deduptedValues));
         }
@@ -62,36 +62,11 @@ public class FilterBuilder {
     }
 
     private void validateFilterSize(SplitFilter.Type type, int size) {
-        switch (type) {
-            case BY_NAME:
-                if (size > MAX_BY_NAME_VALUES) {
-                    String message = "Error: 400 different split names can be specified at most. You passed " + size
-                            + ". Please consider reducing the amount or using prefixes to target specific groups of splits.";
-                    throw new IllegalArgumentException(message);
-                }
-                break;
-            case BY_PREFIX:
-                if (size > MAX_BY_PREFIX_VALUES) {
-                    String message = "Error: 50 different prefixes can be specified at most. You passed %d." + size +
-                            "Please consider using a lower number of prefixes and/or filtering by split name as well.";
-
-                    throw new IllegalArgumentException(message);
-                }
-                break;
-            default:
-                Logger.e("Invalid Split filter!");
+        if (size > type.maxValuesCount()) {
+            String message = "Error: " + type.maxValuesCount() + " different split " + type.queryStringField() +
+                    " can be specified at most. You passed " + size
+                    + ". Please consider reducing the amount or using prefixes to target specific groups of splits.";
+            throw new IllegalArgumentException(message);
         }
-    }
-
-    private String fieldNameByType(SplitFilter.Type type) {
-        switch (type) {
-            case BY_NAME:
-                return "names";
-            case BY_PREFIX:
-                return "prefixes";
-            default:
-                Logger.e("Unknown filter: " + type.toString());
-        }
-        return "unknown";
     }
 }

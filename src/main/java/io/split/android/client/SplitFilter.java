@@ -24,6 +24,28 @@ public class SplitFilter {
                     return "Invalid type";
             }
         }
+
+        public String queryStringField() {
+            switch (this) {
+                case BY_NAME:
+                    return "names";
+                case BY_PREFIX:
+                    return "prefixes";
+                default:
+                    return "unknown";
+            }
+        }
+
+        public int maxValuesCount() {
+            switch (this) {
+                case BY_NAME:
+                    return 400;
+                case BY_PREFIX:
+                    return 50;
+                default:
+                    return 0;
+            }
+        }
     }
 
     private final SplitFilter.Type mType;
