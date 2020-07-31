@@ -3,9 +3,7 @@ package io.split.android.client;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.SplitValidator;
@@ -44,7 +42,9 @@ class SyncConfig {
                         validatedValues.add(value);
                     }
                 }
-                validatedFilters.add(new SplitFilter(filter.getType(), validatedValues));
+                if (validatedValues.size() > 0) {
+                    validatedFilters.add(new SplitFilter(filter.getType(), validatedValues));
+                }
             }
             return new SyncConfig(validatedFilters);
         }
