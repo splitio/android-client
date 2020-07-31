@@ -112,7 +112,6 @@ public class FilterBuilderTest {
                 .build();
         String queryString = new FilterBuilder().addFilters(config.getFilters()).build();
         Assert.assertEquals("&names=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
-//        Assert.assertEquals("&names=abc%C8%A3,abc%C8%A3asd,ausgef%C3%BCllt,%C8%A3abc", queryString);
     }
 
     @Test
