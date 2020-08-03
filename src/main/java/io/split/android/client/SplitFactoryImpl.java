@@ -135,13 +135,13 @@ public class SplitFactoryImpl implements SplitFactory {
         final FireAndForgetMetrics cachedFireAndForgetMetrics = FireAndForgetMetrics.instance(cachedMetrics, 2, 1000);
 
 
+        String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
-                config, key,
-                httpClient, cachedFireAndForgetMetrics);
+                config, key, httpClient, cachedFireAndForgetMetrics, splitsFilterQueryString);
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
-                config, splitApiFacade, storageContainer, key.matchingKey());
+                config, splitApiFacade, storageContainer, key.matchingKey(), splitsFilterQueryString);
 
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,

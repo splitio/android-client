@@ -10,45 +10,39 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Thread.sleep;
 
-public class SplitsUpdateTask implements SplitTask {
+public class SplitsSyncBackgroundTask implements SplitTask {
 
     static final String SINCE_PARAM = "since";
-    private final SplitsStorage mSplitsStorage;
-    private Long mChangeNumber;
     private final SplitsSyncHelper mSplitsSyncHelper;
+    private final SplitsStorage mSplitsStorage;
+    private final long mCacheExpirationInSeconds;
 
-    public SplitsUpdateTask(SplitsSyncHelper splitsSyncHelper,
-                            SplitsStorage splitsStorage,
-                            long since) {
-        mSplitsStorage = checkNotNull(splitsStorage);
+    public SplitsSyncBackgroundTask(SplitsSyncHelper splitsSyncHelper,
+                                    SplitsStorage splitsStorage,
+                                    long cacheExpirationInSeconds) {
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
-        mChangeNumber = since;
+        mSplitsStorage = checkNotNull(splitsStorage);
+        mCacheExpirationInSeconds = cacheExpirationInSeconds;
     }
 
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
-
-        if (mChangeNumber == null || mChangeNumber == 0) {
-            Logger.e("Could not update split. Invalid change number " + mChangeNumber);
-            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
-        }
-
         long storedChangeNumber = mSplitsStorage.getTill();
-        if (mChangeNumber <= storedChangeNumber) {
-            Logger.d("Received change number is previous than stored one. " +
-                    "Avoiding update.");
-            return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
+        if (mSplitsSyncHelper.cacheHasExpired(storedChangeNumber, mSplitsStorage.getUpdateTimestamp(), mCacheExpirationInSeconds)) {
+            Logger.d("Removing expirated cache");
+            mSplitsStorage.clear();
+            storedChangeNumber = -1;
         }
-
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
-
-        return mSplitsSyncHelper.syncUntilSuccess(params);
+        return mSplitsSyncHelper.sync(params);
     }
 }

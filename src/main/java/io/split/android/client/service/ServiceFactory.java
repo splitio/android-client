@@ -5,6 +5,7 @@ import androidx.annotation.RestrictTo;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import io.split.android.client.SyncConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.MySegment;
@@ -33,7 +34,8 @@ public class ServiceFactory {
             NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint,
-            Metrics cachedFireAndForgetMetrics) throws URISyntaxException {
+            Metrics cachedFireAndForgetMetrics,
+            String splitFilterQueryString) throws URISyntaxException {
 
         FetcherMetricsConfig splitsfetcherMetricsConfig = new FetcherMetricsConfig(
                 Metrics.SPLIT_CHANGES_FETCHER_EXCEPTION,
@@ -42,7 +44,7 @@ public class ServiceFactory {
         );
 
         return new HttpFetcherImpl<SplitChange>(httpClient,
-                SdkTargetPath.splitChanges(endPoint), cachedFireAndForgetMetrics,
+                SdkTargetPath.splitChanges(endPoint, splitFilterQueryString), cachedFireAndForgetMetrics,
                 splitsfetcherMetricsConfig,
                 networkHelper, new SplitChangeResponseParser());
     }

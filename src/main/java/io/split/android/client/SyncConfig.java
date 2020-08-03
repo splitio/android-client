@@ -9,7 +9,7 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 
-class SyncConfig {
+public class SyncConfig {
 
     private final List<SplitFilter> mFilters;
 

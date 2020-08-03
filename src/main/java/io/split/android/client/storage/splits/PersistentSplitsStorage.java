@@ -10,6 +10,7 @@ public interface PersistentSplitsStorage {
     boolean update(ProcessedSplitChange splitChange);
     SplitsSnapshot getSnapshot();
     void update(Split splitName);
+    void updateFilterQueryString(String queryString);
     void clear();
     void close();
 }

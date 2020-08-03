@@ -54,7 +54,8 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase);
         mDatabase.runInTransaction(loader);
         return new SplitsSnapshot(
-                convertEntitiesToSplitList(mDatabase.splitDao().getAll()), loader.getChangeNumber(), loader.getUpdateTimestamp());
+                convertEntitiesToSplitList(mDatabase.splitDao().getAll()), loader.getChangeNumber(),
+                loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString());
     }
 
     @Override
@@ -64,6 +65,11 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         List<Split> splits = new ArrayList<>();
         splits.add(split);
         mDatabase.splitDao().insert(convertSplitListToEntities(splits));
+    }
+
+    @Override
+    public void updateFilterQueryString(String queryString) {
+        mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING, queryString));
     }
 
     @Override
@@ -129,6 +135,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         private SplitRoomDatabase mDatabase;
         private Long mChangeNumber = -1L;
         private Long mUpdateTimestamp = 0L;
+        private String mSplitsFilterQueryString = "";
         private List<SplitEntity> mSplitEntities;
 
         public SplitsSnapshotLoader(SplitRoomDatabase database) {
@@ -139,12 +146,17 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         public void run() {
             GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
             GeneralInfoEntity changeNumberEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
+            GeneralInfoEntity filterQueryStringEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
             if (changeNumberEntity != null) {
                 mChangeNumber = changeNumberEntity.getLongValue();
             }
 
             if (timestampEntity != null) {
                 mUpdateTimestamp = timestampEntity.getLongValue();
+            }
+            if (filterQueryStringEntity != null) {
+                mSplitsFilterQueryString = filterQueryStringEntity.getStringValue();
+
             }
         }
 
@@ -154,6 +166,10 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
         public Long getUpdateTimestamp() {
             return mUpdateTimestamp;
+        }
+
+        public String getSplitsFilterQueryString() {
+            return mSplitsFilterQueryString;
         }
 
         public List<SplitEntity> getSplitEntities() {

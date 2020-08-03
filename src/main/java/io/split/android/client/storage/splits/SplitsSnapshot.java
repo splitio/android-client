@@ -12,11 +12,13 @@ public class SplitsSnapshot {
     final private long changeNumber;
     final private List<Split> splits;
     final private long updateTimestamp;
+    final private String splitsFilterQueryString;
 
-    public SplitsSnapshot(List<Split> splits, long changeNumber, long updateTimestamp) {
+    public SplitsSnapshot(List<Split> splits, long changeNumber, long updateTimestamp, String splitsFilterQueryString) {
         this.changeNumber = changeNumber;
         this.splits = splits;
         this.updateTimestamp = updateTimestamp;
+        this.splitsFilterQueryString = splitsFilterQueryString;
     }
 
     public long getChangeNumber() {
@@ -25,6 +27,10 @@ public class SplitsSnapshot {
 
     public long getUpdateTimestamp() {
         return updateTimestamp;
+    }
+
+    public String getSplitsFilterQueryString() {
+        return splitsFilterQueryString;
     }
 
     public @NonNull List<Split> getSplits() {

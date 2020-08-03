@@ -25,8 +25,8 @@ public class FilterBuilder {
         }
     }
 
-    public FilterBuilder addFilter(SplitFilter filter) {
-        mFilters.add(filter);
+    public FilterBuilder addFilters(List<SplitFilter> filters) {
+        mFilters.addAll(filters);
         return this;
     }
 

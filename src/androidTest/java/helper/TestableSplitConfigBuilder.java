@@ -4,6 +4,7 @@ package helper;
 
         import io.split.android.client.ServiceEndpoints;
         import io.split.android.client.SplitClientConfig;
+        import io.split.android.client.SyncConfig;
         import io.split.android.client.impressions.ImpressionListener;
         import io.split.android.client.utils.Logger;
         import okhttp3.Authenticator;
@@ -43,6 +44,7 @@ public class TestableSplitConfigBuilder {
     private int mAuthRetryBackoffBase = 1;
     private int mStreamingReconnectBackoffBase = 1;
     private boolean mEnableSslDevelopmentMode = false;
+    private SyncConfig mSyncConfig;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -184,6 +186,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder syncConfig(SyncConfig syncConfig) {
+        mSyncConfig = syncConfig;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -224,7 +231,8 @@ public class TestableSplitConfigBuilder {
                     mStreamingReconnectBackoffBase,
                     mServiceEndpoints.getAuthServiceEndpoint(),
                     mServiceEndpoints.getStreamingServiceEndpoint(),
-                    mEnableSslDevelopmentMode);
+                    mEnableSslDevelopmentMode,
+                    mSyncConfig);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "
