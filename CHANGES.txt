@@ -1,5 +1,5 @@
 2.6.6: (Ago 03, 2020)
-- Added filters to fetch especific split when synchronizing
+- Added filters to fetch specific split when synchronizing
 
 2.6.5: (Jul 20, 2020)
 - Improved logic to refresh streaming token

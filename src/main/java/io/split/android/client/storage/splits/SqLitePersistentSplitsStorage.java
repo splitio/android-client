@@ -3,6 +3,7 @@ package io.split.android.client.storage.splits;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
+    private static final int SQL_PARAM_BIND_SIZE = 20;
     SplitRoomDatabase mDatabase;
 
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database) {
@@ -75,7 +77,11 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public void delete(List<String> splitNames) {
-        mDatabase.splitDao().delete(splitNames);
+        // This is to avoid an sqlite error if there are many split to delete
+        List<List<String>> deleteChunk = Lists.partition(splitNames, SQL_PARAM_BIND_SIZE);
+        for(List<String> splitName : deleteChunk) {
+            mDatabase.splitDao().delete(splitNames);
+        }
     }
 
     @Override
