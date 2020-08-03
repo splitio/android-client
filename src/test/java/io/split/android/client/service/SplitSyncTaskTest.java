@@ -139,22 +139,24 @@ public class SplitSyncTaskTest {
         verify(mSplitsStorage, times(1)).clear();
     }
 
-    @Test
-    public void cleanSplitsWhenQueryStringHasChanged() throws HttpFetcherException {
-        // Splits have to be cleared when query string on db is != than current one on current sdk client instance
-        // Setting up cache not expired
-
-        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                true, true, 100L, "q=other");
-        when(mSplitsStorage.getTill()).thenReturn(100L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(false);
-
-        mTask.execute();
-
-        verify(mSplitsStorage, times(1)).clear();
-    }
+    // This tests corresponds to CLEAR CACHE PR.
+    /// TODO: Uncomment on that PR
+//    @Test
+//    public void cleanSplitsWhenQueryStringHasChanged() throws HttpFetcherException {
+//        // Splits have to be cleared when query string on db is != than current one on current sdk client instance
+//        // Setting up cache not expired
+//
+//        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+//                true, true, 100L, "q=other");
+//        when(mSplitsStorage.getTill()).thenReturn(100L);
+//        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
+//        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+//        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(false);
+//
+//        mTask.execute();
+//
+//        verify(mSplitsStorage, times(1)).clear();
+//    }
 
     @After
     public void tearDown() {
