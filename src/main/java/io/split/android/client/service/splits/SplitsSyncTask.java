@@ -60,6 +60,7 @@ public class SplitsSyncTask implements SplitTask {
 
         if(splitsFilterHasChanged) {
             mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryString);
+            storedChangeNumber = -1;
         }
 
         Map<String, Object> params = new HashMap<>();
