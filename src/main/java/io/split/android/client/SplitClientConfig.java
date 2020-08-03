@@ -484,7 +484,7 @@ public class SplitClientConfig {
 
         private boolean _isSslDevelopmentModeEnabled = false;
 
-        private SyncConfig _syncConfig;
+        private SyncConfig _syncConfig = SyncConfig.builder().build();
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();

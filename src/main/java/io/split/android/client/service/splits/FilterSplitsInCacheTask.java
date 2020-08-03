@@ -26,10 +26,10 @@ public class FilterSplitsInCacheTask implements SplitTask {
     private final String mSplitsFilterQueryString;
 
     public FilterSplitsInCacheTask(@NonNull PersistentSplitsStorage splitsStorage,
-                                   @Nullable List<SplitFilter> splitsFilter,
+                                   @NonNull List<SplitFilter> splitsFilter,
                                    @Nullable String splitsFilterQueryString) {
         mSplitsStorage = checkNotNull(splitsStorage);
-        mSplitsFilter = splitsFilter;
+        mSplitsFilter = checkNotNull(splitsFilter);
         mSplitsFilterQueryString = splitsFilterQueryString;
     }
 
@@ -37,9 +37,7 @@ public class FilterSplitsInCacheTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
 
-        // This is defensive code only this task should not be called
-        // if no filter available in config
-        if(mSplitsFilter == null || mSplitsFilter.size() == 0 || !queryStringHasChanged()) {
+        if(!queryStringHasChanged()) {
             return SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE);
         }
 

@@ -121,14 +121,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public FilterSplitsInCacheTask createFilterSplitsInCacheTask() {
-
-        // Defensive code. Synchronizer checks if there are
-        // filters available before submiting this task
-        List<SplitFilter> filters = null;
-        if (mSplitClientConfig.syncConfig() != null) {
-            filters =  new FilterGrouper().group(mSplitClientConfig.syncConfig().getFilters());
-        }
+        List<SplitFilter> filters = new FilterGrouper().group(mSplitClientConfig.syncConfig().getFilters());
         return new FilterSplitsInCacheTask(mSplitsStorageContainer.getPersistentSplitsStorage(),
-               filters, mSplitsFilterQueryString);
+                filters, mSplitsFilterQueryString);
     }
 }
