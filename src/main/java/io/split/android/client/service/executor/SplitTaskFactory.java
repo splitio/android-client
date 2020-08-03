@@ -8,6 +8,7 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
+import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
@@ -34,5 +35,7 @@ public interface SplitTaskFactory {
     MySegmentsUpdateTask createMySegmentsUpdateTask(List<String> segments);
 
     SplitsUpdateTask createSplitsUpdateTask(long since);
+
+    FilterSplitsInCacheTask createFilterSplitsInCacheTask();
 
 }

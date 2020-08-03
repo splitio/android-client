@@ -82,5 +82,32 @@ public class URIBuilderTest {
         Assert.assertEquals("https://api.split.io/internal/api/v2/workspaces?p1=v1&p2=v2", uri.toString());
     }
 
-}
+    @Test
+    public void defaultQueryStringNoParameters() throws URISyntaxException {
 
+        URI root = new URI("https://api.split.io");
+        String path = "/internal/api/v2/workspaces";
+        URI uri = new URIBuilder(root, path).defaultQueryString("p1=v1,v2,v3&p2=v1,v2").build();
+
+        Assert.assertEquals("https://api.split.io/internal/api/v2/workspaces?p1=v1,v2,v3&p2=v1,v2", uri.toString());
+    }
+
+    @Test
+    public void defaultQueryStringAndParameters() throws URISyntaxException {
+
+        URI root = new URI("https://api.split.io");
+        String path = "/internal/api/v2/workspaces";
+        URI uri = new URIBuilder(root, path).addParameter("p3", "v3").defaultQueryString("p1=v1,v2,v3&p2=v1,v2").build();
+
+        Assert.assertEquals("https://api.split.io/internal/api/v2/workspaces?p3=v3&p1=v1,v2,v3&p2=v1,v2", uri.toString());
+    }
+
+    @Test
+    public void existingQueryStringAndParameters() throws URISyntaxException {
+
+        URI root = new URI("https://api.split.io/internal/api/v2/workspaces?p1=v1,v2,v3&p2=v1,v2");
+        URI uri = new URIBuilder(root).addParameter("p3", "v3").build();
+
+        Assert.assertEquals("https://api.split.io/internal/api/v2/workspaces?p3=v3&p1=v1,v2,v3&p2=v1,v2", uri.toString());
+    }
+}

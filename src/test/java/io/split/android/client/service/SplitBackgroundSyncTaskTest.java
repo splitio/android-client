@@ -9,31 +9,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
-import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.service.splits.SplitsSyncBackgroundTask;
 import io.split.android.client.service.splits.SplitsSyncHelper;
-import io.split.android.client.service.splits.SplitsSyncTask;
-import io.split.android.client.service.splits.SplitsUpdateTask;
-import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.helpers.FileHelper;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class SplitUpdateTaskTest {
+public class SplitBackgroundSyncTaskTest {
 
     SplitsStorage mSplitsStorage;
     SplitChange mSplitChange = null;
     SplitsSyncHelper mSplitsSyncHelper;
 
-    SplitsUpdateTask mTask;
+    SplitsSyncBackgroundTask mTask;
 
     Map<String, Object> mDefaultParams = new HashMap<>();
 
@@ -45,30 +40,35 @@ public class SplitUpdateTaskTest {
         mDefaultParams.put("since", -1L);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
         mSplitsSyncHelper = Mockito.mock(SplitsSyncHelper.class);
-        mTask = new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorage, mChangeNumber);
         loadSplitChanges();
     }
 
     @Test
     public void correctExecution() throws HttpFetcherException {
         when(mSplitsStorage.getTill()).thenReturn(-1L);
+        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(false);
+        mTask = new SplitsSyncBackgroundTask(mSplitsSyncHelper, mSplitsStorage, 10000L);
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).syncUntilSuccess(mDefaultParams);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams);
+        verify(mSplitsStorage, never()).clear();
     }
 
     @Test
-    public void storedChangeNumBigger() throws HttpFetcherException {
-        Map<String, Object> params = new HashMap<>();
-        params.put("since", mChangeNumber);
+    public void correctExecutionExpiredCache() throws HttpFetcherException {
 
-        when(mSplitsStorage.getTill()).thenReturn(mChangeNumber + 100L);
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(100L);
+        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(true);
+        mTask = new SplitsSyncBackgroundTask(mSplitsSyncHelper, mSplitsStorage, 10000L);
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, never()).syncUntilSuccess(params);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams);
+        verify(mSplitsStorage, times(1)).clear();
     }
+
 
     @After
     public void tearDown() {

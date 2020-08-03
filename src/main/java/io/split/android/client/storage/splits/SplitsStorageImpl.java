@@ -17,6 +17,7 @@ public class SplitsStorageImpl implements SplitsStorage {
     private Map<String, Split> mInMemorySplits;
     private long mChangeNumber;
     private long mUpdateTimestamp;
+    private String mSplitsFilterQueryString;
     private Map<String, Integer> mTrafficTypes;
 
     public SplitsStorageImpl(@NonNull PersistentSplitsStorage persistentStorage) {
@@ -31,6 +32,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         List<Split> splits = snapshot.getSplits();
         mChangeNumber = snapshot.getChangeNumber();
         mUpdateTimestamp = snapshot.getUpdateTimestamp();
+        mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
         for (Split split : splits) {
             mInMemorySplits.put(split.name, split);
         }
@@ -108,6 +110,15 @@ public class SplitsStorageImpl implements SplitsStorage {
     @Override
     public long getUpdateTimestamp() {
         return mUpdateTimestamp;
+    }
+
+    public String getSplitsFilterQueryString() {
+        return mSplitsFilterQueryString;
+    }
+
+    @Override
+    public void updateSplitsFilterQueryString(String queryString) {
+        mPersistentStorage.updateFilterQueryString(queryString);
     }
 
     @Override

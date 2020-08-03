@@ -33,6 +33,10 @@ public class StorageFactory {
         return new MySegmentsStorageImpl(persistentMySegmentsStorage);
     }
 
+    public static PersistentSplitsStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase) {
+        return new SqLitePersistentSplitsStorage(splitRoomDatabase);
+    }
+
     public static PersistentImpressionsStorage getPersistenImpressionsStorage(
             SplitRoomDatabase splitRoomDatabase) {
         return new SqLitePersistentImpressionsStorage(splitRoomDatabase,

@@ -1,3 +1,6 @@
+2.6.6: (Ago 03, 2020)
+- Added `syncConfig.addFilter()` method to SDK configuration to pass a list of filters for the splits that will be downloaded. Read more in our docs.
+
 2.6.5: (Jul 23, 2020)
 - Improved logic to refresh streaming token
 

@@ -1,7 +1,9 @@
 package io.split.android.client.storage.splits;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
+    private static final int SQL_PARAM_BIND_SIZE = 20;
     SplitRoomDatabase mDatabase;
 
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database) {
@@ -54,7 +57,8 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase);
         mDatabase.runInTransaction(loader);
         return new SplitsSnapshot(
-                convertEntitiesToSplitList(mDatabase.splitDao().getAll()), loader.getChangeNumber(), loader.getUpdateTimestamp());
+                convertEntitiesToSplitList(mDatabase.splitDao().getAll()), loader.getChangeNumber(),
+                loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString());
     }
 
     @Override
@@ -64,6 +68,20 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         List<Split> splits = new ArrayList<>();
         splits.add(split);
         mDatabase.splitDao().insert(convertSplitListToEntities(splits));
+    }
+
+    @Override
+    public void updateFilterQueryString(String queryString) {
+        mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING, queryString));
+    }
+
+    @Override
+    public void delete(List<String> splitNames) {
+        // This is to avoid an sqlite error if there are many split to delete
+        List<List<String>> deleteChunk = Lists.partition(splitNames, SQL_PARAM_BIND_SIZE);
+        for(List<String> splits : deleteChunk) {
+            mDatabase.splitDao().delete(splits);
+        }
     }
 
     @Override
@@ -80,6 +98,18 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             }
         });
 
+    }
+
+    @Override
+    public List<Split> getAll() {
+        return convertEntitiesToSplitList(mDatabase.splitDao().getAll());
+    }
+
+    @Override
+    @Nullable
+    public String getFilterQueryString() {
+        GeneralInfoEntity generalInfoEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
+        return generalInfoEntity != null ? generalInfoEntity.getStringValue() : null;
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
@@ -129,6 +159,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         private SplitRoomDatabase mDatabase;
         private Long mChangeNumber = -1L;
         private Long mUpdateTimestamp = 0L;
+        private String mSplitsFilterQueryString = "";
         private List<SplitEntity> mSplitEntities;
 
         public SplitsSnapshotLoader(SplitRoomDatabase database) {
@@ -139,12 +170,17 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         public void run() {
             GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
             GeneralInfoEntity changeNumberEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
+            GeneralInfoEntity filterQueryStringEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
             if (changeNumberEntity != null) {
                 mChangeNumber = changeNumberEntity.getLongValue();
             }
 
             if (timestampEntity != null) {
                 mUpdateTimestamp = timestampEntity.getLongValue();
+            }
+            if (filterQueryStringEntity != null) {
+                mSplitsFilterQueryString = filterQueryStringEntity.getStringValue();
+
             }
         }
 
@@ -154,6 +190,10 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
         public Long getUpdateTimestamp() {
             return mUpdateTimestamp;
+        }
+
+        public String getSplitsFilterQueryString() {
+            return mSplitsFilterQueryString;
         }
 
         public List<SplitEntity> getSplitEntities() {
