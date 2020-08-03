@@ -5,7 +5,9 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 
+import io.split.android.client.FilterGrouper;
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
@@ -16,6 +18,7 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
+import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitKillTask;
@@ -114,5 +117,12 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SplitsUpdateTask createSplitsUpdateTask(long since) {
         return new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), since);
+    }
+
+    @Override
+    public FilterSplitsInCacheTask createFilterSplitsInCacheTask() {
+        List<SplitFilter> filters = new FilterGrouper().group(mSplitClientConfig.syncConfig().getFilters());
+        return new FilterSplitsInCacheTask(mSplitsStorageContainer.getPersistentSplitsStorage(),
+                filters, mSplitsFilterQueryString);
     }
 }

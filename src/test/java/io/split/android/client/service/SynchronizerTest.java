@@ -18,6 +18,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Filter;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
@@ -39,6 +40,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
@@ -49,6 +51,7 @@ import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -70,6 +73,8 @@ public class SynchronizerTest {
     SplitApiFacade mSplitApiFacade;
     @Mock
     SplitStorageContainer mSplitStorageContainer;
+    @Mock
+    PersistentSplitsStorage mPersistentSplitsStorageContainer;
     @Mock
     PersistentEventsStorage mEventsStorage;
     @Mock
@@ -103,6 +108,7 @@ public class SynchronizerTest {
         when(mSplitApiFacade.getImpressionsRecorder()).thenReturn(impressionsRecorder);
 
         when(mSplitStorageContainer.getSplitsStorage()).thenReturn(splitsStorage);
+        when(mSplitStorageContainer.getPersistentSplitsStorage()).thenReturn(mPersistentSplitsStorageContainer);
         when(mSplitStorageContainer.getMySegmentsStorage()).thenReturn(mySegmentsStorage);
         when(mSplitStorageContainer.getEventsStorage()).thenReturn(mEventsStorage);
         when(mSplitStorageContainer.getImpressionsStorage()).thenReturn(mImpressionsStorage);
@@ -112,6 +118,7 @@ public class SynchronizerTest {
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
         when(mTaskFactory.createLoadSplitsTask()).thenReturn(Mockito.mock(LoadSplitsTask.class));
+        when(mTaskFactory.createFilterSplitsInCacheTask()).thenReturn(Mockito.mock(FilterSplitsInCacheTask.class));
 
         when(mWorkManager.getWorkInfoByIdLiveData(any())).thenReturn(mock(LiveData.class));
 
@@ -360,6 +367,7 @@ public class SynchronizerTest {
         setup(config);
 
         List<SplitTaskExecutionInfo> list = new ArrayList<>();
+        list.add(SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE));
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);

@@ -1,6 +1,7 @@
 package io.split.android.client.storage.splits;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.gson.JsonSyntaxException;
 
@@ -73,6 +74,11 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     @Override
+    public void delete(List<String> splitNames) {
+        mDatabase.splitDao().delete(splitNames);
+    }
+
+    @Override
     public void close() {
     }
 
@@ -86,6 +92,18 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             }
         });
 
+    }
+
+    @Override
+    public List<Split> getAll() {
+        return convertEntitiesToSplitList(mDatabase.splitDao().getAll());
+    }
+
+    @Override
+    @Nullable
+    public String getFilterQueryString() {
+        GeneralInfoEntity generalInfoEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
+        return generalInfoEntity != null ? generalInfoEntity.getStringValue() : null;
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {

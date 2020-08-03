@@ -66,6 +66,7 @@ class SplitFactoryHelper {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, key.matchingKey()),
+                StorageFactory.getPersistentSplitsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenEventsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase));
     }

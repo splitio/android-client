@@ -49,8 +49,10 @@ public class SplitsSyncTask implements SplitTask {
         long storedChangeNumber = mSplitsStorage.getTill();
         long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
         String storedSplitsFilterQueryString = mSplitsStorage.getSplitsFilterQueryString();
-        if (mCheckCacheExpiration &&
-                mSplitsSyncHelper.cacheHasExpired(storedChangeNumber, updateTimestamp, mCacheExpirationInSeconds)) {
+
+        boolean shouldClearExpiredCache = mCheckCacheExpiration &&
+                mSplitsSyncHelper.cacheHasExpired(storedChangeNumber, updateTimestamp, mCacheExpirationInSeconds);
+        if (shouldClearExpiredCache) {
             Logger.d("Removing expirated cache");
             mSplitsStorage.clear();
             storedChangeNumber = -1;
@@ -60,12 +62,13 @@ public class SplitsSyncTask implements SplitTask {
 
         if(splitsFilterHasChanged) {
             mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryString);
+            storedChangeNumber = -1;
         }
 
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
         if(mRetryOnFail) {
-            return mSplitsSyncHelper.syncUntilSuccess(params);
+            return mSplitsSyncHelper.syncUntilSuccess(params, splitsFilterHasChanged && !shouldClearExpiredCache);
         }
         return mSplitsSyncHelper.sync(params);
     }
