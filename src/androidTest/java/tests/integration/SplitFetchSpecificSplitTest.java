@@ -112,7 +112,6 @@ public class SplitFetchSpecificSplitTest {
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 2));
         SplitClient client;
-        SplitManager manager;
 
         final String url = mWebServer.url("/").url().toString();
         ServiceEndpoints endpoints = ServiceEndpoints.builder()
@@ -146,7 +145,7 @@ public class SplitFetchSpecificSplitTest {
 
         latch.await(10, TimeUnit.SECONDS);
 
-        Assert.assertEquals("names=ausgefüllt,split1,split2&prefixes=abc\u0223,pre1,pre2&since=-1", mReceivedQueryString);
+        Assert.assertEquals("since=2&names=ausgefüllt,split1,split2&prefixes=abc\u0223,pre1,pre2", mReceivedQueryString);
 
         splitFactory.destroy();
     }

@@ -144,6 +144,7 @@ public class SplitSyncTaskTest {
     public void cleanSplitsWhenQueryStringHasChanged() throws HttpFetcherException {
         // Splits have to be cleared when query string on db is != than current one on current sdk client instance
         // Setting up cache not expired
+        // splits change param should be -1
 
         String otherQs = "q=other";
         Map<String, Object> params = new HashMap<>();
@@ -157,7 +158,9 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).syncUntilSuccess(params, true);
+        Map<String, Object> expectedParam = new HashMap<>();
+        expectedParam.put("since", -1L);
+        verify(mSplitsSyncHelper, times(1)).syncUntilSuccess(expectedParam, true);
         verify(mSplitsStorage, times(1)).updateSplitsFilterQueryString(otherQs);
     }
 
