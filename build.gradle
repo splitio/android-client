@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '2.6.6-rc3'
+    splitVersion = '2.6.6'
 }
 
 allprojects {
@@ -62,16 +62,16 @@ android {
 }
 
 dependencies {
+
     def roomVersion = '2.2.2'
-    def lifeCycleVersion = '2.1.0'
 
     // Room components
     implementation "androidx.room:room-runtime:$roomVersion"
     annotationProcessor "androidx.room:room-compiler:$roomVersion"
     implementation 'androidx.work:work-runtime:2.3.1'
 
+    implementation 'androidx.lifecycle:lifecycle-process:2.2.0'
 
-    implementation "androidx.lifecycle:lifecycle-extensions:$lifeCycleVersion"
     implementation "androidx.annotation:annotation:1.0.0"
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')

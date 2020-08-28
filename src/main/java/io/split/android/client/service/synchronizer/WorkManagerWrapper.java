@@ -105,7 +105,7 @@ public class WorkManagerWrapper {
 
     private void observeWorkState(String tag) {
         Logger.d("Adding work manager observer for request id " + tag);
-        if (isCurrentThreadMain()) {
+        if (ThreadUtils.isCurrentThreadMain()) {
             mWorkManager.getWorkInfosByTagLiveData(tag)
                     .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
                         @Override
@@ -215,9 +215,5 @@ public class WorkManagerWrapper {
         constraintsBuilder.setRequiresBatteryNotLow(
                 mSplitClientConfig.backgroundSyncWhenBatteryNotLow());
         return constraintsBuilder.build();
-    }
-
-    private boolean isCurrentThreadMain() {
-        return Looper.myLooper() == Looper.getMainLooper();
     }
 }

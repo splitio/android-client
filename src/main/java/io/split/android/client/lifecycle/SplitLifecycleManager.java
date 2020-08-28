@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.service.sseclient.PushNotificationManager;
+import io.split.android.client.service.synchronizer.ThreadUtils;
+import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -52,7 +54,12 @@ public class SplitLifecycleManager implements LifecycleObserver {
     }
 
     public void destroy() {
-        ProcessLifecycleOwner.get().getLifecycle().removeObserver(this);
+        ThreadUtils.runInMainThread(new Runnable() {
+            @Override
+            public void run() {
+                ProcessLifecycleOwner.get().getLifecycle().removeObserver(SplitLifecycleManager.this);
+            }
+        });
     }
 
 }

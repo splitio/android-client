@@ -79,8 +79,8 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     public void delete(List<String> splitNames) {
         // This is to avoid an sqlite error if there are many split to delete
         List<List<String>> deleteChunk = Lists.partition(splitNames, SQL_PARAM_BIND_SIZE);
-        for(List<String> splitName : deleteChunk) {
-            mDatabase.splitDao().delete(splitNames);
+        for(List<String> splits : deleteChunk) {
+            mDatabase.splitDao().delete(splits);
         }
     }
 
