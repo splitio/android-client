@@ -1,7 +1,5 @@
 package io.split.android.client.service.synchronizer;
 
-import android.os.Looper;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -105,27 +103,26 @@ public class WorkManagerWrapper {
 
     private void observeWorkState(String tag) {
         Logger.d("Adding work manager observer for request id " + tag);
-        if (ThreadUtils.isCurrentThreadMain()) {
-            mWorkManager.getWorkInfosByTagLiveData(tag)
-                    .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
-                        @Override
-                        public void onChanged(@Nullable List<WorkInfo> workInfoList) {
-                            if (workInfoList == null) {
-                                return;
-                            }
+        ThreadUtils.runInMainThread(new Runnable() {
+            @Override
+            public void run() {
+                mWorkManager.getWorkInfosByTagLiveData(tag)
+                        .observe(ProcessLifecycleOwner.get(), new Observer<List<WorkInfo>>() {
+                            @Override
+                            public void onChanged(@Nullable List<WorkInfo> workInfoList) {
+                                if (workInfoList == null) {
+                                    return;
+                                }
 
-                            for (WorkInfo workInfo : workInfoList) {
-                                Logger.d("Work manager task: " + workInfo.getTags() +
-                                        ", state: " + workInfo.getState().toString());
-                                updateTaskStatus(workInfo);
+                                for (WorkInfo workInfo : workInfoList) {
+                                    Logger.d("Work manager task: " + workInfo.getTags() +
+                                            ", state: " + workInfo.getState().toString());
+                                    updateTaskStatus(workInfo);
+                                }
                             }
-
-                        }
-                    });
-        } else {
-            Logger.w("Split Client: Background synchronization monitoring can't be enabled if the SDK is instantiated in " +
-                    " a background thread due to the inability to observe task state changes. Setting it to off.");
-        }
+                        });
+            }
+        });
     }
 
     private Data buildInputData(Data customData) {
