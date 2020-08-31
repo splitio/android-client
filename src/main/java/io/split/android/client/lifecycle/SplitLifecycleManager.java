@@ -23,7 +23,12 @@ public class SplitLifecycleManager implements LifecycleObserver {
 
     public SplitLifecycleManager() {
         mComponents = new ArrayList<>();
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+        ThreadUtils.runInMainThread(new Runnable() {
+            @Override
+            public void run() {
+                ProcessLifecycleOwner.get().getLifecycle().addObserver(SplitLifecycleManager.this);
+            }
+        });
     }
 
     public void register(SplitLifecycleAware component) {
