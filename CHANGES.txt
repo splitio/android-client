@@ -1,5 +1,5 @@
-2.6.7: (Ago 27, 2020)
-- Fixed issue when removing lifecycle observer in LifecycleManager
+2.6.7: (Ago 31, 2020)
+- Fixed issue when adding and removing lifecycle observer in LifecycleManager
 
 2.6.6: (Ago 03, 2020)
 - Added `syncConfig.addFilter()` method to SDK configuration to pass a list of filters for the splits that will be downloaded. Read more in our docs.
