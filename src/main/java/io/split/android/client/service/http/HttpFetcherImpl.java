@@ -9,6 +9,7 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
+import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.metrics.FetcherMetricsConfig;
@@ -65,9 +66,9 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                 Object value = param.getValue();
                 uriBuilder.addParameter(param.getKey(), value != null ? value.toString() : "");
             }
-
+            URI u = uriBuilder.build();
             HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET).execute();
-
+            Logger.d("Received from: " + u.toString() + " -> " + response.getData());
             if (!response.isSuccess()) {
                 if(mMetrics != null) {
                     mMetrics.count(String.format(mFetcherMetricsConfig.getStatusLabel(), response.getHttpStatus()), 1);
