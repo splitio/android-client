@@ -4,8 +4,6 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.Map;
 
-import io.split.android.client.utils.Logger;
-
 public class EventStreamParser {
     public final static String EVENT_FIELD = "event";
     public final static String KEEP_ALIVE_EVENT = "keepalive";

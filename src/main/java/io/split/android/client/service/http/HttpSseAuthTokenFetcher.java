@@ -51,7 +51,7 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
             HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET).execute();
 
             if (!response.isSuccess()) {
-                if (response.isCredentialsError()) {
+                if (response.isClientRelatedError()) {
                     return new SseAuthenticationResponse(false);
                 }
                 throw new IllegalStateException("http return code " + response.getHttpStatus());

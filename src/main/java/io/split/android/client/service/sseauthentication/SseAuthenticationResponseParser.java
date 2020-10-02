@@ -1,13 +1,7 @@
 package io.split.android.client.service.sseauthentication;
 
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
-
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.service.http.HttpResponseParser;
 import io.split.android.client.service.http.HttpResponseParserException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;

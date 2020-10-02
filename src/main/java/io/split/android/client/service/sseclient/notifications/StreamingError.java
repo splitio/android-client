@@ -22,4 +22,12 @@ public class StreamingError {
     public int getStatusCode() {
         return statusCode;
     }
+
+    public boolean shouldBeIgnored() {
+        return !(code >= 40000 && code <= 49999);
+    }
+
+    public boolean isRetryable() {
+        return code >= 40140 &&  code <= 40149;
+    }
 }
