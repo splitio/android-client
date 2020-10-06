@@ -41,12 +41,12 @@ public class SseAuthenticator {
         Logger.d("SSE Authentication done, now parsing token");
 
         if(authResponse.isClientError()) {
-            Logger.d("Streaming disabled");
+            Logger.d("Non recoverable error while connecting to streaming");
             return new SseAuthenticationResult(false, false, false, null);
         }
 
         if(!authResponse.isStreamingEnabled()) {
-            Logger.d("Streaming disabled");
+            Logger.d("Streaming disabled for api key");
             return new SseAuthenticationResult(true, true, false, null);
         }
 
