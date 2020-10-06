@@ -41,7 +41,7 @@ public class SseAuthenticator {
         Logger.d("SSE Authentication done, now parsing token");
 
         if(authResponse.isClientError()) {
-            Logger.d("Non recoverable error while connecting to streaming");
+            Logger.d("Error while authenticating to streaming. Check your api key is correct.");
             return new SseAuthenticationResult(false, false, false, null);
         }
 
