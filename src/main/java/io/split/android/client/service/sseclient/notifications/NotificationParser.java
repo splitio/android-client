@@ -67,6 +67,10 @@ public class NotificationParser {
         return Json.fromJson(jsonData, ControlNotification.class);
     }
 
+    public StreamingError parseError(String jsonData) throws JsonSyntaxException {
+        return Json.fromJson(jsonData, StreamingError.class);
+    }
+
     private boolean isError(RawNotification rawNotification) {
         return NAME_ERROR.equals(rawNotification.getName());
     }

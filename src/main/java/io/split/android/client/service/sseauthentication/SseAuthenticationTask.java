@@ -49,7 +49,7 @@ public class SseAuthenticationTask implements SplitTask {
         }
         Logger.d("SSE Authentication done, now parsing token...");
 
-        if(!authResponse.isValidApiKey()) {
+        if(!authResponse.isClientError()) {
             return invalidApiKeyError();
         }
 

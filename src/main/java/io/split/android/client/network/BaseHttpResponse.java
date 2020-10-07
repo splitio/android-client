@@ -7,5 +7,7 @@ public interface BaseHttpResponse {
 
     boolean isBadRequestError();
 
+    boolean isClientRelatedError();
+
     int getHttpStatus();
 }
