@@ -61,9 +61,6 @@ public class SseClientTest {
 
     URI mUri;
 
-
-
-
     private static long DUMMY_DELAY = 1;
     private static int POOL_SIZE = 2;
 

@@ -67,6 +67,11 @@ public class SseHandler {
         }
     }
 
+    public void reportError(boolean retryable) {
+        PushStatusEvent event = new PushStatusEvent(retryable ? EventType.PUSH_RETRYABLE_ERROR : EventType.PUSH_NON_RETRYABLE_ERROR);
+        mBroadcasterChannel.pushMessage(event);
+    }
+
     private void handleControlNotification(IncomingNotification incomingNotification) {
         try {
             mNotificationManagerKeeper.handleControlNotification(

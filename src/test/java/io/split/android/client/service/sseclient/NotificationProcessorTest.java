@@ -21,7 +21,6 @@ import io.split.android.client.service.sseclient.notifications.MySegmentChangeNo
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
-import io.split.android.client.service.sseclient.notifications.RawNotification;
 import io.split.android.client.service.sseclient.notifications.SplitKillNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 
