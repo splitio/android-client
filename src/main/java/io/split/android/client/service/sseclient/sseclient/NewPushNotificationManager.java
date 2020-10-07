@@ -136,7 +136,7 @@ public class NewPushNotificationManager {
 
             if(authResult.isSuccess() && !authResult.isPushEnabled()) {
                 Logger.d("Streaming disabled for api key");
-                mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_DISABLED));
+                mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
                 mStatus.set(STOPPED);
                 return;
             }
