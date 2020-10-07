@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
@@ -33,10 +34,9 @@ public class NotificationManagerKeeper {
     private static String CHANNEL_SEC_KEY = "SEC";
 
     Map<String, Publisher> mPublishers = Maps.newConcurrentMap();
-
     private PushManagerEventBroadcaster mBroadcasterChannel;
-
-    AtomicBoolean isStreamingActive = new AtomicBoolean(true);
+    private AtomicLong mLastControlTimestamp = new AtomicLong(0);
+    AtomicBoolean mIsStreamingActive = new AtomicBoolean(true);
 
     public NotificationManagerKeeper(PushManagerEventBroadcaster broadcasterChannel) {
         mBroadcasterChannel = broadcasterChannel;
@@ -46,20 +46,24 @@ public class NotificationManagerKeeper {
     }
 
     public void handleControlNotification(ControlNotification notification) {
+        if(mLastControlTimestamp.get() >= notification.getTimestamp()) {
+            return;
+        }
+        mLastControlTimestamp.set(notification.getTimestamp());
         try {
             switch (notification.getControlType()) {
                 case STREAMING_PAUSED:
-                    isStreamingActive.set(false);
+                    mIsStreamingActive.set(false);
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
                     break;
 
                 case STREAMING_DISABLED:
-                    isStreamingActive.set(false);
+                    mIsStreamingActive.set(false);
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_DISABLED));
                     break;
 
                 case STREAMING_ENABLED:
-                    isStreamingActive.set(true);
+                    mIsStreamingActive.set(true);
                     if (publishersCount() > 0) {
                         mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
                     }
@@ -91,7 +95,7 @@ public class NotificationManagerKeeper {
             return;
         }
 
-        if (publishersCount() > 0 && prevPublishersCount == 0 && isStreamingActive.get()) {
+        if (publishersCount() > 0 && prevPublishersCount == 0 && mIsStreamingActive.get()) {
             mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
             return;
         }
