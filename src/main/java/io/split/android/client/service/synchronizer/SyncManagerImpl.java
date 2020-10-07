@@ -15,6 +15,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
+import io.split.android.client.service.sseclient.sseclient.NewPushNotificationManager;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -24,7 +25,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
     private final SplitClientConfig mSplitClientConfig;
     private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final Synchronizer mSynchronizer;
-    private final PushNotificationManager mPushNotificationManager;
+    private final NewPushNotificationManager mPushNotificationManager;
     private SplitUpdatesWorker mSplitUpdateWorker;
     private MySegmentsUpdateWorker mMySegmentUpdateWorker;
     private BackoffCounterTimer mStreamingReconnectTimer;
@@ -35,7 +36,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull Synchronizer synchronizer,
-                           @NonNull PushNotificationManager pushNotificationManager,
+                           @NonNull NewPushNotificationManager pushNotificationManager,
                            @NonNull SplitUpdatesWorker splitUpdateWorker,
                            @NonNull MySegmentsUpdateWorker mySegmentUpdateWorker,
                            @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,

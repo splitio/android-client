@@ -148,8 +148,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
                 context, config, apiToken, key.matchingKey(), databaseName));
 
-        _syncManager = factoryHelper.buildSyncManager(config, _splitTaskExecutor,
-                splitTaskFactory, httpClient, synchronizer);
+        _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
+                splitTaskFactory, splitApiFacade, httpClient, synchronizer);
 
         _syncManager.start();
 

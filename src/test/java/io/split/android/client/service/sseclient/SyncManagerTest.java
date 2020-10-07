@@ -14,6 +14,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
+import io.split.android.client.service.sseclient.sseclient.NewPushNotificationManager;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -32,8 +33,9 @@ public class SyncManagerTest {
 
     @Mock
     Synchronizer mSynchronizer;
+
     @Mock
-    PushNotificationManager mPushNotificationManager;
+    NewPushNotificationManager mPushNotificationManager;
 
     @Spy
     PushManagerEventBroadcaster mPushManagerEventBroadcaster;
@@ -90,7 +92,7 @@ public class SyncManagerTest {
     public void disablePushNotificationReceived() {
         mSyncManager.start();
         mPushManagerEventBroadcaster.pushMessage(
-                new PushStatusEvent(EventType.ENABLE_POLLING));
+                new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
 
         verify(mSynchronizer, times(1)).startPeriodicFetching();
         verify(mSynchronizer, never()).stopPeriodicFetching();
@@ -100,10 +102,10 @@ public class SyncManagerTest {
     public void disableAndEnablePushNotificationReceived() {
         mSyncManager.start();
         mPushManagerEventBroadcaster.pushMessage(
-                new PushStatusEvent(EventType.ENABLE_POLLING));
+                new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
 
         mPushManagerEventBroadcaster.pushMessage(
-                new PushStatusEvent(EventType.DISABLE_POLLING));
+                new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
 
         verify(mSynchronizer, times(1)).stopPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicFetching();
@@ -114,7 +116,7 @@ public class SyncManagerTest {
         mSyncManager.start();
         reset(mSynchronizer);
         mPushManagerEventBroadcaster.pushMessage(
-                new PushStatusEvent(EventType.STREAMING_CONNECTED));
+                new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
 
         verify(mSynchronizer, times(1)).synchronizeSplits();
         verify(mSynchronizer, times(1)).synchronizeMySegments();
