@@ -146,6 +146,13 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
                 mStreamingReconnectTimer.cancel();
                 break;
 
+            case PUSH_DISABLED:
+                Logger.d("Push Subsystem Down event message received.");
+                enablePolling();
+                mStreamingReconnectTimer.cancel();
+                mPushNotificationManager.stop();
+                break;
+
             default:
                 Logger.e("Invalid SSE event received: " + message.getMessage());
         }
