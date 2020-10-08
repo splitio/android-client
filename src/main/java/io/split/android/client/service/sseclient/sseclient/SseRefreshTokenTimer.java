@@ -43,8 +43,7 @@ public class SseRefreshTokenTimer implements SplitTaskExecutionListener {
         }, reconnectTime, null);
     }
 
-    @VisibleForTesting(otherwise = PRIVATE)
-    public long reconnectTime(long issuedAtTime, long expirationTime) {
+    private long reconnectTime(long issuedAtTime, long expirationTime) {
         return Math.max((expirationTime - issuedAtTime) - RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS
                 , 0L);
     }
