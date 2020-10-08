@@ -5,7 +5,6 @@ import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;

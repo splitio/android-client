@@ -11,7 +11,6 @@ import java.util.List;
 
 import io.split.android.client.service.sseclient.PushNotificationManager;
 import io.split.android.client.service.synchronizer.ThreadUtils;
-import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

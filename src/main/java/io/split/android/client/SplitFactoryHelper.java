@@ -31,6 +31,7 @@ import io.split.android.client.service.sseclient.notifications.SplitsChangeNotif
 import io.split.android.client.service.sseclient.notifications.StreamingMessageParser;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
+import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -144,8 +145,10 @@ class SplitFactoryHelper {
                 new PushNotificationManager(sseClient, notificationParser, notificationProcessor, streamingMessageParser,
                         pushManagerEventBroadcaster, sseConnectionManager);
 
+        BackoffCounterTimer backoffReconnectTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
+
         return new SyncManagerImpl(
                 config, synchronizer, pushNotificationManager, splitUpdateWorker,
-                mySegmentUpdateWorker, pushManagerEventBroadcaster);
+                mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer);
     }
 }

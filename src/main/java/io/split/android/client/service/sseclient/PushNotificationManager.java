@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import io.split.android.client.lifecycle.SplitLifecycleAware;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
@@ -21,9 +22,6 @@ import io.split.android.client.service.sseclient.notifications.StreamingMessageP
 import io.split.android.client.utils.Logger;
 
 import static androidx.core.util.Preconditions.checkNotNull;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.STREAMING_CONNECTED;
 import static java.lang.reflect.Modifier.PRIVATE;
 
 public class PushNotificationManager implements SseClientListener, SplitLifecycleAware, SseConnectionManagerListener {
@@ -97,7 +95,7 @@ public class PushNotificationManager implements SseClientListener, SplitLifecycl
     public void notifyPollingDisabled() {
         Logger.i("Sending polling disabled message through event broadcaster.");
         if (mIsPollingEnabled.getAndSet(false)) {
-            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(DISABLE_POLLING));
+            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(EventType.DISABLE_POLLING));
         }
     }
 
@@ -105,13 +103,13 @@ public class PushNotificationManager implements SseClientListener, SplitLifecycl
     public void notifyPollingEnabled() {
         if (!mIsPollingEnabled.getAndSet(true)) {
             Logger.i("Enabling polling");
-            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(ENABLE_POLLING));
+            mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(EventType.ENABLE_POLLING));
         }
     }
 
     public void notifyStreamingConnected() {
         Logger.i("Disabling polling");
-        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(STREAMING_CONNECTED));
+        mPushManagerEventBroadcaster.pushMessage(new PushStatusEvent(EventType.STREAMING_CONNECTED));
     }
 
     // SSE Connection manager listener

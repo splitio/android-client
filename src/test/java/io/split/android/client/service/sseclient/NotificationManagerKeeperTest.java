@@ -10,6 +10,7 @@ import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
@@ -60,7 +61,7 @@ public class NotificationManagerKeeperTest {
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_SUBSYSTEM_DOWN);
+        Assert.assertEquals(messageCaptor.getValue().getMessage(), EventType.PUSH_SUBSYSTEM_DOWN);
     }
 
     @Test
@@ -125,7 +126,7 @@ public class NotificationManagerKeeperTest {
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_SUBSYSTEM_UP);
+        Assert.assertEquals(messageCaptor.getValue().getMessage(), EventType.PUSH_SUBSYSTEM_UP);
     }
 
     @Test
@@ -180,7 +181,7 @@ public class NotificationManagerKeeperTest {
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_SUBSYSTEM_UP);
+        Assert.assertEquals(messageCaptor.getValue().getMessage(), EventType.PUSH_SUBSYSTEM_UP);
     }
 
     @Test

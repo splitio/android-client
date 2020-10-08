@@ -1,6 +1,5 @@
 package io.split.android.client.service.sseclient;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,11 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
@@ -28,10 +25,7 @@ import io.split.android.client.service.sseclient.notifications.OccupancyNotifica
 import io.split.android.client.service.sseclient.notifications.StreamingMessageParser;
 import io.split.android.client.utils.Json;
 
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
@@ -119,7 +113,7 @@ public class PushNotificationManagerTest {
         ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(DISABLE_POLLING, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(EventType.DISABLE_POLLING, messageCaptor.getValue().getMessage());
     }
 
     @Test
@@ -176,7 +170,7 @@ public class PushNotificationManagerTest {
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(EventType.ENABLE_POLLING, messageCaptor.getValue().getMessage());
     }
 
     @Test
@@ -200,7 +194,7 @@ public class PushNotificationManagerTest {
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(EventType.ENABLE_POLLING, messageCaptor.getValue().getMessage());
     }
 
     @Test
