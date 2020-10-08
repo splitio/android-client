@@ -133,7 +133,7 @@ public class NewPushNotificationManagerTest {
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_DISABLED);
+        Assert.assertEquals(PushStatusEvent.EventType.PUSH_SUBSYSTEM_DOWN, messageCaptor.getValue().getMessage());
     }
 
     @Test
