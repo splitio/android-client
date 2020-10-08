@@ -81,8 +81,8 @@ public class NewSseClientImpl implements NewSseClient {
 
     private void close() {
         Logger.d("Shutting down SSE client");
-        setCloseStatus();
         disconnect();
+        setCloseStatus();
     }
 
     private void setCloseStatus() {
