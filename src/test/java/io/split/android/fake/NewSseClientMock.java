@@ -15,11 +15,6 @@ public class NewSseClientMock implements NewSseClient {
     }
 
     @Override
-    public void close() {
-
-    }
-
-    @Override
     public void connect(SseJwtToken token, ConnectionListener connectionListener) {
         connectionListener.onConnectionSuccess();
         mConnectLatch.countDown();

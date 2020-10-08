@@ -79,8 +79,7 @@ public class NewSseClientImpl implements NewSseClient {
         }
     }
 
-    @Override
-    public void close() {
+    private void close() {
         Logger.d("Shutting down SSE client");
         setCloseStatus();
         disconnect();
