@@ -9,7 +9,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -34,13 +34,8 @@ public class NewPushNotificationManager {
     private SseRefreshTokenTimer mRefreshTokenTimer;
     private SseDisconnectionTimer mDisconnectionTimer;
 
-
-    private final static int AUTHENTICATING = 1;
-    private final static int CONNECTING = 3;
-    private final static int CONNECTED = 4;
-    private final static int DISCONNECTED = 5;
-    private final static int STOPPED = 6;
-    private AtomicInteger mStatus;
+    private AtomicBoolean mIsPaused;
+    private AtomicBoolean mIsStopped;
 
     @VisibleForTesting(otherwise = PRIVATE)
     public NewPushNotificationManager(@NonNull PushManagerEventBroadcaster broadcasterChannel,
@@ -54,7 +49,8 @@ public class NewPushNotificationManager {
         mSseClient = checkNotNull(sseClient);
         mRefreshTokenTimer = checkNotNull(refreshTokenTimer);
         mDisconnectionTimer = checkNotNull(disconnectionTimer);
-        mStatus = new AtomicInteger(DISCONNECTED);
+        mIsStopped = new AtomicBoolean(false);
+        mIsPaused = new AtomicBoolean(false);
 
         if(executor != null) {
             mExecutor = executor;
@@ -70,6 +66,7 @@ public class NewPushNotificationManager {
 
     public void pause() {
         Logger.d("Push notification manager paused");
+        mIsPaused.set(true);
         mDisconnectionTimer.schedule(new SplitTask() {
             @NonNull
             @Override
@@ -83,14 +80,19 @@ public class NewPushNotificationManager {
 
     public void resume() {
         Logger.d("Push notification manager resumed");
+        mIsPaused.set(false);
         mDisconnectionTimer.cancel();
-        if(mStatus.get() == DISCONNECTED) {
+        if(mSseClient.status() == NewSseClient.DISCONNECTED && !mIsStopped.get()) {
             connect();
         }
     }
 
     public void stop() {
         Logger.d("Shutting down SSE client");
+        mIsStopped.set(true);
+        mDisconnectionTimer.cancel();
+        mRefreshTokenTimer.cancel();
+        mSseClient.disconnect();
         shutdownAndAwaitTermination();
     }
     private void connect() {
@@ -131,26 +133,24 @@ public class NewPushNotificationManager {
         @Override
         public void run() {
 
-            mStatus.set(AUTHENTICATING);
             SseAuthenticationResult authResult = mSseAuthenticator.authenticate();
 
             if(authResult.isSuccess() && !authResult.isPushEnabled()) {
                 Logger.d("Streaming disabled for api key");
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
-                mStatus.set(STOPPED);
+                mIsStopped.set(true);
                 return;
             }
 
             if(!authResult.isSuccess() && !authResult.isErrorRecoverable()) {
                 Logger.d("Streaming no recoverable auth error.");
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_NON_RETRYABLE_ERROR));
-                mStatus.set(STOPPED);
+                mIsStopped.set(true);
                 return;
             }
 
             if( !authResult.isSuccess() && authResult.isErrorRecoverable()) {
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RETRYABLE_ERROR));
-                mStatus.set(DISCONNECTED);
                 return;
             }
 
@@ -158,15 +158,17 @@ public class NewPushNotificationManager {
             if(token == null || token.getChannels() == null || token.getRawJwt() == null) {
                 Logger.d("Streaming auth error. Retrying");
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RETRYABLE_ERROR));
-                mStatus.set(DISCONNECTED);
                 return;
             }
 
-            mStatus.set(CONNECTING);
+            // If host app is in bg or push manager stopped, abort the process
+            if(mIsPaused.get() || mIsStopped.get()) {
+                return;
+            }
+
             mSseClient.connect(token, new NewSseClientImpl.ConnectionListener() {
                 @Override
                 public void onConnectionSuccess() {
-                    mStatus.set(CONNECTED);
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
                     mRefreshTokenTimer.schedule(token.getIssuedAtTime(), token.getExpirationTime());
                 }

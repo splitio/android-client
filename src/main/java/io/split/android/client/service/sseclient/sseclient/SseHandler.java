@@ -9,9 +9,11 @@ import java.util.Map;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
+import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
+import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.notifications.StreamingError;
 import io.split.android.client.utils.Logger;
 
@@ -74,8 +76,9 @@ public class SseHandler {
 
     private void handleControlNotification(IncomingNotification incomingNotification) {
         try {
-            mNotificationManagerKeeper.handleControlNotification(
-                    mNotificationParser.parseControl(incomingNotification.getJsonData()));
+            ControlNotification notification = mNotificationParser.parseControl(incomingNotification.getJsonData());
+            notification.setTimestamp(incomingNotification.getTimestamp());
+            mNotificationManagerKeeper.handleControlNotification(notification);
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse control notification: "
                     + incomingNotification.getJsonData() + " -> " + e.getLocalizedMessage());
@@ -88,8 +91,10 @@ public class SseHandler {
     private void handleOccupancyNotification(IncomingNotification incomingNotification) {
 
         try {
-            mNotificationManagerKeeper.handleOccupancyNotification(
-                    mNotificationParser.parseOccupancy(incomingNotification.getJsonData()));
+            OccupancyNotification notification = mNotificationParser.parseOccupancy(incomingNotification.getJsonData());
+            notification.setChannel(incomingNotification.getChannel());
+            notification.setTimestamp(incomingNotification.getTimestamp());
+            mNotificationManagerKeeper.handleOccupancyNotification(notification);
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse occupancy notification: "
                     + incomingNotification.getJsonData() + " -> " + e.getLocalizedMessage());

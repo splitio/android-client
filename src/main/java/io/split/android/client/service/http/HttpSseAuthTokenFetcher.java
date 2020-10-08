@@ -52,7 +52,7 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
 
             if (!response.isSuccess()) {
                 if (response.isClientRelatedError()) {
-                    return new SseAuthenticationResponse(false);
+                    return new SseAuthenticationResponse(true);
                 }
                 throw new IllegalStateException("http return code " + response.getHttpStatus());
             }

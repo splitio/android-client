@@ -7,6 +7,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.utils.Logger;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
@@ -40,8 +41,9 @@ public class BackoffCounterTimer implements SplitTaskExecutionListener {
             return;
         }
 
-        cancel();
-        mTaskId = mTaskExecutor.schedule(mTask, mStreamingBackoffCounter.getNextRetryTime(), this);
+        long retryTime = mStreamingBackoffCounter.getNextRetryTime();
+        Logger.d(String.format("Retrying streaming reconnection in %d seconds", retryTime));
+        mTaskId = mTaskExecutor.schedule(mTask, retryTime, this);
     }
 
     @Override

@@ -156,7 +156,7 @@ class SplitFactoryHelper {
         SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, managerKeeper, pushManagerEventBroadcaster);
         NewSseClient sseClient = new NewSseClientImpl(streamingServiceUrl, httpClient, eventStreamParser, sseHandler);
         SseAuthenticator sseAuthenticator =
-                new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(), "", new SseJwtParser());
+                new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(), userKey, new SseJwtParser());
 
         NewPushNotificationManager pushNotificationManager =
                 new NewPushNotificationManager(pushManagerEventBroadcaster, sseAuthenticator, sseClient,
