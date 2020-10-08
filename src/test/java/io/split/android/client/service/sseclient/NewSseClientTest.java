@@ -160,7 +160,7 @@ public class NewSseClientTest {
         NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         client.connect(mJwt, connListener);
 
-        verify(mSseHandler, times(1)).reportError(false);
+        verify(mSseHandler, times(1)).handleError(false);
         verify(mSseHandler, never()).handleIncomingMessage(any());
     }
 
@@ -185,7 +185,7 @@ public class NewSseClientTest {
         NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         client.connect(mJwt, connListener);
 
-        verify(mSseHandler, times(1)).reportError(true);
+        verify(mSseHandler, times(1)).handleError(true);
         verify(mSseHandler, never()).handleIncomingMessage(any());
     }
 
@@ -208,7 +208,7 @@ public class NewSseClientTest {
         NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         client.connect(mJwt, connListener);
 
-        verify(mSseHandler, times(1)).reportError(true);
+        verify(mSseHandler, times(1)).handleError(true);
         verify(mSseHandler, never()).handleIncomingMessage(any());
     }
 
@@ -240,7 +240,7 @@ public class NewSseClientTest {
 
         Thread.sleep(500);
         client.disconnect();
-        verify(mSseHandler, never()).reportError(anyBoolean());
+        verify(mSseHandler, never()).handleError(anyBoolean());
     }
 
     private void setupJwt(List<String> channels, long issuedAt, long expirationTime, String rawToken) {

@@ -11,6 +11,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
+import io.split.android.client.utils.Logger;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 import static java.lang.reflect.Modifier.PRIVATE;
@@ -37,14 +38,14 @@ public class SseRefreshTokenTimer implements SplitTaskExecutionListener {
             @NonNull
             @Override
             public SplitTaskExecutionInfo execute() {
+                Logger.d("Informing sse token expired throught pushing retryable error.");
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RETRYABLE_ERROR));
                 return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
             }
         }, reconnectTime, null);
     }
 
-    @VisibleForTesting(otherwise = PRIVATE)
-    public long reconnectTime(long issuedAtTime, long expirationTime) {
+    private long reconnectTime(long issuedAtTime, long expirationTime) {
         return Math.max((expirationTime - issuedAtTime) - RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS
                 , 0L);
     }

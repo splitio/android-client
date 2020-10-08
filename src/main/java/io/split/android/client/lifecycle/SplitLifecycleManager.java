@@ -9,14 +9,11 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.split.android.client.service.sseclient.PushNotificationManager;
 import io.split.android.client.service.synchronizer.ThreadUtils;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitLifecycleManager implements LifecycleObserver {
-    
-    PushNotificationManager mPushNotificationManager;
 
     private List<WeakReference<SplitLifecycleAware>> mComponents;
 

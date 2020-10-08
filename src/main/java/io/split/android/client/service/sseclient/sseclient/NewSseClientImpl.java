@@ -66,20 +66,15 @@ public class NewSseClientImpl implements NewSseClient {
 
     @Override
     public void disconnect() {
+        Logger.d("Disconnecting SSE client");
         if (status() != DISCONNECTED) {
             isDisconnectCalled.set(true);
             setDisconnectedStatus();
             if (mHttpStreamRequest != null) {
                 mHttpStreamRequest.close();
             }
+            Logger.d("SSE client disconnected");
         }
-    }
-
-    @Override
-    public void close() {
-        Logger.d("Closing SSE client");
-        setDisconnectedStatus();
-        disconnect();
     }
 
     private void setDisconnectedStatus() {
@@ -128,21 +123,21 @@ public class NewSseClientImpl implements NewSseClient {
                 }
             } else {
                 Logger.e("Streaming connection error. Http return code " + response.getHttpStatus());
-                mSseHandler.reportError(!response.isClientRelatedError());
+                mSseHandler.handleError(!response.isClientRelatedError());
             }
         } catch (URISyntaxException e) {
             logError("An error has ocurred while creating stream Url ", e);
-            mSseHandler.reportError(false);
+            mSseHandler.handleError(false);
         } catch (IOException e) {
             if (!isDisconnectCalled.getAndSet(false)) {
                 logError("An error has ocurred while parsing stream from: ", e);
-                mSseHandler.reportError(true);
+                mSseHandler.handleError(true);
             }
         } catch (Exception e) {
             logError("An unexpected error has ocurred while receiving stream events from: ", e);
-            mSseHandler.reportError(true);
+            mSseHandler.handleError(true);
         } finally {
-            close();
+            disconnect();
         }
     }
 
@@ -151,5 +146,3 @@ public class NewSseClientImpl implements NewSseClient {
     }
 
 }
-
-

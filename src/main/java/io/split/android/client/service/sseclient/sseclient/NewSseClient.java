@@ -12,8 +12,6 @@ public interface NewSseClient {
 
     void disconnect();
 
-    void close();
-
     void connect(SseJwtToken token, ConnectionListener connectionListener);
 
     public static interface ConnectionListener {
