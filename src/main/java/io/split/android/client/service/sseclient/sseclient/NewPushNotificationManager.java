@@ -36,10 +36,10 @@ public class NewPushNotificationManager {
 
 
     private final static int AUTHENTICATING = 1;
-    private final static int CONNECTING = 3;
-    private final static int CONNECTED = 4;
-    private final static int DISCONNECTED = 5;
-    private final static int STOPPED = 6;
+    private final static int CONNECTING = 2;
+    private final static int CONNECTED = 3;
+    private final static int DISCONNECTED = 4;
+    private final static int STOPPED = 5;
     private AtomicInteger mStatus;
 
     @VisibleForTesting(otherwise = PRIVATE)
