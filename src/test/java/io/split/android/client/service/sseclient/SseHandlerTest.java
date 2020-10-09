@@ -54,6 +54,7 @@ public class SseHandlerTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         mSseHandler = new SseHandler(mNotificationParser, mNotificationProcessor, mManagerKeeper, mBroadcasterChannel);
+        when(mNotificationParser.isError(any())).thenReturn(false);
     }
 
     @Test
@@ -141,11 +142,10 @@ public class SseHandlerTest {
     }
 
     public void incomingRetryableSseErrorTest(int code) {
-        IncomingNotification incomingNotification =
-                new IncomingNotification(NotificationType.ERROR, "", "", 100);
+
         StreamingError notification = new StreamingError("msg", code, code);
 
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mNotificationParser.isError(any())).thenReturn(true);
         when(mNotificationParser.parseError(anyString())).thenReturn(notification);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
@@ -166,11 +166,9 @@ public class SseHandlerTest {
     }
 
     public void incomingNonRetryableSseErrorTest(int code) {
-        IncomingNotification incomingNotification =
-                new IncomingNotification(NotificationType.ERROR, "", "", 100);
+        when(mNotificationParser.isError(any())).thenReturn(true);
         StreamingError notification = new StreamingError("msg", code, code);
 
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseError(anyString())).thenReturn(notification);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
@@ -186,7 +184,8 @@ public class SseHandlerTest {
                 new IncomingNotification(NotificationType.ERROR, "", "", 100);
         StreamingError notification = new StreamingError("msg", 50000, 50000);
 
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+
+        when(mNotificationParser.isError(any())).thenReturn(true);
         when(mNotificationParser.parseError(anyString())).thenReturn(notification);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
