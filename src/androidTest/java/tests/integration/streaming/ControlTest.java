@@ -80,7 +80,7 @@ public class ControlTest {
 
 
     @Test
-    public void controlt() throws IOException, InterruptedException {
+    public void controlNotification() throws IOException, InterruptedException {
 
         MySegmentEntity dummySegmenteEntity = new MySegmentEntity();
         dummySegmenteEntity.setUserKey(mUserKey.matchingKey());

@@ -34,6 +34,7 @@ import static java.lang.Thread.sleep;
 public class OccupancyTest {
     private static final String PUBLISHERS_PLACEHOLDER = "$PUBLISHERS$";
     private static final String CHANNEL_PLACEHOLDER = "$CHANNEL$";
+    private static final String TIMESTAMP_PLACEHOLDER = "$TIMESTAMP$";
     private static final String PRIMARY_CHANNEL = "control_pri";
     private static final String SECONDARY_CHANNEL = "control_sec";
     private static final String OCCUPANCY_MOCK_FILE = "push_msg-occupancy.txt";
@@ -83,14 +84,21 @@ public class OccupancyTest {
         int mySegmentsHitCountAfterDisable = mMySegmentsHitCount;
         int splitsHitCountAfterDisable = mSplitsHitCount;
 
-        // Should ignore this message
         pushOccupancy(SECONDARY_CHANNEL, 1);
-        sleep(300);
+        sleep(1000);
         mMySegmentsHitCount = 0;
         mSplitsHitCount = 0;
         sleep(4000);
         int mySegmentsHitCountAfterSecEnable = mMySegmentsHitCount;
         int splitsHitCountSecEnable = mSplitsHitCount;
+
+        pushOccupancy(SECONDARY_CHANNEL, 0);
+        sleep(300);
+        mMySegmentsHitCount = 0;
+        mSplitsHitCount = 0;
+        sleep(4000);
+        int mySegmentsHitCountAfterSecDisable = mMySegmentsHitCount;
+        int splitsHitCountSecDisable = mSplitsHitCount;
 
         // Should enable streaming
         pushOccupancy(PRIMARY_CHANNEL, 1);
@@ -105,9 +113,13 @@ public class OccupancyTest {
         Assert.assertTrue(mySegmentsHitCountAfterDisable > 0);
         Assert.assertTrue(splitsHitCountAfterDisable > 0);
 
+        // Hits == 2 means streaming enabled and sync all
+        Assert.assertEquals(0,mySegmentsHitCountAfterSecEnable);
+        Assert.assertEquals(0, splitsHitCountSecEnable);
+
         // Hits > 0 means secondary channel message ignored because pollling wasn't disabled
-        Assert.assertTrue(mySegmentsHitCountAfterSecEnable > 0);
-        Assert.assertTrue(splitsHitCountSecEnable > 0);
+        Assert.assertTrue(mySegmentsHitCountAfterSecDisable > 0);
+        Assert.assertTrue(splitsHitCountSecDisable > 0);
 
         // Hits == 0 means streaming enabled
         Assert.assertEquals(0, mySegmentsHitCountAfterEnable);
@@ -169,6 +181,7 @@ public class OccupancyTest {
     private void pushOccupancy(String channel, int publishers) {
         String message = mOccupancyMsgMock
                 .replace(CHANNEL_PLACEHOLDER, channel)
+                .replace(TIMESTAMP_PLACEHOLDER, String.valueOf(System.currentTimeMillis()))
                 .replace(PUBLISHERS_PLACEHOLDER, String.valueOf(publishers));
         try {
             mStreamingData.put(message + "" + "\n");
