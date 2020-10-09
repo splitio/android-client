@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
@@ -26,6 +27,7 @@ public class SseHandler {
     private final NotificationParser mNotificationParser;
     private final NotificationProcessor mNotificationProcessor;
     private final NotificationManagerKeeper mNotificationManagerKeeper;
+    private AtomicBoolean isStreamingPaused;
 
     public SseHandler(@NonNull NotificationParser notificationParser,
                       @NonNull NotificationProcessor notificationProcessor,
@@ -36,6 +38,7 @@ public class SseHandler {
         mNotificationProcessor = checkNotNull(notificationProcessor);
         mBroadcasterChannel = checkNotNull(broadcasterChannel);
         mNotificationManagerKeeper = checkNotNull(notificationManagerKeeper);
+        isStreamingPaused = new AtomicBoolean(false);
     }
 
     public void handleIncomingMessage(Map<String, String> values) {
@@ -62,7 +65,10 @@ public class SseHandler {
                 case SPLIT_KILL:
                 case SPLIT_UPDATE:
                 case MY_SEGMENTS_UPDATE:
-                    mNotificationProcessor.process(incomingNotification);
+                    if(!isStreamingPaused.get()) {
+                        mNotificationProcessor.process(incomingNotification);
+                    }
+                    break;
                 default:
                     Logger.w("SSE Handler: Unknown notification");
             }
@@ -78,6 +84,8 @@ public class SseHandler {
         try {
             ControlNotification notification = mNotificationParser.parseControl(incomingNotification.getJsonData());
             notification.setTimestamp(incomingNotification.getTimestamp());
+            // If push disabled also set isPaused = true to avoid process any notification until push shuts down
+            isStreamingPaused.set(!(notification.getControlType() == ControlNotification.ControlType.STREAMING_ENABLED));
             mNotificationManagerKeeper.handleControlNotification(notification);
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse control notification: "

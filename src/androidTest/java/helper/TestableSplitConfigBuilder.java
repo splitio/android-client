@@ -44,7 +44,7 @@ public class TestableSplitConfigBuilder {
     private int mAuthRetryBackoffBase = 1;
     private int mStreamingReconnectBackoffBase = 1;
     private boolean mEnableSslDevelopmentMode = false;
-    private SyncConfig mSyncConfig;
+    private SyncConfig mSyncConfig = SyncConfig.builder().build();
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
