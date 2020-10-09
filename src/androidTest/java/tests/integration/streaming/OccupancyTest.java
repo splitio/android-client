@@ -63,7 +63,7 @@ public class OccupancyTest {
 
         SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig();
 
-        SplitFactory splitFactory = IntegrationHelper.buidFactory(
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
                 config, mContext, httpClientMock);
 

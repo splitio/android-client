@@ -93,7 +93,7 @@ public class SplitsSyncProcessTest {
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
-        mFactory = IntegrationHelper.buidFactory(
+        mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
                 config, mContext, httpClientMock);
 

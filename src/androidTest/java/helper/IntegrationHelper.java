@@ -69,8 +69,8 @@ public class IntegrationHelper {
         return String.format("{\"splits\":[], \"since\": %d, \"till\": %d }", since, till);
     }
 
-    public static SplitFactory buidFactory(String apiToken, Key key, SplitClientConfig config,
-                                           Context context, HttpClient httpClient) {
+    public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
+                                            Context context, HttpClient httpClient) {
         return buildFactory(apiToken, key, config, context, httpClient, null);
     }
 
