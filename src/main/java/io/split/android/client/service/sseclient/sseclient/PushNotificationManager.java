@@ -23,14 +23,14 @@ import io.split.android.client.utils.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.reflect.Modifier.PRIVATE;
 
-public class NewPushNotificationManager {
+public class PushNotificationManager {
 
     private final static int POOL_SIZE = 1;
     private final static long AWAIT_SHUTDOWN_TIME = 5;
     private final ScheduledExecutorService mExecutor;
     private final PushManagerEventBroadcaster mBroadcasterChannel;
     private final SseAuthenticator mSseAuthenticator;
-    private final NewSseClient mSseClient;
+    private final SseClient mSseClient;
     private SseRefreshTokenTimer mRefreshTokenTimer;
     private SseDisconnectionTimer mDisconnectionTimer;
 
@@ -38,12 +38,12 @@ public class NewPushNotificationManager {
     private AtomicBoolean mIsStopped;
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public NewPushNotificationManager(@NonNull PushManagerEventBroadcaster broadcasterChannel,
-                                      @NonNull SseAuthenticator sseAuthenticator,
-                                      @NonNull NewSseClient sseClient,
-                                      @NonNull SseRefreshTokenTimer refreshTokenTimer,
-                                      @NonNull SseDisconnectionTimer disconnectionTimer,
-                                      @Nullable ScheduledExecutorService executor) {
+    public PushNotificationManager(@NonNull PushManagerEventBroadcaster broadcasterChannel,
+                                   @NonNull SseAuthenticator sseAuthenticator,
+                                   @NonNull SseClient sseClient,
+                                   @NonNull SseRefreshTokenTimer refreshTokenTimer,
+                                   @NonNull SseDisconnectionTimer disconnectionTimer,
+                                   @Nullable ScheduledExecutorService executor) {
         mBroadcasterChannel = checkNotNull(broadcasterChannel);
         mSseAuthenticator = checkNotNull(sseAuthenticator);
         mSseClient = checkNotNull(sseClient);
@@ -82,7 +82,7 @@ public class NewPushNotificationManager {
         Logger.d("Push notification manager resumed");
         mIsPaused.set(false);
         mDisconnectionTimer.cancel();
-        if(mSseClient.status() == NewSseClient.DISCONNECTED && !mIsStopped.get()) {
+        if(mSseClient.status() == SseClient.DISCONNECTED && !mIsStopped.get()) {
             connect();
         }
     }
@@ -166,7 +166,7 @@ public class NewPushNotificationManager {
                 return;
             }
 
-            mSseClient.connect(token, new NewSseClientImpl.ConnectionListener() {
+            mSseClient.connect(token, new SseClientImpl.ConnectionListener() {
                 @Override
                 public void onConnectionSuccess() {
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));

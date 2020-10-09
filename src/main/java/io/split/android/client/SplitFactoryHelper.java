@@ -29,9 +29,9 @@ import io.split.android.client.service.sseclient.notifications.SplitsChangeNotif
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
-import io.split.android.client.service.sseclient.sseclient.NewPushNotificationManager;
-import io.split.android.client.service.sseclient.sseclient.NewSseClient;
-import io.split.android.client.service.sseclient.sseclient.NewSseClientImpl;
+import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
+import io.split.android.client.service.sseclient.sseclient.SseClient;
+import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
 import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
@@ -153,12 +153,12 @@ class SplitFactoryHelper {
 
         NotificationManagerKeeper managerKeeper = new NotificationManagerKeeper(pushManagerEventBroadcaster);
         SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, managerKeeper, pushManagerEventBroadcaster);
-        NewSseClient sseClient = new NewSseClientImpl(streamingServiceUrl, httpClient, eventStreamParser, sseHandler);
+        SseClient sseClient = new SseClientImpl(streamingServiceUrl, httpClient, eventStreamParser, sseHandler);
         SseAuthenticator sseAuthenticator =
                 new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(), userKey, new SseJwtParser());
 
-        NewPushNotificationManager pushNotificationManager =
-                new NewPushNotificationManager(pushManagerEventBroadcaster, sseAuthenticator, sseClient,
+        PushNotificationManager pushNotificationManager =
+                new PushNotificationManager(pushManagerEventBroadcaster, sseAuthenticator, sseClient,
                         new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
                         new SseDisconnectionTimer(new SplitTaskExecutorImpl()),null);
 

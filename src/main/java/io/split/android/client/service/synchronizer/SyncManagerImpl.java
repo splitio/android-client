@@ -10,14 +10,13 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
-import io.split.android.client.service.sseclient.sseclient.NewPushNotificationManager;
+import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -27,7 +26,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
     private final SplitClientConfig mSplitClientConfig;
     private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final Synchronizer mSynchronizer;
-    private final NewPushNotificationManager mPushNotificationManager;
+    private final PushNotificationManager mPushNotificationManager;
     private SplitUpdatesWorker mSplitUpdateWorker;
     private MySegmentsUpdateWorker mMySegmentUpdateWorker;
     private BackoffCounterTimer mStreamingReconnectTimer;
@@ -38,7 +37,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull Synchronizer synchronizer,
-                           @NonNull NewPushNotificationManager pushNotificationManager,
+                           @NonNull PushNotificationManager pushNotificationManager,
                            @NonNull SplitUpdatesWorker splitUpdateWorker,
                            @NonNull MySegmentsUpdateWorker mySegmentUpdateWorker,
                            @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
