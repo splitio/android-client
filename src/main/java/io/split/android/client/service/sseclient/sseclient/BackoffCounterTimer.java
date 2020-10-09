@@ -34,10 +34,12 @@ public class BackoffCounterTimer implements SplitTaskExecutionListener {
         }
         mStreamingBackoffCounter.resetCounter();
         mTaskExecutor.stopTask(mTaskId);
+        mTaskId = null;
     }
 
     public void schedule() {
-        if(mTask == null) {
+        // mTaskId != null means task already scheduled, so return to avoid schedule a second one
+        if(mTask == null || mTaskId != null) {
             return;
         }
 

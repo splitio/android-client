@@ -41,8 +41,6 @@ public class SseConnectionExpiredTokenTest {
     int mSseConnHitCount;
     HttpStreamResponseMock mExpiredStreamResponse;
 
-    private static final int MAX_SSE_CONN_RETRIES = 3;
-
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
@@ -84,11 +82,11 @@ public class SseConnectionExpiredTokenTest {
         // Push token expired message and clouse connection
         pushTokenExpiredMessage();
         mSseExpiredTokenMessage.await(5, TimeUnit.SECONDS);
-        mStreamingData.put("\0"); // This is currently what server sends when token is expired
+        mExpiredStreamResponse.close();
 
 
         // Wait to sdk to react to stream closed
-        sleep(1000);
+        sleep(6000);
 
         // Wait for second connection to check full sse auth / sse connection cycle
         mSseConnLatch.await(5, TimeUnit.SECONDS);
@@ -121,7 +119,7 @@ public class SseConnectionExpiredTokenTest {
                     String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
-                    Logger.i("** SSE Auth hit");
+                    Logger.i("** SSE Auth hit: " + mSseConnAuthHitCount);
                     mSseConnAuthHitCount++;
                     return createResponse(200, IntegrationHelper.streamingEnabledToken());
 

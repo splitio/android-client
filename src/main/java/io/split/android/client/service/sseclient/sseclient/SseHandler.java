@@ -46,16 +46,17 @@ public class SseHandler {
         String messageData = values.get(DATA_FIELD);
 
         if (messageData != null) {
-            IncomingNotification incomingNotification
-                    = mNotificationParser.parseIncoming(messageData);
+            if(mNotificationParser.isError(values)) {
+                handleError(messageData);
+                return;
+            }
+
+            IncomingNotification incomingNotification = mNotificationParser.parseIncoming(messageData);
             if (incomingNotification == null) {
                 return;
             }
 
             switch (incomingNotification.getType()) {
-                case ERROR:
-                    handleError(incomingNotification);
-                    break;
                 case CONTROL:
                     handleControlNotification(incomingNotification);
                     break;
@@ -112,10 +113,10 @@ public class SseHandler {
         }
     }
 
-    private void handleError(IncomingNotification incomingNotification) {
+    private void handleError(String jsonData) {
 
         try {
-            StreamingError errorNotification = mNotificationParser.parseError(incomingNotification.getJsonData());
+            StreamingError errorNotification = mNotificationParser.parseError(jsonData);
             Logger.w("Streaming error notification received: " + errorNotification.getMessage());
             if(errorNotification.shouldBeIgnored()) {
                 Logger.w("Error ignored");
@@ -128,7 +129,7 @@ public class SseHandler {
 
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse occupancy notification: "
-                    + incomingNotification.getJsonData() + " -> " + e.getLocalizedMessage());
+                    + jsonData + " -> " + e.getLocalizedMessage());
         } catch (Exception e) {
             Logger.e("Unexpected error while processing occupancy notification: " +
                     e.getLocalizedMessage());
