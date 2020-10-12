@@ -30,6 +30,8 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
+import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -162,7 +164,7 @@ public class SplitFactoryImpl implements SplitFactory {
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
-                context, config, apiToken, key.matchingKey(), databaseName));
+                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory());
 
         _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
                 splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer);

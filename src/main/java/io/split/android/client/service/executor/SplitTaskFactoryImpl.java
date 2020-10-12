@@ -74,17 +74,17 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitsSyncTask createSplitsSyncTask(boolean retryOnFail, boolean checkCacheExpiration) {
+    public SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration) {
 
-        return new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), retryOnFail, checkCacheExpiration,
+        return new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), checkCacheExpiration,
                 mSplitClientConfig.cacheExpirationInSeconds(), mSplitsFilterQueryString);
     }
 
     @Override
-    public MySegmentsSyncTask createMySegmentsSyncTask(boolean retryOnFail) {
+    public MySegmentsSyncTask createMySegmentsSyncTask() {
         return new MySegmentsSyncTask(
                 mSplitApiFacade.getMySegmentsFetcher(),
-                mSplitsStorageContainer.getMySegmentsStorage(), retryOnFail);
+                mSplitsStorageContainer.getMySegmentsStorage());
     }
 
     @Override

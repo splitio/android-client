@@ -23,14 +23,12 @@ public class SplitsSyncTask implements SplitTask {
     private final String mSplitsFilterQueryString;
 
     private final SplitsStorage mSplitsStorage;
-    private final boolean mRetryOnFail;
     private final boolean mCheckCacheExpiration;
     private final long mCacheExpirationInSeconds;
     private final SplitsSyncHelper mSplitsSyncHelper;
 
     public SplitsSyncTask(SplitsSyncHelper splitsSyncHelper,
                           SplitsStorage splitsStorage,
-                          boolean retryOnFail,
                           boolean checkCacheExpiration,
                           long cacheExpirationInSeconds,
                           String splitsFilterQueryString) {
@@ -39,7 +37,6 @@ public class SplitsSyncTask implements SplitTask {
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
         mCacheExpirationInSeconds = cacheExpirationInSeconds;
         mCheckCacheExpiration = checkCacheExpiration;
-        mRetryOnFail = retryOnFail;
         mSplitsFilterQueryString = splitsFilterQueryString;
     }
 
@@ -52,11 +49,6 @@ public class SplitsSyncTask implements SplitTask {
 
         boolean shouldClearExpiredCache = mCheckCacheExpiration &&
                 mSplitsSyncHelper.cacheHasExpired(storedChangeNumber, updateTimestamp, mCacheExpirationInSeconds);
-        if (shouldClearExpiredCache) {
-            Logger.d("Removing expirated cache");
-            mSplitsStorage.clear();
-            storedChangeNumber = -1;
-        }
 
         boolean splitsFilterHasChanged = splitsFilterHasChanged(storedSplitsFilterQueryString);
 
@@ -67,10 +59,7 @@ public class SplitsSyncTask implements SplitTask {
 
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
-        if(mRetryOnFail) {
-            return mSplitsSyncHelper.syncUntilSuccess(params, splitsFilterHasChanged && !shouldClearExpiredCache);
-        }
-        return mSplitsSyncHelper.sync(params);
+        return mSplitsSyncHelper.sync(params, splitsFilterHasChanged || shouldClearExpiredCache);
     }
 
     private boolean splitsFilterHasChanged(String storedSplitsFilterQueryString) {
