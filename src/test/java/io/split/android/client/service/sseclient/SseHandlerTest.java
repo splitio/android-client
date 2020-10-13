@@ -54,6 +54,7 @@ public class SseHandlerTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         mSseHandler = new SseHandler(mNotificationParser, mNotificationProcessor, mManagerKeeper, mBroadcasterChannel);
+        when(mNotificationParser.isError(any())).thenReturn(false);
     }
 
     @Test
@@ -66,6 +67,7 @@ public class SseHandlerTest {
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseSplitUpdate(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
@@ -81,6 +83,7 @@ public class SseHandlerTest {
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseSplitKill(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
@@ -96,10 +99,27 @@ public class SseHandlerTest {
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
         verify(mNotificationProcessor).process(incomingNotification);
+    }
+
+    @Test
+    public void streamingPaused() {
+
+        IncomingNotification incomingNotification =
+                new IncomingNotification(NotificationType.MY_SEGMENTS_UPDATE, "", "", 100);
+        MySegmentChangeNotification notification = new MySegmentChangeNotification();
+
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(false);
+
+        mSseHandler.handleIncomingMessage(buildMessage("{}"));
+
+        verify(mNotificationProcessor, never()).process(incomingNotification);
     }
 
     @Test
@@ -141,11 +161,10 @@ public class SseHandlerTest {
     }
 
     public void incomingRetryableSseErrorTest(int code) {
-        IncomingNotification incomingNotification =
-                new IncomingNotification(NotificationType.ERROR, "", "", 100);
+
         StreamingError notification = new StreamingError("msg", code, code);
 
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mNotificationParser.isError(any())).thenReturn(true);
         when(mNotificationParser.parseError(anyString())).thenReturn(notification);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
@@ -166,11 +185,9 @@ public class SseHandlerTest {
     }
 
     public void incomingNonRetryableSseErrorTest(int code) {
-        IncomingNotification incomingNotification =
-                new IncomingNotification(NotificationType.ERROR, "", "", 100);
+        when(mNotificationParser.isError(any())).thenReturn(true);
         StreamingError notification = new StreamingError("msg", code, code);
 
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseError(anyString())).thenReturn(notification);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
@@ -186,7 +203,8 @@ public class SseHandlerTest {
                 new IncomingNotification(NotificationType.ERROR, "", "", 100);
         StreamingError notification = new StreamingError("msg", 50000, 50000);
 
-        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+
+        when(mNotificationParser.isError(any())).thenReturn(true);
         when(mNotificationParser.parseError(anyString())).thenReturn(notification);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));

@@ -5,13 +5,16 @@ import androidx.annotation.NonNull;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
+import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
+import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.notifications.StreamingError;
 import io.split.android.client.utils.Logger;
 
@@ -41,16 +44,17 @@ public class SseHandler {
         String messageData = values.get(DATA_FIELD);
 
         if (messageData != null) {
-            IncomingNotification incomingNotification
-                    = mNotificationParser.parseIncoming(messageData);
+            if(mNotificationParser.isError(values)) {
+                handleError(messageData);
+                return;
+            }
+
+            IncomingNotification incomingNotification = mNotificationParser.parseIncoming(messageData);
             if (incomingNotification == null) {
                 return;
             }
 
             switch (incomingNotification.getType()) {
-                case ERROR:
-                    handleError(incomingNotification);
-                    break;
                 case CONTROL:
                     handleControlNotification(incomingNotification);
                     break;
@@ -60,7 +64,10 @@ public class SseHandler {
                 case SPLIT_KILL:
                 case SPLIT_UPDATE:
                 case MY_SEGMENTS_UPDATE:
-                    mNotificationProcessor.process(incomingNotification);
+                    if(mNotificationManagerKeeper.isStreamingActive()) {
+                        mNotificationProcessor.process(incomingNotification);
+                    }
+                    break;
                 default:
                     Logger.w("SSE Handler: Unknown notification");
             }
@@ -74,8 +81,9 @@ public class SseHandler {
 
     private void handleControlNotification(IncomingNotification incomingNotification) {
         try {
-            mNotificationManagerKeeper.handleControlNotification(
-                    mNotificationParser.parseControl(incomingNotification.getJsonData()));
+            ControlNotification notification = mNotificationParser.parseControl(incomingNotification.getJsonData());
+            notification.setTimestamp(incomingNotification.getTimestamp());
+            mNotificationManagerKeeper.handleControlNotification(notification);
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse control notification: "
                     + incomingNotification.getJsonData() + " -> " + e.getLocalizedMessage());
@@ -88,8 +96,10 @@ public class SseHandler {
     private void handleOccupancyNotification(IncomingNotification incomingNotification) {
 
         try {
-            mNotificationManagerKeeper.handleOccupancyNotification(
-                    mNotificationParser.parseOccupancy(incomingNotification.getJsonData()));
+            OccupancyNotification notification = mNotificationParser.parseOccupancy(incomingNotification.getJsonData());
+            notification.setChannel(incomingNotification.getChannel());
+            notification.setTimestamp(incomingNotification.getTimestamp());
+            mNotificationManagerKeeper.handleOccupancyNotification(notification);
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse occupancy notification: "
                     + incomingNotification.getJsonData() + " -> " + e.getLocalizedMessage());
@@ -99,10 +109,10 @@ public class SseHandler {
         }
     }
 
-    private void handleError(IncomingNotification incomingNotification) {
+    private void handleError(String jsonData) {
 
         try {
-            StreamingError errorNotification = mNotificationParser.parseError(incomingNotification.getJsonData());
+            StreamingError errorNotification = mNotificationParser.parseError(jsonData);
             Logger.w("Streaming error notification received: " + errorNotification.getMessage());
             if(errorNotification.shouldBeIgnored()) {
                 Logger.w("Error ignored");
@@ -115,7 +125,7 @@ public class SseHandler {
 
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse occupancy notification: "
-                    + incomingNotification.getJsonData() + " -> " + e.getLocalizedMessage());
+                    + jsonData + " -> " + e.getLocalizedMessage());
         } catch (Exception e) {
             Logger.e("Unexpected error while processing occupancy notification: " +
                     e.getLocalizedMessage());

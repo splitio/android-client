@@ -14,6 +14,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
+import io.split.android.client.service.sseclient.sseclient.NewPushNotificationManager;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -32,8 +33,9 @@ public class SyncManagerTest {
 
     @Mock
     Synchronizer mSynchronizer;
+
     @Mock
-    PushNotificationManager mPushNotificationManager;
+    NewPushNotificationManager mPushNotificationManager;
 
     @Spy
     PushManagerEventBroadcaster mPushManagerEventBroadcaster;

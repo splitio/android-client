@@ -10,6 +10,11 @@ public class NewSseClientMock implements NewSseClient {
     public CountDownLatch mConnectLatch;
 
     @Override
+    public int status() {
+        return 0;
+    }
+
+    @Override
     public void disconnect() {
 
     }

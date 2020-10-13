@@ -36,7 +36,7 @@ public class NotificationManagerKeeper {
     Map<String, Publisher> mPublishers = Maps.newConcurrentMap();
     private PushManagerEventBroadcaster mBroadcasterChannel;
     private AtomicLong mLastControlTimestamp = new AtomicLong(0);
-    AtomicBoolean mIsStreamingActive = new AtomicBoolean(true);
+    private AtomicBoolean mIsStreamingActive = new AtomicBoolean(true);
 
     public NotificationManagerKeeper(PushManagerEventBroadcaster broadcasterChannel) {
         mBroadcasterChannel = broadcasterChannel;
@@ -101,6 +101,10 @@ public class NotificationManagerKeeper {
         }
     }
 
+    public boolean isStreamingActive() {
+        return mIsStreamingActive.get();
+    }
+
     private synchronized int publishersCount() {
         return mPublishers.get(CHANNEL_PRI_KEY).count +  mPublishers.get(CHANNEL_SEC_KEY).count;
     }
@@ -131,5 +135,4 @@ public class NotificationManagerKeeper {
         publisher.lastTimestamp = timestamp;
         publisher.count = publishersCount;
     }
-
 }

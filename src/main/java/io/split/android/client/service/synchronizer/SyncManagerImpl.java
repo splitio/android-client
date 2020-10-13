@@ -7,7 +7,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.sseclient.PushNotificationManager;
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
@@ -15,6 +17,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
+import io.split.android.client.service.sseclient.sseclient.NewPushNotificationManager;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -24,18 +27,18 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
     private final SplitClientConfig mSplitClientConfig;
     private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final Synchronizer mSynchronizer;
-    private final PushNotificationManager mPushNotificationManager;
+    private final NewPushNotificationManager mPushNotificationManager;
     private SplitUpdatesWorker mSplitUpdateWorker;
     private MySegmentsUpdateWorker mMySegmentUpdateWorker;
     private BackoffCounterTimer mStreamingReconnectTimer;
-
+    private AtomicBoolean mIsPaused;
 
 
     private AtomicBoolean isPollingEnabled;
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull Synchronizer synchronizer,
-                           @NonNull PushNotificationManager pushNotificationManager,
+                           @NonNull NewPushNotificationManager pushNotificationManager,
                            @NonNull SplitUpdatesWorker splitUpdateWorker,
                            @NonNull MySegmentsUpdateWorker mySegmentUpdateWorker,
                            @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
@@ -50,6 +53,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
         mStreamingReconnectTimer = checkNotNull(streamingReconnectTimer);
 
         isPollingEnabled = new AtomicBoolean(false);
+        mIsPaused = new AtomicBoolean(false);
     }
 
 
@@ -65,6 +69,15 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
             mSplitUpdateWorker.start();
             mMySegmentUpdateWorker.start();
             mPushNotificationManager.start();
+            mStreamingReconnectTimer.setTask(new SplitTask() {
+                @NonNull
+                @Override
+                public SplitTaskExecutionInfo execute() {
+                    Logger.d("Reconnecting to streaming");
+                     mPushNotificationManager.start();
+                    return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
+                }
+            });
 
         } else {
             mSynchronizer.startPeriodicFetching();
@@ -74,6 +87,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
 
     @Override
     public void pause() {
+        mIsPaused.set(true);
         mSynchronizer.pause();
         if(mSplitClientConfig.streamingEnabled()) {
             mPushNotificationManager.pause();
@@ -82,6 +96,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
 
     @Override
     public void resume() {
+        mIsPaused.set(false);
         mSynchronizer.resume();
         if(mSplitClientConfig.streamingEnabled()) {
             mPushNotificationManager.resume();
@@ -134,15 +149,17 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
             case PUSH_RETRYABLE_ERROR:
                 Logger.d("Push Subsystem recoverable error received.");
                 enablePolling();
-                mPushNotificationManager.stop();
-                mStreamingReconnectTimer.schedule();
+                // If sdk is paused (host app in bg) push manager should reconnect on resume
+                if(!mIsPaused.get()) {
+                    mStreamingReconnectTimer.schedule();
+                }
                 break;
 
             case PUSH_NON_RETRYABLE_ERROR:
                 Logger.d("Push Subsystem non recoverable error received.");
                 enablePolling();
-                mPushNotificationManager.stop();
                 mStreamingReconnectTimer.cancel();
+                mPushNotificationManager.stop();
                 break;
 
             case PUSH_DISABLED:

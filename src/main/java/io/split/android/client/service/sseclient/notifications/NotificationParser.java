@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 
 import com.google.gson.JsonSyntaxException;
 
+import java.util.Map;
+
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
@@ -11,7 +13,8 @@ import static io.split.android.client.service.sseclient.notifications.Notificati
 import static io.split.android.client.service.sseclient.notifications.NotificationType.OCCUPANCY;
 
 public class NotificationParser {
-    private final static String NAME_ERROR = "error";
+    private final static String EVENT_TYPE_ERROR = "error";
+    private static final String EVENT_TYPE_FIELD = "event";
 
     @NonNull
     public IncomingNotification parseIncoming(String jsonData) throws JsonSyntaxException {
@@ -19,9 +22,6 @@ public class NotificationParser {
         RawNotification rawNotification = null;
         try {
             rawNotification = Json.fromJson(jsonData, RawNotification.class);
-            if(isError(rawNotification)) {
-                return new IncomingNotification(ERROR, "", "", 0L);
-            }
         } catch (JsonSyntaxException e) {
             Logger.e("Unexpected error while parsing raw notification: " + e.getLocalizedMessage());
             return null;
@@ -71,7 +71,7 @@ public class NotificationParser {
         return Json.fromJson(jsonData, StreamingError.class);
     }
 
-    private boolean isError(RawNotification rawNotification) {
-        return NAME_ERROR.equals(rawNotification.getName());
+    public boolean isError(Map<String, String> values) {
+        return values != null && EVENT_TYPE_ERROR.equals(values.get(EVENT_TYPE_FIELD));
     }
 }

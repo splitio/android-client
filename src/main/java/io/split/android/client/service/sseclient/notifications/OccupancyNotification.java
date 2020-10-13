@@ -23,6 +23,14 @@ public class OccupancyNotification extends IncomingNotification {
         return metrics;
     }
 
+    public void setTimestamp(long timestamp) {
+        super.timestamp = timestamp;
+    }
+
+    public void setChannel(String channel) {
+        super.channel = channel;
+    }
+
     public boolean isControlPriChannel() {
         if(getChannel() == null) {
             return false;

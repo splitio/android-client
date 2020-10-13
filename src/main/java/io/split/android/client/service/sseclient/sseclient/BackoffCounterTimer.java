@@ -7,20 +7,21 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.utils.Logger;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
 public class BackoffCounterTimer implements SplitTaskExecutionListener {
 
     private SplitTaskExecutor mTaskExecutor;
-    private ReconnectBackoffCounter mStreamingBackoffCounter;
+    private ReconnectBackoffCounter mBackoffCounter;
     private SplitTask mTask;
     String mTaskId;
 
     public BackoffCounterTimer(@NonNull SplitTaskExecutor taskExecutor,
                                @NonNull ReconnectBackoffCounter streamingBackoffCounter) {
         mTaskExecutor = checkNotNull(taskExecutor);
-        mStreamingBackoffCounter = checkNotNull(streamingBackoffCounter);
+        mBackoffCounter = checkNotNull(streamingBackoffCounter);
     }
 
     public void setTask(@NonNull SplitTask task) {
@@ -31,17 +32,20 @@ public class BackoffCounterTimer implements SplitTaskExecutionListener {
         if(mTask == null) {
             return;
         }
-        mStreamingBackoffCounter.resetCounter();
+        mBackoffCounter.resetCounter();
         mTaskExecutor.stopTask(mTaskId);
+        mTaskId = null;
     }
 
     public void schedule() {
-        if(mTask == null) {
+        // mTaskId != null means task already scheduled, so return to avoid schedule a second one
+        if(mTask == null || mTaskId != null) {
             return;
         }
 
-        cancel();
-        mTaskId = mTaskExecutor.schedule(mTask, mStreamingBackoffCounter.getNextRetryTime(), this);
+        long retryTime = mBackoffCounter.getNextRetryTime();
+        Logger.d(String.format("Retrying reconnection in %d seconds", retryTime));
+        mTaskId = mTaskExecutor.schedule(mTask, retryTime, this);
     }
 
     @Override

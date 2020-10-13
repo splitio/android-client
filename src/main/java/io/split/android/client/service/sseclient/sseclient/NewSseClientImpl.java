@@ -27,7 +27,7 @@ import static java.lang.reflect.Modifier.PRIVATE;
 public class NewSseClientImpl implements NewSseClient {
 
     private final URI mTargetUrl;
-    private AtomicInteger mReadyState;
+    private AtomicInteger mStatus;
     private final HttpClient mHttpClient;
     private EventStreamParser mEventStreamParser;
     private AtomicBoolean isDisconnectCalled;
@@ -37,10 +37,6 @@ public class NewSseClientImpl implements NewSseClient {
 
     private BufferedReader mBufferedReader;
     private HttpStreamRequest mHttpStreamRequest = null;
-
-    final static int CONNECTING = 0;
-    final static int CLOSED = 2;
-    final static int OPEN = 1;
 
     private static final String CONTENT_TYPE_HEADER = "Content-Type";
     private static final String CONTENT_TYPE_VALUE_STREAM = "text/event-stream";
@@ -58,47 +54,47 @@ public class NewSseClientImpl implements NewSseClient {
         mHttpClient = checkNotNull(httpClient);
         mEventStreamParser = checkNotNull(eventStreamParser);
         mSseHandler = checkNotNull(sseHandler);
-        mReadyState = new AtomicInteger(CLOSED);
+        mStatus = new AtomicInteger(DISCONNECTED);
         isDisconnectCalled = new AtomicBoolean(false);
         mStringHelper = new StringHelper();
-        mReadyState.set(CLOSED);
+        mStatus.set(DISCONNECTED);
     }
 
-    public int readyState() {
-        return mReadyState.get();
+    public int status() {
+        return mStatus.get();
     }
 
     @Override
     public void disconnect() {
-        if (readyState() != CLOSED) {
-            isDisconnectCalled.set(true);
-            setCloseStatus();
-            if (mHttpStreamRequest != null) {
-                mHttpStreamRequest.close();
-            }
-        }
+        isDisconnectCalled.set(true);
+        close();
     }
 
     private void close() {
-        Logger.d("Shutting down SSE client");
-        disconnect();
-        setCloseStatus();
+        Logger.d("Disconnecting SSE client");
+        if (mStatus.getAndSet(DISCONNECTED) != DISCONNECTED) {
+            if (mHttpStreamRequest != null) {
+                mHttpStreamRequest.close();
+            }
+            Logger.d("SSE client disconnected");
+        }
     }
 
-    private void setCloseStatus() {
-        mReadyState.set(CLOSED);
+    private void setDisconnectedStatus() {
+        mStatus.set(DISCONNECTED);
     }
 
-    private void setReadyState(int state) {
-        mReadyState.set(state);
+    private void setStatus(int state) {
+        mStatus.set(state);
     }
 
     @Override
     public void connect(SseJwtToken token, ConnectionListener connectionListener) {
-        mReadyState.set(CONNECTING);
+        isDisconnectCalled.set(false);
+        mStatus.set(CONNECTING);
         String channels = mStringHelper.join(",", token.getChannels());
         String rawToken = token.getRawJwt();
-
+        boolean isErrorRetryable = true;
         mBufferedReader = null;
         try {
             URI url = new URIBuilder(mTargetUrl)
@@ -113,7 +109,7 @@ public class NewSseClientImpl implements NewSseClient {
                 mBufferedReader = response.getBufferedReader();
                 if (mBufferedReader != null) {
                     Logger.i("Streaming connection opened");
-                    mReadyState.set(OPEN);
+                    mStatus.set(CONNECTED);
                     connectionListener.onConnectionSuccess();
                     String inputLine;
                     Map<String, String> values = new HashMap<>();
@@ -131,21 +127,22 @@ public class NewSseClientImpl implements NewSseClient {
                 }
             } else {
                 Logger.e("Streaming connection error. Http return code " + response.getHttpStatus());
-                mSseHandler.handleError(!response.isClientRelatedError());
+                isErrorRetryable = !response.isClientRelatedError();
             }
         } catch (URISyntaxException e) {
             logError("An error has ocurred while creating stream Url ", e);
-            mSseHandler.handleError(false);
+            isErrorRetryable = false;
         } catch (IOException e) {
-            if (!isDisconnectCalled.getAndSet(false)) {
-                logError("An error has ocurred while parsing stream from ", e);
-                mSseHandler.handleError(true);
-            }
+            logError("An error has ocurred while parsing stream from: ", e);
+            isErrorRetryable = true;
         } catch (Exception e) {
-            logError("An unexpected error has ocurred while receiving stream events from ", e);
-            mSseHandler.handleError(true);
+            logError("An unexpected error has ocurred while receiving stream events from: ", e);
+            isErrorRetryable = true;
         } finally {
-            close();
+            if (!isDisconnectCalled.getAndSet(false)) {
+                mSseHandler.handleError(isErrorRetryable);
+                close();
+            }
         }
     }
 
@@ -154,5 +151,3 @@ public class NewSseClientImpl implements NewSseClient {
     }
 
 }
-
-
