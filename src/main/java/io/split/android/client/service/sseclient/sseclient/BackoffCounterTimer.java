@@ -14,14 +14,14 @@ import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 public class BackoffCounterTimer implements SplitTaskExecutionListener {
 
     private SplitTaskExecutor mTaskExecutor;
-    private ReconnectBackoffCounter mStreamingBackoffCounter;
+    private ReconnectBackoffCounter mBackoffCounter;
     private SplitTask mTask;
     String mTaskId;
 
     public BackoffCounterTimer(@NonNull SplitTaskExecutor taskExecutor,
                                @NonNull ReconnectBackoffCounter streamingBackoffCounter) {
         mTaskExecutor = checkNotNull(taskExecutor);
-        mStreamingBackoffCounter = checkNotNull(streamingBackoffCounter);
+        mBackoffCounter = checkNotNull(streamingBackoffCounter);
     }
 
     public void setTask(@NonNull SplitTask task) {
@@ -32,7 +32,7 @@ public class BackoffCounterTimer implements SplitTaskExecutionListener {
         if(mTask == null) {
             return;
         }
-        mStreamingBackoffCounter.resetCounter();
+        mBackoffCounter.resetCounter();
         mTaskExecutor.stopTask(mTaskId);
         mTaskId = null;
     }
@@ -43,8 +43,8 @@ public class BackoffCounterTimer implements SplitTaskExecutionListener {
             return;
         }
 
-        long retryTime = mStreamingBackoffCounter.getNextRetryTime();
-        Logger.d(String.format("Retrying streaming reconnection in %d seconds", retryTime));
+        long retryTime = mBackoffCounter.getNextRetryTime();
+        Logger.d(String.format("Retrying reconnection in %d seconds", retryTime));
         mTaskId = mTaskExecutor.schedule(mTask, retryTime, this);
     }
 

@@ -66,10 +66,13 @@ public class SseClientImpl implements SseClient {
 
     @Override
     public void disconnect() {
+        isDisconnectCalled.set(true);
+        close();
+    }
+
+    private void close() {
         Logger.d("Disconnecting SSE client");
-        if (status() != DISCONNECTED) {
-            isDisconnectCalled.set(true);
-            setDisconnectedStatus();
+        if (mStatus.getAndSet(DISCONNECTED) != DISCONNECTED) {
             if (mHttpStreamRequest != null) {
                 mHttpStreamRequest.close();
             }
@@ -87,10 +90,11 @@ public class SseClientImpl implements SseClient {
 
     @Override
     public void connect(SseJwtToken token, ConnectionListener connectionListener) {
+        isDisconnectCalled.set(false);
         mStatus.set(CONNECTING);
         String channels = mStringHelper.join(",", token.getChannels());
         String rawToken = token.getRawJwt();
-
+        boolean isErrorRetryable = true;
         mBufferedReader = null;
         try {
             URI url = new URIBuilder(mTargetUrl)
@@ -123,21 +127,22 @@ public class SseClientImpl implements SseClient {
                 }
             } else {
                 Logger.e("Streaming connection error. Http return code " + response.getHttpStatus());
-                mSseHandler.handleError(!response.isClientRelatedError());
+                isErrorRetryable = !response.isClientRelatedError();
             }
         } catch (URISyntaxException e) {
             logError("An error has ocurred while creating stream Url ", e);
-            mSseHandler.handleError(false);
+            isErrorRetryable = false;
         } catch (IOException e) {
-            if (!isDisconnectCalled.getAndSet(false)) {
-                logError("An error has ocurred while parsing stream from: ", e);
-                mSseHandler.handleError(true);
-            }
+            logError("An error has ocurred while parsing stream from: ", e);
+            isErrorRetryable = true;
         } catch (Exception e) {
             logError("An unexpected error has ocurred while receiving stream events from: ", e);
-            mSseHandler.handleError(true);
+            isErrorRetryable = true;
         } finally {
-            disconnect();
+            if (!isDisconnectCalled.getAndSet(false)) {
+                mSseHandler.handleError(isErrorRetryable);
+                close();
+            }
         }
     }
 
