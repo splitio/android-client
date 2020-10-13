@@ -27,7 +27,6 @@ public class SseHandler {
     private final NotificationParser mNotificationParser;
     private final NotificationProcessor mNotificationProcessor;
     private final NotificationManagerKeeper mNotificationManagerKeeper;
-    private AtomicBoolean isStreamingPaused;
 
     public SseHandler(@NonNull NotificationParser notificationParser,
                       @NonNull NotificationProcessor notificationProcessor,
@@ -38,7 +37,6 @@ public class SseHandler {
         mNotificationProcessor = checkNotNull(notificationProcessor);
         mBroadcasterChannel = checkNotNull(broadcasterChannel);
         mNotificationManagerKeeper = checkNotNull(notificationManagerKeeper);
-        isStreamingPaused = new AtomicBoolean(false);
     }
 
     public void handleIncomingMessage(Map<String, String> values) {
@@ -66,7 +64,7 @@ public class SseHandler {
                 case SPLIT_KILL:
                 case SPLIT_UPDATE:
                 case MY_SEGMENTS_UPDATE:
-                    if(!isStreamingPaused.get()) {
+                    if(mNotificationManagerKeeper.isStreamingActive()) {
                         mNotificationProcessor.process(incomingNotification);
                     }
                     break;
@@ -85,8 +83,6 @@ public class SseHandler {
         try {
             ControlNotification notification = mNotificationParser.parseControl(incomingNotification.getJsonData());
             notification.setTimestamp(incomingNotification.getTimestamp());
-            // If push disabled also set isPaused = true to avoid process any notification until push shuts down
-            isStreamingPaused.set(!(notification.getControlType() == ControlNotification.ControlType.STREAMING_ENABLED));
             mNotificationManagerKeeper.handleControlNotification(notification);
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse control notification: "

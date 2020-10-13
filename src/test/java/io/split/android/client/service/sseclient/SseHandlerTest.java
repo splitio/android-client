@@ -67,6 +67,7 @@ public class SseHandlerTest {
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseSplitUpdate(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
@@ -82,6 +83,7 @@ public class SseHandlerTest {
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseSplitKill(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
@@ -97,10 +99,27 @@ public class SseHandlerTest {
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
         verify(mNotificationProcessor).process(incomingNotification);
+    }
+
+    @Test
+    public void streamingPaused() {
+
+        IncomingNotification incomingNotification =
+                new IncomingNotification(NotificationType.MY_SEGMENTS_UPDATE, "", "", 100);
+        MySegmentChangeNotification notification = new MySegmentChangeNotification();
+
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(false);
+
+        mSseHandler.handleIncomingMessage(buildMessage("{}"));
+
+        verify(mNotificationProcessor, never()).process(incomingNotification);
     }
 
     @Test

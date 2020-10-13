@@ -71,6 +71,7 @@ public class PushNotificationManager {
             @NonNull
             @Override
             public SplitTaskExecutionInfo execute() {
+                Logger.d("Disconnecting streaming while in background");
                 mSseClient.disconnect();
                 mRefreshTokenTimer.cancel();
                 return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
