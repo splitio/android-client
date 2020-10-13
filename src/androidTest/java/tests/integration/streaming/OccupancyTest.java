@@ -75,6 +75,7 @@ public class OccupancyTest {
 
         latch.await(40, TimeUnit.SECONDS);
         mSseConnectLatch.await(40, TimeUnit.SECONDS);
+
         mMySegmentsHitCount = 0;
         mSplitsHitCount = 0;
 
@@ -96,7 +97,7 @@ public class OccupancyTest {
         sleep(300);
         mMySegmentsHitCount = 0;
         mSplitsHitCount = 0;
-        sleep(4000);
+        sleep(5000);
         int mySegmentsHitCountAfterSecDisable = mMySegmentsHitCount;
         int splitsHitCountSecDisable = mSplitsHitCount;
 

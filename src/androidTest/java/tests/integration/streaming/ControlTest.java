@@ -78,7 +78,6 @@ public class ControlTest {
         mUserKey = IntegrationHelper.dummyUserKey();
     }
 
-
     @Test
     public void controlNotification() throws IOException, InterruptedException {
 
@@ -104,6 +103,7 @@ public class ControlTest {
         latch.await(5, TimeUnit.SECONDS);
         mSseConnectedLatch.await(5, TimeUnit.SECONDS);
 
+        sleep(300);
         MySegmentEntity mySegmentEntityReady = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
 
         // Update segments to test initial data ok
