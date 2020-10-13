@@ -3,9 +3,9 @@ package io.split.android.fake;
 import java.util.concurrent.CountDownLatch;
 
 import io.split.android.client.service.sseclient.SseJwtToken;
-import io.split.android.client.service.sseclient.sseclient.NewSseClient;
+import io.split.android.client.service.sseclient.sseclient.SseClient;
 
-public class NewSseClientMock implements NewSseClient {
+public class SseClientMock implements SseClient {
 
     public CountDownLatch mConnectLatch;
 

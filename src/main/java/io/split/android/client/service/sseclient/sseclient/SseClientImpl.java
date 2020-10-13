@@ -24,7 +24,7 @@ import io.split.android.client.utils.StringHelper;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.reflect.Modifier.PRIVATE;
 
-public class NewSseClientImpl implements NewSseClient {
+public class SseClientImpl implements SseClient {
 
     private final URI mTargetUrl;
     private AtomicInteger mStatus;
@@ -46,10 +46,10 @@ public class NewSseClientImpl implements NewSseClient {
     private static final String PUSH_NOTIFICATION_VERSION_VALUE = "1.1";
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public NewSseClientImpl(@NonNull URI uri,
-                            @NonNull HttpClient httpClient,
-                            @NonNull EventStreamParser eventStreamParser,
-                            @NonNull SseHandler sseHandler) {
+    public SseClientImpl(@NonNull URI uri,
+                         @NonNull HttpClient httpClient,
+                         @NonNull EventStreamParser eventStreamParser,
+                         @NonNull SseHandler sseHandler) {
         mTargetUrl = checkNotNull(uri);
         mHttpClient = checkNotNull(httpClient);
         mEventStreamParser = checkNotNull(eventStreamParser);

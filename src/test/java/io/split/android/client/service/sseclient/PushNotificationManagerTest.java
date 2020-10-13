@@ -5,7 +5,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.BufferedReader;
@@ -15,26 +14,20 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.network.HttpException;
-import io.split.android.client.network.HttpStreamRequest;
-import io.split.android.client.network.HttpStreamResponse;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
-import io.split.android.client.service.sseclient.sseclient.NewPushNotificationManager;
-import io.split.android.client.service.sseclient.sseclient.NewSseClient;
-import io.split.android.client.service.sseclient.sseclient.NewSseClientImpl;
+import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticationResult;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
-import io.split.android.fake.NewSseClientMock;
+import io.split.android.fake.SseClientMock;
 
 import static java.lang.Thread.sleep;
 import static org.mockito.ArgumentMatchers.any;
@@ -44,7 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class NewPushNotificationManagerTest {
+public class PushNotificationManagerTest {
 
     private static final String DUMMY_TOKEN = "DUMMY_TOKEN";
     private static final int POOL_SIZE = 1;
@@ -68,7 +61,7 @@ public class NewPushNotificationManagerTest {
     SseJwtToken mJwt;
 
 
-    NewPushNotificationManager mPushManager;
+    PushNotificationManager mPushManager;
 
     URI mUri;
 
@@ -80,9 +73,9 @@ public class NewPushNotificationManagerTest {
 
     @Test
     public void connectOk() throws InterruptedException, HttpException {
-        NewSseClientMock sseClient = new NewSseClientMock();
+        SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
-        mPushManager = new NewPushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         setupOkAuthResponse();
@@ -102,9 +95,9 @@ public class NewPushNotificationManagerTest {
 
     @Test
     public void connectClientError() throws InterruptedException, HttpException {
-        NewSseClientMock sseClient = new NewSseClientMock();
+        SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
-        mPushManager = new NewPushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         SseAuthenticationResult result = new SseAuthenticationResult(false, false, false, null);
@@ -120,9 +113,9 @@ public class NewPushNotificationManagerTest {
 
     @Test
     public void connectStreamingDisabled() throws InterruptedException, HttpException {
-        NewSseClientMock sseClient = new NewSseClientMock();
+        SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
-        mPushManager = new NewPushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         SseAuthenticationResult result = new SseAuthenticationResult(true, false, false, null);
@@ -138,9 +131,9 @@ public class NewPushNotificationManagerTest {
 
     @Test
     public void connectOtherError() throws InterruptedException, HttpException {
-        NewSseClientMock sseClient = new NewSseClientMock();
+        SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
-        mPushManager = new NewPushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         SseAuthenticationResult result = new SseAuthenticationResult(false, true, false, null);
@@ -156,9 +149,9 @@ public class NewPushNotificationManagerTest {
 
     @Test
     public void pause() throws InterruptedException, HttpException {
-        NewSseClientMock sseClient = new NewSseClientMock();
+        SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
-        mPushManager = new NewPushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
         setupOkAuthResponse();
         mPushManager.start();
@@ -172,9 +165,9 @@ public class NewPushNotificationManagerTest {
     @Test
     public void resume() throws InterruptedException, HttpException {
 
-        NewSseClientMock sseClient = new NewSseClientMock();
+        SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
-        mPushManager = new NewPushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
         setupOkAuthResponse();
         mPushManager.start();

@@ -24,8 +24,8 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpStreamRequest;
 import io.split.android.client.network.HttpStreamResponse;
-import io.split.android.client.service.sseclient.sseclient.NewSseClient;
-import io.split.android.client.service.sseclient.sseclient.NewSseClientImpl;
+import io.split.android.client.service.sseclient.sseclient.SseClient;
+import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class NewSseClientTest {
+public class SseClientTest {
 
     @Mock
     HttpClient mHttpClient;
@@ -53,7 +53,7 @@ public class NewSseClientTest {
 
     BlockingQueue mData;
 
-    NewSseClient mClient;
+    SseClient mClient;
 
     URI mUri;
 
@@ -61,7 +61,7 @@ public class NewSseClientTest {
     public void setup() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
         mUri = new URI("http://api/sse");
-        mClient = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        mClient = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         mData = new LinkedBlockingDeque();
     }
 
@@ -77,7 +77,7 @@ public class NewSseClientTest {
         when(response.getBufferedReader()).thenReturn(dummyData());
         when(request.execute()).thenReturn(response);
         when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
-        NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         client.connect(mJwt, connListener);
 
         onOpenLatch.await(1000, TimeUnit.MILLISECONDS);
@@ -104,7 +104,7 @@ public class NewSseClientTest {
 
         when(request.execute()).thenReturn(response);
         when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
-        NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         client.connect(mJwt, connListener);
 
         onOpenLatch.await(1000, TimeUnit.MILLISECONDS);
@@ -132,7 +132,7 @@ public class NewSseClientTest {
 
         when(request.execute()).thenReturn(response);
         when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
-        NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         client.connect(mJwt, connListener);
 
         onOpenLatch.await(1000, TimeUnit.MILLISECONDS);
@@ -157,7 +157,7 @@ public class NewSseClientTest {
 
         when(request.execute()).thenReturn(response);
         when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
-        NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         client.connect(mJwt, connListener);
 
         verify(mSseHandler, times(1)).handleError(false);
@@ -182,7 +182,7 @@ public class NewSseClientTest {
 
         when(request.execute()).thenReturn(response);
         when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
-        NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         client.connect(mJwt, connListener);
 
         verify(mSseHandler, times(1)).handleError(true);
@@ -205,7 +205,7 @@ public class NewSseClientTest {
 
         when(request.execute()).thenReturn(response);
         when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
-        NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         client.connect(mJwt, connListener);
 
         verify(mSseHandler, times(1)).handleError(true);
@@ -225,7 +225,7 @@ public class NewSseClientTest {
 
         when(request.execute()).thenReturn(response);
         when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
-        NewSseClient client = new NewSseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -304,7 +304,7 @@ public class NewSseClientTest {
         return new BufferedReader(new InputStreamReader(inputStream));
     }
 
-    private static class TestConnListener implements NewSseClientImpl.ConnectionListener {
+    private static class TestConnListener implements SseClientImpl.ConnectionListener {
         CountDownLatch mConnLatch;
         public TestConnListener(CountDownLatch connLatch) {
             mConnLatch = connLatch;
