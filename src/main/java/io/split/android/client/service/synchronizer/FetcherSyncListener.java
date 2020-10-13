@@ -28,8 +28,8 @@ class FetcherSyncListener implements SplitTaskExecutionListener {
     @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
         if (mIsFirstFetch.get() && taskInfo.getStatus().equals(SplitTaskExecutionStatus.SUCCESS)) {
-            mSplitEventsManager.notifyInternalEvent(mEventToFireOnFirstTime);
             mIsFirstFetch.set(false);
+            mSplitEventsManager.notifyInternalEvent(mEventToFireOnFirstTime);
         }
     }
 }
