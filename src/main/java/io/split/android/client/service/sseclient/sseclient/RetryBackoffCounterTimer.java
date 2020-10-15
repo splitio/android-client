@@ -49,6 +49,9 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
     }
 
     private void schedule() {
+        if(mTask == null) {
+            return;
+        }
         long retryTime = mStreamingBackoffCounter.getNextRetryTime();
         Logger.d(String.format("Retrying %s task in %d seconds", mTask.getClass().getSimpleName(),  retryTime));
         mTaskId = mTaskExecutor.schedule(mTask, retryTime, this);
