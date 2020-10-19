@@ -32,14 +32,14 @@ public class SyncManagerChannelMessageTest {
         BroadcastedEventListener l3 = Mockito.mock(BroadcastedEventListener.class);
 
         mChannel.register(l1);
-        mChannel.pushMessage(new PushStatusEvent(EventType.DISABLE_POLLING));
-        mChannel.pushMessage(new PushStatusEvent(EventType.DISABLE_POLLING));
+        mChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
+        mChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
 
         mChannel.register(l2);
-        mChannel.pushMessage(new PushStatusEvent(EventType.ENABLE_POLLING));
+        mChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
 
         mChannel.register(l3);
-        mChannel.pushMessage(new PushStatusEvent(EventType.ENABLE_POLLING));
+        mChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
 
         verify(l1, times(4)).onEvent(any(PushStatusEvent.class));
         verify(l2, times(2)).onEvent(any(PushStatusEvent.class));
@@ -50,9 +50,9 @@ public class SyncManagerChannelMessageTest {
     public void correctMessage() {
         BroadcastedEventListener l1 = Mockito.mock(BroadcastedEventListener.class);
 
-        PushStatusEvent m0 = new PushStatusEvent(EventType.DISABLE_POLLING);
-        PushStatusEvent m1 = new PushStatusEvent(EventType.DISABLE_POLLING);
-        PushStatusEvent m2 = new PushStatusEvent(EventType.ENABLE_POLLING);
+        PushStatusEvent m0 = new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP);
+        PushStatusEvent m1 = new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP);
+        PushStatusEvent m2 = new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN);
 
         mChannel.pushMessage(m0);
 
@@ -70,7 +70,7 @@ public class SyncManagerChannelMessageTest {
         BroadcastedEventListener l1 = Mockito.mock(BroadcastedEventListener.class);
         BroadcastedEventListener l2 = Mockito.mock(BroadcastedEventListener.class);
 
-        PushStatusEvent m1 = new PushStatusEvent(EventType.DISABLE_POLLING);
+        PushStatusEvent m1 = new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP);
 
         mChannel.pushMessage(m1);
 

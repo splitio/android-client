@@ -51,22 +51,21 @@ public class SplitBackgroundSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false);
         verify(mSplitsStorage, never()).clear();
     }
 
     @Test
     public void correctExecutionExpiredCache() throws HttpFetcherException {
 
-        when(mSplitsStorage.getTill()).thenReturn(-1L);
+        when(mSplitsStorage.getTill()).thenReturn(10L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(100L);
         when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(true);
         mTask = new SplitsSyncBackgroundTask(mSplitsSyncHelper, mSplitsStorage, 10000L);
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams);
-        verify(mSplitsStorage, times(1)).clear();
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, true);
     }
 
 

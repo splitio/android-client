@@ -58,7 +58,7 @@ public class SplitsSyncHelperTest {
         // should execute fetcher, update storage and avoid clearing splits cache
         when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams, false);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
         verify(mSplitsStorage, times(1)).update(any());
@@ -72,40 +72,13 @@ public class SplitsSyncHelperTest {
         when(mSplitsFetcher.execute(mDefaultParams))
                 .thenThrow(HttpFetcherException.class);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams, true);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
         verify(mSplitsStorage, never()).update(any());
+        verify(mSplitsStorage, never()).clear();
         verify(mSplitChangeProcessor, never()).process(mSplitChange);
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
-    }
-
-    @Test
-    public void correctSyncRetryExecution() throws HttpFetcherException {
-        when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
-
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.syncUntilSuccess(mDefaultParams);
-
-        verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
-        verify(mSplitsStorage, times(1)).update(any());
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
-        Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
-    }
-
-    @Test
-    public void fetcherSyncRetryException() throws HttpFetcherException {
-        when(mSplitsFetcher.execute(mDefaultParams))
-                .thenThrow(HttpFetcherException.class)
-                .thenThrow(HttpFetcherException.class)
-                .thenThrow(HttpFetcherException.class)
-                .thenReturn(mSplitChange);
-
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.syncUntilSuccess(mDefaultParams);
-
-        verify(mSplitsFetcher, times(4)).execute(mDefaultParams);
-        verify(mSplitsStorage, times(1)).update(any());
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
-        Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
     @Test
@@ -113,10 +86,11 @@ public class SplitsSyncHelperTest {
         when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
         doThrow(NullPointerException.class).when(mSplitsStorage).update(any(ProcessedSplitChange.class));
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.syncUntilSuccess(mDefaultParams);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams, true);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
         verify(mSplitsStorage, times(1)).update(any());
+        verify(mSplitsStorage, times(1)).clear();
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
 
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
@@ -126,7 +100,7 @@ public class SplitsSyncHelperTest {
     public void shouldClearStorageAfterFetch() throws HttpFetcherException {
         when(mSplitsFetcher.execute(mDefaultParams)).thenReturn(mSplitChange);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.syncUntilSuccess(mDefaultParams, true);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams, true);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams);
         verify(mSplitsStorage, times(1)).update(any());

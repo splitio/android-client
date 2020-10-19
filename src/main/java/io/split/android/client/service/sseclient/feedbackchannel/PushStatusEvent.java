@@ -10,7 +10,6 @@ public class PushStatusEvent {
          * Types of messages that can be pushed to the
          * Synchronization feedback channel
          */
-        DISABLE_POLLING, ENABLE_POLLING, STREAMING_CONNECTED,
         PUSH_SUBSYSTEM_UP, PUSH_SUBSYSTEM_DOWN, PUSH_RETRYABLE_ERROR, PUSH_NON_RETRYABLE_ERROR, PUSH_DISABLED
     }
 
