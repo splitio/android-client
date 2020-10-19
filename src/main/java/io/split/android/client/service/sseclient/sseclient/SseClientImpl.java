@@ -121,6 +121,7 @@ public class SseClientImpl implements SseClient {
                                     connectionListener.onConnectionSuccess();
                                     isConnectionConfirmed = true;
                                 } else {
+                                    Logger.d("Streaming error after connection");
                                     isErrorRetryable = true;
                                     break;
                                 }
