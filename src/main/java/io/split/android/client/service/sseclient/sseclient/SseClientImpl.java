@@ -90,6 +90,7 @@ public class SseClientImpl implements SseClient {
 
     @Override
     public void connect(SseJwtToken token, ConnectionListener connectionListener) {
+        boolean isConnectionConfirmed = false;
         isDisconnectCalled.set(false);
         mStatus.set(CONNECTING);
         String channels = mStringHelper.join(",", token.getChannels());
@@ -108,13 +109,22 @@ public class SseClientImpl implements SseClient {
             if (response.isSuccess()) {
                 mBufferedReader = response.getBufferedReader();
                 if (mBufferedReader != null) {
-                    Logger.i("Streaming connection opened");
+                    Logger.d("Streaming connection opened");
                     mStatus.set(CONNECTED);
-                    connectionListener.onConnectionSuccess();
                     String inputLine;
                     Map<String, String> values = new HashMap<>();
                     while ((inputLine = mBufferedReader.readLine()) != null) {
                         if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
+                            if(!isConnectionConfirmed) {
+                                if(mEventStreamParser.isKeepAlive(values) || mSseHandler.isConnectionConfirmed(values)) {
+                                    Logger.d("Streaming connection success");
+                                    connectionListener.onConnectionSuccess();
+                                    isConnectionConfirmed = true;
+                                } else {
+                                    isErrorRetryable = true;
+                                    break;
+                                }
+                            }
                             // Keep alive has to be handled by connection timeout
                             if (!mEventStreamParser.isKeepAlive(values)) {
                                 mSseHandler.handleIncomingMessage(values);

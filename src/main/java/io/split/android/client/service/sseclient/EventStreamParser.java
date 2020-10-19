@@ -6,6 +6,8 @@ import java.util.Map;
 
 public class EventStreamParser {
     public final static String EVENT_FIELD = "event";
+    public final static String DATA_FIELD = "data";
+    public final static String ID_FIELD = "data";
     public final static String KEEP_ALIVE_EVENT = "keepalive";
     private final static String FIELD_SEPARATOR = ":";
     private final static String KEEP_ALIVE_TOKEN = ":" + KEEP_ALIVE_EVENT;

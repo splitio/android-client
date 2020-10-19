@@ -72,8 +72,9 @@ public class SseClientTest {
         TestConnListener connListener = spy(new TestConnListener(onOpenLatch));
         HttpStreamRequest request = Mockito.mock(HttpStreamRequest.class);
         HttpStreamResponse response = Mockito.mock(HttpStreamResponse.class);
-
+        when(mSseHandler.isConnectionConfirmed(any())).thenReturn(true);
         when(response.isSuccess()).thenReturn(true);
+        when(mParser.parseLineAndAppendValue(any(), any())).thenReturn(true);
         when(response.getBufferedReader()).thenReturn(dummyData());
         when(request.execute()).thenReturn(response);
         when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
@@ -86,6 +87,27 @@ public class SseClientTest {
     }
 
     @Test
+    public void onConnectNotConfirmed() throws InterruptedException, HttpException {
+        CountDownLatch onOpenLatch = new CountDownLatch(1);
+
+        TestConnListener connListener = spy(new TestConnListener(onOpenLatch));
+        HttpStreamRequest request = Mockito.mock(HttpStreamRequest.class);
+        HttpStreamResponse response = Mockito.mock(HttpStreamResponse.class);
+        when(mSseHandler.isConnectionConfirmed(any())).thenReturn(false);
+        when(response.isSuccess()).thenReturn(true);
+        when(mParser.parseLineAndAppendValue(any(), any())).thenReturn(true);
+        when(response.getBufferedReader()).thenReturn(dummyData());
+        when(request.execute()).thenReturn(response);
+        when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        client.connect(mJwt, connListener);
+
+        onOpenLatch.await(1000, TimeUnit.MILLISECONDS);
+
+        verify(connListener, never()).onConnectionSuccess();
+    }
+
+    @Test
     public void onMessage() throws InterruptedException, HttpException, IOException {
         CountDownLatch onOpenLatch = new CountDownLatch(1);
 
@@ -94,6 +116,7 @@ public class SseClientTest {
 
         HttpStreamResponse response = Mockito.mock(HttpStreamResponse.class);
 
+        when(mSseHandler.isConnectionConfirmed(any())).thenReturn(true);
         when(response.isSuccess()).thenReturn(true);
         when(response.getBufferedReader()).thenReturn(dummyData());
         when(request.execute()).thenReturn(response);
@@ -122,6 +145,7 @@ public class SseClientTest {
 
         HttpStreamResponse response = Mockito.mock(HttpStreamResponse.class);
 
+        when(mSseHandler.isConnectionConfirmed(any())).thenReturn(true);
         when(response.isSuccess()).thenReturn(true);
         when(response.getBufferedReader()).thenReturn(dummyData());
         when(request.execute()).thenReturn(response);

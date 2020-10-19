@@ -5,8 +5,8 @@ import androidx.annotation.NonNull;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
@@ -21,7 +21,6 @@ import io.split.android.client.utils.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SseHandler {
-    private static final String DATA_FIELD = "data";
 
     private final PushManagerEventBroadcaster mBroadcasterChannel;
     private final NotificationParser mNotificationParser;
@@ -39,9 +38,17 @@ public class SseHandler {
         mNotificationManagerKeeper = checkNotNull(notificationManagerKeeper);
     }
 
+    public boolean isConnectionConfirmed(Map<String, String> values) {
+        // Is initial id message
+        if (values.get(EventStreamParser.ID_FIELD) != null && values.get(EventStreamParser.DATA_FIELD) == null &&
+                values.get(EventStreamParser.EVENT_FIELD) == null) {
+            return true;
+        }
+        return values.get(EventStreamParser.DATA_FIELD) != null && !mNotificationParser.isError(values);
+    }
     public void handleIncomingMessage(Map<String, String> values) {
 
-        String messageData = values.get(DATA_FIELD);
+        String messageData = values.get(EventStreamParser.DATA_FIELD);
 
         if (messageData != null) {
             if(mNotificationParser.isError(values)) {
