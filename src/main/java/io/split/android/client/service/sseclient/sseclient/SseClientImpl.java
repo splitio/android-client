@@ -118,8 +118,8 @@ public class SseClientImpl implements SseClient {
                             if(!isConnectionConfirmed) {
                                 if(mEventStreamParser.isKeepAlive(values) || mSseHandler.isConnectionConfirmed(values)) {
                                     Logger.d("Streaming connection success");
-                                    connectionListener.onConnectionSuccess();
                                     isConnectionConfirmed = true;
+                                    connectionListener.onConnectionSuccess();
                                 } else {
                                     Logger.d("Streaming error after connection");
                                     isErrorRetryable = true;
