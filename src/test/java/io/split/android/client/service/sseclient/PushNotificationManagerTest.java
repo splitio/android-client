@@ -1,6 +1,5 @@
 package io.split.android.client.service.sseclient;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -8,237 +7,195 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
+import io.split.android.client.network.HttpException;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
-import io.split.android.client.service.sseclient.notifications.ControlNotification;
-import io.split.android.client.service.sseclient.notifications.IncomingNotification;
-import io.split.android.client.service.sseclient.notifications.NotificationParser;
-import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
-import io.split.android.client.service.sseclient.notifications.NotificationType;
-import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
-import io.split.android.client.service.sseclient.notifications.StreamingMessageParser;
-import io.split.android.client.utils.Json;
+import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
+import io.split.android.client.service.sseclient.sseclient.SseAuthenticationResult;
+import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
+import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
+import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
+import io.split.android.fake.SseClientMock;
 
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.DISABLE_POLLING;
-import static io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType.ENABLE_POLLING;
+import static java.lang.Thread.sleep;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class PushNotificationManagerTest {
 
-    private static final String TOKEN = "THETOKEN";
+    private static final String DUMMY_TOKEN = "DUMMY_TOKEN";
+    private static final int POOL_SIZE = 1;
 
     @Mock
-    SplitClientConfig mSplitClientConfig;
+    ScheduledThreadPoolExecutor mExecutor;
 
     @Mock
-    SseClient mSseClient;
+    SseAuthenticator mAuthenticator;
 
     @Mock
     PushManagerEventBroadcaster mBroadcasterChannel;
 
     @Mock
-    SseConnectionManager mSseConnectionManager;
+    SseRefreshTokenTimer mRefreshTokenTimer;
 
     @Mock
-    NotificationParser mNotificationParser;
+    SseDisconnectionTimer mDisconnectionTimer;
 
     @Mock
-    StreamingMessageParser mStreamingMessageParser;
-
-    @Mock
-    NotificationProcessor mNotificationProcessor;
-
+    SseJwtToken mJwt;
 
 
     PushNotificationManager mPushManager;
 
+    URI mUri;
+
     @Before
-    public void setup() {
-
+    public void setup() throws URISyntaxException {
         MockitoAnnotations.initMocks(this);
-
-        mPushManager = new PushNotificationManager(mSseClient, mNotificationParser,
-                 mNotificationProcessor, mStreamingMessageParser, mBroadcasterChannel, mSseConnectionManager);
-    }
-
-
-    @Test
-    public void onMessageToProcess() {
-        List<String> channels = new ArrayList<>();
-        String data = "{}";
-        when(mNotificationParser.parseIncoming(anyString()))
-                .thenReturn(new IncomingNotification(NotificationType.SPLIT_KILL,
-                        "channel", "{}", 1L));
-
-        mPushManager.start();
-
-        mPushManager.onMessage(message(data));
-
-        verify(mNotificationProcessor, times(1))
-                .process(any(IncomingNotification.class));
+        mUri = new URI("http://api/sse");
     }
 
     @Test
-    public void onMessagePrimaryOccupancy() {
-        List<String> channels = new ArrayList<>();
-        channels.add("dummychannel");
-        String data = "{\"metrics\": {\"publishers\": 1}}";
-        OccupancyNotification occupancyNotification = Json.fromJson(data, OccupancyNotification.class);
-        when(mNotificationParser.parseIncoming(anyString()))
-                .thenReturn(new IncomingNotification(NotificationType.OCCUPANCY,
-                        "control_pri", data, 1L));
-        when(mNotificationParser.parseOccupancy(anyString()))
-                .thenReturn(occupancyNotification);
+    public void connectOk() throws InterruptedException, HttpException {
+        SseClientMock sseClient = new SseClientMock();
+        sseClient.mConnectLatch = new CountDownLatch(1);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+
+        setupOkAuthResponse();
 
         mPushManager.start();
-
-        // Enable polling prior to disable it
-        mPushManager.notifyPollingEnabled();
-        reset(mBroadcasterChannel);
-        mPushManager.onMessage(message(data));
-
-        verify(mNotificationProcessor, times(0))
-                .process(any(IncomingNotification.class));
-        ArgumentCaptor<Long> downNotificationTime = ArgumentCaptor.forClass(Long.class);
+        sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(DISABLE_POLLING, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_SUBSYSTEM_UP);
+
+        ArgumentCaptor<Long> issuedAt = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Long> expirationTime = ArgumentCaptor.forClass(Long.class);
+        verify(mRefreshTokenTimer, times(1)).schedule(issuedAt.capture(), expirationTime.capture());
+        Assert.assertEquals(1000L, issuedAt.getValue().longValue());
+        Assert.assertEquals(10000L, expirationTime.getValue().longValue());
     }
 
     @Test
-    public void onMessageNoPrimaryOccupancy() {
-        List<String> channels = new ArrayList<>();
-        channels.add("dummychannel");
-        String data = "{\"metrics\": {\"publishers\": 1}}";
-        OccupancyNotification occupancyNotification = Json.fromJson(data, OccupancyNotification.class);
-        when(mNotificationParser.parseIncoming(anyString()))
-                .thenReturn(new IncomingNotification(NotificationType.CONTROL,
-                        "control_sec", data, 1L));
-        when(mNotificationParser.parseOccupancy(anyString()))
-                .thenReturn(occupancyNotification);
+    public void connectClientError() throws InterruptedException, HttpException {
+        SseClientMock sseClient = new SseClientMock();
+        sseClient.mConnectLatch = new CountDownLatch(1);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+
+        SseAuthenticationResult result = new SseAuthenticationResult(false, false, false, null);
+
+        when(mAuthenticator.authenticate()).thenReturn(result);
 
         mPushManager.start();
-
-        // Enable polling prior to disable it
-        mPushManager.notifyPollingEnabled();
-        reset(mBroadcasterChannel);
-        mPushManager.onMessage(message(data));
-
-        verify(mBroadcasterChannel, never()).pushMessage(any());
-    }
-
-    @Test
-    public void onMessageError() {
-        genericTestOnMessage(new IncomingNotification(NotificationType.ERROR,
-                "", "", 1L));
-    }
-
-    @Test
-    public void onMessageStreamingDisabled() {
-        genericTestOnMessage(new IncomingNotification(NotificationType.CONTROL,
-                "control_pri", "", 100L));
-    }
-
-    private void genericTestOnMessage(IncomingNotification incomingNotification) {
-        ControlNotification streamingDisabledNotification
-                = Json.fromJson("{\"type\":\"CONTROL\",\"controlType\":\"STREAMING_DISABLED\"}", ControlNotification.class);
-        String keepAliveTaskId = "id1";
-        String refreshTokenTaskId = "id2";
-        List<String> channels = new ArrayList<>();
-        channels.add("dummychannel");
-        when(mNotificationParser.parseIncoming(anyString()))
-                .thenReturn(incomingNotification);
-        when(mNotificationParser.parseControl(anyString()))
-                .thenReturn(streamingDisabledNotification);
-        ;
-
-        mPushManager.start();
-        mPushManager.onSseAvailable();
-        reset(mBroadcasterChannel);
-        mPushManager.onMessage(message(""));
-
+        sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_NON_RETRYABLE_ERROR);
     }
 
     @Test
-    public void onMessageStreamingPaused() {
+    public void connectStreamingDisabled() throws InterruptedException, HttpException {
+        SseClientMock sseClient = new SseClientMock();
+        sseClient.mConnectLatch = new CountDownLatch(1);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
-        IncomingNotification incomingNotification = new IncomingNotification(NotificationType.CONTROL,
-                "control_pri", "", 100L);
-        ControlNotification streamingPausedNotification
-                = Json.fromJson("{\"type\":\"CONTROL\",\"controlType\":\"STREAMING_PAUSED\"}", ControlNotification.class);
-        List<String> channels = new ArrayList<>();
-        channels.add("dummychannel");
-        when(mNotificationParser.parseIncoming(anyString()))
-                .thenReturn(incomingNotification);
-        when(mNotificationParser.parseControl(anyString()))
-                .thenReturn(streamingPausedNotification);
+        SseAuthenticationResult result = new SseAuthenticationResult(true, false, false, null);
+
+        when(mAuthenticator.authenticate()).thenReturn(result);
 
         mPushManager.start();
-        mPushManager.onSseAvailable();
-        reset(mBroadcasterChannel);
-        mPushManager.onMessage(message(""));
-
+        sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(ENABLE_POLLING, messageCaptor.getValue().getMessage());
+        Assert.assertEquals(PushStatusEvent.EventType.PUSH_SUBSYSTEM_DOWN, messageCaptor.getValue().getMessage());
     }
 
     @Test
-    public void noProccessNotificationWhenPaused() {
+    public void connectOtherError() throws InterruptedException, HttpException {
+        SseClientMock sseClient = new SseClientMock();
+        sseClient.mConnectLatch = new CountDownLatch(1);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
-        IncomingNotification incomingNotification = new IncomingNotification(NotificationType.CONTROL,
-                "control_pri", "", 100L);
-        ControlNotification streamingDisabledNotification
-                = Json.fromJson("{\"type\":\"CONTROL\",\"controlType\":\"STREAMING_PAUSED\"}", ControlNotification.class);
-        String keepAliveTaskId = "id1";
-        String refreshTokenTaskId = "id2";
-        List<String> channels = new ArrayList<>();
-        channels.add("dummychannel");
-        String data = "{\"metrics\": {\"publishers\": 1}}";
-        OccupancyNotification occupancyNotification = Json.fromJson(data, OccupancyNotification.class);
-        when(mNotificationParser.parseIncoming(anyString()))
-                .thenReturn(incomingNotification);
-        when(mNotificationParser.parseControl(anyString()))
-                .thenReturn(streamingDisabledNotification);
+        SseAuthenticationResult result = new SseAuthenticationResult(false, true, false, null);
+
+        when(mAuthenticator.authenticate()).thenReturn(result);
 
         mPushManager.start();
-        mPushManager.onSseAvailable();
-        mPushManager.onMessage(message(data));
-
-        reset(mNotificationParser);
-        IncomingNotification splitKillNot = new IncomingNotification(NotificationType.SPLIT_KILL,
-                "control_pri", "", 100L);
-        when(mNotificationParser.parseIncoming(anyString()))
-                .thenReturn(splitKillNot);
-
-        mPushManager.onMessage(message(data));
-
-        verify(mNotificationProcessor, never()).process(any());
+        sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
+        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
+        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_RETRYABLE_ERROR);
     }
 
-    private Map<String, String> message(String data) {
-        Map<String, String> values = new HashMap<>();
-        values.put("data", data);
-        return values;
+    @Test
+    public void pause() throws InterruptedException, HttpException {
+        SseClientMock sseClient = new SseClientMock();
+        sseClient.mConnectLatch = new CountDownLatch(1);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+        setupOkAuthResponse();
+        mPushManager.start();
+        sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
+
+        mPushManager.pause();
+        verify(mDisconnectionTimer, times(1)).schedule(any());
+        verify(mDisconnectionTimer, never()).cancel();
     }
+
+    @Test
+    public void resume() throws InterruptedException, HttpException {
+
+        SseClientMock sseClient = new SseClientMock();
+        sseClient.mConnectLatch = new CountDownLatch(1);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+        setupOkAuthResponse();
+        mPushManager.start();
+        sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
+
+        mPushManager.pause();
+        mPushManager.resume();
+        verify(mDisconnectionTimer, times(1)).schedule(any());
+        verify(mDisconnectionTimer, times(1)).cancel();
+    }
+
+    private void setupOkAuthResponse() {
+        when(mJwt.getChannels()).thenReturn(Arrays.asList("dummy"));
+        when(mJwt.getIssuedAtTime()).thenReturn(1000L);
+        when(mJwt.getExpirationTime()).thenReturn(10000L);
+
+        when(mJwt.getRawJwt()).thenReturn(DUMMY_TOKEN);
+        SseAuthenticationResult result = new SseAuthenticationResult(true, true, true, mJwt);
+
+        when(mAuthenticator.authenticate()).thenReturn(result);
+    }
+
+    private BufferedReader dummyData() {
+        InputStream inputStream = new ByteArrayInputStream("hola".getBytes(Charset.forName("UTF-8")));
+
+        return new BufferedReader(new InputStreamReader(inputStream));
+    }
+
+
 }
+

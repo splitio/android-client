@@ -2,6 +2,7 @@ package tests.integration;
 
 import android.content.Context;
 
+import androidx.room.Room;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.common.reflect.TypeToken;
@@ -18,37 +19,25 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import helper.FileHelper;
-import helper.ImpressionListenerHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.SplitFilter;
-import io.split.android.client.SplitManager;
-import io.split.android.client.SplitResult;
 import io.split.android.client.SyncConfig;
 import io.split.android.client.api.Key;
-import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.impressions.Impression;
 import io.split.android.client.storage.db.GeneralInfoEntity;
-import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Json;
-import io.split.android.grammar.Treatments;
+import io.split.android.client.utils.Logger;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -88,7 +77,12 @@ public class SplitFetchSpecificSplitTest {
                 if (request.getPath().contains("/mySegments")) {
                     return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
                 } else if (request.getPath().contains("/splitChanges")) {
-                    mReceivedQueryString = request.getRequestUrl().query();
+                    Logger.d("Req: " + mCurSplitReqId + " -> qs =" + mReceivedQueryString);
+                    System.out.println("Req: " + mCurSplitReqId + " -> qs =" + mReceivedQueryString);
+                    if (mCurSplitReqId == 1) {
+                        mCurSplitReqId++;
+                        mReceivedQueryString = request.getRequestUrl().query();
+                    }
                     return new MockResponse().setResponseCode(200)
                             .setBody(IntegrationHelper.emptySplitChanges(-1, 10000));
                 } else {
@@ -105,12 +99,17 @@ public class SplitFetchSpecificSplitTest {
         CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
         mLatchTrack = new CountDownLatch(10);
         String apiKey = IntegrationHelper.dummyApiKeyAndDb().first;
-        String dataFolderName = IntegrationHelper.dummyApiKeyAndDb().second;
 
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        String expectedQs = "&names=ausgefüllt,split1,split2&prefixes=abc\u0223,pre1,pre2";
+
+        SplitRoomDatabase splitRoomDatabase = Room.inMemoryDatabaseBuilder(mContext,
+                SplitRoomDatabase.class)
+                .build();
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 2));
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING, expectedQs));
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000));
         SplitClient client;
 
         final String url = mWebServer.url("/").url().toString();
@@ -118,8 +117,8 @@ public class SplitFetchSpecificSplitTest {
                 .apiEndpoint(url).eventsEndpoint(url).build();
         Key key = new Key("CUSTOMER_ID");
 
-        SyncConfig syncConfig = SyncConfig.builder().addSplitFilter(SplitFilter.byName(Arrays.asList("split1", "split2","ausgefüllt")))
-        .addSplitFilter(SplitFilter.byPrefix(Arrays.asList("pre1", "pre2", "abc\u0223"))).build();
+        SyncConfig syncConfig = SyncConfig.builder().addSplitFilter(SplitFilter.byName(Arrays.asList("split1", "split2", "ausgefüllt")))
+                .addSplitFilter(SplitFilter.byPrefix(Arrays.asList("pre1", "pre2", "abc\u0223"))).build();
 
         SplitClientConfig config = SplitClientConfig.builder()
                 .serviceEndpoints(endpoints)
@@ -136,7 +135,7 @@ public class SplitFetchSpecificSplitTest {
                 .build();
 
 
-        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(apiKey, key, config, mContext, null, splitRoomDatabase);
 
         client = splitFactory.client();
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
@@ -145,7 +144,7 @@ public class SplitFetchSpecificSplitTest {
 
         latch.await(10, TimeUnit.SECONDS);
 
-        Assert.assertEquals("since=2&names=ausgefüllt,split1,split2&prefixes=abc\u0223,pre1,pre2", mReceivedQueryString);
+        Assert.assertEquals("since=2" + expectedQs, mReceivedQueryString);
 
         splitFactory.destroy();
     }

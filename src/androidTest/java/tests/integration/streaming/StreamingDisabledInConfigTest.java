@@ -61,7 +61,7 @@ public class StreamingDisabledInConfigTest {
 
         SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(false);
 
-        SplitFactory splitFactory = IntegrationHelper.buidFactory(
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
                 config, mContext, httpClientMock);
 

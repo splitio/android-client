@@ -5,7 +5,6 @@ import androidx.annotation.RestrictTo;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import io.split.android.client.SyncConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.MySegment;
@@ -22,7 +21,6 @@ import io.split.android.client.service.impressions.ImpressionsRequestBodySeriali
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
-import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.FetcherMetricsConfig;
 import io.split.android.engine.metrics.Metrics;

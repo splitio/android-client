@@ -25,7 +25,6 @@ import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
-import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.storage.SplitStorageContainer;
 
@@ -75,17 +74,17 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitsSyncTask createSplitsSyncTask(boolean retryOnFail, boolean checkCacheExpiration) {
+    public SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration) {
 
-        return new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), retryOnFail, checkCacheExpiration,
+        return new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), checkCacheExpiration,
                 mSplitClientConfig.cacheExpirationInSeconds(), mSplitsFilterQueryString);
     }
 
     @Override
-    public MySegmentsSyncTask createMySegmentsSyncTask(boolean retryOnFail) {
+    public MySegmentsSyncTask createMySegmentsSyncTask() {
         return new MySegmentsSyncTask(
                 mSplitApiFacade.getMySegmentsFetcher(),
-                mSplitsStorageContainer.getMySegmentsStorage(), retryOnFail);
+                mSplitsStorageContainer.getMySegmentsStorage());
     }
 
     @Override
@@ -96,12 +95,6 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public LoadSplitsTask createLoadSplitsTask() {
         return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage());
-    }
-
-    @Override
-    public SseAuthenticationTask createSseAuthenticationTask() {
-        return new SseAuthenticationTask(mSplitApiFacade.getSseAuthenticationFetcher(),
-                mUserKey, new SseJwtParser());
     }
 
     @Override

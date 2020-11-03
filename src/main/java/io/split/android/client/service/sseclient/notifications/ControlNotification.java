@@ -10,5 +10,9 @@ public class ControlNotification extends IncomingNotification {
     public ControlType getControlType() {
         return controlType;
     }
+
+    public void setTimestamp(long timestamp) {
+        super.timestamp = timestamp;
+    }
 }
 
