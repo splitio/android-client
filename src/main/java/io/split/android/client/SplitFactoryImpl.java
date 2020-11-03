@@ -58,6 +58,8 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
+import io.split.android.client.validators.KeyValidator;
+import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.ValidationErrorInfo;
@@ -90,6 +92,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
         setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
+        KeyValidator keyValidator = new KeyValidatorImpl();
         ValidationMessageLogger validationLogger = new ValidationMessageLoggerImpl();
 
         HttpClient defaultHttpClient;
@@ -105,8 +108,13 @@ public class SplitFactoryImpl implements SplitFactory {
             defaultHttpClient = httpClient;
         }
 
-        ValidationErrorInfo errorInfo = apiKeyValidator.validate(apiToken);
+        ValidationErrorInfo errorInfo = keyValidator.validate(key.matchingKey(), key.bucketingKey());
         String validationTag = "factory instantiation";
+        if (errorInfo != null) {
+            validationLogger.log(errorInfo, validationTag);
+        }
+
+        errorInfo = apiKeyValidator.validate(apiToken);
         if (errorInfo != null) {
             validationLogger.log(errorInfo, validationTag);
         }
@@ -132,7 +140,6 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             splitRoomDatabase = testDatabase;
             Logger.d("Using test database");
-           System.out.println("******** Using test database");
         }
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
