@@ -79,6 +79,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
             });
 
         } else {
+            isPollingEnabled.set(true);
             mSynchronizer.startPeriodicFetching();
         }
         mSynchronizer.startPeriodicRecording();
@@ -91,6 +92,9 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
         if(mSplitClientConfig.streamingEnabled()) {
             mPushNotificationManager.pause();
         }
+        if(isPollingEnabled.get()) {
+            mSynchronizer.stopPeriodicFetching();
+        }
     }
 
     @Override
@@ -99,6 +103,9 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
         mSynchronizer.resume();
         if(mSplitClientConfig.streamingEnabled()) {
             mPushNotificationManager.resume();
+        }
+        if(isPollingEnabled.get()) {
+            mSynchronizer.startPeriodicRecording();
         }
     }
 
