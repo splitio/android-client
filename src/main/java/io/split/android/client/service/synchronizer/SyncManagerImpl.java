@@ -79,7 +79,6 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
             });
 
         } else {
-            isPollingEnabled.set(true);
             mSynchronizer.startPeriodicFetching();
         }
         mSynchronizer.startPeriodicRecording();
