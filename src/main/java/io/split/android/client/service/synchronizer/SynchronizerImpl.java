@@ -184,10 +184,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     public void pause() {
         mTaskExecutor.pause();
+        stopPeriodicRecording();
     }
 
     public void resume() {
         mTaskExecutor.resume();
+        startPeriodicRecording();
     }
 
     @Override
