@@ -104,7 +104,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
             mPushNotificationManager.resume();
         }
         if(isPollingEnabled.get()) {
-            mSynchronizer.startPeriodicRecording();
+            mSynchronizer.startPeriodicFetching();
         }
     }
 
