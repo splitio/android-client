@@ -1,3 +1,8 @@
+2.6.7: (Nov 17, 2020)
+- Fixed issue when adding and removing lifecycle observer in LifecycleManager
+- Updated streaming error handling logic
+- Fixed backoff algorithm issue
+
 2.6.6: (Ago 03, 2020)
 - Added `syncConfig.addFilter()` method to SDK configuration to pass a list of filters for the splits that will be downloaded. Read more in our docs.
 

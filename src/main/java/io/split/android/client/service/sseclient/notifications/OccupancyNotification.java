@@ -2,6 +2,9 @@ package io.split.android.client.service.sseclient.notifications;
 
 public class OccupancyNotification extends IncomingNotification {
 
+    private static final String CONTROL_PRI_TOKEN = "control_pri";
+    private static final String CONTROL_SEC_TOKEN = "control_sec";
+
     public OccupancyNotification() {
         super();
         this.type = NotificationType.OCCUPANCY;
@@ -18,5 +21,27 @@ public class OccupancyNotification extends IncomingNotification {
 
     public Metrics getMetrics() {
         return metrics;
+    }
+
+    public void setTimestamp(long timestamp) {
+        super.timestamp = timestamp;
+    }
+
+    public void setChannel(String channel) {
+        super.channel = channel;
+    }
+
+    public boolean isControlPriChannel() {
+        if(getChannel() == null) {
+            return false;
+        }
+        return getChannel().contains(CONTROL_PRI_TOKEN);
+    }
+
+    public boolean isControlSecChannel() {
+        if(getChannel() == null) {
+            return false;
+        }
+        return getChannel().contains(CONTROL_SEC_TOKEN);
     }
 }

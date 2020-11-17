@@ -3,7 +3,9 @@ package io.split.android.client.service.sseclient;
 import com.google.gson.annotations.SerializedName;
 
 public class SseAuthenticationResponse {
-    private boolean isValidApiKey = true;
+
+    private boolean isClientError = false;
+
     @SerializedName("pushEnabled")
     private boolean isStreamingEnabled;
     private String token;
@@ -11,12 +13,12 @@ public class SseAuthenticationResponse {
     public SseAuthenticationResponse() {
     }
 
-    public SseAuthenticationResponse(boolean isValidApiKey) {
-        this.isValidApiKey = isValidApiKey;
+    public SseAuthenticationResponse(boolean isClientError) {
+        this.isClientError = isClientError;
     }
 
-    public boolean isValidApiKey() {
-        return isValidApiKey;
+    public boolean isClientError() {
+        return isClientError;
     }
 
     public boolean isStreamingEnabled() {

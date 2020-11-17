@@ -6,6 +6,7 @@ import androidx.annotation.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
@@ -20,6 +21,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
 
@@ -45,18 +48,21 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private LoadLocalDataListener mLoadLocalMySegmentsListener;
 
 
-
     private String mSplitsFetcherTaskId;
     private String mMySegmentsFetcherTaskId;
     private String mEventsRecorderTaskId;
     private String mImpressionsRecorderTaskId;
+    private final RetryBackoffCounterTimer mSplitsSyncRetryTimer;
+    private final RetryBackoffCounterTimer mMySegmentsSyncRetryTimer;
+    private final RetryBackoffCounterTimer mSplitsUpdateRetryTimer;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
                             @NonNull SplitStorageContainer splitStorageContainer,
                             @NonNull SplitTaskFactory splitTaskFactory,
                             @NonNull SplitEventsManager splitEventsManager,
-                            @NonNull WorkManagerWrapper workManagerWrapper) {
+                            @NonNull WorkManagerWrapper workManagerWrapper,
+                            @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
@@ -64,8 +70,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mSplitEventsManager = checkNotNull(splitEventsManager);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
+        mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
+        mMySegmentsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
+        mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
 
         setupListeners();
+        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncTaskListener);
+        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(), mMySegmentsSyncTaskListener);
 
         if (mSplitClientConfig.synchronizeInBackground()) {
             mWorkManagerWrapper.setFetcherExecutionListener(this);
@@ -73,6 +84,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         } else {
             mWorkManagerWrapper.removeWork();
         }
+
+
     }
 
     @Override
@@ -90,29 +103,31 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createFilterSplitsInCacheTask(), null));
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(), mLoadLocalSplitsListener));
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createSplitsSyncTask(true, true), mSplitsSyncTaskListener));
+        enqueued.add(new SplitTaskBatchItem(new SplitTask() {
+            @NonNull
+            @Override
+            public SplitTaskExecutionInfo execute() {
+                synchronizeSplits();
+                return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
+            }
+        }, null));
         mTaskExecutor.executeSerially(enqueued);
     }
 
     @Override
     public void synchronizeSplits(long since) {
-        SplitTask splitsUpdateTask
-                = mSplitTaskFactory.createSplitsUpdateTask(since);
-        mTaskExecutor.submit(splitsUpdateTask, null);
+        mSplitsUpdateRetryTimer.setTask(mSplitTaskFactory.createSplitsUpdateTask(since), null);
+        mSplitsUpdateRetryTimer.start();
     }
 
     @Override
     public void synchronizeSplits() {
-        mTaskExecutor.submit(
-                mSplitTaskFactory.createSplitsSyncTask(true, true),
-                mSplitsSyncTaskListener);
+        mSplitsSyncRetryTimer.start();
     }
 
     @Override
     public void synchronizeMySegments() {
-        mTaskExecutor.submit(
-                mSplitTaskFactory.createMySegmentsSyncTask(true),
-                mMySegmentsSyncTaskListener);
+        mMySegmentsSyncRetryTimer.start();
     }
 
     @Override
@@ -169,14 +184,19 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     public void pause() {
         mTaskExecutor.pause();
+        stopPeriodicRecording();
     }
 
     public void resume() {
         mTaskExecutor.resume();
+        startPeriodicRecording();
     }
 
     @Override
     public void destroy() {
+        mSplitsSyncRetryTimer.stop();
+        mMySegmentsSyncRetryTimer.stop();
+        mSplitsUpdateRetryTimer.stop();
         flush();
     }
 
@@ -208,7 +228,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void scheduleSplitsFetcherTask() {
         mSplitsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createSplitsSyncTask(false, false),
+                mSplitTaskFactory.createSplitsSyncTask(false),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitsSyncTaskListener);
@@ -216,7 +236,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void scheduleMySegmentsFetcherTask() {
         mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createMySegmentsSyncTask(false),
+                mSplitTaskFactory.createMySegmentsSyncTask(),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.segmentsRefreshRate(), mMySegmentsSyncTaskListener);
     }

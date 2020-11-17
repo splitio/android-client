@@ -36,13 +36,13 @@ public class SplitsSyncBackgroundTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
         long storedChangeNumber = mSplitsStorage.getTill();
+        boolean cleanBeforeUpdate = false;
         if (mSplitsSyncHelper.cacheHasExpired(storedChangeNumber, mSplitsStorage.getUpdateTimestamp(), mCacheExpirationInSeconds)) {
-            Logger.d("Removing expirated cache");
-            mSplitsStorage.clear();
+            cleanBeforeUpdate = true;
             storedChangeNumber = -1;
         }
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
-        return mSplitsSyncHelper.sync(params);
+        return mSplitsSyncHelper.sync(params, cleanBeforeUpdate);
     }
 }

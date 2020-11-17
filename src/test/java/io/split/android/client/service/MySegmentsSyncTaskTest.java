@@ -38,7 +38,7 @@ public class MySegmentsSyncTaskTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage);
         loadMySegments();
     }
 
@@ -63,24 +63,8 @@ public class MySegmentsSyncTaskTest {
     }
 
     @Test
-    public void fetcherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true);
-
-        when(mMySegmentsFetcher.execute(new HashMap<>()))
-                .thenThrow(HttpFetcherException.class)
-                .thenThrow(HttpFetcherException.class)
-                .thenThrow(HttpFetcherException.class)
-                .thenReturn(mMySegments);
-
-        mTask.execute();
-
-        verify(mMySegmentsFetcher, times(4)).execute(new HashMap<>());
-        verify(mySegmentsStorage, times(1)).set(any());
-    }
-
-    @Test
     public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage);
         when(mMySegmentsFetcher.execute(new HashMap<>())).thenThrow(IllegalStateException.class);
 
         mTask.execute();

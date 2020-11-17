@@ -4,6 +4,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
@@ -12,6 +15,7 @@ import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.notifications.SplitKillNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.sseclient.notifications.StreamingError;
 
 public class NotificationParserTest {
 
@@ -100,9 +104,53 @@ public class NotificationParserTest {
     }
 
     @Test
-    public void processError() {
-        IncomingNotification incoming = mParser.parseIncoming(ERROR);
+    public void parseErrorMessage() {
 
-        Assert.assertEquals(NotificationType.ERROR, incoming.getType());
+        String data  = "{\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}";
+
+        StreamingError errorMsg = mParser.parseError(data);
+
+        Assert.assertEquals("Token expired", errorMsg.getMessage());
+        Assert.assertEquals(40142, errorMsg.getCode());
+        Assert.assertEquals(401, errorMsg.getStatusCode());
+    }
+
+    @Test
+    public void isError() {
+
+        // Check is event is error
+        Map<String, String> event = new HashMap<>();
+        event.put("event", "error");
+        event.put("data", "{{{\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}");
+
+        boolean isError = mParser.isError(event);
+
+        Assert.assertTrue(isError);
+    }
+
+    @Test
+    public void isNotError() {
+
+        // Check is event is error
+        Map<String, String> event = new HashMap<>();
+        event.put("event", "noerror");
+        event.put("data", "{{{\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}");
+
+        boolean isError = mParser.isError(event);
+
+        Assert.assertFalse(isError);
+    }
+
+    @Test
+    public void NoCrashIfisNullEventError() {
+
+        // Check if no crashing when null values are passed to the function
+        Map<String, String> event = new HashMap<>();
+        event.put("event", "noerror");
+        event.put("data", "{{{\"message\":\"Token expired\",\"code\":40142,\"statusCode\":401,\"href\":\"https://help.ably.io/error/40142\"}");
+
+        boolean isError = mParser.isError(null);
+
+        Assert.assertFalse(isError);
     }
 }

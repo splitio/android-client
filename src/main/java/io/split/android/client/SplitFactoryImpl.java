@@ -30,6 +30,8 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
+import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -56,6 +58,8 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
+import io.split.android.client.validators.KeyValidator;
+import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.ValidationErrorInfo;
@@ -78,26 +82,39 @@ public class SplitFactoryImpl implements SplitFactory {
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
         this(apiToken, key, config, context,
-                new HttpClientImpl.Builder()
-                        .setConnectionTimeout(config.connectionTimeout())
-                        .setReadTimeout(config.readTimeout())
-                        .setProxy(config.proxy())
-                        .enableSslDevelopmentMode(config.isSslDevelopmentModeEnabled())
-                        .setContext(context)
-                        .setProxyAuthenticator(config.authenticator()).build());
+                null, null);
     }
 
     private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
-                             Context context, HttpClient httpClient)
+                             Context context, HttpClient httpClient, SplitRoomDatabase testDatabase)
             throws URISyntaxException {
 
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
         setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
+        KeyValidator keyValidator = new KeyValidatorImpl();
         ValidationMessageLogger validationLogger = new ValidationMessageLoggerImpl();
 
-        ValidationErrorInfo errorInfo = apiKeyValidator.validate(apiToken);
+        HttpClient defaultHttpClient;
+        if(httpClient == null) {
+            defaultHttpClient = new HttpClientImpl.Builder()
+                    .setConnectionTimeout(config.connectionTimeout())
+                    .setReadTimeout(config.readTimeout())
+                    .setProxy(config.proxy())
+                    .enableSslDevelopmentMode(config.isSslDevelopmentModeEnabled())
+                    .setContext(context)
+                    .setProxyAuthenticator(config.authenticator()).build();
+        } else {
+            defaultHttpClient = httpClient;
+        }
+
+        ValidationErrorInfo errorInfo = keyValidator.validate(key.matchingKey(), key.bucketingKey());
         String validationTag = "factory instantiation";
+        if (errorInfo != null) {
+            validationLogger.log(errorInfo, validationTag);
+        }
+
+        errorInfo = apiKeyValidator.validate(apiToken);
         if (errorInfo != null) {
             validationLogger.log(errorInfo, validationTag);
         }
@@ -113,20 +130,28 @@ public class SplitFactoryImpl implements SplitFactory {
         _factoryMonitor.add(apiToken);
         _apiKey = apiToken;
 
+        // Check if test database available
+        SplitRoomDatabase splitRoomDatabase;
         String databaseName = factoryHelper.buildDatabaseName(config, apiToken);
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
-        checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, splitRoomDatabase);
+        if(testDatabase == null) {
 
-        httpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
+            splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
+            checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, splitRoomDatabase);
+        } else {
+            splitRoomDatabase = testDatabase;
+            Logger.d("Using test database");
+        }
+
+        defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
 
         URI eventsRootTarget = URI.create(config.eventsEndpoint());
 
-        HttpMetrics httpMetrics = HttpMetrics.create(httpClient, eventsRootTarget);
+        HttpMetrics httpMetrics = HttpMetrics.create(defaultHttpClient, eventsRootTarget);
         final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
 
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
 
-        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(context, key, factoryHelper.buildDatabaseName(config, apiToken));
+        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(splitRoomDatabase, context, key);
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 
@@ -137,7 +162,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
-                config, key, httpClient, cachedFireAndForgetMetrics, splitsFilterQueryString);
+                config, key, defaultHttpClient, cachedFireAndForgetMetrics, splitsFilterQueryString);
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
@@ -146,10 +171,10 @@ public class SplitFactoryImpl implements SplitFactory {
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
-                context, config, apiToken, key.matchingKey(), databaseName));
+                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory());
 
-        _syncManager = factoryHelper.buildSyncManager(config, _splitTaskExecutor,
-                splitTaskFactory, httpClient, synchronizer);
+        _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
+                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer);
 
         _syncManager.start();
 
@@ -185,7 +210,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of metrics 2");
                     customerImpressionListener.close();
                     Logger.i("Successful shutdown of ImpressionListener");
-                    httpClient.close();
+                    defaultHttpClient.close();
                     Logger.i("Successful shutdown of httpclient");
                     _manager.destroy();
                     Logger.i("Successful shutdown of manager");

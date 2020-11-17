@@ -55,7 +55,7 @@ public class StreamingInitializationTest {
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
-        SplitFactory splitFactory = IntegrationHelper.buidFactory(
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
                 config, mContext, httpClientMock);
 

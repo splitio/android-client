@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
-import io.split.android.client.service.sseclient.EventStreamParser;
 
 public class EventStreamParserTest {
     EventStreamParser mParser;

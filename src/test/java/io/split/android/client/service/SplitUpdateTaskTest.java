@@ -20,6 +20,7 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -55,7 +56,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).syncUntilSuccess(mDefaultParams);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false);
     }
 
     @Test
@@ -67,7 +68,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, never()).syncUntilSuccess(params);
+        verify(mSplitsSyncHelper, never()).sync(any(), anyBoolean());
     }
 
     @After
