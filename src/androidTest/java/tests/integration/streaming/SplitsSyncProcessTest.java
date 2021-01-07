@@ -3,6 +3,7 @@ package tests.integration.streaming;
 import android.content.Context;
 
 import androidx.core.util.Pair;
+import androidx.room.Room;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -52,8 +53,7 @@ public class SplitsSyncProcessTest {
     CountDownLatch mSplitsUpdateLatch;
 
     final static String MSG_SPLIT_UPDATE = "push_msg-split_update.txt";
-    final static String MSG_SPLIT_UPDATE_OLD = "push_msg-split_update_old_change_nb.old";
-    final static String MSG_SPLIT_KILL = "push_msg-split_kill.txt";
+    final static String MSG_SPLIT_UPDATE_OLD = "push_msg-split_update_old_change_nb.txt";
 
     private int mSplitChangesHitCount = 0;
 
@@ -76,7 +76,7 @@ public class SplitsSyncProcessTest {
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
         String dataFolderName = apiKeyAndDb.second;
-        mSplitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        mSplitRoomDatabase = Room.inMemoryDatabaseBuilder(mContext, SplitRoomDatabase.class).build();
         mSplitRoomDatabase.clearAllTables();
         mSplitRoomDatabase.generalInfoDao().update(
                 new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000 - 30));
@@ -93,9 +93,9 @@ public class SplitsSyncProcessTest {
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
-        mFactory = IntegrationHelper.buidFactory(
+        mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock, mSplitRoomDatabase);
 
         mClient = mFactory.client();
 
@@ -162,7 +162,7 @@ public class SplitsSyncProcessTest {
                     mLastChangeNumber = new Integer(uri.getQuery().split("=")[1]);
                     Logger.i("** Split Changes hit p: " + mLastChangeNumber);
                     mSplitsSyncLatch.countDown();
-                    if (mSplitChangesHitCount > 2) {
+                    if (mSplitChangesHitCount > 1) {
                         mSplitsUpdateLatch.countDown();
                         return createResponse(200, getSplitChanges(mSplitChangesHitCount));
                     }
@@ -195,6 +195,7 @@ public class SplitsSyncProcessTest {
 
     private void pushMessage(String fileName) {
         String message = loadMockedData(fileName);
+        message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
         try {
             mStreamingData.put(message + "" + "\n");
 

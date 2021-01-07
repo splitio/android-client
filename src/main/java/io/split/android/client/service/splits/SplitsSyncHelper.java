@@ -29,44 +29,12 @@ public class SplitsSyncHelper {
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
     }
 
-    public SplitTaskExecutionInfo syncUntilSuccess(Map<String, Object> params) {
-        return syncUntilSuccess(params, false);
-    }
-
-    public SplitTaskExecutionInfo syncUntilSuccess(Map<String, Object> params, boolean clearBeforeUpdate) {
-
-        ReconnectBackoffCounter backoffCounter = new ReconnectBackoffCounter(RETRY_BASE);
-        boolean success = false;
-
-        while (!success) {
-            try {
-                SplitChange splitChange = mSplitFetcher.execute(params);
-                ProcessedSplitChange processedSplitChange = mSplitChangeProcessor.process(splitChange);
-                if (clearBeforeUpdate) {
-                    mSplitsStorage.clear();
-                }
-                mSplitsStorage.update(processedSplitChange);
-                success = true;
-            } catch (HttpFetcherException e) {
-                logError("Network error while updating splits" + e.getLocalizedMessage());
-                try {
-                    Thread.sleep(backoffCounter.getNextRetryTime());
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
-                }
-            } catch (Exception e) {
-                logError("Unexpected error while updating splits" + e.getLocalizedMessage());
-                return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
-            }
-        }
-        Logger.d("Features have been updated");
-        return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
-    }
-
-    public SplitTaskExecutionInfo sync(Map<String, Object> params) {
+    public SplitTaskExecutionInfo sync(Map<String, Object> params, boolean clearBeforeUpdate) {
         try {
             SplitChange splitChange = mSplitFetcher.execute(params);
+            if (clearBeforeUpdate) {
+                mSplitsStorage.clear();
+            }
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
         } catch (HttpFetcherException e) {
             logError("Newtwork error while fetching splits" + e.getLocalizedMessage());
@@ -92,6 +60,6 @@ public class SplitsSyncHelper {
     }
 
     private void logError(String message) {
-        Logger.e("Error while executing splits syncUntilSuccess/update task: " + message);
+        Logger.e("Error while executing splits sync/update task: " + message);
     }
 }

@@ -76,7 +76,6 @@ public class ImpressionsRecorderTask implements SplitTask {
             return SplitTaskExecutionInfo.error(
                     SplitTaskType.IMPRESSIONS_RECORDER, data);
         }
-        Logger.d("Posting %d Split impressions", impressions.size());
         return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
     }
 

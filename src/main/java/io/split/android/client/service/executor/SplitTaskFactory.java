@@ -14,22 +14,19 @@ import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
-import io.split.android.client.service.sseauthentication.SseAuthenticationTask;
 
 public interface SplitTaskFactory {
     EventsRecorderTask createEventsRecorderTask();
 
     ImpressionsRecorderTask createImpressionsRecorderTask();
 
-    SplitsSyncTask createSplitsSyncTask(boolean retryOnFail, boolean checkCacheExpiration);
+    SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration);
 
-    MySegmentsSyncTask createMySegmentsSyncTask(boolean retryOnFail);
+    MySegmentsSyncTask createMySegmentsSyncTask();
 
     LoadMySegmentsTask createLoadMySegmentsTask();
 
     LoadSplitsTask createLoadSplitsTask();
-
-    SseAuthenticationTask createSseAuthenticationTask();
 
     SplitKillTask createSplitKillTask(Split split);
 

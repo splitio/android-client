@@ -3,6 +3,7 @@ package tests.integration.streaming;
 import android.content.Context;
 
 import androidx.core.util.Pair;
+import androidx.room.Room;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -69,7 +70,7 @@ public class MySegmentsSyncProcessTest {
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
         String dataFolderName = apiKeyAndDb.second;
-        mSplitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        mSplitRoomDatabase = Room.inMemoryDatabaseBuilder(mContext, SplitRoomDatabase.class).build();
         mSplitRoomDatabase.clearAllTables();
         mUserKey = IntegrationHelper.dummyUserKey();
     }
@@ -83,9 +84,9 @@ public class MySegmentsSyncProcessTest {
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
-        mFactory = IntegrationHelper.buidFactory(
+        mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock, mSplitRoomDatabase);
 
         mClient = mFactory.client();
 
@@ -93,9 +94,9 @@ public class MySegmentsSyncProcessTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
 
-        latch.await(40, TimeUnit.SECONDS);
-        mSplitsSyncLatch.await(40, TimeUnit.SECONDS);
-        mMySegmentsSyncLatch.await(40, TimeUnit.SECONDS);
+        latch.await(5, TimeUnit.SECONDS);
+        mSplitsSyncLatch.await(5, TimeUnit.SECONDS);
+        mMySegmentsSyncLatch.await(5, TimeUnit.SECONDS);
 
         testMySegmentsUpdate();
         sleep(500);
@@ -192,6 +193,7 @@ public class MySegmentsSyncProcessTest {
 
     private void pushMessage(String fileName) {
         String message = loadMockedData(fileName);
+        message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
         try {
             mStreamingData.put(message + "" + "\n");
             if(mMySegmentsPushLatch != null) {

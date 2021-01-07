@@ -2,8 +2,8 @@ package io.split.android.client.service.sseclient.notifications;
 
 public class IncomingNotification extends IncomingNotificationType {
     private String jsonData;
-    private String channel;
-    private long timestamp;
+    protected String channel;
+    protected long timestamp;
 
     public IncomingNotification() {
         super();

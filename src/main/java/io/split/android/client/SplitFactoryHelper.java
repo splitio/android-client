@@ -16,21 +16,27 @@ import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.EventStreamParser;
-import io.split.android.client.service.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
-import io.split.android.client.service.sseclient.SseClient;
-import io.split.android.client.service.sseclient.SseConnectionManager;
-import io.split.android.client.service.sseclient.SseConnectionManagerImpl;
+import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
-import io.split.android.client.service.sseclient.notifications.StreamingMessageParser;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
+import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
+import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
+import io.split.android.client.service.sseclient.sseclient.SseClient;
+import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
+import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
+import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
+import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
+import io.split.android.client.service.sseclient.sseclient.SseHandler;
+import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -61,8 +67,7 @@ class SplitFactoryHelper {
         return headersBuilder.build();
     }
 
-    SplitStorageContainer buildStorageContainer(Context context, Key key, String databaseName) {
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
+    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Context context, Key key) {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, key.matchingKey()),
@@ -73,7 +78,7 @@ class SplitFactoryHelper {
 
     String buildSplitsFilterQueryString(SplitClientConfig config) {
         SyncConfig syncConfig = config.syncConfig();
-        if(syncConfig != null) {
+        if (syncConfig != null) {
             return new FilterBuilder().addFilters(syncConfig.getFilters()).build();
         }
         return null;
@@ -106,9 +111,11 @@ class SplitFactoryHelper {
 
     }
 
-    SyncManager buildSyncManager(SplitClientConfig config,
+    SyncManager buildSyncManager(String userKey,
+                                 SplitClientConfig config,
                                  SplitTaskExecutor splitTaskExecutor,
                                  SplitTaskFactory splitTaskFactory,
+                                 SplitApiFacade splitApiFacade,
                                  HttpClient httpClient,
                                  Synchronizer synchronizer) {
 
@@ -132,20 +139,33 @@ class SplitFactoryHelper {
 
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
         EventStreamParser eventStreamParser = new EventStreamParser();
-        SseClient sseClient =
-                new SseClient(streamingServiceUrl,httpClient, eventStreamParser);
+//        SseClient sseClient =
+//                new SseClient(streamingServiceUrl,httpClient, eventStreamParser);
 
-        StreamingMessageParser streamingMessageParser = new StreamingMessageParser();
-        SseConnectionManager sseConnectionManager = new SseConnectionManagerImpl(sseClient, splitTaskExecutor, splitTaskFactory,
-                streamingMessageParser, new ReconnectBackoffCounter(config.authRetryBackoffBase()),
-                new ReconnectBackoffCounter(config.streamingReconnectBackoffBase()));
+//        StreamingMessageParser streamingMessageParser = new StreamingMessageParser();
+////        SseConnectionManager sseConnectionManager = new SseConnectionManagerImpl(sseClient, splitTaskExecutor, splitTaskFactory,
+////                streamingMessageParser, new ReconnectBackoffCounter(config.authRetryBackoffBase()),
+////                new ReconnectBackoffCounter(config.streamingReconnectBackoffBase()));
+////
+////        PushNotificationManager pushNotificationManager =
+////                new PushNotificationManager(sseClient, notificationParser, notificationProcessor, streamingMessageParser,
+////                        pushManagerEventBroadcaster, sseConnectionManager);
+
+        NotificationManagerKeeper managerKeeper = new NotificationManagerKeeper(pushManagerEventBroadcaster);
+        SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, managerKeeper, pushManagerEventBroadcaster);
+        SseClient sseClient = new SseClientImpl(streamingServiceUrl, httpClient, eventStreamParser, sseHandler);
+        SseAuthenticator sseAuthenticator =
+                new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(), userKey, new SseJwtParser());
 
         PushNotificationManager pushNotificationManager =
-                new PushNotificationManager(sseClient, notificationParser, notificationProcessor, streamingMessageParser,
-                        pushManagerEventBroadcaster, sseConnectionManager);
+                new PushNotificationManager(pushManagerEventBroadcaster, sseAuthenticator, sseClient,
+                        new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
+                        new SseDisconnectionTimer(new SplitTaskExecutorImpl()),null);
+
+        BackoffCounterTimer backoffReconnectTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
 
         return new SyncManagerImpl(
                 config, synchronizer, pushNotificationManager, splitUpdateWorker,
-                mySegmentUpdateWorker, pushManagerEventBroadcaster);
+                mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer);
     }
 }

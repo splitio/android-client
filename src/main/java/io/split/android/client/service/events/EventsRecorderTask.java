@@ -58,6 +58,7 @@ public class EventsRecorderTask implements SplitTask {
                     Logger.e("Event recorder task: Some events couldn't be sent" +
                             "Saving to send them in a new iteration: " +
                             e.getLocalizedMessage());
+                    e.printStackTrace();
                     failingEvents.addAll(events);
                 }
             }
