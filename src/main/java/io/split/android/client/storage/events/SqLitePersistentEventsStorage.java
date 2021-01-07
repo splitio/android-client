@@ -84,10 +84,7 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
     }
 
     private long expirationTime() {
-        long e = (System.currentTimeMillis() / 1000) - mExpirationPeriod;
-        Logger.d("exp time: " + e + " ----- period: " + mExpirationPeriod);
-return e;
-        //return (System.currentTimeMillis() / 1000) - mExpirationPeriod;
+        return (System.currentTimeMillis() / 1000) - mExpirationPeriod;
     }
     private List<Event> entitiesToEvents(List<EventEntity> entities) {
         List<Event> events = new ArrayList<>();
