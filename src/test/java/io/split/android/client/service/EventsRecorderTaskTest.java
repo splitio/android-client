@@ -63,6 +63,7 @@ public class EventsRecorderTaskTest {
 
         verify(mEventsRecorder, times(2)).execute(mDefaultParams);
         verify(mPersistentEventsStorage, times(3)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentEventsStorage, times(2)).delete(any());
         verify(mPersistentEventsStorage, never()).setActive(any());
 
         Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
@@ -88,6 +89,7 @@ public class EventsRecorderTaskTest {
 
         verify(mEventsRecorder, times(1)).execute(mDefaultParams);
         verify(mPersistentEventsStorage, times(2)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentEventsStorage, never()).delete(any());
         int setActiveTimes = DEFAULT_POP_CONFIG / EventsRecorderTask.FAILING_CHUNK_SIZE;
         verify(mPersistentEventsStorage, times(setActiveTimes)).setActive(any());
 
