@@ -49,6 +49,7 @@ public class ImpressionsRecorderTask implements SplitTask {
                 try {
                     Logger.d("Posting %d Split impressions", impressions.size());
                     mHttpRecorder.execute(impressions);
+                    mPersistenImpressionsStorage.delete(impressions);
                     Logger.d("%d split impressions sent", impressions.size());
                 } catch (HttpRecorderException e) {
                     status = SplitTaskExecutionStatus.ERROR;

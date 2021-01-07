@@ -9,6 +9,7 @@ import io.split.android.client.FilterGrouper;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRecorderTask;
@@ -124,5 +125,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         List<SplitFilter> filters = new FilterGrouper().group(mSplitClientConfig.syncConfig().getFilters());
         return new FilterSplitsInCacheTask(mSplitsStorageContainer.getPersistentSplitsStorage(),
                 filters, mSplitsFilterQueryString);
+    }
+    @Override
+    public CleanUpDatabaseTask createCleanUpDatabaseTask(long maxTimestamp) {
+        return new CleanUpDatabaseTask(mSplitsStorageContainer.getEventsStorage(),
+                mSplitsStorageContainer.getImpressionsStorage(), maxTimestamp);
     }
 }

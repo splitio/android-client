@@ -40,12 +40,12 @@ public class StorageFactory {
     public static PersistentImpressionsStorage getPersistenImpressionsStorage(
             SplitRoomDatabase splitRoomDatabase) {
         return new SqLitePersistentImpressionsStorage(splitRoomDatabase,
-                ServiceConstants.EXPIRATION_PERIOD);
+                ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
     }
 
     public static PersistentEventsStorage getPersistenEventsStorage(
             SplitRoomDatabase splitRoomDatabase) {
         return new SqLitePersistentEventsStorage(splitRoomDatabase,
-                ServiceConstants.EXPIRATION_PERIOD);
+                ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
     }
 }

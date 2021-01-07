@@ -27,4 +27,7 @@ public interface EventDao {
     @Query("DELETE FROM events WHERE created_at < :updateAt")
     void deleteOutdated(long updateAt);
 
+    @Query("DELETE FROM events WHERE  status = :status AND created_at < :maxTimestamp")
+    void deleteByStatus(int status, long maxTimestamp);
+
 }
