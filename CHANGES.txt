@@ -1,3 +1,6 @@
+2.6.8: (Jan 08, 2021)
+- Added clean up database task to removed old cache entries
+
 2.6.7: (Nov 17, 2020)
 - Fixed issue when adding and removing lifecycle observer in LifecycleManager
 - Updated streaming error handling logic
