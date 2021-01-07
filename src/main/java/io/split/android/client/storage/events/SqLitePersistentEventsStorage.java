@@ -67,6 +67,28 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
         return new ArrayList<>();
     }
 
+    @Override
+    public void delete(@NonNull List<Event> events) {
+        checkNotNull(events);
+        if (events.size() == 0) {
+            return;
+        }
+        List<Long> ids = getEventsId(events);
+        mEventDao.delete(ids);
+    }
+
+    @Override
+    public void deleteInvalid(long maxTimestamp) {
+        mEventDao.deleteByStatus(StorageRecordStatus.DELETED, maxTimestamp);
+        mEventDao.deleteOutdated(expirationTime());
+    }
+
+    private long expirationTime() {
+        long e = (System.currentTimeMillis() / 1000) - mExpirationPeriod;
+        Logger.d("exp time: " + e + " ----- period: " + mExpirationPeriod);
+return e;
+        //return (System.currentTimeMillis() / 1000) - mExpirationPeriod;
+    }
     private List<Event> entitiesToEvents(List<EventEntity> entities) {
         List<Event> events = new ArrayList<>();
         for (EventEntity entity : entities) {
