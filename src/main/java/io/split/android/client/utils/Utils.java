@@ -1,13 +1,12 @@
 package io.split.android.client.utils;
 
-import com.google.common.base.Strings;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.MessageDigest;
 
 import io.split.android.client.network.URIBuilder;
 
@@ -40,12 +39,12 @@ public class Utils {
         return isReachable(host, port);
     }
 
-    public static boolean isReachable(String host, int port ) {
+    public static boolean isReachable(String host, int port) {
         return isReachable(host, port, 1500);
     }
 
     // TCP/HTTP/DNS (depending on the port, 53=DNS, 80=HTTP, etc.)
-    public static boolean isReachable(String host, int port, int timeoutMs ) {
+    public static boolean isReachable(String host, int port, int timeoutMs) {
         try {
             Socket socket = new Socket();
             SocketAddress socketAddress = new InetSocketAddress(host, port);
@@ -54,39 +53,38 @@ public class Utils {
             socket.close();
 
             return true;
-        } catch (IOException e) { return false; }
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     public static String sanitizeForFileName(String string) {
-        if(string == null) {
+        if (string == null) {
             return "";
         }
         return string.replaceAll("[^a-zA-Z0-9.\\-]", "_");
     }
 
     private static String sanitizeForFolderName(String string) {
-        if(string == null) {
+        if (string == null) {
             return "";
         }
         return string.replaceAll("[^a-zA-Z0-9]", "");
     }
 
     public static String convertApiKeyToFolder(String apiKey) {
-        final int SALT_LENGTH = 29;
-        final String SALT_PREFIX = "$2a$10$";
-        final String CHAR_TO_FILL_SALT = "A";
-        String sanitizedApiKey = sanitizeForFolderName(apiKey);
-        StringBuilder salt = new StringBuilder(SALT_PREFIX);
-        if (sanitizedApiKey.length() >= SALT_LENGTH - SALT_PREFIX.length()) {
-            salt.append(sanitizedApiKey.substring(0, SALT_LENGTH - SALT_PREFIX.length()));
-        } else {
-            salt.append(sanitizedApiKey);
-            salt.append(Strings.repeat(CHAR_TO_FILL_SALT, (SALT_LENGTH - SALT_PREFIX.length()) - sanitizedApiKey.length()));
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(apiKey.getBytes("UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            for (int index = 0; index < hash.length; index++) {
+                if (index % 5 != 0) {  /* Drop every 5th byte */
+                    sb.append(String.format("%02x", hash[index]));
+                }
+            }
+            return sb.toString();
+        } catch (Exception ex) {
+            return null;
         }
-        // Remove last end of strings
-        String cleanedSalt = salt.toString().substring(0, 29);
-        String hash = BCrypt.hashpw(sanitizedApiKey, cleanedSalt);
-
-        return (hash != null ? sanitizeForFolderName(hash) : null);
     }
 }
