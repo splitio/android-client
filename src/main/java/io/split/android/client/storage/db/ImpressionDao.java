@@ -25,16 +25,13 @@ public interface ImpressionDao {
             "AND status = :status ORDER BY created_at LIMIT :maxRows")
     List<ImpressionEntity> getBy(long timestamp, int status, int maxRows);
 
-    @Transaction
     @Query("UPDATE impressions SET status = :status " +
             " WHERE id IN (:ids)")
     void updateStatus(List<Long> ids, int status);
 
-    @Transaction
     @Query("DELETE FROM impressions WHERE id IN (:ids)")
     void delete(List<Long> ids);
 
-    @Transaction
     @Query("DELETE FROM impressions WHERE created_at < :timestamp")
     void deleteOutdated(long timestamp);
 

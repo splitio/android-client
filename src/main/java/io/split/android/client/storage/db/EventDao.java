@@ -18,16 +18,13 @@ public interface EventDao {
             "AND status = :status ORDER BY created_at LIMIT :maxRows")
     List<EventEntity> getBy(long updateAt, int status, int maxRows);
 
-    @Transaction
     @Query("UPDATE events SET status = :status "  +
             " WHERE id IN (:ids)")
     void updateStatus(List<Long> ids, int status);
 
-    @Transaction
     @Query("DELETE FROM events WHERE id IN (:ids)")
     void delete(List<Long> ids);
 
-    @Transaction
     @Query("DELETE FROM events WHERE created_at < :updateAt")
     void deleteOutdated(long updateAt);
 

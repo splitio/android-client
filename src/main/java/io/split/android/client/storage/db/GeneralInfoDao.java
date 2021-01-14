@@ -17,7 +17,6 @@ public interface GeneralInfoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void update(GeneralInfoEntity info);
 
-    @Transaction
     @Query("SELECT name, stringValue, longValue, updated_at FROM general_info WHERE name = :name")
     GeneralInfoEntity getByName(String name);
 }
