@@ -3,6 +3,7 @@ package io.split.android.client.service.executor;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
@@ -34,5 +35,7 @@ public interface SplitTaskFactory {
     SplitsUpdateTask createSplitsUpdateTask(long since);
 
     FilterSplitsInCacheTask createFilterSplitsInCacheTask();
+
+    CleanUpDatabaseTask createCleanUpDatabaseTask(long maxTimestamp);
 
 }

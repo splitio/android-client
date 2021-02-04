@@ -168,6 +168,8 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, storageContainer, key.matchingKey(), splitsFilterQueryString);
 
+        cleanUpDabase(_splitTaskExecutor, splitTaskFactory);
+
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
@@ -316,5 +318,10 @@ public class SplitFactoryImpl implements SplitFactory {
             Logger.i("Migration done");
 
         }
+    }
+
+    private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,
+                               SplitTaskFactory splitTaskFactory) {
+        splitTaskExecutor.submit(splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000), null);
     }
 }

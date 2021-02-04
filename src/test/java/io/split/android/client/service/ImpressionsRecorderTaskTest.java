@@ -67,6 +67,7 @@ public class ImpressionsRecorderTaskTest {
 
         verify(mImpressionsRecorder, times(2)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(3)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentImpressionsStorage, times(2)).delete(any());
         verify(mPersistentImpressionsStorage, never()).setActive(any());
 
         Assert.assertEquals(TASK_TYPE, result.getTaskType());
@@ -92,6 +93,7 @@ public class ImpressionsRecorderTaskTest {
 
         verify(mImpressionsRecorder, times(1)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(2)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentImpressionsStorage, never()).delete(any());
         int setActiveTimes = DEFAULT_POP_CONFIG / ImpressionsRecorderTask.FAILING_CHUNK_SIZE;
         verify(mPersistentImpressionsStorage, times(setActiveTimes)).setActive(any());
 
@@ -117,6 +119,7 @@ public class ImpressionsRecorderTaskTest {
 
         verify(mImpressionsRecorder, times(0)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(1)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentImpressionsStorage, never()).delete(any());
         verify(mPersistentImpressionsStorage, never()).setActive(any());
 
         Assert.assertEquals(TASK_TYPE, result.getTaskType());

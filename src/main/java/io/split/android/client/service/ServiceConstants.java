@@ -1,13 +1,13 @@
 package io.split.android.client.service;
 
 public class ServiceConstants {
-    public static final long EXPIRATION_PERIOD = 3600 * 24 * 90;
+    public static final long RECORDED_DATA_EXPIRATION_PERIOD = 3600 * 24 * 90; // Impresions and events
     public static final long ESTIMATED_IMPRESSION_SIZE_IN_BYTES = 150L;
     public static final long MAX_EVENTS_SIZE_BYTES = 5 * 1024 * 1024L;
     public static final long NO_INITIAL_DELAY = 0;
     public static final long DEFAULT_INITIAL_DELAY = 15L;
     public static final int DEFAULT_RECORDS_PER_PUSH = 100;
-    public static final long DEFAULT_CACHE_EXPIRATION_IN_SECONDS = 864000; // 10 days
+    public static final long DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS = 864000; // 10 days
 
     public final static String TASK_INFO_FIELD_STATUS = "taskStatus";
     public final static String TASK_INFO_FIELD_TYPE = "taskType";
