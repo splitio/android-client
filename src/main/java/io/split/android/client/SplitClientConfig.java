@@ -59,7 +59,7 @@ public class SplitClientConfig {
     // Data folder
     private static final String DEFAULT_DATA_FOLDER = "split_data";
 
-    private static final long CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_CACHE_EXPIRATION_IN_SECONDS; // 10 días
+    private static final long SPLITS_CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS; // 10 días
 
     private String _endpoint;
     private String _eventsEndpoint;
@@ -218,7 +218,7 @@ public class SplitClientConfig {
     }
 
     public long cacheExpirationInSeconds() {
-        return CACHE_EXPIRATION_IN_SECONDS;
+        return SPLITS_CACHE_EXPIRATION_IN_SECONDS;
     }
 
     public long eventFlushInterval() {

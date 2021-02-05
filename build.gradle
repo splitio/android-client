@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '2.6.7'
+    splitVersion = '2.6.8'
 }
 
 allprojects {
@@ -101,15 +101,14 @@ dependencies {
 }
 
 repositories {
-google()
+    maven { url "https://maven.google.com" }
     mavenCentral()
-
     jcenter()
 }
 
 buildscript {
     repositories {
-    google()
+        maven { url "https://maven.google.com" }
         jcenter()
         mavenCentral()
 

@@ -12,4 +12,6 @@ public interface PersistentImpressionsStorage extends StoragePusher<KeyImpressio
     List<KeyImpression> pop(int count);
     List<KeyImpression> getCritical();
     void setActive(@NonNull List<KeyImpression> impressions);
+    void delete(@NonNull List<KeyImpression> impressions);
+    void deleteInvalid(long maxTimestamp);
 }

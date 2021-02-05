@@ -5,8 +5,11 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.InBytesSizable;
 import io.split.android.client.storage.StoragePusher;
@@ -16,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHelper<T> {
 
     private final StoragePusher mStorage;
+    private final SplitTaskExecutor mSplitTaskExecutor;
     private AtomicInteger mPushedCount;
     private AtomicLong mTotalPushedSizeInBytes;
     private final int mMaxQueueSize;
@@ -25,9 +29,11 @@ class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHe
     public RecorderSyncHelperImpl(SplitTaskType taskType,
                                   StoragePusher storage,
                                   int maxQueueSize,
-                                  long maxQueueSizeInBytes) {
+                                  long maxQueueSizeInBytes,
+                                  SplitTaskExecutor splitTaskExecutor) {
         mTaskType = checkNotNull(taskType);
         mStorage = checkNotNull(storage);
+        mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mPushedCount = new AtomicInteger(0);
         mTotalPushedSizeInBytes = new AtomicLong(0);
         mMaxQueueSize = maxQueueSize;
@@ -60,11 +66,13 @@ class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHe
     }
 
     private void pushAsync(T entity) {
-        new Thread(new Runnable() {
+        mSplitTaskExecutor.submit(new SplitTask() {
+            @NonNull
             @Override
-            public void run() {
+            public SplitTaskExecutionInfo execute() {
                 mStorage.push(entity);
+                return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
             }
-        }).start();
+        }, null);
     }
 }

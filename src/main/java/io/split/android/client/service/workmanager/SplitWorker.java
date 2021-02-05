@@ -1,6 +1,5 @@
 package io.split.android.client.service.workmanager;
 
-import android.app.Service;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -13,8 +12,6 @@ import java.net.URISyntaxException;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.android_client.BuildConfig;
-import io.split.android.client.ServiceEndpoints;
-import io.split.android.client.SplitClientConfig;
 import io.split.android.client.metrics.CachedMetrics;
 import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
@@ -22,7 +19,6 @@ import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;
@@ -52,7 +48,7 @@ public abstract class SplitWorker extends Worker {
         String metricsEndpoint = inputData.getString(ServiceConstants.WORKER_PARAM_EVENTS_ENDPOINT);
         mDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         mCacheExpirationInSeconds = inputData.getLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION,
-                ServiceConstants.DEFAULT_CACHE_EXPIRATION_IN_SECONDS);
+                ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS);
         SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
         headersBuilder.setClientVersion(BuildConfig.VERSION_NAME);
         headersBuilder.setApiToken(apiKey);

@@ -93,6 +93,26 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         return new ArrayList<>();
     }
 
+    @Override
+    public void delete(@NonNull List<KeyImpression> impressions) {
+        checkNotNull(impressions);
+        if (impressions.size() == 0) {
+            return;
+        }
+        List<Long> ids = getImpressionsId(impressions);
+        mImpressionDao.delete(ids);
+    }
+
+    @Override
+    public void deleteInvalid(long maxTimestamp) {
+        mImpressionDao.deleteByStatus(StorageRecordStatus.DELETED, maxTimestamp);
+        mImpressionDao.deleteOutdated(expirationTime());
+    }
+
+    private long expirationTime() {
+        return (System.currentTimeMillis() / 1000) - mExpirationPeriod;
+    }
+
     private List<KeyImpression> entitiesToImpressions(List<ImpressionEntity> entities) {
         List<KeyImpression> impressions = new ArrayList<>();
         for (ImpressionEntity entity : entities) {

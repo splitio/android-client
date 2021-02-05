@@ -12,4 +12,6 @@ public interface PersistentEventsStorage extends StoragePusher<Event> {
     List<Event> pop(int count);
     List<Event> getCritical();
     void setActive(@NonNull List<Event> events);
+    void delete(@NonNull List<Event> events);
+    void deleteInvalid(long maxTimestamp);
 }
