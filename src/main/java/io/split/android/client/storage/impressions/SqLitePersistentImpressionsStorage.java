@@ -59,21 +59,14 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         List<ImpressionEntity> entities = new ArrayList<>();
         int lastSize = -1;
 
-        try {
-
-            while (lastSize != entities.size() && entities.size() < count) {
-                lastSize = entities.size();
-                int pendingCount = count - lastSize;
-                int finalCount = MAX_ROWS_PER_QUERY <= pendingCount ? MAX_ROWS_PER_QUERY : pendingCount;
-                mDatabase.runInTransaction(
-                        new GetAndUpdateTransaction(mImpressionDao, entities,
-                                finalCount, mExpirationPeriod)
-                );
-            }
-        } catch (SQLiteDatabaseLockedException e) {
-
-        } catch (Exception e) {
-
+        while (lastSize != entities.size() && entities.size() < count) {
+            lastSize = entities.size();
+            int pendingCount = count - lastSize;
+            int finalCount = MAX_ROWS_PER_QUERY <= pendingCount ? MAX_ROWS_PER_QUERY : pendingCount;
+            mDatabase.runInTransaction(
+                    new GetAndUpdateTransaction(mImpressionDao, entities,
+                            finalCount, mExpirationPeriod)
+            );
         }
         return entitiesToImpressions(entities);
     }
