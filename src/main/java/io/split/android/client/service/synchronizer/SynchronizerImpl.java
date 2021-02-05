@@ -161,13 +161,15 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 SplitTaskType.EVENTS_RECORDER,
                 mSplitsStorageContainer.getEventsStorage(),
                 mSplitClientConfig.eventsQueueSize(),
-                ServiceConstants.MAX_EVENTS_SIZE_BYTES);
+                ServiceConstants.MAX_EVENTS_SIZE_BYTES,
+                mTaskExecutor);
 
         mImpressionsSyncHelper = new RecorderSyncHelperImpl<>(
                 SplitTaskType.IMPRESSIONS_RECORDER,
                 mSplitsStorageContainer.getImpressionsStorage(),
                 mSplitClientConfig.impressionsQueueSize(),
-                mSplitClientConfig.impressionsChunkSize());
+                mSplitClientConfig.impressionsChunkSize(),
+                mTaskExecutor);
 
         mSplitsSyncTaskListener = new FetcherSyncListener(
                 mSplitEventsManager, SplitInternalEvent.SPLITS_ARE_READY);
