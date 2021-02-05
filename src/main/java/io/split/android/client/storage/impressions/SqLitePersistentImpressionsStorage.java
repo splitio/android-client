@@ -1,5 +1,8 @@
 package io.split.android.client.storage.impressions;
 
+import android.app.Service;
+import android.database.sqlite.SQLiteDatabaseLockedException;
+
 import androidx.annotation.NonNull;
 
 import com.google.gson.JsonSyntaxException;
@@ -8,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.db.ImpressionDao;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -22,6 +26,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
     final SplitRoomDatabase mDatabase;
     final ImpressionDao mImpressionDao;
     final long mExpirationPeriod;
+    private static  final int MAX_ROWS_PER_QUERY = ServiceConstants.MAX_ROWS_PER_QUERY;
 
     public SqLitePersistentImpressionsStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
         mDatabase = checkNotNull(database);
@@ -51,11 +56,25 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
 
     @Override
     public List<KeyImpression> pop(int count) {
-
         List<ImpressionEntity> entities = new ArrayList<>();
-        mDatabase.runInTransaction(
-                new GetAndUpdateTransaction(mImpressionDao, entities, count, mExpirationPeriod)
-        );
+        int lastSize = -1;
+
+        try {
+
+            while (lastSize != entities.size() && entities.size() < count) {
+                lastSize = entities.size();
+                int pendingCount = count - lastSize;
+                int finalCount = MAX_ROWS_PER_QUERY <= pendingCount ? MAX_ROWS_PER_QUERY : pendingCount;
+                mDatabase.runInTransaction(
+                        new GetAndUpdateTransaction(mImpressionDao, entities,
+                                finalCount, mExpirationPeriod)
+                );
+            }
+        } catch (SQLiteDatabaseLockedException e) {
+
+        } catch (Exception e) {
+
+        }
         return entitiesToImpressions(entities);
     }
 
