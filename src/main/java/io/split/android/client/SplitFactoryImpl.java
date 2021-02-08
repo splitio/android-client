@@ -30,8 +30,6 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
-import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -78,6 +76,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
     private SplitLifecycleManager _lifecyleManager;
     private SyncManager _syncManager;
+    private SplitRoomDatabase _splitDatabase;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
@@ -131,14 +130,13 @@ public class SplitFactoryImpl implements SplitFactory {
         _apiKey = apiToken;
 
         // Check if test database available
-        SplitRoomDatabase splitRoomDatabase;
         String databaseName = factoryHelper.buildDatabaseName(config, apiToken);
         if(testDatabase == null) {
 
-            splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
-            checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, splitRoomDatabase);
+            _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
+            checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, _splitDatabase);
         } else {
-            splitRoomDatabase = testDatabase;
+            _splitDatabase = testDatabase;
             Logger.d("Using test database");
         }
 
@@ -151,7 +149,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
 
-        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(splitRoomDatabase, context, key);
+        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, context, key);
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 
@@ -216,9 +214,10 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of httpclient");
                     _manager.destroy();
                     Logger.i("Successful shutdown of manager");
-
                     _splitTaskExecutor.stop();
                     Logger.i("Successful shutdown of task executor");
+                    _splitDatabase.close();
+                    Logger.i("Database closed");
 
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");

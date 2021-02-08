@@ -2,6 +2,7 @@ package io.split.android.client.storage.splits;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.room.Query;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
@@ -10,8 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
+import io.split.android.client.storage.db.SplitQueryDao;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
@@ -20,6 +23,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
+    private static  final int MAX_ROWS_PER_QUERY = ServiceConstants.MAX_ROWS_PER_QUERY;
     private static final int SQL_PARAM_BIND_SIZE = 20;
     SplitRoomDatabase mDatabase;
 
@@ -53,18 +57,14 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public SplitsSnapshot getSnapshot() {
-
         SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase);
         mDatabase.runInTransaction(loader);
-        return new SplitsSnapshot(
-                convertEntitiesToSplitList(mDatabase.splitDao().getAll()), loader.getChangeNumber(),
+        return new SplitsSnapshot(loadSplits(), loader.getChangeNumber(),
                 loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString());
     }
 
     @Override
     public void update(Split split) {
-        // Using this all.database method
-        // to avoid introducing breaking changes in db schema
         List<Split> splits = new ArrayList<>();
         splits.add(split);
         mDatabase.splitDao().insert(convertSplitListToEntities(splits));
@@ -97,12 +97,11 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                 mDatabase.splitDao().deleteAll();
             }
         });
-
     }
 
     @Override
     public List<Split> getAll() {
-        return convertEntitiesToSplitList(mDatabase.splitDao().getAll());
+        return loadSplits();
     }
 
     @Override
@@ -110,6 +109,21 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     public String getFilterQueryString() {
         GeneralInfoEntity generalInfoEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
         return generalInfoEntity != null ? generalInfoEntity.getStringValue() : null;
+    }
+
+    private List<Split> loadSplits() {
+        List<Split> splits = new ArrayList<>();
+        int count = 1;
+        long rowIdFrom = 0;
+        while(count > 0) {
+            List<SplitEntity> entities = mDatabase.splitQueryDao().get(rowIdFrom, MAX_ROWS_PER_QUERY);
+            splits.addAll(convertEntitiesToSplitList(entities));
+            count = entities.size();
+            if(count > 0) {
+                rowIdFrom = entities.get(entities.size() - 1).getRowId();
+            };
+        }
+        return splits;
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
@@ -155,12 +169,13 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         return names;
     }
 
+
+
     private static class SplitsSnapshotLoader implements Runnable {
         private SplitRoomDatabase mDatabase;
         private Long mChangeNumber = -1L;
         private Long mUpdateTimestamp = 0L;
         private String mSplitsFilterQueryString = "";
-        private List<SplitEntity> mSplitEntities;
 
         public SplitsSnapshotLoader(SplitRoomDatabase database) {
             mDatabase = database;
@@ -194,10 +209,6 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
         public String getSplitsFilterQueryString() {
             return mSplitsFilterQueryString;
-        }
-
-        public List<SplitEntity> getSplitEntities() {
-            return mSplitEntities;
         }
     }
 }

@@ -63,10 +63,8 @@ public class ImpressionsRecorderTask implements SplitTask {
             }
         } while (impressions.size() == mConfig.getImpressionsPerPush());
 
-        // Update impressions by chunks to avoid sqlite errors
-        List<List<KeyImpression>> failingChunks = Lists.partition(failingImpressions, FAILING_CHUNK_SIZE);
-        for(List<KeyImpression> chunk : failingChunks) {
-            mPersistenImpressionsStorage.setActive(chunk);
+        if(failingImpressions.size() > 0) {
+            mPersistenImpressionsStorage.setActive(failingImpressions);
         }
 
         if (status == SplitTaskExecutionStatus.ERROR) {

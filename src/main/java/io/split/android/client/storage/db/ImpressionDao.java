@@ -33,6 +33,7 @@ public interface ImpressionDao {
     @Query("DELETE FROM impressions WHERE created_at < :timestamp")
     void deleteOutdated(long timestamp);
 
-    @Query("DELETE FROM impressions WHERE  status = :status AND created_at < :maxTimestamp")
-    void deleteByStatus(int status, long maxTimestamp);
+    @Query("DELETE FROM impressions WHERE  status = :status AND created_at < :maxTimestamp " +
+            "AND EXISTS(SELECT 1 FROM impressions AS imp  WHERE imp.id = impressions.id LIMIT :maxRows)")
+    int deleteByStatus(int status, long maxTimestamp, int maxRows);
 }

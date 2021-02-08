@@ -3,10 +3,15 @@ package io.split.android.client.storage.db;
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "splits")
 public class SplitEntity {
+
+    @Ignore
+    private long rowId;
+
     @PrimaryKey()
     @NonNull
     private String name;
@@ -16,6 +21,14 @@ public class SplitEntity {
 
     @ColumnInfo(name = "updated_at")
     private long updatedAt;
+
+    public long getRowId() {
+        return rowId;
+    }
+
+    public void setRowId(long rowId) {
+        this.rowId = rowId;
+    }
 
     @NonNull
     public String getName() {

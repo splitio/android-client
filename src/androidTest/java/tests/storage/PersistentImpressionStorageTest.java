@@ -11,7 +11,11 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import helper.DatabaseHelper;
+import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.impressions.Impression;
+import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
@@ -30,7 +34,7 @@ public class PersistentImpressionStorageTest {
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mContext.deleteDatabase("encripted_api_key");
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
+        mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
         generateImpressions(1, 10, StorageRecordStatus.ACTIVE, false);
         generateImpressions(101, 110, StorageRecordStatus.DELETED, false);
@@ -111,6 +115,25 @@ public class PersistentImpressionStorageTest {
     }
 
     @Test
+    public void popMasive() {
+        // To make sure that poping in chunks works as expected
+        mRoomDb.clearAllTables();
+        List<KeyImpression> impressions = createImpressions(1000, 6000, StorageRecordStatus.ACTIVE);
+        for(KeyImpression Impression : impressions) {
+            mPersistentImpressionStorage.push(Impression);
+        }
+        List<KeyImpression> Impressions1 = mPersistentImpressionStorage.pop(2000);
+        List<KeyImpression> Impressions2 = mPersistentImpressionStorage.pop(2001);
+        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<ImpressionEntity> deletedImpressions = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+
+        Assert.assertEquals(2000, Impressions1.size());
+        Assert.assertEquals(2001, Impressions2.size());
+        Assert.assertEquals(4001, deletedImpressions.size());
+        Assert.assertEquals(1000, activeImpressions.size());
+    }
+
+    @Test
     public void setActive() {
 
         List<KeyImpression> impressions = mPersistentImpressionStorage.pop(100);
@@ -127,9 +150,32 @@ public class PersistentImpressionStorageTest {
         Assert.assertEquals(10, deletedImpressionsAfter.size());
     }
 
+    @Test
+    public void setActiveMasive() {
+
+        mRoomDb.clearAllTables();
+        List<KeyImpression> masiveImpressions = createImpressions(1, 4000, StorageRecordStatus.ACTIVE);
+        for(KeyImpression Impression : masiveImpressions) {
+            mPersistentImpressionStorage.push(Impression);
+        }
+
+        List<KeyImpression> Impressions = mPersistentImpressionStorage.pop(3001);
+        List<ImpressionEntity> activeImpressionsBefore = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<ImpressionEntity> deletedImpressionsBefore = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+        mPersistentImpressionStorage.setActive(Impressions);
+        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<ImpressionEntity> deletedImpressionsAfter = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+
+        Assert.assertEquals(3001, Impressions.size());
+        Assert.assertEquals(999, activeImpressionsBefore.size());
+        Assert.assertEquals(3001, deletedImpressionsBefore.size());
+        Assert.assertEquals(4000, activeImpressions.size());
+        Assert.assertEquals(0, deletedImpressionsAfter.size());
+    }
+
     private void generateImpressions(int from, int to, int status, boolean expired) {
         for(int i = from; i <= to; i++) {
-            long timestamp  = System.currentTimeMillis() / 1000;
+            long timestamp  = (System.currentTimeMillis() / 1000);
             long createdAt = !expired ? timestamp : timestamp - EXPIRATION_PERIOD * 2;
             ImpressionEntity entity = new ImpressionEntity();
             entity.setCreatedAt(createdAt);
@@ -138,6 +184,45 @@ public class PersistentImpressionStorageTest {
             entity.setStatus(status);
             mRoomDb.impressionDao().insert(entity);
         }
+    }
+
+    @Test
+    public void masiveDelete() {
+
+        mRoomDb.clearAllTables();
+        List<KeyImpression> masiveImpressions = createImpressions(1, 4000, StorageRecordStatus.ACTIVE);
+        for(KeyImpression impression : masiveImpressions) {
+            mPersistentImpressionStorage.push(impression);
+        }
+
+        List<KeyImpression> toDelete =  mPersistentImpressionStorage.pop(3000);
+        mPersistentImpressionStorage.setActive(toDelete);
+
+        mPersistentImpressionStorage.delete(toDelete);
+        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<ImpressionEntity> deletedImpressions = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+
+        Assert.assertEquals(1000, activeImpressions.size());
+        Assert.assertEquals(0, deletedImpressions.size());
+    }
+
+    @Test
+    public void deleteMasiveOutdated() {
+
+        mRoomDb.clearAllTables();
+        List<KeyImpression> masiveImpressions = createImpressions(1, 6000, StorageRecordStatus.ACTIVE);
+        for(KeyImpression impression : masiveImpressions) {
+            mPersistentImpressionStorage.push(impression);
+        }
+
+        List<KeyImpression> toDelete =  mPersistentImpressionStorage.pop(5000);
+
+        mPersistentImpressionStorage.deleteInvalid((System.currentTimeMillis() / 1000) + 2000);
+        List<ImpressionEntity> activeImpressions = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<ImpressionEntity> deletedImpression = mRoomDb.impressionDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+
+        Assert.assertEquals(1000, activeImpressions.size());
+        Assert.assertEquals(0, deletedImpression.size());
     }
 
     private List<KeyImpression> createImpressions(int from, int to, int status) {

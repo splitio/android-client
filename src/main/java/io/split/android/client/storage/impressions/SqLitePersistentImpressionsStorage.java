@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabaseLockedException;
 
 import androidx.annotation.NonNull;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
@@ -63,10 +64,12 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
             lastSize = entities.size();
             int pendingCount = count - lastSize;
             int finalCount = MAX_ROWS_PER_QUERY <= pendingCount ? MAX_ROWS_PER_QUERY : pendingCount;
+            List<ImpressionEntity> newEntityChunk = new ArrayList<>();
             mDatabase.runInTransaction(
-                    new GetAndUpdateTransaction(mImpressionDao, entities,
+                    new GetAndUpdateTransaction(mImpressionDao, newEntityChunk,
                             finalCount, mExpirationPeriod)
             );
+            entities.addAll(newEntityChunk);
         }
         return entitiesToImpressions(entities);
     }
@@ -77,8 +80,10 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         if (impressions.size() == 0) {
             return;
         }
-        List<Long> ids = getImpressionsId(impressions);
-        mImpressionDao.updateStatus(ids, StorageRecordStatus.ACTIVE);
+        List<List<Long>> chunks = getImpressionsIdInChunks(impressions);
+        for(List<Long> ids : chunks) {
+            mImpressionDao.updateStatus(ids, StorageRecordStatus.ACTIVE);
+        }
     }
 
     @Override
@@ -92,13 +97,19 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         if (impressions.size() == 0) {
             return;
         }
-        List<Long> ids = getImpressionsId(impressions);
-        mImpressionDao.delete(ids);
+        List<List<Long>> chunks = getImpressionsIdInChunks(impressions);
+        for(List<Long> ids : chunks) {
+            mImpressionDao.delete(ids);
+        }
     }
 
     @Override
     public void deleteInvalid(long maxTimestamp) {
-        mImpressionDao.deleteByStatus(StorageRecordStatus.DELETED, maxTimestamp);
+        int deleted = 1;
+        while(deleted > 0) {
+            deleted = mImpressionDao.deleteByStatus(
+                    StorageRecordStatus.DELETED, maxTimestamp, MAX_ROWS_PER_QUERY);
+        }
         mImpressionDao.deleteOutdated(expirationTime());
     }
 
@@ -132,15 +143,15 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
         return entity;
     }
 
-    private List<Long> getImpressionsId(List<KeyImpression> impressions) {
+    private List<List<Long>> getImpressionsIdInChunks(List<KeyImpression> impressions) {
         List<Long> ids = new ArrayList<>();
         if (impressions == null) {
-            return ids;
+            return new ArrayList<>();
         }
         for (KeyImpression impression : impressions) {
             ids.add(impression.storageId);
         }
-        return ids;
+        return Lists.partition(ids, MAX_ROWS_PER_QUERY);
     }
 
     static final class GetAndUpdateTransaction implements Runnable {
