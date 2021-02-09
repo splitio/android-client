@@ -286,26 +286,24 @@ public class SplitFactoryImpl implements SplitFactory {
         StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase);
         if (!storageMigrator.isMigrationDone()) {
             Logger.i("Migrating cache to new storage implementation");
-
-            TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
-            TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
-
-            ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
-            ImpressionsStorageManager impressionsStorageManager =
-                    new ImpressionsStorageManager(impressionsFileStorage,
-                            new ImpressionsStorageManagerConfig(),
-                            new FileStorageHelper());
-
+            
             EventsMigratorHelper eventsMigratorHelper = null;
             ImpressionsMigratorHelper impressionsMigratorHelper = null;
 
             if(!isOutdated(fileStore.lastModified(TrackStorageManager.CHUNK_HEADERS_FILE_NAME)) ||
                     !isOutdated(fileStore.lastModified(TrackStorageManager.LEGACY_EVENTS_FILE_NAME))) {
+                TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
+                TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
                 eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
             }
 
             if(!isOutdated(fileStore.lastModified(ImpressionsStorageManager.CHUNK_HEADERS_FILE_NAME)) ||
                     !isOutdated(fileStore.lastModified(ImpressionsStorageManager.LEGACY_IMPRESSIONS_FILE_NAME))) {
+                ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
+                ImpressionsStorageManager impressionsStorageManager =
+                        new ImpressionsStorageManager(impressionsFileStorage,
+                                new ImpressionsStorageManagerConfig(),
+                                new FileStorageHelper());
                 impressionsMigratorHelper =new ImpressionsMigratorHelperImpl(impressionsStorageManager);
             }
 
