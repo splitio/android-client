@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import helper.DatabaseHelper;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.db.GeneralInfoEntity;
@@ -35,7 +36,8 @@ public class PersistentSplitsStorageTest {
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mContext.deleteDatabase("encripted_api_key");
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
+        //mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
+        mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
         List<SplitEntity> entities = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
@@ -59,6 +61,27 @@ public class PersistentSplitsStorageTest {
         Assert.assertNotNull(splits.get("split-1"));
         Assert.assertNotNull(splits.get("split-2"));
         Assert.assertNotNull(splits.get("split-9"));
+    }
+
+    @Test
+    public void getMasiveSplits() {
+        List<SplitEntity> entities = new ArrayList<>();
+        for (int i = 0; i < 10001; i++) {
+            String splitName = "split-" + i;
+            SplitEntity entity = new SplitEntity();
+            entity.setName(splitName);
+            entity.setBody(String.format(JSON_SPLIT_TEMPLATE, splitName, INITIAL_CHANGE_NUMBER - i));
+            entities.add(entity);
+        }
+        mRoomDb.splitDao().insert(entities);
+
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+        Map<String, Split> splits = listToMap(snapshot.getSplits());
+
+        Assert.assertNotNull(splits.get("split-0"));
+        Assert.assertNotNull(splits.get("split-1"));
+        Assert.assertNotNull(splits.get("split-2"));
+        Assert.assertNotNull(splits.get("split-10000"));
     }
 
     @Test

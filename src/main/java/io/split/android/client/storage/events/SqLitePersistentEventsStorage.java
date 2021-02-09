@@ -2,12 +2,14 @@ package io.split.android.client.storage.events;
 
 import androidx.annotation.NonNull;
 
+import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Event;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.db.EventDao;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -22,6 +24,7 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
     final SplitRoomDatabase mDatabase;
     final EventDao mEventDao;
     final long mExpirationPeriod;
+    private static  final int MAX_ROWS_PER_QUERY = ServiceConstants.MAX_ROWS_PER_QUERY;
 
     public SqLitePersistentEventsStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
         mDatabase = checkNotNull(database);
@@ -44,11 +47,19 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
 
     @Override
     public List<Event> pop(int count) {
-
         List<EventEntity> entities = new ArrayList<>();
-        mDatabase.runInTransaction(
-                new GetAndUpdateTransaction(mEventDao, entities, count, mExpirationPeriod)
-        );
+        int lastSize = -1;
+        int rowCount = count;
+        do {
+            int finalCount = MAX_ROWS_PER_QUERY <= rowCount ? MAX_ROWS_PER_QUERY : rowCount;
+            List<EventEntity> newEntityChunk = new ArrayList<>();
+            mDatabase.runInTransaction(
+                    new GetAndUpdateTransaction(mEventDao, newEntityChunk, finalCount, mExpirationPeriod)
+            );
+            lastSize = entities.size();
+            rowCount -= lastSize;
+            entities.addAll(newEntityChunk);
+        }  while (lastSize > 0 && rowCount > 0);
         return entitiesToEvents(entities);
     }
 
@@ -58,8 +69,10 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
         if (events.size() == 0) {
             return;
         }
-        List<Long> ids = getEventsId(events);
-        mEventDao.updateStatus(ids, StorageRecordStatus.ACTIVE);
+        List<List<Long>> chunks = getEventsIdInChunks(events);
+        for(List<Long> ids : chunks) {
+            mEventDao.updateStatus(ids, StorageRecordStatus.ACTIVE);
+        }
     }
 
     @Override
@@ -73,13 +86,19 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
         if (events.size() == 0) {
             return;
         }
-        List<Long> ids = getEventsId(events);
-        mEventDao.delete(ids);
+        List<List<Long>> chunks = getEventsIdInChunks(events);
+        for(List<Long> ids : chunks) {
+            mEventDao.delete(ids);
+        }
     }
 
     @Override
     public void deleteInvalid(long maxTimestamp) {
-        mEventDao.deleteByStatus(StorageRecordStatus.DELETED, maxTimestamp);
+        int deleted = 1;
+        while(deleted > 0) {
+            deleted = mEventDao.deleteByStatus(
+                    StorageRecordStatus.DELETED, maxTimestamp, MAX_ROWS_PER_QUERY);
+        }
         mEventDao.deleteOutdated(expirationTime());
     }
 
@@ -103,15 +122,15 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
         return events;
     }
 
-    private List<Long> getEventsId(List<Event> entities) {
+    private List<List<Long>> getEventsIdInChunks(List<Event> events) {
         List<Long> ids = new ArrayList<>();
-        if (entities == null) {
-            return ids;
+        if (events == null) {
+            return new ArrayList<>();
         }
-        for (Event entity : entities) {
-            ids.add(entity.storageId);
+        for (Event event : events) {
+            ids.add(event.storageId);
         }
-        return ids;
+        return Lists.partition(ids, MAX_ROWS_PER_QUERY);
     }
 
     static final class GetAndUpdateTransaction implements Runnable {

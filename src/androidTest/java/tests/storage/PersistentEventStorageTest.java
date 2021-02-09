@@ -12,7 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Event;
+import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.storage.db.EventEntity;
+import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.storage.events.PersistentEventsStorage;
@@ -111,6 +113,25 @@ public class PersistentEventStorageTest {
     }
 
     @Test
+    public void popMasive() {
+        // To make sure that poping in chunks works as expected
+        mRoomDb.clearAllTables();
+        List<Event> events = createEvents(1000, 6000, StorageRecordStatus.ACTIVE);
+        for(Event event : events) {
+            mPersistentEventsStorage.push(event);
+        }
+        List<Event> Impressions1 = mPersistentEventsStorage.pop(2000);
+        List<Event> Impressions2 = mPersistentEventsStorage.pop(2001);
+        List<EventEntity> activeImpressions = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<EventEntity> deletedImpressions = mRoomDb.eventDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+
+        Assert.assertEquals(2000, Impressions1.size());
+        Assert.assertEquals(2001, Impressions2.size());
+        Assert.assertEquals(4001, deletedImpressions.size());
+        Assert.assertEquals(1000, activeImpressions.size());
+    }
+
+    @Test
     public void setActive() {
 
         List<Event> events = mPersistentEventsStorage.pop(100);
@@ -125,6 +146,68 @@ public class PersistentEventStorageTest {
         Assert.assertEquals(20, deletedEventsBefore.size());
         Assert.assertEquals(20, activeEvents.size());
         Assert.assertEquals(10, deletedEventsAfter.size());
+    }
+
+    @Test
+    public void setActiveMasive() {
+
+        mRoomDb.clearAllTables();
+        List<Event> masiveEvents = createEvents(1, 4000, StorageRecordStatus.ACTIVE);
+        for(Event event : masiveEvents) {
+            mPersistentEventsStorage.push(event);
+        }
+
+        List<Event> events = mPersistentEventsStorage.pop(3001);
+        List<EventEntity> activeEventsBefore = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<EventEntity> deletedEventsBefore = mRoomDb.eventDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+        mPersistentEventsStorage.setActive(events);
+        List<EventEntity> activeEvents = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<EventEntity> deletedEventsAfter = mRoomDb.eventDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+
+        Assert.assertEquals(3001, events.size());
+        Assert.assertEquals(999, activeEventsBefore.size());
+        Assert.assertEquals(3001, deletedEventsBefore.size());
+        Assert.assertEquals(4000, activeEvents.size());
+        Assert.assertEquals(0, deletedEventsAfter.size());
+    }
+
+    @Test
+    public void masiveDelete() {
+
+        mRoomDb.clearAllTables();
+        List<Event> masiveEvents = createEvents(1, 4000, StorageRecordStatus.ACTIVE);
+        for(Event event : masiveEvents) {
+            mPersistentEventsStorage.push(event);
+        }
+
+        List<Event> toDelete =  mPersistentEventsStorage.pop(3000);
+        mPersistentEventsStorage.setActive(toDelete);
+
+        mPersistentEventsStorage.delete(toDelete);
+        List<EventEntity> activeEvents = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<EventEntity> deletedEvents = mRoomDb.eventDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+
+        Assert.assertEquals(1000, activeEvents.size());
+        Assert.assertEquals(0, deletedEvents.size());
+    }
+
+    @Test
+    public void deleteMasiveOutdated() {
+
+        mRoomDb.clearAllTables();
+        List<Event> masiveEvents = createEvents(1, 6000, StorageRecordStatus.ACTIVE);
+        for(Event event : masiveEvents) {
+            mPersistentEventsStorage.push(event);
+        }
+
+        List<Event> toDelete =  mPersistentEventsStorage.pop(5000);
+
+        mPersistentEventsStorage.deleteInvalid((System.currentTimeMillis() / 1000) + 2000);
+        List<EventEntity> activeEvents = mRoomDb.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 10000);
+        List<EventEntity> deletedEvents = mRoomDb.eventDao().getBy(0, StorageRecordStatus.DELETED, 10000);
+
+        Assert.assertEquals(1000, activeEvents.size());
+        Assert.assertEquals(0, deletedEvents.size());
     }
 
     private void generateEvents(int from, int to, int status, boolean expired) {

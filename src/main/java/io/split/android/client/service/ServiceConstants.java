@@ -9,6 +9,8 @@ public class ServiceConstants {
     public static final int DEFAULT_RECORDS_PER_PUSH = 100;
     public static final long DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS = 864000; // 10 days
 
+    public static final int MAX_ROWS_PER_QUERY = 100;
+
     public final static String TASK_INFO_FIELD_STATUS = "taskStatus";
     public final static String TASK_INFO_FIELD_TYPE = "taskType";
     public final static String TASK_INFO_FIELD_RECORDS_NON_SENT = "recordNonSent";
