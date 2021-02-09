@@ -107,7 +107,7 @@ public class IntegrationHelper {
     }
 
     public static Key dummyUserKey() {
-        return new Key("CUSTOMER_ID");
+        return new Key("CUSTOMER_ID|ENCO");
     }
 
     public static SplitClientConfig basicConfig() {
