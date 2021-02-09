@@ -219,8 +219,6 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of manager");
                     _splitTaskExecutor.stop();
                     Logger.i("Successful shutdown of task executor");
-                    _splitDatabase.close();
-                    Logger.i("Database closed");
 
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");

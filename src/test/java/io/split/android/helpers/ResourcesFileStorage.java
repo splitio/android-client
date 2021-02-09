@@ -54,6 +54,4 @@ public class ResourcesFileStorage implements IStorage {
     public long lastModified(String elementId) {
         return 0;
     }
-
-
 }
