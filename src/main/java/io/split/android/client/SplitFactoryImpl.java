@@ -1,8 +1,6 @@
 package io.split.android.client;
 
 import android.content.Context;
-import android.media.MediaPlayer;
-import android.os.Trace;
 
 import java.io.File;
 import java.net.URI;
@@ -13,10 +11,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.cache.MySegmentsCache;
-import io.split.android.client.cache.MySegmentsCacheMigrator;
-import io.split.android.client.cache.SplitCache;
-import io.split.android.client.cache.SplitCacheMigrator;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -53,7 +47,6 @@ import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
 import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.client.storage.legacy.TracksFileStorage;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.StringHelper;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
