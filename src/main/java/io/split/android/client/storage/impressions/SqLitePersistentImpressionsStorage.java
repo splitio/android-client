@@ -1,8 +1,5 @@
 package io.split.android.client.storage.impressions;
 
-import android.app.Service;
-import android.database.sqlite.SQLiteDatabaseLockedException;
-
 import androidx.annotation.NonNull;
 
 import com.google.common.collect.Lists;
@@ -13,6 +10,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionDao;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -59,18 +57,17 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
     public List<KeyImpression> pop(int count) {
         List<ImpressionEntity> entities = new ArrayList<>();
         int lastSize = -1;
-
-        while (lastSize != entities.size() && entities.size() < count) {
-            lastSize = entities.size();
-            int pendingCount = count - lastSize;
-            int finalCount = MAX_ROWS_PER_QUERY <= pendingCount ? MAX_ROWS_PER_QUERY : pendingCount;
+        int rowCount = count;
+        do {
+            int finalCount = MAX_ROWS_PER_QUERY <= rowCount ? MAX_ROWS_PER_QUERY : rowCount;
             List<ImpressionEntity> newEntityChunk = new ArrayList<>();
             mDatabase.runInTransaction(
-                    new GetAndUpdateTransaction(mImpressionDao, newEntityChunk,
-                            finalCount, mExpirationPeriod)
+                    new GetAndUpdateTransaction(mImpressionDao, newEntityChunk, finalCount, mExpirationPeriod)
             );
+            lastSize = entities.size();
+            rowCount -= lastSize;
             entities.addAll(newEntityChunk);
-        }
+        }  while (lastSize > 0 && rowCount > 0);
         return entitiesToImpressions(entities);
     }
 
