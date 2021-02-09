@@ -24,10 +24,10 @@ import io.split.android.client.utils.MemoryUtilsImpl;
 @Deprecated
 public class TrackStorageManager {
 
-    private static final String LEGACY_EVENTS_FILE_NAME = "SPLITIO.events.json";
+    public static final String LEGACY_EVENTS_FILE_NAME = "SPLITIO.events.json";
     private static final String TRACK_FILE_PREFIX = "SPLITIO.events";
     private static final String EVENTS_FILE_PREFIX = TRACK_FILE_PREFIX + "_#";
-    private static final String CHUNK_HEADERS_FILE_NAME = TRACK_FILE_PREFIX + "_chunk_headers.json";
+    public static final String CHUNK_HEADERS_FILE_NAME = TRACK_FILE_PREFIX + "_chunk_headers.json";
     private static final Type LEGACY_FILE_TYPE = new TypeToken<Map<String, EventsChunk>>() {
     }.getType();
 

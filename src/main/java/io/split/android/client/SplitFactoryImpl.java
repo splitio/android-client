@@ -1,11 +1,14 @@
 package io.split.android.client;
 
 import android.content.Context;
+import android.media.MediaPlayer;
+import android.os.Trace;
 
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +28,7 @@ import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
@@ -39,10 +43,6 @@ import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
 import io.split.android.client.storage.db.migrator.EventsMigratorHelperImpl;
 import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelper;
 import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelperImpl;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelper;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelperImpl;
-import io.split.android.client.storage.db.migrator.SplitsMigratorHelper;
-import io.split.android.client.storage.db.migrator.SplitsMigratorHelperImpl;
 import io.split.android.client.storage.db.migrator.StorageMigrator;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.FileStorageHelper;
@@ -134,7 +134,10 @@ public class SplitFactoryImpl implements SplitFactory {
         if(testDatabase == null) {
 
             _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
-            checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, _splitDatabase);
+            if (config.isStorageMigrationEnabled()) {
+                checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, _splitDatabase);
+            }
+            deleteLegacyCacheFiles(context.getCacheDir(), databaseName);
         } else {
             _splitDatabase = testDatabase;
             Logger.d("Using test database");
@@ -284,16 +287,17 @@ public class SplitFactoryImpl implements SplitFactory {
                                          String dataFolderName,
                                          SplitRoomDatabase splitRoomDatabase) {
 
+        if(!rootFolder.exists()) {
+            // No migration needed
+            return;
+        }
+        IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
         StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase);
         if (!storageMigrator.isMigrationDone()) {
             Logger.i("Migrating cache to new storage implementation");
-            IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
-            SplitCacheMigrator splitCacheMigrator = new SplitCache(fileStore);
-            MySegmentsCacheMigrator mySegmentsCacheMigrator = new MySegmentsCache(fileStore);
 
             TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
             TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
-
 
             ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
             ImpressionsStorageManager impressionsStorageManager =
@@ -301,22 +305,43 @@ public class SplitFactoryImpl implements SplitFactory {
                             new ImpressionsStorageManagerConfig(),
                             new FileStorageHelper());
 
-            SplitsMigratorHelper splitsMigratorHelper
-                    = new SplitsMigratorHelperImpl(splitCacheMigrator);
-            MySegmentsMigratorHelper mySegmentsMigratorHelper
-                    = new MySegmentsMigratorHelperImpl(mySegmentsCacheMigrator, new StringHelper());
+            EventsMigratorHelper eventsMigratorHelper = null;
+            ImpressionsMigratorHelper impressionsMigratorHelper = null;
 
-            EventsMigratorHelper eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
+            if(!isOutdated(fileStore.lastModified(TrackStorageManager.CHUNK_HEADERS_FILE_NAME)) ||
+                    !isOutdated(fileStore.lastModified(TrackStorageManager.LEGACY_EVENTS_FILE_NAME))) {
+                eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
+            }
 
-            ImpressionsMigratorHelper impressionsMigratorHelper =
-                    new ImpressionsMigratorHelperImpl(impressionsStorageManager);
+            if(!isOutdated(fileStore.lastModified(ImpressionsStorageManager.CHUNK_HEADERS_FILE_NAME)) ||
+                    !isOutdated(fileStore.lastModified(ImpressionsStorageManager.LEGACY_IMPRESSIONS_FILE_NAME))) {
+                impressionsMigratorHelper =new ImpressionsMigratorHelperImpl(impressionsStorageManager);
+            }
 
-            storageMigrator.runMigration(mySegmentsMigratorHelper, splitsMigratorHelper,
-                    eventsMigratorHelper, impressionsMigratorHelper);
+            if(eventsMigratorHelper == null && impressionsMigratorHelper == null) {
+                return;
+            }
+            storageMigrator.runMigration(eventsMigratorHelper, impressionsMigratorHelper);
 
             Logger.i("Migration done");
-
         }
+    }
+
+    private void deleteLegacyCacheFiles(File rootFolder,
+                                        String dataFolderName) {
+
+        if(!rootFolder.exists()) {
+            // There's no files to delete
+            return;
+        }
+        IStorage fileStorage = new FileStorage(rootFolder, dataFolderName);
+        List<String> files = new ArrayList(Arrays.asList(fileStorage.getAllIds()));
+        fileStorage.delete(files);
+    }
+
+    private boolean isOutdated(long timestamp) {
+        long now = System.currentTimeMillis() / 1000;
+        return (now - timestamp > ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
     }
 
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,

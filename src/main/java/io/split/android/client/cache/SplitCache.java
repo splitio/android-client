@@ -27,7 +27,7 @@ import io.split.android.client.utils.Logger;
 public class SplitCache implements ISplitCache, SplitCacheMigrator {
 
     private static final String SPLIT_FILE_PREFIX = "SPLITIO.split.";
-    private static final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
+    public static final String CHANGE_NUMBER_FILE = "SPLITIO.changeNumber";
 
     private final IStorage mFileStorageManager;
 

@@ -50,5 +50,10 @@ public class ResourcesFileStorage implements IStorage {
     public void delete(List<String> files) {
     }
 
+    @Override
+    public long lastModified(String elementId) {
+        return 0;
+    }
+
 
 }

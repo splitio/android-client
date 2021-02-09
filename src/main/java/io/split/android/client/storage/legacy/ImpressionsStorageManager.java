@@ -30,10 +30,10 @@ import io.split.android.client.utils.Logger;
 @Deprecated
 public class ImpressionsStorageManager {
 
-    private static final String LEGACY_IMPRESSIONS_FILE_NAME = "SPLITIO.impressions";
+    public static final String LEGACY_IMPRESSIONS_FILE_NAME = "SPLITIO.impressions";
     private static final String IMPRESSIONS_FILE_PREFIX = "SPLITIO.impressions";
     private static final String IMPRESSIONS_CHUNK_FILE_PREFIX = IMPRESSIONS_FILE_PREFIX + "_#";
-    private static final String CHUNK_HEADERS_FILE_NAME = IMPRESSIONS_FILE_PREFIX + "_chunk_headers.json";
+    public static final String CHUNK_HEADERS_FILE_NAME = IMPRESSIONS_FILE_PREFIX + "_chunk_headers.json";
     private static final String IMPRESSIONS_FILE_NAME = IMPRESSIONS_CHUNK_FILE_PREFIX + "%d.json";
 
     private final static Type IMPRESSIONS_FILE_TYPE = new TypeToken<Map<String, List<KeyImpression>>>() {

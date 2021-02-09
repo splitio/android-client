@@ -3,6 +3,7 @@ package io.split.android.client.storage.db.migrator;
 import androidx.core.util.Pair;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -13,8 +14,6 @@ import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.GeneralInfoDao;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
-import io.split.android.client.storage.db.MySegmentEntity;
-import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
 
@@ -23,8 +22,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class StorageMigrator {
 
     private final SplitRoomDatabase mSqLiteDatabase;
-    private MySegmentsMigratorHelper mMySegmentsMigratorHelper;
-    private SplitsMigratorHelper mSplitsMigratorHelper;
     private EventsMigratorHelper mEventsMigratorHelper;
     private ImpressionsMigratorHelper mImpressionsMigratorHelper;
     private final GeneralInfoDao mGeneralInfoDao;
@@ -39,47 +36,31 @@ public class StorageMigrator {
         return migrationChecker.isMigrationDone();
     }
 
-    public void runMigration(@NotNull MySegmentsMigratorHelper mySegmentsMigratorHelper,
-                             @NotNull SplitsMigratorHelper splitsMigratorHelper,
-                             @NotNull EventsMigratorHelper eventsMigratorHelper,
-                             @NotNull ImpressionsMigratorHelper impressionsMigratorHelper) {
+    public void runMigration(@Nullable EventsMigratorHelper eventsMigratorHelper,
+                             @Nullable ImpressionsMigratorHelper impressionsMigratorHelper) {
 
-        mMySegmentsMigratorHelper = checkNotNull(mySegmentsMigratorHelper);
-        mSplitsMigratorHelper = checkNotNull(splitsMigratorHelper);
-        mEventsMigratorHelper = checkNotNull(eventsMigratorHelper);
-        mImpressionsMigratorHelper = checkNotNull(impressionsMigratorHelper);
+        mImpressionsMigratorHelper = impressionsMigratorHelper;
+        mEventsMigratorHelper = eventsMigratorHelper;
 
         MigrationRunner migrationRunner = new MigrationRunner();
         migrationRunner.runMigration();
     }
 
-    private void migrateMySegments() {
-        List<MySegmentEntity> mySegmentEntities = mMySegmentsMigratorHelper.loadLegacySegmentsAsEntities();
-        for (MySegmentEntity entity : mySegmentEntities) {
-            mSqLiteDatabase.mySegmentDao().update(entity);
-        }
-    }
-
-    private void migrateSplits() {
-        Pair<Long, List<SplitEntity>> splitsSnapshot = mSplitsMigratorHelper.loadLegacySplitsAsEntities();
-        mSqLiteDatabase.splitDao().insert(splitsSnapshot.second);
-        GeneralInfoEntity changeNumberInfo = new GeneralInfoEntity(
-                GeneralInfoEntity.CHANGE_NUMBER_INFO,
-                splitsSnapshot.first);
-        mSqLiteDatabase.generalInfoDao().update(changeNumberInfo);
-    }
-
     private void migrateEvents() {
-        List<EventEntity> eventEntities = mEventsMigratorHelper.loadLegacyEventsAsEntities();
-        for (EventEntity entity : eventEntities) {
-            mSqLiteDatabase.eventDao().insert(entity);
+        if(mEventsMigratorHelper != null) {
+            List<EventEntity> eventEntities = mEventsMigratorHelper.loadLegacyEventsAsEntities();
+            for (EventEntity entity : eventEntities) {
+                mSqLiteDatabase.eventDao().insert(entity);
+            }
         }
     }
 
     private void migrateImpressions() {
-        List<ImpressionEntity> impressionEntities = mImpressionsMigratorHelper.loadLegacyImpressionsAsEntities();
-        for (ImpressionEntity entity : impressionEntities) {
-            mSqLiteDatabase.impressionDao().insert(entity);
+        if(mImpressionsMigratorHelper != null) {
+            List<ImpressionEntity> impressionEntities = mImpressionsMigratorHelper.loadLegacyImpressionsAsEntities();
+            for (ImpressionEntity entity : impressionEntities) {
+                mSqLiteDatabase.impressionDao().insert(entity);
+            }
         }
     }
 
@@ -124,8 +105,6 @@ public class StorageMigrator {
                 @Override
                 public void run() {
                     try {
-                        migrateMySegments();
-                        migrateSplits();
                         migrateEvents();
                         migrateImpressions();
                     } catch (Exception e) {
