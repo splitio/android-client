@@ -286,7 +286,7 @@ public class SplitFactoryImpl implements SplitFactory {
         StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase);
         if (!storageMigrator.isMigrationDone()) {
             Logger.i("Migrating cache to new storage implementation");
-            
+
             EventsMigratorHelper eventsMigratorHelper = null;
             ImpressionsMigratorHelper impressionsMigratorHelper = null;
 
@@ -330,7 +330,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
     private boolean isOutdated(long timestamp) {
         long now = System.currentTimeMillis() / 1000;
-        return (now - timestamp > ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
+        return (now - ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD > timestamp);
     }
 
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,
