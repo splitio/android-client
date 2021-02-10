@@ -1,8 +1,6 @@
 package io.split.android.client;
 
 import android.content.Context;
-import android.media.MediaPlayer;
-import android.os.Trace;
 
 import java.io.File;
 import java.net.URI;
@@ -13,10 +11,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.cache.MySegmentsCache;
-import io.split.android.client.cache.MySegmentsCacheMigrator;
-import io.split.android.client.cache.SplitCache;
-import io.split.android.client.cache.SplitCacheMigrator;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -53,7 +47,6 @@ import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
 import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.client.storage.legacy.TracksFileStorage;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.StringHelper;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
@@ -296,31 +289,15 @@ public class SplitFactoryImpl implements SplitFactory {
 
             TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
             TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
+            EventsMigratorHelper eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
 
             ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
             ImpressionsStorageManager impressionsStorageManager =
                     new ImpressionsStorageManager(impressionsFileStorage,
                             new ImpressionsStorageManagerConfig(),
                             new FileStorageHelper());
-
-            EventsMigratorHelper eventsMigratorHelper = null;
-            ImpressionsMigratorHelper impressionsMigratorHelper = null;
-
-            if(!isOutdated(fileStore.lastModified(TrackStorageManager.CHUNK_HEADERS_FILE_NAME)) ||
-                    !isOutdated(fileStore.lastModified(TrackStorageManager.LEGACY_EVENTS_FILE_NAME))) {
-                eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
-            }
-
-            if(!isOutdated(fileStore.lastModified(ImpressionsStorageManager.CHUNK_HEADERS_FILE_NAME)) ||
-                    !isOutdated(fileStore.lastModified(ImpressionsStorageManager.LEGACY_IMPRESSIONS_FILE_NAME))) {
-                impressionsMigratorHelper =new ImpressionsMigratorHelperImpl(impressionsStorageManager);
-            }
-
-            if(eventsMigratorHelper == null && impressionsMigratorHelper == null) {
-                return;
-            }
+            ImpressionsMigratorHelper impressionsMigratorHelper = new ImpressionsMigratorHelperImpl(impressionsStorageManager);
             storageMigrator.runMigration(eventsMigratorHelper, impressionsMigratorHelper);
-
             Logger.i("Migration done");
         }
     }
@@ -335,11 +312,6 @@ public class SplitFactoryImpl implements SplitFactory {
         IStorage fileStorage = new FileStorage(rootFolder, dataFolderName);
         List<String> files = new ArrayList(Arrays.asList(fileStorage.getAllIds()));
         fileStorage.delete(files);
-    }
-
-    private boolean isOutdated(long timestamp) {
-        long now = System.currentTimeMillis() / 1000;
-        return (now - timestamp > ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
     }
 
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,

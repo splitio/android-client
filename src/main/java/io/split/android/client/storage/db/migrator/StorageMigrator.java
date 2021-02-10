@@ -1,5 +1,6 @@
 package io.split.android.client.storage.db.migrator;
 
+import androidx.annotation.NonNull;
 import androidx.core.util.Pair;
 
 import org.jetbrains.annotations.NotNull;
@@ -36,31 +37,26 @@ public class StorageMigrator {
         return migrationChecker.isMigrationDone();
     }
 
-    public void runMigration(@Nullable EventsMigratorHelper eventsMigratorHelper,
-                             @Nullable ImpressionsMigratorHelper impressionsMigratorHelper) {
+    public void runMigration(@NonNull EventsMigratorHelper eventsMigratorHelper,
+                             @NonNull ImpressionsMigratorHelper impressionsMigratorHelper) {
 
-        mImpressionsMigratorHelper = impressionsMigratorHelper;
-        mEventsMigratorHelper = eventsMigratorHelper;
-
+        mImpressionsMigratorHelper = checkNotNull(impressionsMigratorHelper);
+        mEventsMigratorHelper = checkNotNull(eventsMigratorHelper);
         MigrationRunner migrationRunner = new MigrationRunner();
         migrationRunner.runMigration();
     }
 
     private void migrateEvents() {
-        if(mEventsMigratorHelper != null) {
-            List<EventEntity> eventEntities = mEventsMigratorHelper.loadLegacyEventsAsEntities();
-            for (EventEntity entity : eventEntities) {
-                mSqLiteDatabase.eventDao().insert(entity);
-            }
+        List<EventEntity> eventEntities = mEventsMigratorHelper.loadLegacyEventsAsEntities();
+        for (EventEntity entity : eventEntities) {
+            mSqLiteDatabase.eventDao().insert(entity);
         }
     }
 
     private void migrateImpressions() {
-        if(mImpressionsMigratorHelper != null) {
-            List<ImpressionEntity> impressionEntities = mImpressionsMigratorHelper.loadLegacyImpressionsAsEntities();
-            for (ImpressionEntity entity : impressionEntities) {
-                mSqLiteDatabase.impressionDao().insert(entity);
-            }
+        List<ImpressionEntity> impressionEntities = mImpressionsMigratorHelper.loadLegacyImpressionsAsEntities();
+        for (ImpressionEntity entity : impressionEntities) {
+            mSqLiteDatabase.impressionDao().insert(entity);
         }
     }
 

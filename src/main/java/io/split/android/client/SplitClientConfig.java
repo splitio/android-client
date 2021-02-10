@@ -112,7 +112,7 @@ public class SplitClientConfig {
 
     private SyncConfig _syncConfig;
 
-    private boolean _isStorageMigrationEnabled;
+    private boolean _legacyStorageMigrationEnabled;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -158,7 +158,7 @@ public class SplitClientConfig {
                               String streamingServiceUrl,
                               boolean enableSslDevelopmentMode,
                               SyncConfig syncConfig,
-                              boolean isStorageMigrationEnabled) {
+                              boolean legacyStorageMigrationEnabled) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -197,7 +197,7 @@ public class SplitClientConfig {
         _streamingServiceUrl = streamingServiceUrl;
         _isSslDevelopmentModeEnabled = enableSslDevelopmentMode;
         _syncConfig = syncConfig;
-        _isStorageMigrationEnabled = isStorageMigrationEnabled;
+        _legacyStorageMigrationEnabled = legacyStorageMigrationEnabled;
 
         splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
 
@@ -443,7 +443,7 @@ public class SplitClientConfig {
     }
 
     public boolean isStorageMigrationEnabled() {
-        return _isStorageMigrationEnabled;
+        return _legacyStorageMigrationEnabled;
     }
 
     public static final class Builder {
@@ -494,7 +494,7 @@ public class SplitClientConfig {
 
         private SyncConfig _syncConfig = SyncConfig.builder().build();
 
-        private boolean _isStorageMigrationEnabled = false;
+        private boolean _legacyStorageMigrationEnabled = false;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -925,8 +925,8 @@ public class SplitClientConfig {
          * @return: This builder
          * @default: false
          */
-        public Builder isStorageMigrationEnabled(boolean isStorageMigrationEnabled) {
-            _isStorageMigrationEnabled = isStorageMigrationEnabled;
+        public Builder legacyStorageMigrationEnabled(boolean legacyStorageMigrationEnabled) {
+            _legacyStorageMigrationEnabled = legacyStorageMigrationEnabled;
             return this;
         }
 
@@ -1024,7 +1024,7 @@ public class SplitClientConfig {
                     _serviceEndpoints.getStreamingServiceEndpoint(),
                     _isSslDevelopmentModeEnabled,
                     _syncConfig,
-                    _isStorageMigrationEnabled);
+                    _legacyStorageMigrationEnabled);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
