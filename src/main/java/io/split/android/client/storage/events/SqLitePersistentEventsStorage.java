@@ -9,14 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Event;
-import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.db.EventDao;
 import io.split.android.client.storage.db.EventEntity;
-import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
-import io.split.android.client.storage.impressions.SqLitePersistentImpressionsStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
@@ -52,17 +49,17 @@ public class SqLitePersistentEventsStorage implements PersistentEventsStorage {
     public List<Event> pop(int count) {
         List<EventEntity> entities = new ArrayList<>();
         int lastSize = -1;
-
-        while (lastSize != entities.size() && entities.size() < count) {
-            lastSize = entities.size();
-            int pendingCount = count - lastSize;
-            int finalCount = MAX_ROWS_PER_QUERY <= pendingCount ? MAX_ROWS_PER_QUERY : pendingCount;
+        int rowCount = count;
+        do {
+            int finalCount = MAX_ROWS_PER_QUERY <= rowCount ? MAX_ROWS_PER_QUERY : rowCount;
             List<EventEntity> newEntityChunk = new ArrayList<>();
             mDatabase.runInTransaction(
                     new GetAndUpdateTransaction(mEventDao, newEntityChunk, finalCount, mExpirationPeriod)
             );
+            lastSize = entities.size();
+            rowCount -= lastSize;
             entities.addAll(newEntityChunk);
-        }
+        }  while (lastSize > 0 && rowCount > 0);
         return entitiesToEvents(entities);
     }
 
