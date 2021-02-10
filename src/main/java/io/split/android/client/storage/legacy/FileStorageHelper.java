@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
@@ -37,7 +38,7 @@ public class FileStorageHelper {
 
     public List<ChunkHeader> readAndParseChunkHeadersFile(String fileName, IStorage storage) {
         if(isOutdated(storage.lastModified(fileName))) {
-            return null;
+            return new ArrayList<>();
         }
         List<ChunkHeader> headers = null;
         try {
