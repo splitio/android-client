@@ -5,7 +5,6 @@ import androidx.core.util.Pair;
 import java.util.List;
 
 import io.split.android.client.storage.db.SplitEntity;
-import io.split.android.client.storage.db.migrator.SplitsMigratorHelper;
 
 public class SplitsMigratorHelperMock implements SplitsMigratorHelper {
     private long mChangeNumber;

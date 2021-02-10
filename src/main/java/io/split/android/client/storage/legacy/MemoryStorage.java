@@ -82,4 +82,9 @@ public class MemoryStorage implements IStorage {
             delete(fileName);
         }
     }
+
+    @Override
+    public long lastModified(String elementId) {
+        return System.currentTimeMillis();
+    }
 }
