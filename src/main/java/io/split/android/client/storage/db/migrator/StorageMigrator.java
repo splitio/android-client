@@ -47,20 +47,16 @@ public class StorageMigrator {
     }
 
     private void migrateEvents() {
-        if(mEventsMigratorHelper != null) {
-            List<EventEntity> eventEntities = mEventsMigratorHelper.loadLegacyEventsAsEntities();
-            for (EventEntity entity : eventEntities) {
-                mSqLiteDatabase.eventDao().insert(entity);
-            }
+        List<EventEntity> eventEntities = mEventsMigratorHelper.loadLegacyEventsAsEntities();
+        for (EventEntity entity : eventEntities) {
+            mSqLiteDatabase.eventDao().insert(entity);
         }
     }
 
     private void migrateImpressions() {
-        if(mImpressionsMigratorHelper != null) {
-            List<ImpressionEntity> impressionEntities = mImpressionsMigratorHelper.loadLegacyImpressionsAsEntities();
-            for (ImpressionEntity entity : impressionEntities) {
-                mSqLiteDatabase.impressionDao().insert(entity);
-            }
+        List<ImpressionEntity> impressionEntities = mImpressionsMigratorHelper.loadLegacyImpressionsAsEntities();
+        for (ImpressionEntity entity : impressionEntities) {
+            mSqLiteDatabase.impressionDao().insert(entity);
         }
     }
 
