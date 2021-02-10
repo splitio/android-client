@@ -7,8 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 
-import io.split.android.client.FilterBuilder;
-import io.split.android.client.SyncConfig;
 import io.split.android.client.utils.Logger;
 
 public class SdkTargetPath {
@@ -23,7 +21,7 @@ public class SdkTargetPath {
     }
 
     public static final URI mySegments(String baseUrl, String key) throws URISyntaxException {
-        String encodedKey = "";
+        String encodedKey = key;
         try {
             encodedKey = URLEncoder.encode(key, "UTF-8");
         } catch (UnsupportedEncodingException e) {
