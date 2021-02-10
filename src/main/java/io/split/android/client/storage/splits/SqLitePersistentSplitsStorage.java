@@ -169,8 +169,6 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         return names;
     }
 
-
-
     private static class SplitsSnapshotLoader implements Runnable {
         private SplitRoomDatabase mDatabase;
         private Long mChangeNumber = -1L;
