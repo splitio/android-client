@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '2.6.9-rc4'
+    splitVersion = '2.6.9'
 }
 
 allprojects {
