@@ -94,8 +94,7 @@ public class ImpressionsRecorderTaskTest {
         verify(mImpressionsRecorder, times(1)).execute(mDefaultParams);
         verify(mPersistentImpressionsStorage, times(2)).pop(DEFAULT_POP_CONFIG);
         verify(mPersistentImpressionsStorage, never()).delete(any());
-        int setActiveTimes = DEFAULT_POP_CONFIG / ImpressionsRecorderTask.FAILING_CHUNK_SIZE;
-        verify(mPersistentImpressionsStorage, times(setActiveTimes)).setActive(any());
+        verify(mPersistentImpressionsStorage, times(1)).setActive(any());
 
         Assert.assertEquals(TASK_TYPE, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());

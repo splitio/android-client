@@ -7,11 +7,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
 
 import io.split.android.client.dtos.ChunkHeader;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.MemoryUtils;
@@ -35,6 +37,9 @@ public class FileStorageHelper {
     }
 
     public List<ChunkHeader> readAndParseChunkHeadersFile(String fileName, IStorage storage) {
+        if(isOutdated(storage.lastModified(fileName))) {
+            return new ArrayList<>();
+        }
         List<ChunkHeader> headers = null;
         try {
             String headerContent = storage.read(fileName);
@@ -110,6 +115,9 @@ public class FileStorageHelper {
     }
 
     public String checkMemoryAndReadFile(String name, IStorage storage) {
+        if(isOutdated(storage.lastModified(name))) {
+            return null;
+        }
         String fileContent = null;
         long fileSize = storage.fileSize(name);
         if(fileSize > 0 && mMemoryUtils.isMemoryAvailableToAllocate(fileSize, MEMORY_ALLOCATION_TIMES)) {
@@ -126,6 +134,11 @@ public class FileStorageHelper {
 
     private ChunkHeader newHeaderChunk() {
         return new ChunkHeader(UUID.randomUUID().toString(), 1);
+    }
+
+    public boolean isOutdated(long timestamp) {
+        long now = System.currentTimeMillis() / 1000;
+        return (now - ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD > timestamp);
     }
 
 }

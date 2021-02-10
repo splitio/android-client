@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final int SHUTDOWN_WAIT_TIME = 15;
-    private static final int MIN_THREADPOOL_SIZE_WHEN_IDLE = 4;
+    private static final int MIN_THREADPOOL_SIZE_WHEN_IDLE = 6;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
     private final Map<String, ScheduledFuture> mScheduledTasks;

@@ -17,8 +17,6 @@ import io.split.android.client.cache.MySegmentsCache;
 import io.split.android.client.cache.MySegmentsCacheMigrator;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.storage.db.MySegmentEntity;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelper;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelperImpl;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.IStorage;
 import io.split.android.client.utils.StringHelper;

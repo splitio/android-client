@@ -6,14 +6,11 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.cache.MySegmentsCache;
-import io.split.android.client.cache.MySegmentsCacheMigrator;
-import io.split.android.client.cache.SplitCache;
-import io.split.android.client.cache.SplitCacheMigrator;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -25,13 +22,12 @@ import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
-import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -41,10 +37,6 @@ import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
 import io.split.android.client.storage.db.migrator.EventsMigratorHelperImpl;
 import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelper;
 import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelperImpl;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelper;
-import io.split.android.client.storage.db.migrator.MySegmentsMigratorHelperImpl;
-import io.split.android.client.storage.db.migrator.SplitsMigratorHelper;
-import io.split.android.client.storage.db.migrator.SplitsMigratorHelperImpl;
 import io.split.android.client.storage.db.migrator.StorageMigrator;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.legacy.FileStorageHelper;
@@ -55,7 +47,6 @@ import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
 import io.split.android.client.storage.legacy.TrackStorageManager;
 import io.split.android.client.storage.legacy.TracksFileStorage;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.StringHelper;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
@@ -78,6 +69,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
     private SplitLifecycleManager _lifecyleManager;
     private SyncManager _syncManager;
+    private SplitRoomDatabase _splitDatabase;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
@@ -131,14 +123,16 @@ public class SplitFactoryImpl implements SplitFactory {
         _apiKey = apiToken;
 
         // Check if test database available
-        SplitRoomDatabase splitRoomDatabase;
         String databaseName = factoryHelper.buildDatabaseName(config, apiToken);
         if(testDatabase == null) {
 
-            splitRoomDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
-            checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, splitRoomDatabase);
+            _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
+            if (config.isStorageMigrationEnabled()) {
+                checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, _splitDatabase);
+            }
+            deleteLegacyCacheFiles(context.getCacheDir(), databaseName);
         } else {
-            splitRoomDatabase = testDatabase;
+            _splitDatabase = testDatabase;
             Logger.d("Using test database");
         }
 
@@ -151,7 +145,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
 
-        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(splitRoomDatabase, context, key);
+        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, context, key);
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 
@@ -216,7 +210,6 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of httpclient");
                     _manager.destroy();
                     Logger.i("Successful shutdown of manager");
-
                     _splitTaskExecutor.stop();
                     Logger.i("Successful shutdown of task executor");
 
@@ -285,39 +278,40 @@ public class SplitFactoryImpl implements SplitFactory {
                                          String dataFolderName,
                                          SplitRoomDatabase splitRoomDatabase) {
 
+        if(!rootFolder.exists()) {
+            // No migration needed
+            return;
+        }
+        IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
         StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase);
         if (!storageMigrator.isMigrationDone()) {
             Logger.i("Migrating cache to new storage implementation");
-            IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
-            SplitCacheMigrator splitCacheMigrator = new SplitCache(fileStore);
-            MySegmentsCacheMigrator mySegmentsCacheMigrator = new MySegmentsCache(fileStore);
 
             TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
             TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
-
+            EventsMigratorHelper eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
 
             ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
             ImpressionsStorageManager impressionsStorageManager =
                     new ImpressionsStorageManager(impressionsFileStorage,
                             new ImpressionsStorageManagerConfig(),
                             new FileStorageHelper());
-
-            SplitsMigratorHelper splitsMigratorHelper
-                    = new SplitsMigratorHelperImpl(splitCacheMigrator);
-            MySegmentsMigratorHelper mySegmentsMigratorHelper
-                    = new MySegmentsMigratorHelperImpl(mySegmentsCacheMigrator, new StringHelper());
-
-            EventsMigratorHelper eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
-
-            ImpressionsMigratorHelper impressionsMigratorHelper =
-                    new ImpressionsMigratorHelperImpl(impressionsStorageManager);
-
-            storageMigrator.runMigration(mySegmentsMigratorHelper, splitsMigratorHelper,
-                    eventsMigratorHelper, impressionsMigratorHelper);
-
+            ImpressionsMigratorHelper impressionsMigratorHelper = new ImpressionsMigratorHelperImpl(impressionsStorageManager);
+            storageMigrator.runMigration(eventsMigratorHelper, impressionsMigratorHelper);
             Logger.i("Migration done");
-
         }
+    }
+
+    private void deleteLegacyCacheFiles(File rootFolder,
+                                        String dataFolderName) {
+
+        if(!rootFolder.exists()) {
+            // There's no files to delete
+            return;
+        }
+        IStorage fileStorage = new FileStorage(rootFolder, dataFolderName);
+        List<String> files = new ArrayList(Arrays.asList(fileStorage.getAllIds()));
+        fileStorage.delete(files);
     }
 
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,

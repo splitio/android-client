@@ -2,11 +2,12 @@ package io.split.android.client.network;
 
 import com.google.common.base.Strings;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 
-import io.split.android.client.FilterBuilder;
-import io.split.android.client.SyncConfig;
+import io.split.android.client.utils.Logger;
 
 public class SdkTargetPath {
     public static final String SPLIT_CHANGES = "/splitChanges";
@@ -20,7 +21,13 @@ public class SdkTargetPath {
     }
 
     public static final URI mySegments(String baseUrl, String key) throws URISyntaxException {
-        return buildUrl(baseUrl, MY_SEGMENTS + "/" + key);
+        String encodedKey = key;
+        try {
+            encodedKey = URLEncoder.encode(key, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            Logger.e("Could not encode user key: " + key + " error -> " + e.getLocalizedMessage());
+        }
+        return buildUrl(baseUrl, MY_SEGMENTS + "/" + encodedKey);
     }
 
     public static final URI events(String baseUrl) throws URISyntaxException {

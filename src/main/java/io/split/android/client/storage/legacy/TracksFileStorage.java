@@ -42,10 +42,14 @@ public class TracksFileStorage extends FileStorage implements ITrackStorage {
         List<String> tracksFiles = getAllIds(FILE_NAME_PREFIX);
 
         for (String fileName : tracksFiles) {
+            File file = new File(_dataFolder, fileName);
+            if(_fileStorageHelper.isOutdated(file.lastModified())) {
+                continue;
+            }
             FileInputStream inputStream = null;
             Scanner scanner = null;
             try {
-                inputStream = new FileInputStream(new File(_dataFolder, fileName));
+                inputStream = new FileInputStream(file);
                 scanner = new Scanner(inputStream, FileStorageHelper.UTF8_CHARSET);
                 EventsChunk eventsChunk = null;
                 if (scanner.hasNextLine()) {

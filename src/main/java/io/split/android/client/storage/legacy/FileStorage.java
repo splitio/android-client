@@ -157,6 +157,15 @@ public class FileStorage implements IStorage {
         return file.exists();
     }
 
+    @Override
+    public long lastModified(String elementId) {
+        File file = new File(_dataFolder, elementId);
+        if(!file.exists()) {
+            return 0;
+        }
+        return file.lastModified();
+    }
+
     public long fileSize(String elementId) {
         return new File(_dataFolder, elementId).length();
     }

@@ -55,6 +55,7 @@ import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.fake.SplitTaskExecutorStub;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -63,6 +64,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,7 +72,7 @@ import static org.mockito.Mockito.when;
 public class SynchronizerTest {
 
     Synchronizer mSynchronizer;
-    @Mock
+
     SplitTaskExecutor mTaskExecutor;
     @Mock
     SplitApiFacade mSplitApiFacade;
@@ -109,6 +111,8 @@ public class SynchronizerTest {
 
     public void setup(SplitClientConfig splitClientConfig) {
         MockitoAnnotations.initMocks(this);
+
+        mTaskExecutor = spy(new SplitTaskExecutorStub());
         HttpFetcher<SplitChange> splitsFetcher = Mockito.mock(HttpFetcher.class);
         HttpFetcher<List<MySegment>> mySegmentsFetcher = Mockito.mock(HttpFetcher.class);
         HttpRecorder<List<Event>> eventsRecorder = Mockito.mock(HttpRecorder.class);
@@ -295,6 +299,7 @@ public class SynchronizerTest {
 
     @Test
     public void pushImpression() throws InterruptedException {
+
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)

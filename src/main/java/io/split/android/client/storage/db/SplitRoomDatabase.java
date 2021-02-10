@@ -2,7 +2,9 @@ package io.split.android.client.storage.db;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
+import androidx.room.InvalidationTracker;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
@@ -28,6 +30,8 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
 
     public abstract GeneralInfoDao generalInfoDao();
 
+    private volatile SplitQueryDao mSplitQueryDao;
+
     private static volatile SplitRoomDatabase mInstance;
 
     public static SplitRoomDatabase getDatabase(final Context context, final String databaseName) {
@@ -46,4 +50,15 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
         }
         return mInstance;
     }
+
+    public SplitQueryDao splitQueryDao() {
+        if (mSplitQueryDao != null) {
+            return mSplitQueryDao;
+        }
+        synchronized (this) {
+            mSplitQueryDao = new SplitQueryDaoImpl(this);
+            return mSplitQueryDao;
+        }
+    }
+
 }

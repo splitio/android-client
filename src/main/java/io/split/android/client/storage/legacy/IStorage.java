@@ -76,4 +76,6 @@ public interface IStorage {
      */
     void delete(List<String> files);
 
+    long lastModified(String elementId);
+
 }
