@@ -45,6 +45,10 @@ public class ImpressionsFileStorage extends FileStorage implements IImpressionsS
         List<String> impressionFiles = getAllIds(FILE_NAME_PREFIX);
 
         for (String fileName : impressionFiles) {
+            File file = new File(_dataFolder, fileName);
+            if(_fileStorageHelper.isOutdated(file.lastModified())) {
+                continue;
+            }
             FileInputStream inputStream = null;
             Scanner scanner = null;
             try {

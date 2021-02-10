@@ -1,5 +1,6 @@
 package io.split.android.client.storage.db.migrator;
 
+import androidx.annotation.NonNull;
 import androidx.core.util.Pair;
 
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +37,11 @@ public class StorageMigrator {
         return migrationChecker.isMigrationDone();
     }
 
-    public void runMigration(@Nullable EventsMigratorHelper eventsMigratorHelper,
-                             @Nullable ImpressionsMigratorHelper impressionsMigratorHelper) {
+    public void runMigration(@NonNull EventsMigratorHelper eventsMigratorHelper,
+                             @NonNull ImpressionsMigratorHelper impressionsMigratorHelper) {
 
-        mImpressionsMigratorHelper = impressionsMigratorHelper;
-        mEventsMigratorHelper = eventsMigratorHelper;
-
+        mImpressionsMigratorHelper = checkNotNull(impressionsMigratorHelper);
+        mEventsMigratorHelper = checkNotNull(eventsMigratorHelper);
         MigrationRunner migrationRunner = new MigrationRunner();
         migrationRunner.runMigration();
     }

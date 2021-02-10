@@ -287,31 +287,17 @@ public class SplitFactoryImpl implements SplitFactory {
         if (!storageMigrator.isMigrationDone()) {
             Logger.i("Migrating cache to new storage implementation");
 
-            EventsMigratorHelper eventsMigratorHelper = null;
-            ImpressionsMigratorHelper impressionsMigratorHelper = null;
+            TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
+            TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
+            EventsMigratorHelper eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
 
-            if(!isOutdated(fileStore.lastModified(TrackStorageManager.CHUNK_HEADERS_FILE_NAME)) ||
-                    !isOutdated(fileStore.lastModified(TrackStorageManager.LEGACY_EVENTS_FILE_NAME))) {
-                TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
-                TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
-                eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
-            }
-
-            if(!isOutdated(fileStore.lastModified(ImpressionsStorageManager.CHUNK_HEADERS_FILE_NAME)) ||
-                    !isOutdated(fileStore.lastModified(ImpressionsStorageManager.LEGACY_IMPRESSIONS_FILE_NAME))) {
-                ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
-                ImpressionsStorageManager impressionsStorageManager =
-                        new ImpressionsStorageManager(impressionsFileStorage,
-                                new ImpressionsStorageManagerConfig(),
-                                new FileStorageHelper());
-                impressionsMigratorHelper =new ImpressionsMigratorHelperImpl(impressionsStorageManager);
-            }
-
-            if(eventsMigratorHelper == null && impressionsMigratorHelper == null) {
-                return;
-            }
+            ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
+            ImpressionsStorageManager impressionsStorageManager =
+                    new ImpressionsStorageManager(impressionsFileStorage,
+                            new ImpressionsStorageManagerConfig(),
+                            new FileStorageHelper());
+            ImpressionsMigratorHelper impressionsMigratorHelper = new ImpressionsMigratorHelperImpl(impressionsStorageManager);
             storageMigrator.runMigration(eventsMigratorHelper, impressionsMigratorHelper);
-
             Logger.i("Migration done");
         }
     }
@@ -326,11 +312,6 @@ public class SplitFactoryImpl implements SplitFactory {
         IStorage fileStorage = new FileStorage(rootFolder, dataFolderName);
         List<String> files = new ArrayList(Arrays.asList(fileStorage.getAllIds()));
         fileStorage.delete(files);
-    }
-
-    private boolean isOutdated(long timestamp) {
-        long now = System.currentTimeMillis() / 1000;
-        return (now - ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD > timestamp);
     }
 
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,
