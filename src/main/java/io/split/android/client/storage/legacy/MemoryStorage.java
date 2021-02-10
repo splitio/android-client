@@ -85,6 +85,6 @@ public class MemoryStorage implements IStorage {
 
     @Override
     public long lastModified(String elementId) {
-        return 0;
+        return System.currentTimeMillis();
     }
 }
