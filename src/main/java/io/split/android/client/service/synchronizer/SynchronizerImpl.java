@@ -221,11 +221,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void pushImpression(Impression impression) {
-//        if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(new KeyImpression(impression))) {
-//            mTaskExecutor.submit(
-//                    mSplitTaskFactory.createImpressionsRecorderTask(),
-//                    mImpressionsSyncHelper);
-//        }
+        if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(new KeyImpression(impression))) {
+            mTaskExecutor.submit(
+                    mSplitTaskFactory.createImpressionsRecorderTask(),
+                    mImpressionsSyncHelper);
+        }
     }
 
     private void scheduleSplitsFetcherTask() {
