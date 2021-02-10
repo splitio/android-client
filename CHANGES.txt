@@ -1,7 +1,7 @@
 2.6.9: (Feb 10, 2021)
-- Optimized legacy storage data migration
-- Optimized storage cache processing
-- Allowing encoded unsafe chars in user key
+- Updated legacy storage data migration logic to be more efficient and run only if enabled
+- Updated storage cache processing to improve performance
+- Fixed encoding issue with unsafe chars in user key
 
 2.6.8: (Jan 08, 2021)
 - Added clean up database task to removed old cache entries
