@@ -17,7 +17,7 @@ SplitClientConfig config = SplitClientConfig.builder()
         .build();
 // User Key
 String matchingKey = "CUSTOMER_ID";
-Key key = new Key(matchingKey, null);
+Key key = new Key(matchingKey);
 
 SplitClient splitClient = null;
 try {
