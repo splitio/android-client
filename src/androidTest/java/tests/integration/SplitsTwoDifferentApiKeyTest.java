@@ -33,6 +33,7 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
+import io.split.android.client.service.synchronizer.ThreadUtils;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -48,25 +49,23 @@ public class SplitsTwoDifferentApiKeyTest {
 
     SplitChange mSplitChange;
 
-    final static String MSG_SPLIT_UPDATE = "push_msg-split_update.txt";
-    final static String MSG_SPLIT_UPDATE_OLD = "push_msg-split_update_old_change_nb.txt";
-
-    private int mSplitChangesHitCount = 0;
+    final static String MSG_SPLIT_UPDATE = "push_msg-split_update-chgnum.txt";
 
     SplitFactory mFactory1;
     SplitClient mClient1;
     final static String mApiKey1 = UUID.randomUUID().toString();// Random to avoid old data issues
-    final static String mUserKey1 = "CUSTOMER_1";
 
     SplitFactory mFactory2;
     SplitClient mClient2;
     final static String mApiKey2 = UUID.randomUUID().toString(); // Random to avoid old data issues
-    final static String mUserKey2 = "CUSTOMER_2";
 
     final static long CHANGE_NUMBER_BASE = 1000;
     final static long CHANGE_NUMBER_F1 = CHANGE_NUMBER_BASE + 1;
     final static long CHANGE_NUMBER_F2 = CHANGE_NUMBER_BASE + 2;
     long[] lastChangeNumbers = { 0, 0, 0};
+    long[] firstChangeNumbers = { 0, 0, 0};
+
+    CountDownLatch mSplitsUpdateLatch;
 
     @Before
     public void setup() {
@@ -75,7 +74,6 @@ public class SplitsTwoDifferentApiKeyTest {
 
         loadSplitChanges();
     }
-
 
     @Test
     public void initialization() throws IOException, InterruptedException {
@@ -97,10 +95,14 @@ public class SplitsTwoDifferentApiKeyTest {
 
         mClient1.on(SplitEvent.SDK_READY, readyTask1);
 
-        latch1.await(40, TimeUnit.SECONDS);
+        latch1.await(10, TimeUnit.SECONDS);
 
-        String t1Split1 = mClient2.getTreatment("split1");
-        String t1Split2 = mClient2.getTreatment("split2");
+        String t1Split1 = mClient1.getTreatment("split1");
+        String t1Split2 = mClient1.getTreatment("split2");
+
+        testSplitsUpdate(CHANGE_NUMBER_F1);
+
+        mFactory1.destroy();
 
         /// Factory 2 init
         CountDownLatch latch2 = new CountDownLatch(1);
@@ -110,7 +112,7 @@ public class SplitsTwoDifferentApiKeyTest {
 
         mFactory2 = IntegrationHelper.buildFactory(
                 mApiKey2, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock2);
 
         mClient2 = mFactory2.client();
 
@@ -118,26 +120,25 @@ public class SplitsTwoDifferentApiKeyTest {
 
         mClient2.on(SplitEvent.SDK_READY, readyTask2);
 
-        latch2.await(40, TimeUnit.SECONDS);
+        latch2.await(10, TimeUnit.SECONDS);
 
         String t2Split1 = mClient2.getTreatment("split1");
         String t2Split2 = mClient2.getTreatment("split2");
 
+        testSplitsUpdate(CHANGE_NUMBER_F2);
 
         // Assert factory 1
-        Assert.assertEquals(t1Split1, "xxx");
-        Assert.assertEquals(t1Split2, "control");
+        Assert.assertEquals("no", t1Split1);
+        Assert.assertEquals("control", t1Split2);
+        Assert.assertEquals(-1, firstChangeNumbers[1]);
         Assert.assertEquals(CHANGE_NUMBER_F1, lastChangeNumbers[1]);
 
         // Assert factory 2
-        Assert.assertEquals(t2Split1, "control");
-        Assert.assertEquals(t2Split2, "xxxxx");
-        Assert.assertEquals(CHANGE_NUMBER_F1, lastChangeNumbers[2]);
+        Assert.assertEquals("control", t2Split1);
+        Assert.assertEquals("no", t2Split2);
+        Assert.assertEquals(-1, firstChangeNumbers[2]);
+        Assert.assertEquals(CHANGE_NUMBER_F2, lastChangeNumbers[2]);
 
-    }
-
-    @After
-    public void tearDown() {
         mFactory2.destroy();
     }
 
@@ -160,10 +161,14 @@ public class SplitsTwoDifferentApiKeyTest {
                     long respChangeNumber = CHANGE_NUMBER_BASE + factoryNumber;
                     lastChangeNumbers[factoryNumber] = new Integer(uri.getQuery().split("=")[1]);
 //                    Logger.i("** Split Changes hit p: " + mLastChangeNumber);
-                    if (lastChangeNumbers[factoryNumber] == 1) {
+                    if (lastChangeNumbers[factoryNumber] == -1) {
+                        firstChangeNumbers[factoryNumber] = lastChangeNumbers[factoryNumber];
                         return createResponse(200, getSplitChanges(factoryNumber));
                     }
                     String data = IntegrationHelper.emptySplitChanges(respChangeNumber, respChangeNumber);
+                    if(mSplitsUpdateLatch != null) {
+                        mSplitsUpdateLatch.countDown();
+                    }
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     return createResponse(200, IntegrationHelper.streamingEnabledToken());
@@ -195,8 +200,8 @@ public class SplitsTwoDifferentApiKeyTest {
     }
 
     private String getSplitChanges(int factoryNumber) {
-        mSplitChange.splits.get(0).name = "SPLIT_" + factoryNumber;
-        mSplitChange.since = CHANGE_NUMBER_BASE + factoryNumber;
+        mSplitChange.splits.get(0).name = "split" + factoryNumber;
+        mSplitChange.since = -1;
         mSplitChange.till = CHANGE_NUMBER_BASE + factoryNumber;
         return Json.toJson(mSplitChange);
     }
@@ -204,5 +209,25 @@ public class SplitsTwoDifferentApiKeyTest {
     private Split parseEntity(SplitEntity entity) {
         return Json.fromJson(entity.getBody(), Split.class);
     }
+
+    private void testSplitsUpdate(long changeNumber) throws IOException, InterruptedException {
+        mSplitsUpdateLatch = new CountDownLatch(1);
+        pushMessage(MSG_SPLIT_UPDATE, changeNumber);
+        mSplitsUpdateLatch.await(10, TimeUnit.SECONDS);
+        sleep(200);
+    }
+
+    private void pushMessage(String fileName, long newChangeNum) {
+        String message = loadMockedData(fileName);
+        message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()))
+                .replace("$CHANGE_NUMBER$", String.valueOf(newChangeNum));
+        try {
+            mStreamingData.put(message + "" + "\n");
+
+            Logger.d("Pushed message: " + message);
+        } catch (InterruptedException e) {
+        }
+    }
+
 
 }
