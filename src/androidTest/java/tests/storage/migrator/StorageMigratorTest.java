@@ -28,14 +28,10 @@ import io.split.android.client.storage.db.migrator.StorageMigrator;
 import io.split.android.client.utils.Json;
 import tests.storage.migrator.mocks.EventsMigratorHelperMock;
 import tests.storage.migrator.mocks.ImpressionsMigratorHelperMock;
-import tests.storage.migrator.mocks.MySegmentsMigratorHelperMock;
-import tests.storage.migrator.mocks.SplitsMigratorHelperMock;
 
 
 public class StorageMigratorTest {
 
-    MySegmentsMigratorHelperMock mMySegmentsMigratorHelper;
-    SplitsMigratorHelperMock mSplitsMigratorHelper;
     EventsMigratorHelperMock mEventsMigratorHelper;
     ImpressionsMigratorHelperMock mImpressionsMigratorHelper;
     StorageMigrator mMigrator;
@@ -44,8 +40,6 @@ public class StorageMigratorTest {
     @Before
     public void setup() {
 
-        mMySegmentsMigratorHelper = new MySegmentsMigratorHelperMock();
-        mSplitsMigratorHelper = new SplitsMigratorHelperMock();
         mEventsMigratorHelper = new EventsMigratorHelperMock();
         mImpressionsMigratorHelper = new ImpressionsMigratorHelperMock();
 
@@ -59,13 +53,11 @@ public class StorageMigratorTest {
 
     @Test
     public void successfulMigration() {
-        mMySegmentsMigratorHelper.setMySegments(generateMySegmentEntities(10));
-        mSplitsMigratorHelper.setSnapshot(100L, generateSplitsEntities(10));
+
         mEventsMigratorHelper.setEvents(generateEventsEntities(10));
         mImpressionsMigratorHelper.setImpressions(generateImpressionsEntities(10));
 
-        mMigrator.runMigration(mMySegmentsMigratorHelper, mSplitsMigratorHelper,
-                mEventsMigratorHelper, mImpressionsMigratorHelper);
+        mMigrator.runMigration(mEventsMigratorHelper, mImpressionsMigratorHelper);
 
         MySegmentEntity mySegmentEntity3 = mDatabase.mySegmentDao().getByUserKeys("the_key_3");
         MySegmentEntity mySegmentEntity8 = mDatabase.mySegmentDao().getByUserKeys("the_key_8");
@@ -122,13 +114,10 @@ public class StorageMigratorTest {
 
     @Test
     public void emptyMigration() {
-        mMySegmentsMigratorHelper.setMySegments(new ArrayList<>());
-        mSplitsMigratorHelper.setSnapshot(-1, new ArrayList<>());
         mEventsMigratorHelper.setEvents(new ArrayList<>());
         mImpressionsMigratorHelper.setImpressions(new ArrayList<>());
 
-        mMigrator.runMigration(mMySegmentsMigratorHelper, mSplitsMigratorHelper,
-                mEventsMigratorHelper, mImpressionsMigratorHelper);
+        mMigrator.runMigration(mEventsMigratorHelper, mImpressionsMigratorHelper);
 
         List<SplitEntity> splitEntities = mDatabase.splitDao().getAll();
         List<EventEntity> eventEntities = mDatabase.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 1000);
@@ -143,13 +132,10 @@ public class StorageMigratorTest {
 
     @Test
     public void failedMigration() {
-        mMySegmentsMigratorHelper.setMySegments(null);
-        mSplitsMigratorHelper.setSnapshot(-1, null);
         mEventsMigratorHelper.setEvents(null);
         mImpressionsMigratorHelper.setImpressions(null);
 
-        mMigrator.runMigration(mMySegmentsMigratorHelper, mSplitsMigratorHelper,
-                mEventsMigratorHelper, mImpressionsMigratorHelper);
+        mMigrator.runMigration(mEventsMigratorHelper, mImpressionsMigratorHelper);
 
         List<SplitEntity> splitEntities = mDatabase.splitDao().getAll();
         List<EventEntity> eventEntities = mDatabase.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 1000);
