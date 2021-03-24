@@ -1,12 +1,15 @@
 package io.split.android.client.storage.db;
 
 import android.content.Context;
+import android.util.Log;
 
-import androidx.annotation.NonNull;
 import androidx.room.Database;
-import androidx.room.InvalidationTracker;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -32,23 +35,23 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
 
     private volatile SplitQueryDao mSplitQueryDao;
 
-    private static volatile SplitRoomDatabase mInstance;
+    private static volatile Map<String, SplitRoomDatabase> mInstances = new ConcurrentHashMap<>();
 
     public static SplitRoomDatabase getDatabase(final Context context, final String databaseName) {
         checkNotNull(context);
         checkNotNull(databaseName);
         checkArgument(!databaseName.isEmpty());
-
-        if (mInstance == null) {
-            synchronized (SplitRoomDatabase.class) {
-                if (mInstance == null) {
-                    mInstance = Room.databaseBuilder(context.getApplicationContext(),
-                            SplitRoomDatabase.class, databaseName)
-                            .build();
-                }
+        SplitRoomDatabase instance = null;
+        synchronized (SplitRoomDatabase.class) {
+            instance = mInstances.get(databaseName);
+            if (instance == null) {
+                instance = Room.databaseBuilder(context.getApplicationContext(),
+                        SplitRoomDatabase.class, databaseName)
+                        .build();
+                mInstances.put(databaseName, instance);
             }
         }
-        return mInstance;
+        return instance;
     }
 
     public SplitQueryDao splitQueryDao() {
