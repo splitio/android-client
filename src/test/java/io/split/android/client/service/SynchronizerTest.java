@@ -72,7 +72,7 @@ import static org.mockito.Mockito.when;
 public class SynchronizerTest {
 
     Synchronizer mSynchronizer;
-    //@Mock
+
     SplitTaskExecutor mTaskExecutor;
     @Mock
     SplitApiFacade mSplitApiFacade;
