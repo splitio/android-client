@@ -1,3 +1,7 @@
+
+2.6.10: (Mar 26, 2021)
+- Fixed issue when using two factories with api keys from different environments
+
 2.6.9: (Feb 10, 2021)
 - Updated legacy storage data migration logic to be more efficient and run only if enabled
 - Updated storage cache processing to improve performance
