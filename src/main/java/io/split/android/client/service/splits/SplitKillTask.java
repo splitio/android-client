@@ -3,9 +3,12 @@ package io.split.android.client.service.splits;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.synchronizer.SplitsChangeChecker;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
@@ -15,10 +18,13 @@ public class SplitKillTask implements SplitTask {
 
     private final Split mKilledSplit;
     private final SplitsStorage mSplitsStorage;
+    private final SplitEventsManager mEventsManager;
 
-    public SplitKillTask(@NonNull SplitsStorage splitsStorage, Split split) {
+    public SplitKillTask(@NonNull SplitsStorage splitsStorage, Split split,
+                         SplitEventsManager eventsManager) {
         mSplitsStorage = checkNotNull(splitsStorage);
         mKilledSplit = split;
+        mEventsManager = eventsManager;
     }
 
     @Override
@@ -43,6 +49,7 @@ public class SplitKillTask implements SplitTask {
             splitToKill.changeNumber = mKilledSplit.changeNumber;
 
             mSplitsStorage.updateWithoutChecks(splitToKill);
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION);
         } catch (Exception e) {
             logError("Unknown error while updating killed split: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLIT_KILL);

@@ -175,7 +175,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitEventsManager, SplitInternalEvent.SPLITS_UPDATED);
 
         mMySegmentsSyncTaskListener = new FetcherSyncListener(
-                mSplitEventsManager, SplitInternalEvent.MY_SEGEMENTS_UPDATED);
+                mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_UPDATED);
 
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 mSplitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
@@ -235,7 +235,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void notifyMySegmentsUpdated() {
-        mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGEMENTS_UPDATED);
+        mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
     }
 
     private void scheduleSplitsFetcherTask() {

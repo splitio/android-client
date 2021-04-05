@@ -34,7 +34,7 @@ public class RefreshableMySegments implements Runnable, MySegments {
     private void initializaFromCache(){
         _mySegments = _mySegmentsFetcher.fetch(_matchingKey, FetcherPolicy.CacheOnly);
         if (_mySegments != null && !_mySegments.isEmpty()) {
-            _eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGEMENTS_UPDATED);
+            _eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
         }
     }
 
@@ -66,7 +66,7 @@ public class RefreshableMySegments implements Runnable, MySegments {
             runWithoutExceptionHandling();
 
             if (_firstLoad) {
-                _eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGEMENTS_UPDATED);
+                _eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
                 _firstLoad = false;
             } else {
                 _eventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_UPDATED);

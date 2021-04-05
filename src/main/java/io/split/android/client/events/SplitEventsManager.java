@@ -150,7 +150,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
             _triggered.add(event);
             switch (event) {
                 case SPLITS_UPDATED:
-                case MY_SEGEMENTS_UPDATED:
+                case MY_SEGMENTS_UPDATED:
                     if (isTriggered(SplitEvent.SDK_READY)) {
                         trigger(SplitEvent.SDK_UPDATED);
                         return;
@@ -186,7 +186,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     }
 
     private void triggerSdkReadyIfNeeded() {
-        if (isTriggered(SplitInternalEvent.MY_SEGEMENTS_UPDATED) &&
+        if (isTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) &&
         isTriggered(SplitInternalEvent.SPLITS_UPDATED) &&
         !isTriggered(SplitEvent.SDK_READY)){
             trigger(SplitEvent.SDK_READY);
