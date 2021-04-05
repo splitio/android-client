@@ -160,7 +160,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
-                config, splitApiFacade, storageContainer, key.matchingKey(), splitsFilterQueryString);
+                config, splitApiFacade, storageContainer, splitsFilterQueryString, _eventsManager);
 
         cleanUpDabase(_splitTaskExecutor, splitTaskFactory);
 

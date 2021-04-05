@@ -33,8 +33,6 @@ import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.RegularExpressionMatcher;
 import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
-import io.split.android.engine.segments.MySegments;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;

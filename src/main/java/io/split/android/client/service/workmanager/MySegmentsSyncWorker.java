@@ -25,7 +25,7 @@ public class MySegmentsSyncWorker extends SplitWorker {
             mSplitTask = new MySegmentsSyncTask(
                     ServiceFactory.getMySegmentsFetcher(getNetworkHelper(), getHttpClient(),
                             getEndPoint(), key, getMetrics()),
-                    StorageFactory.getMySegmentsStorage(getDatabase(), key));
+                    StorageFactory.getMySegmentsStorage(getDatabase(), key), null);
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
         }

@@ -44,10 +44,7 @@ public class MySegmentsSyncTask implements SplitTask {
             List<String> oldSegments = new ArrayList(mMySegmentsStorage.getAll());
             List<String> mySegments = getNameList(mMySegmentsFetcher.execute(new HashMap<>()));
             mMySegmentsStorage.set(mySegments);
-            if(!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY) ||
-                    mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, mySegments)) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-            }
+            fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
@@ -69,5 +66,15 @@ public class MySegmentsSyncTask implements SplitTask {
             nameList.add(segment.name);
         }
         return nameList;
+    }
+
+    private void fireMySegmentsUpdatedIfNeeded(List<String> oldSegments, List<String> newSegments) {
+        if(mEventsManager == null) {
+            return;
+        }
+        if(!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY) ||
+                mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments)) {
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        }
     }
 }
