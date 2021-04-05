@@ -1,3 +1,4 @@
+
 package io.split.android.client.service.synchronizer;
 
 import androidx.annotation.NonNull;
@@ -21,7 +22,6 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
@@ -172,10 +172,10 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mTaskExecutor);
 
         mSplitsSyncTaskListener = new FetcherSyncListener(
-                mSplitEventsManager, SplitInternalEvent.SPLITS_ARE_READY);
+                mSplitEventsManager, SplitInternalEvent.SPLITS_UPDATED);
 
         mMySegmentsSyncTaskListener = new FetcherSyncListener(
-                mSplitEventsManager, SplitInternalEvent.MYSEGEMENTS_ARE_READY);
+                mSplitEventsManager, SplitInternalEvent.MY_SEGEMENTS_UPDATED);
 
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 mSplitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
@@ -226,6 +226,16 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                     mSplitTaskFactory.createImpressionsRecorderTask(),
                     mImpressionsSyncHelper);
         }
+    }
+
+    @Override
+    public void notifySplitKilled() {
+        mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION);
+    }
+
+    @Override
+    public void notifyMySegmentsUpdated() {
+        mSplitEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGEMENTS_UPDATED);
     }
 
     private void scheduleSplitsFetcherTask() {

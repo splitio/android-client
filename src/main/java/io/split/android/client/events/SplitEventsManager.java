@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -39,13 +40,9 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
     private SplitEventExecutorResources _resources;
 
-    private boolean _eventMySegmentsAreReady = false;
-    private boolean _eventSplitsAreReady = false;
-
-    private boolean _eventLocalMySegmentsAreLoaded = false;
-    private boolean _eventLocalSplitsAreLoaded = false;
-
     private Map<SplitEvent, Integer> _executionTimes;
+
+    private Set<SplitInternalEvent> _triggered;
 
     public SplitEventsManager(SplitClientConfig config) {
 
@@ -56,6 +53,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
         _executionTimes = new ConcurrentHashMap<>();
         _resources = new SplitEventExecutorResources();
+        _triggered = new ConcurrentHashMap<SplitInternalEvent, Integer>().keySet();
 
         registerMaxAllowebExecutionTimesPerEvent();
 
@@ -97,6 +95,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         _executionTimes.put(SplitEvent.SDK_READY, 1);
         _executionTimes.put(SplitEvent.SDK_READY_TIMED_OUT, 1);
         _executionTimes.put(SplitEvent.SDK_READY_FROM_CACHE, 1);
+        _executionTimes.put(SplitEvent.SDK_UPDATED, -1);
     }
 
     public SplitEventExecutorResources getExecutorResources() {
@@ -148,35 +147,27 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     private void triggerEventsWhenAreAvailable() {
         try {
             SplitInternalEvent event = _queue.take(); //Blocking method (waiting if necessary until an element becomes available.)
+            _triggered.add(event);
             switch (event) {
-                case SPLITS_ARE_READY:
-                    _eventSplitsAreReady = true;
-                    if (_eventMySegmentsAreReady) {
-                        trigger(SplitEvent.SDK_READY);
+                case SPLITS_UPDATED:
+                case MY_SEGEMENTS_UPDATED:
+                    if (isTriggered(SplitEvent.SDK_READY)) {
+                        trigger(SplitEvent.SDK_UPDATED);
+                        return;
                     }
-                    break;
-                case MYSEGEMENTS_ARE_READY:
-                    _eventMySegmentsAreReady = true;
-                    if (_eventSplitsAreReady) {
-                        trigger(SplitEvent.SDK_READY);
-                    }
+                    triggerSdkReadyIfNeeded();
                     break;
 
                 case SPLITS_LOADED_FROM_STORAGE:
-                    _eventLocalSplitsAreLoaded = true;
-                    if (_eventLocalMySegmentsAreLoaded) {
-                        trigger(SplitEvent.SDK_READY_FROM_CACHE);
-                    }
-                    break;
                 case MYSEGMENTS_LOADED_FROM_STORAGE:
-                    _eventLocalMySegmentsAreLoaded = true;
-                    if (_eventLocalSplitsAreLoaded) {
+                    if (isTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
+                            isTriggered(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE)) {
                         trigger(SplitEvent.SDK_READY_FROM_CACHE);
                     }
                     break;
 
                 case SDK_READY_TIMEOUT_REACHED:
-                    if (!_eventSplitsAreReady || !_eventMySegmentsAreReady) {
+                    if (isTriggered(SplitEvent.SDK_READY)) {
                         trigger(SplitEvent.SDK_READY_TIMED_OUT);
                     }
                     break;
@@ -185,6 +176,20 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
             //Catching the InterruptedException that can be thrown by _queue.take() if interrupted while waiting
             // for further information read https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ArrayBlockingQueue.html#take()
             Logger.d(e.getMessage());
+        }
+    }
+
+    // MARK: Helper functions.
+    private boolean isTriggered(SplitEvent event) {
+        Integer times = _executionTimes.get(event);
+        return times != null ? times > 0 : false;
+    }
+
+    private void triggerSdkReadyIfNeeded() {
+        if (isTriggered(SplitInternalEvent.MY_SEGEMENTS_UPDATED) &&
+        isTriggered(SplitInternalEvent.SPLITS_UPDATED) &&
+        !isTriggered(SplitEvent.SDK_READY)){
+            trigger(SplitEvent.SDK_READY);
         }
     }
 
@@ -212,5 +217,9 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         if (executor != null) {
             executor.execute();
         }
+    }
+
+    private boolean isTriggered(SplitInternalEvent event) {
+        return _triggered.contains(event);
     }
 }

@@ -21,8 +21,8 @@ public class EventsManagerTest {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(cfg);
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_READY);
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGEMENTS_UPDATED);
 
 
         boolean shouldStop = false;
@@ -116,8 +116,8 @@ public class EventsManagerTest {
         assertThat(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT), is(equalTo(true)));
 
         //But if after timeout event, the Splits and MySegments are ready, SDK_READY should be triggered
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_READY);
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGEMENTS_UPDATED);
 
         shouldStop = false;
         maxExecutionTime = System.currentTimeMillis() + 10000;

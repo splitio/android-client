@@ -44,8 +44,8 @@ public class SplitClientImplFactory {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            eventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_READY);
-        eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+            eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGEMENTS_UPDATED);
+        eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         return c;
     }
 
