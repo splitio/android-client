@@ -33,6 +33,7 @@ import io.split.android.engine.matchers.collections.PartOfSetMatcher;
 import io.split.android.engine.matchers.strings.ContainsAnyOfMatcher;
 import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
+import io.split.android.engine.segments.RefreshableMySegmentsFetcherProviderImpl;
 import io.split.android.engine.segments.StaticMySegmentsFectherProvider;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.SplitHelper;

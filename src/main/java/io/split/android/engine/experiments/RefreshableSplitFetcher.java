@@ -117,7 +117,7 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
                 _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
                 _firstLoad = false;
             } else {
-                _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_UPDATED);
+                _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
             }
 
         } catch (InterruptedException e) {

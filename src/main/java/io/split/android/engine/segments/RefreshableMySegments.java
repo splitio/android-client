@@ -69,7 +69,7 @@ public class RefreshableMySegments implements Runnable, MySegments {
                 _eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
                 _firstLoad = false;
             } else {
-                _eventsManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_UPDATED);
+                _eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
             }
         } catch (Throwable t) {
             Logger.e(t,"RefreshableMySegments failed: %s", t.getMessage());

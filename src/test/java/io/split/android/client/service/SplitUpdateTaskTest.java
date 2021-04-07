@@ -3,12 +3,14 @@ package io.split.android.client.service;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -34,6 +36,9 @@ public class SplitUpdateTaskTest {
     SplitChange mSplitChange = null;
     SplitsSyncHelper mSplitsSyncHelper;
 
+    @Mock
+    SplitEventsManager mEventsManager;
+
     SplitsUpdateTask mTask;
 
     Map<String, Object> mDefaultParams = new HashMap<>();
@@ -46,7 +51,7 @@ public class SplitUpdateTaskTest {
         mDefaultParams.put("since", -1L);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
         mSplitsSyncHelper = Mockito.mock(SplitsSyncHelper.class);
-        mTask = new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorage, mChangeNumber);
+        mTask = new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorage, mChangeNumber, mEventsManager);
         loadSplitChanges();
     }
 
