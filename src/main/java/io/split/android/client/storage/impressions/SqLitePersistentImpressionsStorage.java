@@ -64,7 +64,7 @@ public class SqLitePersistentImpressionsStorage implements PersistentImpressions
             mDatabase.runInTransaction(
                     new GetAndUpdateTransaction(mImpressionDao, newEntityChunk, finalCount, mExpirationPeriod)
             );
-            lastSize = entities.size();
+            lastSize = newEntityChunk.size();
             rowCount -= lastSize;
             entities.addAll(newEntityChunk);
         }  while (lastSize > 0 && rowCount > 0);
