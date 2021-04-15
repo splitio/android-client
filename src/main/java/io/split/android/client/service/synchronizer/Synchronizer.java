@@ -30,10 +30,6 @@ public interface Synchronizer extends SplitLifecycleAware {
 
     void pushImpression(Impression impression);
 
-    void notifySplitKilled();
-
-    void notifyMySegmentsUpdated();
-
     void flush();
 
     void destroy();

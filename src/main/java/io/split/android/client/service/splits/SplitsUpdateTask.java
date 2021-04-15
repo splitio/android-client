@@ -60,9 +60,12 @@ public class SplitsUpdateTask implements SplitTask {
         params.put(SINCE_PARAM, storedChangeNumber);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(params, false);
-        if(result.getStatus() == SplitTaskExecutionStatus.SUCCESS &&
-                mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        if(result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+            SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
+            if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
+                event = SplitInternalEvent.SPLITS_UPDATED;
+            }
+            mEventsManager.notifyInternalEvent(event);
         }
         return result;
     }

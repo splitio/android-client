@@ -1,5 +1,7 @@
 package io.split.android.client.events;
 
+import androidx.annotation.VisibleForTesting;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.ArrayList;
@@ -16,6 +18,8 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.executors.SplitEventExecutorAbstract;
 import io.split.android.client.events.executors.SplitEventExecutorFactory;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
+import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
+import io.split.android.client.utils.ConcurrentSet;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -26,7 +30,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
-    private final static int QUEUE_CAPACITY = 10;
+    private final static int QUEUE_CAPACITY = 20;
 
     private SplitClientConfig _config;
 
@@ -44,6 +48,11 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
     private Set<SplitInternalEvent> _triggered;
 
+    @VisibleForTesting
+    public void setExecutionResources(SplitEventExecutorResources resources) {
+        _resources = resources;
+    }
+
     public SplitEventsManager(SplitClientConfig config) {
 
         _config = config;
@@ -52,8 +61,8 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         _suscriptions = new ConcurrentHashMap<>();
 
         _executionTimes = new ConcurrentHashMap<>();
-        _resources = new SplitEventExecutorResources();
-        _triggered = new ConcurrentHashMap<SplitInternalEvent, Integer>().keySet();
+        _resources = new SplitEventExecutorResourcesImpl();
+        _triggered = new ConcurrentSet<SplitInternalEvent>();
 
         registerMaxAllowebExecutionTimesPerEvent();
 
@@ -80,6 +89,12 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setNameFormat("Split-EventsManager-%d")
+                .setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                    @Override
+                    public void uncaughtException(Thread t, Throwable e) {
+                        Logger.e("Unexpected error " + e.getLocalizedMessage());
+                    }
+                })
                 .build();
         _scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
         _scheduler.submit(this);
@@ -103,9 +118,17 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     }
 
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
-
         checkNotNull(internalEvent);
-
+        Logger.i("notifyInternalEvent: " + internalEvent.toString());
+        // Avoid adding to queue for fetched events if sdk is ready
+        // These events were added to handle updated event logic in this component
+        // and also to fix some issues when processing queue that made sdk update
+        // fire on init
+        if((internalEvent == SplitInternalEvent.SPLITS_FETCHED
+                || internalEvent == SplitInternalEvent.MY_SEGMENTS_FETCHED) &&
+                isTriggered(SplitEvent.SDK_READY)) {
+            return;
+        }
         try {
             _queue.add(internalEvent);
         } catch (IllegalStateException e) {
@@ -134,6 +157,11 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         return _executionTimes.get(event) == 0;
     }
 
+    private boolean wasTriggered(SplitInternalEvent event) {
+        Logger.i("was triggered: " + event.toString() + " -> " + _triggered.contains(event));
+        return _triggered.contains(event);
+    }
+
     @Override
     public void run() {
         // This code was intentionally designed this way
@@ -147,27 +175,37 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     private void triggerEventsWhenAreAvailable() {
         try {
             SplitInternalEvent event = _queue.take(); //Blocking method (waiting if necessary until an element becomes available.)
+            Logger.i("SEM: Arrived: " + event.toString());
             _triggered.add(event);
             switch (event) {
                 case SPLITS_UPDATED:
                 case MY_SEGMENTS_UPDATED:
                     if (isTriggered(SplitEvent.SDK_READY)) {
+                        Logger.i("SEM: TRIGGER UPDATED");
                         trigger(SplitEvent.SDK_UPDATED);
                         return;
                     }
                     triggerSdkReadyIfNeeded();
                     break;
 
+                case SPLITS_FETCHED:
+                case MY_SEGMENTS_FETCHED:
+                    if (isTriggered(SplitEvent.SDK_READY)) {
+                        return;
+                    }
+                    triggerSdkReadyIfNeeded();
+                    break;
+
                 case SPLITS_LOADED_FROM_STORAGE:
-                case MYSEGMENTS_LOADED_FROM_STORAGE:
-                    if (isTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
-                            isTriggered(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE)) {
+                case MY_SEGMENTS_LOADED_FROM_STORAGE:
+                    if (wasTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
+                            wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE)) {
                         trigger(SplitEvent.SDK_READY_FROM_CACHE);
                     }
                     break;
 
                 case SDK_READY_TIMEOUT_REACHED:
-                    if (isTriggered(SplitEvent.SDK_READY)) {
+                    if (!isTriggered(SplitEvent.SDK_READY)) {
                         trigger(SplitEvent.SDK_READY_TIMED_OUT);
                     }
                     break;
@@ -182,19 +220,20 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     // MARK: Helper functions.
     private boolean isTriggered(SplitEvent event) {
         Integer times = _executionTimes.get(event);
-        return times != null ? times > 0 : false;
+        return times != null ? times == 0 : false;
     }
 
     private void triggerSdkReadyIfNeeded() {
-        if (isTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) &&
-        isTriggered(SplitInternalEvent.SPLITS_UPDATED) &&
-        !isTriggered(SplitEvent.SDK_READY)){
+        if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED))&&
+                (wasTriggered(SplitInternalEvent.SPLITS_UPDATED) || wasTriggered(SplitInternalEvent.SPLITS_FETCHED)) &&
+                !isTriggered(SplitEvent.SDK_READY)) {
+            Logger.i("SEM: SDK_READY");
             trigger(SplitEvent.SDK_READY);
         }
     }
 
     private void trigger(SplitEvent event) {
-
+        Logger.i("SEM: trigger " + event.toString());
         // If executionTimes is zero, maximum executions has been reached
         if (_executionTimes.get(event) == 0) {
             return;
@@ -202,10 +241,8 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         } else if (_executionTimes.get(event) > 0) {
             _executionTimes.put(event, _executionTimes.get(event) - 1);
         } //If executionTimes is lower than zero, execute it without limitation
-
         if (_suscriptions.containsKey(event)) {
             List<SplitEventTask> toExecute = _suscriptions.get(event);
-
             for (SplitEventTask task : toExecute) {
                 executeTask(event, task);
             }
@@ -217,9 +254,5 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         if (executor != null) {
             executor.execute();
         }
-    }
-
-    private boolean isTriggered(SplitInternalEvent event) {
-        return _triggered.contains(event);
     }
 }
