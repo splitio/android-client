@@ -1,5 +1,7 @@
 package io.split.android.client.service;
 
+import androidx.work.Operation;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -12,8 +14,10 @@ import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -24,6 +28,7 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -45,7 +50,6 @@ public class SplitSyncTaskTest {
     Map<String, Object> mDefaultParams = new HashMap<>();
     String mQueryString = "qs=1";
 
-    @Mock
     SplitEventsManager mEventsManager;
 
     @Before
@@ -54,6 +58,10 @@ public class SplitSyncTaskTest {
         mDefaultParams.put("since", -1L);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
         mSplitsSyncHelper = Mockito.mock(SplitsSyncHelper.class);
+        mEventsManager = Mockito.mock(SplitEventsManager.class);
+
+        when(mSplitsSyncHelper.sync(any(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLIT_KILL));
+
         loadSplitChanges();
     }
 
@@ -151,6 +159,42 @@ public class SplitSyncTaskTest {
 
         verify(mSplitsSyncHelper, times(1)).sync(params, false);
         verify(mSplitsStorage, never()).updateSplitsFilterQueryString(anyString());
+    }
+
+    @Test
+    public void splitUpdatedNotified() throws HttpFetcherException {
+        // Check that syncing is done with changeNum retrieved from db
+        // Querystring is the same, so no clear sould be called
+        // And updateTimestamp is 0
+        // Retry is off, so splitSyncHelper.sync should be called
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                false, 1000, mQueryString, mEventsManager);
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        mTask.execute();
+
+        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+    }
+
+    @Test
+    public void splitFetchdNotified() throws HttpFetcherException {
+        // Check that syncing is done with changeNum retrieved from db
+        // Querystring is the same, so no clear sould be called
+        // And updateTimestamp is 0
+        // Retry is off, so splitSyncHelper.sync should be called
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                false, 1000, mQueryString, mEventsManager);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        mTask.execute();
+
+        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
     }
 
     @After
