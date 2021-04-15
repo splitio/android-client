@@ -59,13 +59,7 @@ public class StorageMigratorTest {
 
         mMigrator.runMigration(mEventsMigratorHelper, mImpressionsMigratorHelper);
 
-        MySegmentEntity mySegmentEntity3 = mDatabase.mySegmentDao().getByUserKeys("the_key_3");
-        MySegmentEntity mySegmentEntity8 = mDatabase.mySegmentDao().getByUserKeys("the_key_8");
         GeneralInfoEntity migrationInfo = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.DATBASE_MIGRATION_STATUS);
-
-        List<SplitEntity> splitEntities = mDatabase.splitDao().getAll();
-        SplitEntity splitEntity = findSplitByName("split_1", splitEntities);
-        Split split = Json.fromJson(splitEntity.getBody(), Split.class);
 
         List<EventEntity> eventEntities = mDatabase.eventDao().getBy(0, StorageRecordStatus.ACTIVE, 1000);
         EventEntity eventEntity = findEventByType("event_1", eventEntities);
@@ -76,21 +70,6 @@ public class StorageMigratorTest {
         KeyImpression impression = Json.fromJson(impressionEntity.getBody(), KeyImpression.class);
 
         Assert.assertEquals(GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE, migrationInfo.getLongValue());
-        Assert.assertNotNull(mySegmentEntity3);
-        Assert.assertEquals("the_key_3", mySegmentEntity3.getUserKey());
-        Assert.assertEquals("segment1,segment2,segment3", mySegmentEntity3.getSegmentList());
-        Assert.assertEquals(100, mySegmentEntity3.getUpdatedAt());
-
-        Assert.assertNotNull(mySegmentEntity8);
-        Assert.assertEquals("the_key_8", mySegmentEntity8.getUserKey());
-        Assert.assertEquals("segment10,segment20,segment30", mySegmentEntity8.getSegmentList());
-        Assert.assertEquals(100, mySegmentEntity8.getUpdatedAt());
-
-        Assert.assertEquals(10, splitEntities.size());
-        Assert.assertEquals(100, splitEntity.getUpdatedAt());
-        Assert.assertEquals("split_1", splitEntity.getName());
-        Assert.assertEquals("split_1", split.name);
-        Assert.assertEquals(Status.ACTIVE, split.status);
 
         Assert.assertEquals(10, eventEntities.size());
         Assert.assertEquals(100, eventEntity.getCreatedAt());

@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.TestingHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.FileHelper;
 import helper.IntegrationHelper;
@@ -75,6 +76,7 @@ public class OccupancyTest {
 
         latch.await(40, TimeUnit.SECONDS);
         mSseConnectLatch.await(40, TimeUnit.SECONDS);
+        TestingHelper.pushKeepAlive(mStreamingData);
 
         mMySegmentsHitCount = 0;
         mSplitsHitCount = 0;
@@ -123,8 +125,8 @@ public class OccupancyTest {
         Assert.assertTrue(splitsHitCountSecDisable > 0);
 
         // Hits == 0 means streaming enabled
-        Assert.assertEquals(0, mySegmentsHitCountAfterEnable);
-        Assert.assertEquals(0, splitsHitCountAfterEnable);
+        Assert.assertTrue(mySegmentsHitCountAfterEnable < 2 );
+        Assert.assertTrue(splitsHitCountAfterEnable < 2);
 
         splitFactory.destroy();
     }

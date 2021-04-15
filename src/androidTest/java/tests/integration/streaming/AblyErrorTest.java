@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -28,15 +27,10 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
-import io.split.android.client.service.sseclient.notifications.StreamingError;
-import io.split.android.client.storage.db.GeneralInfoEntity;
-import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 
@@ -50,20 +44,15 @@ public class AblyErrorTest {
     CountDownLatch mMySegmentsSyncLatch;
     String mApiKey;
     Key mUserKey;
-    SplitChange mSplitChange;
 
-    CountDownLatch mSplitsUpdateLatch;
+    CountDownLatch mSseLatch;
 
-    private int mSplitChangesHitCount = 0;
+    private int mSseHitCount = 0;
 
     SplitFactory mFactory;
     SplitClient mClient;
 
     SplitRoomDatabase mSplitRoomDatabase;
-
-    final static long CHANGE_NUMBER = 1000200;
-
-    private long mLastChangeNumber = 0;
 
     @Before
     public void setup() {
@@ -100,21 +89,20 @@ public class AblyErrorTest {
 
         latch.await(5, TimeUnit.SECONDS);
 
-        for (int i=0; i<10; i++) {
-        latch = new CountDownLatch(1);
-        pushErrorMessage(40012);
-        //pushErrorMessage(40142); // token expired
-        latch.await(5, TimeUnit.SECONDS);
+        for (int i=0; i<3; i++) {
+            pushErrorMessage(40012);
+            Logger.d("push i: " + i);
+            //pushErrorMessage(40142); // token expired
         }
-        Assert.assertTrue(true);
+        Assert.assertEquals(6, mSseHitCount);
     }
 
     private void pushErrorMessage(int code) throws IOException, InterruptedException {
-        mSplitsUpdateLatch = new CountDownLatch(1);
+        mSseLatch = new CountDownLatch(1);
         pushMessage("push_msg-ably_error_" + code + ".txt");
         //mStreamingResponse.close();
         mStreamingData.put("\0");
-        mSplitsUpdateLatch.await(40, TimeUnit.SECONDS);
+        mSseLatch.await(5, TimeUnit.SECONDS);
     }
 
     @After
@@ -142,13 +130,14 @@ public class AblyErrorTest {
                     return createResponse(200, IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     Logger.i("** Split changes hit");
-                    mSplitChangesHitCount++;
-                    mLastChangeNumber = new Integer(uri.getQuery().split("=")[1]);
+                    mSseHitCount++;
                     mSplitsSyncLatch.countDown();
-                    String data = IntegrationHelper.emptySplitChanges(-1, CHANGE_NUMBER - 1000);
+                    String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
+                    mSseHitCount++;
+                    mSseLatch.countDown();
                     return createResponse(200, IntegrationHelper.streamingEnabledToken());
                 } else {
                     return new HttpResponseMock(200);

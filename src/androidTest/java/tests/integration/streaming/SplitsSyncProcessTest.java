@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.TestingHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.FileHelper;
 import helper.IntegrationHelper;
@@ -44,6 +45,7 @@ import static java.lang.Thread.sleep;
 public class SplitsSyncProcessTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
+    CountDownLatch mSseLatch;
     CountDownLatch mSplitsSyncLatch;
     CountDownLatch mMySegmentsSyncLatch;
     String mApiKey;
@@ -88,6 +90,7 @@ public class SplitsSyncProcessTest {
     @Test
     public void updateTest() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch mSseLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
@@ -103,9 +106,12 @@ public class SplitsSyncProcessTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
 
-        latch.await(40, TimeUnit.SECONDS);
-        mSplitsSyncLatch.await(40, TimeUnit.SECONDS);
-        mMySegmentsSyncLatch.await(40, TimeUnit.SECONDS);
+        latch.await(20, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
+        sleep(100);
+        TestingHelper.pushKeepAlive(mStreamingData);
+        mSplitsSyncLatch.await(20, TimeUnit.SECONDS);
+        mMySegmentsSyncLatch.await(20, TimeUnit.SECONDS);
 
         testSplitsUpdate();
         sleep(500);
@@ -127,7 +133,7 @@ public class SplitsSyncProcessTest {
     private void testSplitsUpdate() throws IOException, InterruptedException {
         mSplitsUpdateLatch = new CountDownLatch(1);
         pushMessage(MSG_SPLIT_UPDATE);
-        mSplitsUpdateLatch.await(40, TimeUnit.SECONDS);
+        mSplitsUpdateLatch.await(20, TimeUnit.SECONDS);
     }
 
     private void testOldSplitsUpdate() throws IOException, InterruptedException {
@@ -162,9 +168,9 @@ public class SplitsSyncProcessTest {
                     mLastChangeNumber = new Integer(uri.getQuery().split("=")[1]);
                     Logger.i("** Split Changes hit p: " + mLastChangeNumber);
                     mSplitsSyncLatch.countDown();
-                    if (mSplitChangesHitCount > 1) {
+                    if (mSplitChangesHitCount > 2) {
                         mSplitsUpdateLatch.countDown();
-                        return createResponse(200, getSplitChanges(mSplitChangesHitCount));
+                        return createResponse(200, getSplitChanges(mSplitChangesHitCount - 1));
                     }
                     String data = IntegrationHelper.emptySplitChanges(-1, CHANGE_NUMBER - 1000);
                     return createResponse(200, data);
@@ -180,6 +186,7 @@ public class SplitsSyncProcessTest {
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
                     Logger.i("** SSE Connect hit");
+                    mSseLatch.countDown();
                     return createStreamResponse(200, mStreamingData);
                 } catch (Exception e) {
                 }
