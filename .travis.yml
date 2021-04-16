@@ -8,12 +8,8 @@ android:
   components:
     - build-tools-24.0.3
     - android-24
-    - sys-img-armeabi-v7a-android-24
-    # - sys-img-x86-android-24
+#    - sys-img-armeabi-v7a-android-24
 
-# env:
-#   global:
-#     - export ANDROID_SDK_ROOT=/usr/local/android-sdk
 
   licenses:
     - android-sdk-preview-license-.+
@@ -28,4 +24,5 @@ before_script:
 
 script:
   - ./gradlew test
-  - ./gradlew connectedAndroidTest
+  # TODO: Research to make this work
+  # - ./gradlew connectedAndroidTest
