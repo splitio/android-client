@@ -7,7 +7,7 @@ sudo: false
 android:
   components:
     - build-tools-24.0.3
-    - android-27
+    - android-24
     #- sys-img-armeabi-v7a-android-28
     - sys-img-x86-android-24
 
