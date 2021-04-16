@@ -9,6 +9,7 @@ android:
     - build-tools-29.0.2
     - android-28
     #- sys-img-armeabi-v7a-android-28
+    - sys-img-x86-android-28
 
   licenses:
     - android-sdk-preview-license-.+
