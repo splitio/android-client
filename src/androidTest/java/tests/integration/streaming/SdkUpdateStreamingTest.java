@@ -111,7 +111,7 @@ public class SdkUpdateStreamingTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         mClient.on(SplitEvent.SDK_READY_TIMED_OUT, timeoutTask);
-        mClient.on(SplitEvent.SDK_UPDATED, updatedTask);
+        mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
         mSseLatch.await(5, TimeUnit.SECONDS);
@@ -146,7 +146,7 @@ public class SdkUpdateStreamingTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         mClient.on(SplitEvent.SDK_READY_TIMED_OUT, timeoutTask);
-        mClient.on(SplitEvent.SDK_UPDATED, updatedTask);
+        mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
         mSseLatch.await(5, TimeUnit.SECONDS);
@@ -182,7 +182,7 @@ public class SdkUpdateStreamingTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         mClient.on(SplitEvent.SDK_READY_TIMED_OUT, timeoutTask);
-        mClient.on(SplitEvent.SDK_UPDATED, updatedTask);
+        mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
         mSseLatch.await(5, TimeUnit.SECONDS);

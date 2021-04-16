@@ -110,7 +110,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         _executionTimes.put(SplitEvent.SDK_READY, 1);
         _executionTimes.put(SplitEvent.SDK_READY_TIMED_OUT, 1);
         _executionTimes.put(SplitEvent.SDK_READY_FROM_CACHE, 1);
-        _executionTimes.put(SplitEvent.SDK_UPDATED, -1);
+        _executionTimes.put(SplitEvent.SDK_UPDATE, -1);
     }
 
     public SplitEventExecutorResources getExecutorResources() {
@@ -182,7 +182,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
                 case MY_SEGMENTS_UPDATED:
                     if (isTriggered(SplitEvent.SDK_READY)) {
                         Logger.i("SEM: TRIGGER UPDATED");
-                        trigger(SplitEvent.SDK_UPDATED);
+                        trigger(SplitEvent.SDK_UPDATE);
                         return;
                     }
                     triggerSdkReadyIfNeeded();

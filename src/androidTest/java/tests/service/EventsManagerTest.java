@@ -23,7 +23,7 @@ public class EventsManagerTest {
 
         CountDownLatch updateLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
-        eventManager.register(SplitEvent.SDK_UPDATED, updateTask);
+        eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
@@ -43,7 +43,7 @@ public class EventsManagerTest {
 
         CountDownLatch updateLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
-        eventManager.register(SplitEvent.SDK_UPDATED, updateTask);
+        eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
@@ -63,7 +63,7 @@ public class EventsManagerTest {
 
         CountDownLatch updateLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
-        eventManager.register(SplitEvent.SDK_UPDATED, updateTask);
+        eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
@@ -84,7 +84,7 @@ public class EventsManagerTest {
 
         CountDownLatch updateLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
-        eventManager.register(SplitEvent.SDK_UPDATED, updateTask);
+        eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
@@ -104,7 +104,7 @@ public class EventsManagerTest {
 
         CountDownLatch updateLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
-        eventManager.register(SplitEvent.SDK_UPDATED, updateTask);
+        eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
@@ -124,7 +124,7 @@ public class EventsManagerTest {
 
         CountDownLatch updateLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
-        eventManager.register(SplitEvent.SDK_UPDATED, updateTask);
+        eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
