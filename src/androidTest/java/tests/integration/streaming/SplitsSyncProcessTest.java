@@ -90,7 +90,7 @@ public class SplitsSyncProcessTest {
     @Test
     public void updateTest() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        CountDownLatch mSseLatch = new CountDownLatch(1);
+        mSseLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
@@ -108,7 +108,7 @@ public class SplitsSyncProcessTest {
 
         latch.await(20, TimeUnit.SECONDS);
         mSseLatch.await(20, TimeUnit.SECONDS);
-        sleep(100);
+        sleep(500);
         TestingHelper.pushKeepAlive(mStreamingData);
         mSplitsSyncLatch.await(20, TimeUnit.SECONDS);
         mMySegmentsSyncLatch.await(20, TimeUnit.SECONDS);
@@ -189,6 +189,7 @@ public class SplitsSyncProcessTest {
                     mSseLatch.countDown();
                     return createStreamResponse(200, mStreamingData);
                 } catch (Exception e) {
+                    Logger.e("** SSE Connect error: " + e.getLocalizedMessage());
                 }
                 return null;
             }

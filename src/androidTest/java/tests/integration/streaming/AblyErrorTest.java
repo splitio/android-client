@@ -23,6 +23,7 @@ import fake.HttpResponseMockDispatcher;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
+import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -72,6 +73,7 @@ public class AblyErrorTest {
     @Test
     public void ablyErrorTest() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
+        mSseLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
@@ -89,12 +91,18 @@ public class AblyErrorTest {
 
         latch.await(5, TimeUnit.SECONDS);
 
-        for (int i=0; i<3; i++) {
+        mSseLatch.await(5, TimeUnit.SECONDS);
+
+        for (int i=0; i<2; i++) {
             pushErrorMessage(40012);
             Logger.d("push i: " + i);
             //pushErrorMessage(40142); // token expired
         }
-        Assert.assertEquals(6, mSseHitCount);
+
+        // what to be sure no new hit occurs
+        TestingHelper.delay(1000);
+
+        Assert.assertEquals(3, mSseHitCount);
     }
 
     private void pushErrorMessage(int code) throws IOException, InterruptedException {
@@ -103,6 +111,7 @@ public class AblyErrorTest {
         //mStreamingResponse.close();
         mStreamingData.put("\0");
         mSseLatch.await(5, TimeUnit.SECONDS);
+        TestingHelper.delay(500);
     }
 
     @After
@@ -130,14 +139,11 @@ public class AblyErrorTest {
                     return createResponse(200, IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     Logger.i("** Split changes hit");
-                    mSseHitCount++;
                     mSplitsSyncLatch.countDown();
                     String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
-                    mSseHitCount++;
-                    mSseLatch.countDown();
                     return createResponse(200, IntegrationHelper.streamingEnabledToken());
                 } else {
                     return new HttpResponseMock(200);
@@ -148,6 +154,8 @@ public class AblyErrorTest {
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
                     Logger.i("** SSE Connect hit");
+                    mSseHitCount++;
+                    mSseLatch.countDown();
                     return createStreamResponse(200, mStreamingData);
                 } catch (Exception e) {
                 }
