@@ -16,3 +16,4 @@ android:
 
 script:
   - ./gradlew test
+  - ./gradlew connectedAndroidTest
