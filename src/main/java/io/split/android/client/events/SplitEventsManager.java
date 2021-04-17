@@ -119,7 +119,6 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
         checkNotNull(internalEvent);
-        Logger.i("notifyInternalEvent: " + internalEvent.toString());
         // Avoid adding to queue for fetched events if sdk is ready
         // These events were added to handle updated event logic in this component
         // and also to fix some issues when processing queue that made sdk update
@@ -158,7 +157,6 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     }
 
     private boolean wasTriggered(SplitInternalEvent event) {
-        Logger.i("was triggered: " + event.toString() + " -> " + _triggered.contains(event));
         return _triggered.contains(event);
     }
 
@@ -175,13 +173,11 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     private void triggerEventsWhenAreAvailable() {
         try {
             SplitInternalEvent event = _queue.take(); //Blocking method (waiting if necessary until an element becomes available.)
-            Logger.i("SEM: Arrived: " + event.toString());
             _triggered.add(event);
             switch (event) {
                 case SPLITS_UPDATED:
                 case MY_SEGMENTS_UPDATED:
                     if (isTriggered(SplitEvent.SDK_READY)) {
-                        Logger.i("SEM: TRIGGER UPDATED");
                         trigger(SplitEvent.SDK_UPDATE);
                         return;
                     }
@@ -201,6 +197,12 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
                     if (wasTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE)) {
                         trigger(SplitEvent.SDK_READY_FROM_CACHE);
+                    }
+                    break;
+
+                case SPLIT_KILLED_NOTIFICATION:
+                    if (isTriggered(SplitEvent.SDK_READY)) {
+                        trigger(SplitEvent.SDK_UPDATE);
                     }
                     break;
 
@@ -227,13 +229,11 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
         if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED))&&
                 (wasTriggered(SplitInternalEvent.SPLITS_UPDATED) || wasTriggered(SplitInternalEvent.SPLITS_FETCHED)) &&
                 !isTriggered(SplitEvent.SDK_READY)) {
-            Logger.i("SEM: SDK_READY");
             trigger(SplitEvent.SDK_READY);
         }
     }
 
     private void trigger(SplitEvent event) {
-        Logger.i("SEM: trigger " + event.toString());
         // If executionTimes is zero, maximum executions has been reached
         if (_executionTimes.get(event) == 0) {
             return;
