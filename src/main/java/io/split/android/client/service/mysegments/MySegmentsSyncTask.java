@@ -73,11 +73,11 @@ public class MySegmentsSyncTask implements SplitTask {
         if(mEventsManager == null) {
             return;
         }
-        mEventsManager.notifyInternalEvent(getInternalEvent(
-                mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments)));
+        mEventsManager.notifyInternalEvent(getInternalEvent(oldSegments, newSegments));
     }
 
-    private SplitInternalEvent getInternalEvent(boolean haveChanged) {
+    private SplitInternalEvent getInternalEvent(List<String> oldSegments, List<String> newSegments) {
+        boolean haveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments);
         if(haveChanged) {
             return SplitInternalEvent.MY_SEGMENTS_UPDATED;
         }
