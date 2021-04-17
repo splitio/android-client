@@ -1,4 +1,4 @@
-package tests.integration.streaming;
+package tests.service;
 
 import android.content.Context;
 
@@ -27,6 +27,7 @@ import fake.HttpResponseMockDispatcher;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
+import helper.TestableSplitConfigBuilder;
 import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
@@ -45,19 +46,13 @@ import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 
-import static java.lang.Thread.sleep;
-
-public class SdkUpdateStreamingTest {
+public class SdkUpdatePollingTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
 
     CountDownLatch mSseLatch;
     String mApiKey = IntegrationHelper.dummyApiKey();
     Key mUserKey = IntegrationHelper.dummyUserKey();
-
-    final static String MSG_SPLIT_UPDATE = "push_msg-split_update.txt";
-    final static String MSG_SPLIT_KILL = "push_msg-split_kill.txt";
-    final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
 
     CountDownLatch mSplitsPushLatch = null;
     CountDownLatch mMySegmentsPushLatch = null;
@@ -96,9 +91,14 @@ public class SdkUpdateStreamingTest {
 
         HttpClientMock httpClientMock = new HttpClientMock(createNoChangesDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.basicConfig();
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .streamingEnabled(false)
+                .featuresRefreshRate(1)
+                .segmentsRefreshRate(1)
+                .ready(3000)
+                .build();
         mSplitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1000));
+                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 100));
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, mUserKey,
@@ -115,8 +115,6 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
-        pushInitialId();
 
         TestingHelper.delay(1000);
 
@@ -125,49 +123,18 @@ public class SdkUpdateStreamingTest {
     }
 
     @Test
-    public void sdkUpdateSplitsWhenNotificationArrives() throws IOException, InterruptedException {
+    public void sdkUpdateSplits() throws IOException, InterruptedException {
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch updateLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createSplitChangesDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.basicConfig();
-        mSplitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1000));
-
-        mFactory = IntegrationHelper.buildFactory(
-                mApiKey, mUserKey,
-                config, mContext, httpClientMock, mSplitRoomDatabase);
-
-        mClient = mFactory.client();
-
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
-        SplitEventTaskHelper timeoutTask = new SplitEventTaskHelper(readyLatch);
-        SplitEventTaskHelper updatedTask = new SplitEventTaskHelper(updateLatch);
-
-        mClient.on(SplitEvent.SDK_READY, readyTask);
-        mClient.on(SplitEvent.SDK_READY_TIMED_OUT, timeoutTask);
-        mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
-
-        readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
-        pushInitialId();
-
-        testSplitsUpdate();
-        updateLatch.await(5, TimeUnit.SECONDS);
-
-        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
-    }
-
-    @Test
-    public void sdkUpdateSplitsWhenKillNotificationArrives() throws IOException, InterruptedException {
-        CountDownLatch readyLatch = new CountDownLatch(1);
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
-        HttpClientMock httpClientMock = new HttpClientMock(createSplitChangesDispatcher());
-
-        SplitClientConfig config = IntegrationHelper.basicConfig();
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .streamingEnabled(false)
+                .featuresRefreshRate(1)
+                .segmentsRefreshRate(1)
+                .ready(3000)
+                .build();
         mSplitRoomDatabase.generalInfoDao().update(
                 new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 100));
 
@@ -187,9 +154,7 @@ public class SdkUpdateStreamingTest {
 
         readyLatch.await(5, TimeUnit.SECONDS);
         mSseLatch.await(5, TimeUnit.SECONDS);
-        pushInitialId();
 
-        testSplitKill();
         updateLatch.await(5, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
@@ -197,15 +162,20 @@ public class SdkUpdateStreamingTest {
     }
 
     @Test
-    public void sdkUpdateMySegmentsWhenNotificationArrives() throws IOException, InterruptedException {
+    public void sdkUpdateMySegments() throws IOException, InterruptedException {
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch updateLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createMySegmentsChangesDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.basicConfig();
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .streamingEnabled(false)
+                .featuresRefreshRate(1)
+                .segmentsRefreshRate(1)
+                .ready(3000)
+                .build();
         mSplitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1000));
+                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 100));
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, mUserKey,
@@ -232,25 +202,12 @@ public class SdkUpdateStreamingTest {
         Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
     }
 
-    private void testSplitKill() throws IOException, InterruptedException {
-        mSplitsPushLatch = new CountDownLatch(1);
-        pushMessage(MSG_SPLIT_KILL);
-        mSplitsPushLatch.await(5, TimeUnit.SECONDS);
-        mSplitsPushLatch = null;
-    }
-
     private void testSplitsUpdate() throws IOException, InterruptedException {
-        mSplitsPushLatch = new CountDownLatch(1);
-        pushMessage(MSG_SPLIT_UPDATE);
-        mSplitsPushLatch.await(5, TimeUnit.SECONDS);
-        mSplitsPushLatch = null;
+
     }
 
     private void testMySegmentsUpdate() throws IOException, InterruptedException {
-        mMySegmentsPushLatch = new CountDownLatch(1);
-        pushMessage(MSG_SEGMENT_UPDATE_PAYLOAD);
-        mMySegmentsPushLatch.await(5, TimeUnit.SECONDS);
-        mMySegmentsPushLatch = null;
+
     }
 
     @After
@@ -274,7 +231,8 @@ public class SdkUpdateStreamingTest {
                     Logger.i("NO CHANGWES MY S");
                     return createResponse(200, IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
-                    Logger.i("NO CHANGES changes");
+                    String json = IntegrationHelper.emptySplitChanges(99999, 99999);
+                    Logger.i("NO CHANGES changes: " + json);
                     return createResponse(200, IntegrationHelper.emptySplitChanges(99999, 99999));
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
@@ -305,9 +263,8 @@ public class SdkUpdateStreamingTest {
                     return createResponse(200, IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     mSplitChangesHitCount++;
-                    if(mSplitsPushLatch != null) {
-                        mSplitsPushLatch.countDown();
-                    }
+                    String json = getChanges(mSplitChangesHitCount);
+                    Logger.d("REPS CH: " + json);
                     return createResponse(200, getChanges(mSplitChangesHitCount));
                 } else if (uri.getPath().contains("/auth")) {
                     mSseLatch.countDown();
@@ -336,20 +293,14 @@ public class SdkUpdateStreamingTest {
                 if (uri.getPath().contains("/mySegments")) {
                     mMySegmentsHitCount++;
                     int hit = mMySegmentsHitCount;
-                    String json = IntegrationHelper.emptyMySegments();
-                    if (mMySegmentsHitCount > 2) {
-                        List<MySegment> mySegments = new ArrayList<>();
-                        for (int i = 0; i <= hit; i++) {
-                            MySegment segment = new MySegment();
-                            segment.id = "s" + i;
-                            segment.name = "segment" + i;
-                            mySegments.add(segment);
-                        }
-                        json = "{\"mySegments\": " + Json.toJson(mySegments) + "}";
+                    List<MySegment> mySegments = new ArrayList<>();
+                    for (int i = 0; i <= hit; i++) {
+                        MySegment segment = new MySegment();
+                        segment.id = "s" + i;
+                        segment.name = "segment" + i;
+                        mySegments.add(segment);
                     }
-                    if(mMySegmentsPushLatch != null) {
-                        mMySegmentsPushLatch.countDown();
-                    }
+                    String json = "{\"mySegments\": " + Json.toJson(mySegments) + "}";
                     return createResponse(200, json);
                 } else if (uri.getPath().contains("/splitChanges")) {
 
@@ -426,7 +377,7 @@ public class SdkUpdateStreamingTest {
         if (hitNumber < mNumbers.size()) {
             return mSplitChangesJson.get(hitNumber);
         }
-        return IntegrationHelper.emptySplitChanges(500, 500);
+        return IntegrationHelper.emptySplitChanges(5000, 5000);
     }
 
     private Split parseEntity(SplitEntity entity) {

@@ -55,6 +55,16 @@ public class MySegmentsChangesCheckerTest {
     }
 
     @Test
+    public void testNoChangesDifferentOrderInverted() {
+
+        List<String> newSegments = Arrays.asList("s1", "s2", "s3");
+        List<String> old = Arrays.asList("s2", "s1", "s3");
+        boolean result = mMySegmentsChangeChecker.mySegmentsHaveChanged(old, newSegments);
+
+        Assert.assertFalse(result);
+    }
+
+    @Test
     public void testNoChangesArrivedEmpty() {
 
         List<String> newSegments = new ArrayList<>();
