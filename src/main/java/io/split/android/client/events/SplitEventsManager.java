@@ -101,7 +101,6 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
     }
 
-
     /**
      * This method should registering the allowed maximum times of event trigger
      * EXAMPLE: SDK_READY should be triggered only once
