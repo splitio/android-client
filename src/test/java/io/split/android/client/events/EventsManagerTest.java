@@ -2,18 +2,40 @@ package io.split.android.client.events;
 
 import org.junit.Assert;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
+import helper.TestingHelper;
+import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.events.executors.SplitEventExecutorResources;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class EventsManagerTest {
+
+    @Mock
+    SplitEventExecutorResources resources;
+
+    @Mock
+    SplitClient client;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+        when(resources.getSplitClient()).thenReturn(client);
+    }
 
     @Test
     public void eventOnReady() {
@@ -21,8 +43,8 @@ public class EventsManagerTest {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(cfg);
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_READY);
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
 
 
         boolean shouldStop = false;
@@ -116,8 +138,8 @@ public class EventsManagerTest {
         assertThat(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT), is(equalTo(true)));
 
         //But if after timeout event, the Splits and MySegments are ready, SDK_READY should be triggered
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MYSEGEMENTS_ARE_READY);
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
 
         shouldStop = false;
         maxExecutionTime = System.currentTimeMillis() + 10000;
@@ -150,14 +172,14 @@ public class EventsManagerTest {
     public void eventOnReadyFromCacheSplitsFirst() {
         List<SplitInternalEvent> eventList = new ArrayList<>();
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-        eventList.add(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
+        eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList);
     }
 
     @Test
     public void eventOnReadyFromCacheMySegmentsFirst() {
         List<SplitInternalEvent> eventList = new ArrayList<>();
-        eventList.add(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
+        eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList);
     }
@@ -196,5 +218,4 @@ public class EventsManagerTest {
 
         assertThat(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE), is(equalTo(true)));
     }
-
 }

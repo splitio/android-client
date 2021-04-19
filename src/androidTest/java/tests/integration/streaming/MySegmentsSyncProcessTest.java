@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.TestingHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.FileHelper;
 import helper.IntegrationHelper;
@@ -40,8 +41,8 @@ import static java.lang.Thread.sleep;
 public class MySegmentsSyncProcessTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
-    CountDownLatch mSplitsSyncLatch;
     CountDownLatch mMySegmentsSyncLatch;
+    CountDownLatch mSseLatch;
     String mApiKey;
     Key mUserKey;
 
@@ -52,7 +53,6 @@ public class MySegmentsSyncProcessTest {
     final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
     final static String MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD = "push_msg-segment_update_empty_payload.txt";
 
-    private int mSplitChangesHitCount = 0;
     private int mMySegmentsHitCount = 0;
 
     SplitFactory mFactory;
@@ -64,7 +64,6 @@ public class MySegmentsSyncProcessTest {
     public void setup() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mStreamingData = new LinkedBlockingDeque<>();
-        mSplitsSyncLatch = new CountDownLatch(2);
         mMySegmentsSyncLatch = new CountDownLatch(2);
 
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
@@ -79,6 +78,7 @@ public class MySegmentsSyncProcessTest {
     @Test
     public void mySegmentsUpdate() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
+        mSseLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
@@ -94,9 +94,12 @@ public class MySegmentsSyncProcessTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
 
-        latch.await(5, TimeUnit.SECONDS);
-        mSplitsSyncLatch.await(5, TimeUnit.SECONDS);
-        mMySegmentsSyncLatch.await(5, TimeUnit.SECONDS);
+        latch.await(10, TimeUnit.SECONDS);
+
+        mSseLatch.await(5, TimeUnit.SECONDS);
+
+        TestingHelper.pushKeepAlive(mStreamingData);
+        mMySegmentsSyncLatch.await(10, TimeUnit.SECONDS);
 
         testMySegmentsUpdate();
         sleep(500);
@@ -120,13 +123,13 @@ public class MySegmentsSyncProcessTest {
     private void testMySegmentsUpdate() throws IOException, InterruptedException {
         mMySegmentsUpdateLatch = new CountDownLatch(1);
         pushMessage(MSG_SEGMENT_UPDATE);
-        mMySegmentsUpdateLatch.await(40, TimeUnit.SECONDS);
+        mMySegmentsUpdateLatch.await(5, TimeUnit.SECONDS);
     }
 
     private void testMySegmentsPush(String message) throws IOException, InterruptedException {
         mMySegmentsPushLatch = new CountDownLatch(1);
         pushMessage(message);
-        mMySegmentsPushLatch.await(40, TimeUnit.SECONDS);
+        mMySegmentsPushLatch.await(5, TimeUnit.SECONDS);
     }
 
 
@@ -154,16 +157,13 @@ public class MySegmentsSyncProcessTest {
 
                     if (mMySegmentsHitCount == 3) {
                         mMySegmentsUpdateLatch.countDown();
+                        Logger.d("updatedMySegments SEGMENTS");
                         return createResponse(200, updatedMySegments());
                     }
-
+                    Logger.d("DUMMY SEGMENTS");
                     return createResponse(200, IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
-
-                    mSplitChangesHitCount++;
                     Logger.i("** Split Changes hit");
-                    mSplitsSyncLatch.countDown();
-
                     String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
@@ -177,7 +177,7 @@ public class MySegmentsSyncProcessTest {
             @Override
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
-                    Logger.i("** SSE Connect hit");
+                    mSseLatch.countDown();
                     return createStreamResponse(200, mStreamingData);
                 } catch (Exception e) {
                 }

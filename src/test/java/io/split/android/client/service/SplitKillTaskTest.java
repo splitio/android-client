@@ -5,9 +5,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -26,6 +29,8 @@ import static org.mockito.Mockito.when;
 
 public class SplitKillTaskTest {
 
+    SplitEventsManager mEventsManager;
+
     SplitsStorage mSplitsStorage;
 
     SplitKillTask mTask;
@@ -34,6 +39,7 @@ public class SplitKillTaskTest {
     @Before
     public void setup() {
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
+        mEventsManager = Mockito.mock(SplitEventsManager.class);
         Split split = new Split();
         split.name = "split1";
         split.defaultTreatment = "off";
@@ -49,7 +55,7 @@ public class SplitKillTaskTest {
         split.name = "split1";
         split.defaultTreatment = "on";
         split.changeNumber = 1001;
-        mTask = new SplitKillTask( mSplitsStorage, split);
+        mTask = new SplitKillTask( mSplitsStorage, split, mEventsManager);
 
         when(mSplitsStorage.getTill()).thenReturn(1000L);
 
@@ -63,6 +69,7 @@ public class SplitKillTaskTest {
         Assert.assertEquals(split.defaultTreatment, splitCaptor.getValue().defaultTreatment);
         Assert.assertEquals(split.changeNumber, splitCaptor.getValue().changeNumber);
         Assert.assertEquals(true, splitCaptor.getValue().killed);
+        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION);
     }
 
     @Test
@@ -71,7 +78,7 @@ public class SplitKillTaskTest {
         split.name = "split1";
         split.defaultTreatment = "on";
         split.changeNumber = 1001;
-        mTask = new SplitKillTask( mSplitsStorage, split);
+        mTask = new SplitKillTask( mSplitsStorage, split, mEventsManager);
 
         when(mSplitsStorage.getTill()).thenReturn(1002L);
 
@@ -84,7 +91,7 @@ public class SplitKillTaskTest {
 
     @Test
     public void nullParam() throws HttpFetcherException {
-        mTask = new SplitKillTask( mSplitsStorage, null);
+        mTask = new SplitKillTask( mSplitsStorage, null, mEventsManager);
         SplitTaskExecutionInfo result = mTask.execute();
         verify(mSplitsStorage, never()).updateWithoutChecks(any());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
@@ -95,7 +102,7 @@ public class SplitKillTaskTest {
         Split split = new Split();
         split.changeNumber = 2000L;
         when(mSplitsStorage.getTill()).thenReturn(1000L);
-        mTask = new SplitKillTask( mSplitsStorage, split);
+        mTask = new SplitKillTask( mSplitsStorage, split, mEventsManager);
         doThrow(NullPointerException.class).when(mSplitsStorage).updateWithoutChecks(any());
         SplitTaskExecutionInfo result = mTask.execute();
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());

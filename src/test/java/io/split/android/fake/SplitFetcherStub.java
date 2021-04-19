@@ -9,7 +9,6 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 
 @SuppressWarnings("ConstantConditions")
 public class SplitFetcherStub implements SplitFetcher {

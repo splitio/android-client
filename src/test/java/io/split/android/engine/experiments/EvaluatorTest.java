@@ -18,9 +18,6 @@ import io.split.android.client.TreatmentLabels;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
-import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
-import io.split.android.fake.SplitFetcherStub;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 
