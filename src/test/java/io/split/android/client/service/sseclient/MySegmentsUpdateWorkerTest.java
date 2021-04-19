@@ -42,7 +42,7 @@ public class MySegmentsUpdateWorkerTest {
 
         Thread.sleep(1000);
 
-        verify(mSynchronizer, times(4)).synchronizeMySegments();
+        verify(mSynchronizer, times(4)).forceMySegmentsSync();
     }
 
     @Test

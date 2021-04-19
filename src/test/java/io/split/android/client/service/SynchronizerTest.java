@@ -133,7 +133,7 @@ public class SynchronizerTest {
         when(mSplitStorageContainer.getImpressionsStorage()).thenReturn(mImpressionsStorage);
 
         when(mTaskFactory.createSplitsSyncTask(anyBoolean())).thenReturn(Mockito.mock(SplitsSyncTask.class));
-        when(mTaskFactory.createMySegmentsSyncTask()).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
+        when(mTaskFactory.createMySegmentsSyncTask(anyBoolean())).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
         when(mTaskFactory.createLoadSplitsTask()).thenReturn(Mockito.mock(LoadSplitsTask.class));

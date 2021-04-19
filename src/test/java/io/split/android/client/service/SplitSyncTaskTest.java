@@ -66,7 +66,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false, false);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(params, true);
+        verify(mSplitsSyncHelper, times(1)).sync(params, true, false);
     }
 
     @Test
@@ -124,7 +124,7 @@ public class SplitSyncTaskTest {
 
         Map<String, Object> expectedParam = new HashMap<>();
         expectedParam.put("since", -1L);
-        verify(mSplitsSyncHelper, times(1)).sync(expectedParam, true);
+        verify(mSplitsSyncHelper, times(1)).sync(expectedParam, true, false);
         verify(mSplitsStorage, times(1)).updateSplitsFilterQueryString(otherQs);
     }
 
@@ -144,7 +144,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(params, false);
+        verify(mSplitsSyncHelper, times(1)).sync(params, false, false);
         verify(mSplitsStorage, never()).updateSplitsFilterQueryString(anyString());
     }
 

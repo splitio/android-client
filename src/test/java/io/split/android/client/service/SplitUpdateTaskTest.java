@@ -56,7 +56,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false, true);
     }
 
     @Test
@@ -68,7 +68,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, never()).sync(any(), anyBoolean());
+        verify(mSplitsSyncHelper, never()).sync(any(), anyBoolean(), anyBoolean());
     }
 
     @After
