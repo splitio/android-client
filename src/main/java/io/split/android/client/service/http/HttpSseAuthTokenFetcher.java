@@ -1,6 +1,7 @@
 package io.split.android.client.service.http;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.net.URI;
 import java.util.Map;
@@ -33,7 +34,8 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
     }
 
     @Override
-    public SseAuthenticationResponse execute(@NonNull Map<String, Object> params) throws HttpFetcherException {
+    public SseAuthenticationResponse execute(@NonNull Map<String, Object> params,
+                                             @Nullable Map<String, String> headers) throws HttpFetcherException {
         checkNotNull(params);
         SseAuthenticationResponse responseData = null;
 

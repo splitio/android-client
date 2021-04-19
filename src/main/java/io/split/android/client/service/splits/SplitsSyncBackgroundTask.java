@@ -43,6 +43,6 @@ public class SplitsSyncBackgroundTask implements SplitTask {
         }
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
-        return mSplitsSyncHelper.sync(params, cleanBeforeUpdate);
+        return mSplitsSyncHelper.sync(params, cleanBeforeUpdate, false);
     }
 }

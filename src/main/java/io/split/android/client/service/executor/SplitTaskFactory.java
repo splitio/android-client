@@ -22,7 +22,7 @@ public interface SplitTaskFactory {
 
     SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration);
 
-    MySegmentsSyncTask createMySegmentsSyncTask();
+    MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache);
 
     LoadMySegmentsTask createLoadMySegmentsTask();
 

@@ -49,6 +49,6 @@ public class SplitsUpdateTask implements SplitTask {
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
 
-        return mSplitsSyncHelper.sync(params, false);
+        return mSplitsSyncHelper.sync(params, false, true);
     }
 }

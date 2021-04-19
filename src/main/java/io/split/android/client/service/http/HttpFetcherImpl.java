@@ -1,6 +1,7 @@
 package io.split.android.client.service.http;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.net.URI;
 import java.util.Map;
@@ -51,7 +52,8 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
     }
 
     @Override
-    public T execute(@NonNull Map<String, Object> params) throws HttpFetcherException {
+    public T execute(@NonNull Map<String, Object> params,
+                     @Nullable Map<String, String> headers) throws HttpFetcherException {
         checkNotNull(params);
         long start = System.currentTimeMillis();
         T responseData = null;
@@ -67,7 +69,7 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                 uriBuilder.addParameter(param.getKey(), value != null ? value.toString() : "");
             }
             URI u = uriBuilder.build();
-            HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET).execute();
+            HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET, null, headers).execute();
             Logger.d("Received from: " + u.toString() + " -> " + response.getData());
             if (!response.isSuccess()) {
                 if(mMetrics != null) {

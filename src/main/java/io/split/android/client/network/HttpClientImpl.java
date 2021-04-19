@@ -44,6 +44,10 @@ public class HttpClientImpl implements HttpClient {
     }
 
     @Override
+    public HttpRequest request(URI uri, HttpMethod requestMethod, String body, Map<String, String> headers) {
+        return request(uri, requestMethod, body, headers);
+    }
+
     public HttpRequest request(URI uri, HttpMethod requestMethod) {
         return request(uri, requestMethod, null);
     }

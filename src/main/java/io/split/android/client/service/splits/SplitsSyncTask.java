@@ -59,7 +59,7 @@ public class SplitsSyncTask implements SplitTask {
 
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
-        return mSplitsSyncHelper.sync(params, splitsFilterHasChanged || shouldClearExpiredCache);
+        return mSplitsSyncHelper.sync(params, splitsFilterHasChanged || shouldClearExpiredCache, false);
     }
 
     private boolean splitsFilterHasChanged(String storedSplitsFilterQueryString) {
