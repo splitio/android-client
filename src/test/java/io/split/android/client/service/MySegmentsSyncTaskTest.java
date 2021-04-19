@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.impressions.Impression;
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
@@ -42,6 +42,8 @@ public class MySegmentsSyncTaskTest {
     HttpFetcher mMySegmentsFetcher;
     @Mock
     MySegmentsStorage mySegmentsStorage;
+    @Mock
+    SplitEventsManager mEventsManager;
 
     List<MySegment> mMySegments = null;
 
@@ -50,7 +52,7 @@ public class MySegmentsSyncTaskTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager);
         loadMySegments();
     }
 
@@ -74,7 +76,7 @@ public class MySegmentsSyncTaskTest {
     public void correctExecutionNoCache() throws HttpFetcherException {
         Map<String, String> headers = new HashMap<>();
         headers.put(ServiceConstants.CACHE_CONTROL_HEADER, ServiceConstants.CACHE_CONTROL_NO_CACHE);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, null);
         when(mMySegmentsFetcher.execute(noParams, headers)).thenReturn(mMySegments);
 
         mTask.execute();
@@ -97,7 +99,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager);
         when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(IllegalStateException.class);
 
         mTask.execute();

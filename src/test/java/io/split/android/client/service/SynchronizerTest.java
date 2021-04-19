@@ -18,7 +18,6 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.logging.Filter;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
@@ -162,10 +161,10 @@ public class SynchronizerTest {
         mSynchronizer.startPeriodicRecording();
         verify(mTaskExecutor, times(1)).schedule(
                 any(SplitsSyncTask.class), anyLong(), anyLong(),
-                any(SplitTaskExecutionListener.class));
+                any());
         verify(mTaskExecutor, times(1)).schedule(
                 any(MySegmentsSyncTask.class), anyLong(), anyLong(),
-                any(SplitTaskExecutionListener.class));
+                any());
         verify(mTaskExecutor, times(1)).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
@@ -384,7 +383,7 @@ public class SynchronizerTest {
         mSynchronizer.loadSplitsFromCache();
         mSynchronizer.loadMySegmentsFromCache();
         verify(mEventsManager, times(1))
-                .notifyInternalEvent(SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
+                .notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
     }

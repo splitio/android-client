@@ -39,6 +39,7 @@ public class TestableSplitConfigBuilder {
     private long mBackgroundSyncPeriod = 15;
     private boolean mBackgroundSyncWhenBatteryNotLow = true;
     private boolean mBackgroundSyncWhenWifiOnly = false;
+    private boolean mLegacyStorageMigrationEnabled = false;
 
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
@@ -191,6 +192,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder legacyStorageMigrationEnabled(boolean value) {
+        mLegacyStorageMigrationEnabled = value;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -232,7 +238,8 @@ public class TestableSplitConfigBuilder {
                     mServiceEndpoints.getAuthServiceEndpoint(),
                     mServiceEndpoints.getStreamingServiceEndpoint(),
                     mEnableSslDevelopmentMode,
-                    mSyncConfig);
+                    mSyncConfig,
+                    mLegacyStorageMigrationEnabled);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

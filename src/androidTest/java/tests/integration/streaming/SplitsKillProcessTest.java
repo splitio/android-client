@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.TestingHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.FileHelper;
 import helper.IntegrationHelper;
@@ -105,8 +106,11 @@ public class SplitsKillProcessTest {
         mClient.on(SplitEvent.SDK_READY, readyTask);
 
         latch.await(40, TimeUnit.SECONDS);
+        TestingHelper.pushKeepAlive(mStreamingData);
+
         mSplitsSyncLatch.await(40, TimeUnit.SECONDS);
         mMySegmentsSyncLatch.await(40, TimeUnit.SECONDS);
+
 
         testSplitsKill();
         sleep(500);

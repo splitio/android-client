@@ -108,16 +108,16 @@ public class RefreshableSplitFetcher implements SplitFetcher, Runnable {
                 initializeFromCache();
                 _shouldInitialize = false;
                 if (!_splitChangeFetcher.isSourceReachable() && !_concurrentMap.isEmpty()) {
-                    _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+                    _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
                     _firstLoad = false;
                 }
             }
             runWithoutExceptionHandling();
             if (_firstLoad) {
-                _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_READY);
+                _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
                 _firstLoad = false;
             } else {
-                _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_ARE_UPDATED);
+                _eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
             }
 
         } catch (InterruptedException e) {

@@ -11,6 +11,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -31,6 +32,9 @@ public class MySegmentsUpdateTaskTest {
     @Mock
     MySegmentsStorage mySegmentsStorage;
 
+    @Mock
+    SplitEventsManager mEventsManager;
+
     MySegmentsUpdateTask mTask;
 
     @Before
@@ -41,7 +45,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void correctExecution() throws HttpFetcherException {
         List<String> segments = dummySegments();
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, segments);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, segments, mEventsManager);
         SplitTaskExecutionInfo result = mTask.execute();
 
         verify(mySegmentsStorage, times(1)).set(any());
@@ -53,7 +57,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void storageException() {
         List<String> segments = dummySegments();
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, segments);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, segments, mEventsManager);
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(segments);
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -64,7 +68,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void nullParameter() {
 
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, null);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, null, mEventsManager);
 
         SplitTaskExecutionInfo result = mTask.execute();
 

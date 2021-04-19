@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.TestingHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -79,6 +80,7 @@ public class SseConnectionFail5xxTest {
         readyLatch.await(40, TimeUnit.SECONDS);
 
         mSseConnLatch.await(40, TimeUnit.SECONDS);
+        TestingHelper.pushKeepAlive(mStreamingData);
 
         // Wait for pollling to be stopped
         // and initil sse sync to finish

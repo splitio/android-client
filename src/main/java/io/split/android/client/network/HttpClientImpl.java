@@ -45,7 +45,8 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpRequest request(URI uri, HttpMethod requestMethod, String body, Map<String, String> headers) {
-        return request(uri, requestMethod, body, headers);
+        return new HttpRequestImpl(mOkHttpClient, uri, requestMethod, body, mHeaders);
+
     }
 
     public HttpRequest request(URI uri, HttpMethod requestMethod) {
@@ -54,7 +55,7 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpRequest request(URI uri, HttpMethod requestMethod, String body) {
-        return new HttpRequestImpl(mOkHttpClient, uri, requestMethod, body, mHeaders);
+        return request(uri, requestMethod, body, null);
     }
 
     @Override

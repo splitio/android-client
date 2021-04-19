@@ -141,6 +141,7 @@ public class SplitChangesTest {
                 .impressionsRefreshRate(25)
                 .impressionsQueueSize(1000)
                 .impressionsChunkSize(9999999)
+                .streamingEnabled(false)
                 .enableDebug()
                 .trafficType("client")
                 .impressionListener(impListener)
