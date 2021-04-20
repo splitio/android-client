@@ -89,7 +89,6 @@ public class MySegmentsSyncTask implements SplitTask {
             return;
         }
         SplitInternalEvent e = getInternalEvent(oldSegments, newSegments);
-        Logger.d("MY SEGMENTS SYNC TASK: " + e);
         mEventsManager.notifyInternalEvent(getInternalEvent(oldSegments, newSegments));
     }
 

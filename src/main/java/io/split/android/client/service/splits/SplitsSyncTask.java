@@ -68,7 +68,6 @@ public class SplitsSyncTask implements SplitTask {
             mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryString);
             storedChangeNumber = -1;
         }
-        Logger.d("SPLITS SYNC TASK BEFORE!!! ");
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(params, splitsFilterHasChanged || shouldClearExpiredCache, false);
@@ -77,7 +76,6 @@ public class SplitsSyncTask implements SplitTask {
             if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
                 event = SplitInternalEvent.SPLITS_UPDATED;
             }
-            Logger.d("SPLITS SYNC TASK: " + event);
             mEventsManager.notifyInternalEvent(event);
         }
         return result;

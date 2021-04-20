@@ -57,22 +57,17 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
         checkNotNull(params);
         long start = System.currentTimeMillis();
         T responseData = null;
-        Logger.d("[REMOVE]  FETCH EXEC");
         try {
             if (!mNetworkHelper.isReachable(mTarget)) {
-                Logger.d("[REMOVE]  SUPER ERROR HERE: Source not reachable");
                 throw new IllegalStateException("Source not reachable");
             }
-            Logger.d("[REMOVE]  SUPER ERROR HERE: AFTERRRRR Source not reachable");
             URIBuilder uriBuilder = new URIBuilder(mTarget);
             for (Map.Entry<String, Object> param : params.entrySet()) {
                 Object value = param.getValue();
                 uriBuilder.addParameter(param.getKey(), value != null ? value.toString() : "");
             }
             URI u = uriBuilder.build();
-            Logger.d("[REMOVE]  AFETER BUILDER");
             HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET, null, headers).execute();
-            Logger.d("[REMOVE]  AFETER RESPONSE");
             Logger.d("Received from: " + u.toString() + " -> " + response.getData());
             if (!response.isSuccess()) {
                 if(mMetrics != null) {
@@ -87,13 +82,11 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                 throw new IllegalStateException("Wrong data received from split changes server");
             }
         } catch (Exception e) {
-            Logger.d("[REMOVE]  SUPER ERROR HERE EXCEIPTIO: " + e.getLocalizedMessage());
             if(mMetrics != null) {
                 mMetrics.count(mFetcherMetricsConfig.getExceptionLabel(), 1);
             }
             throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage());
         } finally {
-            Logger.d("[REMOVE]  SUPER FINALLLY: ");
             if(mMetrics != null) {
                 mMetrics.time(mFetcherMetricsConfig.getTimeLabel(), System.currentTimeMillis() - start);
             }

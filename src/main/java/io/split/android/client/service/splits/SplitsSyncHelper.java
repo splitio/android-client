@@ -35,14 +35,11 @@ public class SplitsSyncHelper {
                                        boolean clearBeforeUpdate,
                                        boolean avoidCache) {
         try {
-            Logger.d("UPDATED 1");
             SplitChange splitChange = mSplitFetcher.execute(params, getHeaders(avoidCache));
-            Logger.d("UPDATED 2");
             if (clearBeforeUpdate) {
                 mSplitsStorage.clear();
             }
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
-            Logger.d("UPDATED");
         } catch (HttpFetcherException e) {
             logError("Newtwork error while fetching splits" + e.getLocalizedMessage());
 
