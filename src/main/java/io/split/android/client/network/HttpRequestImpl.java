@@ -15,6 +15,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.utils.Logger;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -70,6 +71,7 @@ public class HttpRequestImpl implements HttpRequest {
             Request.Builder requestBuilder = new Request.Builder()
                     .url(url);
             addHeaders(requestBuilder);
+            Logger.d("HEADERS: " + mHeaders);
             Request okHttpRequest = requestBuilder.build();
             Response okHttpResponse = mOkHttpClient.newCall(okHttpRequest).execute();
             response = buildResponse(okHttpResponse);

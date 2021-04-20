@@ -45,7 +45,12 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpRequest request(URI uri, HttpMethod requestMethod, String body, Map<String, String> headers) {
-        return new HttpRequestImpl(mOkHttpClient, uri, requestMethod, body, mHeaders);
+        Map<String, String> newHeaders = new HashMap<>();
+        newHeaders.putAll(mHeaders);
+        if(headers != null) {
+            newHeaders.putAll(headers);
+        }
+        return new HttpRequestImpl(mOkHttpClient, uri, requestMethod, body, newHeaders);
 
     }
 
