@@ -10,7 +10,7 @@ public interface HttpClient {
 
     HttpRequest request(URI uri, HttpMethod httpMethod);
 
-    public HttpRequest request(URI uri, HttpMethod requestMethod, String body, Map<String, String> headers);
+    HttpRequest request(URI uri, HttpMethod requestMethod, String body, Map<String, String> headers);
 
     HttpRequest request(URI uri, HttpMethod httpMethod, String body);
 
