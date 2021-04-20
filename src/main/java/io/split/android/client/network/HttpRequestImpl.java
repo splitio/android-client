@@ -71,7 +71,6 @@ public class HttpRequestImpl implements HttpRequest {
             Request.Builder requestBuilder = new Request.Builder()
                     .url(url);
             addHeaders(requestBuilder);
-            Logger.d("HEADERS: " + mHeaders);
             Request okHttpRequest = requestBuilder.build();
             Response okHttpResponse = mOkHttpClient.newCall(okHttpRequest).execute();
             response = buildResponse(okHttpResponse);
