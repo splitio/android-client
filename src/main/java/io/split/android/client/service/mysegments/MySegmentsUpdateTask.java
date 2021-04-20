@@ -43,7 +43,6 @@ public class MySegmentsUpdateTask implements SplitTask {
             }
             List<String> oldSegments = new ArrayList(mMySegmentsStorage.getAll());
             mMySegmentsStorage.set(mMySegments);
-            Logger.d("my segments (UPDATED task) new: " + mMySegments.toString() + " -> old segments" + oldSegments.toString());
             if(mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, mMySegments)) {
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
             }
