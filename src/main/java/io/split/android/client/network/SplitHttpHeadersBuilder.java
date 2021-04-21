@@ -1,13 +1,18 @@
 package io.split.android.client.network;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.service.ServiceConstants;
 
 public class SplitHttpHeadersBuilder {
+
+    static private final Map<String, String> noCacheHeaders;
+
+    static {
+        noCacheHeaders = new HashMap<>();
+        noCacheHeaders.put(ServiceConstants.CACHE_CONTROL_HEADER, ServiceConstants.CACHE_CONTROL_NO_CACHE);
+    }
 
     Map<String, String> mHeaders;
 
@@ -67,8 +72,6 @@ public class SplitHttpHeadersBuilder {
     }
 
     static public Map<String, String> noCacheHeaders() {
-        Map<String, String> headers = new HashMap<>();
-        headers.put(ServiceConstants.CACHE_CONTROL_HEADER, ServiceConstants.CACHE_CONTROL_NO_CACHE);
-        return headers;
+        return noCacheHeaders;
     }
 }
