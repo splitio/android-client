@@ -3,7 +3,16 @@ package io.split.android.client.network;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.service.ServiceConstants;
+
 public class SplitHttpHeadersBuilder {
+
+    static private final Map<String, String> noCacheHeaders;
+
+    static {
+        noCacheHeaders = new HashMap<>();
+        noCacheHeaders.put(ServiceConstants.CACHE_CONTROL_HEADER, ServiceConstants.CACHE_CONTROL_NO_CACHE);
+    }
 
     Map<String, String> mHeaders;
 
@@ -62,5 +71,7 @@ public class SplitHttpHeadersBuilder {
         return mHeaders;
     }
 
-
+    static public Map<String, String> noCacheHeaders() {
+        return noCacheHeaders;
+    }
 }

@@ -2,11 +2,17 @@ package io.split.android.client.service.mysegments;
 
 import androidx.annotation.NonNull;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.MySegment;
+import io.split.android.client.network.SplitHttpHeadersBuilder;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -25,14 +31,17 @@ public class MySegmentsSyncTask implements SplitTask {
 
     private final HttpFetcher<List<MySegment>> mMySegmentsFetcher;
     private final MySegmentsStorage mMySegmentsStorage;
+    private final boolean mAvoidCache;
     private final SplitEventsManager mEventsManager;
     private MySegmentsChangeChecker mMySegmentsChangeChecker;
 
     public MySegmentsSyncTask(@NonNull HttpFetcher<List<MySegment>> mySegmentsFetcher,
                               @NonNull MySegmentsStorage mySegmentsStorage,
+                              boolean avoidCache,
                               SplitEventsManager eventsManager) {
         mMySegmentsFetcher = checkNotNull(mySegmentsFetcher);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
+        mAvoidCache = avoidCache;
         mEventsManager = eventsManager;
         mMySegmentsChangeChecker = new MySegmentsChangeChecker();
     }
@@ -42,9 +51,8 @@ public class MySegmentsSyncTask implements SplitTask {
     public SplitTaskExecutionInfo execute() {
         try {
             List<String> oldSegments = new ArrayList(mMySegmentsStorage.getAll());
-            List<String> mySegments = getNameList(mMySegmentsFetcher.execute(new HashMap<>()));
+            List<String> mySegments = getNameList(mMySegmentsFetcher.execute(new HashMap<>(), getHeaders()));
             mMySegmentsStorage.set(mySegments);
-            Logger.d("my segments (sync task) new: " + mySegments.toString() + " -> old segments" + oldSegments.toString());
             fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
@@ -67,6 +75,13 @@ public class MySegmentsSyncTask implements SplitTask {
             nameList.add(segment.name);
         }
         return nameList;
+    }
+
+    private @Nullable Map<String, String> getHeaders() {
+        if (mAvoidCache) {
+            return SplitHttpHeadersBuilder.noCacheHeaders();
+        }
+        return null;
     }
 
     private void fireMySegmentsUpdatedIfNeeded(List<String> oldSegments, List<String> newSegments) {

@@ -74,7 +74,6 @@ public class MySegmentsSyncProcessTest {
         mUserKey = IntegrationHelper.dummyUserKey();
     }
 
-
     @Test
     public void mySegmentsUpdate() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);

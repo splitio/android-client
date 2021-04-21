@@ -34,6 +34,11 @@ public class HttpClientMock implements HttpClient {
     }
 
     @Override
+    public HttpRequest request(URI uri, HttpMethod requestMethod, String body, Map<String, String> headers) {
+        return request(uri, requestMethod, body);
+    }
+
+    @Override
     public HttpRequest request(URI uri, HttpMethod httpMethod, String body) {
         HttpResponse response = mResponseDispatcher.getResponse(uri, httpMethod, body);
         return new HttpRequestMock(response);

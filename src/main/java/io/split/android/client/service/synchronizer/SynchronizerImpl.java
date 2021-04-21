@@ -49,8 +49,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private String mEventsRecorderTaskId;
     private String mImpressionsRecorderTaskId;
     private final RetryBackoffCounterTimer mSplitsSyncRetryTimer;
-    private final RetryBackoffCounterTimer mMySegmentsSyncRetryTimer;
     private final RetryBackoffCounterTimer mSplitsUpdateRetryTimer;
+    private final RetryBackoffCounterTimer mMySegmentsSyncRetryTimer;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -67,12 +67,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
         mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
-        mMySegmentsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
+
+        mMySegmentsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
 
         setupListeners();
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
-        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(), null);
 
         if (mSplitClientConfig.synchronizeInBackground()) {
             mWorkManagerWrapper.setFetcherExecutionListener(this);
@@ -80,8 +80,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         } else {
             mWorkManagerWrapper.removeWork();
         }
-
-
     }
 
     @Override
@@ -123,6 +121,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeMySegments() {
+        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), null);
+        mMySegmentsSyncRetryTimer.start();
+    }
+
+    @Override
+    public void forceMySegmentsSync() {
+        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), null);
         mMySegmentsSyncRetryTimer.start();
     }
 
@@ -228,7 +233,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void scheduleMySegmentsFetcherTask() {
         mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createMySegmentsSyncTask(),
+                mSplitTaskFactory.createMySegmentsSyncTask(false),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.segmentsRefreshRate(), null);
     }

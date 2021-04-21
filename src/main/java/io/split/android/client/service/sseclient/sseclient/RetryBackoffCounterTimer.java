@@ -27,28 +27,28 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
         mStreamingBackoffCounter = checkNotNull(streamingBackoffCounter);
     }
 
-    public void setTask(@NonNull SplitTask task, @Nullable SplitTaskExecutionListener listener) {
+    synchronized public void setTask(@NonNull SplitTask task, @Nullable SplitTaskExecutionListener listener) {
         mTask = checkNotNull(task);
         mListener = listener;
     }
 
-    public void stop() {
+    synchronized public void stop() {
         if(mTask == null) {
             return;
         }
-        mStreamingBackoffCounter.resetCounter();
         mTaskExecutor.stopTask(mTaskId);
         mTaskId = null;
     }
 
-    public void start() {
+    synchronized public void start() {
         if(mTask == null || mTaskId != null) {
             return;
         }
+        mStreamingBackoffCounter.resetCounter();
         mTaskId = mTaskExecutor.schedule(mTask, 0L, this);
     }
 
-    private void schedule() {
+    synchronized private void schedule() {
         if(mTask == null) {
             return;
         }

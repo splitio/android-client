@@ -23,6 +23,11 @@ public class HttpClientStub implements HttpClient {
     }
 
     @Override
+    public HttpRequest request(URI uri, HttpMethod requestMethod, String body, Map<String, String> headers) {
+        return new HttpRequestStub();
+    }
+
+    @Override
     public HttpRequest request(URI uri, HttpMethod httpMethod, String body) {
         return new HttpRequestStub();
     }

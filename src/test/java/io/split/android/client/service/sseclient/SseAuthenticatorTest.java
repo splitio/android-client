@@ -47,7 +47,7 @@ public class SseAuthenticatorTest {
 
         when(mJwtParser.parse(anyString())).thenReturn(token);
 
-        when(mFetcher.execute(any())).thenReturn(mResponse);
+        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, dummyKey, mJwtParser);
         SseAuthenticationResult result = authenticator.authenticate();
@@ -68,7 +68,7 @@ public class SseAuthenticatorTest {
 
         when(mJwtParser.parse(anyString())).thenThrow(InvalidJwtTokenException.class);
 
-        when(mFetcher.execute(any())).thenReturn(mResponse);
+        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, dummyKey, mJwtParser);
         SseAuthenticationResult result = authenticator.authenticate();
@@ -85,7 +85,7 @@ public class SseAuthenticatorTest {
         when(mResponse.getToken()).thenReturn(null);
         when(mResponse.isClientError()).thenReturn(false);
 
-        when(mFetcher.execute(any())).thenThrow(HttpFetcherException.class);
+        when(mFetcher.execute(any(), any())).thenThrow(HttpFetcherException.class);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, dummyKey, mJwtParser);
         SseAuthenticationResult result = authenticator.authenticate();
@@ -103,7 +103,7 @@ public class SseAuthenticatorTest {
         when(mResponse.getToken()).thenReturn(null);
         when(mResponse.isClientError()).thenReturn(true);
 
-        when(mFetcher.execute(any())).thenReturn(mResponse);
+        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, dummyKey, mJwtParser);
         SseAuthenticationResult result = authenticator.authenticate();
