@@ -127,7 +127,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void forceMySegmentsSync() {
-        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), null);
+        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), null);
         mMySegmentsSyncRetryTimer.start();
     }
 
