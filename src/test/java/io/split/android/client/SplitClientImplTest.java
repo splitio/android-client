@@ -51,6 +51,7 @@ import static org.mockito.Mockito.when;
  */
 public class SplitClientImplTest {
 
+    SplitClient mClient;
 
     @Test
     public void null_key_results_in_control() {
@@ -172,9 +173,9 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        mClient = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
 
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+        mClient.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
             @Override
             public void onPostExecution(SplitClient client) {
@@ -182,9 +183,9 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
+        mClient = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
 
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+        mClient.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
             @Override
             public void onPostExecution(SplitClient client) {
@@ -193,9 +194,9 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("trevor@codigo.com"), splitsStorage);
+        mClient = SplitClientImplFactory.get(Key.withMatchingKey("trevor@codigo.com"), splitsStorage);
 
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+        mClient.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
             @Override
             public void onPostExecution(SplitClient client) {

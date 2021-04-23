@@ -52,7 +52,7 @@ public class SseHandler {
         String messageData = values.get(EventStreamParser.DATA_FIELD);
 
         if (messageData != null) {
-            if(mNotificationParser.isError(values)) {
+            if (mNotificationParser.isError(values)) {
                 handleError(messageData);
                 return;
             }
@@ -72,7 +72,7 @@ public class SseHandler {
                 case SPLIT_KILL:
                 case SPLIT_UPDATE:
                 case MY_SEGMENTS_UPDATE:
-                    if(mNotificationManagerKeeper.isStreamingActive()) {
+                    if (mNotificationManagerKeeper.isStreamingActive()) {
                         mNotificationProcessor.process(incomingNotification);
                     }
                     break;
@@ -122,7 +122,7 @@ public class SseHandler {
         try {
             StreamingError errorNotification = mNotificationParser.parseError(jsonData);
             Logger.w("Streaming error notification received: " + errorNotification.getMessage());
-            if(errorNotification.shouldBeIgnored()) {
+            if (errorNotification.shouldBeIgnored()) {
                 Logger.w("Error ignored");
                 return;
             }

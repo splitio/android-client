@@ -3,12 +3,16 @@ package io.split.android.client.service;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -33,6 +37,7 @@ public class SplitUpdateTaskTest {
     SplitsStorage mSplitsStorage;
     SplitChange mSplitChange = null;
     SplitsSyncHelper mSplitsSyncHelper;
+    SplitEventsManager mEventsManager;
 
     SplitsUpdateTask mTask;
 
@@ -46,7 +51,9 @@ public class SplitUpdateTaskTest {
         mDefaultParams.put("since", -1L);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
         mSplitsSyncHelper = Mockito.mock(SplitsSyncHelper.class);
-        mTask = new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorage, mChangeNumber);
+        mEventsManager = Mockito.mock(SplitEventsManager.class);
+        mTask = new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorage, mChangeNumber, mEventsManager);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
         loadSplitChanges();
     }
 
@@ -56,7 +63,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false, true);
     }
 
     @Test
@@ -68,7 +75,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, never()).sync(any(), anyBoolean());
+        verify(mSplitsSyncHelper, never()).sync(any(), anyBoolean(), anyBoolean());
     }
 
     @After

@@ -1,15 +1,20 @@
 package io.split.android.client.service.splits;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.synchronizer.SplitsChangeChecker;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
@@ -21,13 +26,18 @@ public class SplitsUpdateTask implements SplitTask {
     private final SplitsStorage mSplitsStorage;
     private Long mChangeNumber;
     private final SplitsSyncHelper mSplitsSyncHelper;
+    private final SplitEventsManager mEventsManager;
+    private SplitsChangeChecker mChangeChecker;
 
     public SplitsUpdateTask(SplitsSyncHelper splitsSyncHelper,
                             SplitsStorage splitsStorage,
-                            long since) {
+                            long since,
+                            SplitEventsManager eventsManager) {
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
         mChangeNumber = since;
+        mEventsManager = checkNotNull(eventsManager);
+        mChangeChecker = new SplitsChangeChecker();
     }
 
     @Override
@@ -49,6 +59,19 @@ public class SplitsUpdateTask implements SplitTask {
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
 
-        return mSplitsSyncHelper.sync(params, false);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(params, false, true);
+        if(result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+            SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
+            if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
+                event = SplitInternalEvent.SPLITS_UPDATED;
+            }
+            mEventsManager.notifyInternalEvent(event);
+        }
+        return result;
+    }
+
+    @VisibleForTesting
+    public void setChangeChecker(SplitsChangeChecker changeChecker) {
+        mChangeChecker = changeChecker;
     }
 }

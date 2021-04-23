@@ -1,3 +1,4 @@
+
 package io.split.android.client.service.synchronizer;
 
 import androidx.annotation.NonNull;
@@ -21,7 +22,6 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
@@ -41,20 +41,16 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private RecorderSyncHelper<Event> mEventsSyncHelper;
     private RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
 
-    private FetcherSyncListener mSplitsSyncTaskListener;
-    private FetcherSyncListener mMySegmentsSyncTaskListener;
-
     private LoadLocalDataListener mLoadLocalSplitsListener;
     private LoadLocalDataListener mLoadLocalMySegmentsListener;
-
 
     private String mSplitsFetcherTaskId;
     private String mMySegmentsFetcherTaskId;
     private String mEventsRecorderTaskId;
     private String mImpressionsRecorderTaskId;
     private final RetryBackoffCounterTimer mSplitsSyncRetryTimer;
-    private final RetryBackoffCounterTimer mMySegmentsSyncRetryTimer;
     private final RetryBackoffCounterTimer mSplitsUpdateRetryTimer;
+    private final RetryBackoffCounterTimer mMySegmentsSyncRetryTimer;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -71,12 +67,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
         mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
-        mMySegmentsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
 
+        mMySegmentsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
+
         setupListeners();
-        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncTaskListener);
-        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(), mMySegmentsSyncTaskListener);
+        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
 
         if (mSplitClientConfig.synchronizeInBackground()) {
             mWorkManagerWrapper.setFetcherExecutionListener(this);
@@ -84,8 +80,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         } else {
             mWorkManagerWrapper.removeWork();
         }
-
-
     }
 
     @Override
@@ -127,6 +121,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeMySegments() {
+        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), null);
+        mMySegmentsSyncRetryTimer.start();
+    }
+
+    @Override
+    public void forceMySegmentsSync() {
+        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), null);
         mMySegmentsSyncRetryTimer.start();
     }
 
@@ -171,17 +172,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitClientConfig.impressionsChunkSize(),
                 mTaskExecutor);
 
-        mSplitsSyncTaskListener = new FetcherSyncListener(
-                mSplitEventsManager, SplitInternalEvent.SPLITS_ARE_READY);
-
-        mMySegmentsSyncTaskListener = new FetcherSyncListener(
-                mSplitEventsManager, SplitInternalEvent.MYSEGEMENTS_ARE_READY);
-
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 mSplitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
 
         mLoadLocalMySegmentsListener = new LoadLocalDataListener(
-                mSplitEventsManager, SplitInternalEvent.MYSEGMENTS_LOADED_FROM_STORAGE);
+                mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
     }
 
     public void pause() {
@@ -233,14 +228,14 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitTaskFactory.createSplitsSyncTask(false),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.featuresRefreshRate(),
-                mSplitsSyncTaskListener);
+                null);
     }
 
     private void scheduleMySegmentsFetcherTask() {
         mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createMySegmentsSyncTask(),
+                mSplitTaskFactory.createMySegmentsSyncTask(false),
                 mSplitClientConfig.featuresRefreshRate(),
-                mSplitClientConfig.segmentsRefreshRate(), mMySegmentsSyncTaskListener);
+                mSplitClientConfig.segmentsRefreshRate(), null);
     }
 
     private void scheduleEventsRecorderTask() {

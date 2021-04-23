@@ -51,7 +51,7 @@ public class SplitBackgroundSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false, false);
         verify(mSplitsStorage, never()).clear();
     }
 
@@ -65,7 +65,7 @@ public class SplitBackgroundSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, true);
+        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, true, false);
     }
 
 

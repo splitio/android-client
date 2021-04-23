@@ -93,6 +93,10 @@ public class IntegrationHelper {
         return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}";
     }
 
+    public static String emptyMySegments() {
+        return "{\"mySegments\":[]}";
+    }
+
     public static String dummyApiKey() {
         return "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
     }

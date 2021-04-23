@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.TestingHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.FileHelper;
 import helper.IntegrationHelper;
@@ -102,6 +103,7 @@ public class ControlTest {
         mClient.on(SplitEvent.SDK_READY, readyTask);
         latch.await(5, TimeUnit.SECONDS);
         mSseConnectedLatch.await(5, TimeUnit.SECONDS);
+        TestingHelper.pushKeepAlive(mStreamingData);
 
         sleep(300);
         MySegmentEntity mySegmentEntityReady = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());

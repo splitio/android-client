@@ -26,4 +26,8 @@ public class EventsManagerMock implements ISplitEventsManager {
     public boolean eventAlreadyTriggered(SplitEvent event) {
         return false;
     }
+
+    public boolean wasTriggered(SplitInternalEvent event) {
+        return false;
+    }
 }

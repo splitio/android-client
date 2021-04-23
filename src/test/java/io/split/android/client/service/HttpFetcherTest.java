@@ -1,8 +1,11 @@
 package io.split.android.client.service;
 
+import android.util.ArrayMap;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,6 +17,7 @@ import java.util.stream.Collectors;
 
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.impressions.Impression;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
@@ -28,11 +32,19 @@ import io.split.android.client.service.http.HttpFetcherImpl;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.http.HttpResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.metrics.FetcherMetricsConfig;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class HttpFetcherTest {
@@ -41,7 +53,7 @@ public class HttpFetcherTest {
     private final static String SPLIT_CHANGES_TEST_URL = TEST_URL + SdkTargetPath.SPLIT_CHANGES;
     private final static String MY_SEGMENTS_TEST_URL = TEST_URL + SdkTargetPath.MY_SEGMENTS;
 
-    NetworkHelper mNetworkHelperMock ;
+    NetworkHelper mNetworkHelperMock;
     Metrics mMetricsMock;
     HttpClient mClientMock;
     URI mUrl;
@@ -79,7 +91,7 @@ public class HttpFetcherTest {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("since", -1);
-            fetcher.execute(params);
+            fetcher.execute(params, null);
         } catch (HttpFetcherException e) {
             isReachable = false;
         }
@@ -96,7 +108,7 @@ public class HttpFetcherTest {
 
         HttpResponse response = new HttpResponseImpl(200, dummySplitChangeResponse());
         when(request.execute()).thenReturn(response);
-        when(mClientMock.request(uri, HttpMethod.GET)).thenReturn(request);
+        when(mClientMock.request(uri, HttpMethod.GET, null, null)).thenReturn(request);
 
         HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mMetricsMock,
                 mMetricsSplitFetcherConfig, mNetworkHelperMock, mSplitChangeResponseParser);
@@ -104,7 +116,7 @@ public class HttpFetcherTest {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("since", -1);
-            change = fetcher.execute(params);
+            change = fetcher.execute(params, null);
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }
@@ -117,6 +129,37 @@ public class HttpFetcherTest {
     }
 
     @Test
+    public void tesNonEmptyHeaderSplitChangesFetch() throws URISyntaxException, HttpException {
+        boolean exceptionWasThrown = false;
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("header1", "value1");
+
+        URI uri = new URIBuilder(mSplitChangesUrl).addParameter("since", "" + -1).build();
+        when(mNetworkHelperMock.isReachable(mSplitChangesUrl)).thenReturn(true);
+        HttpRequest request = mock(HttpRequest.class);
+
+        HttpResponse response = new HttpResponseImpl(200, dummySplitChangeResponse());
+        when(request.execute()).thenReturn(response);
+        when(mClientMock.request(uri, HttpMethod.GET, null, headers)).thenReturn(request);
+
+        HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mMetricsMock,
+                mMetricsSplitFetcherConfig, mNetworkHelperMock, mSplitChangeResponseParser);
+
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("since", -1);
+            SplitChange change = fetcher.execute(params, headers);
+        } catch (HttpFetcherException e) {
+            exceptionWasThrown = true;
+        }
+
+        ArgumentCaptor<Map<String, String>> headersCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(mClientMock).request(eq(uri), eq(HttpMethod.GET), eq(null), headersCaptor.capture());
+        Assert.assertEquals("value1", headersCaptor.getValue().get("header1"));
+    }
+
+    @Test
     public void testFailedResponse() throws URISyntaxException, HttpException {
         URI uri = new URIBuilder(mSplitChangesUrl).addParameter("since", "" + -1).build();
         when(mNetworkHelperMock.isReachable(mSplitChangesUrl)).thenReturn(true);
@@ -124,7 +167,7 @@ public class HttpFetcherTest {
 
         HttpResponse response = new HttpResponseImpl(500, "");
         when(request.execute()).thenReturn(response);
-        when(mClientMock.request(uri, HttpMethod.GET)).thenReturn(request);
+        when(mClientMock.request(uri, HttpMethod.GET, null, null)).thenReturn(request);
 
         HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mMetricsMock,
                 mMetricsSplitFetcherConfig, mNetworkHelperMock, mSplitChangeResponseParser);
@@ -133,7 +176,7 @@ public class HttpFetcherTest {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("since", -1);
-            change = fetcher.execute(params);
+            change = fetcher.execute(params, null);
         } catch (HttpFetcherException e) {
             failed = true;
         }
@@ -150,7 +193,7 @@ public class HttpFetcherTest {
 
         HttpResponse response = new HttpResponseImpl(200, "");
         when(request.execute()).thenReturn(response);
-        when(mClientMock.request(uri, HttpMethod.GET)).thenReturn(request);
+        when(mClientMock.request(uri, HttpMethod.GET, null, null)).thenReturn(request);
 
         HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mMetricsMock,
                 mMetricsSplitFetcherConfig, mNetworkHelperMock, mSplitChangeResponseParser);
@@ -159,7 +202,7 @@ public class HttpFetcherTest {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("since", -1);
-            change = fetcher.execute(params);
+            change = fetcher.execute(params, null);
         } catch (HttpFetcherException e) {
             failed = true;
         }
@@ -177,13 +220,13 @@ public class HttpFetcherTest {
 
         HttpResponse response = new HttpResponseImpl(200, dummyMySegmentsResponse());
         when(request.execute()).thenReturn(response);
-        when(mClientMock.request(mMySegmentsUrl, HttpMethod.GET)).thenReturn(request);
+        when(mClientMock.request(mMySegmentsUrl, HttpMethod.GET, null, null)).thenReturn(request);
 
         HttpFetcher<List<MySegment>> fetcher = new HttpFetcherImpl<>(mClientMock, mMySegmentsUrl, mMetricsMock,
                 mMetricsMySegmentsConfig, mNetworkHelperMock, mMySegmentsResponseParser);
         List<MySegment> mySegments = null;
         try {
-            mySegments = fetcher.execute(new HashMap<>());
+            mySegments = fetcher.execute(new HashMap<>(), null);
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }
@@ -194,6 +237,34 @@ public class HttpFetcherTest {
         Assert.assertEquals(2, mySegments.size());
         Assert.assertNotNull(mySegmentsSet.contains("segment1"));
         Assert.assertNotNull(mySegmentsSet.contains("segment2"));
+    }
+
+    @Test
+    public void tesNonEmptyHeadersMySegmentsFetch() throws URISyntaxException, HttpException {
+        boolean exceptionWasThrown = false;
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("header1", "value1");
+
+        when(mNetworkHelperMock.isReachable(mMySegmentsUrl)).thenReturn(true);
+        HttpRequest request = mock(HttpRequest.class);
+
+        HttpResponse response = new HttpResponseImpl(200, dummyMySegmentsResponse());
+        when(request.execute()).thenReturn(response);
+        when(mClientMock.request(mMySegmentsUrl, HttpMethod.GET, null, headers)).thenReturn(request);
+
+        HttpFetcher<List<MySegment>> fetcher = new HttpFetcherImpl<>(mClientMock, mMySegmentsUrl, mMetricsMock,
+                mMetricsMySegmentsConfig, mNetworkHelperMock, mMySegmentsResponseParser);
+
+        try {
+            List<MySegment> mySegments = fetcher.execute(new HashMap<>(), headers);
+        } catch (HttpFetcherException e) {
+            exceptionWasThrown = true;
+        }
+
+        ArgumentCaptor<Map<String, String>> headersCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(mClientMock).request(eq(mMySegmentsUrl), eq(HttpMethod.GET), any(), headersCaptor.capture());
+        Assert.assertEquals("value1", headersCaptor.getValue().get("header1"));
     }
 
     @Test
@@ -212,7 +283,7 @@ public class HttpFetcherTest {
                 mMetricsMySegmentsConfig, mNetworkHelperMock, mMySegmentsResponseParser);
         List<MySegment> mySegments = null;
         try {
-            mySegments = fetcher.execute(new HashMap<>());
+            mySegments = fetcher.execute(new HashMap<>(), null);
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }

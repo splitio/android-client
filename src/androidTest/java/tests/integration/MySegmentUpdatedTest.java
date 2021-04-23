@@ -158,6 +158,7 @@ public class MySegmentUpdatedTest {
                 .impressionsChunkSize(999999)
                 .enableDebug()
                 .trafficType("client")
+                .streamingEnabled(false)
                 .impressionListener(impListener)
                 .build();
 

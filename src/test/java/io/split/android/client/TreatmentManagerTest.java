@@ -31,7 +31,6 @@ import io.split.android.fake.ImpressionListenerMock;
 import io.split.android.fake.MetricsMock;
 import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
 import io.split.android.fake.SplitEventsManagerStub;
-import io.split.android.fake.SplitFetcherStub;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 

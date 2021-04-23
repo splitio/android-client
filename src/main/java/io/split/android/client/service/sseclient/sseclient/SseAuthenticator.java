@@ -32,7 +32,7 @@ public class SseAuthenticator {
         try {
             Map<String, Object> params = new HashMap<>();
             params.put(USER_KEY_PARAM, mUserKey);
-            authResponse = mAuthFetcher.execute(params);
+            authResponse = mAuthFetcher.execute(params, null);
 
         } catch (Exception e) {
             logError("Unexpected " + e.getLocalizedMessage());

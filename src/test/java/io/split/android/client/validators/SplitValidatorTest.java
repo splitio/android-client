@@ -5,15 +5,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-
 import io.split.android.client.dtos.Split;
-import io.split.android.engine.experiments.SplitFetcher;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
-import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
-import io.split.android.fake.SplitFetcherStub;
-import io.split.android.helpers.FileHelper;
 
 public class SplitValidatorTest {
 
