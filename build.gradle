@@ -150,11 +150,12 @@ afterEvaluate {
                 from components.release
 
                 artifact sourcesJar
-//                artifact javadocJar
+                artifact javadocJar
 
                 pom {
                     name = 'Split Android SDK'
-                    packaging = 'jar'
+//                    packaging = 'jar'
+                    packaging = 'aar'
                     description = 'Official Split Android SDK'
                     url = 'https://github.com/splitio/android-client'
 
@@ -224,7 +225,7 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-//artifacts {
-//    archives sourcesJar
-//    archives javadocJar
-//}
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
