@@ -20,6 +20,8 @@ public class SplitHttpHeadersBuilder {
     private static final String CLIENT_MACHINE_IP_HEADER = "SplitSDKMachineIP";
     private static final String CLIENT_VERSION = "SplitSDKVersion";
     private static final String AUTHORIZATION = "Authorization";
+    private static final String ABLY_CLIENT_KEY = "SplitSDKClientKey";
+    private static final int ABLY_CLIENT_KEY_LENGTH = 4;
 
     public SplitHttpHeadersBuilder() {
         mHeaders = new HashMap<>();
@@ -33,6 +35,7 @@ public class SplitHttpHeadersBuilder {
 
     public SplitHttpHeadersBuilder setApiToken(String apiToken) {
         mHeaders.put(AUTHORIZATION, "Bearer " + apiToken);
+        mHeaders.put(ABLY_CLIENT_KEY, apiToken.substring(apiToken.length() - ABLY_CLIENT_KEY_LENGTH));
         return this;
     }
 

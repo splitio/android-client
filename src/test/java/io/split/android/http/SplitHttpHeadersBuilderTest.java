@@ -21,6 +21,8 @@ public class SplitHttpHeadersBuilderTest {
     final String CLIENT_MACHINE_IP_HEADER = "SplitSDKMachineIP";
     final String CLIENT_VERSION = "SplitSDKVersion";
     final String AUTHORIZATION = "Authorization";
+    final String ABLY_CLIENT_KEY = "SplitSDKClientKey";
+    final String ABLY_CLIENT_KEY_VALUE = "2bc3";
 
     @Before
     public void setup() {
@@ -41,6 +43,7 @@ public class SplitHttpHeadersBuilderTest {
         Assert.assertEquals(VERSION, headers.get(CLIENT_VERSION));
         Assert.assertEquals(HOST_NAME, headers.get(CLIENT_MACHINE_NAME_HEADER));
         Assert.assertEquals(HOST_IP, headers.get(CLIENT_MACHINE_IP_HEADER));
+        Assert.assertEquals(ABLY_CLIENT_KEY_VALUE, headers.get(ABLY_CLIENT_KEY));
     }
 
     @Test
@@ -90,6 +93,7 @@ public class SplitHttpHeadersBuilderTest {
         Assert.assertEquals(VERSION, headers.get(CLIENT_VERSION));
         Assert.assertNull(headers.get(CLIENT_MACHINE_NAME_HEADER));
         Assert.assertNull(headers.get(CLIENT_MACHINE_IP_HEADER));
+        Assert.assertEquals(ABLY_CLIENT_KEY_VALUE, headers.get(ABLY_CLIENT_KEY));
     }
 
     @After
