@@ -18,6 +18,14 @@ public class HttpClientStub implements HttpClient {
     }
 
     @Override
+    public void setStreamingHeader(String name, String value) {
+    }
+
+    @Override
+    public void addStreamingHeaders(Map<String, String> headers) {
+    }
+
+    @Override
     public HttpRequest request(URI uri, HttpMethod httpMethod) {
         return new HttpRequestStub();
     }
