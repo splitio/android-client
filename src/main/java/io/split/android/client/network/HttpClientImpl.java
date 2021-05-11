@@ -40,6 +40,7 @@ public class HttpClientImpl implements HttpClient {
 
     private HttpClientImpl(OkHttpClient okHttpClient, OkHttpClient okHttpClientStreaming) {
         mCommonHeaders = new HashMap<>();
+        mStreamingHeaders = new HashMap<>();
         mOkHttpClient = okHttpClient;
         mOkHttpClientStreaming = okHttpClientStreaming;
     }
