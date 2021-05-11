@@ -24,7 +24,4 @@ public class ServiceConstants {
     public final static String WORKER_PARAM_IMPRESSIONS_PER_PUSH = "impressionsPerPush";
     public final static String WORKER_PARAM_EVENTS_PER_PUSH = "eventsPerPush";
     public final static String WORKER_PARAM_SPLIT_CACHE_EXPIRATION = "splitCacheExpiration";
-
-    public final static String CACHE_CONTROL_HEADER = "Cache-Control";
-    public final static String CACHE_CONTROL_NO_CACHE = "no-cache";
 }

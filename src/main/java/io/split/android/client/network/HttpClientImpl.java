@@ -35,10 +35,11 @@ public class HttpClientImpl implements HttpClient {
     private static final long STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
     private OkHttpClient mOkHttpClient;
     private OkHttpClient mOkHttpClientStreaming;
-    private Map<String, String> mHeaders;
+    private Map<String, String> mCommonHeaders;
+    private Map<String, String> mStreamingHeaders;
 
     private HttpClientImpl(OkHttpClient okHttpClient, OkHttpClient okHttpClientStreaming) {
-        mHeaders = new HashMap<>();
+        mCommonHeaders = new HashMap<>();
         mOkHttpClient = okHttpClient;
         mOkHttpClientStreaming = okHttpClientStreaming;
     }
@@ -46,7 +47,7 @@ public class HttpClientImpl implements HttpClient {
     @Override
     public HttpRequest request(URI uri, HttpMethod requestMethod, String body, Map<String, String> headers) {
         Map<String, String> newHeaders = new HashMap<>();
-        newHeaders.putAll(mHeaders);
+        newHeaders.putAll(mCommonHeaders);
         if(headers != null) {
             newHeaders.putAll(headers);
         }
@@ -65,7 +66,7 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpStreamRequest streamRequest(URI uri) {
-        return new HttpStreamRequestImpl(mOkHttpClientStreaming, uri, mHeaders);
+        return new HttpStreamRequestImpl(mOkHttpClientStreaming, uri, mStreamingHeaders);
     }
 
     @Override
@@ -73,13 +74,28 @@ public class HttpClientImpl implements HttpClient {
         if (name == null || value == null) {
             throw new IllegalArgumentException(String.format("Invalid value for header %s: %s", name, value));
         }
-        mHeaders.put(name, value);
+        mCommonHeaders.put(name, value);
+    }
+
+    @Override
+    public void setStreamingHeader(String name, String value) {
+        if (name == null || value == null) {
+            throw new IllegalArgumentException(String.format("Invalid value for streaming header %s: %s", name, value));
+        }
+        mStreamingHeaders.put(name, value);
     }
 
     @Override
     public void addHeaders(Map<String, String> headers) {
         for (Map.Entry<String, String> header : headers.entrySet()) {
             setHeader(header.getKey(), header.getValue());
+        }
+    }
+
+    @Override
+    public void addStreamingHeaders(Map<String, String> headers) {
+        for (Map.Entry<String, String> header : headers.entrySet()) {
+            setStreamingHeader(header.getKey(), header.getValue());
         }
     }
 

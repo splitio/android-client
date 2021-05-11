@@ -17,6 +17,7 @@ import java.util.Map;
 
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
@@ -75,7 +76,7 @@ public class MySegmentsSyncTaskTest {
     @Test
     public void correctExecutionNoCache() throws HttpFetcherException {
         Map<String, String> headers = new HashMap<>();
-        headers.put(ServiceConstants.CACHE_CONTROL_HEADER, ServiceConstants.CACHE_CONTROL_NO_CACHE);
+        headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, null);
         when(mMySegmentsFetcher.execute(noParams, headers)).thenReturn(mMySegments);
 
@@ -84,7 +85,7 @@ public class MySegmentsSyncTaskTest {
         ArgumentCaptor<Map<String, String>> headersCaptor = ArgumentCaptor.forClass(Map.class);
         verify(mMySegmentsFetcher, times(1)).execute(any(), headersCaptor.capture());
         verify(mySegmentsStorage, times(1)).set(any());
-        Assert.assertEquals(ServiceConstants.CACHE_CONTROL_NO_CACHE, headersCaptor.getValue().get(ServiceConstants.CACHE_CONTROL_HEADER));
+        Assert.assertEquals(SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE, headersCaptor.getValue().get(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER));
     }
 
     @Test
