@@ -137,6 +137,7 @@ public class SplitFactoryImpl implements SplitFactory {
         }
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
+        defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
 
         URI eventsRootTarget = URI.create(config.eventsEndpoint());
 
