@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: "maven-publish"
 
 ext {
-    splitVersion = '2.7.0'
+    splitVersion = '2.7.1-rc1'
 }
 
 allprojects {
@@ -13,7 +13,7 @@ allprojects {
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
     targetCompatibility = '1.8'
     sourceCompatibility = '1.8'
 
@@ -24,7 +24,7 @@ android {
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 0
         versionName splitVersion
 
