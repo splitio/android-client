@@ -54,20 +54,20 @@ public class ImpressionObserverTest {
 
     @Test
     public void testConcurrencyVsAccuracy() throws InterruptedException {
-        ImpressionObserver observer = new ImpressionObserver(500000);
+        ImpressionObserver observer = new ImpressionObserver(5000);
         ConcurrentLinkedQueue<Impression> imps = new ConcurrentLinkedQueue<>();
-        Thread t1 = new Thread(() -> caller(observer, 1000000, imps));
-        Thread t2 = new Thread(() -> caller(observer, 1000000, imps));
-        Thread t3 = new Thread(() -> caller(observer, 1000000, imps));
-        Thread t4 = new Thread(() -> caller(observer, 1000000, imps));
-        Thread t5 = new Thread(() -> caller(observer, 1000000, imps));
+        Thread t1 = new Thread(() -> caller(observer, 1000, imps));
+        Thread t2 = new Thread(() -> caller(observer, 1000, imps));
+        Thread t3 = new Thread(() -> caller(observer, 1000, imps));
+        Thread t4 = new Thread(() -> caller(observer, 1000, imps));
+        Thread t5 = new Thread(() -> caller(observer, 1000, imps));
 
         // start the 5 threads an wait for them to finish.
         t1.setDaemon(true); t2.setDaemon(true); t3.setDaemon(true); t4.setDaemon(true); t5.setDaemon(true);
         t1.start(); t2.start(); t3.start(); t4.start(); t5.start();
         t1.join(); t2.join(); t3.join(); t4.join(); t5.join();
 
-        Assert.assertEquals(imps.size(), 5000000);
+        Assert.assertEquals(imps.size(), 5000);
         for (Impression i : imps) {
             Assert.assertTrue(i.previousTime() == null || i.previousTime() <= i.time());
         }
