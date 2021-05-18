@@ -65,13 +65,12 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "VERSION_NAME", "\"${splitVersion}\"")
+            buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
         }
         release {
-            buildConfigField("String", "VERSION_NAME", "\"${splitVersion}\"")
+            buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
         }
     }
-    buildToolsVersion '29.0.2'
 }
 
 dependencies {
