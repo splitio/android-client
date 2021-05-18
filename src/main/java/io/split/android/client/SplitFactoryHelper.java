@@ -60,10 +60,18 @@ class SplitFactoryHelper {
 
     Map<String, String> buildHeaders(SplitClientConfig splitClientConfig, String apiToken) {
         SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
+        headersBuilder.addJsonTypeHeaders();
         headersBuilder.setHostIp(splitClientConfig.ip());
         headersBuilder.setHostname(splitClientConfig.hostname());
         headersBuilder.setClientVersion(SplitClientConfig.splitSdkVersion);
         headersBuilder.setApiToken(apiToken);
+        return headersBuilder.build();
+    }
+
+    Map<String, String> buildStreamingHeaders(String apiToken) {
+        SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
+        headersBuilder.addStreamingTypeHeaders();
+        headersBuilder.setAblyApiToken(apiToken);
         return headersBuilder.build();
     }
 

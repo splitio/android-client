@@ -38,8 +38,6 @@ public class SseClientImpl implements SseClient {
     private BufferedReader mBufferedReader;
     private HttpStreamRequest mHttpStreamRequest = null;
 
-    private static final String CONTENT_TYPE_HEADER = "Content-Type";
-    private static final String CONTENT_TYPE_VALUE_STREAM = "text/event-stream";
     private static final String PUSH_NOTIFICATION_CHANNELS_PARAM = "channel";
     private static final String PUSH_NOTIFICATION_TOKEN_PARAM = "accessToken";
     private static final String PUSH_NOTIFICATION_VERSION_PARAM = "v";
@@ -104,7 +102,6 @@ public class SseClientImpl implements SseClient {
                     .addParameter(PUSH_NOTIFICATION_TOKEN_PARAM, rawToken)
                     .build();
             mHttpStreamRequest = mHttpClient.streamRequest(url);
-            mHttpStreamRequest.addHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_VALUE_STREAM);
             HttpStreamResponse response = mHttpStreamRequest.execute();
             if (response.isSuccess()) {
                 mBufferedReader = response.getBufferedReader();

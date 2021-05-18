@@ -4,18 +4,9 @@ plugins {
     id 'signing'
 }
 
-//apply plugin:  'signing'
-//apply plugin:  'maven-publish'
-//apply plugin:  'com.android.library'
-
 ext {
-    splitVersion = '2.7.1-rc1'
+    splitVersion = '2.7.1'
 }
-
-//allprojects {
-//    group = 'io.split.client'
-//    version = splitVersion
-//}
 
 android {
     compileSdkVersion 29
@@ -124,23 +115,6 @@ dependencies {
 
 }
 
-//buildscript {
-//    repositories {
-//        google()
-//        maven { url "https://maven.google.com" }
-//        mavenCentral()
-//
-//    }
-//    dependencies {
-//        classpath 'com.android.tools.build:gradle:4.0.1'
-//    }
-//}
-
-//repositories {
-//    maven { url "https://maven.google.com" }
-//    mavenCentral()
-//}
-
 afterEvaluate {
     publishing {
         publications {
@@ -154,7 +128,6 @@ afterEvaluate {
 
                 pom {
                     name = 'Split Android SDK'
-//                    packaging = 'jar'
                     packaging = 'aar'
                     description = 'Official Split Android SDK'
                     url = 'https://github.com/splitio/android-client'
