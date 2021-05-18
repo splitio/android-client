@@ -28,6 +28,16 @@ public class HttpClientMock implements HttpClient {
     }
 
     @Override
+    public void setStreamingHeader(String name, String value) {
+
+    }
+
+    @Override
+    public void addStreamingHeaders(Map<String, String> headers) {
+
+    }
+
+    @Override
     public HttpRequest request(URI uri, HttpMethod httpMethod) {
         HttpResponse response = mResponseDispatcher.getResponse(uri, httpMethod, null);
         return new HttpRequestMock(response);

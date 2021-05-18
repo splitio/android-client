@@ -52,6 +52,7 @@ public abstract class SplitWorker extends Worker {
         SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
         headersBuilder.setClientVersion(BuildConfig.VERSION_NAME);
         headersBuilder.setApiToken(apiKey);
+        headersBuilder.addJsonTypeHeaders();
         mHttpClient = new HttpClientImpl.Builder().build();
         mHttpClient.addHeaders(headersBuilder.build());
         mNetworkHelper = new NetworkHelper();

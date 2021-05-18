@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpFetcher;
@@ -73,7 +74,7 @@ public class SplitsSyncHelperTest {
         // should execute fetcher, update storage and avoid clearing splits cache
 
         Map<String, String> headers = new HashMap<>();
-        headers.put(ServiceConstants.CACHE_CONTROL_HEADER, ServiceConstants.CACHE_CONTROL_NO_CACHE);
+        headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
         when(mSplitsFetcher.execute(mDefaultParams, headers)).thenReturn(mSplitChange);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams, false, true);
