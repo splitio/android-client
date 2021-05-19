@@ -199,7 +199,7 @@ public class SplitClientConfig {
         _syncConfig = syncConfig;
         _legacyStorageMigrationEnabled = legacyStorageMigrationEnabled;
 
-        splitSdkVersion = "Android-" + BuildConfig.VERSION_NAME;
+        splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
         if (_debugEnabled) {
             Logger.instance().debugLevel(true);

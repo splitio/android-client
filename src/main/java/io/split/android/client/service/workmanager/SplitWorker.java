@@ -50,7 +50,7 @@ public abstract class SplitWorker extends Worker {
         mCacheExpirationInSeconds = inputData.getLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION,
                 ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS);
         SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
-        headersBuilder.setClientVersion(BuildConfig.VERSION_NAME);
+        headersBuilder.setClientVersion(BuildConfig.SPLIT_VERSION_NAME);
         headersBuilder.setApiToken(apiKey);
         headersBuilder.addJsonTypeHeaders();
         mHttpClient = new HttpClientImpl.Builder().build();
