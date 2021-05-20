@@ -1,3 +1,14 @@
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.0.2'
+    }
+}
 
 plugins {
     id 'com.android.library'
@@ -111,10 +122,10 @@ afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
-                groupId = 'io.split.client'
-                version = splitVersion
                 from components.release
 
+                groupId = 'io.split.client'
+                version = splitVersion
                 artifact sourcesJar
                 artifact javadocJar
 
