@@ -91,7 +91,7 @@ public class ImpressionCount {
 
         @Override
         public int hashCode() {
-            return String.format("%s%d%d%d", feature, timeframe, count).hashCode();
+            return String.format("%s%d%d", feature, timeframe, count).hashCode();
         }
 
         @Override

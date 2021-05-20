@@ -2,7 +2,6 @@ package io.split.android.client.service.impressions;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,7 +23,7 @@ public class ImpressionCounter {
 
         @Override
         public int hashCode() {
-            return Objects.hash(mFeatureName, mTimeFrame);
+            return String.format("%s%d", mFeatureName, mTimeFrame).hashCode();
         }
 
         @Override
@@ -33,8 +32,8 @@ public class ImpressionCounter {
             if (o == null || getClass() != o.getClass()) return false;
 
             Key key = (Key) o;
-            return Objects.equals(mFeatureName, key.mFeatureName) &&
-                    Objects.equals(mTimeFrame, key.mTimeFrame);
+            return mFeatureName.equals(key.mFeatureName) &&
+                    mTimeFrame == key.mTimeFrame;
         }
     }
 
@@ -47,10 +46,10 @@ public class ImpressionCounter {
     public void inc(String featureName, long timeFrame, int amount) {
         Key key = new Key(featureName, ImpressionUtils.truncateTimeframe(timeFrame));
         AtomicInteger count = mCounts.get(key);
-        if (Objects.isNull(count)) {
+        if (count == null) {
             count = new AtomicInteger();
             AtomicInteger old = mCounts.putIfAbsent(key, count);
-            if (!Objects.isNull(old)) { // Some other thread won the race, use that AtomicInteger instead
+            if (old != null) { // Some other thread won the race, use that AtomicInteger instead
                 count = old;
             }
         }
@@ -60,8 +59,11 @@ public class ImpressionCounter {
     public Map<Key, Integer> popAll() {
         HashMap<Key, Integer> toReturn = new HashMap<>();
         for (Key key : mCounts.keySet()) {
-            AtomicInteger curr = mCounts.remove(key);
-            toReturn.put(key, curr.get());
+            AtomicInteger current = mCounts.remove(key);
+            // It shouldn't be null...
+            if(current != null) {
+                toReturn.put(key, current.get());
+            }
         }
         return toReturn;
     }
