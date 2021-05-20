@@ -1,6 +1,7 @@
 package io.split.android.client.service.impressions;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,20 +11,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ImpressionCounter {
 
     public static class Key {
-        private final String _featureName;
-        private final long _timeFrame;
+        private final String mFeatureName;
+        private final long mTimeFrame;
 
         public Key(String featureName, long timeframe) {
-            _featureName = checkNotNull(featureName);
-            _timeFrame = timeframe;
+            mFeatureName = checkNotNull(featureName);
+            mTimeFrame = timeframe;
         }
 
-        public String featureName() { return  _featureName; }
-        public long timeFrame() { return  _timeFrame; }
+        public String featureName() { return mFeatureName; }
+        public long timeFrame() { return mTimeFrame; }
 
         @Override
         public int hashCode() {
-            return Objects.hash(_featureName, _timeFrame);
+            return Objects.hash(mFeatureName, mTimeFrame);
         }
 
         @Override
@@ -32,23 +33,23 @@ public class ImpressionCounter {
             if (o == null || getClass() != o.getClass()) return false;
 
             Key key = (Key) o;
-            return Objects.equals(_featureName, key._featureName) && Objects.equals(_timeFrame, key._timeFrame);
+            return Objects.equals(mFeatureName, key.mFeatureName) &&
+                    Objects.equals(mTimeFrame, key.mTimeFrame);
         }
     }
 
-
-    private final ConcurrentHashMap<Key, AtomicInteger> _counts;
+    private final ConcurrentHashMap<Key, AtomicInteger> mCounts;
 
     public ImpressionCounter() {
-        _counts = new ConcurrentHashMap<>();
+        mCounts = new ConcurrentHashMap<>();
     }
 
     public void inc(String featureName, long timeFrame, int amount) {
         Key key = new Key(featureName, ImpressionUtils.truncateTimeframe(timeFrame));
-        AtomicInteger count = _counts.get(key);
+        AtomicInteger count = mCounts.get(key);
         if (Objects.isNull(count)) {
             count = new AtomicInteger();
-            AtomicInteger old = _counts.putIfAbsent(key, count);
+            AtomicInteger old = mCounts.putIfAbsent(key, count);
             if (!Objects.isNull(old)) { // Some other thread won the race, use that AtomicInteger instead
                 count = old;
             }
@@ -56,14 +57,14 @@ public class ImpressionCounter {
         count.addAndGet(amount);
     }
 
-    public HashMap<Key, Integer> popAll() {
+    public Map<Key, Integer> popAll() {
         HashMap<Key, Integer> toReturn = new HashMap<>();
-        for (Key key : _counts.keySet()) {
-            AtomicInteger curr = _counts.remove(key);
+        for (Key key : mCounts.keySet()) {
+            AtomicInteger curr = mCounts.remove(key);
             toReturn.put(key, curr.get());
         }
         return toReturn;
     }
 
-    public boolean isEmpty() { return _counts.isEmpty(); }
+    public boolean isEmpty() { return mCounts.isEmpty(); }
 }

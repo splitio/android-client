@@ -230,17 +230,17 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     private Map<String, SplitResult> controlTreatmentsForSplitsWithConfig(List<String> splits, String validationTag) {
         Map<String, SplitResult> results = new HashMap<>();
-        splits.stream().forEach((String split) -> {
+        for(String split : splits) {
             ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
-            if (errorInfo != null) {
-                if (errorInfo.isError()) {
+            if(errorInfo != null) {
+                if(errorInfo.isError()) {
                     mValidationLogger.e(errorInfo, validationTag);
-                    return;
+                    continue;
                 }
                 mValidationLogger.w(errorInfo, validationTag);
             }
             results.put(split.trim(), new SplitResult(Treatments.CONTROL));
-        });
+        }
         return results;
     }
 
