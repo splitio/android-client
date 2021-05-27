@@ -9,9 +9,9 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.impressions.ImpressionObserver;
+import io.split.android.client.service.impressions.ImpressionsObserver;
 
-public class ImpressionObserverTest {
+public class ImpressionsObserverTest {
 
     // We allow the cache implementation to have a 0.01% drift in size when elements change, given that it's internal
     // structure/references might vary, and the ObjectSizeCalculator is not 100% accurate
@@ -36,7 +36,7 @@ public class ImpressionObserverTest {
 
     @Test
     public void testBasicFunctionality() {
-        ImpressionObserver observer = new ImpressionObserver(5);
+        ImpressionsObserver observer = new ImpressionsObserver(5);
         Impression imp = new Impression("someKey",
                 null, "someFeature",
                 "on", System.currentTimeMillis(),
@@ -54,7 +54,7 @@ public class ImpressionObserverTest {
 
     @Test
     public void testConcurrencyVsAccuracy() throws InterruptedException {
-        ImpressionObserver observer = new ImpressionObserver(5000);
+        ImpressionsObserver observer = new ImpressionsObserver(5000);
         ConcurrentLinkedQueue<Impression> imps = new ConcurrentLinkedQueue<>();
         Thread t1 = new Thread(() -> caller(observer, 1000, imps));
         Thread t2 = new Thread(() -> caller(observer, 1000, imps));
@@ -73,7 +73,7 @@ public class ImpressionObserverTest {
         }
     }
 
-    private void caller(ImpressionObserver o, int count, ConcurrentLinkedQueue<Impression> imps) {
+    private void caller(ImpressionsObserver o, int count, ConcurrentLinkedQueue<Impression> imps) {
 
         while (count-- > 0) {
             Impression i = new Impression("key_" + mRandom.nextInt(100),

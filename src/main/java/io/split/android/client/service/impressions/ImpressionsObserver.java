@@ -7,11 +7,11 @@ import java.util.Objects;
 
 import io.split.android.client.impressions.Impression;
 
-public class ImpressionObserver {
+public class ImpressionsObserver {
 
     private final Cache<Long, Long> mCache;
 
-    public ImpressionObserver(long size) {
+    public ImpressionsObserver(long size) {
         mCache = CacheBuilder.newBuilder()
                 .maximumSize(size)
                 .concurrencyLevel(4)  // Just setting the default value explicitly

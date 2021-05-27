@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class ImpressionCounter {
+public class ImpressionsCounter {
 
     public static class Key {
         private final String mFeatureName;
@@ -39,7 +39,7 @@ public class ImpressionCounter {
 
     private final ConcurrentHashMap<Key, AtomicInteger> mCounts;
 
-    public ImpressionCounter() {
+    public ImpressionsCounter() {
         mCounts = new ConcurrentHashMap<>();
     }
 
