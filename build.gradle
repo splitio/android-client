@@ -1,15 +1,23 @@
-apply plugin: 'com.android.library'
-apply plugin: 'signing'
-apply plugin: 'maven'
-apply plugin: "maven-publish"
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter()
 
-ext {
-    splitVersion = '2.7.1'
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.0.2'
+    }
 }
 
-allprojects {
-    group = 'io.split.client'
-    version = splitVersion
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+ext {
+    splitVersion = '2.7.2-rc1'
 }
 
 android {
@@ -18,11 +26,12 @@ android {
     sourceCompatibility = '1.8'
 
     compileOptions {
-        sourceCompatibility 1.8
-        targetCompatibility 1.8
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     defaultConfig {
+
         minSdkVersion 15
         targetSdkVersion 29
         versionCode 0
@@ -57,6 +66,15 @@ android {
         }
         test {
             java.srcDirs += "src/sharedTest/java"
+        }
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
+        }
+        release {
+            buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
         }
     }
 }
@@ -100,82 +118,76 @@ dependencies {
 
 }
 
-repositories {
-    maven { url "https://maven.google.com" }
-    mavenCentral()
-    jcenter()
-}
+afterEvaluate {
+    publishing {
+        publications {
+            project.components.all { print("PRJ NAME: " + name) }
+            release(MavenPublication) {
+                from components.release
 
-buildscript {
-    repositories {
-        maven { url "https://maven.google.com" }
-        jcenter()
-        mavenCentral()
+                groupId = 'io.split.client'
+                version = splitVersion
+                artifact sourcesJar
+                artifact javadocJar
 
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.1'
-    }
-}
+                pom {
+                    name = 'Split Android SDK'
+                    packaging = 'aar'
+                    description = 'Official Split Android SDK'
+                    url = 'https://github.com/splitio/android-client'
 
-signing {
-    sign configurations.archives
-}
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
+                    developers {
+                        developer {
+                            id = 'sarrubia'
+                            name = 'Sebastian Arrubia'
+                            email = 'sebastian@split.io'
+                        }
 
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+                        developer {
+                            id = 'fernando'
+                            name = 'Fernando Martin'
+                            email = 'fernando@split.io'
+                        }
+                    }
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name 'Split Android SDK'
-                packaging 'jar'
-                description 'Official Split Android SDK'
-                url 'https://github.com/splitio/android-client'
-
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    scm {
+                        connection = 'scm:git:git@github.com:splitio/android-client.git'
+                        developerConnection = 'scm:git@github.com:splitio/android-client.git'
+                        url = 'https://github.com/splitio/android-client'
                     }
                 }
 
-                developers {
-                    developer {
-                        id 'sarrubia'
-                        name 'Sebastian Arrubia'
-                        email 'sebastian@split.io'
+                repositories {
+                    maven {
+                        def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                        def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+                        url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                        credentials {
+                            username = ossrhUsername
+                            password = ossrhPassword
+                        }
                     }
-
-                    developer {
-                        id 'fernando'
-                        name 'Fernando Martin'
-                        email 'fernando@split.io'
-                    }
-                }
-
-                scm {
-                    connection 'scm:git:git@github.com:splitio/android-client.git'
-                    developerConnection 'scm:git@github.com:splitio/android-client.git'
-                    url 'https://github.com/splitio/android-client'
                 }
             }
         }
     }
 }
 
+signing {
+    sign publishing.publications
+}
+
 task sourcesJar(type: Jar) {
+    archiveClassifier.set("sources")
     from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
+//    archiveClassifier = "sources"
 }
 
 task javadoc(type: Javadoc) {
@@ -186,7 +198,8 @@ task javadoc(type: Javadoc) {
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+//    archiveClassifier = 'javadoc'
+    archiveClassifier.set("javadoc")
     from javadoc.destinationDir
 }
 
