@@ -7,7 +7,7 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.InBytesSizable;
 import io.split.android.client.impressions.Impression;
 
-public class KeyImpression implements InBytesSizable {
+public class KeyImpression implements InBytesSizable, Identifiable {
 
     public transient long storageId;
     public String feature;
@@ -79,5 +79,10 @@ public class KeyImpression implements InBytesSizable {
         keyImpression.treatment = impression.treatment();
         keyImpression.label = impression.appliedRule();
         return keyImpression;
+    }
+
+    @Override
+    public long getId() {
+        return storageId;
     }
 }

@@ -1,23 +1,17 @@
 package io.split.android.client.storage.db;
 
 import androidx.annotation.NonNull;
-
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 import io.split.android.client.dtos.Identifiable;
 
-@Entity(tableName = "impressions")
-public class ImpressionEntity implements Identifiable {
-
+@Entity(tableName = "impressions_count")
+public class ImpressionsCountEntity implements Identifiable {
 
     @PrimaryKey(autoGenerate = true)
     private long id;
-
-    @NonNull
-    @ColumnInfo(name = "test_name")
-    private String testName;
 
     @NonNull
     private String body;
@@ -32,15 +26,6 @@ public class ImpressionEntity implements Identifiable {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    @NonNull
-    public String getTestName() {
-        return testName;
-    }
-
-    public void setTestName(@NonNull String testName) {
-        this.testName = testName;
     }
 
     @NonNull

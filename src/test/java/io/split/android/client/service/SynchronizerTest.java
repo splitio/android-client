@@ -39,6 +39,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
+import io.split.android.client.service.impressions.SaveImpressionsCountTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
@@ -221,6 +222,10 @@ public class SynchronizerTest {
         mSynchronizer.startPeriodicRecording();
         mSynchronizer.pause();
         verify(mTaskExecutor, times(1)).pause();
+        // TODO: Uncomment on integration
+//        verify(mTaskExecutor, times(1)).schedule(
+//                any(SaveImpressionsCountTask.class), anyLong(), anyLong(),
+//                any());
     }
 
     @Test
