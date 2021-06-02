@@ -11,6 +11,8 @@ public class ServiceConstants {
 
     public static final int MAX_ROWS_PER_QUERY = 100;
 
+    public static int DEFAULT_IMPRESSION_COUNT_ROWS_POP = 200;
+
     public final static String TASK_INFO_FIELD_STATUS = "taskStatus";
     public final static String TASK_INFO_FIELD_TYPE = "taskType";
     public final static String TASK_INFO_FIELD_RECORDS_NON_SENT = "recordNonSent";
