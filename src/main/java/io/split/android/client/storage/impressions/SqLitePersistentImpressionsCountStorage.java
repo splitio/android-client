@@ -1,50 +1,53 @@
 package io.split.android.client.storage.impressions;
 
 import androidx.annotation.NonNull;
+
 import com.google.gson.JsonParseException;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.storage.SqLitePersistentStorage;
-import io.split.android.client.storage.db.ImpressionDao;
-import io.split.android.client.storage.db.ImpressionEntity;
+import io.split.android.client.storage.db.ImpressionsCountDao;
+import io.split.android.client.storage.db.ImpressionsCountEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class SqLitePersistentImpressionsStorage
-        extends SqLitePersistentStorage<ImpressionEntity, KeyImpression>
-        implements PersistentImpressionsStorage {
+public class SqLitePersistentImpressionsCountStorage
+        extends SqLitePersistentStorage<ImpressionsCountEntity, ImpressionsCountPerFeature>
+        implements PersistentImpressionsCountStorage {
 
     final SplitRoomDatabase mDatabase;
-    final ImpressionDao mDao;
+    final ImpressionsCountDao mDao;
 
-    public SqLitePersistentImpressionsStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
+    public SqLitePersistentImpressionsCountStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
         super(expirationPeriod);
         mDatabase = checkNotNull(database);
-        mDao = mDatabase.impressionDao();
+        mDao = mDatabase.impressionsCountDao();
     }
 
     @Override
-    protected void insert(@NonNull ImpressionEntity entity) {
+    protected void insert(@NonNull ImpressionsCountEntity entity) {
         mDao.insert(entity);
     }
 
     @Override
-    protected void insert(@NonNull List<ImpressionEntity> entities) {
+    protected void insert(@NonNull List<ImpressionsCountEntity> entities) {
         mDao.insert(entities);
     }
 
     @NonNull
+    @NotNull
     @Override
-    protected ImpressionEntity entityForModel(@NonNull KeyImpression model) {
-        ImpressionEntity entity = new ImpressionEntity();
+    protected ImpressionsCountEntity entityForModel(@NonNull ImpressionsCountPerFeature model) {
+        ImpressionsCountEntity entity = new ImpressionsCountEntity();
         entity.setStatus(StorageRecordStatus.ACTIVE);
         entity.setBody(Json.toJson(model));
-        entity.setTestName(model.feature);
         entity.setCreatedAt(System.currentTimeMillis() / 1000);
         return entity;
     }
@@ -65,34 +68,35 @@ public class SqLitePersistentImpressionsStorage
     }
 
     @Override
-    protected void updateStatus(@NonNull List<Long> ids, int status) {
+    protected void updateStatus(@NonNull @NotNull List<Long> ids, int status) {
         mDao.updateStatus(ids, status);
     }
 
     @Override
-    protected void runInTransaction(List<ImpressionEntity> entities, int finalCount, long expirationPeriod) {
+    protected void runInTransaction(List<ImpressionsCountEntity> entities, int finalCount, long expirationPeriod) {
         mDatabase.runInTransaction(new GetAndUpdate(mDao, entities, finalCount, expirationPeriod));
     }
 
     @Override
-    protected KeyImpression entityToModel(ImpressionEntity entity) throws JsonParseException {
-        KeyImpression count = Json.fromJson(entity.getBody(), KeyImpression.class);
+    protected ImpressionsCountPerFeature entityToModel(ImpressionsCountEntity entity) throws JsonParseException {
+        ImpressionsCountPerFeature count = Json.fromJson(entity.getBody(), ImpressionsCountPerFeature.class);
         count.storageId = entity.getId();
         return count;
     }
 
     static class GetAndUpdate extends
-            SqLitePersistentStorage.GetAndUpdateTransaction<ImpressionEntity, KeyImpression> {
+            SqLitePersistentStorage.GetAndUpdateTransaction<ImpressionsCountEntity,
+            ImpressionsCountPerFeature> {
 
-        final ImpressionDao mDao;
+        final ImpressionsCountDao mDao;
 
-        public GetAndUpdate(ImpressionDao dao, List<ImpressionEntity> entities, int count, long expirationPeriod) {
+        public GetAndUpdate(ImpressionsCountDao dao, List<ImpressionsCountEntity> entities, int count, long expirationPeriod) {
             super(entities, count, expirationPeriod);
             mDao = dao;
         }
 
         @Override
-        protected List<ImpressionEntity> getBy(long timestamp, int status, int rowCount) {
+        protected List<ImpressionsCountEntity> getBy(long timestamp, int status, int rowCount) {
             return mDao.getBy(timestamp, status, rowCount);
         }
 

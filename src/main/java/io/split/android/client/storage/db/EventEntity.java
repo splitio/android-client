@@ -5,8 +5,10 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import io.split.android.client.dtos.Identifiable;
+
 @Entity(tableName = "events")
-public class EventEntity {
+public class EventEntity implements Identifiable {
 
     @PrimaryKey(autoGenerate = true)
     private long id;

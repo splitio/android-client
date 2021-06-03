@@ -2,11 +2,15 @@ package io.split.android.client.service.impressions;
 
 import com.google.gson.annotations.SerializedName;
 
-public class ImpressionsCountPerFeature {
+import io.split.android.client.dtos.Identifiable;
+
+public class ImpressionsCountPerFeature implements Identifiable {
 
     private static final String FIELD_FEATURE = "f";
     private static final String FIELD_TIMEFRAME = "m";
     private static final String FIELD_COUNT = "rc";
+
+    public transient long storageId;
 
     @SerializedName(FIELD_FEATURE)
     public final String feature;
@@ -37,5 +41,10 @@ public class ImpressionsCountPerFeature {
         return feature.equals(countPerFeature.feature) &&
                 timeframe == countPerFeature.timeframe &&
                 count == countPerFeature.count;
+    }
+
+    @Override
+    public long getId() {
+        return storageId;
     }
 }

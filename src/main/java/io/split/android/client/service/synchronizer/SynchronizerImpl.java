@@ -22,6 +22,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.impressions.ImpressionsCount;
+import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
@@ -180,8 +182,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     public void pause() {
-        mTaskExecutor.pause();
+        // saveImpressionsCount task is sent on pause, but it could be executed
+        // when task executor resumes when app becomes active
+        //saveImpressionsCount();
         stopPeriodicRecording();
+        mTaskExecutor.pause();
     }
 
     public void resume() {
@@ -221,6 +226,15 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                     mSplitTaskFactory.createImpressionsRecorderTask(),
                     mImpressionsSyncHelper);
         }
+    }
+
+    private void saveImpressionsCount() {
+        // TODO: Replace with real impressions list on integration
+        // Clear counters once saved successfully
+        List<ImpressionsCountPerFeature> c = new ArrayList<>();
+        ImpressionsCount impressionsCount = new ImpressionsCount(c);
+        mTaskExecutor.submit(
+                mSplitTaskFactory.createSaveImpressionsCountTask(impressionsCount), null);
     }
 
     private void scheduleSplitsFetcherTask() {
