@@ -6,6 +6,7 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
@@ -22,13 +23,18 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.impressions.ImpressionUtils;
 import io.split.android.client.service.impressions.ImpressionsCount;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
+import io.split.android.client.service.impressions.ImpressionsCounter;
+import io.split.android.client.service.impressions.ImpressionsMode;
+import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.service.ServiceConstants.COUNTERS_REFRESH_RATE_SECS;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener {
@@ -50,9 +56,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private String mMySegmentsFetcherTaskId;
     private String mEventsRecorderTaskId;
     private String mImpressionsRecorderTaskId;
+    private String mImpressionsRecorderCountTaskId;
     private final RetryBackoffCounterTimer mSplitsSyncRetryTimer;
     private final RetryBackoffCounterTimer mSplitsUpdateRetryTimer;
     private final RetryBackoffCounterTimer mMySegmentsSyncRetryTimer;
+    private final ImpressionsObserver mImpressionsObserver;
+    private final ImpressionsCounter mImpressionsCounter;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -72,6 +81,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
 
         mMySegmentsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
+
+        mImpressionsObserver = new ImpressionsObserver(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE);
+        mImpressionsCounter = new ImpressionsCounter();
 
         setupListeners();
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
@@ -150,6 +162,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     public void startPeriodicRecording() {
         scheduleEventsRecorderTask();
         scheduleImpressionsRecorderTask();
+        scheduleImpressionsCountRecorderTask();
         Logger.i("Peridic recording tasks scheduled");
     }
 
@@ -157,6 +170,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     public void stopPeriodicRecording() {
         mTaskExecutor.stopTask(mEventsRecorderTaskId);
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
+        mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
     }
 
     private void setupListeners() {
@@ -221,20 +235,26 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void pushImpression(Impression impression) {
-        if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(new KeyImpression(impression))) {
-            mTaskExecutor.submit(
-                    mSplitTaskFactory.createImpressionsRecorderTask(),
-                    mImpressionsSyncHelper);
+        KeyImpression keyImpression = KeyImpression.fromImpression(impression);
+        impression = impression.withPreviousTime(mImpressionsObserver.testAndSet(impression));
+
+        if (ImpressionsMode.OPTIMIZED.equals(mSplitClientConfig.impressionsMode())) {
+            mImpressionsCounter.inc(impression.split(), impression.time(), 1);
+        }
+
+        if (ImpressionsMode.DEBUG.equals(mSplitClientConfig.impressionsMode())
+                || shouldPushImpression(keyImpression)) {
+            if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression)) {
+                mTaskExecutor.submit(
+                        mSplitTaskFactory.createImpressionsRecorderTask(),
+                        mImpressionsSyncHelper);
+            }
         }
     }
 
     private void saveImpressionsCount() {
-        // TODO: Replace with real impressions list on integration
-        // Clear counters once saved successfully
-        List<ImpressionsCountPerFeature> c = new ArrayList<>();
-        ImpressionsCount impressionsCount = new ImpressionsCount(c);
         mTaskExecutor.submit(
-                mSplitTaskFactory.createSaveImpressionsCountTask(impressionsCount), null);
+                mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null);
     }
 
     private void scheduleSplitsFetcherTask() {
@@ -266,6 +286,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitClientConfig.impressionsRefreshRate(), mImpressionsSyncHelper);
     }
 
+    private void scheduleImpressionsCountRecorderTask() {
+        mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
+                mSplitTaskFactory.createImpressionsCountRecorderTask(),
+                ServiceConstants.NO_INITIAL_DELAY,
+                COUNTERS_REFRESH_RATE_SECS, null);
+    }
+
     private void submitSplitLoadingTask(SplitTaskExecutionListener listener) {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
                 listener);
@@ -274,6 +301,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private void submitMySegmentsLoadingTask(SplitTaskExecutionListener listener) {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(),
                 listener);
+    }
+
+    private boolean shouldPushImpression(KeyImpression impression) {
+        return impression.previousTime == null ||
+                ImpressionUtils.truncateTimeframe(impression.previousTime) != ImpressionUtils.truncateTimeframe(impression.time);
     }
 
     @Override

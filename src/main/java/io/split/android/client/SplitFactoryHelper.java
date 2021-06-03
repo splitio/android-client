@@ -81,7 +81,8 @@ class SplitFactoryHelper {
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, key.matchingKey()),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenEventsStorage(splitRoomDatabase),
-                StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase));
+                StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase),
+                StorageFactory.getPersistenImpressionsCountStorage(splitRoomDatabase));
     }
 
     String buildSplitsFilterQueryString(SplitClientConfig config) {
@@ -109,6 +110,8 @@ class SplitFactoryHelper {
                 ServiceFactory.getEventsRecorder(networkHelper, httpClient,
                         splitClientConfig.eventsEndpoint()),
                 ServiceFactory.getImpressionsRecorder(networkHelper, httpClient,
+                        splitClientConfig.eventsEndpoint()),
+                ServiceFactory.getImpressionsCountRecorder(networkHelper, httpClient,
                         splitClientConfig.eventsEndpoint()));
     }
 
@@ -147,17 +150,6 @@ class SplitFactoryHelper {
 
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
         EventStreamParser eventStreamParser = new EventStreamParser();
-//        SseClient sseClient =
-//                new SseClient(streamingServiceUrl,httpClient, eventStreamParser);
-
-//        StreamingMessageParser streamingMessageParser = new StreamingMessageParser();
-////        SseConnectionManager sseConnectionManager = new SseConnectionManagerImpl(sseClient, splitTaskExecutor, splitTaskFactory,
-////                streamingMessageParser, new ReconnectBackoffCounter(config.authRetryBackoffBase()),
-////                new ReconnectBackoffCounter(config.streamingReconnectBackoffBase()));
-////
-////        PushNotificationManager pushNotificationManager =
-////                new PushNotificationManager(sseClient, notificationParser, notificationProcessor, streamingMessageParser,
-////                        pushManagerEventBroadcaster, sseConnectionManager);
 
         NotificationManagerKeeper managerKeeper = new NotificationManagerKeeper(pushManagerEventBroadcaster);
         SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, managerKeeper, pushManagerEventBroadcaster);

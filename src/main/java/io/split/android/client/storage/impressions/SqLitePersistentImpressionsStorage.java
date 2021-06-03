@@ -5,6 +5,7 @@ import com.google.gson.JsonParseException;
 
 import java.util.List;
 
+import io.split.android.client.dtos.DeprecatedKeyImpression;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.storage.SqLitePersistentStorage;
 import io.split.android.client.storage.db.ImpressionDao;
@@ -76,11 +77,32 @@ public class SqLitePersistentImpressionsStorage
 
     @Override
     protected KeyImpression entityToModel(ImpressionEntity entity) throws JsonParseException {
-        KeyImpression count = Json.fromJson(entity.getBody(), KeyImpression.class);
-        count.storageId = entity.getId();
-        return count;
+        KeyImpression impression = null;
+        try {
+            impression = Json.fromJson(entity.getBody(), KeyImpression.class);
+        } catch (JsonParseException e) {
+            // Try deprecated serialization
+            DeprecatedKeyImpression deprecatedImp = Json.fromJson(entity.getBody(), DeprecatedKeyImpression.class);
+            impression = updateImpression(deprecatedImp);
+        }
+        if (impression == null) {
+            throw new JsonParseException("Error parsing stored impression");
+        }
+        impression.storageId = entity.getId();
+        return impression;
     }
 
+    private KeyImpression updateImpression(DeprecatedKeyImpression deprecated) {
+        KeyImpression impression = new KeyImpression();
+        impression.feature = deprecated.feature;
+        impression.bucketingKey = deprecated.bucketingKey;
+        impression.changeNumber = deprecated.changeNumber;
+        impression.keyName = deprecated.keyName;
+        impression.label = deprecated.label;
+        impression.time = deprecated.time;
+        impression.treatment = deprecated.treatment;
+        return impression;
+    }
     static class GetAndUpdate extends
             SqLitePersistentStorage.GetAndUpdateTransaction<ImpressionEntity, KeyImpression> {
 

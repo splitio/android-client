@@ -26,4 +26,8 @@ public class ServiceConstants {
     public final static String WORKER_PARAM_IMPRESSIONS_PER_PUSH = "impressionsPerPush";
     public final static String WORKER_PARAM_EVENTS_PER_PUSH = "eventsPerPush";
     public final static String WORKER_PARAM_SPLIT_CACHE_EXPIRATION = "splitCacheExpiration";
+
+    public static final long LAST_SEEN_IMPRESSION_CACHE_SIZE = 500; // 50k impressions hashes
+    public static final long COUNTERS_REFRESH_RATE_SECS = 30 * 60;
+
 }

@@ -1,7 +1,7 @@
 package io.split.android.client.service.impressions;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -10,20 +10,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ImpressionsCounter {
 
     public static class Key {
-        private final String mFeatureName;
-        private final long mTimeFrame;
+        private final String featureName;
+        private final long timeFrame;
 
         public Key(String featureName, long timeframe) {
-            mFeatureName = checkNotNull(featureName);
-            mTimeFrame = timeframe;
+            this.featureName = checkNotNull(featureName);
+            timeFrame = timeframe;
         }
 
-        public String featureName() { return mFeatureName; }
-        public long timeFrame() { return mTimeFrame; }
+        public String featureName() { return featureName; }
+        public long timeFrame() { return timeFrame; }
 
         @Override
         public int hashCode() {
-            return String.format("%s%d", mFeatureName, mTimeFrame).hashCode();
+            return String.format("%s%d", featureName, timeFrame).hashCode();
         }
 
         @Override
@@ -32,8 +32,8 @@ public class ImpressionsCounter {
             if (o == null || getClass() != o.getClass()) return false;
 
             Key key = (Key) o;
-            return mFeatureName.equals(key.mFeatureName) &&
-                    mTimeFrame == key.mTimeFrame;
+            return featureName.equals(key.featureName) &&
+                    timeFrame == key.timeFrame;
         }
     }
 
@@ -56,16 +56,16 @@ public class ImpressionsCounter {
         count.addAndGet(amount);
     }
 
-    public Map<Key, Integer> popAll() {
-        HashMap<Key, Integer> toReturn = new HashMap<>();
-        for (Key key : mCounts.keySet()) {
-            AtomicInteger current = mCounts.remove(key);
-            // It shouldn't be null...
-            if(current != null) {
-                toReturn.put(key, current.get());
+    public List<ImpressionsCountPerFeature> popAll() {
+        List<ImpressionsCountPerFeature> counts = new ArrayList<>();
+        List<Key> keys = new ArrayList(mCounts.keySet());
+        for (Key key : keys) {
+            AtomicInteger currentCount = mCounts.remove(key);
+            if(currentCount != null) {
+                counts.add(new ImpressionsCountPerFeature(key.featureName, key.timeFrame, currentCount.get()));
             }
         }
-        return toReturn;
+        return counts;
     }
 
     public boolean isEmpty() { return mCounts.isEmpty(); }

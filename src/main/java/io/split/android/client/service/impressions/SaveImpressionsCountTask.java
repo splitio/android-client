@@ -8,7 +8,6 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
-import io.split.android.client.storage.splits.SplitsStorage;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -18,9 +17,9 @@ public class SaveImpressionsCountTask implements SplitTask {
     private final List<ImpressionsCountPerFeature> mCounts;
 
     public SaveImpressionsCountTask(@NonNull PersistentImpressionsCountStorage countsStorage,
-                                    @NonNull ImpressionsCount counts) {
+                                    @NonNull List<ImpressionsCountPerFeature> counts) {
         mCountsStorage = checkNotNull(countsStorage);
-        mCounts = checkNotNull(counts.perFeature);
+        mCounts = checkNotNull(counts);
     }
 
     @Override

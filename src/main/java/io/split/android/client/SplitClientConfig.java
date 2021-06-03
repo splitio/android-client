@@ -9,6 +9,7 @@ import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.utils.Logger;
 import okhttp3.Authenticator;
 
@@ -67,8 +68,6 @@ public class SplitClientConfig {
     private static String _ip;
 
     private HttpProxy _proxy = null;
-    private String _proxyUsername = null;
-    private String _proxyPassword = null;
     private Authenticator _proxyAuthenticator = null;
 
     private final int _featuresRefreshRate;
@@ -113,6 +112,7 @@ public class SplitClientConfig {
     private SyncConfig _syncConfig;
 
     private boolean _legacyStorageMigrationEnabled;
+    private ImpressionsMode _impressionsMode;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -158,7 +158,8 @@ public class SplitClientConfig {
                               String streamingServiceUrl,
                               boolean enableSslDevelopmentMode,
                               SyncConfig syncConfig,
-                              boolean legacyStorageMigrationEnabled) {
+                              boolean legacyStorageMigrationEnabled,
+                              ImpressionsMode impressionsMode) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -198,6 +199,7 @@ public class SplitClientConfig {
         _isSslDevelopmentModeEnabled = enableSslDevelopmentMode;
         _syncConfig = syncConfig;
         _legacyStorageMigrationEnabled = legacyStorageMigrationEnabled;
+        _impressionsMode = impressionsMode;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
@@ -446,6 +448,10 @@ public class SplitClientConfig {
         return _legacyStorageMigrationEnabled;
     }
 
+    public ImpressionsMode impressionsMode() {
+        return _impressionsMode;
+    }
+
     public static final class Builder {
 
         private ServiceEndpoints _serviceEndpoints = null;
@@ -495,6 +501,8 @@ public class SplitClientConfig {
         private SyncConfig _syncConfig = SyncConfig.builder().build();
 
         private boolean _legacyStorageMigrationEnabled = false;
+
+        private ImpressionsMode _impressionsMode = ImpressionsMode.OPTIMIZED;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -930,6 +938,20 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Setup the impressions mode.
+         * @values
+         * @value DEBUG: All impressions are sent
+         * @value OPTIMIZED: Impressions are sent using an optimization algorithm
+         *
+         * @return: This builder
+         * @default: OPTIMIZED
+         */
+        public Builder impressionsMode(ImpressionsMode mode) {
+            _impressionsMode = mode;
+            return this;
+        }
+
         public SplitClientConfig build() {
 
 
@@ -1024,7 +1046,8 @@ public class SplitClientConfig {
                     _serviceEndpoints.getStreamingServiceEndpoint(),
                     _isSslDevelopmentModeEnabled,
                     _syncConfig,
-                    _legacyStorageMigrationEnabled);
+                    _legacyStorageMigrationEnabled,
+                    _impressionsMode);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

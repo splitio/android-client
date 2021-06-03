@@ -3,6 +3,7 @@ package io.split.android.client.storage;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
@@ -17,18 +18,21 @@ public class SplitStorageContainer {
     private final PersistentSplitsStorage mPersistentSplitsStorage;
     private final PersistentEventsStorage mPersistentEventsStorage;
     private final PersistentImpressionsStorage mPersistentImpressionsStorage;
+    private final PersistentImpressionsCountStorage mPersistentImpressionsCountStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorage mySegmentsStorage,
                                  @NonNull PersistentSplitsStorage persistentSplitsStorage,
                                  @NonNull PersistentEventsStorage persistentEventsStorage,
-                                 @NonNull PersistentImpressionsStorage persistentImpressionsStorage) {
+                                 @NonNull PersistentImpressionsStorage persistentImpressionsStorage,
+                                 @NonNull PersistentImpressionsCountStorage persistentImpressionsCountStorage) {
 
         mSplitStorage = checkNotNull(splitStorage);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mPersistentSplitsStorage = checkNotNull(persistentSplitsStorage);
         mPersistentEventsStorage = checkNotNull(persistentEventsStorage);
         mPersistentImpressionsStorage = checkNotNull(persistentImpressionsStorage);
+        mPersistentImpressionsCountStorage = checkNotNull(persistentImpressionsCountStorage);
     }
 
     public SplitsStorage getSplitsStorage() {
@@ -51,4 +55,7 @@ public class SplitStorageContainer {
         return mPersistentImpressionsStorage;
     }
 
+    public PersistentImpressionsCountStorage getImpressionsCountStorage() {
+        return mPersistentImpressionsCountStorage;
+    }
 }

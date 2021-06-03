@@ -4,8 +4,11 @@ import org.junit.Test;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionUtils;
 
@@ -42,7 +45,9 @@ public class ImpressionsCounterTest {
         counter.inc("feature1", timestamp + 2, 1);
         counter.inc("feature2", timestamp + 3, 2);
         counter.inc("feature2", timestamp + 4, 2);
-        Map<ImpressionsCounter.Key, Integer> counted = counter.popAll();
+
+        Map<ImpressionsCounter.Key, Integer> counted = countedMap(counter.popAll());
+
         assertThat(counted.size(), is(equalTo(2)));
         assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(3)));
         assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(4)));
@@ -59,7 +64,8 @@ public class ImpressionsCounterTest {
         counter.inc("feature1", nextHourTimestamp + 2, 1);
         counter.inc("feature2", nextHourTimestamp + 3, 2);
         counter.inc("feature2", nextHourTimestamp + 4, 2);
-        counted = counter.popAll();
+
+        counted = countedMap(counter.popAll());
         assertThat(counted.size(), is(equalTo(4)));
         assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(3)));
         assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(4)));
@@ -97,11 +103,20 @@ public class ImpressionsCounterTest {
         t1.start(); t2.start();
         t1.join(); t2.join();
 
-        Map<ImpressionsCounter.Key, Integer> counted = counter.popAll();
+        Map<ImpressionsCounter.Key, Integer> counted = countedMap(counter.popAll());
         assertThat(counted.size(), is(equalTo(4)));
         assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(iterations * 3)));
         assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(iterations * 3)));
         assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(nextHourTimestamp))), is(equalTo(iterations * 3)));
         assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(nextHourTimestamp))), is(equalTo(iterations * 3)));
+    }
+
+    private Map<ImpressionsCounter.Key, Integer> countedMap(List<ImpressionsCountPerFeature> counts) {
+
+        Map<ImpressionsCounter.Key, Integer> map = new HashMap<>();
+        for(ImpressionsCountPerFeature count : counts) {
+            map.put(new ImpressionsCounter.Key(count.feature, count.timeframe), count.count);
+        }
+        return  map;
     }
 }

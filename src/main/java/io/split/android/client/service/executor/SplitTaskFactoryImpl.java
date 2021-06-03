@@ -16,6 +16,8 @@ import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.impressions.ImpressionsCount;
+import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
+import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
@@ -130,8 +132,14 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SaveImpressionsCountTask createSaveImpressionsCountTask(ImpressionsCount count) {
-        // TODO: Implement this method on components integration
-        return null;
+    public SaveImpressionsCountTask createSaveImpressionsCountTask(List<ImpressionsCountPerFeature> counts) {
+        return new SaveImpressionsCountTask(mSplitsStorageContainer.getImpressionsCountStorage() ,counts);
+    }
+
+    @Override
+    public ImpressionsCountRecorderTask createImpressionsCountRecorderTask() {
+        return new ImpressionsCountRecorderTask(
+                mSplitApiFacade.getImpressionsCountRecorder(),
+                mSplitsStorageContainer.getImpressionsCountStorage());
     }
 }
