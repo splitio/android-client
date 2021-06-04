@@ -940,15 +940,33 @@ public class SplitClientConfig {
 
         /**
          * Setup the impressions mode.
-         * @values
-         * @value DEBUG: All impressions are sent
-         * @value OPTIMIZED: Impressions are sent using an optimization algorithm
+         * @param mode Values:<br>
+         *             DEBUG: All impressions are sent and
+         *             OPTIMIZED: Impressions are sent using an optimization algorithm
          *
          * @return: This builder
          * @default: OPTIMIZED
          */
         public Builder impressionsMode(ImpressionsMode mode) {
             _impressionsMode = mode;
+            return this;
+        }
+
+        /**
+         * Setup the impressions mode using a string.
+         * @param mode Values:<br>
+         *             DEBUG: All impressions are sent and
+         *             OPTIMIZED: Impressions are sent using an optimization algorithm
+         *
+         * <p>
+         *  NOTE: If the string is invalid (Neither DEBUG nor OPTIMIZED) default value will be used
+         *  </p>
+         *
+         * @return: This builder
+         * @default: OPTIMIZED
+         */
+        public Builder impressionsMode(String mode) {
+            _impressionsMode = ImpressionsMode.fromString(mode);
             return this;
         }
 
