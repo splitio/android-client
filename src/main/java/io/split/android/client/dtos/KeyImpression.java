@@ -78,6 +78,7 @@ public class KeyImpression implements InBytesSizable, Identifiable {
         keyImpression.changeNumber = impression.changeNumber();
         keyImpression.treatment = impression.treatment();
         keyImpression.label = impression.appliedRule();
+        keyImpression.previousTime = impression.previousTime();
         return keyImpression;
     }
 

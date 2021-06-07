@@ -34,7 +34,6 @@ import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static io.split.android.client.service.ServiceConstants.COUNTERS_REFRESH_RATE_SECS;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener {
@@ -168,6 +167,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void stopPeriodicRecording() {
+        saveImpressionsCount();
         mTaskExecutor.stopTask(mEventsRecorderTaskId);
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
         mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
@@ -196,9 +196,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     public void pause() {
-        // saveImpressionsCount task is sent on pause, but it could be executed
-        // when task executor resumes when app becomes active
-        //saveImpressionsCount();
         stopPeriodicRecording();
         mTaskExecutor.pause();
     }
@@ -222,6 +219,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mTaskExecutor.submit(
                 mSplitTaskFactory.createImpressionsRecorderTask(),
                 mImpressionsSyncHelper);
+        flushImpressionsCount();
     }
 
     @Override
@@ -235,15 +233,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void pushImpression(Impression impression) {
-        KeyImpression keyImpression = KeyImpression.fromImpression(impression);
         impression = impression.withPreviousTime(mImpressionsObserver.testAndSet(impression));
-
-        if (ImpressionsMode.OPTIMIZED.equals(mSplitClientConfig.impressionsMode())) {
+        KeyImpression keyImpression = KeyImpression.fromImpression(impression);
+        if (isOptimizedImpressionsMode()) {
             mImpressionsCounter.inc(impression.split(), impression.time(), 1);
         }
 
-        if (ImpressionsMode.DEBUG.equals(mSplitClientConfig.impressionsMode())
-                || shouldPushImpression(keyImpression)) {
+        if (!isOptimizedImpressionsMode() || shouldPushImpression(keyImpression)) {
             if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression)) {
                 mTaskExecutor.submit(
                         mSplitTaskFactory.createImpressionsRecorderTask(),
@@ -253,8 +249,25 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void saveImpressionsCount() {
+        if(!isOptimizedImpressionsMode()) {
+            return;
+        }
         mTaskExecutor.submit(
                 mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null);
+    }
+
+    private void flushImpressionsCount() {
+        if(!isOptimizedImpressionsMode()) {
+            return;
+        }
+        List<SplitTaskBatchItem> enqueued = new ArrayList<>();
+        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null));
+        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createImpressionsCountRecorderTask(), null));
+        mTaskExecutor.executeSerially(enqueued);
+    }
+
+    private boolean isOptimizedImpressionsMode() {
+        return ImpressionsMode.OPTIMIZED.equals(mSplitClientConfig.impressionsMode());
     }
 
     private void scheduleSplitsFetcherTask() {
@@ -290,7 +303,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createImpressionsCountRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
-                COUNTERS_REFRESH_RATE_SECS, null);
+                mSplitClientConfig.impressionsCounterRefreshRate(), null);
     }
 
     private void submitSplitLoadingTask(SplitTaskExecutionListener listener) {

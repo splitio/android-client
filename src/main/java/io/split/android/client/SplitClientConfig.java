@@ -33,6 +33,7 @@ public class SplitClientConfig {
     private static final int DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_IMPRESSIONS_QUEUE_SIZE = 30000;
     private static final int DEFAULT_IMPRESSIONS_PER_PUSH = 2000;
+    private static final int DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 15000;
     private static final int DEFAULT_READ_TIMEOUT_SECS = 15000;
     private static final int DEFAULT_NUM_THREAD_FOR_SEGMENT_FETCH = 2;
@@ -77,6 +78,7 @@ public class SplitClientConfig {
     private final int _impressionsPerPush;
     private final static int _impressionsMaxSentAttempts = IMPRESSIONS_MAX_SENT_ATTEMPTS;
     private final static long _impressionsChunkOudatedTime = IMPRESSIONS_CHUNK_OUTDATED_TIME;
+    private final int _impCountersRefreshRate;
 
     private final int _metricsRefreshRate;
     private final int _connectionTimeout;
@@ -159,7 +161,8 @@ public class SplitClientConfig {
                               boolean enableSslDevelopmentMode,
                               SyncConfig syncConfig,
                               boolean legacyStorageMigrationEnabled,
-                              ImpressionsMode impressionsMode) {
+                              ImpressionsMode impressionsMode,
+                              int impCountersRefreshRate) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -167,6 +170,7 @@ public class SplitClientConfig {
         _impressionsRefreshRate = impressionsRefreshRate;
         _impressionsQueueSize = impressionsQueueSize;
         _impressionsPerPush = impressionsPerPush;
+        _impCountersRefreshRate = impCountersRefreshRate;
         _metricsRefreshRate = metricsRefreshRate;
         _connectionTimeout = connectionTimeout;
         _readTimeout = readTimeout;
@@ -452,6 +456,10 @@ public class SplitClientConfig {
         return _impressionsMode;
     }
 
+    public int impressionsCounterRefreshRate() {
+        return _impCountersRefreshRate;
+    }
+
     public static final class Builder {
 
         private ServiceEndpoints _serviceEndpoints = null;
@@ -460,6 +468,7 @@ public class SplitClientConfig {
         private int _impressionsRefreshRate = DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS;
         private int _impressionsQueueSize = DEFAULT_IMPRESSIONS_QUEUE_SIZE;
         private int _impressionsPerPush = DEFAULT_IMPRESSIONS_PER_PUSH;
+        private int _impCountersRefreshRate = DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS;
         private int _connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
         private int _readTimeout = DEFAULT_READ_TIMEOUT_SECS;
         private int _numThreadsForSegmentFetch = DEFAULT_NUM_THREAD_FOR_SEGMENT_FETCH;
@@ -1065,7 +1074,8 @@ public class SplitClientConfig {
                     _isSslDevelopmentModeEnabled,
                     _syncConfig,
                     _legacyStorageMigrationEnabled,
-                    _impressionsMode);
+                    _impressionsMode,
+                    _impCountersRefreshRate);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
