@@ -19,6 +19,7 @@ public class TestableSplitConfigBuilder {
     private int mImpressionsQueueSize = 30000;
     private long mImpressionsChunkSize = 2 * 1024;
     private int mImpressionsPerPush = 10;
+    private int mImpressionsCountersRefreshRate = 1800;
     private int mMetricsRefreshRate = 1800;
     private int mConnectionTimeout = 15000;
     private int mReadTimeout = 15000;
@@ -204,6 +205,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder impressionsCountersRefreshRate(int impressionsCountersRefreshRate) {
+        this.mImpressionsCountersRefreshRate = impressionsCountersRefreshRate;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -247,7 +253,8 @@ public class TestableSplitConfigBuilder {
                     mEnableSslDevelopmentMode,
                     mSyncConfig,
                     mLegacyStorageMigrationEnabled,
-                    mImpressionsMode);
+                    mImpressionsMode,
+                    mImpressionsCountersRefreshRate);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "
