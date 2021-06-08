@@ -160,12 +160,11 @@ class SplitFactoryHelper {
         PushNotificationManager pushNotificationManager =
                 new PushNotificationManager(pushManagerEventBroadcaster, sseAuthenticator, sseClient,
                         new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
-                        new SseDisconnectionTimer(new SplitTaskExecutorImpl()),null);
+                        new SseDisconnectionTimer(new SplitTaskExecutorImpl()), null);
 
         BackoffCounterTimer backoffReconnectTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
 
-        return new SyncManagerImpl(
-                config, synchronizer, pushNotificationManager, splitUpdateWorker,
+        return new SyncManagerImpl(config, synchronizer, pushNotificationManager, splitUpdateWorker,
                 mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer);
     }
 }
