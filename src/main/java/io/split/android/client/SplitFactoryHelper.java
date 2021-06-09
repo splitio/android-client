@@ -72,6 +72,7 @@ class SplitFactoryHelper {
         SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
         headersBuilder.addStreamingTypeHeaders();
         headersBuilder.setAblyApiToken(apiToken);
+        headersBuilder.setClientVersion(SplitClientConfig.splitSdkVersion);
         return headersBuilder.build();
     }
 
