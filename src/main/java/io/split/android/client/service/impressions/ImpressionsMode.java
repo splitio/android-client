@@ -5,6 +5,9 @@ public enum ImpressionsMode {
     DEBUG;
 
     public static ImpressionsMode fromString(String value) {
+        if (value != null) {
+            value = value.toUpperCase();
+        }
         return "DEBUG".equals(value) ? DEBUG : OPTIMIZED;
     }
 }
