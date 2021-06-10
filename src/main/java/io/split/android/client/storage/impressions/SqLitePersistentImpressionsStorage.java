@@ -80,6 +80,7 @@ public class SqLitePersistentImpressionsStorage
         KeyImpression impression = null;
         try {
             impression = Json.fromJson(entity.getBody(), KeyImpression.class);
+            impression.feature = entity.getTestName();
         } catch (JsonParseException e) {
             // Try deprecated serialization
             DeprecatedKeyImpression deprecatedImp = Json.fromJson(entity.getBody(), DeprecatedKeyImpression.class);
