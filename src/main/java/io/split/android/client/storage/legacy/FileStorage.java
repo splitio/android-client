@@ -1,34 +1,21 @@
 package io.split.android.client.storage.legacy;
 
-import com.google.common.base.Strings;
-import com.google.gson.JsonSyntaxException;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
 
-import io.split.android.client.dtos.ChunkHeader;
-import io.split.android.client.dtos.Event;
-import io.split.android.client.track.EventsChunk;
-import io.split.android.client.track.ITrackStorage;
-import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
 /**
  * Created by guillermo on 11/22/17.
  */
 
-@Deprecated
 public class FileStorage implements IStorage {
 
     protected final File _dataFolder;

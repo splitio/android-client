@@ -16,10 +16,6 @@ import helper.FileHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.migrator.EventsMigratorHelperImpl;
-import io.split.android.client.storage.legacy.TrackStorageManager;
-import io.split.android.client.storage.legacy.TracksFileStorage;
-import io.split.android.client.track.EventsChunk;
-import io.split.android.client.track.ITrackStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.TimeUtils;
 
