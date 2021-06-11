@@ -33,7 +33,7 @@ public class SplitClientConfig {
     private static final int DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_IMPRESSIONS_QUEUE_SIZE = 30000;
     private static final int DEFAULT_IMPRESSIONS_PER_PUSH = 2000;
-    private static final int DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS = 15;
+    private static final int DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 15000;
     private static final int DEFAULT_READ_TIMEOUT_SECS = 15000;
     private static final int DEFAULT_NUM_THREAD_FOR_SEGMENT_FETCH = 2;
