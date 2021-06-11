@@ -17,6 +17,8 @@ import io.split.android.client.service.http.HttpFetcherImpl;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderImpl;
 import io.split.android.client.service.http.HttpSseAuthTokenFetcher;
+import io.split.android.client.service.impressions.ImpressionsCount;
+import io.split.android.client.service.impressions.ImpressionsCountRequestBodySerializer;
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
@@ -81,6 +83,15 @@ public class ServiceFactory {
         return new HttpRecorderImpl<>(
                 httpClient, SdkTargetPath.impressions(endPoint), networkHelper,
                 new ImpressionsRequestBodySerializer());
+    }
+
+    public static HttpRecorder<ImpressionsCount> getImpressionsCountRecorder(
+            NetworkHelper networkHelper,
+            HttpClient httpClient,
+            String endPoint) throws URISyntaxException {
+        return new HttpRecorderImpl<>(
+                httpClient, SdkTargetPath.impressionsCount(endPoint), networkHelper,
+                new ImpressionsCountRequestBodySerializer());
     }
 
     public static HttpSseAuthTokenFetcher getSseAuthenticationFetcher(

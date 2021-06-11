@@ -11,7 +11,7 @@ public class ServiceConstants {
 
     public static final int MAX_ROWS_PER_QUERY = 100;
 
-    public static int DEFAULT_IMPRESSION_COUNT_ROWS_POP = 200;
+    public static final int DEFAULT_IMPRESSION_COUNT_ROWS_POP = 200;
 
     public final static String TASK_INFO_FIELD_STATUS = "taskStatus";
     public final static String TASK_INFO_FIELD_TYPE = "taskType";
@@ -26,4 +26,6 @@ public class ServiceConstants {
     public final static String WORKER_PARAM_IMPRESSIONS_PER_PUSH = "impressionsPerPush";
     public final static String WORKER_PARAM_EVENTS_PER_PUSH = "eventsPerPush";
     public final static String WORKER_PARAM_SPLIT_CACHE_EXPIRATION = "splitCacheExpiration";
+
+    public static final long LAST_SEEN_IMPRESSION_CACHE_SIZE = 500;
 }

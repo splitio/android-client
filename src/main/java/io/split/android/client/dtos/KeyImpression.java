@@ -10,13 +10,35 @@ import io.split.android.client.impressions.Impression;
 public class KeyImpression implements InBytesSizable, Identifiable {
 
     public transient long storageId;
-    public String feature;
+    /* package private */ static final String FIELD_KEY_NAME = "k";
+    /* package private */ static final String FIELD_BUCKETING_KEY = "b";
+    /* package private */ static final String FIELD_TREATMENT = "t";
+    /* package private */ static final String FIELD_LABEL = "r";
+    /* package private */ static final String FIELD_TIME = "m";
+    /* package private */ static final String FIELD_CHANGE_NUMBER = "c";
+    /* package private */ static final String FIELD_PREVIOUS_TIME = "pt";
+
+    public transient String feature; // Non-serializable
+
+    @SerializedName(FIELD_KEY_NAME)
     public String keyName;
+
+    @SerializedName(FIELD_BUCKETING_KEY)
     public String bucketingKey;
+
+    @SerializedName(FIELD_TREATMENT)
     public String treatment;
+
+    @SerializedName(FIELD_LABEL)
     public String label;
+
+    @SerializedName(FIELD_TIME)
     public long time;
+
+    @SerializedName(FIELD_CHANGE_NUMBER)
     public Long changeNumber; // can be null if there is no changeNumber
+
+    @SerializedName(FIELD_PREVIOUS_TIME)
     public Long previousTime;
 
     public KeyImpression() {
@@ -78,6 +100,7 @@ public class KeyImpression implements InBytesSizable, Identifiable {
         keyImpression.changeNumber = impression.changeNumber();
         keyImpression.treatment = impression.treatment();
         keyImpression.label = impression.appliedRule();
+        keyImpression.previousTime = impression.previousTime();
         return keyImpression;
     }
 

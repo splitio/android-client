@@ -17,7 +17,7 @@ plugins {
 }
 
 ext {
-    splitVersion = '2.7.2-rc1'
+    splitVersion = '2.7.2-rc4'
 }
 
 android {

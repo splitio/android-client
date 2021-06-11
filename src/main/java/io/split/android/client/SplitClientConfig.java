@@ -9,6 +9,7 @@ import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.utils.Logger;
 import okhttp3.Authenticator;
 
@@ -32,6 +33,7 @@ public class SplitClientConfig {
     private static final int DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_IMPRESSIONS_QUEUE_SIZE = 30000;
     private static final int DEFAULT_IMPRESSIONS_PER_PUSH = 2000;
+    private static final int DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS = 15;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 15000;
     private static final int DEFAULT_READ_TIMEOUT_SECS = 15000;
     private static final int DEFAULT_NUM_THREAD_FOR_SEGMENT_FETCH = 2;
@@ -67,8 +69,6 @@ public class SplitClientConfig {
     private static String _ip;
 
     private HttpProxy _proxy = null;
-    private String _proxyUsername = null;
-    private String _proxyPassword = null;
     private Authenticator _proxyAuthenticator = null;
 
     private final int _featuresRefreshRate;
@@ -78,6 +78,7 @@ public class SplitClientConfig {
     private final int _impressionsPerPush;
     private final static int _impressionsMaxSentAttempts = IMPRESSIONS_MAX_SENT_ATTEMPTS;
     private final static long _impressionsChunkOudatedTime = IMPRESSIONS_CHUNK_OUTDATED_TIME;
+    private final int _impCountersRefreshRate;
 
     private final int _metricsRefreshRate;
     private final int _connectionTimeout;
@@ -113,6 +114,7 @@ public class SplitClientConfig {
     private SyncConfig _syncConfig;
 
     private boolean _legacyStorageMigrationEnabled;
+    private ImpressionsMode _impressionsMode;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -158,7 +160,9 @@ public class SplitClientConfig {
                               String streamingServiceUrl,
                               boolean enableSslDevelopmentMode,
                               SyncConfig syncConfig,
-                              boolean legacyStorageMigrationEnabled) {
+                              boolean legacyStorageMigrationEnabled,
+                              ImpressionsMode impressionsMode,
+                              int impCountersRefreshRate) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -166,6 +170,7 @@ public class SplitClientConfig {
         _impressionsRefreshRate = impressionsRefreshRate;
         _impressionsQueueSize = impressionsQueueSize;
         _impressionsPerPush = impressionsPerPush;
+        _impCountersRefreshRate = impCountersRefreshRate;
         _metricsRefreshRate = metricsRefreshRate;
         _connectionTimeout = connectionTimeout;
         _readTimeout = readTimeout;
@@ -198,6 +203,7 @@ public class SplitClientConfig {
         _isSslDevelopmentModeEnabled = enableSslDevelopmentMode;
         _syncConfig = syncConfig;
         _legacyStorageMigrationEnabled = legacyStorageMigrationEnabled;
+        _impressionsMode = impressionsMode;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
@@ -446,6 +452,14 @@ public class SplitClientConfig {
         return _legacyStorageMigrationEnabled;
     }
 
+    public ImpressionsMode impressionsMode() {
+        return _impressionsMode;
+    }
+
+    public int impressionsCounterRefreshRate() {
+        return _impCountersRefreshRate;
+    }
+
     public static final class Builder {
 
         private ServiceEndpoints _serviceEndpoints = null;
@@ -454,6 +468,7 @@ public class SplitClientConfig {
         private int _impressionsRefreshRate = DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS;
         private int _impressionsQueueSize = DEFAULT_IMPRESSIONS_QUEUE_SIZE;
         private int _impressionsPerPush = DEFAULT_IMPRESSIONS_PER_PUSH;
+        private int _impCountersRefreshRate = DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS;
         private int _connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
         private int _readTimeout = DEFAULT_READ_TIMEOUT_SECS;
         private int _numThreadsForSegmentFetch = DEFAULT_NUM_THREAD_FOR_SEGMENT_FETCH;
@@ -495,6 +510,8 @@ public class SplitClientConfig {
         private SyncConfig _syncConfig = SyncConfig.builder().build();
 
         private boolean _legacyStorageMigrationEnabled = false;
+
+        private ImpressionsMode _impressionsMode = ImpressionsMode.OPTIMIZED;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -930,6 +947,38 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Setup the impressions mode.
+         * @param mode Values:<br>
+         *             DEBUG: All impressions are sent and
+         *             OPTIMIZED: Impressions are sent using an optimization algorithm
+         *
+         * @return: This builder
+         * @default: OPTIMIZED
+         */
+        public Builder impressionsMode(ImpressionsMode mode) {
+            _impressionsMode = mode;
+            return this;
+        }
+
+        /**
+         * Setup the impressions mode using a string.
+         * @param mode Values:<br>
+         *             DEBUG: All impressions are sent and
+         *             OPTIMIZED: Impressions are sent using an optimization algorithm
+         *
+         * <p>
+         *  NOTE: If the string is invalid (Neither DEBUG nor OPTIMIZED) default value will be used
+         *  </p>
+         *
+         * @return: This builder
+         * @default: OPTIMIZED
+         */
+        public Builder impressionsMode(String mode) {
+            _impressionsMode = ImpressionsMode.fromString(mode);
+            return this;
+        }
+
         public SplitClientConfig build() {
 
 
@@ -1024,7 +1073,9 @@ public class SplitClientConfig {
                     _serviceEndpoints.getStreamingServiceEndpoint(),
                     _isSslDevelopmentModeEnabled,
                     _syncConfig,
-                    _legacyStorageMigrationEnabled);
+                    _legacyStorageMigrationEnabled,
+                    _impressionsMode,
+                    _impCountersRefreshRate);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

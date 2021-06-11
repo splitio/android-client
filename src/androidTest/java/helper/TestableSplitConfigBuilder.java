@@ -6,6 +6,7 @@ package helper;
         import io.split.android.client.SplitClientConfig;
         import io.split.android.client.SyncConfig;
         import io.split.android.client.impressions.ImpressionListener;
+        import io.split.android.client.service.impressions.ImpressionsMode;
         import io.split.android.client.utils.Logger;
         import okhttp3.Authenticator;
 
@@ -18,6 +19,7 @@ public class TestableSplitConfigBuilder {
     private int mImpressionsQueueSize = 30000;
     private long mImpressionsChunkSize = 2 * 1024;
     private int mImpressionsPerPush = 10;
+    private int mImpressionsCountersRefreshRate = 1800;
     private int mMetricsRefreshRate = 1800;
     private int mConnectionTimeout = 15000;
     private int mReadTimeout = 15000;
@@ -45,6 +47,7 @@ public class TestableSplitConfigBuilder {
     private int mAuthRetryBackoffBase = 1;
     private int mStreamingReconnectBackoffBase = 1;
     private boolean mEnableSslDevelopmentMode = false;
+    private ImpressionsMode mImpressionsMode = ImpressionsMode.OPTIMIZED;
     private SyncConfig mSyncConfig = SyncConfig.builder().build();
 
     public TestableSplitConfigBuilder() {
@@ -187,6 +190,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder impressionsMode(ImpressionsMode mode) {
+        mImpressionsMode = mode;
+        return this;
+    }
+
     public TestableSplitConfigBuilder syncConfig(SyncConfig syncConfig) {
         mSyncConfig = syncConfig;
         return this;
@@ -194,6 +202,11 @@ public class TestableSplitConfigBuilder {
 
     public TestableSplitConfigBuilder legacyStorageMigrationEnabled(boolean value) {
         mLegacyStorageMigrationEnabled = value;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder impressionsCountersRefreshRate(int impressionsCountersRefreshRate) {
+        this.mImpressionsCountersRefreshRate = impressionsCountersRefreshRate;
         return this;
     }
 
@@ -239,7 +252,9 @@ public class TestableSplitConfigBuilder {
                     mServiceEndpoints.getStreamingServiceEndpoint(),
                     mEnableSslDevelopmentMode,
                     mSyncConfig,
-                    mLegacyStorageMigrationEnabled);
+                    mLegacyStorageMigrationEnabled,
+                    mImpressionsMode,
+                    mImpressionsCountersRefreshRate);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

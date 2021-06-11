@@ -1,93 +1,93 @@
 [
   {
-    "keyImpressions": [
+    "i": [
       {
-        "bucketingKey": null,
-        "changeNumber": 1561500492437,
+        "b": null,
+        "c": 1561500492437,
         "feature": "ANDROID_sameTreatmentWithBucketingKey",
-        "keyName": "CUSTOMER_ID",
-        "label": "default rule",
-        "time": 1561667586092,
-        "treatment": "V1"
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667586092,
+        "t": "V1"
       },
       {
-        "bucketingKey": null,
-        "changeNumber": 1561500492437,
+        "b": null,
+        "c": 1561500492437,
         "feature": "ANDROID_sameTreatmentWithBucketingKey",
-        "keyName": "CUSTOMER_ID",
-        "label": "default rule",
-        "time": 1561667586413,
-        "treatment": "V1"
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667586413,
+        "t": "V1"
       },
       {
-        "bucketingKey": null,
-        "changeNumber": 1561500492437,
+        "b": null,
+        "c": 1561500492437,
         "feature": "ANDROID_sameTreatmentWithBucketingKey",
-        "keyName": "CUSTOMER_ID",
-        "label": "default rule",
-        "time": 1561667587616,
-        "treatment": "V1"
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667587616,
+        "t": "V1"
       },
       {
-        "bucketingKey": null,
-        "changeNumber": 1561500492437,
+        "b": null,
+        "c": 1561500492437,
         "feature": "ANDROID_sameTreatmentWithBucketingKey",
-        "keyName": "CUSTOMER_ID",
-        "label": "default rule",
-        "time": 1561667588973,
-        "treatment": "V1"
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667588973,
+        "t": "V1"
       }
     ],
-    "testName": "ANDROID_sameTreatmentWithBucketingKey"
+    "f": "ANDROID_sameTreatmentWithBucketingKey"
   },
   {
-    "keyImpressions": [
+    "i": [
       {
-        "bucketingKey": null,
-        "changeNumber": 1515711580857,
+        "b": null,
+        "c": 1515711580857,
         "feature": "sample_feature",
-        "keyName": "CUSTOMER_ID",
-        "label": "default rule",
-        "time": 1561667786937,
-        "treatment": "off"
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667786937,
+        "t": "off"
       },
       {
-        "bucketingKey": null,
-        "changeNumber": 1515711580857,
+        "b": null,
+        "c": 1515711580857,
         "feature": "sample_feature",
-        "keyName": "CUSTOMER_ID",
-        "label": "default rule",
-        "time": 1561667787361,
-        "treatment": "off"
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667787361,
+        "t": "off"
       },
       {
-        "bucketingKey": null,
-        "changeNumber": 1515711580857,
+        "b": null,
+        "c": 1515711580857,
         "feature": "sample_feature",
-        "keyName": "CUSTOMER_ID",
-        "label": "default rule",
-        "time": 1561667787780,
-        "treatment": "off"
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667787780,
+        "t": "off"
       },
       {
-        "bucketingKey": null,
-        "changeNumber": 1515711580857,
+        "b": null,
+        "c": 1515711580857,
         "feature": "sample_feature",
-        "keyName": "CUSTOMER_ID",
-        "label": "default rule",
-        "time": 1561667788275,
-        "treatment": "off"
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667788275,
+        "t": "off"
       },
       {
-        "bucketingKey": null,
-        "changeNumber": 1515711580857,
+        "b": null,
+        "c": 1515711580857,
         "feature": "sample_feature",
-        "keyName": "CUSTOMER_ID",
-        "label": "default rule",
-        "time": 1561667788863,
-        "treatment": "off"
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667788863,
+        "t": "off"
       }
     ],
-    "testName": "sample_feature"
+    "f": "sample_feature"
   }
 ]
