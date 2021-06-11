@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Created by guillermo on 11/23/17.
  */
-@Deprecated
+
 public interface IStorage {
 
     /**
