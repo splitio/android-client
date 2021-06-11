@@ -300,6 +300,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void scheduleImpressionsCountRecorderTask() {
+        if(!isOptimizedImpressionsMode()) {
+            return;
+        }
         mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createImpressionsCountRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
