@@ -97,6 +97,9 @@ public class PushNotificationManager {
         shutdownAndAwaitTermination();
     }
     private void connect() {
+        if(mSseClient.status() == SseClient.CONNECTED) {
+            mSseClient.disconnect();
+        }
         mExecutor.submit(new StreamingConnection());
     }
 

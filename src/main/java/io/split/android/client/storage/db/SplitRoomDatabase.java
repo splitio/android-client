@@ -16,9 +16,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @Database(
         entities = {
                 MySegmentEntity.class, SplitEntity.class, EventEntity.class,
-                ImpressionEntity.class, GeneralInfoEntity.class
+                ImpressionEntity.class, GeneralInfoEntity.class, ImpressionsCountEntity.class
         },
-        version = 1
+        version = 2
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 
@@ -31,6 +31,8 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
     public abstract ImpressionDao impressionDao();
 
     public abstract GeneralInfoDao generalInfoDao();
+
+    public abstract ImpressionsCountDao impressionsCountDao();
 
     private volatile SplitQueryDao mSplitQueryDao;
 
@@ -46,6 +48,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
             if (instance == null) {
                 instance = Room.databaseBuilder(context.getApplicationContext(),
                         SplitRoomDatabase.class, databaseName)
+                        .fallbackToDestructiveMigrationFrom(1, 2)
                         .build();
                 mInstances.put(databaseName, instance);
             }
@@ -62,5 +65,4 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
             return mSplitQueryDao;
         }
     }
-
 }

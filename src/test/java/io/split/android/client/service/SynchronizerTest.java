@@ -38,7 +38,10 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
+import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
+import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
+import io.split.android.client.service.impressions.SaveImpressionsCountTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
@@ -61,6 +64,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -137,6 +141,8 @@ public class SynchronizerTest {
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
         when(mTaskFactory.createLoadSplitsTask()).thenReturn(Mockito.mock(LoadSplitsTask.class));
         when(mTaskFactory.createFilterSplitsInCacheTask()).thenReturn(Mockito.mock(FilterSplitsInCacheTask.class));
+        when(mTaskFactory.createImpressionsCountRecorderTask()).thenReturn(Mockito.mock(ImpressionsCountRecorderTask.class));
+        when(mTaskFactory.createSaveImpressionsCountTask(any())).thenReturn(Mockito.mock(SaveImpressionsCountTask.class));
 
         when(mWorkManager.getWorkInfoByIdLiveData(any())).thenReturn(mock(LiveData.class));
 
@@ -210,7 +216,7 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void pause() {
+    public void pauseImpOptimized() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
@@ -221,6 +227,25 @@ public class SynchronizerTest {
         mSynchronizer.startPeriodicRecording();
         mSynchronizer.pause();
         verify(mTaskExecutor, times(1)).pause();
+        verify(mTaskExecutor, times(1)).submit(
+                any(SaveImpressionsCountTask.class), isNull());
+    }
+
+    @Test
+    public void pauseImpDebug() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .impressionsMode("DEBUG")
+                .build();
+        setup(config);
+        mSynchronizer.startPeriodicFetching();
+        mSynchronizer.startPeriodicRecording();
+        mSynchronizer.pause();
+        verify(mTaskExecutor, times(1)).pause();
+        verify(mTaskExecutor, never()).submit(
+                any(SaveImpressionsCountTask.class), isNull());
     }
 
     @Test
@@ -324,10 +349,11 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void pushImpressionReachQueueSize() throws InterruptedException {
+    public void pushImpressionReachQueueSizeImpDebug() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
+                .impressionsMode(ImpressionsMode.DEBUG)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
@@ -343,17 +369,58 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void pushImpressionBytesLimit() throws InterruptedException {
+    public void pushImpressionReachQueueSizeImpOptimized() throws InterruptedException {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsMode(ImpressionsMode.OPTIMIZED)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
+        mSynchronizer.startPeriodicRecording();
+        for (int i = 0; i < 8; i++) {
+            mSynchronizer.pushImpression(createUniqueImpression());
+        }
+        Thread.sleep(200);
+        verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
+        verify(mTaskExecutor, times(2)).submit(
+                any(ImpressionsRecorderTask.class),
+                any(RecorderSyncHelper.class));
+    }
+
+    @Test
+    public void pushImpressionBytesLimitImpDebug() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
                 .impressionsQueueSize(3)
+                .impressionsMode(ImpressionsMode.DEBUG)
                 .build();
         setup(config);
 
         mSynchronizer.startPeriodicRecording();
         for (int i = 0; i < 10; i++) {
             mSynchronizer.pushImpression(createImpression());
+        }
+        Thread.sleep(200);
+        verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
+        verify(mTaskExecutor, times(2)).submit(
+                any(ImpressionsRecorderTask.class),
+                any(SplitTaskExecutionListener.class));
+    }
+
+    public void pushImpressionBytesLimitImpOptimized() throws InterruptedException {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .sychronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .impressionsMode(ImpressionsMode.OPTIMIZED)
+                .build();
+        setup(config);
+
+        mSynchronizer.startPeriodicRecording();
+        for (int i = 0; i < 10; i++) {
+            mSynchronizer.pushImpression(createUniqueImpression());
         }
         Thread.sleep(200);
         verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
@@ -439,6 +506,11 @@ public class SynchronizerTest {
 
     private Impression createImpression() {
         return new Impression("key", "bkey", "split", "on",
+                100L, "default rule", 999L, null);
+    }
+
+    private Impression createUniqueImpression() {
+        return new Impression("key", "bkey", UUID.randomUUID().toString(), "on",
                 100L, "default rule", 999L, null);
     }
 

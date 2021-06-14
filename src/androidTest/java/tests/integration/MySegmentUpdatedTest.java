@@ -40,6 +40,7 @@ import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import okhttp3.mockwebserver.Dispatcher;
@@ -157,6 +158,7 @@ public class MySegmentUpdatedTest {
                 .impressionsRefreshRate(21)
                 .impressionsChunkSize(999999)
                 .enableDebug()
+                .impressionsMode(ImpressionsMode.DEBUG)
                 .trafficType("client")
                 .streamingEnabled(false)
                 .impressionListener(impListener)

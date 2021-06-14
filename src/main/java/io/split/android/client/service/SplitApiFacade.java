@@ -11,6 +11,8 @@ import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpSseAuthTokenFetcher;
+import io.split.android.client.service.impressions.ImpressionsCount;
+import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -21,17 +23,20 @@ public class SplitApiFacade {
     private final HttpFetcher<SseAuthenticationResponse> mSseAuthenticationFetcher;
     private final HttpRecorder<List<Event>> mEventsRecorder;
     private final HttpRecorder<List<KeyImpression>> mImpressionsRecorder;
+    private final HttpRecorder<ImpressionsCount> mImpressionsCountRecorder;
 
     public SplitApiFacade(@NonNull HttpFetcher<SplitChange> splitFetcher,
                           @NonNull HttpFetcher<List<MySegment>> mySegmentsFetcher,
                           @NonNull HttpSseAuthTokenFetcher sseAuthenticationFetcher,
                           @NonNull HttpRecorder<List<Event>> eventsRecorder,
-                          @NonNull HttpRecorder<List<KeyImpression>> impressionsRecorder) {
+                          @NonNull HttpRecorder<List<KeyImpression>> impressionsRecorder,
+                          @NonNull HttpRecorder<ImpressionsCount> impressionsCountRecorder) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mMySegmentsFetcher = checkNotNull(mySegmentsFetcher);
         mSseAuthenticationFetcher = checkNotNull(sseAuthenticationFetcher);
         mEventsRecorder = checkNotNull(eventsRecorder);
         mImpressionsRecorder = checkNotNull(impressionsRecorder);
+        mImpressionsCountRecorder = checkNotNull(impressionsCountRecorder);
     }
 
     public HttpFetcher<SplitChange> getSplitFetcher() {
@@ -52,5 +57,9 @@ public class SplitApiFacade {
 
     public HttpRecorder<List<KeyImpression>> getImpressionsRecorder() {
         return mImpressionsRecorder;
+    }
+
+    public HttpRecorder<ImpressionsCount> getImpressionsCountRecorder() {
+        return mImpressionsCountRecorder;
     }
 }

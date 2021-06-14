@@ -22,7 +22,6 @@ import io.split.android.client.metrics.FireAndForgetMetrics;
 import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
@@ -33,19 +32,6 @@ import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.storage.db.migrator.EventsMigratorHelper;
-import io.split.android.client.storage.db.migrator.EventsMigratorHelperImpl;
-import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelper;
-import io.split.android.client.storage.db.migrator.ImpressionsMigratorHelperImpl;
-import io.split.android.client.storage.db.migrator.StorageMigrator;
-import io.split.android.client.storage.legacy.FileStorage;
-import io.split.android.client.storage.legacy.FileStorageHelper;
-import io.split.android.client.storage.legacy.IStorage;
-import io.split.android.client.storage.legacy.ImpressionsFileStorage;
-import io.split.android.client.storage.legacy.ImpressionsStorageManager;
-import io.split.android.client.storage.legacy.ImpressionsStorageManagerConfig;
-import io.split.android.client.storage.legacy.TrackStorageManager;
-import io.split.android.client.storage.legacy.TracksFileStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -125,12 +111,7 @@ public class SplitFactoryImpl implements SplitFactory {
         // Check if test database available
         String databaseName = factoryHelper.buildDatabaseName(config, apiToken);
         if(testDatabase == null) {
-
             _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
-            if (config.isStorageMigrationEnabled()) {
-                checkAndMigrateIfNeeded(context.getCacheDir(), databaseName, _splitDatabase);
-            }
-            deleteLegacyCacheFiles(context.getCacheDir(), databaseName);
         } else {
             _splitDatabase = testDatabase;
             Logger.d("Using test database");
@@ -273,46 +254,6 @@ public class SplitFactoryImpl implements SplitFactory {
 
         ValidationConfig.getInstance().setMaximumKeyLength(splitClientConfig.maximumKeyLength());
         ValidationConfig.getInstance().setTrackEventNamePattern(splitClientConfig.trackEventNamePattern());
-    }
-
-    private void checkAndMigrateIfNeeded(File rootFolder,
-                                         String dataFolderName,
-                                         SplitRoomDatabase splitRoomDatabase) {
-
-        if(!rootFolder.exists()) {
-            // No migration needed
-            return;
-        }
-        IStorage fileStore = new FileStorage(rootFolder, dataFolderName);
-        StorageMigrator storageMigrator = new StorageMigrator(splitRoomDatabase);
-        if (!storageMigrator.isMigrationDone()) {
-            Logger.i("Migrating cache to new storage implementation");
-
-            TracksFileStorage tracksFileStorage = new TracksFileStorage(rootFolder, dataFolderName);
-            TrackStorageManager trackStorageManager = new TrackStorageManager(tracksFileStorage);
-            EventsMigratorHelper eventsMigratorHelper = new EventsMigratorHelperImpl(trackStorageManager);
-
-            ImpressionsFileStorage impressionsFileStorage = new ImpressionsFileStorage(rootFolder, dataFolderName);
-            ImpressionsStorageManager impressionsStorageManager =
-                    new ImpressionsStorageManager(impressionsFileStorage,
-                            new ImpressionsStorageManagerConfig(),
-                            new FileStorageHelper());
-            ImpressionsMigratorHelper impressionsMigratorHelper = new ImpressionsMigratorHelperImpl(impressionsStorageManager);
-            storageMigrator.runMigration(eventsMigratorHelper, impressionsMigratorHelper);
-            Logger.i("Migration done");
-        }
-    }
-
-    private void deleteLegacyCacheFiles(File rootFolder,
-                                        String dataFolderName) {
-
-        if(!rootFolder.exists()) {
-            // There's no files to delete
-            return;
-        }
-        IStorage fileStorage = new FileStorage(rootFolder, dataFolderName);
-        List<String> files = new ArrayList(Arrays.asList(fileStorage.getAllIds()));
-        fileStorage.delete(files);
     }
 
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,

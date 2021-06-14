@@ -10,7 +10,6 @@ import io.split.android.client.storage.StoragePusher;
 public interface PersistentEventsStorage extends StoragePusher<Event> {
     // Push method is defined in StoragePusher interface
     List<Event> pop(int count);
-    List<Event> getCritical();
     void setActive(@NonNull List<Event> events);
     void delete(@NonNull List<Event> events);
     void deleteInvalid(long maxTimestamp);

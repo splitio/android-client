@@ -82,9 +82,9 @@ public class ControlTest {
     @Test
     public void controlNotification() throws IOException, InterruptedException {
 
-        MySegmentEntity dummySegmenteEntity = new MySegmentEntity();
-        dummySegmenteEntity.setUserKey(mUserKey.matchingKey());
-        dummySegmenteEntity.setSegmentList("dummy");
+        MySegmentEntity dummySegmentEntity = new MySegmentEntity();
+        dummySegmentEntity.setUserKey(mUserKey.matchingKey());
+        dummySegmentEntity.setSegmentList("dummy");
 
         CountDownLatch latch = new CountDownLatch(1);
 
@@ -102,11 +102,12 @@ public class ControlTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         latch.await(5, TimeUnit.SECONDS);
-        mSseConnectedLatch.await(5, TimeUnit.SECONDS);
-        TestingHelper.pushKeepAlive(mStreamingData);
 
         sleep(300);
         MySegmentEntity mySegmentEntityReady = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
+
+        mSseConnectedLatch.await(5, TimeUnit.SECONDS);
+        TestingHelper.pushKeepAlive(mStreamingData);
 
         // Update segments to test initial data ok
         pushMySegmentsUpdatePayload();
@@ -114,7 +115,7 @@ public class ControlTest {
         MySegmentEntity mySegmentEntityOne = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
 
         // Remove data, pause streaming and then retrieve segments to assert that no one is available
-        mSplitRoomDatabase.mySegmentDao().update(dummySegmenteEntity);
+        mSplitRoomDatabase.mySegmentDao().update(dummySegmentEntity);
         /// Pause streaming
         pushControl("STREAMING_PAUSED");
         sleep(1000);
@@ -126,7 +127,7 @@ public class ControlTest {
         pushControl("STREAMING_ENABLED");
         sleep(2000);
 
-        mSplitRoomDatabase.mySegmentDao().update(dummySegmenteEntity);
+        mSplitRoomDatabase.mySegmentDao().update(dummySegmentEntity);
         pushMySegmentsUpdatePayload();
         sleep(2000);
         MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
@@ -176,6 +177,7 @@ public class ControlTest {
                     Logger.i("** My segments hit");
                     if (hit < 1) {
                         hit++;
+                        Logger.i("** My segments hit return my segments ready");
                         return createResponse(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment_ready\"}]}");
                     } else {
                         // This is to avoid having issues for polling update while asserting
