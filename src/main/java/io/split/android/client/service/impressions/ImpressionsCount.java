@@ -18,17 +18,6 @@ public class ImpressionsCount {
         perFeature = countList;
     }
 
-    public static ImpressionsCount fromImpressionCounterData(Map<ImpressionsCounter.Key, Integer> raw) {
-        List<ImpressionsCountPerFeature> countList = new ArrayList<>();
-        for(Map.Entry<ImpressionsCounter.Key, Integer> featureCount : raw.entrySet()) {
-            countList.add(
-                    new ImpressionsCountPerFeature( featureCount.getKey().featureName(),
-                    featureCount.getKey().timeFrame(), featureCount.getValue())
-            );
-        }
-        return new ImpressionsCount(countList);
-    }
-
     @Override
     public int hashCode() {
         return perFeature.hashCode();
