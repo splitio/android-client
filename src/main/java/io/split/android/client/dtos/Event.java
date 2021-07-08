@@ -6,7 +6,7 @@ import java.util.Map;
 
 import io.split.android.client.storage.InBytesSizable;
 
-public class Event implements InBytesSizable {
+public class Event implements InBytesSizable, Identifiable {
 
     public String eventTypeId;
     public String trafficTypeName;
@@ -42,5 +42,10 @@ public class Event implements InBytesSizable {
 
     public long getSizeInBytes() {
         return sizeInBytes;
+    }
+
+    @Override
+    public long getId() {
+        return storageId;
     }
 }

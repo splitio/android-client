@@ -7,3 +7,4 @@ gradle.properties
 *.iml
 .DS_Store
 .settings/org.eclipse.buildship.core.prefs
+.gradle

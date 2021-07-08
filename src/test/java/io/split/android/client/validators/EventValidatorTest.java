@@ -7,14 +7,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-
-import io.split.android.client.cache.ISplitCache;
-import io.split.android.client.cache.SplitCache;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 
 import static org.mockito.Mockito.mock;

@@ -6,8 +6,10 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import io.split.android.client.dtos.Identifiable;
+
 @Entity(tableName = "impressions")
-public class ImpressionEntity {
+public class ImpressionEntity implements Identifiable {
 
 
     @PrimaryKey(autoGenerate = true)

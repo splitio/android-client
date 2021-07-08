@@ -1,0 +1,3 @@
+rootProject.name = 'project'
+include('android-client')
+project(':android-client').projectDir=file('..')

@@ -15,4 +15,5 @@ android:
     - google-gdk-license-.+
 
 script:
+  - cd project
   - ./gradlew test

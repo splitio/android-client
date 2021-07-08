@@ -19,7 +19,6 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.MemoryUtils;
 import io.split.android.client.utils.MemoryUtilsImpl;
 
-@Deprecated
 public class FileStorageHelper {
 
     public static final String LINE_SEPARATOR = System.getProperty("line.separator") != null ? System.getProperty("line.separator") : "\n";
