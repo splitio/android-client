@@ -3,7 +3,7 @@
 - Fixed issue when closing streaming connection
 
 2.7.1: (May 14, 2021)
-- Streaming telemetry
+- Added telemetry headers to SSE connection
 
 2.7.0: (Apr 21, 2021)
 - Added SDK Update event to notify when Splits or My Segments have changed
