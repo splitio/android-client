@@ -2,7 +2,10 @@
 - Added impressions dedupe logic to avoid sending duplicated impressions
 - Fixed issue when closing streaming connection
 
-2.7.0: (Abr 21, 2021)
+2.7.1: (May 14, 2021)
+- Streaming telemetry
+
+2.7.0: (Apr 21, 2021)
 - Added SDK Update event to notify when Splits or My Segments have changed
 
 2.6.10: (Mar 26, 2021)
