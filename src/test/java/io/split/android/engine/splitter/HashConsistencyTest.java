@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
+import io.split.android.client.utils.MurmurHash3;
 import io.split.android.engine.splitter.Splitter;
 
 @SuppressWarnings({"UnstableApiUsage", "ConstantConditions"})
@@ -64,6 +65,13 @@ public class HashConsistencyTest {
         URL resource = getClass().getClassLoader().getResource("murmur3-sample-data-non-alpha-numeric.csv");
         File file = new File(resource.getFile());
         validateFileGuavaMurmur3Hash(file);
+    }
+
+    @Test
+    public void testMurmurHash3_64() throws IOException {
+        URL resource = getClass().getClassLoader().getResource("murmur3_64_uuids.csv");
+        File file = new File(resource.getFile());
+        validateFileMurmurHash3_64(file);
     }
 
     private void validateFileLegacyHash(File file) throws IOException {
@@ -140,6 +148,22 @@ public class HashConsistencyTest {
 
             Assert.assertEquals(expected_hash, hash);
             Assert.assertEquals(expected_bucket, bucket);
+        }
+    }
+
+    private void validateFileMurmurHash3_64(File file) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        reader.readLine(); // Header
+
+        String line;
+        int i = 0;
+        while ((line = reader.readLine()) != null) {
+            String[] parts = line.split(",");
+            String key = parts[0];
+            long seed = Long.parseLong(parts[1]);
+            long expected_hash = Long.parseLong(parts[2]);
+            long[] hash = MurmurHash3.hash128x64(key.getBytes(), 0, key.length(), seed);
+            Assert.assertEquals(expected_hash, hash[0]);
         }
     }
 }
