@@ -5,10 +5,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class MySegmentChangeV2Notification extends IncomingNotification {
+
+    public enum Type {
+        UNBOUNDED_FETCH_REQUEST, BOUNDED_FETCH_REQUEST, KEY_LIST, SEGMENT_REMOVAL
+    }
+
+    public enum CompressionType {
+        GZIP, ZLIB
+    }
+
     private Long changeNumber;
     private String segmentName;
-    private Long compression;
-    private Long envScopedType;
+    private MySegmentChangeV2Notification.CompressionType compression;
+    private MySegmentChangeV2Notification.Type envScopedType;
     private byte[] data;
 
     @Nullable
@@ -22,12 +31,12 @@ public class MySegmentChangeV2Notification extends IncomingNotification {
     }
 
     @Nullable
-    public Long getCompression() {
+    public MySegmentChangeV2Notification.CompressionType getCompression() {
         return compression;
     }
 
     @Nullable
-    public Long getEnvScopedType() {
+    public MySegmentChangeV2Notification.Type getEnvScopedType() {
         return envScopedType;
     }
 
