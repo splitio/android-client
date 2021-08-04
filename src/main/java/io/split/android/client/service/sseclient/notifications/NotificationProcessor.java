@@ -11,6 +11,7 @@ import java.util.concurrent.BlockingQueue;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.utils.Logger;
 
@@ -50,6 +51,9 @@ public class NotificationProcessor {
                 case MY_SEGMENTS_UPDATE:
                     processMySegmentUpdate(mNotificationParser.parseMySegmentUpdate(notificationJson));
                     break;
+                case MY_SEGMENTS_UPDATE_V2:
+                    processMySegmentUpdateV2(mNotificationParser.parseMySegmentUpdateV2(notificationJson));
+                    break;
                 default:
                     Logger.e("Unknow notification arrived: " + notificationJson);
             }
@@ -82,6 +86,24 @@ public class NotificationProcessor {
             List<String> segmentList = notification.getSegmentList() != null ? notification.getSegmentList() : new ArrayList<>();
             MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask(segmentList);
             mSplitTaskExecutor.submit(task, null);
+        }
+    }
+
+    private void processMySegmentUpdateV2(MySegmentChangeV2Notification notification) {
+
+        switch (notification.getEnvScopedType()) {
+            case UNBOUNDED_FETCH_REQUEST:
+                MySegmentsSyncTask task = mSplitTaskFactory.createMySegmentsSyncTask(true);
+                mSplitTaskExecutor.submit(task, null);
+                break;
+            case BOUNDED_FETCH_REQUEST:
+                break;
+            case KEY_LIST:
+                break;
+            case SEGMENT_REMOVAL:
+                break;
+            default:
+                Logger.i("Unknown my segment change v2 notification type: " + notification.getEnvScopedType());
         }
     }
 }
