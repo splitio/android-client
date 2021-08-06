@@ -11,14 +11,14 @@ public class MySegmentChangeV2Notification extends IncomingNotification {
     }
 
     public enum CompressionType {
-        GZIP, ZLIB
+        NONE, GZIP, ZLIB
     }
 
     private Long changeNumber;
     private String segmentName;
     private MySegmentChangeV2Notification.CompressionType compression;
     private MySegmentChangeV2Notification.Type envScopedType;
-    private byte[] data;
+    private String[] data;
 
     @Nullable
     public Long getChangeNumber() {
@@ -41,7 +41,7 @@ public class MySegmentChangeV2Notification extends IncomingNotification {
     }
 
     @Nullable
-    public byte[] getData() {
+    public String[] getData() {
         return data;
     }
 }
