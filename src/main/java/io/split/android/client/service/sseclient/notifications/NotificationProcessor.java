@@ -11,6 +11,7 @@ import java.util.concurrent.BlockingQueue;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.mysegments.MySegmentsRemovalTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.utils.Logger;
@@ -93,17 +94,30 @@ public class NotificationProcessor {
 
         switch (notification.getEnvScopedType()) {
             case UNBOUNDED_FETCH_REQUEST:
-                MySegmentsSyncTask task = mSplitTaskFactory.createMySegmentsSyncTask(true);
-                mSplitTaskExecutor.submit(task, null);
+                executeUnboundedFetch();
                 break;
             case BOUNDED_FETCH_REQUEST:
                 break;
             case KEY_LIST:
                 break;
             case SEGMENT_REMOVAL:
+                removeSegment(notification.getSegmentName());
                 break;
             default:
                 Logger.i("Unknown my segment change v2 notification type: " + notification.getEnvScopedType());
         }
+    }
+
+    private void executeUnboundedFetch() {
+        MySegmentsSyncTask task = mSplitTaskFactory.createMySegmentsSyncTask(true);
+        mSplitTaskExecutor.submit(task, null);
+    }
+
+    private void removeSegment(String segmentName) {
+        if(segmentName == null) {
+            return;
+        }
+        MySegmentsRemovalTask task = mSplitTaskFactory.createMySegmentsRemovalTask(segmentName);
+        mSplitTaskExecutor.submit(task, null);
     }
 }
