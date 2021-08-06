@@ -173,6 +173,28 @@ public class NotificationProcessorTest {
     }
 
     @Test
+    public void mySegmentsUpdateV2RemovalNotification() {
+
+        String segmentName = "ToRemove";
+        MySegmentChangeV2Notification mySegmentChangeNotification
+                = Mockito.mock(MySegmentChangeV2Notification.class);
+        when(mySegmentChangeNotification.getEnvScopedType()).thenReturn(MySegmentChangeV2Notification.Type.BOUNDED_FETCH_REQUEST);
+        when(mySegmentChangeNotification.getSegmentName()).thenReturn(segmentName);
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
+        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
+        when(mNotificationParser.parseMySegmentUpdateV2(anyString())).thenReturn(mySegmentChangeNotification);
+
+        mNotificationProcessor.process(mIncomingNotification);
+
+        ArgumentCaptor<String> messageCaptor =
+                ArgumentCaptor.forClass(String.class);
+        verify(mSplitTaskFactory, times(1)).createMySegmentsRemovalTask(messageCaptor.capture());
+
+        Assert.assertEquals(segmentName, messageCaptor.getValue());
+    }
+
+    @Test
     public void splitKillNotification() {
         when(mIncomingNotification.getType()).thenReturn(NotificationType.SPLIT_KILL);
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
