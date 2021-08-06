@@ -59,6 +59,10 @@ public class NotificationParser {
         return Json.fromJson(jsonData, MySegmentChangeNotification.class);
     }
 
+    public MySegmentChangeV2Notification parseMySegmentUpdateV2(String jsonData) throws JsonSyntaxException {
+        return Json.fromJson(jsonData, MySegmentChangeV2Notification.class);
+    }
+
     public OccupancyNotification parseOccupancy(String jsonData) throws JsonSyntaxException {
         return Json.fromJson(jsonData, OccupancyNotification.class);
     }
