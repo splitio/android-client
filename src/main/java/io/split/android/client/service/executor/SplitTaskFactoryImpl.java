@@ -22,6 +22,7 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
+import io.split.android.client.service.mysegments.MySegmentsRemovalTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
@@ -112,6 +113,11 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public MySegmentsUpdateTask createMySegmentsUpdateTask(List<String> segments) {
         return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage(), segments, mEventsManager);
+    }
+
+    @Override
+    public MySegmentsRemovalTask createMySegmentsRemovalTask(String segment) {
+        return new MySegmentsRemovalTask(mSplitsStorageContainer.getMySegmentsStorage(), segment, mEventsManager);
     }
 
     @Override
