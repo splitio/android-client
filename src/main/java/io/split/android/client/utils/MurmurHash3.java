@@ -1,5 +1,7 @@
 package io.split.android.client.utils;
 
+import java.math.BigInteger;
+
 /**
  * The MurmurHash3 algorithm was created by Austin Appleby and placed in the public domain.
  * This java port was authored by Yonik Seeley and also placed into the public domain.
@@ -191,6 +193,13 @@ public final class MurmurHash3 {
                 (((long) data[index + 5] & 0xff) << 40) |
                 (((long) data[index + 6] & 0xff) << 48) |
                 (((long) data[index + 7] & 0xff) << 56);
+    }
+
+    public static BigInteger[] unsignedHash128x64(final byte[] data) {
+        long[] hash = MurmurHash3.hash128x64(data);
+        BigInteger b0 = new BigInteger(Long.toBinaryString(hash[0]), 2);
+        BigInteger b1 = new BigInteger(Long.toBinaryString(hash[1]), 2);
+        return new BigInteger[] { b0, b1 };
     }
 
     public static long[] hash128x64(final byte[] data) {
