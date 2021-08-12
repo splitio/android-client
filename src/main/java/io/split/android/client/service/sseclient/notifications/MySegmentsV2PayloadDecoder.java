@@ -1,21 +1,17 @@
 package io.split.android.client.service.sseclient.notifications;
 
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.CompressionUtil;
-import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.MurmurHash3;
 import io.split.android.client.utils.StringHelper;
 
 import static java.lang.Math.abs;
 
 public class MySegmentsV2PayloadDecoder {
-    public final long DIVISOR = 8L;
+    public final int FIELD_SIZE = 8;
 
     public String decodeAsString(String payload, CompressionUtil compressionUtil) throws MySegmentsParsingException {
         byte[] decoded = decodeAsBytes(payload, compressionUtil);
@@ -30,27 +26,27 @@ public class MySegmentsV2PayloadDecoder {
         }
 
         byte[] decompressed = compressionUtil.decompress(decoded);
-//        int i =0;
-//        for (byte b : decompressed) {
-//            //String s = "00000000" + Integer.toBinaryString(b);
-////            System.out.println(s);
-//            System.out.println(i + " -> " + b + " (" + s.substring(s.length() - 8, s.length()) + ")");
-//            i++;
-//        }
         if (decompressed == null) {
             throw new MySegmentsParsingException("Could not decompress payload");
         }
         return decompressed;
     }
 
-    public boolean hasKey(byte[] keyMap, String userKey) {
-        BigInteger unsignedHash = MurmurHash3.unsignedHash128x64(userKey.getBytes())[0];
-        long index = unsignedHash.remainder(BigInteger.valueOf(keyMap.length)).longValue();
-        int internal = (int) (index / DIVISOR);
-        byte offset = (byte) (index % DIVISOR);
+    public boolean isKeyInBitmap(byte[] keyMap, int index) {
+        int internal = index / FIELD_SIZE;
+        byte offset = (byte) (index % FIELD_SIZE);
         if (internal > keyMap.length - 1) {
             return false;
         }
+        System.out.println("Value: " + keyMap[internal]);
         return (keyMap[internal] & 1 << offset) != 0;
+    }
+
+    public BigInteger hashKey(String key) {
+        return MurmurHash3.unsignedHash128x64(key.getBytes(StringHelper.defaultCharset()))[0];
+    }
+
+    public int computeKeyIndex(BigInteger hashedKey, int keyMapLength) {
+        return hashedKey.remainder(BigInteger.valueOf(keyMapLength * FIELD_SIZE)).intValue();
     }
 }

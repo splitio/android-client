@@ -71,21 +71,13 @@ public class MySegmentV2PayloadDecoderTest {
 
         Map<String, Boolean> results = new HashMap<>();
         for (String key : keys) {
-            results.put(key, mDecoder.hasKey(payloadGzip, key));
+            BigInteger hashedKey = mDecoder.hashKey(key);
+            int index = mDecoder.computeKeyIndex(hashedKey, payloadGzip.length);
+            results.put(key, mDecoder.isKeyInBitmap(payloadGzip, index));
         }
 
         for (String key : keys) {
             Assert.assertTrue(results.get(key));
         }
-    }
-
-    @Test
-    public void boundedZlibPayload() throws MySegmentsParsingException {
-
-        byte[] payloadZlib = mDecoder.decodeAsBytes(TestingData.encodedBoundedPayloadZlib(), mZlib);
-
-        boolean isThere = mDecoder.hasKey(payloadZlib, "key1");
-
-        Assert.assertTrue(isThere);
     }
 }
