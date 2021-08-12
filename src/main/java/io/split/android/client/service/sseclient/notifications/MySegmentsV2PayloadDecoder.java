@@ -38,7 +38,6 @@ public class MySegmentsV2PayloadDecoder {
         if (internal > keyMap.length - 1) {
             return false;
         }
-        System.out.println("Value: " + keyMap[internal]);
         return (keyMap[internal] & 1 << offset) != 0;
     }
 
