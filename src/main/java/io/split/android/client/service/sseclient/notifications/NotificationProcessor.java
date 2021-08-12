@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.google.gson.JsonSyntaxException;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -15,6 +16,7 @@ import io.split.android.client.service.mysegments.MySegmentsRemovalTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.MurmurHash3;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -25,6 +27,7 @@ public class NotificationProcessor {
     private final SplitTaskFactory mSplitTaskFactory;
     private final BlockingQueue<MySegmentChangeNotification> mMySegmentUpdateNotificationsQueue;
     private final BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationsQueue;
+    private final BigInteger mHashedUserKey;
 
     public NotificationProcessor(
             @NonNull SplitTaskExecutor splitTaskExecutor,
@@ -37,6 +40,7 @@ public class NotificationProcessor {
         mNotificationParser = checkNotNull(notificationParser);
         mMySegmentUpdateNotificationsQueue = checkNotNull(mySegmentUpdateNotificationsQueue);
         mSplitsUpdateNotificationsQueue = checkNotNull(splitsUpdateNotificationsQueue);
+        mHashedUserKey = MurmurHash3.unsignedHash128x64("param key".getBytes())[0];
     }
 
     public void process(IncomingNotification incomingNotification) {
