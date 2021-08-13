@@ -7,16 +7,17 @@ import com.google.gson.JsonSyntaxException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.mysegments.MySegmentsRemovalTask;
-import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
+import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.MurmurHash3;
+import io.split.android.client.utils.StringHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,19 +29,23 @@ public class NotificationProcessor {
     private final BlockingQueue<MySegmentChangeNotification> mMySegmentUpdateNotificationsQueue;
     private final BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationsQueue;
     private final BigInteger mHashedUserKey;
+    private final MySegmentsV2PayloadDecoder mMySegmentsPayloadDecoder;
 
     public NotificationProcessor(
+            @NonNull String userKey,
             @NonNull SplitTaskExecutor splitTaskExecutor,
             @NonNull SplitTaskFactory splitTaskFactory,
             @NonNull NotificationParser notificationParser,
+            @NonNull MySegmentsV2PayloadDecoder mySegmentsPayloadDecoder,
             @NonNull BlockingQueue<MySegmentChangeNotification> mySegmentUpdateNotificationsQueue,
             @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue) {
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mNotificationParser = checkNotNull(notificationParser);
+        mMySegmentsPayloadDecoder = checkNotNull(mySegmentsPayloadDecoder);
         mMySegmentUpdateNotificationsQueue = checkNotNull(mySegmentUpdateNotificationsQueue);
         mSplitsUpdateNotificationsQueue = checkNotNull(splitsUpdateNotificationsQueue);
-        mHashedUserKey = MurmurHash3.unsignedHash128x64("param key".getBytes())[0];
+        mHashedUserKey = mySegmentsPayloadDecoder.hashKey(userKey);
     }
 
     public void process(IncomingNotification incomingNotification) {
@@ -89,7 +94,7 @@ public class NotificationProcessor {
             mMySegmentUpdateNotificationsQueue.offer(notification);
         } else {
             List<String> segmentList = notification.getSegmentList() != null ? notification.getSegmentList() : new ArrayList<>();
-            MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask(segmentList);
+            MySegmentsOverwriteTask task = mSplitTaskFactory.createMySegmentsOverwriteTask(segmentList);
             mSplitTaskExecutor.submit(task, null);
         }
     }
@@ -101,8 +106,10 @@ public class NotificationProcessor {
                 executeUnboundedFetch();
                 break;
             case BOUNDED_FETCH_REQUEST:
+                executeBoundedFetch(notification.getData());
                 break;
             case KEY_LIST:
+                updateSegments(notification.getData(), notification.getSegmentName());
                 break;
             case SEGMENT_REMOVAL:
                 removeSegment(notification.getSegmentName());
@@ -118,10 +125,39 @@ public class NotificationProcessor {
     }
 
     private void removeSegment(String segmentName) {
-        if(segmentName == null) {
+        // Shouldn't be null, some defensive code here
+        if (segmentName == null) {
             return;
         }
-        MySegmentsRemovalTask task = mSplitTaskFactory.createMySegmentsRemovalTask(segmentName);
+        MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask(false, segmentName);
+        mSplitTaskExecutor.submit(task, null);
+    }
+
+    private void executeBoundedFetch(String keyMap) {
+        int index = mMySegmentsPayloadDecoder.computeKeyIndex(mHashedUserKey, keyMap.length());
+        if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap.getBytes(StringHelper.defaultCharset()), index)) {
+            MySegmentsSyncTask task = mSplitTaskFactory.createMySegmentsSyncTask(true);
+            mSplitTaskExecutor.submit(task, null);
+        }
+    }
+
+    private void updateSegments(String keyListString, String segmentName) {
+        // Shouldn't be null, some defensive code here
+        if (segmentName == null) {
+            return;
+        }
+        KeyList keyList = mNotificationParser.parseKeyList(keyListString);
+        KeyList.Action action = mMySegmentsPayloadDecoder.getKeyListAction(keyList, mHashedUserKey);
+        boolean actionIsAdd = true;
+
+        if (action == KeyList.Action.REMOVE) {
+            actionIsAdd = false;
+        }
+        if (action == KeyList.Action.NONE) {
+            return;
+        }
+
+        MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask(actionIsAdd, segmentName);
         mSplitTaskExecutor.submit(task, null);
     }
 }
