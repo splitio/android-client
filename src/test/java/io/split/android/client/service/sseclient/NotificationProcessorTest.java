@@ -208,7 +208,7 @@ public class NotificationProcessorTest {
 
         ArgumentCaptor<String> messageCaptor =
                 ArgumentCaptor.forClass(String.class);
-        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(false, messageCaptor.capture());
+        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(anyBoolean(), messageCaptor.capture());
 
         Assert.assertEquals(segmentName, messageCaptor.getValue());
     }
