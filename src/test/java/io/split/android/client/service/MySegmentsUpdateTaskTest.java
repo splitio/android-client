@@ -92,16 +92,6 @@ public class MySegmentsUpdateTaskTest {
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
-    @Test
-    public void nullParameter() {
-
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, null, mEventsManager);
-
-        SplitTaskExecutionInfo result = mTask.execute();
-
-        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
-    }
-
     @After
     public void tearDown() {
         reset(mySegmentsStorage);
