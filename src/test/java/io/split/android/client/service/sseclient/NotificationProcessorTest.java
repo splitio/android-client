@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
 import helper.TestingHelper;
+import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -31,6 +32,7 @@ import io.split.android.client.service.sseclient.notifications.NotificationProce
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.SplitKillNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.utils.CompressionUtil;
 
 import static io.split.android.client.service.sseclient.notifications.KeyList.Action.ADD;
 import static io.split.android.client.service.sseclient.notifications.KeyList.Action.NONE;
@@ -57,6 +59,12 @@ public class NotificationProcessorTest {
     NotificationParser mNotificationParser;
 
     @Mock
+    CompressionUtilProvider mCompressionUtilProvider;
+
+    @Mock
+    CompressionUtil mCompressionUtil;
+
+    @Mock
     BlockingQueue<MySegmentChangeNotification> mMySegmentChangeQueue;
 
     @Mock
@@ -77,6 +85,7 @@ public class NotificationProcessorTest {
     public void setup() {
 
         MockitoAnnotations.initMocks(this);
+        when(mCompressionUtilProvider.get(any())).thenReturn(mCompressionUtil);
         when(mMySegmentsPayloadDecoder.hashKey(anyString())).thenReturn(mHashedUserKey);
         when(mIncomingNotification.getJsonData()).thenReturn("{}");
         when(mSplitTaskFactory.createMySegmentsUpdateTask(anyBoolean(), anyString()))
@@ -90,7 +99,7 @@ public class NotificationProcessorTest {
                 .thenReturn(Mockito.mock(MySegmentsSyncTask.class));
 
         mNotificationProcessor = new NotificationProcessor(mUserKey, mSplitTaskExecutor,
-                mSplitTaskFactory, mNotificationParser, mMySegmentsPayloadDecoder,
+                mSplitTaskFactory, mNotificationParser, mMySegmentsPayloadDecoder, mCompressionUtilProvider,
                 mMySegmentChangeQueue, mSplitsChangeQueue);
     }
 
@@ -222,7 +231,6 @@ public class NotificationProcessorTest {
     @Test
     public void mySegmentsUpdateV2BoundedNotificationNoFetch() {
         mySegmentsUpdateV2BoundedNotification(false);
-
         verify(mSplitTaskFactory, never()).createMySegmentsSyncTask(anyBoolean());
     }
 
@@ -235,6 +243,10 @@ public class NotificationProcessorTest {
         when(mySegmentChangeNotification.getData()).thenReturn("dummy");
         when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
         when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
+        try {
+            when(mMySegmentsPayloadDecoder.decodeAsBytes(anyString(), any())).thenReturn(new byte[]{});
+        } catch (MySegmentsParsingException e) {
+        }
         when(mMySegmentsPayloadDecoder.computeKeyIndex(any(), anyInt())).thenReturn(1);
         when(mMySegmentsPayloadDecoder.isKeyInBitmap(any(), anyInt())).thenReturn(hasToFetch);
         when(mNotificationParser.parseMySegmentUpdateV2(anyString())).thenReturn(mySegmentChangeNotification);
@@ -271,10 +283,49 @@ public class NotificationProcessorTest {
         when(mySegmentChangeNotification.getSegmentName()).thenReturn(segmentName);
         when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
         when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
+        try {
+            when(mMySegmentsPayloadDecoder.decodeAsString(anyString(), any())).thenReturn("");
+        } catch (MySegmentsParsingException e) {
+            e.printStackTrace();
+        }
         when(mMySegmentsPayloadDecoder.getKeyListAction(any(), any())).thenReturn(action);
         when(mNotificationParser.parseMySegmentUpdateV2(anyString())).thenReturn(mySegmentChangeNotification);
 
         mNotificationProcessor.process(mIncomingNotification);
+    }
+
+    @Test
+    public void mySegmentsUpdateV2KeyListNotificationErrorFallback() throws MySegmentsParsingException {
+
+        MySegmentChangeV2Notification mySegmentChangeNotification
+                = Mockito.mock(MySegmentChangeV2Notification.class);
+        when(mySegmentChangeNotification.getEnvScopedType()).thenReturn(MySegmentChangeV2Notification.Type.KEY_LIST);
+        when(mySegmentChangeNotification.getSegmentName()).thenReturn("s1");
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
+        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
+        when(mMySegmentsPayloadDecoder.decodeAsString(anyString(), any())).thenThrow(MySegmentsParsingException.class);
+
+        mNotificationProcessor.process(mIncomingNotification);
+
+        verify(mMySegmentsPayloadDecoder, never()).getKeyListAction(any(), any());
+        verify(mSplitTaskFactory, times(1)).createMySegmentsSyncTask(true);
+    }
+
+    @Test
+    public void mySegmentsUpdateV2BoundedNotificationErrorFallback() throws MySegmentsParsingException {
+
+        MySegmentChangeV2Notification mySegmentChangeNotification
+                = Mockito.mock(MySegmentChangeV2Notification.class);
+        when(mySegmentChangeNotification.getEnvScopedType()).thenReturn(MySegmentChangeV2Notification.Type.BOUNDED_FETCH_REQUEST);
+        when(mySegmentChangeNotification.getSegmentName()).thenReturn("s1");
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
+        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
+        when(mMySegmentsPayloadDecoder.decodeAsBytes(anyString(), any())).thenThrow(MySegmentsParsingException.class);
+
+        mNotificationProcessor.process(mIncomingNotification);
+
+        verify(mMySegmentsPayloadDecoder, never()).isKeyInBitmap(any(), anyInt());
+        verify(mSplitTaskFactory, times(1)).createMySegmentsSyncTask(true);
     }
 
     @Test

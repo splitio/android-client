@@ -10,12 +10,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
+import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
+import io.split.android.client.utils.CompressionUtil;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
 
@@ -30,6 +33,7 @@ public class NotificationProcessor {
     private final BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationsQueue;
     private final BigInteger mHashedUserKey;
     private final MySegmentsV2PayloadDecoder mMySegmentsPayloadDecoder;
+    private final CompressionUtilProvider mCompressionProvider;
 
     public NotificationProcessor(
             @NonNull String userKey,
@@ -37,11 +41,13 @@ public class NotificationProcessor {
             @NonNull SplitTaskFactory splitTaskFactory,
             @NonNull NotificationParser notificationParser,
             @NonNull MySegmentsV2PayloadDecoder mySegmentsPayloadDecoder,
+            @NonNull CompressionUtilProvider compressionUtilProvider,
             @NonNull BlockingQueue<MySegmentChangeNotification> mySegmentUpdateNotificationsQueue,
             @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue) {
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mNotificationParser = checkNotNull(notificationParser);
+        mCompressionProvider = checkNotNull(compressionUtilProvider);
         mMySegmentsPayloadDecoder = checkNotNull(mySegmentsPayloadDecoder);
         mMySegmentUpdateNotificationsQueue = checkNotNull(mySegmentUpdateNotificationsQueue);
         mSplitsUpdateNotificationsQueue = checkNotNull(splitsUpdateNotificationsQueue);
@@ -100,22 +106,30 @@ public class NotificationProcessor {
     }
 
     private void processMySegmentUpdateV2(MySegmentChangeV2Notification notification) {
-
-        switch (notification.getEnvScopedType()) {
-            case UNBOUNDED_FETCH_REQUEST:
-                executeUnboundedFetch();
-                break;
-            case BOUNDED_FETCH_REQUEST:
-                executeBoundedFetch(notification.getData());
-                break;
-            case KEY_LIST:
-                updateSegments(notification.getData(), notification.getSegmentName());
-                break;
-            case SEGMENT_REMOVAL:
-                removeSegment(notification.getSegmentName());
-                break;
-            default:
-                Logger.i("Unknown my segment change v2 notification type: " + notification.getEnvScopedType());
+        try {
+            switch (notification.getEnvScopedType()) {
+                case UNBOUNDED_FETCH_REQUEST:
+                    executeUnboundedFetch();
+                    break;
+                case BOUNDED_FETCH_REQUEST:
+                    byte[] keyMap = mMySegmentsPayloadDecoder.decodeAsBytes(notification.getData(),
+                            mCompressionProvider.get(notification.getCompression()));
+                    executeBoundedFetch(keyMap);
+                    break;
+                case KEY_LIST:
+                    updateSegments(mMySegmentsPayloadDecoder.decodeAsString(notification.getData(),
+                            mCompressionProvider.get(notification.getCompression())),
+                            notification.getSegmentName());
+                    break;
+                case SEGMENT_REMOVAL:
+                    removeSegment(notification.getSegmentName());
+                    break;
+                default:
+                    Logger.i("Unknown my segment change v2 notification type: " + notification.getEnvScopedType());
+            }
+        } catch (Exception e) {
+            Logger.e("Executing unbounded fetch because an error has occurred processing my segmentV2 notification: " + e.getLocalizedMessage());
+            executeUnboundedFetch();
         }
     }
 
@@ -133,9 +147,9 @@ public class NotificationProcessor {
         mSplitTaskExecutor.submit(task, null);
     }
 
-    private void executeBoundedFetch(String keyMap) {
-        int index = mMySegmentsPayloadDecoder.computeKeyIndex(mHashedUserKey, keyMap.length());
-        if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap.getBytes(StringHelper.defaultCharset()), index)) {
+    private void executeBoundedFetch(byte[] keyMap) {
+        int index = mMySegmentsPayloadDecoder.computeKeyIndex(mHashedUserKey, keyMap.length);
+        if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap, index)) {
             MySegmentsSyncTask task = mSplitTaskFactory.createMySegmentsSyncTask(true);
             mSplitTaskExecutor.submit(task, null);
         }

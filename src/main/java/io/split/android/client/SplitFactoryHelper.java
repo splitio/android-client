@@ -11,6 +11,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
@@ -146,8 +147,8 @@ class SplitFactoryHelper {
         NotificationParser notificationParser = new NotificationParser();
         NotificationProcessor notificationProcessor =
                 new NotificationProcessor(userKey, splitTaskExecutor, splitTaskFactory,
-                        notificationParser, new MySegmentsV2PayloadDecoder(), mySegmentChangeNotificationQueue,
-                        splitsUpdateNotificationQueue);
+                        notificationParser, new MySegmentsV2PayloadDecoder(), new CompressionUtilProvider(),
+                        mySegmentChangeNotificationQueue, splitsUpdateNotificationQueue);
         PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
 
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
