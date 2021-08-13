@@ -2,7 +2,7 @@ package io.split.android.client.service.sseclient.notifications;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import io.split.android.client.common.CompressionType;
 
 public class MySegmentChangeV2Notification extends IncomingNotification {
 
@@ -10,15 +10,11 @@ public class MySegmentChangeV2Notification extends IncomingNotification {
         UNBOUNDED_FETCH_REQUEST, BOUNDED_FETCH_REQUEST, KEY_LIST, SEGMENT_REMOVAL
     }
 
-    public enum CompressionType {
-        NONE, GZIP, ZLIB
-    }
-
     private Long changeNumber;
     private String segmentName;
-    private MySegmentChangeV2Notification.CompressionType compression;
+    private CompressionType compression;
     private MySegmentChangeV2Notification.Type envScopedType;
-    private String[] data;
+    private String data;
 
     @Nullable
     public Long getChangeNumber() {
@@ -31,7 +27,7 @@ public class MySegmentChangeV2Notification extends IncomingNotification {
     }
 
     @Nullable
-    public MySegmentChangeV2Notification.CompressionType getCompression() {
+    public CompressionType getCompression() {
         return compression;
     }
 
@@ -41,7 +37,7 @@ public class MySegmentChangeV2Notification extends IncomingNotification {
     }
 
     @Nullable
-    public String[] getData() {
+    public String getData() {
         return data;
     }
 }

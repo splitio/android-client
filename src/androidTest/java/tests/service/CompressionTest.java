@@ -18,6 +18,7 @@ import helper.FileHelper;
 import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.CompressionUtil;
 import io.split.android.client.utils.Gzip;
+import io.split.android.client.utils.StringHelper;
 import io.split.android.client.utils.Zlib;
 
 public class CompressionTest {
@@ -38,7 +39,7 @@ public class CompressionTest {
     @Test
     public void zlibBasicDecompress() {
         String toComp = "0123456789_0123456789";
-        byte[] compressed = helper.compressZlib(toComp.getBytes(Charset.defaultCharset()));
+        byte[] compressed = helper.compressZlib(toComp.getBytes(StringHelper.defaultCharset()));
         byte[] dec = zlib.decompress(compressed);
         Assert.assertEquals(toComp, new String(dec, 0, dec.length));
     }
@@ -47,7 +48,7 @@ public class CompressionTest {
     public void zlibManyDecompress() {
         for(int i = 0; i < 20; i++) {
             String toComp = generateString();
-            byte[] compressed = helper.compressZlib(toComp.getBytes(Charset.defaultCharset()));
+            byte[] compressed = helper.compressZlib(toComp.getBytes(StringHelper.defaultCharset()));
             byte[] dec = zlib.decompress(compressed);
             Assert.assertEquals(toComp, new String(dec, 0, dec.length));
         }
@@ -57,7 +58,7 @@ public class CompressionTest {
     public void zlibLoremIpsum() {
         List<String> params = loadFileContent();
         for(String p : params) {
-            byte[] compressed = helper.compressZlib(p.getBytes(Charset.defaultCharset()));
+            byte[] compressed = helper.compressZlib(p.getBytes(StringHelper.defaultCharset()));
             byte[] dec = zlib.decompress(compressed);
             Assert.assertEquals(p, new String(dec, 0, dec.length));
         }
@@ -67,7 +68,7 @@ public class CompressionTest {
     public void zlibBase64Decompression() {
         for(int i = 0; i < 20; i++) {
             String toComp = Base64Util.encode(generateString());
-            byte[] compressed = helper.compressZlib(toComp.getBytes(Charset.defaultCharset()));
+            byte[] compressed = helper.compressZlib(toComp.getBytes(StringHelper.defaultCharset()));
             byte[] dec = zlib.decompress(compressed);
             Assert.assertEquals(toComp, new String(dec, 0, dec.length));
         }
@@ -76,7 +77,7 @@ public class CompressionTest {
     @Test
     public void gzipBasicDecompress() {
         String toComp = "0123456789_0123456789";
-        byte[] compressed = helper.compressGzip(toComp.getBytes(Charset.defaultCharset()));
+        byte[] compressed = helper.compressGzip(toComp.getBytes(StringHelper.defaultCharset()));
         byte[] dec = gzip.decompress(compressed);
         Assert.assertEquals(toComp, new String(dec, 0, dec.length));
     }
@@ -85,7 +86,7 @@ public class CompressionTest {
     public void gzipManyDecompress() {
         for(int i = 0; i < 20; i++) {
             String toComp = generateString();
-            byte[] compressed = helper.compressGzip(toComp.getBytes(Charset.defaultCharset()));
+            byte[] compressed = helper.compressGzip(toComp.getBytes(StringHelper.defaultCharset()));
             byte[] dec = gzip.decompress(compressed);
             Assert.assertEquals(toComp, new String(dec, 0, dec.length));
         }
@@ -95,7 +96,7 @@ public class CompressionTest {
     public void gzipLoremIpsum() {
         List<String> params = loadFileContent();
         for(String p : params) {
-            byte[] compressed = helper.compressGzip(p.getBytes(Charset.defaultCharset()));
+            byte[] compressed = helper.compressGzip(p.getBytes(StringHelper.defaultCharset()));
             byte[] dec = gzip.decompress(compressed);
             Assert.assertEquals(p, new String(dec, 0, dec.length));
         }
@@ -105,7 +106,7 @@ public class CompressionTest {
     public void gzipBase64Decompression() {
         for(int i = 0; i < 20; i++) {
             String toComp = Base64Util.encode(generateString());
-            byte[] compressed = helper.compressGzip(toComp.getBytes(Charset.defaultCharset()));
+            byte[] compressed = helper.compressGzip(toComp.getBytes(StringHelper.defaultCharset()));
             byte[] dec = gzip.decompress(compressed);
             Assert.assertEquals(toComp, new String(dec, 0, dec.length));
         }
