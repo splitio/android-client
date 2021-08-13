@@ -1,6 +1,10 @@
 package io.split.android.client.service.sseclient.notifications;
 
 import java.math.BigInteger;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.utils.Base64Util;
@@ -11,6 +15,7 @@ import io.split.android.client.utils.StringHelper;
 import static java.lang.Math.abs;
 
 public class MySegmentsV2PayloadDecoder {
+
     public final int FIELD_SIZE = 8;
 
     public String decodeAsString(String payload, CompressionUtil compressionUtil) throws MySegmentsParsingException {
@@ -47,5 +52,15 @@ public class MySegmentsV2PayloadDecoder {
 
     public int computeKeyIndex(BigInteger hashedKey, int keyMapLength) {
         return hashedKey.remainder(BigInteger.valueOf(keyMapLength * FIELD_SIZE)).intValue();
+    }
+
+    public KeyList.Action getKeyListAction(KeyList keyList, BigInteger hashedKey) {
+        if(new HashSet<>(keyList.getAdded()).contains(hashedKey)) {
+            return KeyList.Action.ADD;
+        }
+        if(new HashSet<>(keyList.getRemoved()).contains(hashedKey)) {
+            return KeyList.Action.REMOVE;
+        }
+        return KeyList.Action.NONE;
     }
 }

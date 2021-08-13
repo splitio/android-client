@@ -82,7 +82,7 @@ public class NotificationParser {
         return Json.fromJson(jsonData, StreamingError.class);
     }
 
-    public KeyList parseKeyList(String jsonData) throws JsonParseException {
+    public KeyList parseKeyList(String jsonData) throws JsonSyntaxException {
         return Json.fromJson(jsonData, KeyList.class);
     }
 
