@@ -42,15 +42,22 @@ public class MySegmentV2PayloadDecoderTest {
         String payload = mDecoder.decodeAsString(TestingData.encodedKeyListPayloadGzip(), mGzip);
         KeyList keyList = mParser.parseKeyList(payload);
 
-        Set added = new HashSet<String>(keyList.getAdded());
-        Set removed = new HashSet<String>(keyList.getRemoved());
+        Set added = new HashSet<BigInteger>(keyList.getAdded());
+        Set removed = new HashSet<BigInteger>(keyList.getRemoved());
+
+        KeyList.Action add = mDecoder.getKeyListAction(keyList, new BigInteger("1573573083296714675"));
+        KeyList.Action remove = mDecoder.getKeyListAction(keyList, new BigInteger("8031872927333060586"));
+        KeyList.Action none = mDecoder.getKeyListAction(keyList, new BigInteger("1"));
 
         Assert.assertEquals(2, keyList.getAdded().size());
         Assert.assertEquals(2, keyList.getRemoved().size());
-        Assert.assertTrue(added.contains("1573573083296714675"));
-        Assert.assertTrue(added.contains("8482869187405483569"));
-        Assert.assertTrue(removed.contains("8031872927333060586"));
-        Assert.assertTrue(removed.contains("6829471020522910836"));
+        Assert.assertTrue(added.contains(new BigInteger("1573573083296714675")));
+        Assert.assertTrue(added.contains(new BigInteger("8482869187405483569")));
+        Assert.assertTrue(removed.contains(new BigInteger("8031872927333060586")));
+        Assert.assertTrue(removed.contains(new BigInteger("6829471020522910836")));
+        Assert.assertEquals(KeyList.Action.ADD, add);
+        Assert.assertEquals(KeyList.Action.REMOVE, remove);
+        Assert.assertEquals(KeyList.Action.NONE, none);
     }
 
     @Test
