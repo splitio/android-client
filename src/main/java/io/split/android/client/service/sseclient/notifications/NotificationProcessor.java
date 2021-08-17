@@ -109,19 +109,23 @@ public class NotificationProcessor {
         try {
             switch (notification.getEnvScopedType()) {
                 case UNBOUNDED_FETCH_REQUEST:
+                    Logger.d("Received Unbounded my segment fetch request");
                     executeUnboundedFetch();
                     break;
                 case BOUNDED_FETCH_REQUEST:
+                    Logger.d("Received Bounded my segment fetch request");
                     byte[] keyMap = mMySegmentsPayloadDecoder.decodeAsBytes(notification.getData(),
                             mCompressionProvider.get(notification.getCompression()));
                     executeBoundedFetch(keyMap);
                     break;
                 case KEY_LIST:
+                    Logger.d("Received KeyList my segment fetch request");
                     updateSegments(mMySegmentsPayloadDecoder.decodeAsString(notification.getData(),
                             mCompressionProvider.get(notification.getCompression())),
                             notification.getSegmentName());
                     break;
                 case SEGMENT_REMOVAL:
+                    Logger.d("Received Segment removal request");
                     removeSegment(notification.getSegmentName());
                     break;
                 default:
@@ -150,6 +154,7 @@ public class NotificationProcessor {
     private void executeBoundedFetch(byte[] keyMap) {
         int index = mMySegmentsPayloadDecoder.computeKeyIndex(mHashedUserKey, keyMap.length);
         if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap, index)) {
+            Logger.d("Executing Unbounded my segment fetch request");
             MySegmentsSyncTask task = mSplitTaskFactory.createMySegmentsSyncTask(true);
             mSplitTaskExecutor.submit(task, null);
         }
@@ -170,7 +175,7 @@ public class NotificationProcessor {
         if (action == KeyList.Action.NONE) {
             return;
         }
-
+        Logger.d("Executing KeyList my segment fetch request: Adding = " + actionIsAdd);
         MySegmentsUpdateTask task = mSplitTaskFactory.createMySegmentsUpdateTask(actionIsAdd, segmentName);
         mSplitTaskExecutor.submit(task, null);
     }
