@@ -21,6 +21,7 @@ import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
 
@@ -71,18 +72,24 @@ public class IntegrationHelper {
 
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
                                             Context context, HttpClient httpClient) {
-        return buildFactory(apiToken, key, config, context, httpClient, null);
+        return buildFactory(apiToken, key, config, context, httpClient, null, null);
     }
 
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
-                                           Context context, HttpClient httpClient, SplitRoomDatabase database) {
+                                            Context context, HttpClient httpClient, SplitRoomDatabase database) {
+        return buildFactory(apiToken, key, config, context, httpClient, database, null);
+    }
+
+    public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
+                                            Context context, HttpClient httpClient, SplitRoomDatabase database,
+                                            SynchronizerSpy synchronizerSpy) {
         Constructor[] c = SplitFactoryImpl.class.getDeclaredConstructors();
         Constructor constructor = c[1];
         constructor.setAccessible(true);
         SplitFactory factory = null;
         try {
             factory = (SplitFactory) constructor.newInstance(
-                    apiToken, key, config, context, httpClient, database);
+                    apiToken, key, config, context, httpClient, database, synchronizerSpy);
         } catch (Exception e) {
             Logger.e("Error creating factory: " + e.getLocalizedMessage());
         }
@@ -126,6 +133,7 @@ public class IntegrationHelper {
     public static SplitClientConfig lowRefreshRateConfig() {
         return lowRefreshRateConfig(true);
     }
+
     public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled) {
         TestableSplitConfigBuilder builder = new TestableSplitConfigBuilder()
                 .ready(30000)
