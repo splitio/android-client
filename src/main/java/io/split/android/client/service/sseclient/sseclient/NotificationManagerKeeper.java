@@ -69,6 +69,9 @@ public class NotificationManagerKeeper {
                     }
                     break;
 
+                case STREAMING_RESET:
+
+
                 default:
                     Logger.e("Unknown message received" + notification.getControlType());
             }

@@ -45,8 +45,7 @@ public class ControlTest {
     private String mApiKey;
     private Key mUserKey;
     private long mTimestamp = 100;
-
-    private CountDownLatch mMySegmentsUpdateLatch;
+    private int mConnectionCount = 0;
 
     private final static String CONTROL_TYPE_PLACEHOLDER = "$CONTROL_TYPE$";
     private final static String CONTROL_TIMESTAMP_PLACEHOLDER = "$TIMESTAMP$";
@@ -132,6 +131,11 @@ public class ControlTest {
         sleep(2000);
         MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
 
+//        // Reset streaming connection connection
+//        mSseConnectedLatch = new CountDownLatch(1);
+//        pushControl("STREAMING_RESET");
+//        mSseConnectedLatch.await(5, TimeUnit.SECONDS);
+
 
         //Enable streaming, push a new my segments payload update and check data again
         pushControl("STREAMING_DISABLED");
@@ -143,6 +147,7 @@ public class ControlTest {
         Assert.assertEquals("dummy", mySegmentEntityNone.getSegmentList());
         Assert.assertEquals("segment1", mySegmentEntityPayload.getSegmentList());
         Assert.assertTrue(mStreamingResponse.isClosed());
+        Assert.assertEquals(2, mConnectionCount);
     }
 
     private void pushMySegmentsUpdatePayload() throws IOException, InterruptedException {
@@ -201,6 +206,7 @@ public class ControlTest {
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
                     Logger.i("** SSE Connect hit");
+                    mConnectionCount++;
                     mSseConnectedLatch.countDown();
                     return createStreamResponse(200, mStreamingData);
                 } catch (Exception e) {
