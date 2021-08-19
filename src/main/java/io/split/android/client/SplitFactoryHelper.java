@@ -23,6 +23,7 @@ import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;

@@ -7,20 +7,15 @@ import com.google.gson.JsonSyntaxException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
-import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
-import io.split.android.client.utils.CompressionUtil;
 import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.StringHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -107,10 +102,10 @@ public class NotificationProcessor {
 
     private void processMySegmentUpdateV2(MySegmentChangeV2Notification notification) {
         try {
-            switch (notification.getEnvScopedType()) {
+            switch (notification.getUpdateStrategy()) {
                 case UNBOUNDED_FETCH_REQUEST:
                     Logger.d("Received Unbounded my segment fetch request");
-                    executeUnboundedFetch();
+                    notifyMySegmentRefreshNeeded();
                     break;
                 case BOUNDED_FETCH_REQUEST:
                     Logger.d("Received Bounded my segment fetch request");
@@ -129,17 +124,16 @@ public class NotificationProcessor {
                     removeSegment(notification.getSegmentName());
                     break;
                 default:
-                    Logger.i("Unknown my segment change v2 notification type: " + notification.getEnvScopedType());
+                    Logger.i("Unknown my segment change v2 notification type: " + notification.getUpdateStrategy());
             }
         } catch (Exception e) {
             Logger.e("Executing unbounded fetch because an error has occurred processing my segmentV2 notification: " + e.getLocalizedMessage());
-            executeUnboundedFetch();
+            notifyMySegmentRefreshNeeded();
         }
     }
 
-    private void executeUnboundedFetch() {
-        MySegmentsSyncTask task = mSplitTaskFactory.createMySegmentsSyncTask(true);
-        mSplitTaskExecutor.submit(task, null);
+    private void notifyMySegmentRefreshNeeded() {
+        mMySegmentUpdateNotificationsQueue.offer(new MySegmentChangeNotification());
     }
 
     private void removeSegment(String segmentName) {
@@ -155,8 +149,7 @@ public class NotificationProcessor {
         int index = mMySegmentsPayloadDecoder.computeKeyIndex(mHashedUserKey, keyMap.length);
         if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap, index)) {
             Logger.d("Executing Unbounded my segment fetch request");
-            MySegmentsSyncTask task = mSplitTaskFactory.createMySegmentsSyncTask(true);
-            mSplitTaskExecutor.submit(task, null);
+            notifyMySegmentRefreshNeeded();
         }
     }
 

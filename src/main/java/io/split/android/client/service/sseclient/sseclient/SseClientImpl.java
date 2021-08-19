@@ -125,6 +125,7 @@ public class SseClientImpl implements SseClient {
                             }
                             // Keep alive has to be handled by connection timeout
                             if (!mEventStreamParser.isKeepAlive(values)) {
+                                System.out.println("Values: " + values);
                                 mSseHandler.handleIncomingMessage(values);
                             }
                             values = new HashMap<>();

@@ -19,7 +19,6 @@ import static io.split.android.client.service.sseclient.notifications.Notificati
 import static io.split.android.client.service.sseclient.notifications.NotificationType.OCCUPANCY;
 
 public class NotificationParser {
-    private final static Type BOUNDED_MAP_TYPE = new TypeToken<Map<Long, Byte>>(){}.getType();
     private final static String EVENT_TYPE_ERROR = "error";
     private static final String EVENT_TYPE_FIELD = "event";
 

@@ -6,14 +6,10 @@ import io.split.android.client.common.CompressionType;
 
 public class MySegmentChangeV2Notification extends IncomingNotification {
 
-    public enum Type {
-        UNBOUNDED_FETCH_REQUEST, BOUNDED_FETCH_REQUEST, KEY_LIST, SEGMENT_REMOVAL
-    }
-
     private Long changeNumber;
     private String segmentName;
     private CompressionType compression;
-    private MySegmentChangeV2Notification.Type envScopedType;
+    private MySegmentUpdateStrategy updateStrategy;
     private String data;
 
     @Nullable
@@ -32,8 +28,8 @@ public class MySegmentChangeV2Notification extends IncomingNotification {
     }
 
     @Nullable
-    public MySegmentChangeV2Notification.Type getEnvScopedType() {
-        return envScopedType;
+    public MySegmentUpdateStrategy getUpdateStrategy() {
+        return updateStrategy;
     }
 
     @Nullable
