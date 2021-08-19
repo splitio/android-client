@@ -17,6 +17,7 @@ import static java.lang.Thread.sleep;
 public class TestingHelper {
 
     public static final String COUNTERS_REFRESH_RATE_SECS_NAME = "COUNTERS_REFRESH_RATE_SECS";
+    public static final String MSG_DATA_FIELD = "[NOTIFICATION_DATA]";
 
     static public void delay(long millis) {
 

@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 
-import helper.TestingHelper;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -26,6 +25,7 @@ import io.split.android.client.service.sseclient.notifications.IncomingNotificat
 import io.split.android.client.service.sseclient.notifications.KeyList;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
+import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
@@ -185,7 +185,7 @@ public class NotificationProcessorTest {
 
         MySegmentChangeV2Notification mySegmentChangeNotification
                 = Mockito.mock(MySegmentChangeV2Notification.class);
-        when(mySegmentChangeNotification.getEnvScopedType()).thenReturn(MySegmentChangeV2Notification.Type.UNBOUNDED_FETCH_REQUEST);
+        when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST);
         when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
         when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
@@ -193,11 +193,7 @@ public class NotificationProcessorTest {
 
         mNotificationProcessor.process(mIncomingNotification);
 
-        ArgumentCaptor<Boolean> messageCaptor =
-                ArgumentCaptor.forClass(Boolean.class);
-        verify(mSplitTaskFactory, times(1)).createMySegmentsSyncTask(messageCaptor.capture());
-
-        Assert.assertEquals(Boolean.TRUE, messageCaptor.getValue());
+        verify(mMySegmentChangeQueue, times(1)).offer(any());
     }
 
     @Test
@@ -206,7 +202,7 @@ public class NotificationProcessorTest {
         String segmentName = "ToRemove";
         MySegmentChangeV2Notification mySegmentChangeNotification
                 = Mockito.mock(MySegmentChangeV2Notification.class);
-        when(mySegmentChangeNotification.getEnvScopedType()).thenReturn(MySegmentChangeV2Notification.Type.SEGMENT_REMOVAL);
+        when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.SEGMENT_REMOVAL);
         when(mySegmentChangeNotification.getSegmentName()).thenReturn(segmentName);
         when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
         when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
@@ -225,7 +221,7 @@ public class NotificationProcessorTest {
     @Test
     public void mySegmentsUpdateV2BoundedNotificationFetch() {
         mySegmentsUpdateV2BoundedNotification(true);
-        verify(mSplitTaskFactory, times(1)).createMySegmentsSyncTask(true);
+        verify(mMySegmentChangeQueue, times(1)).offer(any());
     }
 
     @Test
@@ -239,7 +235,7 @@ public class NotificationProcessorTest {
         String segmentName = "ToRemove";
         MySegmentChangeV2Notification mySegmentChangeNotification
                 = Mockito.mock(MySegmentChangeV2Notification.class);
-        when(mySegmentChangeNotification.getEnvScopedType()).thenReturn(MySegmentChangeV2Notification.Type.BOUNDED_FETCH_REQUEST);
+        when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST);
         when(mySegmentChangeNotification.getData()).thenReturn("dummy");
         when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
         when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
@@ -279,7 +275,7 @@ public class NotificationProcessorTest {
 
         MySegmentChangeV2Notification mySegmentChangeNotification
                 = Mockito.mock(MySegmentChangeV2Notification.class);
-        when(mySegmentChangeNotification.getEnvScopedType()).thenReturn(MySegmentChangeV2Notification.Type.KEY_LIST);
+        when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.KEY_LIST);
         when(mySegmentChangeNotification.getSegmentName()).thenReturn(segmentName);
         when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
         when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
@@ -299,7 +295,7 @@ public class NotificationProcessorTest {
 
         MySegmentChangeV2Notification mySegmentChangeNotification
                 = Mockito.mock(MySegmentChangeV2Notification.class);
-        when(mySegmentChangeNotification.getEnvScopedType()).thenReturn(MySegmentChangeV2Notification.Type.KEY_LIST);
+        when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.KEY_LIST);
         when(mySegmentChangeNotification.getSegmentName()).thenReturn("s1");
         when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
         when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
@@ -308,7 +304,7 @@ public class NotificationProcessorTest {
         mNotificationProcessor.process(mIncomingNotification);
 
         verify(mMySegmentsPayloadDecoder, never()).getKeyListAction(any(), any());
-        verify(mSplitTaskFactory, times(1)).createMySegmentsSyncTask(true);
+        verify(mMySegmentChangeQueue, times(1)).offer(any());
     }
 
     @Test
@@ -316,7 +312,7 @@ public class NotificationProcessorTest {
 
         MySegmentChangeV2Notification mySegmentChangeNotification
                 = Mockito.mock(MySegmentChangeV2Notification.class);
-        when(mySegmentChangeNotification.getEnvScopedType()).thenReturn(MySegmentChangeV2Notification.Type.BOUNDED_FETCH_REQUEST);
+        when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST);
         when(mySegmentChangeNotification.getSegmentName()).thenReturn("s1");
         when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
         when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
@@ -325,7 +321,7 @@ public class NotificationProcessorTest {
         mNotificationProcessor.process(mIncomingNotification);
 
         verify(mMySegmentsPayloadDecoder, never()).isKeyInBitmap(any(), anyInt());
-        verify(mSplitTaskFactory, times(1)).createMySegmentsSyncTask(true);
+        verify(mMySegmentChangeQueue, times(1)).offer(any());
     }
 
     @Test
