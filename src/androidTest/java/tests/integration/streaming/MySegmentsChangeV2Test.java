@@ -117,12 +117,16 @@ public class MySegmentsChangeV2Test {
         mSynchronizerSpy.mForceMySegmentSyncCalledCount.set(0);
         testMySegmentsUpdate(TestingData.UNBOUNDED_NOTIFICATION);
 
+        // Should not trigger any fetch to my segments because
+        // this payload doesn't have "key1" enabled
+        pushMessage(TestingData.ESCAPED_BOUNDED_NOTIFICATION_GZIP);
+
         // Pushed key list message. Key 1 should add a segment
         pushMessage(TestingData.ESCAPED_KEY_LIST_NOTIFICATION_GZIP);
 
         pushMessage(TestingData.SEGMENT_REMOVAL_NOTIFICATION);
 
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(20, TimeUnit.SECONDS);
         MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKeys(userKey);
 
         Assert.assertEquals(1, mSynchronizerSpy.mForceMySegmentSyncCalledCount.get());
@@ -176,7 +180,13 @@ public class MySegmentsChangeV2Test {
         mSynchronizerSpy.mForceMySegmentSyncCalledCount.set(0);
         testMySegmentsUpdate(TestingData.ESCAPED_BOUNDED_NOTIFICATION_GZIP);
 
-        Assert.assertEquals(1, mSynchronizerSpy.mForceMySegmentSyncCalledCount.get());
+        // ZLIB payload
+        testMySegmentsUpdate(TestingData.ESCAPED_BOUNDED_NOTIFICATION_ZLIB);
+
+        // This malformed payload should trigger unbounded
+        testMySegmentsUpdate(TestingData.ESCAPED_BOUNDED_NOTIFICATION_MALFORMED);
+
+        Assert.assertEquals(3, mSynchronizerSpy.mForceMySegmentSyncCalledCount.get());
 
     }
 
@@ -205,10 +215,8 @@ public class MySegmentsChangeV2Test {
                     if (mMySegmentsHitCount == 3) {
                         mMySegmentsUpdateLatch.countDown();
                         Logger.d("updatedMySegments SEGMENTS");
-                        return createResponse(200, updatedMySegments());
                     }
-                    Logger.d("DUMMY SEGMENTS");
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                    return createResponse(200, updatedMySegments(mMySegmentsHitCount));
                 } else if (uri.getPath().contains("/splitChanges")) {
                     Logger.i("** Split Changes hit");
                     String data = IntegrationHelper.emptySplitChanges(-1, 1000);
@@ -255,10 +263,16 @@ public class MySegmentsChangeV2Test {
         }
     }
 
-    private String updatedMySegments() {
-        return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, " +
-                " { \"id\":\"id1\", \"name\":\"segment2\"}, " +
-                "{ \"id\":\"id3\", \"name\":\"segment3\"}]}";
+    private String updatedMySegments(int count) {
+
+        StringBuilder b = new StringBuilder();
+        for (int i=0; i<count; i++) {
+            b.append("{ \"id\":\"id" + i + "\", \"name\":\"segment" + i + "\"},");
+        }
+        b.deleteCharAt(b.length() - 1); // Removing last ","
+
+        return "{\"mySegments\":[" + b.toString() + "]}";
+
     }
 
 }

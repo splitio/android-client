@@ -87,4 +87,32 @@ public class MySegmentV2PayloadDecoderTest {
             Assert.assertTrue(results.get(key));
         }
     }
+
+    @Test
+    public void boundedZlibPayload() throws MySegmentsParsingException {
+
+        byte[] payloadGzip = mDecoder.decodeAsBytes(TestingData.encodedBoundedPayloadZlib(), mZlib);
+        List<String> keys = new ArrayList<>();
+        keys.add("603516ce-1243-400b-b919-0dce5d8aecfd");
+        keys.add("88f8b33b-f858-4aea-bea2-a5f066bab3ce");
+        keys.add("375903c8-6f62-4272-88f1-f8bcd304c7ae");
+        keys.add("18c936ad-0cd2-490d-8663-03eaa23a5ef1");
+        keys.add("bfd4a824-0cde-4f11-9700-2b4c5ad6f719");
+        keys.add("4588c4f6-3d18-452a-bc4a-47d7abfd23df");
+        keys.add("42bcfe02-d268-472f-8ed5-e6341c33b4f7");
+        keys.add("2a7cae0e-85a2-443e-9d7c-7157b7c5960a");
+        keys.add("4b0b0467-3fe1-43d1-a3d5-937c0a5473b1");
+        keys.add("09025e90-d396-433a-9292-acef23cf0ad1");
+
+        Map<String, Boolean> results = new HashMap<>();
+        for (String key : keys) {
+            BigInteger hashedKey = mDecoder.hashKey(key);
+            int index = mDecoder.computeKeyIndex(hashedKey, payloadGzip.length);
+            results.put(key, mDecoder.isKeyInBitmap(payloadGzip, index));
+        }
+
+        for (String key : keys) {
+            Assert.assertTrue(results.get(key));
+        }
+    }
 }
