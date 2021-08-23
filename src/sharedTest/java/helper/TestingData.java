@@ -48,15 +48,37 @@ public class TestingData {
     public final static String BOUNDED_NOTIFICATION_GZIP = "{" +
             "\"type\": \"MY_SEGMENTS_UPDATE_V2\"," +
             "\"u\": 1," +
-            "\"c\": 2," +
+            "\"c\": 1," +
             "\"d\": \"H4sIAAAAAAAA/2IYBfgAx0A7YBTgB4wD7YABAAID7QC6g5EYy8MEMA20A+gMFAbaAYMZDPXqlGWgHTAKRsEoGAWjgCzQQFjJkKqiiPAPAQAIAAD//5L7VQwAEAAA\"" +
             "}";
 
     public final static String ESCAPED_BOUNDED_NOTIFICATION_GZIP = "{" +
             "\\\"type\\\": \\\"MY_SEGMENTS_UPDATE_V2\\\"," +
             "\\\"u\\\": 1," +
-            "\\\"c\\\": 2," +
+            "\\\"c\\\": 1," +
             "\\\"d\\\": \\\"H4sIAAAAAAAA/2IYBfgAx0A7YBTgB4wD7YABAAID7QC6g5EYy8MEMA20A+gMFAbaAYMZDPXqlGWgHTAKRsEoGAWjgCzQQFjJkKqiiPAPAQAIAAD//5L7VQwAEAAA\\\"" +
+            "}";
+
+    public final static String BOUNDED_NOTIFICATION_ZLIB = "{" +
+            "\"type\": \"MY_SEGMENTS_UPDATE_V2\"," +
+            "\"u\": 1," +
+            "\"c\": 2," +
+            "\"d\": \"eJxiGAX4AMdAO2AU4AeMA+2AAQACA+0AuoORGMvDBDANtAPoDBQG2gGDGQz16pRloB0wCkbBKBgFo4As0EBYyZCqoojwDwEACAAA//+W/QFR\"" +
+            "}";
+
+    public final static String ESCAPED_BOUNDED_NOTIFICATION_ZLIB = "{" +
+            "\\\"type\\\": \\\"MY_SEGMENTS_UPDATE_V2\\\"," +
+            "\\\"u\\\": 1," +
+            "\\\"c\\\": 2," +
+            "\\\"d\\\": \\\"eJxiGAX4AMdAO2AU4AeMA+2AAQACA+0AuoORGMvDBDANtAPoDBQG2gGDGQz16pRloB0wCkbBKBgFo4As0EBYyZCqoojwDwEACAAA//+W/QFR\\\"" +
+            "}";
+
+
+    public final static String ESCAPED_BOUNDED_NOTIFICATION_MALFORMED = "{" +
+            "\\\"type\\\": \\\"MY_SEGMENTS_UPDATE_V2\\\"," +
+            "\\\"u\\\": 1," +
+            "\\\"c\\\": 1," +
+            "\\\"d\\\": \\\"H4sIAAAAAAAAg5EYy8MEMA20A+//5L7VQwAEAAA\\\"" +
             "}";
 
     /**
