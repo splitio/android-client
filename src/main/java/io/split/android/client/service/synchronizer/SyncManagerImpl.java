@@ -177,6 +177,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
             case PUSH_RESET:
                 Logger.d("Push Subsystem reset received.");
                 // If sdk is paused (host app in bg) push manager should reconnect on resume
+                mPushNotificationManager.disconnect();
                 if(!mIsPaused.get()) {
                     mStreamingReconnectTimer.schedule();
                 }

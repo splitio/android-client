@@ -112,6 +112,7 @@ public class SseClientImpl implements SseClient {
                     Map<String, String> values = new HashMap<>();
                     while ((inputLine = mBufferedReader.readLine()) != null) {
                         if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
+                            Logger.d("SSE line msg: " + inputLine);
                             if(!isConnectionConfirmed) {
                                 if(mEventStreamParser.isKeepAlive(values) || mSseHandler.isConnectionConfirmed(values)) {
                                     Logger.d("Streaming connection success");

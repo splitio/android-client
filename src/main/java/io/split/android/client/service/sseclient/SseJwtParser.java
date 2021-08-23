@@ -78,7 +78,7 @@ public class SseJwtParser {
             }
         }
 
-        return new SseJwtToken(authToken.getIssuedAt(), authToken.getExpirationAt(), processedChannels, rawToken);
+        return new SseJwtToken(authToken.getIssuedAt(), authToken.getExpirationAt(), authToken.getSseConnectionDelay(), processedChannels, rawToken);
     }
 
     @Nullable

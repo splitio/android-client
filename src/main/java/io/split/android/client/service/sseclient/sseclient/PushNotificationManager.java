@@ -6,6 +6,8 @@ import androidx.annotation.VisibleForTesting;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +23,8 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Thread.interrupted;
+import static java.lang.Thread.sleep;
 import static java.lang.reflect.Modifier.PRIVATE;
 
 public class PushNotificationManager {
@@ -36,6 +40,7 @@ public class PushNotificationManager {
 
     private AtomicBoolean mIsPaused;
     private AtomicBoolean mIsStopped;
+    private Future mConnectionTask;
 
     @VisibleForTesting(otherwise = PRIVATE)
     public PushNotificationManager(@NonNull PushManagerEventBroadcaster broadcasterChannel,
@@ -91,16 +96,25 @@ public class PushNotificationManager {
     public void stop() {
         Logger.d("Shutting down SSE client");
         mIsStopped.set(true);
+        disconnect();
+        shutdownAndAwaitTermination();
+    }
+
+    public void disconnect() {
+        Logger.d("Disconnecting down SSE client");
         mDisconnectionTimer.cancel();
         mRefreshTokenTimer.cancel();
         mSseClient.disconnect();
-        shutdownAndAwaitTermination();
     }
+
     private void connect() {
         if(mSseClient.status() == SseClient.CONNECTED) {
             mSseClient.disconnect();
         }
-        mExecutor.submit(new StreamingConnection());
+        if(mConnectionTask != null && (!mConnectionTask.isDone() || !mConnectionTask.isCancelled())) {
+            mConnectionTask.cancel(true);
+        }
+        mConnectionTask = mExecutor.submit(new StreamingConnection());
     }
 
     private void shutdownAndAwaitTermination() {
@@ -165,6 +179,15 @@ public class PushNotificationManager {
                 return;
             }
 
+            long e   = token.getExpirationTime();
+            boolean r = authResult.isSuccess();
+            long delay = token.getSseConnectionDelay();
+            List<String> c = token.getChannels();
+            // Delay returns false if some error occurs
+            if (delay > 0 && !delay(delay)) {
+                return;
+            }
+
             // If host app is in bg or push manager stopped, abort the process
             if(mIsPaused.get() || mIsStopped.get()) {
                 return;
@@ -181,6 +204,16 @@ public class PushNotificationManager {
 
         private void logError(String message, Exception e) {
             Logger.e(message + " : " + e.getLocalizedMessage());
+        }
+
+        private boolean delay(long seconds) {
+            try {
+                sleep(seconds * 1000L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+            return true;
         }
     }
 }

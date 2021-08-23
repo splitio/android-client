@@ -5,6 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.BufferedReader;
@@ -60,6 +61,9 @@ public class PushNotificationManagerTest {
     @Mock
     SseJwtToken mJwt;
 
+    @Mock
+    SseAuthenticationResult mResult;
+
 
     PushNotificationManager mPushManager;
 
@@ -73,15 +77,16 @@ public class PushNotificationManagerTest {
 
     @Test
     public void connectOk() throws InterruptedException, HttpException {
+        setupOkAuthResponse();
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
-        setupOkAuthResponse();
-
+        long time = System.currentTimeMillis();
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
+        time = System.currentTimeMillis() - time;
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
         verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
         Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_SUBSYSTEM_UP);
@@ -91,6 +96,32 @@ public class PushNotificationManagerTest {
         verify(mRefreshTokenTimer, times(1)).schedule(issuedAt.capture(), expirationTime.capture());
         Assert.assertEquals(1000L, issuedAt.getValue().longValue());
         Assert.assertEquals(10000L, expirationTime.getValue().longValue());
+        Assert.assertTrue(time < 2000);
+    }
+
+    @Test
+    public void connectOkWithDelay() throws InterruptedException, HttpException {
+        SseClientMock sseClient = new SseClientMock();
+        sseClient.mConnectLatch = new CountDownLatch(1);
+        setupOkAuthResponse(4);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+
+        long time = System.currentTimeMillis();
+        mPushManager.start();
+        sseClient.mConnectLatch.await(10, TimeUnit.SECONDS);
+        time = System.currentTimeMillis() - time;
+
+        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
+        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
+        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_SUBSYSTEM_UP);
+
+        ArgumentCaptor<Long> issuedAt = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Long> expirationTime = ArgumentCaptor.forClass(Long.class);
+        verify(mRefreshTokenTimer, times(1)).schedule(issuedAt.capture(), expirationTime.capture());
+        Assert.assertEquals(1000L, issuedAt.getValue().longValue());
+        Assert.assertEquals(10000L, expirationTime.getValue().longValue());
+        Assert.assertTrue(time > 3000);
     }
 
     @Test
@@ -180,14 +211,23 @@ public class PushNotificationManagerTest {
     }
 
     private void setupOkAuthResponse() {
+        setupOkAuthResponse(0L);
+    }
+
+    private void setupOkAuthResponse(long delay) {
         when(mJwt.getChannels()).thenReturn(Arrays.asList("dummy"));
         when(mJwt.getIssuedAtTime()).thenReturn(1000L);
         when(mJwt.getExpirationTime()).thenReturn(10000L);
+        when(mJwt.getSseConnectionDelay()).thenReturn(delay);
 
         when(mJwt.getRawJwt()).thenReturn(DUMMY_TOKEN);
-        SseAuthenticationResult result = new SseAuthenticationResult(true, true, true, mJwt);
 
-        when(mAuthenticator.authenticate()).thenReturn(result);
+        when(mResult.isSuccess()).thenReturn(true);
+        when(mResult.isErrorRecoverable()).thenReturn(true);
+        when(mResult.isPushEnabled()).thenReturn(true);
+        when(mResult.getJwtToken()).thenReturn(mJwt);
+
+        when(mAuthenticator.authenticate()).thenReturn(mResult);
     }
 
     private BufferedReader dummyData() {
