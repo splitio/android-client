@@ -69,6 +69,11 @@ public class NotificationManagerKeeper {
                     }
                     break;
 
+                case STREAMING_RESET:
+                    if (publishersCount() > 0) {
+                        mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RESET));
+                    }
+
                 default:
                     Logger.e("Unknown message received" + notification.getControlType());
             }

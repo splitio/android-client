@@ -73,7 +73,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
                 @Override
                 public SplitTaskExecutionInfo execute() {
                     Logger.d("Reconnecting to streaming");
-                     mPushNotificationManager.start();
+                    mPushNotificationManager.start();
                     return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
                 }
             });
@@ -172,6 +172,14 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
                 enablePolling();
                 mStreamingReconnectTimer.cancel();
                 mPushNotificationManager.stop();
+                break;
+
+            case PUSH_RESET:
+                Logger.d("Push Subsystem reset received.");
+                // If sdk is paused (host app in bg) push manager should reconnect on resume
+                if(!mIsPaused.get()) {
+                    mStreamingReconnectTimer.schedule();
+                }
                 break;
 
             default:
