@@ -42,16 +42,17 @@ public class SseAuthenticator {
 
         if(authResponse.isClientError()) {
             Logger.d("Error while authenticating to streaming. Check your api key is correct.");
-            return new SseAuthenticationResult(false, false, false, null);
+            return new SseAuthenticationResult(false, false, false, 0, null);
         }
 
         if(!authResponse.isStreamingEnabled()) {
             Logger.d("Streaming disabled for api key");
-            return new SseAuthenticationResult(true, true, false, null);
+            return new SseAuthenticationResult(true, true, false, 0, null);
         }
 
         try {
-            return new SseAuthenticationResult(true, true, true, mJwtParser.parse(authResponse.getToken()));
+            return new SseAuthenticationResult(true, true, true,
+                    authResponse.getSseConnectionDelay(), mJwtParser.parse(authResponse.getToken()));
         } catch (InvalidJwtTokenException e) {
             Logger.e("Error while parsing Jwt");
         }

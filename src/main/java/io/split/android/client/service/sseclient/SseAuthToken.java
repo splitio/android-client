@@ -12,6 +12,7 @@ class SseAuthToken {
     @SerializedName("exp")
     private final long expirationAt;
 
+
     public SseAuthToken(String channelList, long issuedAt, long expirationAt) {
         this.channelList = channelList;
         this.issuedAt = issuedAt;
@@ -29,4 +30,5 @@ class SseAuthToken {
     public long getExpirationAt() {
         return expirationAt;
     }
+
 }
