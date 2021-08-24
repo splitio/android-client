@@ -85,6 +85,9 @@ public class PushNotificationManager {
     }
 
     public void resume() {
+        if(!mIsPaused.get()) {
+            return;
+        }
         Logger.d("Push notification manager resumed");
         mIsPaused.set(false);
         mDisconnectionTimer.cancel();
@@ -179,10 +182,8 @@ public class PushNotificationManager {
                 return;
             }
 
-            long e   = token.getExpirationTime();
-            boolean r = authResult.isSuccess();
-            long delay = token.getSseConnectionDelay();
-            List<String> c = token.getChannels();
+
+            long delay = authResult.getSseConnectionDelay();
             // Delay returns false if some error occurs
             if (delay > 0 && !delay(delay)) {
                 return;

@@ -131,7 +131,7 @@ public class PushNotificationManagerTest {
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
-        SseAuthenticationResult result = new SseAuthenticationResult(false, false, false, null);
+        SseAuthenticationResult result = new SseAuthenticationResult(false, false, false, 0, null);
 
         when(mAuthenticator.authenticate()).thenReturn(result);
 
@@ -149,7 +149,7 @@ public class PushNotificationManagerTest {
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
-        SseAuthenticationResult result = new SseAuthenticationResult(true, false, false, null);
+        SseAuthenticationResult result = new SseAuthenticationResult(true, false, false, 0, null);
 
         when(mAuthenticator.authenticate()).thenReturn(result);
 
@@ -167,7 +167,7 @@ public class PushNotificationManagerTest {
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
-        SseAuthenticationResult result = new SseAuthenticationResult(false, true, false, null);
+        SseAuthenticationResult result = new SseAuthenticationResult(false, true, false, 0, null);
 
         when(mAuthenticator.authenticate()).thenReturn(result);
 
@@ -218,7 +218,7 @@ public class PushNotificationManagerTest {
         when(mJwt.getChannels()).thenReturn(Arrays.asList("dummy"));
         when(mJwt.getIssuedAtTime()).thenReturn(1000L);
         when(mJwt.getExpirationTime()).thenReturn(10000L);
-        when(mJwt.getSseConnectionDelay()).thenReturn(delay);
+
 
         when(mJwt.getRawJwt()).thenReturn(DUMMY_TOKEN);
 
@@ -226,6 +226,7 @@ public class PushNotificationManagerTest {
         when(mResult.isErrorRecoverable()).thenReturn(true);
         when(mResult.isPushEnabled()).thenReturn(true);
         when(mResult.getJwtToken()).thenReturn(mJwt);
+        when(mResult.getSseConnectionDelay()).thenReturn(delay);
 
         when(mAuthenticator.authenticate()).thenReturn(mResult);
     }

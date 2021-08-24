@@ -41,7 +41,7 @@ public class SseAuthenticatorTest {
 
     @Test
     public void successfulRequest() throws InvalidJwtTokenException, HttpFetcherException {
-        SseJwtToken token = new SseJwtToken(100, 200, 0, mDummyChannels, "the raw token");
+        SseJwtToken token = new SseJwtToken(100, 200, mDummyChannels, "the raw token");
         when(mResponse.isStreamingEnabled()).thenReturn(true);
         when(mResponse.getToken()).thenReturn("");
 
@@ -62,7 +62,7 @@ public class SseAuthenticatorTest {
 
     @Test
     public void tokenParseError() throws InvalidJwtTokenException, HttpFetcherException {
-        SseJwtToken token = new SseJwtToken(100, 200, 0, mDummyChannels, "the raw token");
+        SseJwtToken token = new SseJwtToken(100, 200, mDummyChannels, "the raw token");
         when(mResponse.isStreamingEnabled()).thenReturn(true);
         when(mResponse.getToken()).thenReturn("");
 
@@ -80,7 +80,7 @@ public class SseAuthenticatorTest {
 
     @Test
     public void recoverableError() throws InvalidJwtTokenException, HttpFetcherException {
-        SseJwtToken token = new SseJwtToken(100, 200, 0, Arrays.asList(), "the raw token");
+        SseJwtToken token = new SseJwtToken(100, 200, Arrays.asList(), "the raw token");
         when(mResponse.isStreamingEnabled()).thenReturn(false);
         when(mResponse.getToken()).thenReturn(null);
         when(mResponse.isClientError()).thenReturn(false);
@@ -98,7 +98,7 @@ public class SseAuthenticatorTest {
 
     @Test
     public void nonRrecoverableError() throws InvalidJwtTokenException, HttpFetcherException {
-        SseJwtToken token = new SseJwtToken(100, 200, 0, Arrays.asList(), "the raw token");
+        SseJwtToken token = new SseJwtToken(100, 200, Arrays.asList(), "the raw token");
         when(mResponse.isStreamingEnabled()).thenReturn(false);
         when(mResponse.getToken()).thenReturn(null);
         when(mResponse.isClientError()).thenReturn(true);

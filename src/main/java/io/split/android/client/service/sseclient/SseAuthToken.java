@@ -12,14 +12,11 @@ class SseAuthToken {
     @SerializedName("exp")
     private final long expirationAt;
 
-    @SerializedName("connDelay")
-    private final long sseConnectionDelay;
 
-    public SseAuthToken(String channelList, long issuedAt, long expirationAt, long sseConnectionDelay) {
+    public SseAuthToken(String channelList, long issuedAt, long expirationAt) {
         this.channelList = channelList;
         this.issuedAt = issuedAt;
         this.expirationAt = expirationAt;
-        this.sseConnectionDelay = sseConnectionDelay;
     }
 
     public String getChannelList() {
@@ -34,7 +31,4 @@ class SseAuthToken {
         return expirationAt;
     }
 
-    public long getSseConnectionDelay() {
-        return sseConnectionDelay;
-    }
 }
