@@ -115,4 +115,26 @@ public class MySegmentV2PayloadDecoderTest {
             Assert.assertTrue(results.get(key));
         }
     }
+
+    @Test
+    public void boundedZlibPayload2() throws MySegmentsParsingException {
+
+        byte[] payload = mDecoder.decodeAsBytes(TestingData.encodedBoundedPayloadZlib2(), mZlib);
+        List<String> keys = new ArrayList<>();
+        for (int i=0; i<= 121; i++) {
+            keys.add("user"+i);
+        }
+        Map<String, Boolean> results = new HashMap<>();
+        for (String key : keys) {
+            BigInteger hashedKey = mDecoder.hashKey(key);
+            int index = mDecoder.computeKeyIndex(hashedKey, payload.length);
+            results.put(key, mDecoder.isKeyInBitmap(payload, index));
+        }
+
+        for (int i=1; i<= 120; i++) {
+            Assert.assertTrue(results.get("user"+i));
+        }
+        Assert.assertFalse(results.get("user0"));
+        Assert.assertFalse(results.get("user121"));
+    }
 }
