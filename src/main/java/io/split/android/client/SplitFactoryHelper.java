@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.work.WorkManager;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -47,18 +48,50 @@ import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
 import io.split.android.engine.metrics.Metrics;
 
 class SplitFactoryHelper {
+    private static final int  DB_MAGIC_CHARS_COUNT = 4;
 
-    String buildDatabaseName(SplitClientConfig splitClientConfig, String apiToken) {
+    String getDatabaseName(SplitClientConfig config, String apiToken, Context context) {
+
+        String dbName = buildDatabaseName(config, apiToken);
+        File dbPath = context.getDatabasePath(dbName);
+        if(dbPath.exists()) {
+            return dbName;
+        }
+
+        String legacyName = buildLegacyDatabaseName(config, apiToken);
+        File legacyDb = context.getDatabasePath(legacyName);
+        if(legacyDb.exists()) {
+            legacyDb.renameTo(dbPath);
+        }
+        return dbName;
+    }
+
+    private String buildDatabaseName(SplitClientConfig config, String apiToken) {
+        int apiTokenLength = apiToken.length();
+        if(apiTokenLength > DB_MAGIC_CHARS_COUNT) {
+            String begin = apiToken.substring(0, DB_MAGIC_CHARS_COUNT);
+            String end = apiToken.substring(apiTokenLength - DB_MAGIC_CHARS_COUNT - 1, apiTokenLength - 1);
+            return begin + end;
+        }
+        return config.defaultDataFolder();
+    }
+
+    private String buildLegacyDatabaseName(SplitClientConfig splitClientConfig, String apiToken) {
         String databaseName = Utils.convertApiKeyToFolder(apiToken);
         if (databaseName == null) {
             databaseName = splitClientConfig.defaultDataFolder();
         }
         return databaseName;
+    }
+
+    void renameDbIfLegacy(String databaseName) {
+
     }
 
     Map<String, String> buildHeaders(SplitClientConfig splitClientConfig, String apiToken) {
