@@ -1,24 +1,28 @@
 package io.split.android.client.service.sseclient.notifications;
 
+import com.google.gson.annotations.SerializedName;
+
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import io.split.android.client.common.CompressionType;
 
 public class MySegmentChangeV2Notification extends IncomingNotification {
 
-    public enum Type {
-        UNBOUNDED_FETCH_REQUEST, BOUNDED_FETCH_REQUEST, KEY_LIST, SEGMENT_REMOVAL
-    }
-
-    public enum CompressionType {
-        GZIP, ZLIB
-    }
+    private static final String FIELD_UPDATE_STRATEGY = "u";
+    private static final String FIELD_COMPRESSION = "c";
+    private static final String FIELD_DATE = "d";
 
     private Long changeNumber;
     private String segmentName;
-    private MySegmentChangeV2Notification.CompressionType compression;
-    private MySegmentChangeV2Notification.Type envScopedType;
-    private byte[] data;
+
+    @SerializedName(FIELD_COMPRESSION)
+    private CompressionType compression;
+
+    @SerializedName(FIELD_UPDATE_STRATEGY)
+    private MySegmentUpdateStrategy updateStrategy;
+
+    @SerializedName(FIELD_DATE)
+    private String data;
 
     @Nullable
     public Long getChangeNumber() {
@@ -31,17 +35,17 @@ public class MySegmentChangeV2Notification extends IncomingNotification {
     }
 
     @Nullable
-    public MySegmentChangeV2Notification.CompressionType getCompression() {
+    public CompressionType getCompression() {
         return compression;
     }
 
     @Nullable
-    public MySegmentChangeV2Notification.Type getEnvScopedType() {
-        return envScopedType;
+    public MySegmentUpdateStrategy getUpdateStrategy() {
+        return updateStrategy;
     }
 
     @Nullable
-    public byte[] getData() {
+    public String getData() {
         return data;
     }
 }

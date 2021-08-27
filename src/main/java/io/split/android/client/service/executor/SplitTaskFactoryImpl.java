@@ -15,15 +15,15 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.events.EventsRecorderTaskConfig;
-import io.split.android.client.service.impressions.ImpressionsCount;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
-import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
+import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -31,7 +31,6 @@ import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
-import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.storage.SplitStorageContainer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -110,8 +109,15 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public MySegmentsUpdateTask createMySegmentsUpdateTask(List<String> segments) {
-        return new MySegmentsUpdateTask(mSplitsStorageContainer.getMySegmentsStorage(), segments, mEventsManager);
+    public MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments) {
+        return new MySegmentsOverwriteTask(mSplitsStorageContainer.getMySegmentsStorage(), segments, mEventsManager);
+    }
+
+    @Override
+    public MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, String segmentName) {
+        return new MySegmentsUpdateTask(
+                mSplitsStorageContainer.getMySegmentsStorage(), add,
+                segmentName, mEventsManager);
     }
 
     @Override

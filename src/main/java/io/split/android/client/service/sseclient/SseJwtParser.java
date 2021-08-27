@@ -1,18 +1,16 @@
 package io.split.android.client.service.sseclient;
 
-import android.util.Base64;
-
 import androidx.annotation.Nullable;
 
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
@@ -40,7 +38,7 @@ public class SseJwtParser {
             throw new InvalidJwtTokenException();
         }
 
-        String payload = base64Decode(encodedPayload);
+        String payload = Base64Util.decode(encodedPayload);
         if (payload == null) {
             Logger.e("Could not decode SSE authentication JWT payload.");
             throw new InvalidJwtTokenException();
@@ -90,20 +88,6 @@ public class SseJwtParser {
             return components[1];
         }
         return null;
-    }
-
-    @Nullable
-    private String base64Decode(String string) {
-        String decoded = null;
-        try {
-            byte[] bytes = Base64.decode(string, Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
-            decoded = new String(bytes, Charset.defaultCharset());
-        } catch (IllegalArgumentException e) {
-            Logger.e("Received bytes didn't correspond to a valid Base64 encoded string." + e.getLocalizedMessage());
-        } catch (Exception e) {
-            Logger.e("An unknown error has ocurred " + e.getLocalizedMessage());
-        }
-        return decoded;
     }
 
     private List<String> emptyChannelList() {

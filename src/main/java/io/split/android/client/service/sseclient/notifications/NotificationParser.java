@@ -2,12 +2,18 @@ package io.split.android.client.service.sseclient.notifications;
 
 import androidx.annotation.NonNull;
 
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Map;
 
+import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.StringHelper;
 
 import static io.split.android.client.service.sseclient.notifications.NotificationType.ERROR;
 import static io.split.android.client.service.sseclient.notifications.NotificationType.OCCUPANCY;
@@ -73,6 +79,10 @@ public class NotificationParser {
 
     public StreamingError parseError(String jsonData) throws JsonSyntaxException {
         return Json.fromJson(jsonData, StreamingError.class);
+    }
+
+    public KeyList parseKeyList(String jsonData) throws JsonSyntaxException {
+        return Json.fromJson(jsonData, KeyList.class);
     }
 
     public boolean isError(Map<String, String> values) {
