@@ -208,12 +208,12 @@ public class PushNotificationManager {
         }
 
         private boolean delay(long seconds) {
-//            try {
-//                sleep(seconds * 1000L);
-//            } catch (InterruptedException e) {
-//                Thread.currentThread().interrupt();
-//                return false;
-//            }
+            try {
+                sleep(seconds * 1000L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
             return true;
         }
     }
