@@ -11,7 +11,7 @@ public class SseAuthenticationResponse {
     private String token;
 
     @SerializedName("connDelay")
-    private long sseConnectionDelay;
+    private Long sseConnectionDelay;
 
     public SseAuthenticationResponse() {
     }
@@ -32,7 +32,7 @@ public class SseAuthenticationResponse {
         return token;
     }
 
-    public long getSseConnectionDelay() {
+    public Long getSseConnectionDelay() {
         return sseConnectionDelay;
     }
 }
