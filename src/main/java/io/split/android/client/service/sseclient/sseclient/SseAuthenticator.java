@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
@@ -51,8 +53,9 @@ public class SseAuthenticator {
         }
 
         try {
+            long sseConnetionDelay = authResponse.getSseConnectionDelay() != null ? authResponse.getSseConnectionDelay().longValue() : ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
             return new SseAuthenticationResult(true, true, true,
-                    authResponse.getSseConnectionDelay(), mJwtParser.parse(authResponse.getToken()));
+                    sseConnetionDelay, mJwtParser.parse(authResponse.getToken()));
         } catch (InvalidJwtTokenException e) {
             Logger.e("Error while parsing Jwt");
         }
