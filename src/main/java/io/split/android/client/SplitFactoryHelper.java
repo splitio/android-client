@@ -76,7 +76,7 @@ class SplitFactoryHelper {
         int apiTokenLength = apiToken.length();
         if(apiTokenLength > DB_MAGIC_CHARS_COUNT) {
             String begin = apiToken.substring(0, DB_MAGIC_CHARS_COUNT);
-            String end = apiToken.substring(apiTokenLength - DB_MAGIC_CHARS_COUNT - 1, apiTokenLength - 1);
+            String end = apiToken.substring(apiTokenLength - DB_MAGIC_CHARS_COUNT);
             return begin + end;
         }
         return config.defaultDataFolder();
@@ -88,10 +88,6 @@ class SplitFactoryHelper {
             databaseName = splitClientConfig.defaultDataFolder();
         }
         return databaseName;
-    }
-
-    void renameDbIfLegacy(String databaseName) {
-
     }
 
     Map<String, String> buildHeaders(SplitClientConfig splitClientConfig, String apiToken) {
