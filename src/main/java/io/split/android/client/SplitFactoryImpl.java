@@ -33,6 +33,7 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -111,7 +112,7 @@ public class SplitFactoryImpl implements SplitFactory {
         _apiKey = apiToken;
 
         // Check if test database available
-        String databaseName = factoryHelper.buildDatabaseName(config, apiToken);
+        String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
         if(testDatabase == null) {
             _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         } else {
