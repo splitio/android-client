@@ -16,6 +16,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
+import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
@@ -99,6 +100,22 @@ public class SseHandlerTest {
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(true);
+
+        mSseHandler.handleIncomingMessage(buildMessage("{}"));
+
+        verify(mNotificationProcessor).process(incomingNotification);
+    }
+
+    @Test
+    public void incomingMySegmentsUpdateV2() {
+
+        IncomingNotification incomingNotification =
+                new IncomingNotification(NotificationType.MY_SEGMENTS_UPDATE_V2, "", "", 100);
+        MySegmentChangeV2Notification notification = new MySegmentChangeV2Notification();
+
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mNotificationParser.parseMySegmentUpdateV2(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));

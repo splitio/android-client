@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
@@ -42,16 +44,18 @@ public class SseAuthenticator {
 
         if(authResponse.isClientError()) {
             Logger.d("Error while authenticating to streaming. Check your api key is correct.");
-            return new SseAuthenticationResult(false, false, false, null);
+            return new SseAuthenticationResult(false, false, false, 0, null);
         }
 
         if(!authResponse.isStreamingEnabled()) {
             Logger.d("Streaming disabled for api key");
-            return new SseAuthenticationResult(true, true, false, null);
+            return new SseAuthenticationResult(true, true, false, 0, null);
         }
 
         try {
-            return new SseAuthenticationResult(true, true, true, mJwtParser.parse(authResponse.getToken()));
+            long sseConnetionDelay = authResponse.getSseConnectionDelay() != null ? authResponse.getSseConnectionDelay().longValue() : ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
+            return new SseAuthenticationResult(true, true, true,
+                    sseConnetionDelay, mJwtParser.parse(authResponse.getToken()));
         } catch (InvalidJwtTokenException e) {
             Logger.e("Error while parsing Jwt");
         }

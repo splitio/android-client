@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import java.util.concurrent.BlockingQueue;
 
+import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.utils.Logger;

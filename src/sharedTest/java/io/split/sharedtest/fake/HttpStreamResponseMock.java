@@ -7,6 +7,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.network.BaseHttpResponseImpl;
 import io.split.android.client.network.HttpStreamResponse;
@@ -18,7 +19,7 @@ public class HttpStreamResponseMock extends BaseHttpResponseImpl implements Http
     final private PipedOutputStream mOutputStream;
     final private BufferedReader mBufferedReader;
     private Thread mRedirectionThread;
-    private boolean mIsClosed;
+    private AtomicBoolean mIsClosed = new AtomicBoolean(false);
 
     private CountDownLatch mClosedLatch;
 
@@ -65,8 +66,10 @@ public class HttpStreamResponseMock extends BaseHttpResponseImpl implements Http
     }
 
     public void close() {
-        mIsClosed = true;
+        mIsClosed.set(true);
+        System.out.println("Streaming Close mock call");
         if (mClosedLatch != null) {
+            System.out.println("Streaming Close latch countdown");
             mClosedLatch.countDown();
         }
         mRedirectionThread.interrupt();
@@ -82,7 +85,7 @@ public class HttpStreamResponseMock extends BaseHttpResponseImpl implements Http
     }
 
     public boolean isClosed() {
-        return mIsClosed;
+        return mIsClosed.get();
     }
 }
 

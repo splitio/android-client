@@ -10,7 +10,8 @@ public class PushStatusEvent {
          * Types of messages that can be pushed to the
          * Synchronization feedback channel
          */
-        PUSH_SUBSYSTEM_UP, PUSH_SUBSYSTEM_DOWN, PUSH_RETRYABLE_ERROR, PUSH_NON_RETRYABLE_ERROR, PUSH_DISABLED
+        PUSH_SUBSYSTEM_UP, PUSH_SUBSYSTEM_DOWN, PUSH_RETRYABLE_ERROR, PUSH_NON_RETRYABLE_ERROR, PUSH_DISABLED,
+        PUSH_RESET
     }
 
     final private EventType message;

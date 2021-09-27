@@ -10,6 +10,9 @@ public class SseAuthenticationResponse {
     private boolean isStreamingEnabled;
     private String token;
 
+    @SerializedName("connDelay")
+    private Long sseConnectionDelay;
+
     public SseAuthenticationResponse() {
     }
 
@@ -27,5 +30,9 @@ public class SseAuthenticationResponse {
 
     public String getToken() {
         return token;
+    }
+
+    public Long getSseConnectionDelay() {
+        return sseConnectionDelay;
     }
 }
