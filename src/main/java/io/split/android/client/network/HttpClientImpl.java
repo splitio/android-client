@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.Logger;
@@ -111,7 +112,7 @@ public class HttpClientImpl implements HttpClient {
         private HttpProxy mProxy;
         private long readTimeout = -1;
         private long connectionTimeout = -1;
-        private boolean isSslDevelopmentMode = false;
+        private DevelopmentSslConfig developmentSslConfig = null;
         private Context mHostAppContext;
 
         public Builder setContext(Context context) {
@@ -139,8 +140,8 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
-        public Builder enableSslDevelopmentMode(boolean enableSslDevelopmentMode) {
-            isSslDevelopmentMode = enableSslDevelopmentMode;
+        public Builder setDevelopmentSslConfig(DevelopmentSslConfig developmentSslConfig) {
+            this.developmentSslConfig = developmentSslConfig;
             return this;
         }
 
@@ -158,9 +159,9 @@ public class HttpClientImpl implements HttpClient {
 
             // Avoiding newBuilder on purpose to use different thread pool and resources
             return new HttpClientImpl(
-                    createOkHttpClient(proxy, proxyAuthenticator, readTimeout, connectionTimeout, isSslDevelopmentMode, mHostAppContext),
+                    createOkHttpClient(proxy, proxyAuthenticator, readTimeout, connectionTimeout, developmentSslConfig, mHostAppContext),
                     createOkHttpClient(proxy, proxyAuthenticator, STREAMING_READ_TIMEOUT_IN_MILLISECONDS,
-                            connectionTimeout, isSslDevelopmentMode, mHostAppContext)
+                            connectionTimeout, developmentSslConfig, mHostAppContext)
             );
         }
 
@@ -168,7 +169,7 @@ public class HttpClientImpl implements HttpClient {
                                                 Authenticator proxyAuthenticator,
                                                 Long readTimeout,
                                                 Long connectionTimeout,
-                                                boolean enableSslDevelopmentMode,
+                                                DevelopmentSslConfig developmentSslConfig,
                                                 Context context) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
@@ -188,9 +189,10 @@ public class HttpClientImpl implements HttpClient {
                 builder.connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS);
             }
 
-            // Both options overides SSLSocketFactory
-            if (enableSslDevelopmentMode) {
-                setupDevelopmentSslSocketFactory(builder);
+            // Both options overrides SSLSocketFactory
+            if (developmentSslConfig != null) {
+                builder.sslSocketFactory(developmentSslConfig.getSslSocketFactory(), developmentSslConfig.getTrustManager());
+                builder.hostnameVerifier(developmentSslConfig.getHostnameVerifier());
             } else if (LegacyTlsUpdater.couldBeOld()) {
                 forceTls12OnOldAndroid(builder, context);
             }
@@ -213,15 +215,6 @@ public class HttpClientImpl implements HttpClient {
                     return response.request().newBuilder().header(PROXY_AUTHORIZATION_HEADER, credential).build();
                 }
             };
-        }
-
-        private void setupDevelopmentSslSocketFactory(OkHttpClient.Builder okHttpBuilder) {
-            DevelopmentSSLFactory developmentSSLFactory = new DevelopmentSSLFactory();
-            SSLSocketFactory socketFactory = developmentSSLFactory.sslSocketFactory();
-            if (socketFactory != null) {
-                okHttpBuilder.sslSocketFactory(socketFactory, developmentSSLFactory.x509TrustManager());
-                okHttpBuilder.hostnameVerifier(developmentSSLFactory.hostnameVerifier());
-            }
         }
 
         private void forceTls12OnOldAndroid(OkHttpClient.Builder okHttpBuilder, Context context) {
