@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.DatabaseHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -57,7 +58,7 @@ public class StreamingInitializationTest {
 
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock, DatabaseHelper.getTestDatabase(mContext));
 
         SplitClient client = splitFactory.client();
 
@@ -66,7 +67,8 @@ public class StreamingInitializationTest {
         SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
-        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
+        // Commented because ready from cache is not fired if no data in cache
+//        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
 
         readyFromCacheLatch.await(40, TimeUnit.SECONDS);
@@ -76,7 +78,7 @@ public class StreamingInitializationTest {
 
         Assert.assertTrue(client.isReady());
         Assert.assertTrue(splitFactory.isReady());
-        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
+//        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
         Assert.assertTrue(mIsStreamingAuth);

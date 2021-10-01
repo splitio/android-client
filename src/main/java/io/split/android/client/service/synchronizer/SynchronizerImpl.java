@@ -281,7 +281,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private void scheduleMySegmentsFetcherTask() {
         mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createMySegmentsSyncTask(false),
-                mSplitClientConfig.featuresRefreshRate(),
+                mSplitClientConfig.segmentsRefreshRate(),
                 mSplitClientConfig.segmentsRefreshRate(), null);
     }
 
