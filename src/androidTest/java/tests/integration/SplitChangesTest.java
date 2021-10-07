@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.ImpressionListenerHelper;
 import helper.IntegrationHelper;
@@ -125,7 +126,7 @@ public class SplitChangesTest {
 
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
 
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
 
         SplitClient client;
@@ -148,7 +149,9 @@ public class SplitChangesTest {
                 .build();
 
 
-        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(
+                apiKey, key,
+                config, mContext, null, splitRoomDatabase);
 
         client = splitFactory.client();
 

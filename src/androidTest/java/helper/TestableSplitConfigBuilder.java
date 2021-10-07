@@ -6,6 +6,7 @@ package helper;
         import io.split.android.client.SplitClientConfig;
         import io.split.android.client.SyncConfig;
         import io.split.android.client.impressions.ImpressionListener;
+        import io.split.android.client.network.DevelopmentSslConfig;
         import io.split.android.client.service.impressions.ImpressionsMode;
         import io.split.android.client.utils.Logger;
         import okhttp3.Authenticator;
@@ -46,7 +47,7 @@ public class TestableSplitConfigBuilder {
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
     private int mStreamingReconnectBackoffBase = 1;
-    private boolean mEnableSslDevelopmentMode = false;
+    private DevelopmentSslConfig mDevelopmentSslConfig = null;
     private ImpressionsMode mImpressionsMode = ImpressionsMode.OPTIMIZED;
     private SyncConfig mSyncConfig = SyncConfig.builder().build();
 
@@ -185,8 +186,8 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
-    public TestableSplitConfigBuilder enableSslDevelopmentMode() {
-        mEnableSslDevelopmentMode = true;
+    public TestableSplitConfigBuilder developmentSslConfig(DevelopmentSslConfig developmentSslConfig) {
+        mDevelopmentSslConfig = developmentSslConfig;
         return this;
     }
 
@@ -250,7 +251,7 @@ public class TestableSplitConfigBuilder {
                     mStreamingReconnectBackoffBase,
                     mServiceEndpoints.getAuthServiceEndpoint(),
                     mServiceEndpoints.getStreamingServiceEndpoint(),
-                    mEnableSslDevelopmentMode,
+                    mDevelopmentSslConfig,
                     mSyncConfig,
                     mLegacyStorageMigrationEnabled,
                     mImpressionsMode,

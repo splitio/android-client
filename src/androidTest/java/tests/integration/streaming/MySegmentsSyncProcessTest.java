@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.DatabaseHelper;
 import helper.TestingHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.FileHelper;
@@ -69,7 +70,7 @@ public class MySegmentsSyncProcessTest {
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
         String dataFolderName = apiKeyAndDb.second;
-        mSplitRoomDatabase = Room.inMemoryDatabaseBuilder(mContext, SplitRoomDatabase.class).build();
+        mSplitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         mSplitRoomDatabase.clearAllTables();
         mUserKey = IntegrationHelper.dummyUserKey();
     }

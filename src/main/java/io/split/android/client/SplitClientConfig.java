@@ -1,17 +1,26 @@
 package io.split.android.client;
 
 
+import androidx.annotation.NonNull;
+
 import com.google.common.base.Strings;
 
 import java.net.URI;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
+
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.utils.Logger;
 import okhttp3.Authenticator;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Configurations for the SplitClient.
@@ -109,7 +118,7 @@ public class SplitClientConfig {
     private int _streamingReconnectBackoffBase;
     private String _authServiceUrl;
     private String _streamingServiceUrl;
-    private boolean _isSslDevelopmentModeEnabled;
+    private DevelopmentSslConfig _developmentSslConfig;
 
     private SyncConfig _syncConfig;
 
@@ -158,7 +167,7 @@ public class SplitClientConfig {
                               int streamingReconnectBackoffBase,
                               String authServiceUrl,
                               String streamingServiceUrl,
-                              boolean enableSslDevelopmentMode,
+                              DevelopmentSslConfig developmentSslConfig,
                               SyncConfig syncConfig,
                               boolean legacyStorageMigrationEnabled,
                               ImpressionsMode impressionsMode,
@@ -200,7 +209,7 @@ public class SplitClientConfig {
         _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
         _authServiceUrl = authServiceUrl;
         _streamingServiceUrl = streamingServiceUrl;
-        _isSslDevelopmentModeEnabled = enableSslDevelopmentMode;
+        _developmentSslConfig = developmentSslConfig;
         _syncConfig = syncConfig;
         _legacyStorageMigrationEnabled = legacyStorageMigrationEnabled;
         _impressionsMode = impressionsMode;
@@ -440,8 +449,8 @@ public class SplitClientConfig {
         return _proxyAuthenticator;
     }
 
-    public boolean isSslDevelopmentModeEnabled() {
-        return _isSslDevelopmentModeEnabled;
+    public DevelopmentSslConfig developmentSslConfig() {
+        return _developmentSslConfig;
     }
 
     public SyncConfig syncConfig() {
@@ -505,7 +514,7 @@ public class SplitClientConfig {
         private int _streamingReconnectBackoffBase
                 = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
 
-        private boolean _isSslDevelopmentModeEnabled = false;
+        private DevelopmentSslConfig _developmentSslConfig;
 
         private SyncConfig _syncConfig = SyncConfig.builder().build();
 
@@ -915,13 +924,17 @@ public class SplitClientConfig {
         }
 
         /**
-         * Avoid SSL checks while app on development. Do not activate this feature in production.
+         * Allows setup a custom SSL factory and trust manager. Do not activate this feature in production.
          *
          * @return: This builder
-         * @default: false
+         * @default: null
          */
-        public Builder enableSslDevelopmentMode() {
-            _isSslDevelopmentModeEnabled = true;
+        public Builder developmentSslConfig(@NonNull SSLSocketFactory sslSocketFactory,
+                                            @NonNull X509TrustManager trustManager,
+                                            @NonNull HostnameVerifier hostnameVerifier) {
+
+            _developmentSslConfig = new DevelopmentSslConfig(checkNotNull(sslSocketFactory),
+                    checkNotNull(trustManager), checkNotNull(hostnameVerifier));
             return this;
         }
 
@@ -1071,7 +1084,7 @@ public class SplitClientConfig {
                     _streamingReconnectBackoffBase,
                     _serviceEndpoints.getAuthServiceEndpoint(),
                     _serviceEndpoints.getStreamingServiceEndpoint(),
-                    _isSslDevelopmentModeEnabled,
+                    _developmentSslConfig,
                     _syncConfig,
                     _legacyStorageMigrationEnabled,
                     _impressionsMode,

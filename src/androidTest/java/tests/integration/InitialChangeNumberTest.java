@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import helper.DatabaseHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.ServiceEndpoints;
@@ -90,8 +91,7 @@ public class InitialChangeNumberTest {
         CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         String apiKey = apiKeyAndDb.first;
-        String dataFolderName = apiKeyAndDb.second;
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
@@ -116,7 +116,9 @@ public class InitialChangeNumberTest {
                 .build();
 
 
-        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(
+                apiKey, key,
+                config, mContext, null, splitRoomDatabase);
 
         client = splitFactory.client();
 

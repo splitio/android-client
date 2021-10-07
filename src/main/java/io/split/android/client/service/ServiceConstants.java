@@ -28,4 +28,6 @@ public class ServiceConstants {
     public final static String WORKER_PARAM_SPLIT_CACHE_EXPIRATION = "splitCacheExpiration";
 
     public static final long LAST_SEEN_IMPRESSION_CACHE_SIZE = 500;
+    public static final int MY_SEGMENT_V2_DATA_SIZE = 1024 * 10;// bytes
+    public static final long DEFAULT_SSE_CONNECTION_DELAY_SECS = 60;
 }

@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.DatabaseHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -72,7 +73,7 @@ public class SseAuthFail5xxTest {
 
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock, DatabaseHelper.getTestDatabase(mContext));
 
         SplitClient client = splitFactory.client();
 

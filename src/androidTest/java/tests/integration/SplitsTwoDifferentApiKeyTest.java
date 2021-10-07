@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -81,13 +82,15 @@ public class SplitsTwoDifferentApiKeyTest {
         // Factory 1 init
         CountDownLatch latch1 = new CountDownLatch(1);
 
+        SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
+
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher(1));
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
         mFactory1 = IntegrationHelper.buildFactory(
                 mApiKey1, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock, db);
 
         mClient1 = mFactory1.client();
 
@@ -112,7 +115,7 @@ public class SplitsTwoDifferentApiKeyTest {
 
         mFactory2 = IntegrationHelper.buildFactory(
                 mApiKey2, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock2);
+                config, mContext, httpClientMock2, DatabaseHelper.getTestDatabase(mContext));
 
         mClient2 = mFactory2.client();
 

@@ -30,8 +30,10 @@ import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
+import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -60,11 +62,12 @@ public class SplitFactoryImpl implements SplitFactory {
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
         this(apiToken, key, config, context,
-                null, null);
+                null, null, null);
     }
 
     private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
-                             Context context, HttpClient httpClient, SplitRoomDatabase testDatabase)
+                             Context context, HttpClient httpClient, SplitRoomDatabase testDatabase,
+                             SynchronizerSpy synchronizerSpy)
             throws URISyntaxException {
 
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
@@ -79,7 +82,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     .setConnectionTimeout(config.connectionTimeout())
                     .setReadTimeout(config.readTimeout())
                     .setProxy(config.proxy())
-                    .enableSslDevelopmentMode(config.isSslDevelopmentModeEnabled())
+                    .setDevelopmentSslConfig(config.developmentSslConfig())
                     .setContext(context)
                     .setProxyAuthenticator(config.authenticator()).build();
         } else {
@@ -109,7 +112,7 @@ public class SplitFactoryImpl implements SplitFactory {
         _apiKey = apiToken;
 
         // Check if test database available
-        String databaseName = factoryHelper.buildDatabaseName(config, apiToken);
+        String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
         if(testDatabase == null) {
             _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         } else {
@@ -150,6 +153,12 @@ public class SplitFactoryImpl implements SplitFactory {
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
                 context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory());
+
+        // Only available for integration tests
+        if (synchronizerSpy != null) {
+            synchronizerSpy.setSynchronizer(synchronizer);
+            synchronizer = synchronizerSpy;
+        }
 
         _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
                 splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer);

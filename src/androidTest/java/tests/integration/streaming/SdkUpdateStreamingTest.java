@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -82,7 +83,7 @@ public class SdkUpdateStreamingTest {
         mStreamingData = new LinkedBlockingDeque<>();
         mSseLatch = new CountDownLatch(1);
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
-        mSplitRoomDatabase = Room.inMemoryDatabaseBuilder(mContext, SplitRoomDatabase.class).build();
+        mSplitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         mSplitRoomDatabase.clearAllTables();
         mSplitRoomDatabase.generalInfoDao().update(
                 new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 99999));
