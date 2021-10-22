@@ -121,4 +121,12 @@ public class URIBuilderTest {
         Assert.assertEquals("https://api.split.io/internal/api/v2/work%7Cspaces?p3=v3&p1=v1%7C1,v2,v3&p2=v1,v2", uri.toString());
     }
 
+    @Test
+    public void maintainSpecialCharactersInPath() throws URISyntaxException {
+
+        URI root = new URI("https://api.split.io/api/mySegments");
+        URI uri = new URIBuilder(root, "test%2Fuser").build();
+
+        Assert.assertEquals("/api/mySegments/test%2Fuser", uri.getPath());
+    }
 }

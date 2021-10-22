@@ -19,8 +19,8 @@ public class URIBuilder {
 
     public URIBuilder(@NonNull URI rootURI, String path) {
         mRootURI = checkNotNull(rootURI);
-        String rootPath = mRootURI.getPath();
-        if(path != null && rootPath != null) {
+        String rootPath = mRootURI.getRawPath();
+        if (path != null && rootPath != null) {
             mPath = String.format("%s/%s", rootPath, path);
             mPath = mPath.replace("///", "/");
             mPath = mPath.replace("//", "/");
@@ -64,7 +64,7 @@ public class URIBuilder {
 
         if (!Strings.isNullOrEmpty(mQueryString)) {
             if (!Strings.isNullOrEmpty(params)) {
-                if(!"&".equals(mQueryString.substring(0, 1))) {
+                if (!"&".equals(mQueryString.substring(0, 1))) {
                     params = params + "&";
                 }
                 params = params + mQueryString;
