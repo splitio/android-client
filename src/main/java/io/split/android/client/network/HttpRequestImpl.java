@@ -31,24 +31,24 @@ public class HttpRequestImpl implements HttpRequest {
     private final String mBody;
     private final HttpMethod mHttpMethod;
     private final Map<String, String> mHeaders;
-    private final UrlEscaper mUrlEscaper;
+    private final UrlSanitizer mUrlSanitizer;
 
     HttpRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
                     @NonNull HttpMethod httpMethod,
                     @Nullable String body, @NonNull Map<String, String> headers) {
-        this(okHttpClient, uri, httpMethod, body, headers, new UrlEscaperImpl());
+        this(okHttpClient, uri, httpMethod, body, headers, new UrlSanitizerImpl());
     }
 
     HttpRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
                     @NonNull HttpMethod httpMethod,
                     @Nullable String body, @NonNull Map<String, String> headers,
-                    @NonNull UrlEscaper urlEscaper) {
+                    @NonNull UrlSanitizer urlSanitizer) {
         mOkHttpClient = checkNotNull(okHttpClient);
         mUri = checkNotNull(uri);
         mHttpMethod = checkNotNull(httpMethod);
         mBody = body;
         mHeaders = new HashMap<>(checkNotNull(headers));
-        mUrlEscaper = urlEscaper;
+        mUrlSanitizer = checkNotNull(urlSanitizer);
     }
 
     @Override
@@ -74,7 +74,7 @@ public class HttpRequestImpl implements HttpRequest {
         HttpResponse response;
         try {
 
-            url = mUrlEscaper.getUrl(mUri);
+            url = mUrlSanitizer.getUrl(mUri);
 
             Request.Builder requestBuilder = new Request.Builder()
                     .url(url);

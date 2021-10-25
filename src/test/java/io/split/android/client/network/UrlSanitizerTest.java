@@ -7,10 +7,10 @@ import org.junit.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class UrlEscaperTest {
+public class UrlSanitizerTest {
 
     private static final String ORIGIN_URI_STRING = "https://api.split.io:8001/path/Segment/test%2Fuser?queryParam1=value1&queryParam2=value2#fragment";
-    private final UrlEscaperImpl urlEscaper = new UrlEscaperImpl();
+    private final UrlSanitizerImpl urlEscaper = new UrlSanitizerImpl();
     private URI originUri;
     private URI httpUrlUri;
 

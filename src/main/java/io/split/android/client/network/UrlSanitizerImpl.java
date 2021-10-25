@@ -6,11 +6,11 @@ import java.net.URL;
 import io.split.android.client.utils.Logger;
 import okhttp3.HttpUrl;
 
-public class UrlEscaperImpl implements UrlEscaper {
+public class UrlSanitizerImpl implements UrlSanitizer {
 
     private final HttpUrl.Builder mUrlBuilder;
 
-    public UrlEscaperImpl() {
+    public UrlSanitizerImpl() {
         mUrlBuilder = new HttpUrl.Builder();
     }
 
