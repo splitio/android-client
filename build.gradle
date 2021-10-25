@@ -6,7 +6,7 @@ buildscript {
 
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
+        classpath 'com.android.tools.build:gradle:7.0.3'
     }
 }
 
@@ -21,7 +21,7 @@ ext {
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     targetCompatibility = '1.8'
     sourceCompatibility = '1.8'
 
@@ -33,9 +33,7 @@ android {
     defaultConfig {
 
         minSdkVersion 15
-        targetSdkVersion 29
-        versionCode 0
-        versionName splitVersion
+        targetSdkVersion 30
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'split-proguard-rules.pro'
