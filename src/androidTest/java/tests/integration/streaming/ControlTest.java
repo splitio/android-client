@@ -174,6 +174,7 @@ public class ControlTest {
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
+
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
                 config, mContext, httpClientMock, db);
@@ -188,6 +189,7 @@ public class ControlTest {
         mSseConnectedLatch.await(5, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
+        sleep(200);
 
         mSseConnectedLatch = new CountDownLatch(1);
         pushControl("STREAMING_RESET");
