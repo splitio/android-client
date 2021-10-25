@@ -96,13 +96,14 @@ public class AblyErrorTest {
         mSseLatch.await(5, TimeUnit.SECONDS);
 
         for (int i=0; i<2; i++) {
+            mSseLatch = new CountDownLatch(1);
             pushErrorMessage(40012);
             Logger.d("push i: " + i);
-            //pushErrorMessage(40142); // token expired
+            mSseLatch.await(5, TimeUnit.SECONDS);mSseLatch.await(5, TimeUnit.SECONDS);
         }
 
         // what to be sure no new hit occurs
-        TestingHelper.delay(1000);
+//        TestingHelper.delay(1000);
 
         Assert.assertEquals(3, mSseHitCount);
     }
