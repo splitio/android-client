@@ -16,8 +16,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.utils.Logger;
-import okhttp3.HttpUrl;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -28,21 +26,29 @@ public class HttpRequestImpl implements HttpRequest {
 
     private static final MediaType JSON
             = MediaType.get("application/json; charset=utf-8");
-    private OkHttpClient mOkHttpClient;
-    private URI mUri;
-    private String mBody;
-    private HttpMethod mHttpMethod;
-    private Map<String, String> mHeaders;
-
+    private final OkHttpClient mOkHttpClient;
+    private final URI mUri;
+    private final String mBody;
+    private final HttpMethod mHttpMethod;
+    private final Map<String, String> mHeaders;
+    private final UrlEscaper mUrlEscaper;
 
     HttpRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
                     @NonNull HttpMethod httpMethod,
                     @Nullable String body, @NonNull Map<String, String> headers) {
+        this(okHttpClient, uri, httpMethod, body, headers, new UrlEscaperImpl());
+    }
+
+    HttpRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
+                    @NonNull HttpMethod httpMethod,
+                    @Nullable String body, @NonNull Map<String, String> headers,
+                    @NonNull UrlEscaper urlEscaper) {
         mOkHttpClient = checkNotNull(okHttpClient);
         mUri = checkNotNull(uri);
         mHttpMethod = checkNotNull(httpMethod);
         mBody = body;
         mHeaders = new HashMap<>(checkNotNull(headers));
+        mUrlEscaper = urlEscaper;
     }
 
     @Override
@@ -64,11 +70,11 @@ public class HttpRequestImpl implements HttpRequest {
     }
 
     private HttpResponse getRequest() throws HttpException {
-        HttpUrl url;
+        URL url;
         HttpResponse response;
         try {
 
-            url = buildUrl(mUri);
+            url = mUrlEscaper.getUrl(mUri);
 
             Request.Builder requestBuilder = new Request.Builder()
                     .url(url);
@@ -89,7 +95,7 @@ public class HttpRequestImpl implements HttpRequest {
 
     private HttpResponse postRequest() throws IOException {
 
-        if(mBody == null) {
+        if (mBody == null) {
             throw new IOException("Json data is null");
         }
 
@@ -128,26 +134,6 @@ public class HttpRequestImpl implements HttpRequest {
             return new HttpResponseImpl(responseCode, (responseData.length() > 0 ? responseData.toString() : null));
         }
         return new HttpResponseImpl(responseCode);
-    }
-
-    static HttpUrl buildUrl(URI uri) {
-        HttpUrl.Builder urlBuilder = new HttpUrl.Builder()
-                .fragment(uri.getFragment())
-                .host(uri.getHost())
-                .scheme(uri.getScheme())
-                .encodedQuery(uri.getQuery())
-                .encodedPath(uri.getPath());
-
-        int port = uri.getPort();
-        if (port > 0 && port <= 65535) {
-            try {
-                urlBuilder.port(port);
-            } catch (IllegalArgumentException exception) {
-                Logger.e(exception);
-            }
-        }
-
-        return urlBuilder.build();
     }
 
 }

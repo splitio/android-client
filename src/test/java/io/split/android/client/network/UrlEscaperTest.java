@@ -7,16 +7,17 @@ import org.junit.Test;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class HttpRequestTest {
+public class UrlEscaperTest {
 
-    private static final String ORIGIN_URI_STRING = "https://api.split.io:8001/path/Segment/test%2Fuser?queryParam1=value1&queryParam2=value2#fragment";;
+    private static final String ORIGIN_URI_STRING = "https://api.split.io:8001/path/Segment/test%2Fuser?queryParam1=value1&queryParam2=value2#fragment";
+    private final UrlEscaperImpl urlEscaper = new UrlEscaperImpl();
     private URI originUri;
     private URI httpUrlUri;
 
     @Before
     public void setUp() throws URISyntaxException {
         originUri = new URI(ORIGIN_URI_STRING);
-        httpUrlUri = HttpRequestImpl.buildUrl(originUri).uri();
+        httpUrlUri = urlEscaper.getUrl(originUri).toURI();
     }
 
     @Test
@@ -58,5 +59,4 @@ public class HttpRequestTest {
     public void buildUrlAbsoluteOpaque() {
         Assert.assertEquals(originUri.isAbsolute(), httpUrlUri.isAbsolute());
     }
-
 }
