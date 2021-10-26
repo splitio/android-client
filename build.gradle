@@ -34,6 +34,8 @@ android {
 
         minSdkVersion 15
         targetSdkVersion 30
+        versionCode 0
+        versionName splitVersion
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'split-proguard-rules.pro'
