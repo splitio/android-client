@@ -228,20 +228,10 @@ public class ControlTest {
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/mySegments")) {
                     Logger.i("** My segments hit");
-//                    if (hit < 1) {
-//                        hit++;
-//                        Logger.i("** My segments hit return my segments ready");
-//                        return createResponse(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment_ready\"}]}");
-//                    } else {
-//                        // This is to avoid having issues for polling update while asserting
-//                        return createResponse(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}]}");
-//                    }
                     return createResponse(200, IntegrationHelper.emptyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
 
                     Logger.i("** Split Changes hit");
-
-//                    String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(200, mSplitChange);
                 } else if (uri.getPath().contains("/auth")) {
                     mSseConnectionCount++;

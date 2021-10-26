@@ -67,8 +67,6 @@ public class StreamingInitializationTest {
         SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
-        // Commented because ready from cache is not fired if no data in cache
-//        client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
 
         readyFromCacheLatch.await(40, TimeUnit.SECONDS);
@@ -78,7 +76,6 @@ public class StreamingInitializationTest {
 
         Assert.assertTrue(client.isReady());
         Assert.assertTrue(splitFactory.isReady());
-//        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
         Assert.assertTrue(mIsStreamingAuth);

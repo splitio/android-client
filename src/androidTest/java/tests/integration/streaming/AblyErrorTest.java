@@ -102,9 +102,6 @@ public class AblyErrorTest {
             mSseLatch.await(5, TimeUnit.SECONDS);mSseLatch.await(5, TimeUnit.SECONDS);
         }
 
-        // what to be sure no new hit occurs
-//        TestingHelper.delay(1000);
-
         Assert.assertEquals(3, mSseHitCount);
     }
 
