@@ -66,9 +66,9 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                 Object value = param.getValue();
                 uriBuilder.addParameter(param.getKey(), value != null ? value.toString() : "");
             }
-            URI u = uriBuilder.build();
-            HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET, null, headers).execute();
-            Logger.d("Received from: " + u.toString() + " -> " + response.getData());
+            URI builtUri = uriBuilder.build();
+            HttpResponse response = mClient.request(builtUri, HttpMethod.GET, null, headers).execute();
+            Logger.d("Received from: " + builtUri.toString() + " -> " + response.getData());
             if (!response.isSuccess()) {
                 if(mMetrics != null) {
                     mMetrics.count(String.format(mFetcherMetricsConfig.getStatusLabel(), response.getHttpStatus()), 1);
