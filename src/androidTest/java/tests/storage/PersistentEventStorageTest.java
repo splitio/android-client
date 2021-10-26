@@ -11,6 +11,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import helper.DatabaseHelper;
+import helper.IntegrationHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.storage.db.EventEntity;
@@ -31,8 +33,7 @@ public class PersistentEventStorageTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mContext.deleteDatabase("encripted_api_key");
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
+        mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
         generateEvents(1, 10, StorageRecordStatus.ACTIVE, false);
         generateEvents(101, 110, StorageRecordStatus.DELETED, false);

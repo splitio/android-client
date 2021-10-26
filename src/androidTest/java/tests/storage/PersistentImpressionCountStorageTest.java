@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import helper.DatabaseHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.storage.db.ImpressionsCountEntity;
@@ -32,8 +33,7 @@ public class PersistentImpressionCountStorageTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mContext.deleteDatabase("encripted_api_key");
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
+        mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
         generateImpressionsCount(1, 10, StorageRecordStatus.ACTIVE, false);
         generateImpressionsCount(101, 110, StorageRecordStatus.DELETED, false);

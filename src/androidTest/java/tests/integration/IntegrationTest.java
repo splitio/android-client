@@ -303,10 +303,8 @@ public class IntegrationTest {
         SplitRoomDatabase mRoomDb;
         Context mContext;
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
-        String databaseName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mContext.deleteDatabase(databaseName);
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, databaseName);
+        mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
 
@@ -336,13 +334,13 @@ public class IntegrationTest {
                 .build();
 
 
-        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(apiKey, key, config, mContext, null, mRoomDb);
 
         client = splitFactory.client();
         SplitManager manager = splitFactory.manager();
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
-        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper();
 
         client.on(SplitEvent.SDK_READY_FROM_CACHE, readyTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
