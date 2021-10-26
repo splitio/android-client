@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -68,7 +69,7 @@ public class CleanUpDatabaseTest {
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
         String dataFolderName = apiKeyAndDb.second;
-        mSplitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        mSplitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         mEventDao = mSplitRoomDatabase.eventDao();
         mImpressionDao = mSplitRoomDatabase.impressionDao();
         mSplitRoomDatabase.clearAllTables();
@@ -109,7 +110,7 @@ public class CleanUpDatabaseTest {
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock, mSplitRoomDatabase);
 
         mClient = mFactory.client();
 

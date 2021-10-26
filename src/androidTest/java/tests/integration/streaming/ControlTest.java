@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -21,7 +22,15 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import fake.SynchronizerSpyImpl;
+import helper.DatabaseHelper;
 import helper.TestingHelper;
+import io.split.android.client.dtos.Partition;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.service.synchronizer.SynchronizerSpy;
+import io.split.android.client.service.synchronizer.ThreadUtils;
+import io.split.android.client.utils.Json;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.FileHelper;
 import helper.IntegrationHelper;
@@ -46,8 +55,6 @@ public class ControlTest {
     private Key mUserKey;
     private long mTimestamp = 100;
 
-    private CountDownLatch mMySegmentsUpdateLatch;
-
     private final static String CONTROL_TYPE_PLACEHOLDER = "$CONTROL_TYPE$";
     private final static String CONTROL_TIMESTAMP_PLACEHOLDER = "$TIMESTAMP$";
     private final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload_generic.txt";
@@ -59,47 +66,49 @@ public class ControlTest {
     private CountDownLatch mRequestClosedLatch;
     private CountDownLatch mPushLatch;
 
-    private SplitRoomDatabase mSplitRoomDatabase;
-
     private HttpStreamResponseMock mStreamingResponse;
     private int  mSseConnectionCount;
 
+    SplitRoomDatabase db;
+    String mSplitChange;
+
     @Before
     public void setup() {
+
         mSseConnectionCount = 0;
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mSplitChange = loadSplitChanges();
         mStreamingData = new LinkedBlockingDeque<>();
         mSseConnectedLatch = new CountDownLatch(1);
 
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
         String dataFolderName = apiKeyAndDb.second;
-        mSplitRoomDatabase = Room.inMemoryDatabaseBuilder(mContext,
-                SplitRoomDatabase.class)
-                .build();
-        mSplitRoomDatabase.clearAllTables();
+
         mUserKey = IntegrationHelper.dummyUserKey();
     }
 
     @Test
     public void controlNotification() throws IOException, InterruptedException {
 
-        MySegmentEntity dummySegmentEntity = new MySegmentEntity();
-        dummySegmentEntity.setUserKey(mUserKey.matchingKey());
-        dummySegmentEntity.setSegmentList("dummy");
+        SynchronizerSpyImpl synchronizerSpy = new SynchronizerSpyImpl();
+        db = DatabaseHelper.getTestDatabase(mContext);
+        db.clearAllTables();
 
         CountDownLatch readyLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(new CountDownLatch(1), "CONTROL notif update task");
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.basicConfig();
+        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(true);
 
         mFactory = IntegrationHelper.buildFactory(
-                mApiKey, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock, mSplitRoomDatabase);
+                mApiKey, mUserKey,
+                config, mContext, httpClientMock, db, synchronizerSpy);
 
         mClient = mFactory.client();
+
+        String splitName = "workm";
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
 
@@ -107,54 +116,53 @@ public class ControlTest {
         mClient.on(SplitEvent.SDK_UPDATE, updateTask);
         readyLatch.await(5, TimeUnit.SECONDS);
 
-        sleep(300);
-        MySegmentEntity mySegmentEntityReady = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
-
         mSseConnectedLatch.await(5, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
-        // Update segments to test initial data ok
-        updateTask.mLatch = new CountDownLatch(1);
-        pushMySegmentsUpdatePayload("segment1");
-        updateTask.mLatch.await(10, TimeUnit.SECONDS);
-        sleep(300);
-        MySegmentEntity mySegmentEntityOne = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
+        String treatmentReady = mClient.getTreatment(splitName);
 
-        // Remove data, pause streaming and then retrieve segments to assert that no one is available
-        mSplitRoomDatabase.mySegmentDao().update(dummySegmentEntity);
-        /// Pause streaming
+//        /// Pause streaming
+        synchronizerSpy.startPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_PAUSED");
+        synchronizerSpy.startPeriodicFetchLatch.await(5, TimeUnit.SECONDS);
+
+        pushMySegmentsUpdatePayload("new_segment");
+
         sleep(1000);
 
-        pushMySegmentsUpdatePayload("segment_pause");
-        sleep(1000);
-        MySegmentEntity mySegmentEntityNone = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
-
+        String treatmentPaused = mClient.getTreatment(splitName);
         // Enable streaming, push a new my segments payload update and check data again
+        synchronizerSpy.stopPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_ENABLED");
-        sleep(1000);
+        synchronizerSpy.stopPeriodicFetchLatch.await(5, TimeUnit.SECONDS);
 
-        mSplitRoomDatabase.mySegmentDao().update(dummySegmentEntity);
         updateTask.mLatch = new CountDownLatch(1);
-        pushMySegmentsUpdatePayload("segment2");
+        pushMySegmentsUpdatePayload("new_segment");
         updateTask.mLatch.await(5, TimeUnit.SECONDS);
-        sleep(300);
-        MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
+
+        String treatmentEnabled = mClient.getTreatment(splitName);
 
         //Enable streaming, push a new my segments payload update and check data again
+        updateTask.mLatch = new CountDownLatch(1);
         pushControl("STREAMING_DISABLED");
-        mRequestClosedLatch.await(10, TimeUnit.SECONDS);
+        updateTask.mLatch.await(10, TimeUnit.SECONDS);
+        pushMySegmentsUpdatePayload("new_segment");
+        sleep(1000);
 
-        Assert.assertEquals("segment_ready", mySegmentEntityReady.getSegmentList());
-        Assert.assertEquals("segment1", mySegmentEntityOne.getSegmentList());
-        Assert.assertEquals("dummy", mySegmentEntityNone.getSegmentList());
-        Assert.assertEquals("segment2", mySegmentEntityPayload.getSegmentList());
+        String treatmentDisabled = mClient.getTreatment(splitName);
+
+        Assert.assertEquals("on", treatmentReady);
+        Assert.assertEquals("on", treatmentPaused);
+        Assert.assertEquals("free", treatmentEnabled);
+        Assert.assertEquals("on", treatmentDisabled);
         Assert.assertTrue(mStreamingResponse.isClosed());
     }
 
     @Test
     public void streamResetControlNotification() throws IOException, InterruptedException {
 
+        SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
+        db.clearAllTables();
         MySegmentEntity dummySegmentEntity = new MySegmentEntity();
         dummySegmentEntity.setUserKey(mUserKey.matchingKey());
         dummySegmentEntity.setSegmentList("dummy");
@@ -168,7 +176,7 @@ public class ControlTest {
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock, mSplitRoomDatabase);
+                config, mContext, httpClientMock, db);
 
         mClient = mFactory.client();
 
@@ -218,20 +226,21 @@ public class ControlTest {
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/mySegments")) {
                     Logger.i("** My segments hit");
-                    if (hit < 1) {
-                        hit++;
-                        Logger.i("** My segments hit return my segments ready");
-                        return createResponse(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment_ready\"}]}");
-                    } else {
-                        // This is to avoid having issues for polling update while asserting
-                        return createResponse(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}]}");
-                    }
+//                    if (hit < 1) {
+//                        hit++;
+//                        Logger.i("** My segments hit return my segments ready");
+//                        return createResponse(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment_ready\"}]}");
+//                    } else {
+//                        // This is to avoid having issues for polling update while asserting
+//                        return createResponse(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}]}");
+//                    }
+                    return createResponse(200, IntegrationHelper.emptyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
 
                     Logger.i("** Split Changes hit");
 
-                    String data = IntegrationHelper.emptySplitChanges(-1, 1000);
-                    return createResponse(200, data);
+//                    String data = IntegrationHelper.emptySplitChanges(-1, 1000);
+                    return createResponse(200, mSplitChange);
                 } else if (uri.getPath().contains("/auth")) {
                     mSseConnectionCount++;
                     Logger.i("** SSE Auth hit: " + mSseConnectionCount);
@@ -257,6 +266,14 @@ public class ControlTest {
     private String loadMockedData(String fileName) {
         FileHelper fileHelper = new FileHelper();
         return fileHelper.loadFileContent(mContext, fileName);
+    }
+
+    private String loadSplitChanges() {
+        String jsonChange = new FileHelper().loadFileContent(mContext, "simple_split.json");
+        SplitChange change = Json.fromJson(jsonChange, SplitChange.class);
+        change.since = 500;
+        change.till = 500;
+        return Json.toJson(change);
     }
 
     private void pushMySegmentMessage(String segmentName) {
@@ -287,17 +304,21 @@ public class ControlTest {
     }
 
     private void pushControl(String controlType) {
-        String message = loadMockedData(MSG_CONTROL);
-        message = message.replace(CONTROL_TYPE_PLACEHOLDER, controlType);
-        mTimestamp+=100;
-        message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
 
-        try {
-            mStreamingData.put(message + "" + "\n");
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String message = loadMockedData(MSG_CONTROL);
+                message = message.replace(CONTROL_TYPE_PLACEHOLDER, controlType);mTimestamp+=100;
+                message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
 
-            Logger.d("Pushed message: " + message);
-        } catch (InterruptedException e) {
-        }
+                try {
+                    mStreamingData.put(message + "" + "\n");
+
+                    Logger.d("Pushed message: " + message);
+                } catch (InterruptedException e) {
+                }
+            }
+        }).start();
     }
-
 }

@@ -1,3 +1,10 @@
+2.7.3: (Oct 4, 2021)
+- Updated streaming logic to implement the newest versions of our Streaming services, including:
+    - Integration with the V2 of the Auth service, connecting to the new channels and applying the received connection delay.
+    - Implemented handling of thew notification types for MySegmentsV2 (keyList, bounded and unbounded) 
+    - New control notification for environment scoped streaming reset.
+- Improved initialization performance by removing hashing in initial database name generation.
+
 2.7.2: (Jun 14, 2021)
 - Added impressions dedupe logic to avoid sending duplicated impressions
 - Fixed issue when closing streaming connection

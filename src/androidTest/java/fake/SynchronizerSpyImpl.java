@@ -13,6 +13,8 @@ import io.split.android.client.service.synchronizer.SynchronizerSpy;
 public class SynchronizerSpyImpl implements SynchronizerSpy {
 
     Synchronizer mSynchronizer;
+    public CountDownLatch startPeriodicFetchLatch = null;
+    public CountDownLatch stopPeriodicFetchLatch = null;
 
     public AtomicInteger mForceMySegmentSyncCalledCount = new AtomicInteger(0);
 
@@ -60,11 +62,17 @@ public class SynchronizerSpyImpl implements SynchronizerSpy {
     @Override
     public void startPeriodicFetching() {
         mSynchronizer.startPeriodicFetching();
+        if (startPeriodicFetchLatch != null) {
+            startPeriodicFetchLatch.countDown();
+        }
     }
 
     @Override
     public void stopPeriodicFetching() {
         mSynchronizer.stopPeriodicFetching();
+        if (stopPeriodicFetchLatch != null) {
+            stopPeriodicFetchLatch.countDown();
+        }
     }
 
     @Override

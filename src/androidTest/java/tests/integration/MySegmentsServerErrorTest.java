@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.ImpressionListenerHelper;
 import helper.IntegrationHelper;
@@ -141,7 +142,7 @@ public class MySegmentsServerErrorTest {
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
 
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
@@ -163,7 +164,9 @@ public class MySegmentsServerErrorTest {
                 .impressionListener(impListener)
                 .build();
 
-        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(
+                apiKey, key,
+                config, mContext, null, splitRoomDatabase);
 
         client = splitFactory.client();
 

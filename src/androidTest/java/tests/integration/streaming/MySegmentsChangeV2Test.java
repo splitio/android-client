@@ -22,6 +22,7 @@ import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import fake.SynchronizerSpyImpl;
+import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -68,7 +69,7 @@ public class MySegmentsChangeV2Test {
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
         String dataFolderName = apiKeyAndDb.second;
-        mSplitRoomDatabase = Room.inMemoryDatabaseBuilder(mContext, SplitRoomDatabase.class).build();
+        mSplitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         mSplitRoomDatabase.clearAllTables();
     }
 

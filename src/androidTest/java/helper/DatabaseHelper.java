@@ -17,6 +17,6 @@ public class DatabaseHelper {
     }
 
     public static SplitRoomDatabase getTestDatabase(Context context) {
-        return Room.inMemoryDatabaseBuilder(context, SplitRoomDatabase.class).build();
+        return Room.inMemoryDatabaseBuilder(context, SplitRoomDatabase.class).allowMainThreadQueries().build();
     }
 }

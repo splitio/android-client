@@ -24,8 +24,10 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.ImpressionListenerHelper;
+import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
@@ -111,7 +113,7 @@ public class IntegrationTest {
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
 
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 2));
@@ -136,8 +138,9 @@ public class IntegrationTest {
                 .impressionListener(impListener)
                 .build();
 
-
-        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(
+                apiKey, key,
+                config, mContext, null, splitRoomDatabase);
 
         client = splitFactory.client();
         manager = splitFactory.manager();
@@ -245,7 +248,7 @@ public class IntegrationTest {
         String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
 
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
@@ -269,8 +272,9 @@ public class IntegrationTest {
                 .impressionListener(impListener)
                 .build();
 
-
-        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(
+                apiKey, key,
+                config, mContext, null, splitRoomDatabase);
 
         client = splitFactory.client();
         manager = splitFactory.manager();

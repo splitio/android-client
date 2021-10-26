@@ -118,7 +118,7 @@ public class IntegrationHelper {
     }
 
     public static Key dummyUserKey() {
-        return new Key("CUSTOMER_ID|ENCO");
+        return new Key("CUSTOMER_ID");
     }
 
     public static SplitClientConfig basicConfig() {
@@ -151,6 +151,7 @@ public class IntegrationHelper {
         // This token expires in 2040
         return "{" +
                 "    \"pushEnabled\": true," +
+                "    \"connDelay\": 0," +
                 "    \"token\": \"eyJhbGciOiJIUzI1NiIsImtpZCI6IjVZOU05US45QnJtR0EiLCJ0eXAiOiJKV1QifQ.eyJ4LWFibHktY2FwYWJpbGl0eSI6IntcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X01UY3dOVEkyTVRNME1nPT1fbXlTZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X3NwbGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xfcHJpXCI6W1wic3Vic2NyaWJlXCIsXCJjaGFubmVsLW1ldGFkYXRhOnB1Ymxpc2hlcnNcIl0sXCJjb250cm9sX3NlY1wiOltcInN1YnNjcmliZVwiLFwiY2hhbm5lbC1tZXRhZGF0YTpwdWJsaXNoZXJzXCJdfSIsIngtYWJseS1jbGllbnRJZCI6ImNsaWVudElkIiwiZXhwIjoyMjA4OTg4ODAwLCJpYXQiOjE1ODc0MDQzODh9.LcKAXnkr-CiYVxZ7l38w9i98Y-BMAv9JlGP2i92nVQY\"" +
                 "}";
 

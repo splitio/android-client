@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -66,7 +67,7 @@ public class SseConnectionExpiredTokenTest {
 
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock, DatabaseHelper.getTestDatabase(mContext));
 
         SplitClient client = splitFactory.client();
 

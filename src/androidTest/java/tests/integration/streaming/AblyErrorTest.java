@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -75,13 +76,14 @@ public class AblyErrorTest {
         CountDownLatch latch = new CountDownLatch(1);
         mSseLatch = new CountDownLatch(1);
 
+        SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock, db);
 
         mClient = mFactory.client();
 
