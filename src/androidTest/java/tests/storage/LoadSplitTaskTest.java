@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import helper.DatabaseHelper;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -34,8 +35,7 @@ public class LoadSplitTaskTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mContext.deleteDatabase("encripted_api_key");
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
+        mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
         List<SplitEntity> entities = new ArrayList<>();
         for (int i = 0; i < 4; i++) {

@@ -33,7 +33,6 @@ public class PersistentImpressionStorageTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mContext.deleteDatabase("encripted_api_key");
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
         generateImpressions(1, 10, StorageRecordStatus.ACTIVE, false);

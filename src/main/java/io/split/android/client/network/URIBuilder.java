@@ -1,5 +1,7 @@
 package io.split.android.client.network;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import com.google.common.base.Strings;
@@ -9,18 +11,16 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class URIBuilder {
-    private URI mRootURI;
+    private final URI mRootURI;
+    private final Map<String, String> mParams;
     private String mPath;
-    private Map<String, String> mParams;
     private String mQueryString;
 
     public URIBuilder(@NonNull URI rootURI, String path) {
         mRootURI = checkNotNull(rootURI);
-        String rootPath = mRootURI.getPath();
-        if(path != null && rootPath != null) {
+        String rootPath = mRootURI.getRawPath();
+        if (path != null && rootPath != null) {
             mPath = String.format("%s/%s", rootPath, path);
             mPath = mPath.replace("///", "/");
             mPath = mPath.replace("//", "/");
@@ -64,7 +64,7 @@ public class URIBuilder {
 
         if (!Strings.isNullOrEmpty(mQueryString)) {
             if (!Strings.isNullOrEmpty(params)) {
-                if(!"&".equals(mQueryString.substring(0, 1))) {
+                if (!"&".equals(mQueryString.substring(0, 1))) {
                     params = params + "&";
                 }
                 params = params + mQueryString;

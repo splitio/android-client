@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.util.HashSet;
 import java.util.Set;
 
+import helper.DatabaseHelper;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -32,8 +33,7 @@ public class LoadMySegmentsTaskTest {
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mContext.deleteDatabase("encripted_api_key");
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
+        mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
 
         MySegmentEntity entity = new MySegmentEntity();

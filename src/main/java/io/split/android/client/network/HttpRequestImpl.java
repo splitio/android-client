@@ -1,5 +1,7 @@
 package io.split.android.client.network;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -20,27 +22,33 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class HttpRequestImpl implements HttpRequest {
 
     private static final MediaType JSON
             = MediaType.get("application/json; charset=utf-8");
-    private OkHttpClient mOkHttpClient;
-    private URI mUri;
-    private String mBody;
-    private HttpMethod mHttpMethod;
-    private Map<String, String> mHeaders;
-
+    private final OkHttpClient mOkHttpClient;
+    private final URI mUri;
+    private final String mBody;
+    private final HttpMethod mHttpMethod;
+    private final Map<String, String> mHeaders;
+    private final UrlSanitizer mUrlSanitizer;
 
     HttpRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
                     @NonNull HttpMethod httpMethod,
                     @Nullable String body, @NonNull Map<String, String> headers) {
+        this(okHttpClient, uri, httpMethod, body, headers, new UrlSanitizerImpl());
+    }
+
+    HttpRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
+                    @NonNull HttpMethod httpMethod,
+                    @Nullable String body, @NonNull Map<String, String> headers,
+                    @NonNull UrlSanitizer urlSanitizer) {
         mOkHttpClient = checkNotNull(okHttpClient);
         mUri = checkNotNull(uri);
         mHttpMethod = checkNotNull(httpMethod);
         mBody = body;
         mHeaders = new HashMap<>(checkNotNull(headers));
+        mUrlSanitizer = checkNotNull(urlSanitizer);
     }
 
     @Override
@@ -65,7 +73,9 @@ public class HttpRequestImpl implements HttpRequest {
         URL url;
         HttpResponse response;
         try {
-            url = mUri.toURL();
+
+            url = mUrlSanitizer.getUrl(mUri);
+
             Request.Builder requestBuilder = new Request.Builder()
                     .url(url);
             addHeaders(requestBuilder);
@@ -85,7 +95,7 @@ public class HttpRequestImpl implements HttpRequest {
 
     private HttpResponse postRequest() throws IOException {
 
-        if(mBody == null) {
+        if (mBody == null) {
             throw new IOException("Json data is null");
         }
 
