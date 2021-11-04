@@ -7,6 +7,8 @@ import org.junit.Test;
 import java.util.Map;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import helper.FileHelper;
 import io.split.android.client.localhost.LocalhostFileParser;
 import io.split.android.client.localhost.LocalhostPropertiesFileParser;
 import io.split.android.client.dtos.Split;
@@ -16,12 +18,15 @@ public class LocalhostPropertiesParserTest {
 
     @Before
     public void setup() {
-        parser = new LocalhostPropertiesFileParser(InstrumentationRegistry.getInstrumentation().getContext());
+        parser = new LocalhostPropertiesFileParser();
     }
 
     @Test
     public void testFile() {
-        Map<String, Split> splits = parser.parse("splits1.properties");
+        String content = new FileHelper().loadFileContent(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                "splits1.properties");
+        Map<String, Split> splits = parser.parse(content);
         Split split1 = splits.get("split1");
         Split split2 = splits.get("split2");
         Split split3 = splits.get("split3");

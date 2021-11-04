@@ -1,4 +1,4 @@
-package io.split.android.client;
+package io.split.android.client.localhost;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
