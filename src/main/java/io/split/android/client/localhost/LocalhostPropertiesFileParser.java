@@ -35,28 +35,3 @@ public class LocalhostPropertiesFileParser implements LocalhostFileParser {
         return splits;
     }
 }
-
-/*
-Split split = splits.get(splitName);
-                    if (split == null) {
-                        split = SplitHelper.createDefaultSplit(splitName);
-                        split.conditions = new ArrayList<>();
-                    }
-
-                    String treatment = splitMap.get(TREATMENT_FIELD);
-                    List<String> keys = parseKeys(splitMap.get(KEYS_FIELD));
-                    if (keys.size() > 0) {
-                        split.conditions.add(0, SplitHelper.createWhiteListCondition(keys, treatment));
-                    } else {
-                        split.conditions.add(SplitHelper.createRolloutCondition(treatment));
-                    }
-
-                    String config = splitMap.get(CONFIG_FIELD);
-                    if (config != null) {
-                        if (split.configurations == null) {
-                            split.configurations = new HashMap<>();
-                        }
-                        split.configurations.put(treatment, config);
-                    }
-                    splits.put(split.name, split);
- */
