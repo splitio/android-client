@@ -13,7 +13,7 @@ import io.split.android.client.localhost.LocalhostFileParser;
 import io.split.android.client.localhost.LocalhostPropertiesFileParser;
 import io.split.android.client.dtos.Split;
 
-public class LocalhostPropertiesParserTest {
+public class LocalhostPropertiesFileParserTest {
     LocalhostFileParser parser;
 
     @Before
@@ -36,12 +36,15 @@ public class LocalhostPropertiesParserTest {
         Assert.assertNotNull(split3);
 
         Assert.assertEquals("split1", split1.name);
-        Assert.assertEquals("on", split1.defaultTreatment);
+        Assert.assertEquals("control", split1.defaultTreatment);
+        Assert.assertEquals("on", split1.conditions.get(0).partitions.get(0).treatment);
 
         Assert.assertEquals("split2", split2.name);
-        Assert.assertEquals("off", split2.defaultTreatment);
+        Assert.assertEquals("off", split2.conditions.get(0).partitions.get(0).treatment);
+        Assert.assertEquals("control", split2.defaultTreatment);
 
         Assert.assertEquals("split3", split3.name);
-        Assert.assertEquals("u1", split3.defaultTreatment);
+        Assert.assertEquals("u1", split3.conditions.get(0).partitions.get(0).treatment);
+        Assert.assertEquals("control", split3.defaultTreatment);
     }
 }
