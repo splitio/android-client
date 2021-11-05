@@ -24,6 +24,9 @@ public class LocalhostPropertiesFileParser implements LocalhostFileParser {
             for (Object k: _properties.keySet()) {
                 String splitName = (String) k;
                 String treatment = _properties.getProperty((String) k);
+                if(splitName == null || treatment == null) {
+                    continue;
+                }
                 Split split = SplitHelper.createDefaultSplit(splitName);
                 split.conditions = new ArrayList<>();
                 split.conditions.add(SplitHelper.createRolloutCondition(treatment));

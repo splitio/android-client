@@ -3,26 +3,39 @@ package io.split.android.client.localhost;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Map;
 
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.utils.Logger;
+import io.split.android.helpers.FileHelper;
 import io.split.android.helpers.ResourcesFileStorage;
 
 @SuppressWarnings("ConstantConditions")
 public class LocalhostYamlParserTest {
 
     LocalhostFileParser parser;
+    FileHelper mFileHelper = new FileHelper();
+
+    @Mock
+    SplitEventsManager mEventsManager;
 
     @Before
     public void setup() {
-        parser = new LocalhostYamlFileParser(new ResourcesFileStorage());
+        parser = new LocalhostYamlFileParser();
     }
 
     @Test
     public void testCorrectFormat() {
 
-        Map<String, Split> splits = parser.parse("splits.yaml");
+        Map<String, Split> splits = parser.parse(mFileHelper.loadFileContent("splits.yaml"));
 
         Assert.assertEquals(8, splits.size());
 
@@ -99,35 +112,30 @@ public class LocalhostYamlParserTest {
 
     @Test
     public void testWrongYamlSyntax() {
-        Map<String, Split> splits = parser.parse("splits_no_yaml.yaml");
+        Map<String, Split> splits = parser.parse(mFileHelper.loadFileContent("splits_no_yaml.yaml"));
         Assert.assertNull(splits);
     }
 
     @Test
     public void testMissingTreatment() {
-        Map<String, Split> splits = parser.parse("splits_missing_treatment.yaml");
+        Map<String, Split> splits = parser.parse(mFileHelper.loadFileContent("splits_missing_treatment.yaml"));
 
-        Assert.assertEquals(2, splits.size());
+        Assert.assertEquals(1, splits.size());
 
         Split split0 = splits.get("split_0");
         Split split1 = splits.get("split_1");
-        Split split1HasKey = splits.get("split_1:haskey");
 
         Assert.assertEquals("split_0", split0.name);
-        Assert.assertEquals("off", split0.defaultTreatment);
+        Assert.assertEquals("control", split0.defaultTreatment);
+        Assert.assertEquals(1, split0.conditions.size());
         Assert.assertEquals("{ \"size\" : 20 }", split0.configurations.get("off"));
 
         Assert.assertNull(split1);
-
-        Assert.assertEquals("split_1:haskey", split1HasKey.name);
-        Assert.assertEquals("control", split1HasKey.defaultTreatment);
-        Assert.assertNull(split1HasKey.configurations);
-
     }
 
     @Test
     public void testMissingNameInFirstSplit() {
-        Map<String, Split> splits = parser.parse("splits_missing_name.yaml");
+        Map<String, Split> splits = parser.parse(mFileHelper.loadFileContent("splits_missing_name.yaml"));
         Assert.assertNull(splits);
     }
 

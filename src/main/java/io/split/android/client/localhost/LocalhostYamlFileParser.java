@@ -51,6 +51,9 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
                 Object[] splitNameContainer = parsedSplit.keySet().toArray();
                 if (splitNameContainer != null && splitNameContainer.length > 0) {
                     String splitName = (String) splitNameContainer[0];
+                    if (splitName == null) {
+                        continue;
+                    }
                     Map<String, String> splitMap = (Map<String, String>) parsedSplit.get(splitName);
                     if (splitMap == null) {
                         continue;
@@ -63,6 +66,9 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
                     }
 
                     String treatment = splitMap.get(TREATMENT_FIELD);
+                    if (treatment == null) {
+                        continue;
+                    }
                     List<String> keys = parseKeys(splitMap.get(KEYS_FIELD));
                     if (keys.size() > 0) {
                         split.conditions.add(0, SplitHelper.createWhiteListCondition(keys, treatment));
