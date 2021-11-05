@@ -1,0 +1,16 @@
+package io.split.android.client.storage.db.attributes;
+
+import androidx.room.Dao;
+import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
+import androidx.room.Query;
+
+@Dao
+public interface AttributesDao {
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void update(AttributesEntity attributesEntity);
+
+    @Query("SELECT user_key, attributes FROM attributes WHERE user_key = :userKey")
+    AttributesEntity getByUserKey(String userKey);
+}
