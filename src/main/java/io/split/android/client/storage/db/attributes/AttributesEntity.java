@@ -8,6 +8,15 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "attributes")
 public class AttributesEntity {
 
+    public AttributesEntity() {
+
+    }
+
+    public AttributesEntity(String userKey, String attributes) {
+        this.userKey = userKey;
+        this.attributes = attributes;
+    }
+
     @PrimaryKey
     @NonNull
     @ColumnInfo(name = "user_key")

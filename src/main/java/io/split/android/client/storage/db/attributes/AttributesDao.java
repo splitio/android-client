@@ -13,4 +13,7 @@ public interface AttributesDao {
 
     @Query("SELECT user_key, attributes FROM attributes WHERE user_key = :userKey")
     AttributesEntity getByUserKey(String userKey);
+
+    @Query("DELETE FROM attributes WHERE user_key = :userKey")
+    void deleteAll(String userKey);
 }
