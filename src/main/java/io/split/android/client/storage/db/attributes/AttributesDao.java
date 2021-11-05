@@ -11,7 +11,7 @@ public interface AttributesDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void update(AttributesEntity attributesEntity);
 
-    @Query("SELECT user_key, attributes FROM attributes WHERE user_key = :userKey")
+    @Query("SELECT user_key, attributes, updated_at FROM attributes WHERE user_key = :userKey")
     AttributesEntity getByUserKey(String userKey);
 
     @Query("DELETE FROM attributes WHERE user_key = :userKey")

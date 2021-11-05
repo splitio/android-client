@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "918187948a91170d286f7c0b1706fea7",
+    "identityHash": "11bab1d6d12b194fc8b78e840831ac96",
     "entities": [
       {
         "tableName": "my_segments",
@@ -228,7 +228,7 @@
       },
       {
         "tableName": "attributes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_key` TEXT NOT NULL, `attributes` TEXT, PRIMARY KEY(`user_key`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_key` TEXT NOT NULL, `attributes` TEXT, `updated_at` INTEGER NOT NULL, PRIMARY KEY(`user_key`))",
         "fields": [
           {
             "fieldPath": "userKey",
@@ -241,6 +241,12 @@
             "columnName": "attributes",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -256,7 +262,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '918187948a91170d286f7c0b1706fea7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '11bab1d6d12b194fc8b78e840831ac96')"
     ]
   }
 }

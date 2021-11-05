@@ -30,7 +30,7 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
     public void set(Map<String, Object> attributes) {
         if (attributes == null) return;
 
-        AttributesEntity entity = new AttributesEntity(mUserKey, Json.toJson(attributes));
+        AttributesEntity entity = new AttributesEntity(mUserKey, Json.toJson(attributes), System.currentTimeMillis() / 1000);
 
         mDatabase.attributesDao().update(entity);
     }

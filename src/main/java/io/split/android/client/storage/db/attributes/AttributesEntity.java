@@ -12,9 +12,10 @@ public class AttributesEntity {
 
     }
 
-    public AttributesEntity(String userKey, String attributes) {
+    public AttributesEntity(String userKey, String attributes, long updatedAt) {
         this.userKey = userKey;
         this.attributes = attributes;
+        this.updatedAt = updatedAt;
     }
 
     @PrimaryKey
@@ -25,12 +26,14 @@ public class AttributesEntity {
     @ColumnInfo(name = "attributes")
     private String attributes;
 
+    @ColumnInfo(name = "updated_at")
+    private long updatedAt;
+
     @NonNull
     public String getUserKey() {
         return userKey;
     }
 
-    @NonNull
     public String getAttributes() {
         return attributes;
     }
@@ -41,5 +44,13 @@ public class AttributesEntity {
 
     public void setAttributes(String attributes) {
         this.attributes = attributes;
+    }
+
+    public long getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(long updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
