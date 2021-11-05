@@ -1,3 +1,6 @@
+2.7.4: (Oct 28, 2021)
+- Added support for a user key containing a slash character.
+
 2.7.3: (Oct 4, 2021)
 - Updated streaming logic to implement the newest versions of our Streaming services, including:
     - Integration with the V2 of the Auth service, connecting to the new channels and applying the received connection delay.
