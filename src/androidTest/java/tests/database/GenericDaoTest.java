@@ -9,7 +9,7 @@ import org.junit.Before;
 
 import io.split.android.client.storage.db.SplitRoomDatabase;
 
-public class GenericDaoTest {
+public abstract class GenericDaoTest {
 
     protected SplitRoomDatabase mRoomDb;
     protected Context mContext;
