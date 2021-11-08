@@ -124,7 +124,7 @@ public class SplitClientConfig {
 
     private boolean _legacyStorageMigrationEnabled;
     private ImpressionsMode _impressionsMode;
-    private int _offlineRefreshRate;
+    private final int _offlineRefreshRate;
 
     // To be set during startup
     public static String splitSdkVersion;

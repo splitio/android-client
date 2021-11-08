@@ -24,9 +24,6 @@ public class LocalhostYamlParserTest {
     LocalhostFileParser parser;
     FileHelper mFileHelper = new FileHelper();
 
-    @Mock
-    SplitEventsManager mEventsManager;
-
     @Before
     public void setup() {
         parser = new LocalhostYamlFileParser();
