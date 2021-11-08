@@ -61,6 +61,6 @@ public class StorageFactory {
 
     public static PersistentAttributesStorage getPersistentAttributesStorage(
             SplitRoomDatabase splitRoomDatabase, String key) {
-        return new SqLitePersistentAttributesStorage(splitRoomDatabase, key);
+        return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), key);
     }
 }

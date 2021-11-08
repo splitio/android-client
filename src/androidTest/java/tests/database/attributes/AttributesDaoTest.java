@@ -32,7 +32,14 @@ public class AttributesDaoTest extends GenericDaoTest {
     }
 
     @Test
-    public void deleteAllRemovesAllEntriesFromAttributesTableAssociatedWithUserKey() {
+    public void nullAttributesValueIsInsertedCorrectly() {
+        mRoomDb.attributesDao().update(new AttributesEntity("key1", null, 100L));
+
+        Assert.assertNull(mRoomDb.attributesDao().getByUserKey("key1").getAttributes());
+    }
+
+    @Test
+    public void deleteAllRemovesEntriesFromAttributesTableAssociatedWithUserKey() {
         mRoomDb.attributesDao().update(new AttributesEntity("key1", "attributes1", 100L));
         mRoomDb.attributesDao().update(new AttributesEntity("key3", "attributes3", 300L));
 
