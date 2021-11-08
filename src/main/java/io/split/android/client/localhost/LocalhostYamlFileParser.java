@@ -91,7 +91,8 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
         return splits;
     }
 
-    private @NonNull List<String> parseKeys(@Nullable Object keysContent) {
+    @NonNull
+    private List<String> parseKeys(@Nullable Object keysContent) {
         if(keysContent == null) {
             return new ArrayList<>();
         }
