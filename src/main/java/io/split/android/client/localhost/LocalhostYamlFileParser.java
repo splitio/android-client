@@ -62,7 +62,6 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
                     Split split = splits.get(splitName);
                     if (split == null) {
                         split = SplitHelper.createDefaultSplit(splitName);
-                        split.conditions = new ArrayList<>();
                     }
 
                     String treatment = splitMap.get(TREATMENT_FIELD);

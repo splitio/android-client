@@ -1,5 +1,6 @@
 package io.split.android.client.localhost;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,6 +29,7 @@ class SplitHelper {
         split.trafficAllocation = 100;
         split.trafficAllocationSeed = 1;
         split.seed = 1;
+        split.conditions = new ArrayList<>();
         return split;
     }
 
