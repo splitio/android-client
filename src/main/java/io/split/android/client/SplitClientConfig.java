@@ -1000,7 +1000,8 @@ public class SplitClientConfig {
         }
 
         /**
-         * The SDK will load changes from Splits files base on this feature.
+         * Only used in localhost mode. If offlineRefreshRate is a positive integer, split values
+         * will be loaded from a local file every `offlineRefreshRate` seconds.
          *
          * @return: This builder
          * @default: -1 Second
