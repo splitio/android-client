@@ -21,9 +21,9 @@ public class LocalhostPropertiesFileParser implements LocalhostFileParser {
             Properties _properties = new Properties();
             _properties.load(new StringReader(content));
             splits = new HashMap<>();
-            for (Object k: _properties.keySet()) {
-                String splitName = (String) k;
-                String treatment = _properties.getProperty((String) k);
+            for (Object key: _properties.keySet()) {
+                String splitName = (String) key;
+                String treatment = _properties.getProperty((String) key);
                 if(splitName == null || treatment == null) {
                     continue;
                 }
