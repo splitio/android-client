@@ -148,6 +148,7 @@ public class LocalhostSplitsStorage implements SplitsStorage {
 
         copyFileResourceToDataFolder(mLocalhostFileName, mFileStorage, mContext);
     }
+
     private void loadSplits() {
         String content;
         try {
@@ -181,10 +182,10 @@ public class LocalhostSplitsStorage implements SplitsStorage {
         }
     }
 
+    @Nullable
     private String getYamlFileName(Context context) {
 
         List<String> extensions = Arrays.asList(ServiceConstants.YAML_EXTENSION, ServiceConstants.YML_EXTENSION);
-
         for (String extension : extensions) {
             String fileName = checkFileType(context, mFileUtils, extension);
             if (fileName != null) {
@@ -194,6 +195,7 @@ public class LocalhostSplitsStorage implements SplitsStorage {
         return null;
     }
 
+    @Nullable
     private String checkFileType(Context context, FileUtils fileUtils, String extension) {
         String fileName = ServiceConstants.DEFAULT_SPLITS_FILENAME + "." + extension;
         if(fileUtils.fileExists(fileName, context)) {
