@@ -66,11 +66,10 @@ public final class LocalhostSplitFactory implements SplitFactory {
         SplitParser splitParser = new SplitParser(new EmptyMySegmentsStorage());
         mClient = new LocalhostSplitClient(this, config, key, splitsStorage, mEventsManager, splitParser);
         mEventsManager.getExecutorResources().setSplitClient(mClient);
-        mManager = new SplitManagerImpl( splitsStorage,
+        mManager = new SplitManagerImpl(splitsStorage,
                 new SplitValidatorImpl(), splitParser);
         mSynchronizer = new LocalhostSynchronizer(new SplitTaskExecutorImpl(), config, splitsStorage);
         mSynchronizer.start();
-
 
         Logger.i("Android SDK initialized!");
     }
