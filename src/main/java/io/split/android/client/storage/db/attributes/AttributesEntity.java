@@ -3,6 +3,7 @@ package io.split.android.client.storage.db.attributes;
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "attributes")
@@ -12,6 +13,7 @@ public class AttributesEntity {
 
     }
 
+    @Ignore
     public AttributesEntity(String userKey, String attributes, long updatedAt) {
         this.userKey = userKey;
         this.attributes = attributes;

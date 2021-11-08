@@ -30,7 +30,7 @@ public class SqLitePersistentAttributesStorageTest {
 
     @Test
     public void getRetrievesValuesFromDao() {
-        storage.get();
+        storage.getAll();
 
         Mockito.verify(attributesDao).getByUserKey("key");
     }
@@ -58,41 +58,18 @@ public class SqLitePersistentAttributesStorageTest {
         ArgumentCaptor<AttributesEntity> attributeCaptor = ArgumentCaptor.forClass(AttributesEntity.class);
         Mockito.verify(attributesDao).update(attributeCaptor.capture());
 
-        Assert.assertEquals("{\"attr2\":8000,\"attr1\":{\"id\":10010,\"property1\":\"some_property\",\"property2\":[\"val1\",\"val2\",\"val3\",\"val4\"]},\"attr4\":null,\"attr3\":\"String\"}",
+        Assert.assertEquals("{\"attr2\":80.05,\"attr1\":125,\"attr4\":null,\"attr3\":\"String\"}",
                 attributeCaptor.getValue().getAttributes());
     }
 
     private Map<String, Object> getExampleAttributesMap() {
         Map<String, Object> map = new HashMap<>();
 
-        map.put("attr1", new ArbitraryAttributeType());
-        map.put("attr2", 8000L);
+        map.put("attr1", 125);
+        map.put("attr2", 80.05f);
         map.put("attr3", "String");
         map.put("attr4", null);
 
         return map;
-    }
-
-    private static class ArbitraryAttributeType {
-
-        private final int id;
-        private final String property1;
-        private final List<String> property2;
-
-        ArbitraryAttributeType() {
-            ArrayList<String> list = new ArrayList<>();
-            list.add("val1");
-            list.add("val2");
-            list.add("val3");
-            list.add("val4");
-
-            id = 10010;
-            property1 = "some_property";
-            property2 = list;
-        }
-
-        public int getId() {
-            return id;
-        }
     }
 }

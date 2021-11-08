@@ -1,5 +1,7 @@
 package io.split.android.client.storage.attributes;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -23,7 +25,7 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
     private final String mUserKey;
 
     public SqLitePersistentAttributesStorage(@NonNull AttributesDao attributesDao, @NonNull String userKey) {
-        mAttributesDao = attributesDao;
+        mAttributesDao = checkNotNull(attributesDao);
         mUserKey = userKey;
     }
 
@@ -38,7 +40,7 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
 
     @NonNull
     @Override
-    public Map<String, Object> get() {
+    public Map<String, Object> getAll() {
         AttributesEntity attributesEntity = mAttributesDao.getByUserKey(mUserKey);
 
         return getAttributesMapFromEntity(attributesEntity);

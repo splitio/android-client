@@ -10,7 +10,7 @@ public interface PersistentAttributesStorage {
     void set(@Nullable Map<String, Object> attributes);
 
     @NonNull
-    Map<String, Object> get();
+    Map<String, Object> getAll();
 
     void clear();
 }
