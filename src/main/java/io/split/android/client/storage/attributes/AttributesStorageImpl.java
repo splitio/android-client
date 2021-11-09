@@ -68,6 +68,9 @@ public class AttributesStorageImpl implements AttributesStorage {
     @Override
     public void remove(String key) {
         mInMemoryAttributes.remove(key);
+        if (mPersistentAttributesStorage != null) {
+            mPersistentAttributesStorage.set(mInMemoryAttributes);
+        }
     }
 
     private void overwriteValuesInMemory(Map<String, Object> values) {

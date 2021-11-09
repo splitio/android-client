@@ -140,6 +140,55 @@ public class AttributesStorageImplTest {
         attributesStorage.set(getDefaultValuesMap());
     }
 
+    @Test
+    public void removeRemovesKeyFromMemoryStorage() {
+        Map<String, Object> defaultValuesMap = getDefaultValuesMap();
+        attributesStorage.set(defaultValuesMap);
+
+        attributesStorage.remove("key1");
+
+        assertNull(attributesStorage.get("key1"));
+        assertEquals(defaultValuesMap.size() - 1, attributesStorage.getAll().size());
+    }
+
+    @Test
+    public void removeUpdatesValuesInPersistentStorageWhenItIsNotNull() {
+        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+        Map<String, Object> defaultValuesMap = getDefaultValuesMap();
+        Mockito.when(persistentAttributesStorage.getAll()).thenReturn(defaultValuesMap);
+
+        attributesStorage.loadLocal();
+
+        attributesStorage.remove("key1");
+
+        Mockito.verify(persistentAttributesStorage).set(captor.capture());
+
+        Map<String, Object> capturedValue = captor.getValue();
+        assertNull(capturedValue.get("key1"));
+        assertEquals(defaultValuesMap.size() - 1, capturedValue.size());
+    }
+
+    @Test
+    public void destroyClearsInMemoryValues() {
+        attributesStorage.set(getDefaultValuesMap());
+
+        attributesStorage.destroy();
+
+        assertEquals(0, attributesStorage.getAll().size());
+    }
+
+    @Test
+    public void destroyDoesNotClearPersistentStorageValuesIfPresent() {
+        Map<String, Object> defaultValuesMap = getDefaultValuesMap();
+        Mockito.when(persistentAttributesStorage.getAll()).thenReturn(defaultValuesMap);
+
+        attributesStorage.loadLocal();
+
+        attributesStorage.destroy();
+
+        assertEquals(defaultValuesMap.size(), persistentAttributesStorage.getAll().size());
+    }
+
     private Map<String, Object> getDefaultValuesMap() {
         HashMap<String, Object> defaultValuesMap = new HashMap<>();
         defaultValuesMap.put("key1", "value1");
