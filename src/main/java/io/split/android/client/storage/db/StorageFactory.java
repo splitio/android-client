@@ -3,6 +3,8 @@ package io.split.android.client.storage.db;
 import androidx.annotation.RestrictTo;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.storage.attributes.PersistentAttributesStorage;
+import io.split.android.client.storage.attributes.SqLitePersistentAttributesStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
@@ -55,5 +57,10 @@ public class StorageFactory {
             SplitRoomDatabase splitRoomDatabase) {
         return new SqLitePersistentImpressionsCountStorage(splitRoomDatabase,
                 ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
+    }
+
+    public static PersistentAttributesStorage getPersistentAttributesStorage(
+            SplitRoomDatabase splitRoomDatabase, String key) {
+        return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), key);
     }
 }

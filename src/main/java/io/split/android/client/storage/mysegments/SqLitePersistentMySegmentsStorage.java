@@ -1,27 +1,20 @@
 package io.split.android.client.storage.mysegments;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
-import androidx.room.util.StringUtil;
 
 import com.google.common.base.Strings;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.StringJoiner;
 
-import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.db.MySegmentEntity;
-import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.StringHelper;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsStorage {
 
@@ -57,7 +50,6 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
     @Override
     public void close() {
     }
-
 
     private List<String> getMySegmentsFromEntity(MySegmentEntity entity) {
         if (entity == null || Strings.isNullOrEmpty(entity.getSegmentList())) {
