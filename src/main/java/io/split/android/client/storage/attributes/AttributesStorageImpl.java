@@ -3,18 +3,18 @@ package io.split.android.client.storage.attributes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AttributesStorageImpl implements AttributesStorage {
 
     private final PersistentAttributesStorage mPersistentAttributesStorage;
-    private boolean mCacheAttributes;
-    private final Map<String, Object> mInMemoryAttributes = new HashMap<>();
+    private final boolean mIsPersistentCacheEnabled;
+    private final Map<String, Object> mInMemoryAttributes = new ConcurrentHashMap<>();
 
-    public AttributesStorageImpl(@NonNull PersistentAttributesStorage persistentAttributesStorage, boolean cacheAttributes) {
+    public AttributesStorageImpl(@NonNull PersistentAttributesStorage persistentAttributesStorage, boolean isPersistentCacheEnabled) {
         mPersistentAttributesStorage = persistentAttributesStorage;
-        mCacheAttributes = cacheAttributes;
+        mIsPersistentCacheEnabled = isPersistentCacheEnabled;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class AttributesStorageImpl implements AttributesStorage {
     public void set(String key, @Nullable Object value) {
         mInMemoryAttributes.put(key, value);
 
-        if (mCacheAttributes) {
+        if (mIsPersistentCacheEnabled) {
             mPersistentAttributesStorage.set(mInMemoryAttributes);
         }
     }
@@ -48,7 +48,7 @@ public class AttributesStorageImpl implements AttributesStorage {
 
         overwriteValuesInMemory(attributes);
 
-        if (mCacheAttributes) {
+        if (mIsPersistentCacheEnabled) {
             mPersistentAttributesStorage.set(attributes);
         }
     }
@@ -57,11 +57,6 @@ public class AttributesStorageImpl implements AttributesStorage {
     public void clear() {
         mInMemoryAttributes.clear();
         mPersistentAttributesStorage.clear();
-    }
-
-    @Override
-    public void setCacheEnabled(boolean enabled) {
-        mCacheAttributes = enabled;
     }
 
     private void overwriteValuesInMemory(Map<String, Object> values) {

@@ -18,6 +18,4 @@ public interface AttributesStorage {
     void set(@NonNull Map<String, Object> attributes);
 
     void clear();
-
-    void setCacheEnabled(boolean enabled);
 }

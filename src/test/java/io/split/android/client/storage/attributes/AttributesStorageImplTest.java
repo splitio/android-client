@@ -130,26 +130,6 @@ public class AttributesStorageImplTest {
         Mockito.verifyNoInteractions(persistentAttributesStorage);
     }
 
-    @Test
-    public void setCacheEnabledAllowsPersistentStorageToBeUsed() {
-        Map<String, Object> map = new HashMap<>();
-        map.put("newKey", "newValue");
-        attributesStorage.setCacheEnabled(true);
-
-        attributesStorage.set("newKey", "newValue");
-
-        Mockito.verify(persistentAttributesStorage).set(map);
-    }
-
-    @Test
-    public void setCacheDisabledDisallowsPersistentStorageToBeUsed() {
-        attributesStorage.setCacheEnabled(false);
-
-        attributesStorage.set("newKey", "newValue");
-
-        Mockito.verifyNoInteractions(persistentAttributesStorage);
-    }
-
     private Map<String, Object> getDefaultValuesMap() {
         HashMap<String, Object> defaultValuesMap = new HashMap<>();
         defaultValuesMap.put("key1", "value1");
