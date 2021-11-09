@@ -1,6 +1,5 @@
 package io.split.android.client.storage.attributes;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Map;
@@ -8,18 +7,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class AttributesStorageImpl implements AttributesStorage {
 
-    private final PersistentAttributesStorage mPersistentAttributesStorage;
-    private final boolean mIsPersistentCacheEnabled;
+    @Nullable private final PersistentAttributesStorage mPersistentAttributesStorage;
     private final Map<String, Object> mInMemoryAttributes = new ConcurrentHashMap<>();
 
-    public AttributesStorageImpl(@NonNull PersistentAttributesStorage persistentAttributesStorage, boolean isPersistentCacheEnabled) {
+    public AttributesStorageImpl(@Nullable PersistentAttributesStorage persistentAttributesStorage) {
         mPersistentAttributesStorage = persistentAttributesStorage;
-        mIsPersistentCacheEnabled = isPersistentCacheEnabled;
     }
 
     @Override
     public void loadLocal() {
-        overwriteValuesInMemory(mPersistentAttributesStorage.getAll());
+        if (mPersistentAttributesStorage != null) {
+            overwriteValuesInMemory(mPersistentAttributesStorage.getAll());
+        }
     }
 
     @Nullable
@@ -37,7 +36,7 @@ public class AttributesStorageImpl implements AttributesStorage {
     public void set(String key, @Nullable Object value) {
         mInMemoryAttributes.put(key, value);
 
-        if (mIsPersistentCacheEnabled) {
+        if (mPersistentAttributesStorage != null) {
             mPersistentAttributesStorage.set(mInMemoryAttributes);
         }
     }
@@ -48,7 +47,7 @@ public class AttributesStorageImpl implements AttributesStorage {
 
         overwriteValuesInMemory(attributes);
 
-        if (mIsPersistentCacheEnabled) {
+        if (mPersistentAttributesStorage != null) {
             mPersistentAttributesStorage.set(attributes);
         }
     }
@@ -56,7 +55,9 @@ public class AttributesStorageImpl implements AttributesStorage {
     @Override
     public void clear() {
         mInMemoryAttributes.clear();
-        mPersistentAttributesStorage.clear();
+        if (mPersistentAttributesStorage != null) {
+            mPersistentAttributesStorage.clear();
+        }
     }
 
     private void overwriteValuesInMemory(Map<String, Object> values) {
