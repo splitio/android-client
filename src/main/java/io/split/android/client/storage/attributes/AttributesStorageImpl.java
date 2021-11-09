@@ -23,8 +23,8 @@ public class AttributesStorageImpl implements AttributesStorage {
 
     @Nullable
     @Override
-    public Object get(String attributeName) {
-        return mInMemoryAttributes.get(attributeName);
+    public Object get(String key) {
+        return mInMemoryAttributes.get(key);
     }
 
     @Override
@@ -58,6 +58,16 @@ public class AttributesStorageImpl implements AttributesStorage {
         if (mPersistentAttributesStorage != null) {
             mPersistentAttributesStorage.clear();
         }
+    }
+
+    @Override
+    public void destroy() {
+        mInMemoryAttributes.clear();
+    }
+
+    @Override
+    public void remove(String key) {
+        mInMemoryAttributes.remove(key);
     }
 
     private void overwriteValuesInMemory(Map<String, Object> values) {

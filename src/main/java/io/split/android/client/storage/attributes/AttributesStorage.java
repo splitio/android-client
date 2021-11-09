@@ -9,7 +9,7 @@ public interface AttributesStorage {
 
     void loadLocal();
 
-    @Nullable Object get(String attributeName);
+    @Nullable Object get(String key);
 
     Map<String, Object> getAll();
 
@@ -18,4 +18,8 @@ public interface AttributesStorage {
     void set(@NonNull Map<String, Object> attributes);
 
     void clear();
+
+    void destroy();
+
+    void remove(String key);
 }
