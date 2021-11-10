@@ -1,4 +1,4 @@
-package io.split.android.client.attributes;
+package io.split.android.client.validators;
 
 public interface AttributesValidator {
 

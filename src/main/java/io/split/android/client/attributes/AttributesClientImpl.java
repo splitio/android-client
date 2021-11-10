@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import java.util.Map;
 
 import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.validators.AttributesValidator;
 
 public class AttributesClientImpl implements AttributesClient {
 

@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.validators.AttributesValidator;
 
 public class AttributesClientImplTest {
 
