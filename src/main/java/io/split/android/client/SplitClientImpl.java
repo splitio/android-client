@@ -183,27 +183,27 @@ public final class SplitClientImpl implements SplitClient {
     @Nullable
     @Override
     public Object getAttribute(String attributeName) {
-        return null;
+        return mAttributesClient.getAttribute(attributeName);
     }
 
     @Override
     public boolean setAttributes(Map<String, Object> attributes) {
-        return false; //TODO
+        return mAttributesClient.setAttributes(attributes);
     }
 
     @Override
     public Map<String, Object> getAllAttributes() {
-        return null;
+        return mAttributesClient.getAllAttributes();
     }
 
     @Override
     public void removeAttribute(String attributeName) {
-
+        mAttributesClient.removeAttribute(attributeName);
     }
 
     @Override
     public void clearAttributes() {
-
+        mAttributesClient.clearAttributes();
     }
 
     // Estimated event size without properties

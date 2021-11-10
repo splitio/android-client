@@ -61,7 +61,6 @@ public class AttributesClientImplTest {
         Mockito.verifyNoInteractions(attributesStorage);
     }
 
-
     @Test
     public void setAttributeReturnsFalseIfAttributeValueNotIsValid() {
         String name = "key";
