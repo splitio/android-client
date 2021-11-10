@@ -3,6 +3,7 @@ package io.split.android.client;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.attributes.AttributeClient;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 

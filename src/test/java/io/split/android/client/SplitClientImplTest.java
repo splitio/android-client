@@ -1,5 +1,15 @@
 package io.split.android.client;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static io.split.android.engine.ConditionsTestUtil.partition;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
@@ -23,8 +33,6 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.SplitClientImplFactory;
-import io.split.android.engine.experiments.ParsedCondition;
-import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.CombiningMatcher;
 import io.split.android.engine.matchers.DependencyMatcher;
@@ -34,17 +42,6 @@ import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.SplitHelper;
-
-import static io.split.android.engine.ConditionsTestUtil.partition;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests for SplitClientImpl

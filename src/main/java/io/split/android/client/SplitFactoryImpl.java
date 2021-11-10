@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.attributes.AttributeClientImpl;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -30,6 +31,8 @@ import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.attributes.AttributesStorageImpl;
+import io.split.android.client.storage.attributes.SqLitePersistentAttributesStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
@@ -217,10 +220,20 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-        _client = new SplitClientImpl(this, key, splitParser,
-                customerImpressionListener, cachedFireAndForgetMetrics, config, _eventsManager,
-                storageContainer.getSplitsStorage(), new EventPropertiesProcessorImpl(),
-                _syncManager);
+        _client = new SplitClientImpl(this,
+                key,
+                splitParser,
+                customerImpressionListener,
+                cachedFireAndForgetMetrics,
+                config,
+                _eventsManager,
+                storageContainer.getSplitsStorage(),
+                new EventPropertiesProcessorImpl(),
+                _syncManager,
+                new AttributeClientImpl(new AttributesStorageImpl(
+                        config.isPersistentAttributesCacheEnabled() ? storageContainer.getPersistentAttributesStorage() : null
+                ), null));
+
         _manager = new SplitManagerImpl(
                 storageContainer.getSplitsStorage(),
                 new SplitValidatorImpl(), splitParser);
