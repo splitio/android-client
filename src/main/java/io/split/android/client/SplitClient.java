@@ -6,7 +6,7 @@ import java.util.Map;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 
-public interface SplitClient {
+public interface SplitClient extends AttributeClient {
 
     /**
      * Returns the treatment to show this key for this feature. The set of treatments
@@ -235,4 +235,5 @@ public interface SplitClient {
      * @return true if the track was successful, false otherwise
      */
     boolean track(String eventType, double value, Map<String,Object> properties);
+
 }

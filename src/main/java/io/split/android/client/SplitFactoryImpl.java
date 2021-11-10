@@ -2,11 +2,9 @@ package io.split.android.client;
 
 import android.content.Context;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -33,7 +31,6 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -54,10 +51,10 @@ public class SplitFactoryImpl implements SplitFactory {
     private boolean isTerminated = false;
     private final String _apiKey;
 
-    private FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
-    private SplitLifecycleManager _lifecyleManager;
-    private SyncManager _syncManager;
-    private SplitRoomDatabase _splitDatabase;
+    private final FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
+    private final SplitLifecycleManager _lifecyleManager;
+    private final SyncManager _syncManager;
+    private final SplitRoomDatabase _splitDatabase;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
@@ -77,7 +74,7 @@ public class SplitFactoryImpl implements SplitFactory {
         ValidationMessageLogger validationLogger = new ValidationMessageLoggerImpl();
 
         HttpClient defaultHttpClient;
-        if(httpClient == null) {
+        if (httpClient == null) {
             defaultHttpClient = new HttpClientImpl.Builder()
                     .setConnectionTimeout(config.connectionTimeout())
                     .setReadTimeout(config.readTimeout())
@@ -113,7 +110,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Check if test database available
         String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
-        if(testDatabase == null) {
+        if (testDatabase == null) {
             _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         } else {
             _splitDatabase = testDatabase;
@@ -130,7 +127,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
 
-        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, context, key);
+        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key);
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 

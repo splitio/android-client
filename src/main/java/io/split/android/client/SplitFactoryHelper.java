@@ -108,7 +108,7 @@ class SplitFactoryHelper {
         return headersBuilder.build();
     }
 
-    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Context context, Key key) {
+    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key) {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, key.matchingKey()),
