@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributeClient;
+import io.split.android.client.attributes.AttributesClient;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
@@ -44,7 +44,7 @@ public final class SplitClientImpl implements SplitClient {
     private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
     private final SyncManager mSyncManager;
-    private final AttributeClient mAttributeClient;
+    private final AttributesClient mAttributesClient;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -60,7 +60,7 @@ public final class SplitClientImpl implements SplitClient {
                            SplitsStorage splitsStorage,
                            EventPropertiesProcessor eventPropertiesProcessor,
                            SyncManager syncManager,
-                           AttributeClient attributeClient) {
+                           AttributesClient attributesClient) {
 
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
@@ -79,7 +79,7 @@ public final class SplitClientImpl implements SplitClient {
                 impressionListener, mConfig, eventsManager);
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
         mSyncManager = checkNotNull(syncManager);
-        mAttributeClient = checkNotNull(attributeClient);
+        mAttributesClient = checkNotNull(attributesClient);
     }
 
     @Override
@@ -177,7 +177,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean setAttribute(String attributeName, Object value) {
-        return false;
+        return mAttributesClient.setAttribute(attributeName, value);
     }
 
     @Nullable

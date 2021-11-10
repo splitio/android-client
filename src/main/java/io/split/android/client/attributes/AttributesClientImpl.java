@@ -9,13 +9,13 @@ import java.util.Map;
 
 import io.split.android.client.storage.attributes.AttributesStorage;
 
-public class AttributeClientImpl implements AttributeClient {
+public class AttributesClientImpl implements AttributesClient {
 
     private final AttributesStorage mAttributesStorage;
     private final AttributesValidator mAttributesValidator;
 
-    public AttributeClientImpl(@NonNull AttributesStorage attributesStorage,
-                               @NonNull AttributesValidator attributesValidator) {
+    public AttributesClientImpl(@NonNull AttributesStorage attributesStorage,
+                                @NonNull AttributesValidator attributesValidator) {
         mAttributesStorage = checkNotNull(attributesStorage);
         mAttributesValidator = checkNotNull(attributesValidator);
     }

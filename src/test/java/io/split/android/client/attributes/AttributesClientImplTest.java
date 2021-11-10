@@ -12,19 +12,19 @@ import java.util.Map;
 
 import io.split.android.client.storage.attributes.AttributesStorage;
 
-public class AttributeClientImplTest {
+public class AttributesClientImplTest {
 
     @Mock
     AttributesStorage attributesStorage;
     @Mock
     AttributesValidator attributesValidator;
-    private AttributeClientImpl attributeClient;
+    private AttributesClientImpl attributeClient;
     private Map<String, Object> testValues;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        attributeClient = new AttributeClientImpl(attributesStorage, attributesValidator);
+        attributeClient = new AttributesClientImpl(attributesStorage, attributesValidator);
         testValues = getDefaultValues();
     }
 

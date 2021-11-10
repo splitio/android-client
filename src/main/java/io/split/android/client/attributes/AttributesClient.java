@@ -4,7 +4,7 @@ import androidx.annotation.Nullable;
 
 import java.util.Map;
 
-public interface AttributeClient {
+public interface AttributesClient {
 
     boolean setAttribute(String attributeName, Object value);
 

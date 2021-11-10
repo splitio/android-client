@@ -6,19 +6,15 @@ import static org.mockito.Mockito.verify;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributeClient;
-import io.split.android.client.dtos.Split;
-import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.attributes.AttributesClient;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.utils.SplitClientImplFactory;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.metrics.Metrics;
 
@@ -27,7 +23,7 @@ public class SplitClientImplAttributesTest {
     @Mock
     SplitFactory container;
     @Mock
-    AttributeClient attributeClient;
+    AttributesClient attributesClient;
     @Mock
     MySegmentsStorage mySegmentsStorage;
     @Mock
@@ -59,16 +55,16 @@ public class SplitClientImplAttributesTest {
                 splitsStorage,
                 eventPropertiesProcessor,
                 syncManager,
-                attributeClient
+                attributesClient
         );
     }
 
     @Test
     public void setAttributeCallsSetAttributeOnAttributeClient() {
-        AttributeClient attributeClient = mock(AttributeClient.class);
+        AttributesClient attributesClient = mock(AttributesClient.class);
 
         splitClient.setAttribute("key", "value");
 
-        verify(attributeClient).setAttribute("key", "value");
+        verify(attributesClient).setAttribute("key", "value");
     }
 }
