@@ -9,11 +9,11 @@ public interface AttributesStorage {
 
     void loadLocal();
 
-    @Nullable Object get(String key);
+    @Nullable Object get(String name);
 
     Map<String, Object> getAll();
 
-    void set(String key, @Nullable Object value);
+    void set(String key, @NonNull Object value);
 
     void set(@NonNull Map<String, Object> attributes);
 
@@ -21,5 +21,5 @@ public interface AttributesStorage {
 
     void destroy();
 
-    void remove(String key);
+    void remove(String name);
 }

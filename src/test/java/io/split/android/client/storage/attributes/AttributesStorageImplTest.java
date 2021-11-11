@@ -37,6 +37,8 @@ public class AttributesStorageImplTest {
         attributesStorage = new AttributesStorageImpl(null);
 
         attributesStorage.loadLocal();
+
+        Mockito.verifyNoInteractions(persistentAttributesStorage);
     }
 
     @Test
@@ -54,14 +56,14 @@ public class AttributesStorageImplTest {
     }
 
     @Test
-    public void getFetchesCorrespondingValuePreviouslyLoadedFromPersistentStorageIfPersistentStorageIsNotNull() {
+    public void getFetchesValueFromPersistentStorage() {
         Map<String, Object> defaultValuesMap = getDefaultValuesMap();
 
         Mockito.when(persistentAttributesStorage.getAll()).thenReturn(defaultValuesMap);
 
         attributesStorage.loadLocal();
 
-        assertEquals("value1", attributesStorage.get("key1"));
+        assertEquals(defaultValuesMap, attributesStorage.getAll());
     }
 
     @Test
@@ -76,7 +78,7 @@ public class AttributesStorageImplTest {
     }
 
     @Test
-    public void getAllReturnsAllValuesPreviouslyRetrievedFromPersistentStorageIfPersistentStorageIsNotNull() {
+    public void getAllReturnsValuesFromPersistentStorage() {
         Map<String, Object> defaultValuesMap = getDefaultValuesMap();
 
         Mockito.when(persistentAttributesStorage.getAll()).thenReturn(defaultValuesMap);
@@ -123,7 +125,7 @@ public class AttributesStorageImplTest {
     }
 
     @Test
-    public void setWithMapUpdatesMultipleValuesInPersistentStorageIfPersistentStorageIsNotNull() {
+    public void setWithMapUpdatesValuesInPersistentStorage() {
         Map<String, Object> expectedMap = getDefaultValuesMap();
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
 

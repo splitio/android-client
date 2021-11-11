@@ -1,7 +1,9 @@
 package io.split.android.client.storage.attributes;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,17 +25,17 @@ public class AttributesStorageImpl implements AttributesStorage {
 
     @Nullable
     @Override
-    public Object get(String key) {
-        return mInMemoryAttributes.get(key);
+    public Object get(String name) {
+        return mInMemoryAttributes.get(name);
     }
 
     @Override
     public Map<String, Object> getAll() {
-        return mInMemoryAttributes;
+        return new HashMap<>(mInMemoryAttributes);
     }
 
     @Override
-    public void set(String key, @Nullable Object value) {
+    public void set(String key, @NonNull Object value) {
         mInMemoryAttributes.put(key, value);
 
         if (mPersistentAttributesStorage != null) {
@@ -68,6 +70,7 @@ public class AttributesStorageImpl implements AttributesStorage {
     @Override
     public void remove(String key) {
         mInMemoryAttributes.remove(key);
+
         if (mPersistentAttributesStorage != null) {
             mPersistentAttributesStorage.set(mInMemoryAttributes);
         }
