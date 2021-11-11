@@ -173,12 +173,23 @@ public class EventsManagerTest {
         List<SplitInternalEvent> eventList = new ArrayList<>();
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+        eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList);
     }
 
     @Test
     public void eventOnReadyFromCacheMySegmentsFirst() {
         List<SplitInternalEvent> eventList = new ArrayList<>();
+        eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+        eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
+        eventOnReadyFromCache(eventList);
+    }
+
+    @Test
+    public void eventOnReadyFromCacheAttributesFirst() {
+        List<SplitInternalEvent> eventList = new ArrayList<>();
+        eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList);

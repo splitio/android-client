@@ -193,6 +193,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
 
                 case SPLITS_LOADED_FROM_STORAGE:
                 case MY_SEGMENTS_LOADED_FROM_STORAGE:
+                case ATTRIBUTES_LOADED_FROM_STORAGE:
                     if (wasTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE)) {
@@ -226,7 +227,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     }
 
     private void triggerSdkReadyIfNeeded() {
-        if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED))&&
+        if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED)) &&
                 (wasTriggered(SplitInternalEvent.SPLITS_UPDATED) || wasTriggered(SplitInternalEvent.SPLITS_FETCHED)) &&
                 !isTriggered(SplitEvent.SDK_READY)) {
             trigger(SplitEvent.SDK_READY);
