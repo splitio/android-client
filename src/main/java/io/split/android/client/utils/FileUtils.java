@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import io.split.android.client.service.ServiceConstants;
+
 public class FileUtils {
 
     public String loadFileContent(String name, Context context) throws IOException {
@@ -49,5 +51,14 @@ public class FileUtils {
         } catch (IOException ignored) {
         }
         return content != null;
+    }
+
+    public boolean isPropertiesFileName(String fileName) {
+        String propertiesExtension = ServiceConstants.PROPERTIES_EXTENSION;
+        int propertiesLength = ServiceConstants.PROPERTIES_EXTENSION.length();
+        if (propertiesLength < fileName.length()) {
+            return fileName.substring(fileName.length() - propertiesLength).equals(propertiesExtension);
+        }
+        return false;
     }
 }

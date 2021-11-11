@@ -30,4 +30,11 @@ public class ServiceConstants {
     public static final long LAST_SEEN_IMPRESSION_CACHE_SIZE = 500;
     public static final int MY_SEGMENT_V2_DATA_SIZE = 1024 * 10;// bytes
     public static final long DEFAULT_SSE_CONNECTION_DELAY_SECS = 60;
+
+    public static final String DEFAULT_SPLITS_FILENAME = "splits";
+    public static final String LOCALHOST = "localhost";
+    public static final String LOCALHOST_FOLDER = "localhost";
+    public static final String PROPERTIES_EXTENSION = "properties";
+    public static final String YML_EXTENSION = "yml";
+    public static final String YAML_EXTENSION = "yaml";
 }
