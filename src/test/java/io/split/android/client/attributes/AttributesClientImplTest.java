@@ -145,14 +145,6 @@ public class AttributesClientImplTest {
         Mockito.verify(attributesStorage).remove("key");
     }
 
-    @Test
-    public void destroyCallsDestroyOnStorage() {
-
-        attributeClient.destroy();
-
-        Mockito.verify(attributesStorage).destroy();
-    }
-
     private Map<String, Object> getDefaultValues() {
         int[] array = new int[] { 1, 2, 3 };
         Map<String, Object> values = new HashMap<>();

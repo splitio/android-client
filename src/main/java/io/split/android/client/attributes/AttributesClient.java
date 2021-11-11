@@ -20,6 +20,4 @@ public interface AttributesClient {
     void removeAttribute(String attributeName);
 
     void clearAttributes();
-
-    void destroy();
 }

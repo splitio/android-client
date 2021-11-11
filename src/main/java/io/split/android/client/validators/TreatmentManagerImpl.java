@@ -1,5 +1,9 @@
 package io.split.android.client.validators;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import androidx.annotation.NonNull;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,14 +46,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final SplitClientConfig mSplitClientConfig;
     private final ValidationMessageLogger mValidationLogger;
     private final ISplitEventsManager mEventsManager;
+    @NonNull
     private final AttributesClient mAttributesClient;
+    @NonNull
     private final AttributesMerger mAttributesMerger;
 
     public TreatmentManagerImpl(String matchingKey, String bucketingKey,
                                 Evaluator evaluator, KeyValidator keyValidator,
                                 SplitValidator splitValidator, Metrics metrics,
                                 ImpressionListener impressionListener, SplitClientConfig splitClientConfig,
-                                ISplitEventsManager eventsManager, AttributesClient attributesClient, AttributesMerger attributesMerger) {
+                                ISplitEventsManager eventsManager, @NonNull AttributesClient attributesClient, @NonNull AttributesMerger attributesMerger) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -60,8 +66,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mSplitClientConfig = splitClientConfig;
         mEventsManager = eventsManager;
         mValidationLogger = new ValidationMessageLoggerImpl();
-        mAttributesClient = attributesClient;
-        mAttributesMerger = attributesMerger;
+        mAttributesClient = checkNotNull(attributesClient);
+        mAttributesMerger = checkNotNull(attributesMerger);
     }
 
     @Override

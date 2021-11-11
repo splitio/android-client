@@ -43,6 +43,7 @@ public class TestableSplitConfigBuilder {
     private boolean mBackgroundSyncWhenBatteryNotLow = true;
     private boolean mBackgroundSyncWhenWifiOnly = false;
     private boolean mLegacyStorageMigrationEnabled = false;
+    private boolean mIsPersistentAttributesStorageEnabled = false;
 
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
@@ -211,6 +212,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder isPersistentAttributesStorageEnabled(boolean isPersistentAttributesStorageEnabled) {
+        this.mIsPersistentAttributesStorageEnabled = isPersistentAttributesStorageEnabled;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -255,7 +261,8 @@ public class TestableSplitConfigBuilder {
                     mSyncConfig,
                     mLegacyStorageMigrationEnabled,
                     mImpressionsMode,
-                    mImpressionsCountersRefreshRate);
+                    mImpressionsCountersRefreshRate,
+                    mIsPersistentAttributesStorageEnabled);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

@@ -68,9 +68,4 @@ public class AttributesClientImpl implements AttributesClient {
     public void clearAttributes() {
         mAttributesStorage.clear();
     }
-
-    @Override
-    public void destroy() {
-        mAttributesStorage.destroy();
-    }
 }

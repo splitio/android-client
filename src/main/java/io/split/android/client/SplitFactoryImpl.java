@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.attributes.AttributesClient;
 import io.split.android.client.attributes.AttributesClientImpl;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
@@ -36,6 +37,7 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
+import io.split.android.client.validators.AttributesValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
@@ -180,6 +182,10 @@ public class SplitFactoryImpl implements SplitFactory {
         _lifecyleManager = new SplitLifecycleManager();
         _lifecyleManager.register(_syncManager);
 
+        AttributesStorageImpl attributesStorage = new AttributesStorageImpl(
+                config.isPersistentAttributesCacheEnabled() ? storageContainer.getPersistentAttributesStorage() : null
+        );
+
         destroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");
@@ -202,7 +208,8 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of manager");
                     _splitTaskExecutor.stop();
                     Logger.i("Successful shutdown of task executor");
-
+                    attributesStorage.destroy();
+                    Logger.i("Successful shutdown of attributes storage");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
@@ -229,9 +236,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 storageContainer.getSplitsStorage(),
                 new EventPropertiesProcessorImpl(),
                 _syncManager,
-                new AttributesClientImpl(new AttributesStorageImpl(
-                        config.isPersistentAttributesCacheEnabled() ? storageContainer.getPersistentAttributesStorage() : null
-                ), null));
+                new AttributesClientImpl(attributesStorage, new AttributesValidatorImpl()));
 
         _manager = new SplitManagerImpl(
                 storageContainer.getSplitsStorage(),

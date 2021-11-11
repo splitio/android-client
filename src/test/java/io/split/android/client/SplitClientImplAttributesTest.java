@@ -131,6 +131,7 @@ public class SplitClientImplAttributesTest {
 
     @Test
     public void removeAttributeCallsRemoveOnAttributesClient() {
+
         splitClient.removeAttribute("key");
 
         verify(attributesClient).removeAttribute("key");
@@ -138,6 +139,7 @@ public class SplitClientImplAttributesTest {
 
     @Test
     public void clearAttributesCallsClearAttributesOnAttributesClient() {
+
         splitClient.clearAttributes();
 
         verify(attributesClient).clearAttributes();
