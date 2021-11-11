@@ -61,6 +61,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
 
         mSynchronizer.loadAndSynchronizeSplits();
         mSynchronizer.loadMySegmentsFromCache();
+        mSynchronizer.loadAttributesFromCache();
         mSynchronizer.synchronizeMySegments();
         isPollingEnabled.set(!mSplitClientConfig.streamingEnabled());
         if (mSplitClientConfig.streamingEnabled()) {

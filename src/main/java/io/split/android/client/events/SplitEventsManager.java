@@ -194,7 +194,8 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
                 case SPLITS_LOADED_FROM_STORAGE:
                 case MY_SEGMENTS_LOADED_FROM_STORAGE:
                     if (wasTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
-                            wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE)) {
+                            wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE) &&
+                            wasTriggered(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE)) {
                         trigger(SplitEvent.SDK_READY_FROM_CACHE);
                     }
                     break;
