@@ -32,6 +32,7 @@ import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.AttributesStorageImpl;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
@@ -182,9 +183,7 @@ public class SplitFactoryImpl implements SplitFactory {
         _lifecyleManager = new SplitLifecycleManager();
         _lifecyleManager.register(_syncManager);
 
-        AttributesStorageImpl attributesStorage = new AttributesStorageImpl(
-                config.isPersistentAttributesCacheEnabled() ? storageContainer.getPersistentAttributesStorage() : null
-        );
+        AttributesStorage attributesStorage = storageContainer.getAttributesStorage();
 
         destroyer = new Runnable() {
             public void run() {

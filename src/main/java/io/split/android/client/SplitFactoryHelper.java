@@ -114,7 +114,7 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistenEventsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenImpressionsCountStorage(splitRoomDatabase),
-                StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, key.matchingKey()));
+                StorageFactory.getAttributesStorage(splitRoomDatabase, key.matchingKey()));
     }
 
     String buildSplitsFilterQueryString(SplitClientConfig config) {

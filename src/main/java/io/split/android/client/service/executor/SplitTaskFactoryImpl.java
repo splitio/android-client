@@ -13,6 +13,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.attributes.LoadAttributesTask;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
@@ -147,5 +148,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         return new ImpressionsCountRecorderTask(
                 mSplitApiFacade.getImpressionsCountRecorder(),
                 mSplitsStorageContainer.getImpressionsCountStorage());
+    }
+
+    @Override
+    public LoadAttributesTask createLoadAttributesTask() {
+        return new LoadAttributesTask(mSplitsStorageContainer.getAttributesStorage());
     }
 }

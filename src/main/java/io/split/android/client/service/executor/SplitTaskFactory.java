@@ -4,6 +4,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.CleanUpDatabaseTask;
+import io.split.android.client.service.attributes.LoadAttributesTask;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
@@ -47,5 +48,7 @@ public interface SplitTaskFactory {
     SaveImpressionsCountTask createSaveImpressionsCountTask(List<ImpressionsCountPerFeature> count);
 
     ImpressionsCountRecorderTask createImpressionsCountRecorderTask();
+
+    LoadAttributesTask createLoadAttributesTask();
 
 }
