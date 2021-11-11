@@ -35,8 +35,8 @@ public class AttributesStorageImpl implements AttributesStorage {
     }
 
     @Override
-    public void set(String key, @NonNull Object value) {
-        mInMemoryAttributes.put(key, value);
+    public void set(String name, @NonNull Object value) {
+        mInMemoryAttributes.put(name, value);
 
         if (mPersistentAttributesStorage != null) {
             mPersistentAttributesStorage.set(mInMemoryAttributes);

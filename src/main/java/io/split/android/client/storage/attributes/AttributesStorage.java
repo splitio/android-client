@@ -13,7 +13,7 @@ public interface AttributesStorage {
 
     Map<String, Object> getAll();
 
-    void set(String key, @NonNull Object value);
+    void set(String name, @NonNull Object value);
 
     void set(@NonNull Map<String, Object> attributes);
 
