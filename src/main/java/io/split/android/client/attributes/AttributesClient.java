@@ -1,5 +1,6 @@
 package io.split.android.client.attributes;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Map;
@@ -13,6 +14,7 @@ public interface AttributesClient {
 
     boolean setAttributes(Map<String, Object> attributes);
 
+    @NonNull
     Map<String, Object> getAllAttributes();
 
     void removeAttribute(String attributeName);

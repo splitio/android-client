@@ -1,5 +1,6 @@
 package io.split.android.client;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import io.split.android.client.events.SplitEvent;
@@ -73,6 +74,7 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
         return false;
     }
 
+    @NonNull
     @Override
     public Map<String, Object> getAllAttributes() {
         return null;

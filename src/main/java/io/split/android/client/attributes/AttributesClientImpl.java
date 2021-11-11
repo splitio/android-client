@@ -53,6 +53,7 @@ public class AttributesClientImpl implements AttributesClient {
         }
     }
 
+    @NonNull
     @Override
     public Map<String, Object> getAllAttributes() {
         return mAttributesStorage.getAll();

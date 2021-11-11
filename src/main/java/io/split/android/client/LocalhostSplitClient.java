@@ -1,5 +1,6 @@
 package io.split.android.client;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -117,6 +118,7 @@ public final class LocalhostSplitClient implements SplitClient {
         return false;
     }
 
+    @NonNull
     @Override
     public Map<String, Object> getAllAttributes() {
         return null;

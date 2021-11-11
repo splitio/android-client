@@ -29,6 +29,7 @@ import io.split.android.engine.metrics.Metrics;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 /**
@@ -192,6 +193,7 @@ public final class SplitClientImpl implements SplitClient {
         return mAttributesClient.setAttributes(attributes);
     }
 
+    @NonNull
     @Override
     public Map<String, Object> getAllAttributes() {
         return mAttributesClient.getAllAttributes();
