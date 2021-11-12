@@ -5,6 +5,7 @@ import io.split.android.client.SplitClientImpl;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.EventPropertiesProcessor;
 import io.split.android.client.api.Key;
+import io.split.android.client.attributes.AttributesClient;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.ImpressionListener;
@@ -37,7 +38,8 @@ public class SplitClientImplFactory {
                 eventsManager,
                 mock(SplitsStorage.class),
                 mock(EventPropertiesProcessor.class),
-                mock(SyncManager.class)
+                mock(SyncManager.class),
+                mock(AttributesClient.class)
         );
             try {
                 Thread.sleep(200);
@@ -62,7 +64,8 @@ public class SplitClientImplFactory {
                 new SplitEventsManager(cfg),
                 mock(SplitsStorage.class),
                 mock(EventPropertiesProcessor.class),
-                mock(SyncManager.class)
+                mock(SyncManager.class),
+                mock(AttributesClient.class)
         );
     }
 
@@ -78,7 +81,8 @@ public class SplitClientImplFactory {
                 eventsManager,
                 mock(SplitsStorage.class),
                 mock(EventPropertiesProcessor.class),
-                mock(SyncManager.class)
+                mock(SyncManager.class),
+                mock(AttributesClient.class)
         );
     }
 }

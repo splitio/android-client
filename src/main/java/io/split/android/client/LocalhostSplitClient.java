@@ -1,5 +1,8 @@
 package io.split.android.client;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 
@@ -98,6 +101,38 @@ public final class LocalhostSplitClient implements SplitClient {
         return result;
     }
 
+
+    @Override
+    public boolean setAttribute(String attributeName, Object value) {
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public Object getAttribute(String attributeName) {
+        return null;
+    }
+
+    @Override
+    public boolean setAttributes(Map<String, Object> attributes) {
+        return false;
+    }
+
+    @NonNull
+    @Override
+    public Map<String, Object> getAllAttributes() {
+        return null;
+    }
+
+    @Override
+    public void removeAttribute(String attributeName) {
+
+    }
+
+    @Override
+    public void clearAttributes() {
+
+    }
 
     @Override
     public void destroy() {
