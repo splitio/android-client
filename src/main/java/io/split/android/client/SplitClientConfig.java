@@ -124,7 +124,7 @@ public class SplitClientConfig {
 
     private boolean _legacyStorageMigrationEnabled;
     private ImpressionsMode _impressionsMode;
-    private final boolean _isPersistentAttributesCacheEnabled;
+    private final boolean _isPersistentAttributesEnabled;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -173,7 +173,7 @@ public class SplitClientConfig {
                               boolean legacyStorageMigrationEnabled,
                               ImpressionsMode impressionsMode,
                               int impCountersRefreshRate,
-                              boolean isPersistentAttributesCacheEnabled) {
+                              boolean isPersistentAttributesEnabled) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -215,7 +215,7 @@ public class SplitClientConfig {
         _syncConfig = syncConfig;
         _legacyStorageMigrationEnabled = legacyStorageMigrationEnabled;
         _impressionsMode = impressionsMode;
-        _isPersistentAttributesCacheEnabled = isPersistentAttributesCacheEnabled;
+        _isPersistentAttributesEnabled = isPersistentAttributesEnabled;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
@@ -472,8 +472,8 @@ public class SplitClientConfig {
         return _impCountersRefreshRate;
     }
 
-    public boolean isPersistentAttributesCacheEnabled() {
-        return _isPersistentAttributesCacheEnabled;
+    public boolean persistentAttributesEnabled() {
+        return _isPersistentAttributesEnabled;
     }
 
     public static final class Builder {
@@ -496,7 +496,7 @@ public class SplitClientConfig {
         private ImpressionListener _impressionListener;
         private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
-        private boolean _isPersistentAttributesCacheEnabled = false;
+        private boolean _isPersistentAttributesEnabled = false;
 
         //.track configuration
         private int _eventsQueueSize = DEFAULT_EVENTS_QUEUE_SIZE;
@@ -1004,8 +1004,8 @@ public class SplitClientConfig {
          *
          * @return This builder
          */
-        public Builder persistentAttributesCacheEnabled(boolean enabled) {
-            _isPersistentAttributesCacheEnabled = enabled;
+        public Builder persistentAttributesEnabled(boolean enabled) {
+            _isPersistentAttributesEnabled = enabled;
             return this;
         }
 
@@ -1106,7 +1106,7 @@ public class SplitClientConfig {
                     _legacyStorageMigrationEnabled,
                     _impressionsMode,
                     _impCountersRefreshRate,
-                    _isPersistentAttributesCacheEnabled);
+                    _isPersistentAttributesEnabled);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
