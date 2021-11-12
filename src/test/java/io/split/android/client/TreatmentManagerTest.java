@@ -5,7 +5,9 @@ import com.google.common.base.Strings;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,12 +16,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.api.Key;
+import io.split.android.client.attributes.AttributesClient;
+import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
+import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
@@ -35,6 +43,7 @@ import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @SuppressWarnings("ConstantConditions")
@@ -45,6 +54,8 @@ public class TreatmentManagerTest {
     ImpressionListener impressionListener;
     Metrics metrics;
     ISplitEventsManager eventsManagerStub;
+    AttributesClient attributesClient = mock(AttributesClient.class);
+    TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
 
     @Before
     public void loadSplitsFromFile() {
@@ -227,6 +238,44 @@ public class TreatmentManagerTest {
         Assert.assertEquals(Treatments.CONTROL, treatment);
     }
 
+    @Test
+    public void getTreatmentTakesValuesFromAttributesClientIntoAccount() {
+
+        treatmentManager.getTreatment("test_split", new HashMap<>(), false);
+
+        verify(attributesClient).getAllAttributes();
+    }
+
+    @Test
+    public void getTreatmentWithConfigTakesValuesFromAttributesClientIntoAccount() {
+
+        treatmentManager.getTreatmentWithConfig("test_split", new HashMap<>(), false);
+
+        verify(attributesClient).getAllAttributes();
+    }
+
+    @Test
+    public void getTreatmentsTakesValuesFromAttributesClientIntoAccount() {
+        ArrayList<String> splits = new ArrayList<>();
+        splits.add("test_split_1");
+        splits.add("test_split_2");
+
+        treatmentManager.getTreatments(splits, new HashMap<>(), false);
+
+        verify(attributesClient).getAllAttributes();
+    }
+
+    @Test
+    public void getTreatmentsWithConfigTakesValuesFromAttributesClientIntoAccount() {
+        ArrayList<String> splits = new ArrayList<>();
+        splits.add("test_split_1");
+        splits.add("test_split_2");
+
+        treatmentManager.getTreatmentsWithConfig(splits, new HashMap<>(), false);
+
+        verify(attributesClient).getAllAttributes();
+    }
+
     private void assertControl(List<String> splitList, String treatment, Map<String, String> treatmentList, SplitResult splitResult, Map<String, SplitResult> splitResultList) {
         Assert.assertNotNull(treatment);
         Assert.assertEquals(Treatments.CONTROL, treatment);
@@ -262,7 +311,32 @@ public class TreatmentManagerTest {
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
                 new KeyValidatorImpl(), new SplitValidatorImpl(), new MetricsMock(),
-                new ImpressionListenerMock(), config, eventsManagerStub);
+                new ImpressionListenerMock(), config, eventsManagerStub, mock(AttributesClient.class), mock(AttributesMerger.class));
+    }
+
+    private TreatmentManagerImpl initializeTreatmentManager() {
+        ISplitEventsManager eventsManager = mock(ISplitEventsManager.class);
+        Evaluator evaluator = mock(Evaluator.class);
+
+        Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
+        Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(true);
+        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split", new HashMap<>())).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_1", new HashMap<>())).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_2", new HashMap<>())).thenReturn(new EvaluationResult("test", "test"));
+
+        return new TreatmentManagerImpl(
+                "matching_key",
+                "bucketing_key",
+                evaluator,
+                mock(KeyValidator.class),
+                mock(SplitValidator.class),
+                mock(Metrics.class),
+                mock(ImpressionListener.class),
+                SplitClientConfig.builder().build(),
+                eventsManager,
+                attributesClient,
+                mock(AttributesMerger.class)
+        );
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {
