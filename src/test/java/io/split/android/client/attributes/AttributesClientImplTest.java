@@ -97,6 +97,15 @@ public class AttributesClientImplTest {
     }
 
     @Test
+    public void setAttributeLogsWarningMessageIfValueIsNotValid() {
+        when(attributesValidator.isValid(any(Object.class))).thenReturn(false);
+
+        attributeClient.setAttribute("key", "invalidValue");
+
+        verify(validationMessageLogger).w(eq("You passed an invalid attribute value for key, acceptable types are String, double, float, long, int, boolean or Collections"), any());
+    }
+
+    @Test
     public void getReturnsValueFetchedFromStorage() {
         String name = "key";
         int attribute = 100;
@@ -151,9 +160,9 @@ public class AttributesClientImplTest {
     public void setAttributesLogsWarningMessageIfValueIsNotValid() {
         when(attributesValidator.isValid(any(Object.class))).thenReturn(false);
 
-        attributeClient.setAttribute("key", "invalidValue");
+        attributeClient.setAttributes(testValues);
 
-        verify(validationMessageLogger).w(eq("You passed an invalid attribute value for key, acceptable types are String, double, float, long, int, boolean or Collections"), any());
+        verify(validationMessageLogger).w(eq("You passed an invalid attribute value for key1, acceptable types are String, double, float, long, int, boolean or Collections"), any());
     }
 
     @Test
