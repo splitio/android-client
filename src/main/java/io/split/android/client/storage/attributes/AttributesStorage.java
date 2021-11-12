@@ -11,6 +11,7 @@ public interface AttributesStorage {
 
     @Nullable Object get(String name);
 
+    @NonNull
     Map<String, Object> getAll();
 
     void set(String name, @NonNull Object value);

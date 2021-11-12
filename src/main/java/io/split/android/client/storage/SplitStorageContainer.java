@@ -2,6 +2,8 @@ package io.split.android.client.storage;
 
 import androidx.annotation.NonNull;
 
+import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
@@ -19,13 +21,15 @@ public class SplitStorageContainer {
     private final PersistentEventsStorage mPersistentEventsStorage;
     private final PersistentImpressionsStorage mPersistentImpressionsStorage;
     private final PersistentImpressionsCountStorage mPersistentImpressionsCountStorage;
+    private final AttributesStorage mAttributesStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorage mySegmentsStorage,
                                  @NonNull PersistentSplitsStorage persistentSplitsStorage,
                                  @NonNull PersistentEventsStorage persistentEventsStorage,
                                  @NonNull PersistentImpressionsStorage persistentImpressionsStorage,
-                                 @NonNull PersistentImpressionsCountStorage persistentImpressionsCountStorage) {
+                                 @NonNull PersistentImpressionsCountStorage persistentImpressionsCountStorage,
+                                 @NonNull AttributesStorage attributesStorage) {
 
         mSplitStorage = checkNotNull(splitStorage);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
@@ -33,6 +37,7 @@ public class SplitStorageContainer {
         mPersistentEventsStorage = checkNotNull(persistentEventsStorage);
         mPersistentImpressionsStorage = checkNotNull(persistentImpressionsStorage);
         mPersistentImpressionsCountStorage = checkNotNull(persistentImpressionsCountStorage);
+        mAttributesStorage = checkNotNull(attributesStorage);
     }
 
     public SplitsStorage getSplitsStorage() {
@@ -57,5 +62,9 @@ public class SplitStorageContainer {
 
     public PersistentImpressionsCountStorage getImpressionsCountStorage() {
         return mPersistentImpressionsCountStorage;
+    }
+
+    public AttributesStorage getAttributesStorage() {
+        return mAttributesStorage;
     }
 }
