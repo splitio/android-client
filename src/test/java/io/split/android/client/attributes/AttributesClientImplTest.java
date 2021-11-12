@@ -1,5 +1,7 @@
 package io.split.android.client.attributes;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,6 +24,7 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.validators.AttributesValidator;
+import io.split.android.client.validators.ValidationMessageLogger;
 
 public class AttributesClientImplTest {
 
@@ -33,6 +36,8 @@ public class AttributesClientImplTest {
     SplitTaskFactory splitTaskFactory;
     @Mock
     SplitTaskExecutor splitTaskExecutor;
+    @Mock
+    ValidationMessageLogger validationMessageLogger;
 
     private AttributesClientImpl attributeClient;
     private Map<String, Object> testValues;
@@ -40,7 +45,7 @@ public class AttributesClientImplTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        attributeClient = new AttributesClientImpl(attributesStorage, attributesValidator, splitTaskFactory, splitTaskExecutor);
+        attributeClient = new AttributesClientImpl(attributesStorage, attributesValidator, splitTaskFactory, splitTaskExecutor, validationMessageLogger);
         testValues = getDefaultValues();
     }
 
@@ -106,7 +111,7 @@ public class AttributesClientImplTest {
     public void setAttributesSubmitsAttributesUpdateTask() {
 
         UpdateAttributesTask updateAttributesTask = mock(UpdateAttributesTask.class);
-        when(attributesValidator.isValid(testValues.values())).thenReturn(true);
+        when(attributesValidator.isValid(any(Object.class))).thenReturn(true);
         when(splitTaskFactory.createUpdateAttributesTask(testValues)).thenReturn(updateAttributesTask);
 
         attributeClient.setAttributes(testValues);
@@ -117,7 +122,7 @@ public class AttributesClientImplTest {
 
     @Test
     public void setAttributesReturnsTrueIfAttributeValuesAreValid() {
-        when(attributesValidator.isValid(testValues.values())).thenReturn(true);
+        when(attributesValidator.isValid(any(Object.class))).thenReturn(true);
 
         boolean result = attributeClient.setAttributes(testValues);
 
@@ -126,7 +131,7 @@ public class AttributesClientImplTest {
 
     @Test
     public void setAttributesDoesNotSaveAttributesInStorageIfAttributeValuesAreNotValid() {
-        when(attributesValidator.isValid(testValues.values())).thenReturn(false);
+        when(attributesValidator.isValid(any(Object.class))).thenReturn(false);
 
         attributeClient.setAttributes(testValues);
 
@@ -135,11 +140,20 @@ public class AttributesClientImplTest {
 
     @Test
     public void setAttributesReturnsFalseIfAttributeValuesAreNotValid() {
-        when(attributesValidator.isValid(testValues.values())).thenReturn(false);
+        when(attributesValidator.isValid(any(Object.class))).thenReturn(false);
 
         boolean result = attributeClient.setAttributes(testValues);
 
         Assert.assertFalse(result);
+    }
+
+    @Test
+    public void setAttributesLogsWarningMessageIfValueIsNotValid() {
+        when(attributesValidator.isValid(any(Object.class))).thenReturn(false);
+
+        attributeClient.setAttribute("key", "invalidValue");
+
+        verify(validationMessageLogger).w(eq("You passed an invalid attribute value for key, acceptable types are String, double, float, long, int, boolean or Collections"), any());
     }
 
     @Test

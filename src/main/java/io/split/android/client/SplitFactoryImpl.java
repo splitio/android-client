@@ -232,9 +232,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 new EventPropertiesProcessorImpl(),
                 _syncManager,
                 new AttributesClientImpl(storageContainer.getAttributesStorage(),
-                        new AttributesValidatorImpl(),
-                        splitTaskFactory,
-                        _splitTaskExecutor));
+                        new AttributesValidatorImpl(), splitTaskFactory,
+                        _splitTaskExecutor, validationLogger));
 
         _manager = new SplitManagerImpl(
                 storageContainer.getSplitsStorage(),
