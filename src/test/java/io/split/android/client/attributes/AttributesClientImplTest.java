@@ -10,6 +10,8 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.validators.AttributesValidator;
 
@@ -19,13 +21,17 @@ public class AttributesClientImplTest {
     AttributesStorage attributesStorage;
     @Mock
     AttributesValidator attributesValidator;
+    @Mock
+    SplitTaskFactory splitTaskFactory;
+    @Mock
+    SplitTaskExecutor splitTaskExecutor;
     private AttributesClientImpl attributeClient;
     private Map<String, Object> testValues;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        attributeClient = new AttributesClientImpl(attributesStorage, attributesValidator);
+        attributeClient = new AttributesClientImpl(attributesStorage, attributesValidator, splitTaskFactory, splitTaskExecutor);
         testValues = getDefaultValues();
     }
 

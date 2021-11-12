@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributesClient;
 import io.split.android.client.attributes.AttributesClientImpl;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
@@ -33,7 +32,6 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorage;
-import io.split.android.client.storage.attributes.AttributesStorageImpl;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
@@ -183,8 +181,6 @@ public class SplitFactoryImpl implements SplitFactory {
         _lifecyleManager = new SplitLifecycleManager();
         _lifecyleManager.register(_syncManager);
 
-        AttributesStorage attributesStorage = storageContainer.getAttributesStorage();
-
         destroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");
@@ -207,7 +203,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of manager");
                     _splitTaskExecutor.stop();
                     Logger.i("Successful shutdown of task executor");
-                    attributesStorage.destroy();
+                    storageContainer.getAttributesStorage().destroy();
                     Logger.i("Successful shutdown of attributes storage");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
@@ -235,7 +231,10 @@ public class SplitFactoryImpl implements SplitFactory {
                 storageContainer.getSplitsStorage(),
                 new EventPropertiesProcessorImpl(),
                 _syncManager,
-                new AttributesClientImpl(attributesStorage, new AttributesValidatorImpl()));
+                new AttributesClientImpl(storageContainer.getAttributesStorage(),
+                        new AttributesValidatorImpl(),
+                        splitTaskFactory,
+                        _splitTaskExecutor));
 
         _manager = new SplitManagerImpl(
                 storageContainer.getSplitsStorage(),

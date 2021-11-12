@@ -1,10 +1,15 @@
 package io.split.android.client.service.executor;
 
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.CleanUpDatabaseTask;
+import io.split.android.client.service.attributes.ClearAttributesTask;
 import io.split.android.client.service.attributes.LoadAttributesTask;
+import io.split.android.client.service.attributes.RemoveAttributeTask;
+import io.split.android.client.service.attributes.UpdateAttributesTask;
+import io.split.android.client.service.attributes.UpdateSingleAttributeTask;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
@@ -19,6 +24,8 @@ import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
+import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 
 public interface SplitTaskFactory {
     EventsRecorderTask createEventsRecorderTask();
@@ -51,4 +58,11 @@ public interface SplitTaskFactory {
 
     LoadAttributesTask createLoadAttributesTask();
 
+    UpdateAttributesTask createUpdateAttributesTask(Map<String, Object> attributes);
+
+    UpdateSingleAttributeTask createUpdateSingleAttributeTask(String attributeName, Object value);
+
+    ClearAttributesTask createClearAttributesTask();
+
+    RemoveAttributeTask createRemoveAttributeTask(String attributeName);
 }
