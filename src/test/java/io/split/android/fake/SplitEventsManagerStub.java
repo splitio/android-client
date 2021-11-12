@@ -27,8 +27,8 @@ public class SplitEventsManagerStub implements ISplitEventsManager {
 
     @Override
     public boolean eventAlreadyTriggered(SplitEvent event) {
-        if(event == SplitEvent.SDK_READY) {
-            return  isSdkReadyTriggered;
+        if (event == SplitEvent.SDK_READY) {
+            return isSdkReadyTriggered;
         }
         return false;
     }

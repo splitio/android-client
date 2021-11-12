@@ -39,6 +39,11 @@ public class SynchronizerSpyImpl implements SynchronizerSpy {
     }
 
     @Override
+    public void loadAttributesFromCache() {
+        mSynchronizer.loadAttributesFromCache();
+    }
+
+    @Override
     public void synchronizeSplits(long since) {
         mSynchronizer.synchronizeSplits();
     }
