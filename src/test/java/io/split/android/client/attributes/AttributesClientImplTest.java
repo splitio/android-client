@@ -1,5 +1,9 @@
 package io.split.android.client.attributes;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +14,10 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.service.attributes.ClearAttributesTask;
+import io.split.android.client.service.attributes.RemoveAttributeTask;
+import io.split.android.client.service.attributes.UpdateAttributesTask;
+import io.split.android.client.service.attributes.UpdateSingleAttributeTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.storage.attributes.AttributesStorage;
@@ -25,6 +33,7 @@ public class AttributesClientImplTest {
     SplitTaskFactory splitTaskFactory;
     @Mock
     SplitTaskExecutor splitTaskExecutor;
+
     private AttributesClientImpl attributeClient;
     private Map<String, Object> testValues;
 
@@ -36,21 +45,24 @@ public class AttributesClientImplTest {
     }
 
     @Test
-    public void setAttributeSavesAttributeInStorageIfAttributeValueIsValid() {
+    public void setAttributeSubmitsUpdateSingleAttributeTaskIfAttributeValueIsValid() {
         String name = "key";
         String attribute = "value";
-        Mockito.when(attributesValidator.isValid(attribute)).thenReturn(true);
+        UpdateSingleAttributeTask updateSingleAttributeTask = mock(UpdateSingleAttributeTask.class);
+        when(splitTaskFactory.createUpdateSingleAttributeTask(name, attribute)).thenReturn(updateSingleAttributeTask);
+        when(attributesValidator.isValid(attribute)).thenReturn(true);
 
         attributeClient.setAttribute(name, attribute);
 
-        Mockito.verify(attributesStorage).set(name, attribute);
+        verify(splitTaskFactory).createUpdateSingleAttributeTask(name, attribute);
+        verify(splitTaskExecutor).submit(updateSingleAttributeTask, null);
     }
 
     @Test
     public void setAttributeReturnsTrueIfAttributeValueIsValid() {
         String name = "key";
         String attribute = "value";
-        Mockito.when(attributesValidator.isValid(attribute)).thenReturn(true);
+        when(attributesValidator.isValid(attribute)).thenReturn(true);
 
         boolean result = attributeClient.setAttribute(name, attribute);
 
@@ -61,7 +73,7 @@ public class AttributesClientImplTest {
     public void setAttributeDoesNotSaveAttributeInStorageIfAttributeValueIsNotValid() {
         String name = "key";
         String attribute = "value";
-        Mockito.when(attributesValidator.isValid(attribute)).thenReturn(false);
+        when(attributesValidator.isValid(attribute)).thenReturn(false);
 
         attributeClient.setAttribute(name, attribute);
 
@@ -72,7 +84,7 @@ public class AttributesClientImplTest {
     public void setAttributeReturnsFalseIfAttributeValueNotIsValid() {
         String name = "key";
         String attribute = "value";
-        Mockito.when(attributesValidator.isValid(attribute)).thenReturn(false);
+        when(attributesValidator.isValid(attribute)).thenReturn(false);
 
         boolean result = attributeClient.setAttribute(name, attribute);
 
@@ -83,7 +95,7 @@ public class AttributesClientImplTest {
     public void getReturnsValueFetchedFromStorage() {
         String name = "key";
         int attribute = 100;
-        Mockito.when(attributesStorage.get(name)).thenReturn(attribute);
+        when(attributesStorage.get(name)).thenReturn(attribute);
 
         Object retrievedAttribute = attributeClient.getAttribute(name);
 
@@ -91,17 +103,21 @@ public class AttributesClientImplTest {
     }
 
     @Test
-    public void setAttributesSavesAttributesInStorageIfAttributeValuesAreValid() {
-        Mockito.when(attributesValidator.isValid(testValues.values())).thenReturn(true);
+    public void setAttributesSubmitsAttributesUpdateTask() {
+
+        UpdateAttributesTask updateAttributesTask = mock(UpdateAttributesTask.class);
+        when(attributesValidator.isValid(testValues.values())).thenReturn(true);
+        when(splitTaskFactory.createUpdateAttributesTask(testValues)).thenReturn(updateAttributesTask);
 
         attributeClient.setAttributes(testValues);
 
-        Mockito.verify(attributesStorage).set(testValues);
+        verify(splitTaskFactory).createUpdateAttributesTask(testValues);
+        verify(splitTaskExecutor).submit(updateAttributesTask, null);
     }
 
     @Test
     public void setAttributesReturnsTrueIfAttributeValuesAreValid() {
-        Mockito.when(attributesValidator.isValid(testValues.values())).thenReturn(true);
+        when(attributesValidator.isValid(testValues.values())).thenReturn(true);
 
         boolean result = attributeClient.setAttributes(testValues);
 
@@ -110,7 +126,7 @@ public class AttributesClientImplTest {
 
     @Test
     public void setAttributesDoesNotSaveAttributesInStorageIfAttributeValuesAreNotValid() {
-        Mockito.when(attributesValidator.isValid(testValues.values())).thenReturn(false);
+        when(attributesValidator.isValid(testValues.values())).thenReturn(false);
 
         attributeClient.setAttributes(testValues);
 
@@ -119,7 +135,7 @@ public class AttributesClientImplTest {
 
     @Test
     public void setAttributesReturnsFalseIfAttributeValuesAreNotValid() {
-        Mockito.when(attributesValidator.isValid(testValues.values())).thenReturn(false);
+        when(attributesValidator.isValid(testValues.values())).thenReturn(false);
 
         boolean result = attributeClient.setAttributes(testValues);
 
@@ -128,7 +144,7 @@ public class AttributesClientImplTest {
 
     @Test
     public void getAllAttributesFetchesValuesFromStorage() {
-        Mockito.when(attributesStorage.getAll()).thenReturn(testValues);
+        when(attributesStorage.getAll()).thenReturn(testValues);
 
         Map<String, Object> allAttributes = attributeClient.getAllAttributes();
 
@@ -136,19 +152,25 @@ public class AttributesClientImplTest {
     }
 
     @Test
-    public void clearAttributesCallsClearOnStorage() {
+    public void clearAttributesSubmitsClearAttributesTask() {
+        ClearAttributesTask clearAttributesTask = mock(ClearAttributesTask.class);
+        when(splitTaskFactory.createClearAttributesTask()).thenReturn(clearAttributesTask);
 
         attributeClient.clearAttributes();
 
-        Mockito.verify(attributesStorage).clear();
+        verify(splitTaskFactory).createClearAttributesTask();
+        verify(splitTaskExecutor).submit(clearAttributesTask, null);
     }
 
     @Test
-    public void removeCallsRemoveOnStorage() {
+    public void removeSubmitsRemoveAttributeTask() {
+        RemoveAttributeTask removeAttributeTask = mock(RemoveAttributeTask.class);
+        when(splitTaskFactory.createRemoveAttributeTask("key")).thenReturn(removeAttributeTask);
 
         attributeClient.removeAttribute("key");
 
-        Mockito.verify(attributesStorage).remove("key");
+        verify(splitTaskFactory).createRemoveAttributeTask("key");
+        verify(splitTaskExecutor).submit(removeAttributeTask, null);
     }
 
     private Map<String, Object> getDefaultValues() {
