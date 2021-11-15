@@ -121,12 +121,12 @@ public class SplitClientStub implements SplitClient {
     }
 
     @Override
-    public void removeAttribute(String attributeName) {
-
+    public boolean removeAttribute(String attributeName) {
+        return true;
     }
 
     @Override
-    public void clearAttributes() {
-
+    public boolean clearAttributes() {
+        return true;
     }
 }

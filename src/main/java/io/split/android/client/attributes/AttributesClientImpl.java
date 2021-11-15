@@ -86,12 +86,16 @@ public class AttributesClientImpl implements AttributesClient {
     }
 
     @Override
-    public void removeAttribute(String attributeName) {
+    public boolean removeAttribute(String attributeName) {
         mSplitTaskExecutor.submit(mSplitTaskFactory.createRemoveAttributeTask(attributeName), null);
+
+        return true;
     }
 
     @Override
-    public void clearAttributes() {
+    public boolean clearAttributes() {
         mSplitTaskExecutor.submit(mSplitTaskFactory.createClearAttributesTask(), null);
+
+        return true;
     }
 }

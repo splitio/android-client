@@ -200,13 +200,13 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
-    public void removeAttribute(String attributeName) {
-        mAttributesClient.removeAttribute(attributeName);
+    public boolean removeAttribute(String attributeName) {
+        return mAttributesClient.removeAttribute(attributeName);
     }
 
     @Override
-    public void clearAttributes() {
-        mAttributesClient.clearAttributes();
+    public boolean clearAttributes() {
+        return mAttributesClient.clearAttributes();
     }
 
     // Estimated event size without properties

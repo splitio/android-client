@@ -17,7 +17,7 @@ public interface AttributesClient {
     @NonNull
     Map<String, Object> getAllAttributes();
 
-    void removeAttribute(String attributeName);
+    boolean removeAttribute(String attributeName);
 
-    void clearAttributes();
+    boolean clearAttributes();
 }

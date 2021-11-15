@@ -60,7 +60,7 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
 
     @Override
     public boolean setAttribute(String attributeName, Object value) {
-        return false;
+        return true;
     }
 
     @Nullable
@@ -71,23 +71,23 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
 
     @Override
     public boolean setAttributes(Map<String, Object> attributes) {
-        return false;
+        return true;
     }
 
     @NonNull
     @Override
     public Map<String, Object> getAllAttributes() {
-        return null;
+        return new HashMap<>();
     }
 
     @Override
-    public void removeAttribute(String attributeName) {
-
+    public boolean removeAttribute(String attributeName) {
+        return true;
     }
 
     @Override
-    public void clearAttributes() {
-
+    public boolean clearAttributes() {
+        return true;
     }
 
     @Override
