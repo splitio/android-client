@@ -3,11 +3,11 @@ package io.split.android.client;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.attributes.AttributesClient;
+import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 
-public interface SplitClient extends AttributesClient {
+public interface SplitClient extends AttributesManager {
 
     /**
      * Returns the treatment to show this key for this feature. The set of treatments

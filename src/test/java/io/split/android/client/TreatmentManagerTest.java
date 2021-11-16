@@ -7,7 +7,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,8 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributesClient;
+import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
@@ -54,7 +52,7 @@ public class TreatmentManagerTest {
     ImpressionListener impressionListener;
     Metrics metrics;
     ISplitEventsManager eventsManagerStub;
-    AttributesClient attributesClient = mock(AttributesClient.class);
+    AttributesManager attributesManager = mock(AttributesManager.class);
     TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
 
     @Before
@@ -239,41 +237,41 @@ public class TreatmentManagerTest {
     }
 
     @Test
-    public void getTreatmentTakesValuesFromAttributesClientIntoAccount() {
+    public void getTreatmentTakesValuesFromAttributesManagerIntoAccount() {
 
         treatmentManager.getTreatment("test_split", new HashMap<>(), false);
 
-        verify(attributesClient).getAllAttributes();
+        verify(attributesManager).getAllAttributes();
     }
 
     @Test
-    public void getTreatmentWithConfigTakesValuesFromAttributesClientIntoAccount() {
+    public void getTreatmentWithConfigTakesValuesFromAttributesManagerIntoAccount() {
 
         treatmentManager.getTreatmentWithConfig("test_split", new HashMap<>(), false);
 
-        verify(attributesClient).getAllAttributes();
+        verify(attributesManager).getAllAttributes();
     }
 
     @Test
-    public void getTreatmentsTakesValuesFromAttributesClientIntoAccount() {
+    public void getTreatmentsTakesValuesFromAttributesManagerIntoAccount() {
         ArrayList<String> splits = new ArrayList<>();
         splits.add("test_split_1");
         splits.add("test_split_2");
 
         treatmentManager.getTreatments(splits, new HashMap<>(), false);
 
-        verify(attributesClient).getAllAttributes();
+        verify(attributesManager).getAllAttributes();
     }
 
     @Test
-    public void getTreatmentsWithConfigTakesValuesFromAttributesClientIntoAccount() {
+    public void getTreatmentsWithConfigTakesValuesFromAttributesManagerIntoAccount() {
         ArrayList<String> splits = new ArrayList<>();
         splits.add("test_split_1");
         splits.add("test_split_2");
 
         treatmentManager.getTreatmentsWithConfig(splits, new HashMap<>(), false);
 
-        verify(attributesClient).getAllAttributes();
+        verify(attributesManager).getAllAttributes();
     }
 
     private void assertControl(List<String> splitList, String treatment, Map<String, String> treatmentList, SplitResult splitResult, Map<String, SplitResult> splitResultList) {
@@ -311,7 +309,7 @@ public class TreatmentManagerTest {
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
                 new KeyValidatorImpl(), new SplitValidatorImpl(), new MetricsMock(),
-                new ImpressionListenerMock(), config, eventsManagerStub, mock(AttributesClient.class), mock(AttributesMerger.class));
+                new ImpressionListenerMock(), config, eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class));
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -334,7 +332,7 @@ public class TreatmentManagerTest {
                 mock(ImpressionListener.class),
                 SplitClientConfig.builder().build(),
                 eventsManager,
-                attributesClient,
+                attributesManager,
                 mock(AttributesMerger.class)
         );
     }

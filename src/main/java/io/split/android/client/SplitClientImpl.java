@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributesClient;
+import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
@@ -46,7 +46,7 @@ public final class SplitClientImpl implements SplitClient {
     private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
     private final SyncManager mSyncManager;
-    private final AttributesClient mAttributesClient;
+    private final AttributesManager mAttributesManager;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -62,7 +62,7 @@ public final class SplitClientImpl implements SplitClient {
                            SplitsStorage splitsStorage,
                            EventPropertiesProcessor eventPropertiesProcessor,
                            SyncManager syncManager,
-                           AttributesClient attributesClient) {
+                           AttributesManager attributesManager) {
 
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
@@ -78,10 +78,10 @@ public final class SplitClientImpl implements SplitClient {
         mTreatmentManager = new TreatmentManagerImpl(
                 mMatchingKey, mBucketingKey, new EvaluatorImpl(splitsStorage, splitParser),
                 new KeyValidatorImpl(), new SplitValidatorImpl(), metrics,
-                impressionListener, mConfig, eventsManager, attributesClient, new AttributesMergerImpl());
+                impressionListener, mConfig, eventsManager, attributesManager, new AttributesMergerImpl());
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
         mSyncManager = checkNotNull(syncManager);
-        mAttributesClient = checkNotNull(attributesClient);
+        mAttributesManager = checkNotNull(attributesManager);
     }
 
     @Override
@@ -179,34 +179,34 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean setAttribute(String attributeName, Object value) {
-        return mAttributesClient.setAttribute(attributeName, value);
+        return mAttributesManager.setAttribute(attributeName, value);
     }
 
     @Nullable
     @Override
     public Object getAttribute(String attributeName) {
-        return mAttributesClient.getAttribute(attributeName);
+        return mAttributesManager.getAttribute(attributeName);
     }
 
     @Override
     public boolean setAttributes(Map<String, Object> attributes) {
-        return mAttributesClient.setAttributes(attributes);
+        return mAttributesManager.setAttributes(attributes);
     }
 
     @NonNull
     @Override
     public Map<String, Object> getAllAttributes() {
-        return mAttributesClient.getAllAttributes();
+        return mAttributesManager.getAllAttributes();
     }
 
     @Override
     public boolean removeAttribute(String attributeName) {
-        return mAttributesClient.removeAttribute(attributeName);
+        return mAttributesManager.removeAttribute(attributeName);
     }
 
     @Override
     public boolean clearAttributes() {
-        return mAttributesClient.clearAttributes();
+        return mAttributesManager.clearAttributes();
     }
 
     // Estimated event size without properties

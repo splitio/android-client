@@ -13,7 +13,7 @@ import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.validators.AttributesValidator;
 import io.split.android.client.validators.ValidationMessageLogger;
 
-public class AttributesClientImpl implements AttributesClient {
+public class AttributesManagerImpl implements AttributesManager {
 
     private final AttributesStorage mAttributesStorage;
     private final AttributesValidator mAttributesValidator;
@@ -21,11 +21,11 @@ public class AttributesClientImpl implements AttributesClient {
     private final SplitTaskFactory mSplitTaskFactory;
     private final ValidationMessageLogger mValidationMessageLogger;
 
-    public AttributesClientImpl(@NonNull AttributesStorage attributesStorage,
-                                @NonNull AttributesValidator attributesValidator,
-                                @NonNull SplitTaskFactory splitTaskFactory,
-                                @NonNull SplitTaskExecutor splitTaskExecutor,
-                                @NonNull ValidationMessageLogger validationMessageLogger) {
+    public AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
+                                 @NonNull AttributesValidator attributesValidator,
+                                 @NonNull SplitTaskFactory splitTaskFactory,
+                                 @NonNull SplitTaskExecutor splitTaskExecutor,
+                                 @NonNull ValidationMessageLogger validationMessageLogger) {
         mAttributesStorage = checkNotNull(attributesStorage);
         mAttributesValidator = checkNotNull(attributesValidator);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);

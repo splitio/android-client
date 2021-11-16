@@ -13,9 +13,8 @@ import io.split.android.client.Evaluator;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitResult;
 import io.split.android.client.TreatmentLabels;
-import io.split.android.client.attributes.AttributesClient;
+import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
-import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
@@ -47,7 +46,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final ValidationMessageLogger mValidationLogger;
     private final ISplitEventsManager mEventsManager;
     @NonNull
-    private final AttributesClient mAttributesClient;
+    private final AttributesManager mAttributesManager;
     @NonNull
     private final AttributesMerger mAttributesMerger;
 
@@ -55,7 +54,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 Evaluator evaluator, KeyValidator keyValidator,
                                 SplitValidator splitValidator, Metrics metrics,
                                 ImpressionListener impressionListener, SplitClientConfig splitClientConfig,
-                                ISplitEventsManager eventsManager, @NonNull AttributesClient attributesClient, @NonNull AttributesMerger attributesMerger) {
+                                ISplitEventsManager eventsManager, @NonNull AttributesManager attributesManager, @NonNull AttributesMerger attributesMerger) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -66,7 +65,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mSplitClientConfig = splitClientConfig;
         mEventsManager = eventsManager;
         mValidationLogger = new ValidationMessageLoggerImpl();
-        mAttributesClient = checkNotNull(attributesClient);
+        mAttributesManager = checkNotNull(attributesManager);
         mAttributesMerger = checkNotNull(attributesMerger);
     }
 
@@ -165,7 +164,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             splitName = split.trim();
         }
 
-        EvaluationResult evaluationResult = evaluateIfReady(splitName, mAttributesMerger.merge(mAttributesClient.getAllAttributes(), attributes), validationTag);
+        EvaluationResult evaluationResult = evaluateIfReady(splitName, mAttributesMerger.merge(mAttributesManager.getAllAttributes(), attributes), validationTag);
         SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
 
         if (evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
@@ -201,7 +200,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return results;
         }
 
-        Map<String, Object> mergedAttributes = mAttributesMerger.merge(mAttributesClient.getAllAttributes(), attributes);
+        Map<String, Object> mergedAttributes = mAttributesMerger.merge(mAttributesManager.getAllAttributes(), attributes);
         for (String split : splits) {
             errorInfo = mSplitValidator.validateName(split);
             if (errorInfo != null) {

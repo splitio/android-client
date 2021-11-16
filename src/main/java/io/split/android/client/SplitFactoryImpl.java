@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributesClientImpl;
+import io.split.android.client.attributes.AttributesManagerImpl;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -31,7 +31,6 @@ import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
-import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
@@ -231,7 +230,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 storageContainer.getSplitsStorage(),
                 new EventPropertiesProcessorImpl(),
                 _syncManager,
-                new AttributesClientImpl(storageContainer.getAttributesStorage(),
+                new AttributesManagerImpl(storageContainer.getAttributesStorage(),
                         new AttributesValidatorImpl(), splitTaskFactory,
                         _splitTaskExecutor, validationLogger));
 

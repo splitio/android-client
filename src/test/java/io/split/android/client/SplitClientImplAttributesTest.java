@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributesClient;
+import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
@@ -27,7 +27,7 @@ public class SplitClientImplAttributesTest {
     @Mock
     SplitFactory container;
     @Mock
-    AttributesClient attributesClient;
+    AttributesManager attributesManager;
     @Mock
     MySegmentsStorage mySegmentsStorage;
     @Mock
@@ -59,56 +59,56 @@ public class SplitClientImplAttributesTest {
                 splitsStorage,
                 eventPropertiesProcessor,
                 syncManager,
-                attributesClient
+                attributesManager
         );
     }
 
     @Test
-    public void setAttributeCallsSetAttributeOnAttributesClient() {
+    public void setAttributeCallsSetAttributeOnAttributesManager() {
 
         splitClient.setAttribute("key", "value");
 
-        verify(attributesClient).setAttribute("key", "value");
+        verify(attributesManager).setAttribute("key", "value");
     }
 
     @Test
-    public void setAttributeReturnsSetAttributeValueFromAttributesClient() {
-        Mockito.when(attributesClient.setAttribute("key", "value")).thenReturn(true);
+    public void setAttributeReturnsSetAttributeValueFromAttributesManager() {
+        Mockito.when(attributesManager.setAttribute("key", "value")).thenReturn(true);
 
         boolean result = splitClient.setAttribute("key", "value");
 
-        verify(attributesClient).setAttribute("key", "value");
+        verify(attributesManager).setAttribute("key", "value");
         Assert.assertTrue(result);
     }
 
     @Test
-    public void getAttributeReturnsAttributeFromAttributesClient() {
-        Mockito.when(attributesClient.getAttribute("key")).thenReturn("value");
+    public void getAttributeReturnsAttributeFromAttributesManager() {
+        Mockito.when(attributesManager.getAttribute("key")).thenReturn("value");
 
         Object value = splitClient.getAttribute("key");
 
-        verify(attributesClient).getAttribute("key");
+        verify(attributesManager).getAttribute("key");
         Assert.assertEquals("value", value);
     }
 
     @Test
-    public void setAttributesCallsSetAttributesOnAttributesClient() {
+    public void setAttributesCallsSetAttributesOnAttributesManager() {
         Map<String, Object> testValues = new HashMap<>();
         testValues.put("key1", "value1");
         testValues.put("key2", 200.05);
 
         splitClient.setAttributes(testValues);
 
-        verify(attributesClient).setAttributes(testValues);
+        verify(attributesManager).setAttributes(testValues);
     }
 
     @Test
-    public void setAttributesReturnsSetAttributesValueFromAttributesClient() {
+    public void setAttributesReturnsSetAttributesValueFromAttributesManager() {
         Map<String, Object> testValues = new HashMap<>();
         testValues.put("key1", "value1");
         testValues.put("key2", 200.05);
 
-        Mockito.when(attributesClient.setAttributes(testValues)).thenReturn(true);
+        Mockito.when(attributesManager.setAttributes(testValues)).thenReturn(true);
 
         boolean result = splitClient.setAttributes(testValues);
 
@@ -116,32 +116,32 @@ public class SplitClientImplAttributesTest {
     }
 
     @Test
-    public void getAllAttributesReturnsValuesFromAttributesClient() {
+    public void getAllAttributesReturnsValuesFromAttributesManager() {
         Map<String, Object> testValues = new HashMap<>();
         testValues.put("key1", "value1");
         testValues.put("key2", 200.05);
 
-        Mockito.when(attributesClient.getAllAttributes()).thenReturn(testValues);
+        Mockito.when(attributesManager.getAllAttributes()).thenReturn(testValues);
 
         Map<String, Object> allAttributes = splitClient.getAllAttributes();
 
-        verify(attributesClient).getAllAttributes();
+        verify(attributesManager).getAllAttributes();
         Assert.assertEquals(testValues, allAttributes);
     }
 
     @Test
-    public void removeAttributeCallsRemoveOnAttributesClient() {
+    public void removeAttributeCallsRemoveOnAttributesManager() {
 
         splitClient.removeAttribute("key");
 
-        verify(attributesClient).removeAttribute("key");
+        verify(attributesManager).removeAttribute("key");
     }
 
     @Test
-    public void clearAttributesCallsClearAttributesOnAttributesClient() {
+    public void clearAttributesCallsClearAttributesOnAttributesManager() {
 
         splitClient.clearAttributes();
 
-        verify(attributesClient).clearAttributes();
+        verify(attributesManager).clearAttributes();
     }
 }

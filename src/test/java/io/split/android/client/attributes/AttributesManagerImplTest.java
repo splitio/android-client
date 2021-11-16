@@ -26,7 +26,7 @@ import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.validators.AttributesValidator;
 import io.split.android.client.validators.ValidationMessageLogger;
 
-public class AttributesClientImplTest {
+public class AttributesManagerImplTest {
 
     @Mock
     AttributesStorage attributesStorage;
@@ -39,13 +39,13 @@ public class AttributesClientImplTest {
     @Mock
     ValidationMessageLogger validationMessageLogger;
 
-    private AttributesClientImpl attributeClient;
+    private AttributesManagerImpl attributeClient;
     private Map<String, Object> testValues;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        attributeClient = new AttributesClientImpl(attributesStorage, attributesValidator, splitTaskFactory, splitTaskExecutor, validationMessageLogger);
+        attributeClient = new AttributesManagerImpl(attributesStorage, attributesValidator, splitTaskFactory, splitTaskExecutor, validationMessageLogger);
         testValues = getDefaultValues();
     }
 
