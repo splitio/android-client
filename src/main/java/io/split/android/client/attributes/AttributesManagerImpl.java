@@ -35,17 +35,14 @@ public class AttributesManagerImpl implements AttributesManager {
 
     @Override
     public boolean setAttribute(String attributeName, Object value) {
-        boolean isValid = mAttributesValidator.isValid(value);
-
-        if (isValid) {
-            mSplitTaskExecutor.submit(mSplitTaskFactory.createUpdateSingleAttributeTask(attributeName, value), null);
-
-            return true;
-        } else {
+        if (!mAttributesValidator.isValid(value)) {
             logValidationWarning(attributeName);
-
             return false;
         }
+
+        mSplitTaskExecutor.submit(mSplitTaskFactory.createUpdateSingleAttributeTask(attributeName, value), null);
+
+        return true;
     }
 
     @Nullable
