@@ -8,6 +8,12 @@ import java.util.List;
  */
 
 public interface IStorage {
+    /**
+     * Gets the root working path
+     *
+     * @return String containing the absolute root path in file storage
+     */
+    String getRootPath();
 
     /**
      * Reads an element from the storage

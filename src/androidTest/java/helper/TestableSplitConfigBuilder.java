@@ -51,6 +51,7 @@ public class TestableSplitConfigBuilder {
     private DevelopmentSslConfig mDevelopmentSslConfig = null;
     private ImpressionsMode mImpressionsMode = ImpressionsMode.OPTIMIZED;
     private SyncConfig mSyncConfig = SyncConfig.builder().build();
+    private int mOfflineRefreshRate = 10;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -217,6 +218,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder offlineRefreshRate(int offlineRefreshRate) {
+        this.mOfflineRefreshRate = offlineRefreshRate;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -262,7 +268,8 @@ public class TestableSplitConfigBuilder {
                     mLegacyStorageMigrationEnabled,
                     mImpressionsMode,
                     mImpressionsCountersRefreshRate,
-                    mIsPersistentAttributesStorageEnabled);
+                    mIsPersistentAttributesStorageEnabled,
+                    mOfflineRefreshRate);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

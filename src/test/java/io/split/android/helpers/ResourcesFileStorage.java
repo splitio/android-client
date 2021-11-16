@@ -6,6 +6,12 @@ import java.util.List;
 import io.split.android.client.storage.legacy.IStorage;
 
 public class ResourcesFileStorage implements IStorage {
+
+    @Override
+    public String getRootPath() {
+        return "";
+    }
+
     @Override
     public String read(String elementId) throws IOException {
         return new FileHelper().loadFileContent(elementId);

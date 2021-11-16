@@ -1,0 +1,110 @@
+package io.split.android.client.localhost;
+
+import android.content.Context;
+import androidx.annotation.VisibleForTesting;
+
+import com.google.common.collect.ImmutableMap;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import io.split.android.client.SplitClient;
+import io.split.android.client.SplitClientConfig;
+import io.split.android.client.SplitFactory;
+import io.split.android.client.SplitManager;
+import io.split.android.client.SplitManagerImpl;
+import io.split.android.client.attributes.AttributesManager;
+import io.split.android.client.attributes.AttributesManagerImpl;
+import io.split.android.client.attributes.AttributesMergerImpl;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.SplitTaskExecutorImpl;
+import io.split.android.client.service.executor.SplitTaskFactoryImpl;
+import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.storage.attributes.AttributesStorageImpl;
+import io.split.android.client.storage.legacy.FileStorage;
+import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.utils.FileUtils;
+import io.split.android.client.utils.Logger;
+import io.split.android.client.validators.AttributesValidatorImpl;
+import io.split.android.client.validators.SplitValidatorImpl;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
+import io.split.android.engine.experiments.SplitParser;
+
+/**
+ * An implementation of SplitClient that considers all partitions
+ * passed in the constructor to be 100% on for all users, and
+ * any other split to be 100% off for all users. This implementation
+ * is useful for using Codigo in localhost environment.
+ *
+ */
+public final class LocalhostSplitFactory implements SplitFactory {
+
+    private final SplitClient mClient;
+    private final SplitManager mManager;
+    private final SplitEventsManager mEventsManager;
+    private final LocalhostSynchronizer mSynchronizer;
+    private String mLocalhostFileName = null;
+
+    public LocalhostSplitFactory(String key, Context context, SplitClientConfig config) throws IOException {
+        this(key, context, config, null);
+    }
+
+    public LocalhostSplitFactory(String key, Context context,
+                                 SplitClientConfig config,
+                                 String localhostFileName) throws IOException {
+
+        if (localhostFileName != null) {
+            mLocalhostFileName = localhostFileName;
+        }
+
+        mEventsManager = new SplitEventsManager(config);
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        FileStorage fileStorage = new FileStorage(context.getCacheDir(), ServiceConstants.LOCALHOST_FOLDER);
+        SplitsStorage splitsStorage = new LocalhostSplitsStorage(mLocalhostFileName, context, fileStorage, mEventsManager);
+        SplitParser splitParser = new SplitParser(new EmptyMySegmentsStorage());
+        SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
+        AttributesManager attributesManager = new LocalhostAttributesManager(new AttributesStorageImpl(null), new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
+        mClient = new LocalhostSplitClient(this, config, key, splitsStorage, mEventsManager, splitParser, attributesManager, new AttributesMergerImpl());
+        mEventsManager.getExecutorResources().setSplitClient(mClient);
+        mManager = new SplitManagerImpl(splitsStorage,
+                new SplitValidatorImpl(), splitParser);
+        mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage);
+        mSynchronizer.start();
+
+        Logger.i("Android SDK initialized!");
+    }
+
+    @Override
+    public SplitClient client() {
+        return mClient;
+    }
+
+    @Override
+    public SplitManager manager() {
+        return mManager;
+    }
+
+    @Override
+    public void destroy() {
+        mSynchronizer.stop();
+    }
+
+    @Override
+    public void flush() {
+        mClient.flush();
+    }
+
+    @Override
+    public boolean isReady() {
+        return mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
+    }
+}
