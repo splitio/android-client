@@ -12,6 +12,8 @@ public interface Synchronizer extends SplitLifecycleAware {
 
     void loadMySegmentsFromCache();
 
+    void loadAttributesFromCache();
+
     void synchronizeSplits(long since);
 
     void synchronizeSplits();

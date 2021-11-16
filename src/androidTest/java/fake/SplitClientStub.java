@@ -1,5 +1,9 @@
 package fake;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -92,5 +96,37 @@ public class SplitClientStub implements SplitClient {
     @Override
     public boolean track(String eventType, double value, Map<String, Object> properties) {
         return false;
+    }
+
+    @Override
+    public boolean setAttribute(String attributeName, Object value) {
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public Object getAttribute(String attributeName) {
+        return null;
+    }
+
+    @Override
+    public boolean setAttributes(Map<String, Object> attributes) {
+        return false;
+    }
+
+    @NonNull
+    @Override
+    public Map<String, Object> getAllAttributes() {
+        return new HashMap<>();
+    }
+
+    @Override
+    public boolean removeAttribute(String attributeName) {
+        return true;
+    }
+
+    @Override
+    public boolean clearAttributes() {
+        return true;
     }
 }

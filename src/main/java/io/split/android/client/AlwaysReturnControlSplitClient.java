@@ -1,5 +1,8 @@
 package io.split.android.client;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.grammar.Treatments;
@@ -53,6 +56,38 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
     @Override
     public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
         return new SplitResult(Treatments.CONTROL);
+    }
+
+    @Override
+    public boolean setAttribute(String attributeName, Object value) {
+        return true;
+    }
+
+    @Nullable
+    @Override
+    public Object getAttribute(String attributeName) {
+        return null;
+    }
+
+    @Override
+    public boolean setAttributes(Map<String, Object> attributes) {
+        return true;
+    }
+
+    @NonNull
+    @Override
+    public Map<String, Object> getAllAttributes() {
+        return new HashMap<>();
+    }
+
+    @Override
+    public boolean removeAttribute(String attributeName) {
+        return true;
+    }
+
+    @Override
+    public boolean clearAttributes() {
+        return true;
     }
 
     @Override

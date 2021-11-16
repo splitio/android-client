@@ -2,7 +2,7 @@ package io.split.android.client.storage.attributes;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-
+import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -95,6 +95,16 @@ public class AttributesStorageImplTest {
         attributesStorage.set("newKey", 200);
 
         assertEquals(200, attributesStorage.get("newKey"));
+    }
+
+    @Test
+    public void setNewValueRetainsPreviousValues() {
+        attributesStorage.set(getDefaultValuesMap());
+
+        attributesStorage.set("newKey", "newValue");
+
+        assertTrue(attributesStorage.getAll().entrySet().containsAll(getDefaultValuesMap().entrySet()));
+        assertTrue(attributesStorage.getAll().containsKey("newKey"));
     }
 
     @Test

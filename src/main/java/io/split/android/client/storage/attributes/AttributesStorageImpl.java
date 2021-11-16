@@ -29,6 +29,7 @@ public class AttributesStorageImpl implements AttributesStorage {
         return mInMemoryAttributes.get(name);
     }
 
+    @NonNull
     @Override
     public Map<String, Object> getAll() {
         return new HashMap<>(mInMemoryAttributes);

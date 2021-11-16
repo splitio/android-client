@@ -50,6 +50,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private LoadLocalDataListener mLoadLocalSplitsListener;
     private LoadLocalDataListener mLoadLocalMySegmentsListener;
+    private LoadLocalDataListener mLoadLocalAttributesListener;
 
     private String mSplitsFetcherTaskId;
     private String mMySegmentsFetcherTaskId;
@@ -103,6 +104,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void loadMySegmentsFromCache() {
         submitMySegmentsLoadingTask(mLoadLocalMySegmentsListener);
+    }
+
+    @Override
+    public void loadAttributesFromCache() {
+        submitAttributesLoadingTask(mLoadLocalAttributesListener);
     }
 
     @Override
@@ -193,6 +199,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
         mLoadLocalMySegmentsListener = new LoadLocalDataListener(
                 mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+
+        mLoadLocalAttributesListener = new LoadLocalDataListener(
+                mSplitEventsManager, SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
     }
 
     public void pause() {
@@ -249,7 +258,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void saveImpressionsCount() {
-        if(!isOptimizedImpressionsMode()) {
+        if (!isOptimizedImpressionsMode()) {
             return;
         }
         mTaskExecutor.submit(
@@ -257,7 +266,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void flushImpressionsCount() {
-        if(!isOptimizedImpressionsMode()) {
+        if (!isOptimizedImpressionsMode()) {
             return;
         }
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
@@ -300,7 +309,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void scheduleImpressionsCountRecorderTask() {
-        if(!isOptimizedImpressionsMode()) {
+        if (!isOptimizedImpressionsMode()) {
             return;
         }
         mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
@@ -316,6 +325,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void submitMySegmentsLoadingTask(SplitTaskExecutionListener listener) {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(),
+                listener);
+    }
+
+    private void submitAttributesLoadingTask(SplitTaskExecutionListener listener) {
+        mTaskExecutor.submit(mSplitTaskFactory.createLoadAttributesTask(),
                 listener);
     }
 
