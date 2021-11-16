@@ -6,13 +6,16 @@ import java.util.Map;
 public class AttributesMergerImpl implements AttributesMerger {
 
     @Override
-    public Map<String, Object> merge(Map<String, Object> storedAttributes, Map<String, Object> oneTimeAttributes) {
-        if (storedAttributes == null) storedAttributes = new HashMap<>();
+    public Map<String, Object> merge(final Map<String, Object> storedAttributes, final Map<String, Object> oneTimeAttributes) {
+        if (storedAttributes == null) {
+            if (oneTimeAttributes != null) return oneTimeAttributes;
+            else return new HashMap<>();
+        } else if (oneTimeAttributes == null) {
+            return storedAttributes;
+        } else {
+            storedAttributes.putAll(oneTimeAttributes);
 
-        if (oneTimeAttributes == null) oneTimeAttributes = new HashMap<>();
-
-        storedAttributes.putAll(oneTimeAttributes);
-
-        return storedAttributes;
+            return storedAttributes;
+        }
     }
 }

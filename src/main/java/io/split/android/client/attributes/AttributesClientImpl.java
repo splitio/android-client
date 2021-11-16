@@ -56,22 +56,16 @@ public class AttributesClientImpl implements AttributesClient {
 
     @Override
     public boolean setAttributes(Map<String, Object> attributes) {
-        boolean isValid = true;
         for (Map.Entry<String, Object> attribute : attributes.entrySet()) {
             if (!mAttributesValidator.isValid(attribute.getValue())) {
-                isValid = false;
                 logValidationWarning(attribute.getKey());
-                break;
+                return false;
             }
         }
 
-        if (isValid) {
-            mSplitTaskExecutor.submit(mSplitTaskFactory.createUpdateAttributesTask(attributes), null);
+        mSplitTaskExecutor.submit(mSplitTaskFactory.createUpdateAttributesTask(attributes), null);
 
-            return true;
-        } else {
-            return false;
-        }
+        return true;
     }
 
     private void logValidationWarning(String key) {
