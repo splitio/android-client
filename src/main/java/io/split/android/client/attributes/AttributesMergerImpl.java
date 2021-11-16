@@ -7,15 +7,16 @@ public class AttributesMergerImpl implements AttributesMerger {
 
     @Override
     public Map<String, Object> merge(final Map<String, Object> storedAttributes, final Map<String, Object> oneTimeAttributes) {
-        if (storedAttributes == null) {
-            if (oneTimeAttributes != null) return oneTimeAttributes;
-            else return new HashMap<>();
-        } else if (oneTimeAttributes == null) {
-            return storedAttributes;
-        } else {
-            storedAttributes.putAll(oneTimeAttributes);
+        Map<String, Object> mergedAttributes = new HashMap<>();
 
-            return storedAttributes;
+        if (storedAttributes != null) {
+            mergedAttributes.putAll(storedAttributes);
         }
+
+        if (oneTimeAttributes != null) {
+            mergedAttributes.putAll(oneTimeAttributes);
+        }
+
+        return mergedAttributes;
     }
 }
