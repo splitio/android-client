@@ -19,7 +19,8 @@ public class AttributesStorageImpl implements AttributesStorage {
     @Override
     public void loadLocal() {
         if (mPersistentAttributesStorage != null) {
-            overwriteValuesInMemory(mPersistentAttributesStorage.getAll());
+            mInMemoryAttributes.clear();
+            mInMemoryAttributes.putAll(mPersistentAttributesStorage.getAll());
         }
     }
 
@@ -48,10 +49,10 @@ public class AttributesStorageImpl implements AttributesStorage {
     public void set(@Nullable Map<String, Object> attributes) {
         if (attributes == null) return;
 
-        overwriteValuesInMemory(attributes);
+        mInMemoryAttributes.putAll(attributes);
 
         if (mPersistentAttributesStorage != null) {
-            mPersistentAttributesStorage.set(attributes);
+            mPersistentAttributesStorage.set(mInMemoryAttributes);
         }
     }
 
@@ -75,10 +76,5 @@ public class AttributesStorageImpl implements AttributesStorage {
         if (mPersistentAttributesStorage != null) {
             mPersistentAttributesStorage.set(mInMemoryAttributes);
         }
-    }
-
-    private void overwriteValuesInMemory(Map<String, Object> values) {
-        mInMemoryAttributes.clear();
-        mInMemoryAttributes.putAll(values);
     }
 }
