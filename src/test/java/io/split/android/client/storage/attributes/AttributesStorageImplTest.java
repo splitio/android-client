@@ -3,6 +3,9 @@ package io.split.android.client.storage.attributes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -14,6 +17,10 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.service.attributes.AttributeClearTask;
+import io.split.android.client.service.attributes.AttributeTaskFactory;
+import io.split.android.client.service.attributes.AttributeUpdateTask;
+import io.split.android.client.service.attributes.ClearAttributesTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 
 public class AttributesStorageImplTest {
@@ -22,13 +29,15 @@ public class AttributesStorageImplTest {
     private PersistentAttributesStorage persistentAttributesStorage;
     @Mock
     private SplitTaskExecutor splitTaskExecutor;
+    @Mock
+    private AttributeTaskFactory attributeTaskFactory;
     private AttributesStorageImpl attributesStorage;
     private HashMap<String, Object> defaultValuesMap = null;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        attributesStorage = new AttributesStorageImpl(persistentAttributesStorage, splitTaskExecutor);
+        attributesStorage = new AttributesStorageImpl(persistentAttributesStorage, splitTaskExecutor, attributeTaskFactory);
     }
 
     @Test
@@ -40,7 +49,7 @@ public class AttributesStorageImplTest {
 
     @Test
     public void loadLocalDoesNotInteractWithPersistentStorageWhenItIsNull() {
-        attributesStorage = new AttributesStorageImpl(null, splitTaskExecutor);
+        attributesStorage = new AttributesStorageImpl();
 
         attributesStorage.loadLocal();
 
@@ -48,17 +57,25 @@ public class AttributesStorageImplTest {
     }
 
     @Test
-    public void clearCallsClearInPersistentStorageIfPersistentStorageIsNotNull() {
+    public void clearSubmitsClearTaskIfPersistentStorageIsNotNull() {
+        AttributeClearTask clearAttributesTask = mock(AttributeClearTask.class);
+        Mockito.when(attributeTaskFactory.createAttributeClearTask(persistentAttributesStorage)).thenReturn(clearAttributesTask);
+
         attributesStorage.clear();
 
-        Mockito.verify(persistentAttributesStorage).clear();
+        Mockito.verify(attributeTaskFactory).createAttributeClearTask(persistentAttributesStorage);
+        Mockito.verify(splitTaskExecutor).submit(clearAttributesTask, null);
     }
 
     @Test
     public void clearDoesNotCallClearInPersistentStorageWhenItIsNull() {
-        attributesStorage = new AttributesStorageImpl(null, splitTaskExecutor);
+        attributesStorage = new AttributesStorageImpl();
 
         attributesStorage.clear();
+
+        Mockito.verifyNoInteractions(persistentAttributesStorage);
+        Mockito.verifyNoInteractions(attributeTaskFactory);
+        Mockito.verifyNoInteractions(splitTaskExecutor);
     }
 
     @Test
@@ -136,22 +153,29 @@ public class AttributesStorageImplTest {
     }
 
     @Test
-    public void setUpdatesValueInPersistentStorageIfPersistentStorageIsNotNull() {
+    public void setSubmitsAttributeUpdateTaskIfPersistentStorageIsNotNull() {
         Map<String, Object> expectedMap = new HashMap<>();
         expectedMap.put("newKey", 200);
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+        AttributeUpdateTask updateAttributeTask = mock(AttributeUpdateTask.class);
+        Mockito.when(attributeTaskFactory.createAttributeUpdateTask(persistentAttributesStorage, expectedMap)).thenReturn(updateAttributeTask);
 
         attributesStorage.set("newKey", 200);
 
-        Mockito.verify(persistentAttributesStorage).set(captor.capture());
+        Mockito.verify(attributeTaskFactory).createAttributeUpdateTask(eq(persistentAttributesStorage), captor.capture());
+        Mockito.verify(splitTaskExecutor).submit(updateAttributeTask, null);
         assertEquals(expectedMap, captor.getValue());
     }
 
     @Test
     public void setDoesNotInteractWithPersistentStorageWhenItIsNull() {
-        attributesStorage = new AttributesStorageImpl(null, splitTaskExecutor);
+        attributesStorage = new AttributesStorageImpl();
 
         attributesStorage.set("newKey", "newValue");
+
+        Mockito.verifyNoInteractions(persistentAttributesStorage);
+        Mockito.verifyNoInteractions(attributeTaskFactory);
+        Mockito.verifyNoInteractions(splitTaskExecutor);
     }
 
     @Test
@@ -163,21 +187,29 @@ public class AttributesStorageImplTest {
     }
 
     @Test
-    public void setWithMapUpdatesValuesInPersistentStorage() {
+    public void setWithMapSubmitsAttributeUpdateTaskWhenPersistentStorageIsNotNull() {
         Map<String, Object> expectedMap = getDefaultValuesMap();
         ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
 
+        AttributeUpdateTask updateAttributeTask = mock(AttributeUpdateTask.class);
+        Mockito.when(attributeTaskFactory.createAttributeUpdateTask(persistentAttributesStorage, expectedMap)).thenReturn(updateAttributeTask);
+
         attributesStorage.set(expectedMap);
 
-        Mockito.verify(persistentAttributesStorage).set(captor.capture());
+        Mockito.verify(attributeTaskFactory).createAttributeUpdateTask(eq(persistentAttributesStorage), captor.capture());
+        Mockito.verify(splitTaskExecutor).submit(updateAttributeTask, null);
         assertEquals(expectedMap, captor.getValue());
     }
 
     @Test
     public void setWithMapDoesNotInteractWithPersistentStorageWhenItIsNull() {
-        attributesStorage = new AttributesStorageImpl(null, splitTaskExecutor);
+        attributesStorage = new AttributesStorageImpl();
 
         attributesStorage.set(getDefaultValuesMap());
+
+        Mockito.verifyNoInteractions(persistentAttributesStorage);
+        Mockito.verifyNoInteractions(attributeTaskFactory);
+        Mockito.verifyNoInteractions(splitTaskExecutor);
     }
 
     @Test
@@ -192,20 +224,26 @@ public class AttributesStorageImplTest {
     }
 
     @Test
-    public void removeUpdatesValuesInPersistentStorageWhenItIsNotNull() {
-        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+    public void removeSubmitsAttributeUpdateTaskWhenPersistentStorageIsNotNull() {
+        AttributeUpdateTask updateAttributeTask = mock(AttributeUpdateTask.class);
+
         Map<String, Object> defaultValuesMap = getDefaultValuesMap();
         Mockito.when(persistentAttributesStorage.getAll()).thenReturn(defaultValuesMap);
+
+        Map<String, Object> expectedMap = new HashMap<>();
+        expectedMap.put("key2", "value2");
+        expectedMap.put("key3", "value3");
+        Mockito.when(attributeTaskFactory.createAttributeUpdateTask(persistentAttributesStorage, expectedMap)).thenReturn(updateAttributeTask);
+
+        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
 
         attributesStorage.loadLocal();
 
         attributesStorage.remove("key1");
 
-        Mockito.verify(persistentAttributesStorage).set(captor.capture());
-
-        Map<String, Object> capturedValue = captor.getValue();
-        assertNull(capturedValue.get("key1"));
-        assertEquals(defaultValuesMap.size() - 1, capturedValue.size());
+        Mockito.verify(attributeTaskFactory).createAttributeUpdateTask(eq(persistentAttributesStorage), captor.capture());
+        Mockito.verify(splitTaskExecutor).submit(updateAttributeTask, null);
+        assertEquals(expectedMap, captor.getValue());
     }
 
     @Test

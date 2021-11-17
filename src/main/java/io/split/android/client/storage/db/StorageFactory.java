@@ -5,6 +5,7 @@ import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 import androidx.annotation.RestrictTo;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.AttributesStorageImpl;
@@ -62,9 +63,14 @@ public class StorageFactory {
     }
 
     public static AttributesStorage getAttributesStorage(
-            SplitRoomDatabase splitRoomDatabase, String key, SplitTaskExecutor splitTaskExecutor) {
-        SqLitePersistentAttributesStorage persistentAttributesStorage = new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), key);
+            SplitRoomDatabase splitRoomDatabase, String key, SplitTaskExecutor splitTaskExecutor, boolean persistentStorageEnabled) {
 
-        return new AttributesStorageImpl(persistentAttributesStorage, splitTaskExecutor);
+        if (!persistentStorageEnabled) {
+            return new AttributesStorageImpl();
+        } else {
+            SqLitePersistentAttributesStorage persistentAttributesStorage = new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), key);
+
+            return new AttributesStorageImpl(persistentAttributesStorage, splitTaskExecutor, new AttributeTaskFactoryImpl());
+        }
     }
 }

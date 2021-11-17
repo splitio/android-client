@@ -106,7 +106,7 @@ class SplitFactoryHelper {
         return headersBuilder.build();
     }
 
-    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key, SplitTaskExecutor splitTaskExecutor) {
+    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key, SplitTaskExecutor splitTaskExecutor, SplitClientConfig config) {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, key.matchingKey()),
@@ -114,7 +114,10 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistenEventsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenImpressionsCountStorage(splitRoomDatabase),
-                StorageFactory.getAttributesStorage(splitRoomDatabase, key.matchingKey(), splitTaskExecutor));
+                StorageFactory.getAttributesStorage(splitRoomDatabase,
+                        key.matchingKey(),
+                        splitTaskExecutor,
+                        config.persistentAttributesEnabled()));
     }
 
     String buildSplitsFilterQueryString(SplitClientConfig config) {
