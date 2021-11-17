@@ -48,11 +48,11 @@ public class TestingHelper {
             this(null, "");
         }
 
-        TestEventTask(CountDownLatch latch) {
+        public TestEventTask(CountDownLatch latch) {
             this(latch, "");
         }
 
-        TestEventTask(CountDownLatch latch, String title) {
+        public TestEventTask(CountDownLatch latch, String title) {
             mLatch = latch;
             mTitle = title;
         }
@@ -61,6 +61,7 @@ public class TestingHelper {
             System.out.println("Executing onPostExecution: " + mTitle);
             onExecutedCalled = true;
             if(mLatch != null) {
+                System.out.println("Latch fired TestEventTask");
                 mLatch.countDown();
             }
         }

@@ -15,6 +15,12 @@ public class MemoryStorage implements IStorage {
 
     private final Map<String, String> _storage = new HashMap<>();
 
+
+    @Override
+    public String getRootPath() {
+        return "";
+    }
+
     @SuppressWarnings("RedundantThrows")
     @Override
     public String read(String elementId) throws IOException {

@@ -9,38 +9,59 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import androidx.test.platform.app.InstrumentationRegistry;
-import io.split.android.client.LocalhostSplitClient;
-import io.split.android.client.LocalhostSplitFactory;
-import io.split.android.client.LocalhostSplitManager;
+
+import helper.FileHelper;
+import helper.TestingHelper;
+import io.split.android.client.SplitClient;
+import io.split.android.client.SplitClientConfig;
+import io.split.android.client.SplitFactory;
+import io.split.android.client.SplitManager;
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.localhost.LocalhostSplitClient;
+import io.split.android.client.localhost.LocalhostSplitFactory;
 import io.split.android.client.SplitResult;
 import io.split.android.client.api.SplitView;
 
 @SuppressWarnings("ConstantConditions")
 public class LocalhostTest {
 
+    SplitClientConfig mSplitClientConfig;
+    FileHelper mFileHelper;
+    Context mContext;
+
     @Before
     public void  setUp() {
+        mSplitClientConfig = SplitClientConfig.builder().build();
+        mFileHelper = new FileHelper();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
     }
 
     @Test
-    public void testUsingYamlFile() {
+    public void testUsingYamlFile() throws InterruptedException {
 
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        SplitFactory factory = null;
+        SplitClient client = null;
+        SplitManager manager = null;
 
-        LocalhostSplitFactory factory = null;
-        LocalhostSplitClient client = null;
-        LocalhostSplitManager manager = null;
+        CountDownLatch readyLatch = new CountDownLatch(1);
         try {
-            factory = new LocalhostSplitFactory("key", context);
-            client = (LocalhostSplitClient) factory.client();
-            manager = (LocalhostSplitManager) factory.manager();
+            factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig);
+            client = factory.client();
+            manager = factory.manager();
+            client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(readyLatch));
 
         } catch (IOException e) {
         }
+
+        readyLatch.await(5, TimeUnit.SECONDS);
 
         List<SplitView> splits = manager.splits();
         SplitView sv0 = manager.split("split_0");
@@ -69,7 +90,6 @@ public class LocalhostTest {
         Map<String, String> treatments = client.getTreatments(splitNames, null);
         Map<String, SplitResult> results = client.getTreatmentsWithConfig(splitNames, null);
 
-
         Assert.assertNotNull(factory);
         Assert.assertNotNull(client);
         Assert.assertNotNull(manager);
@@ -95,18 +115,17 @@ public class LocalhostTest {
         Assert.assertEquals(9, splits.size());
 
         Assert.assertNotNull(sv0);
-        Assert.assertEquals(sv0.treatments.get(0) , "off");
-        Assert.assertEquals(sv0.configs.get("off") , "{ \"size\" : 20 }");
+        Assert.assertTrue(existsTreatment("off", sv0.treatments));
+        Assert.assertEquals("{ \"size\" : 20 }", sv0.configs.get("off"));
 
         Assert.assertNotNull(sv1);
-        Assert.assertEquals(sv1.treatments.get(0) , "on");
-        Assert.assertNotNull(sv1.configs);
-        Assert.assertEquals(0, sv1.configs.size());
+        Assert.assertTrue(existsTreatment("on", sv1.treatments));
+        Assert.assertNull(sv1.configs);
 
         Assert.assertNotNull(svx);
-        Assert.assertEquals(svx.treatments.get(0) , "red");
-        Assert.assertEquals(svx.treatments.get(1) , "on");
-        Assert.assertEquals(svx.treatments.get(2) , "off");
+        Assert.assertTrue(existsTreatment("red", svx.treatments));
+        Assert.assertTrue(existsTreatment("on", svx.treatments));
+        Assert.assertTrue(existsTreatment("off", svx.treatments));
         Assert.assertNull(svx.configs.get("on"));
         Assert.assertEquals("{\"desc\" : \"this applies only to OFF and only for only_key. The rest will receive ON\"}", svx.configs.get("off"));
         Assert.assertNull(svx.configs.get("red"));
@@ -126,20 +145,23 @@ public class LocalhostTest {
     }
 
     @Test
-    public void testUsingPropertiesFile() {
+    public void testUsingPropertiesFile() throws InterruptedException {
 
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        SplitFactory factory = null;
+        SplitClient client = null;
+        SplitManager manager = null;
 
-        LocalhostSplitFactory factory = null;
-        LocalhostSplitClient client = null;
-        LocalhostSplitManager manager = null;
+        CountDownLatch readyLatch = new CountDownLatch(1);
         try {
-            factory = new LocalhostSplitFactory("key", context, "splits_test");
+            factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig,"splits_test.properties");
             client = (LocalhostSplitClient) factory.client();
-            manager = (LocalhostSplitManager) factory.manager();
+            manager = factory.manager();
+            client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(readyLatch));
 
         } catch (IOException e) {
         }
+
+        readyLatch.await(5, TimeUnit.SECONDS);
 
         List<SplitView> splits = manager.splits();
         SplitView sva = manager.split("split_a");
@@ -165,34 +187,32 @@ public class LocalhostTest {
         Assert.assertEquals(3, splits.size());
 
         Assert.assertNotNull(sva);
-        Assert.assertEquals(sva.treatments.get(0) , "on");
-        Assert.assertNotNull(sva.configs);
-        Assert.assertEquals(0, sva.configs.size());
+        Assert.assertTrue(existsTreatment("on", sva.treatments));
+        Assert.assertNull(sva.configs);
 
         Assert.assertNotNull(svb);
-        Assert.assertEquals(svb.treatments.get(0) , "off");
-        Assert.assertNotNull(svb.configs);
-        Assert.assertEquals(0, svb.configs.size());
+        Assert.assertTrue(existsTreatment("off", svb.treatments));
+        Assert.assertNull(svb.configs);
 
         Assert.assertNull(svd);
     }
 
     @Test
-    public void testNonExistingFile() {
+    public void testNonExistingFile() throws InterruptedException {
 
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-
-        LocalhostSplitFactory factory = null;
-        LocalhostSplitClient client = null;
-        LocalhostSplitManager manager = null;
+        SplitFactory factory = null;
+        SplitClient client = null;
+        SplitManager manager = null;
+        CountDownLatch timeoutLatch = new CountDownLatch(1);
         try {
-            factory = new LocalhostSplitFactory("key", context, "splits_test_not_found");
-            client = (LocalhostSplitClient) factory.client();
-            manager = (LocalhostSplitManager) factory.manager();
+            factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig, "splits_test_not_found");
+            client = factory.client();
+            manager = factory.manager();
+            client.on(SplitEvent.SDK_READY_TIMED_OUT, new TestingHelper.TestEventTask(timeoutLatch));
 
         } catch (IOException e) {
         }
-
+        timeoutLatch.await(5, TimeUnit.SECONDS);
         List<SplitView> splits = manager.splits();
         SplitView sva = manager.split("split_a");
 
@@ -218,23 +238,35 @@ public class LocalhostTest {
     }
 
     @Test
-    public void testLoadYmlFile() {
+    public void testLoadYmlFile() throws InterruptedException {
 
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
         LocalhostSplitFactory factory = null;
         LocalhostSplitClient client = null;
-        try {
-            factory = new LocalhostSplitFactory("key", context, "splits_yml");
-            client = (LocalhostSplitClient) factory.client();
 
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        try {
+            factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig, "splits_yml.yml");
+            client = (LocalhostSplitClient) factory.client();
+            client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(readyLatch));
         } catch (IOException e) {
         }
+        readyLatch.await(5, TimeUnit.SECONDS);
 
         Assert.assertNotNull(factory);
         Assert.assertNotNull(client);
 
         String t = client.getTreatment("split_0", null);
         Assert.assertEquals("off", t);
+    }
+
+    private String getFileContent(String fileName) {
+        String content = mFileHelper.loadFileContent(mContext, fileName);
+        return content;
+    }
+
+    private boolean existsTreatment(String treatment, List<String> treatmens) {
+        Set<String> set = new HashSet(treatmens);
+        return set.contains(treatment);
     }
 
 }

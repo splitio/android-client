@@ -1,11 +1,27 @@
 package io.split.android.client.localhost;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.io.IOException;
+import java.security.AlgorithmConstraints;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.split.android.client.dtos.Algorithm;
+import io.split.android.client.dtos.Condition;
+import io.split.android.client.dtos.ConditionType;
+import io.split.android.client.dtos.Matcher;
+import io.split.android.client.dtos.MatcherCombiner;
+import io.split.android.client.dtos.MatcherGroup;
+import io.split.android.client.dtos.MatcherType;
+import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.Status;
+import io.split.android.client.dtos.WhitelistMatcherData;
 import io.split.android.client.storage.legacy.IStorage;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.YamlParser;
@@ -17,25 +33,9 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
     private static final String CONFIG_FIELD = "config";
     private static final String KEYS_FIELD = "keys";
 
-    private IStorage mFileStorage;
-    private LocalhostGrammar mLocalhostGrammar;
-
-    public LocalhostYamlFileParser(IStorage fileStorage) {
-        mFileStorage = fileStorage;
-        mLocalhostGrammar = new LocalhostGrammar();
-    }
-
     @Override
-    public Map<String, Split> parse(String fileName) {
+    public Map<String, Split> parse(String content) {
          Map<String, Split> splits = null;
-        String content;
-
-        try {
-            content = mFileStorage.read(fileName);
-        } catch (IOException e) {
-            Logger.e("Error reading localhost yaml file");
-            return null;
-        }
 
         YamlParser parser = new YamlParser();
         try {
@@ -51,29 +51,38 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
                 Object[] splitNameContainer = parsedSplit.keySet().toArray();
                 if (splitNameContainer != null && splitNameContainer.length > 0) {
                     String splitName = (String) splitNameContainer[0];
-                    Map<String, String> splitMap = (Map<String, String>) parsedSplit.get(splitName);
-                    if (splitMap != null) {
-                        List<String> keys = parseKeys(splitMap.get(KEYS_FIELD));
-                        int count = (keys != null ? keys.size() : 1);
-                        for (int i = 0; i < count; i++) {
-                            Split split = new Split();
-                            String key = (keys != null ? keys.get(i) : null);
-                            split.name = mLocalhostGrammar.buildSplitKeyName(splitName, key);
-                            split.defaultTreatment = splitMap.get(TREATMENT_FIELD);
-
-                            if (split.defaultTreatment == null) {
-                                Logger.e("Parsing Localhost Split " + split.name + "does not have a treatment value. Using control");
-                                split.defaultTreatment = Treatments.CONTROL;
-                            }
-                            String config = splitMap.get(CONFIG_FIELD);
-                            if (config != null) {
-                                Map<String, String> configs = new HashMap<>();
-                                configs.put(split.defaultTreatment, config);
-                                split.configurations = configs;
-                            }
-                            splits.put(split.name, split);
-                        }
+                    if (splitName == null) {
+                        continue;
                     }
+                    Map<String, String> splitMap = (Map<String, String>) parsedSplit.get(splitName);
+                    if (splitMap == null) {
+                        continue;
+                    }
+
+                    Split split = splits.get(splitName);
+                    if (split == null) {
+                        split = SplitHelper.createDefaultSplit(splitName);
+                    }
+
+                    String treatment = splitMap.get(TREATMENT_FIELD);
+                    if (treatment == null) {
+                        continue;
+                    }
+                    List<String> keys = parseKeys(splitMap.get(KEYS_FIELD));
+                    if (keys.size() > 0) {
+                        split.conditions.add(0, SplitHelper.createWhiteListCondition(keys, treatment));
+                    } else {
+                        split.conditions.add(SplitHelper.createRolloutCondition(treatment));
+                    }
+
+                    String config = splitMap.get(CONFIG_FIELD);
+                    if (config != null) {
+                        if (split.configurations == null) {
+                            split.configurations = new HashMap<>();
+                        }
+                        split.configurations.put(treatment, config);
+                    }
+                    splits.put(split.name, split);
                 }
             }
         } catch (Exception e) {
@@ -82,9 +91,10 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
         return splits;
     }
 
-    private List<String> parseKeys(Object keysContent) {
+    @NonNull
+    private List<String> parseKeys(@Nullable Object keysContent) {
         if(keysContent == null) {
-            return null;
+            return new ArrayList<>();
         }
 
         List<String> keys = null;
@@ -100,5 +110,4 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
         }
         return keys;
     }
-
 }

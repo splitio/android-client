@@ -125,6 +125,7 @@ public class SplitClientConfig {
     private boolean _legacyStorageMigrationEnabled;
     private ImpressionsMode _impressionsMode;
     private final boolean _isPersistentAttributesEnabled;
+    private final int _offlineRefreshRate;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -173,7 +174,8 @@ public class SplitClientConfig {
                               boolean legacyStorageMigrationEnabled,
                               ImpressionsMode impressionsMode,
                               int impCountersRefreshRate,
-                              boolean isPersistentAttributesEnabled) {
+                              boolean isPersistentAttributesEnabled,
+                              int offlineRefreshRate) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
@@ -216,6 +218,7 @@ public class SplitClientConfig {
         _legacyStorageMigrationEnabled = legacyStorageMigrationEnabled;
         _impressionsMode = impressionsMode;
         _isPersistentAttributesEnabled = isPersistentAttributesEnabled;
+        _offlineRefreshRate = offlineRefreshRate;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
@@ -475,6 +478,7 @@ public class SplitClientConfig {
     public boolean persistentAttributesEnabled() {
         return _isPersistentAttributesEnabled;
     }
+    public int offlineRefreshRate() { return  _offlineRefreshRate; }
 
     public static final class Builder {
 
@@ -497,6 +501,7 @@ public class SplitClientConfig {
         private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
         private boolean _isPersistentAttributesEnabled = false;
+        static final int OFFLINE_REFRESH_RATE_DEFAULT = -1;
 
         //.track configuration
         private int _eventsQueueSize = DEFAULT_EVENTS_QUEUE_SIZE;
@@ -528,6 +533,8 @@ public class SplitClientConfig {
         private boolean _legacyStorageMigrationEnabled = false;
 
         private ImpressionsMode _impressionsMode = ImpressionsMode.OPTIMIZED;
+
+        private int _offlineRefreshRate = OFFLINE_REFRESH_RATE_DEFAULT;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -1009,6 +1016,18 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Only used in localhost mode. If offlineRefreshRate is a positive integer, split values
+         * will be loaded from a local file every `offlineRefreshRate` seconds.
+         *
+         * @return: This builder
+         * @default: -1 Second
+         */
+        public Builder offlineRefreshRate(int offlineRefreshRate) {
+            _offlineRefreshRate = offlineRefreshRate;
+            return this;
+        }
+
         public SplitClientConfig build() {
 
 
@@ -1106,7 +1125,8 @@ public class SplitClientConfig {
                     _legacyStorageMigrationEnabled,
                     _impressionsMode,
                     _impCountersRefreshRate,
-                    _isPersistentAttributesEnabled);
+                    _isPersistentAttributesEnabled,
+                    _offlineRefreshRate);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
