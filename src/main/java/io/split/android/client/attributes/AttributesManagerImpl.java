@@ -17,19 +17,13 @@ public class AttributesManagerImpl implements AttributesManager {
 
     private final AttributesStorage mAttributesStorage;
     private final AttributesValidator mAttributesValidator;
-    private final SplitTaskExecutor mSplitTaskExecutor;
-    private final SplitTaskFactory mSplitTaskFactory;
     private final ValidationMessageLogger mValidationMessageLogger;
 
     public AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
                                  @NonNull AttributesValidator attributesValidator,
-                                 @NonNull SplitTaskFactory splitTaskFactory,
-                                 @NonNull SplitTaskExecutor splitTaskExecutor,
                                  @NonNull ValidationMessageLogger validationMessageLogger) {
         mAttributesStorage = checkNotNull(attributesStorage);
         mAttributesValidator = checkNotNull(attributesValidator);
-        mSplitTaskFactory = checkNotNull(splitTaskFactory);
-        mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mValidationMessageLogger = checkNotNull(validationMessageLogger);
     }
 
@@ -40,7 +34,7 @@ public class AttributesManagerImpl implements AttributesManager {
             return false;
         }
 
-        mSplitTaskExecutor.submit(mSplitTaskFactory.createUpdateSingleAttributeTask(attributeName, value), null);
+        mAttributesStorage.set(attributeName, value);
 
         return true;
     }
@@ -60,7 +54,7 @@ public class AttributesManagerImpl implements AttributesManager {
             }
         }
 
-        mSplitTaskExecutor.submit(mSplitTaskFactory.createUpdateAttributesTask(attributes), null);
+        mAttributesStorage.set(attributes);
 
         return true;
     }
@@ -78,14 +72,14 @@ public class AttributesManagerImpl implements AttributesManager {
 
     @Override
     public boolean removeAttribute(String attributeName) {
-        mSplitTaskExecutor.submit(mSplitTaskFactory.createRemoveAttributeTask(attributeName), null);
+        mAttributesStorage.remove(attributeName);
 
         return true;
     }
 
     @Override
     public boolean clearAttributes() {
-        mSplitTaskExecutor.submit(mSplitTaskFactory.createClearAttributesTask(), null);
+        mAttributesStorage.clear();
 
         return true;
     }

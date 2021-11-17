@@ -10,6 +10,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitManager;
 import io.split.android.client.SplitManagerImpl;
 import io.split.android.client.attributes.AttributesManager;
+import io.split.android.client.attributes.AttributesManagerImpl;
 import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
@@ -61,7 +62,7 @@ public final class LocalhostSplitFactory implements SplitFactory {
         SplitsStorage splitsStorage = new LocalhostSplitsStorage(mLocalhostFileName, context, fileStorage, mEventsManager);
         SplitParser splitParser = new SplitParser(new EmptyMySegmentsStorage());
         SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
-        AttributesManager attributesManager = new LocalhostAttributesManager(new AttributesStorageImpl(), new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
+        AttributesManager attributesManager = new AttributesManagerImpl(new AttributesStorageImpl(), new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
         mClient = new LocalhostSplitClient(this, config, key, splitsStorage, mEventsManager, splitParser, attributesManager, new AttributesMergerImpl());
         mEventsManager.getExecutorResources().setSplitClient(mClient);
         mManager = new SplitManagerImpl(splitsStorage,

@@ -2,7 +2,6 @@ package io.split.android.client.attributes;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,12 +15,6 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.service.attributes.ClearAttributesTask;
-import io.split.android.client.service.attributes.RemoveAttributeTask;
-import io.split.android.client.service.attributes.UpdateAttributesTask;
-import io.split.android.client.service.attributes.UpdateSingleAttributeTask;
-import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.validators.AttributesValidator;
 import io.split.android.client.validators.ValidationMessageLogger;
@@ -33,10 +26,6 @@ public class AttributesManagerImplTest {
     @Mock
     AttributesValidator attributesValidator;
     @Mock
-    SplitTaskFactory splitTaskFactory;
-    @Mock
-    SplitTaskExecutor splitTaskExecutor;
-    @Mock
     ValidationMessageLogger validationMessageLogger;
 
     private AttributesManagerImpl attributeClient;
@@ -45,22 +34,19 @@ public class AttributesManagerImplTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        attributeClient = new AttributesManagerImpl(attributesStorage, attributesValidator, splitTaskFactory, splitTaskExecutor, validationMessageLogger);
+        attributeClient = new AttributesManagerImpl(attributesStorage, attributesValidator, validationMessageLogger);
         testValues = getDefaultValues();
     }
 
     @Test
-    public void setAttributeSubmitsUpdateSingleAttributeTaskIfAttributeValueIsValid() {
+    public void setAttributeUpdatesValueInStorageIfAttributeValueIsValid() {
         String name = "key";
         String attribute = "value";
-        UpdateSingleAttributeTask updateSingleAttributeTask = mock(UpdateSingleAttributeTask.class);
-        when(splitTaskFactory.createUpdateSingleAttributeTask(name, attribute)).thenReturn(updateSingleAttributeTask);
         when(attributesValidator.isValid(attribute)).thenReturn(true);
 
         attributeClient.setAttribute(name, attribute);
 
-        verify(splitTaskFactory).createUpdateSingleAttributeTask(name, attribute);
-        verify(splitTaskExecutor).submit(updateSingleAttributeTask, null);
+        verify(attributesStorage).set(name, attribute);
     }
 
     @Test
@@ -117,16 +103,12 @@ public class AttributesManagerImplTest {
     }
 
     @Test
-    public void setAttributesSubmitsAttributesUpdateTask() {
-
-        UpdateAttributesTask updateAttributesTask = mock(UpdateAttributesTask.class);
+    public void setAttributesCallsSetOnStorage() {
         when(attributesValidator.isValid(any(Object.class))).thenReturn(true);
-        when(splitTaskFactory.createUpdateAttributesTask(testValues)).thenReturn(updateAttributesTask);
 
         attributeClient.setAttributes(testValues);
 
-        verify(splitTaskFactory).createUpdateAttributesTask(testValues);
-        verify(splitTaskExecutor).submit(updateAttributesTask, null);
+        verify(attributesStorage).set(testValues);
     }
 
     @Test
@@ -175,25 +157,19 @@ public class AttributesManagerImplTest {
     }
 
     @Test
-    public void clearAttributesSubmitsClearAttributesTask() {
-        ClearAttributesTask clearAttributesTask = mock(ClearAttributesTask.class);
-        when(splitTaskFactory.createClearAttributesTask()).thenReturn(clearAttributesTask);
+    public void clearAttributesCallsClearOnStorage() {
 
         attributeClient.clearAttributes();
 
-        verify(splitTaskFactory).createClearAttributesTask();
-        verify(splitTaskExecutor).submit(clearAttributesTask, null);
+        verify(attributesStorage).clear();
     }
 
     @Test
-    public void removeSubmitsRemoveAttributeTask() {
-        RemoveAttributeTask removeAttributeTask = mock(RemoveAttributeTask.class);
-        when(splitTaskFactory.createRemoveAttributeTask("key")).thenReturn(removeAttributeTask);
+    public void removeCallsRemoveOnStorage() {
 
         attributeClient.removeAttribute("key");
 
-        verify(splitTaskFactory).createRemoveAttributeTask("key");
-        verify(splitTaskExecutor).submit(removeAttributeTask, null);
+        verify(attributesStorage).remove("key");
     }
 
     private Map<String, Object> getDefaultValues() {

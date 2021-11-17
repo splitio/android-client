@@ -1,6 +1,5 @@
 package io.split.android.client.service.attributes;
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
@@ -23,7 +22,7 @@ public class LoadAttributesTaskTest {
     }
 
     @Test
-    public void executeCallsClearOnAttributesStorage() {
+    public void executeCallsLoadLocalOnAttributesStorage() {
         loadAttributesTask.execute();
 
         verify(attributesStorage).loadLocal();

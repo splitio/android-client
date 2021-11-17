@@ -20,7 +20,6 @@ import java.util.Map;
 import io.split.android.client.service.attributes.AttributeClearTask;
 import io.split.android.client.service.attributes.AttributeTaskFactory;
 import io.split.android.client.service.attributes.AttributeUpdateTask;
-import io.split.android.client.service.attributes.ClearAttributesTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 
 public class AttributesStorageImplTest {
