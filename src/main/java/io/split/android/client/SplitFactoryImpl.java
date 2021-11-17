@@ -129,7 +129,9 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
 
-        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key);
+        SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
+
+        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key, _splitTaskExecutor);
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 
@@ -142,7 +144,6 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, key, defaultHttpClient, cachedFireAndForgetMetrics, splitsFilterQueryString);
 
-        SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, storageContainer, splitsFilterQueryString, _eventsManager);
 

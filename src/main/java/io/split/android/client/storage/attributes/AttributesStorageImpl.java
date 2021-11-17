@@ -7,13 +7,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.split.android.client.service.executor.SplitTaskExecutor;
+
 public class AttributesStorageImpl implements AttributesStorage {
 
     @Nullable private final PersistentAttributesStorage mPersistentAttributesStorage;
+    private final SplitTaskExecutor splitTaskExecutor;
     private final Map<String, Object> mInMemoryAttributes = new ConcurrentHashMap<>();
 
-    public AttributesStorageImpl(@Nullable PersistentAttributesStorage persistentAttributesStorage) {
+    public AttributesStorageImpl(@Nullable PersistentAttributesStorage persistentAttributesStorage,
+                                 @NonNull SplitTaskExecutor splitTaskExecutor) {
         mPersistentAttributesStorage = persistentAttributesStorage;
+        this.splitTaskExecutor = splitTaskExecutor;
     }
 
     @Override

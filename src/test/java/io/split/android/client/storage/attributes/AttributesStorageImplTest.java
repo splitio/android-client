@@ -14,17 +14,21 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.service.executor.SplitTaskExecutor;
+
 public class AttributesStorageImplTest {
 
     @Mock
     private PersistentAttributesStorage persistentAttributesStorage;
+    @Mock
+    private SplitTaskExecutor splitTaskExecutor;
     private AttributesStorageImpl attributesStorage;
     private HashMap<String, Object> defaultValuesMap = null;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        attributesStorage = new AttributesStorageImpl(persistentAttributesStorage);
+        attributesStorage = new AttributesStorageImpl(persistentAttributesStorage, splitTaskExecutor);
     }
 
     @Test
@@ -36,7 +40,7 @@ public class AttributesStorageImplTest {
 
     @Test
     public void loadLocalDoesNotInteractWithPersistentStorageWhenItIsNull() {
-        attributesStorage = new AttributesStorageImpl(null);
+        attributesStorage = new AttributesStorageImpl(null, splitTaskExecutor);
 
         attributesStorage.loadLocal();
 
@@ -52,7 +56,7 @@ public class AttributesStorageImplTest {
 
     @Test
     public void clearDoesNotCallClearInPersistentStorageWhenItIsNull() {
-        attributesStorage = new AttributesStorageImpl(null);
+        attributesStorage = new AttributesStorageImpl(null, splitTaskExecutor);
 
         attributesStorage.clear();
     }
@@ -145,7 +149,7 @@ public class AttributesStorageImplTest {
 
     @Test
     public void setDoesNotInteractWithPersistentStorageWhenItIsNull() {
-        attributesStorage = new AttributesStorageImpl(null);
+        attributesStorage = new AttributesStorageImpl(null, splitTaskExecutor);
 
         attributesStorage.set("newKey", "newValue");
     }
@@ -171,7 +175,7 @@ public class AttributesStorageImplTest {
 
     @Test
     public void setWithMapDoesNotInteractWithPersistentStorageWhenItIsNull() {
-        attributesStorage = new AttributesStorageImpl(null);
+        attributesStorage = new AttributesStorageImpl(null, splitTaskExecutor);
 
         attributesStorage.set(getDefaultValuesMap());
     }
