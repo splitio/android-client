@@ -3,6 +3,7 @@ package io.split.android.client.storage.attributes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -18,6 +19,7 @@ public class AttributesStorageImplTest {
     @Mock
     private PersistentAttributesStorage persistentAttributesStorage;
     private AttributesStorageImpl attributesStorage;
+    private HashMap<String, Object> defaultValuesMap = null;
 
     @Before
     public void setUp() {
@@ -105,6 +107,28 @@ public class AttributesStorageImplTest {
 
         assertTrue(attributesStorage.getAll().entrySet().containsAll(getDefaultValuesMap().entrySet()));
         assertTrue(attributesStorage.getAll().containsKey("newKey"));
+    }
+
+    @Test
+    public void setMultipleNewValuesRetainsPreviousValues() {
+        Map<String, Object> newValues = new HashMap<>();
+        newValues.put("newKey", "newValue");
+        newValues.put("newKey2", "newValue2");
+        newValues.put("key1", "newValue1");
+
+        Map<String, Object> expectedValues = new HashMap<>();
+        expectedValues.put("newKey", "newValue");
+        expectedValues.put("newKey2", "newValue2");
+        expectedValues.put("key1", "newValue1");
+        expectedValues.put("key2", "value2");
+        expectedValues.put("key3", "value3");
+
+        attributesStorage.set(getDefaultValuesMap());
+        attributesStorage.set(newValues);
+
+        Map<String, Object> entries = attributesStorage.getAll();
+        assertEquals(5, entries.size());
+        assertEquals(expectedValues, entries);
     }
 
     @Test
@@ -202,10 +226,12 @@ public class AttributesStorageImplTest {
     }
 
     private Map<String, Object> getDefaultValuesMap() {
-        HashMap<String, Object> defaultValuesMap = new HashMap<>();
-        defaultValuesMap.put("key1", "value1");
-        defaultValuesMap.put("key2", "value2");
-        defaultValuesMap.put("key3", "value3");
+        if (defaultValuesMap == null) {
+            defaultValuesMap = new HashMap<>();
+            defaultValuesMap.put("key1", "value1");
+            defaultValuesMap.put("key2", "value2");
+            defaultValuesMap.put("key3", "value3");
+        }
 
         return defaultValuesMap;
     }
