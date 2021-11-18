@@ -6,7 +6,7 @@ import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 
 public interface AttributeTaskFactory {
 
-    AttributeUpdateTask createAttributeUpdateTask(PersistentAttributesStorage persistentAttributesStorage, Map<String, Object> attributes);
+    UpdateAttributesInPersistentStorageTask createAttributeUpdateTask(PersistentAttributesStorage persistentAttributesStorage, Map<String, Object> attributes);
 
-    AttributeClearTask createAttributeClearTask(PersistentAttributesStorage persistentAttributesStorage);
+    ClearAttributesInPersistentStorageTask createAttributeClearTask(PersistentAttributesStorage persistentAttributesStorage);
 }

@@ -9,18 +9,10 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import io.split.android.client.service.attributes.AttributeClearTask;
-import io.split.android.client.service.attributes.AttributeTaskFactory;
-import io.split.android.client.service.attributes.AttributeUpdateTask;
-import io.split.android.client.service.executor.SplitTaskExecutor;
 
 public class AttributesStorageImplTest {
 

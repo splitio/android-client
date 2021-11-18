@@ -7,11 +7,11 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 
-public class AttributeClearTask implements SplitTask {
+public class ClearAttributesInPersistentStorageTask implements SplitTask {
 
     private final PersistentAttributesStorage mPersistentAttributesStorage;
 
-    public AttributeClearTask(PersistentAttributesStorage persistentAttributesStorage) {
+    public ClearAttributesInPersistentStorageTask(PersistentAttributesStorage persistentAttributesStorage) {
         mPersistentAttributesStorage = persistentAttributesStorage;
     }
 

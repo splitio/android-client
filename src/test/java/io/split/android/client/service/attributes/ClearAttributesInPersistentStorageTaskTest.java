@@ -9,21 +9,21 @@ import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 
-public class AttributeClearTaskTest {
+public class ClearAttributesInPersistentStorageTaskTest {
 
     @Mock
     PersistentAttributesStorage attributesStorage;
-    private AttributeClearTask attributeClearTask;
+    private ClearAttributesInPersistentStorageTask clearAttributesInPersistentStorageTask;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        attributeClearTask = new AttributeClearTask(attributesStorage);
+        clearAttributesInPersistentStorageTask = new ClearAttributesInPersistentStorageTask(attributesStorage);
     }
 
     @Test
     public void executeCallsSetOnAttributesStorage() {
-        attributeClearTask.execute();
+        clearAttributesInPersistentStorageTask.execute();
 
         verify(attributesStorage).clear();
     }

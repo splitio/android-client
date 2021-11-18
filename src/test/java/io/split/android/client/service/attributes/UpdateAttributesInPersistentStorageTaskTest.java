@@ -12,11 +12,11 @@ import java.util.Map;
 
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 
-public class AttributeUpdateTaskTest {
+public class UpdateAttributesInPersistentStorageTaskTest {
 
     @Mock
     PersistentAttributesStorage attributesStorage;
-    private AttributeUpdateTask attributeUpdateTask;
+    private UpdateAttributesInPersistentStorageTask updateAttributesInPersistentStorageTask;
     private final Map<String, Object> testValues = new HashMap<>();
 
     @Before
@@ -24,12 +24,12 @@ public class AttributeUpdateTaskTest {
         MockitoAnnotations.openMocks(this);
         testValues.put("key1", "value1");
         testValues.put("key2", 100);
-        attributeUpdateTask = new AttributeUpdateTask(attributesStorage, testValues);
+        updateAttributesInPersistentStorageTask = new UpdateAttributesInPersistentStorageTask(attributesStorage, testValues);
     }
 
     @Test
     public void executeCallsSetOnAttributesStorage() {
-        attributeUpdateTask.execute();
+        updateAttributesInPersistentStorageTask.execute();
 
         verify(attributesStorage).set(testValues);
     }

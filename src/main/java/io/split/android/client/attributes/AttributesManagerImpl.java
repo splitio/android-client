@@ -57,9 +57,7 @@ public class AttributesManagerImpl implements AttributesManager {
 
         mAttributesStorage.set(attributeName, value);
 
-        if (mPersistentAttributesStorage != null) {
-            submitUpdateTask(mPersistentAttributesStorage, mAttributesStorage.getAll());
-        }
+        submitUpdateTask(mPersistentAttributesStorage, mAttributesStorage.getAll());
 
         return true;
     }
@@ -81,9 +79,7 @@ public class AttributesManagerImpl implements AttributesManager {
 
         mAttributesStorage.set(attributes);
 
-        if (mPersistentAttributesStorage != null) {
-            submitUpdateTask(mPersistentAttributesStorage, mAttributesStorage.getAll());
-        }
+        submitUpdateTask(mPersistentAttributesStorage, mAttributesStorage.getAll());
 
         return true;
     }
@@ -103,9 +99,7 @@ public class AttributesManagerImpl implements AttributesManager {
     public boolean removeAttribute(String attributeName) {
         mAttributesStorage.remove(attributeName);
 
-        if (mPersistentAttributesStorage != null) {
-            submitUpdateTask(mPersistentAttributesStorage, mAttributesStorage.getAll());
-        }
+        submitUpdateTask(mPersistentAttributesStorage, mAttributesStorage.getAll());
 
         return true;
     }
@@ -114,21 +108,19 @@ public class AttributesManagerImpl implements AttributesManager {
     public boolean clearAttributes() {
         mAttributesStorage.clear();
 
-        if (mPersistentAttributesStorage != null) {
-            submitClearTask(mPersistentAttributesStorage);
-        }
+        submitClearTask(mPersistentAttributesStorage);
 
         return true;
     }
 
     private void submitUpdateTask(PersistentAttributesStorage persistentStorage, Map<String, Object> mInMemoryAttributes) {
-        if (mSplitTaskExecutor != null && mAttributeTaskFactory != null) {
+        if (persistentStorage != null && mSplitTaskExecutor != null && mAttributeTaskFactory != null) {
             mSplitTaskExecutor.submit(mAttributeTaskFactory.createAttributeUpdateTask(persistentStorage, mInMemoryAttributes), null);
         }
     }
 
     private void submitClearTask(PersistentAttributesStorage persistentStorage) {
-        if (mSplitTaskExecutor != null && mAttributeTaskFactory != null) {
+        if (persistentStorage != null && mSplitTaskExecutor != null && mAttributeTaskFactory != null) {
             mSplitTaskExecutor.submit(mAttributeTaskFactory.createAttributeClearTask(persistentStorage), null);
         }
     }
