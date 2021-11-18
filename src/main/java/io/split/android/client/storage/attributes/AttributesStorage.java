@@ -7,8 +7,6 @@ import java.util.Map;
 
 public interface AttributesStorage {
 
-    void loadLocal();
-
     @Nullable Object get(String name);
 
     @NonNull

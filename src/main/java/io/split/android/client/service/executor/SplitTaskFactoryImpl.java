@@ -152,7 +152,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public LoadAttributesTask createLoadAttributesTask() {
-        return new LoadAttributesTask(mSplitsStorageContainer.getAttributesStorage());
+        return new LoadAttributesTask(mSplitsStorageContainer.getAttributesStorage(), mSplitsStorageContainer.getPersistentAttributesStorage());
     }
 
 }
