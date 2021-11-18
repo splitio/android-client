@@ -49,6 +49,6 @@ public interface SplitTaskFactory {
 
     ImpressionsCountRecorderTask createImpressionsCountRecorderTask();
 
-    LoadAttributesTask createLoadAttributesTask();
+    LoadAttributesTask createLoadAttributesTask(boolean persistentAttributesEnabled);
 
 }

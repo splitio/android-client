@@ -108,7 +108,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadAttributesFromCache() {
-        submitAttributesLoadingTask(mLoadLocalAttributesListener);
+        submitAttributesLoadingTask(mLoadLocalAttributesListener, mSplitClientConfig.persistentAttributesEnabled());
     }
 
     @Override
@@ -328,8 +328,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 listener);
     }
 
-    private void submitAttributesLoadingTask(SplitTaskExecutionListener listener) {
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadAttributesTask(),
+    private void submitAttributesLoadingTask(SplitTaskExecutionListener listener, boolean persistentAttributesEnabled) {
+        mTaskExecutor.submit(mSplitTaskFactory.createLoadAttributesTask(persistentAttributesEnabled),
                 listener);
     }
 
