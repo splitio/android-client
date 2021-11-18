@@ -1,33 +1,30 @@
 package io.split.android.client.localhost;
 
 import android.content.Context;
-import androidx.annotation.VisibleForTesting;
 
-import com.google.common.collect.ImmutableMap;
-
-import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitManager;
 import io.split.android.client.SplitManagerImpl;
-import io.split.android.client.dtos.Split;
+import io.split.android.client.attributes.AttributesManager;
+import io.split.android.client.attributes.AttributesManagerImpl;
+import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
-import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.storage.attributes.AttributesStorageImpl;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.utils.FileUtils;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.validators.AttributesValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
 
 /**
@@ -64,11 +61,13 @@ public final class LocalhostSplitFactory implements SplitFactory {
         FileStorage fileStorage = new FileStorage(context.getCacheDir(), ServiceConstants.LOCALHOST_FOLDER);
         SplitsStorage splitsStorage = new LocalhostSplitsStorage(mLocalhostFileName, context, fileStorage, mEventsManager);
         SplitParser splitParser = new SplitParser(new EmptyMySegmentsStorage());
-        mClient = new LocalhostSplitClient(this, config, key, splitsStorage, mEventsManager, splitParser);
+        SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
+        AttributesManager attributesManager = new AttributesManagerImpl(new AttributesStorageImpl(), new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
+        mClient = new LocalhostSplitClient(this, config, key, splitsStorage, mEventsManager, splitParser, attributesManager, new AttributesMergerImpl());
         mEventsManager.getExecutorResources().setSplitClient(mClient);
         mManager = new SplitManagerImpl(splitsStorage,
                 new SplitValidatorImpl(), splitParser);
-        mSynchronizer = new LocalhostSynchronizer(new SplitTaskExecutorImpl(), config, splitsStorage);
+        mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage);
         mSynchronizer.start();
 
         Logger.i("Android SDK initialized!");

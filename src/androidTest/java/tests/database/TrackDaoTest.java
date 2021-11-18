@@ -1,12 +1,8 @@
 package tests.database;
 
-import android.content.Context;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -16,21 +12,10 @@ import java.util.stream.Collectors;
 import helper.IntegrationHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.db.EventEntity;
-import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
 
-public class TrackDaoTest {
-
-    SplitRoomDatabase mRoomDb;
-    Context mContext;
-
-    @Before
-    public void setup() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
-        mRoomDb.clearAllTables();
-    }
+public class TrackDaoTest extends GenericDaoTest {
 
     @Test
     public void insertRetrieve() throws InterruptedException {

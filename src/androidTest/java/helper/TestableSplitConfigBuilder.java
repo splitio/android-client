@@ -43,6 +43,7 @@ public class TestableSplitConfigBuilder {
     private boolean mBackgroundSyncWhenBatteryNotLow = true;
     private boolean mBackgroundSyncWhenWifiOnly = false;
     private boolean mLegacyStorageMigrationEnabled = false;
+    private boolean mIsPersistentAttributesStorageEnabled = false;
 
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
@@ -212,6 +213,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder isPersistentAttributesStorageEnabled(boolean isPersistentAttributesStorageEnabled) {
+        this.mIsPersistentAttributesStorageEnabled = isPersistentAttributesStorageEnabled;
+        return this;
+    }
+
     public TestableSplitConfigBuilder offlineRefreshRate(int offlineRefreshRate) {
         this.mOfflineRefreshRate = offlineRefreshRate;
         return this;
@@ -262,6 +268,7 @@ public class TestableSplitConfigBuilder {
                     mLegacyStorageMigrationEnabled,
                     mImpressionsMode,
                     mImpressionsCountersRefreshRate,
+                    mIsPersistentAttributesStorageEnabled,
                     mOfflineRefreshRate);
             return config;
         } catch (Exception e) {

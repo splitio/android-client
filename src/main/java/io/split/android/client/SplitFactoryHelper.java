@@ -24,7 +24,6 @@ import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
-import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
@@ -33,11 +32,11 @@ import io.split.android.client.service.sseclient.notifications.SplitsChangeNotif
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
+import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
+import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseClient;
 import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
-import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
-import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
@@ -48,7 +47,6 @@ import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
-import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
 import io.split.android.engine.metrics.Metrics;
@@ -108,14 +106,16 @@ class SplitFactoryHelper {
         return headersBuilder.build();
     }
 
-    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Context context, Key key) {
+    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key) {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, key.matchingKey()),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenEventsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase),
-                StorageFactory.getPersistenImpressionsCountStorage(splitRoomDatabase));
+                StorageFactory.getPersistenImpressionsCountStorage(splitRoomDatabase),
+                StorageFactory.getAttributesStorage(),
+                StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, key.matchingKey()));
     }
 
     String buildSplitsFilterQueryString(SplitClientConfig config) {

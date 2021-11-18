@@ -8,6 +8,8 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class Json {
 
@@ -31,4 +33,15 @@ public class Json {
         return _json.fromJson(json, clz);
     }
 
+    public static Map<String, Object> genericValueMapFromJson(String json, Type attributesMapType) {
+        Map<String, Object> map = _json.fromJson(json, attributesMapType);
+
+        Set<Map.Entry<String, Object>> entries = map.entrySet();
+        for (Map.Entry<String, Object> entry : entries) {
+            if (entry.getValue() instanceof Double && ((Double) entry.getValue() % 1 == 0)) {
+                entry.setValue(((Double) entry.getValue()).intValue());
+            }
+        }
+        return map;
+    }
 }

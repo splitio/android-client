@@ -1,11 +1,6 @@
 package tests.database;
 
-import android.content.Context;
-
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -15,19 +10,8 @@ import java.util.List;
 import java.util.Set;
 
 import io.split.android.client.storage.db.MySegmentEntity;
-import io.split.android.client.storage.db.SplitRoomDatabase;
 
-public class MySegmentDaoTest {
-
-    SplitRoomDatabase mRoomDb;
-    Context mContext;
-
-    @Before
-    public void setup() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
-        mRoomDb.clearAllTables();
-    }
+public class MySegmentDaoTest extends GenericDaoTest {
 
     @Test
     public void insertRetrieve() throws InterruptedException {

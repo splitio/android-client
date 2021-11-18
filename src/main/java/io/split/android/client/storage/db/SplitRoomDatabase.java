@@ -1,7 +1,9 @@
 package io.split.android.client.storage.db;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import android.content.Context;
-import android.util.Log;
 
 import androidx.room.Database;
 import androidx.room.Room;
@@ -10,15 +12,16 @@ import androidx.room.RoomDatabase;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import io.split.android.client.storage.db.attributes.AttributesDao;
+import io.split.android.client.storage.db.attributes.AttributesEntity;
 
 @Database(
         entities = {
                 MySegmentEntity.class, SplitEntity.class, EventEntity.class,
-                ImpressionEntity.class, GeneralInfoEntity.class, ImpressionsCountEntity.class
+                ImpressionEntity.class, GeneralInfoEntity.class, ImpressionsCountEntity.class,
+                AttributesEntity.class
         },
-        version = 2
+        version = 3
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 
@@ -33,6 +36,8 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
     public abstract GeneralInfoDao generalInfoDao();
 
     public abstract ImpressionsCountDao impressionsCountDao();
+
+    public abstract AttributesDao attributesDao();
 
     private volatile SplitQueryDao mSplitQueryDao;
 

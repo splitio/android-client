@@ -439,6 +439,7 @@ public class SynchronizerTest {
         List<SplitTaskExecutionInfo> list = new ArrayList<>();
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
+        list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_ATTRIBUTES));
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
         when(mRetryBackoffFactory.create(any(), anyInt()))
                 .thenReturn(mRetryTimerSplitsSync)
@@ -449,10 +450,13 @@ public class SynchronizerTest {
                 mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory);
         mSynchronizer.loadSplitsFromCache();
         mSynchronizer.loadMySegmentsFromCache();
+        mSynchronizer.loadAttributesFromCache();
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        verify(mEventsManager, times(1))
+                .notifyInternalEvent(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
     }
 
     @Test

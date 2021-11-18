@@ -3,6 +3,7 @@ package io.split.android.client.localhost;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
@@ -10,6 +11,9 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitResult;
+import io.split.android.client.attributes.AttributesManager;
+import io.split.android.client.attributes.AttributesMerger;
+import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -24,6 +28,7 @@ import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.engine.experiments.SplitParser;
 
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +51,9 @@ public final class LocalhostSplitClient implements SplitClient {
                                 @NonNull String key,
                                 @NonNull SplitsStorage splitsStorage,
                                 @NonNull SplitEventsManager eventsManager,
-                                @NonNull SplitParser splitParser) {
+                                @NonNull SplitParser splitParser,
+                                @NonNull AttributesManager attributesManager,
+                                @NonNull AttributesMerger attributesMerger) {
 
         mFactoryRef = new WeakReference<>(checkNotNull(container));
         mKey = checkNotNull(key);
@@ -55,7 +62,7 @@ public final class LocalhostSplitClient implements SplitClient {
         mTreatmentManager = new TreatmentManagerImpl(mKey, null,
                 mEvaluator, new KeyValidatorImpl(),
                 new SplitValidatorImpl(), new LocalhostMetrics(), getImpressionsListener(splitClientConfig),
-                splitClientConfig, eventsManager);
+                splitClientConfig, eventsManager, attributesManager, attributesMerger);
     }
 
     @Override
@@ -159,5 +166,37 @@ public final class LocalhostSplitClient implements SplitClient {
         } else {
             return new LocalhostImpressionsListener();
         }
+    }
+
+    @Override
+    public boolean setAttribute(String attributeName, Object value) {
+        return true;
+    }
+
+    @Nullable
+    @Override
+    public Object getAttribute(String attributeName) {
+        return null;
+    }
+
+    @Override
+    public boolean setAttributes(Map<String, Object> attributes) {
+        return true;
+    }
+
+    @NonNull
+    @Override
+    public Map<String, Object> getAllAttributes() {
+        return new HashMap<>();
+    }
+
+    @Override
+    public boolean removeAttribute(String attributeName) {
+        return true;
+    }
+
+    @Override
+    public boolean clearAttributes() {
+        return true;
     }
 }

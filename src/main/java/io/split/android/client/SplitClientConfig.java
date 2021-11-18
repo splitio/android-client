@@ -124,6 +124,7 @@ public class SplitClientConfig {
 
     private boolean _legacyStorageMigrationEnabled;
     private ImpressionsMode _impressionsMode;
+    private final boolean _isPersistentAttributesEnabled;
     private final int _offlineRefreshRate;
 
     // To be set during startup
@@ -173,6 +174,7 @@ public class SplitClientConfig {
                               boolean legacyStorageMigrationEnabled,
                               ImpressionsMode impressionsMode,
                               int impCountersRefreshRate,
+                              boolean isPersistentAttributesEnabled,
                               int offlineRefreshRate) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
@@ -215,6 +217,7 @@ public class SplitClientConfig {
         _syncConfig = syncConfig;
         _legacyStorageMigrationEnabled = legacyStorageMigrationEnabled;
         _impressionsMode = impressionsMode;
+        _isPersistentAttributesEnabled = isPersistentAttributesEnabled;
         _offlineRefreshRate = offlineRefreshRate;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
@@ -472,10 +475,14 @@ public class SplitClientConfig {
         return _impCountersRefreshRate;
     }
 
+    public boolean persistentAttributesEnabled() {
+        return _isPersistentAttributesEnabled;
+    }
     public int offlineRefreshRate() { return  _offlineRefreshRate; }
 
     public static final class Builder {
 
+        static final int PROXY_PORT_DEFAULT = 80;
         private ServiceEndpoints _serviceEndpoints = null;
         private int _featuresRefreshRate = DEFAULT_FEATURES_REFRESH_RATE_SECS;
         private int _segmentsRefreshRate = DEFAULT_SEGMENTS_REFRESH_RATE_SECS;
@@ -493,7 +500,7 @@ public class SplitClientConfig {
         private ImpressionListener _impressionListener;
         private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
-        static final int PROXY_PORT_DEFAULT = 80;
+        private boolean _isPersistentAttributesEnabled = false;
         static final int OFFLINE_REFRESH_RATE_DEFAULT = -1;
 
         //.track configuration
@@ -824,7 +831,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * The current device IP adress.
+         * The current device IP address.
          *
          * @param ip
          * @return this builder
@@ -920,7 +927,7 @@ public class SplitClientConfig {
 
 
         /**
-         * Alternative service enpoints URL. Should only be adjusted for playing well in test environments.
+         * Alternative service endpoints URL. Should only be adjusted for playing well in test environments.
          *
          * @param serviceEndpoints ServiceEndpoints
          * @return this builder
@@ -996,6 +1003,16 @@ public class SplitClientConfig {
          */
         public Builder impressionsMode(String mode) {
             _impressionsMode = ImpressionsMode.fromString(mode);
+            return this;
+        }
+
+        /**
+         * Whether to enable persisting attributes.
+         *
+         * @return This builder
+         */
+        public Builder persistentAttributesEnabled(boolean enabled) {
+            _isPersistentAttributesEnabled = enabled;
             return this;
         }
 
@@ -1108,6 +1125,7 @@ public class SplitClientConfig {
                     _legacyStorageMigrationEnabled,
                     _impressionsMode,
                     _impCountersRefreshRate,
+                    _isPersistentAttributesEnabled,
                     _offlineRefreshRate);
         }
 
