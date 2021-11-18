@@ -32,7 +32,9 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
 
     @Override
     public void set(@Nullable Map<String, Object> attributes) {
-        if (attributes == null) return;
+        if (attributes == null) {
+            return;
+        }
 
         AttributesEntity entity = new AttributesEntity(mUserKey, Json.toJson(attributes), System.currentTimeMillis() / 1000);
 
