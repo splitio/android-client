@@ -11,6 +11,7 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
@@ -56,7 +57,7 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
 
         if (attributesEntity != null) {
             try {
-                attributesMap = Json.fromJson(attributesEntity.getAttributes(), ATTRIBUTES_MAP_TYPE);
+                attributesMap = Json.genericValueMapFromJson(attributesEntity.getAttributes(), ATTRIBUTES_MAP_TYPE);
             } catch (JsonSyntaxException exception) {
                 Logger.e(exception);
             }
