@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.List;
-import java.util.Map;
 
 import io.split.android.client.FilterGrouper;
 import io.split.android.client.SplitClientConfig;
@@ -14,11 +13,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
-import io.split.android.client.service.attributes.ClearAttributesTask;
 import io.split.android.client.service.attributes.LoadAttributesTask;
-import io.split.android.client.service.attributes.RemoveAttributeTask;
-import io.split.android.client.service.attributes.UpdateAttributesTask;
-import io.split.android.client.service.attributes.UpdateSingleAttributeTask;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
@@ -156,27 +151,9 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public LoadAttributesTask createLoadAttributesTask() {
-        return new LoadAttributesTask(mSplitsStorageContainer.getAttributesStorage());
+    public LoadAttributesTask createLoadAttributesTask(boolean persistentAttributesEnabled) {
+        return new LoadAttributesTask(mSplitsStorageContainer.getAttributesStorage(),
+                (persistentAttributesEnabled) ? mSplitsStorageContainer.getPersistentAttributesStorage() : null);
     }
 
-    @Override
-    public UpdateAttributesTask createUpdateAttributesTask(Map<String, Object> attributes) {
-        return new UpdateAttributesTask(mSplitsStorageContainer.getAttributesStorage(), attributes);
-    }
-
-    @Override
-    public UpdateSingleAttributeTask createUpdateSingleAttributeTask(String attributeName, Object value) {
-        return new UpdateSingleAttributeTask(mSplitsStorageContainer.getAttributesStorage(), attributeName, value);
-    }
-
-    @Override
-    public ClearAttributesTask createClearAttributesTask() {
-        return new ClearAttributesTask(mSplitsStorageContainer.getAttributesStorage());
-    }
-
-    @Override
-    public RemoveAttributeTask createRemoveAttributeTask(String attributeName) {
-        return new RemoveAttributeTask(mSplitsStorageContainer.getAttributesStorage(), attributeName);
-    }
 }

@@ -9,20 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class AttributesStorageImpl implements AttributesStorage {
 
-    @Nullable private final PersistentAttributesStorage mPersistentAttributesStorage;
     private final Map<String, Object> mInMemoryAttributes = new ConcurrentHashMap<>();
-
-    public AttributesStorageImpl(@Nullable PersistentAttributesStorage persistentAttributesStorage) {
-        mPersistentAttributesStorage = persistentAttributesStorage;
-    }
-
-    @Override
-    public void loadLocal() {
-        if (mPersistentAttributesStorage != null) {
-            mInMemoryAttributes.clear();
-            mInMemoryAttributes.putAll(mPersistentAttributesStorage.getAll());
-        }
-    }
 
     @Nullable
     @Override
@@ -39,10 +26,6 @@ public class AttributesStorageImpl implements AttributesStorage {
     @Override
     public void set(String name, @NonNull Object value) {
         mInMemoryAttributes.put(name, value);
-
-        if (mPersistentAttributesStorage != null) {
-            mPersistentAttributesStorage.set(mInMemoryAttributes);
-        }
     }
 
     @Override
@@ -50,18 +33,11 @@ public class AttributesStorageImpl implements AttributesStorage {
         if (attributes == null) return;
 
         mInMemoryAttributes.putAll(attributes);
-
-        if (mPersistentAttributesStorage != null) {
-            mPersistentAttributesStorage.set(mInMemoryAttributes);
-        }
     }
 
     @Override
     public void clear() {
         mInMemoryAttributes.clear();
-        if (mPersistentAttributesStorage != null) {
-            mPersistentAttributesStorage.clear();
-        }
     }
 
     @Override
@@ -72,9 +48,6 @@ public class AttributesStorageImpl implements AttributesStorage {
     @Override
     public void remove(String key) {
         mInMemoryAttributes.remove(key);
-
-        if (mPersistentAttributesStorage != null) {
-            mPersistentAttributesStorage.set(mInMemoryAttributes);
-        }
     }
+
 }

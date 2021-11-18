@@ -2,6 +2,8 @@ package io.split.android.client;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -129,6 +132,8 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
 
+        SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
+
         SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key);
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
@@ -142,7 +147,6 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, key, defaultHttpClient, cachedFireAndForgetMetrics, splitsFilterQueryString);
 
-        SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, storageContainer, splitsFilterQueryString, _eventsManager);
 
@@ -230,9 +234,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 storageContainer.getSplitsStorage(),
                 new EventPropertiesProcessorImpl(),
                 _syncManager,
-                new AttributesManagerImpl(storageContainer.getAttributesStorage(),
-                        new AttributesValidatorImpl(), splitTaskFactory,
-                        _splitTaskExecutor, validationLogger));
+                getAttributesManager(config.persistentAttributesEnabled(), validationLogger, _splitTaskExecutor, storageContainer));
 
         _manager = new SplitManagerImpl(
                 storageContainer.getSplitsStorage(),
@@ -278,5 +280,21 @@ public class SplitFactoryImpl implements SplitFactory {
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,
                                SplitTaskFactory splitTaskFactory) {
         splitTaskExecutor.submit(splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000), null);
+    }
+
+    @NonNull
+    private AttributesManagerImpl getAttributesManager(boolean persistentAttributesEnabled, ValidationMessageLogger validationLogger, SplitTaskExecutor _splitTaskExecutor, SplitStorageContainer storageContainer) {
+        if (persistentAttributesEnabled) {
+            return new AttributesManagerImpl(storageContainer.getAttributesStorage(),
+                    new AttributesValidatorImpl(),
+                    validationLogger,
+                    storageContainer.getPersistentAttributesStorage(),
+                    new AttributeTaskFactoryImpl(),
+                    _splitTaskExecutor);
+        }
+
+        return new AttributesManagerImpl(storageContainer.getAttributesStorage(),
+                new AttributesValidatorImpl(),
+                validationLogger);
     }
 }

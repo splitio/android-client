@@ -16,13 +16,12 @@ import org.mockito.MockitoAnnotations;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.service.attributes.ClearAttributesTask;
-import io.split.android.client.service.attributes.RemoveAttributeTask;
-import io.split.android.client.service.attributes.UpdateAttributesTask;
-import io.split.android.client.service.attributes.UpdateSingleAttributeTask;
+import io.split.android.client.service.attributes.ClearAttributesInPersistentStorageTask;
+import io.split.android.client.service.attributes.AttributeTaskFactory;
+import io.split.android.client.service.attributes.UpdateAttributesInPersistentStorageTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.validators.AttributesValidator;
 import io.split.android.client.validators.ValidationMessageLogger;
 
@@ -33,11 +32,13 @@ public class AttributesManagerImplTest {
     @Mock
     AttributesValidator attributesValidator;
     @Mock
-    SplitTaskFactory splitTaskFactory;
+    ValidationMessageLogger validationMessageLogger;
+    @Mock
+    PersistentAttributesStorage persistentAttributesStorage;
+    @Mock
+    AttributeTaskFactory attributeTaskFactory;
     @Mock
     SplitTaskExecutor splitTaskExecutor;
-    @Mock
-    ValidationMessageLogger validationMessageLogger;
 
     private AttributesManagerImpl attributeClient;
     private Map<String, Object> testValues;
@@ -45,22 +46,24 @@ public class AttributesManagerImplTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        attributeClient = new AttributesManagerImpl(attributesStorage, attributesValidator, splitTaskFactory, splitTaskExecutor, validationMessageLogger);
+        attributeClient = new AttributesManagerImpl(attributesStorage,
+                attributesValidator,
+                validationMessageLogger,
+                persistentAttributesStorage,
+                attributeTaskFactory,
+                splitTaskExecutor);
         testValues = getDefaultValues();
     }
 
     @Test
-    public void setAttributeSubmitsUpdateSingleAttributeTaskIfAttributeValueIsValid() {
+    public void setAttributeUpdatesValueInStorageIfAttributeValueIsValid() {
         String name = "key";
         String attribute = "value";
-        UpdateSingleAttributeTask updateSingleAttributeTask = mock(UpdateSingleAttributeTask.class);
-        when(splitTaskFactory.createUpdateSingleAttributeTask(name, attribute)).thenReturn(updateSingleAttributeTask);
         when(attributesValidator.isValid(attribute)).thenReturn(true);
 
         attributeClient.setAttribute(name, attribute);
 
-        verify(splitTaskFactory).createUpdateSingleAttributeTask(name, attribute);
-        verify(splitTaskExecutor).submit(updateSingleAttributeTask, null);
+        verify(attributesStorage).set(name, attribute);
     }
 
     @Test
@@ -72,6 +75,24 @@ public class AttributesManagerImplTest {
         boolean result = attributeClient.setAttribute(name, attribute);
 
         Assert.assertTrue(result);
+    }
+
+    @Test
+    public void setAttributeLaunchesAttributeUpdateTaskIfValueIsValid() {
+        String name = "key";
+        String attribute = "value";
+        Map<String, Object> attributeMap = new HashMap<>();
+        attributeMap.put(name, attribute);
+
+        UpdateAttributesInPersistentStorageTask updateAttributesInPersistentStorageTask = mock(UpdateAttributesInPersistentStorageTask.class);
+        when(attributesStorage.getAll()).thenReturn(attributeMap);
+        when(attributesValidator.isValid(attribute)).thenReturn(true);
+        when(attributeTaskFactory.createAttributeUpdateTask(persistentAttributesStorage, attributeMap)).thenReturn(updateAttributesInPersistentStorageTask);
+
+        attributeClient.setAttribute(name, attribute);
+
+        verify(attributeTaskFactory).createAttributeUpdateTask(persistentAttributesStorage, attributeMap);
+        verify(splitTaskExecutor).submit(updateAttributesInPersistentStorageTask, null);
     }
 
     @Test
@@ -117,16 +138,12 @@ public class AttributesManagerImplTest {
     }
 
     @Test
-    public void setAttributesSubmitsAttributesUpdateTask() {
-
-        UpdateAttributesTask updateAttributesTask = mock(UpdateAttributesTask.class);
+    public void setAttributesCallsSetOnStorage() {
         when(attributesValidator.isValid(any(Object.class))).thenReturn(true);
-        when(splitTaskFactory.createUpdateAttributesTask(testValues)).thenReturn(updateAttributesTask);
 
         attributeClient.setAttributes(testValues);
 
-        verify(splitTaskFactory).createUpdateAttributesTask(testValues);
-        verify(splitTaskExecutor).submit(updateAttributesTask, null);
+        verify(attributesStorage).set(testValues);
     }
 
     @Test
@@ -136,6 +153,24 @@ public class AttributesManagerImplTest {
         boolean result = attributeClient.setAttributes(testValues);
 
         Assert.assertTrue(result);
+    }
+
+    @Test
+    public void setAttributesLaunchesAttributeUpdateTaskIfValuesAreValid() {
+        String name = "key";
+        String attribute = "value";
+        Map<String, Object> attributeMap = new HashMap<>();
+        attributeMap.put(name, attribute);
+
+        UpdateAttributesInPersistentStorageTask updateAttributesInPersistentStorageTask = mock(UpdateAttributesInPersistentStorageTask.class);
+        when(attributesStorage.getAll()).thenReturn(attributeMap);
+        when(attributesValidator.isValid(attribute)).thenReturn(true);
+        when(attributeTaskFactory.createAttributeUpdateTask(persistentAttributesStorage, attributeMap)).thenReturn(updateAttributesInPersistentStorageTask);
+
+        attributeClient.setAttributes(attributeMap);
+
+        verify(attributeTaskFactory).createAttributeUpdateTask(persistentAttributesStorage, attributeMap);
+        verify(splitTaskExecutor).submit(updateAttributesInPersistentStorageTask, null);
     }
 
     @Test
@@ -175,25 +210,47 @@ public class AttributesManagerImplTest {
     }
 
     @Test
-    public void clearAttributesSubmitsClearAttributesTask() {
-        ClearAttributesTask clearAttributesTask = mock(ClearAttributesTask.class);
-        when(splitTaskFactory.createClearAttributesTask()).thenReturn(clearAttributesTask);
+    public void clearAttributesCallsClearOnStorage() {
 
         attributeClient.clearAttributes();
 
-        verify(splitTaskFactory).createClearAttributesTask();
-        verify(splitTaskExecutor).submit(clearAttributesTask, null);
+        verify(attributesStorage).clear();
     }
 
     @Test
-    public void removeSubmitsRemoveAttributeTask() {
-        RemoveAttributeTask removeAttributeTask = mock(RemoveAttributeTask.class);
-        when(splitTaskFactory.createRemoveAttributeTask("key")).thenReturn(removeAttributeTask);
+    public void clearLaunchesAttributeClearTask() {
+        ClearAttributesInPersistentStorageTask clearAttributesInPersistentStorageTask = mock(ClearAttributesInPersistentStorageTask.class);
+        when(attributeTaskFactory.createAttributeClearTask(persistentAttributesStorage)).thenReturn(clearAttributesInPersistentStorageTask);
+
+        attributeClient.clearAttributes();
+
+        verify(attributeTaskFactory).createAttributeClearTask(persistentAttributesStorage);
+        verify(splitTaskExecutor).submit(clearAttributesInPersistentStorageTask, null);
+    }
+
+    @Test
+    public void removeCallsRemoveOnStorage() {
 
         attributeClient.removeAttribute("key");
 
-        verify(splitTaskFactory).createRemoveAttributeTask("key");
-        verify(splitTaskExecutor).submit(removeAttributeTask, null);
+        verify(attributesStorage).remove("key");
+    }
+
+    @Test
+    public void removeLaunchesAttributeUpdateTask() {
+        Map<String, Object> attributeMap = new HashMap<>();
+        attributeMap.put("key", "value");
+        attributeMap.put("key2", 100);
+
+        UpdateAttributesInPersistentStorageTask updateAttributesInPersistentStorageTask = mock(UpdateAttributesInPersistentStorageTask.class);
+        when(attributesStorage.getAll()).thenReturn(attributeMap);
+        when(attributesValidator.isValid(any())).thenReturn(true);
+        when(attributeTaskFactory.createAttributeUpdateTask(persistentAttributesStorage, attributeMap)).thenReturn(updateAttributesInPersistentStorageTask);
+
+        attributeClient.removeAttribute("key");
+
+        verify(attributeTaskFactory).createAttributeUpdateTask(persistentAttributesStorage, attributeMap);
+        verify(splitTaskExecutor).submit(updateAttributesInPersistentStorageTask, null);
     }
 
     private Map<String, Object> getDefaultValues() {
