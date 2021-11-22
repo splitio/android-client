@@ -3,12 +3,8 @@ package io.split.android.client.network;
 import com.google.common.base.Strings;
 import com.google.common.net.UrlEscapers;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
-
-import io.split.android.client.utils.Logger;
 
 public class SdkTargetPath {
     public static final String SPLIT_CHANGES = "/splitChanges";

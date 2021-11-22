@@ -29,5 +29,4 @@ public class SdkTargetPathTest {
 
         assertEquals("/mySegments/gr%C3%BCneStra%C3%9Fe", uri.getRawPath());
     }
-
 }
