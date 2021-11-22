@@ -1,6 +1,7 @@
 package io.split.android.client.network;
 
 import com.google.common.base.Strings;
+import com.google.common.net.UrlEscapers;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -22,12 +23,7 @@ public class SdkTargetPath {
     }
 
     public static final URI mySegments(String baseUrl, String key) throws URISyntaxException {
-        String encodedKey = key;
-        try {
-            encodedKey = URLEncoder.encode(key, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            Logger.e("Could not encode user key: " + key + " error -> " + e.getLocalizedMessage());
-        }
+        String encodedKey = key != null ? UrlEscapers.urlPathSegmentEscaper().escape(key) : null;
         return buildUrl(baseUrl, MY_SEGMENTS + "/" + encodedKey);
     }
 
