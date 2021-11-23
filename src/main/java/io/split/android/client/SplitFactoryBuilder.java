@@ -9,6 +9,8 @@ import java.net.URISyntaxException;
 import java.util.concurrent.TimeoutException;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.localhost.LocalhostSplitFactory;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.Logger;
 import io.split.android.grammar.Treatments;
 
@@ -61,11 +63,10 @@ public class SplitFactoryBuilder {
      *                                               ready and the timeout specified via config#ready() passed.
      */
     public static synchronized SplitFactory build(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
-        if (LocalhostSplitFactory.LOCALHOST.equals(apiToken)) {
-            return LocalhostSplitFactory.createLocalhostSplitFactory(key.matchingKey(), context);
+        if (ServiceConstants.LOCALHOST.equals(apiToken)) {
+            return new LocalhostSplitFactory(key.matchingKey(), context, config);
         } else {
             return new SplitFactoryImpl(apiToken, key, config, context);
-
         }
     }
 
@@ -76,7 +77,7 @@ public class SplitFactoryBuilder {
      * @throws IOException if there were problems reading the override file from disk.
      */
     public static SplitFactory local(String key, Context context) throws IOException {
-        return LocalhostSplitFactory.createLocalhostSplitFactory(key, context);
+        return new LocalhostSplitFactory(key, context, SplitClientConfig.builder().build() );
     }
 
     public static void main(String... args) throws IOException, InterruptedException, TimeoutException, URISyntaxException {

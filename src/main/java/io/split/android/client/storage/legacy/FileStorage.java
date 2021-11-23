@@ -18,17 +18,20 @@ import io.split.android.client.utils.Logger;
 
 public class FileStorage implements IStorage {
 
-    protected final File _dataFolder;
+    protected final File mDataFolder;
 
     public FileStorage(@NotNull File rootFolder, @NotNull String folderName) {
-        _dataFolder = new File(rootFolder, folderName);
-        if(!_dataFolder.exists()) {
-            if(!_dataFolder.mkdir()) {
+        mDataFolder = new File(rootFolder, folderName);
+        if(!mDataFolder.exists()) {
+            if(!mDataFolder.mkdir()) {
                 Logger.e("There was a problem creating Split cache folder");
             }
         }
     }
 
+    public String getRootPath() {
+        return mDataFolder.getAbsolutePath();
+    }
     /**
      * read the file content returning it as String. Could return null if file not found or could not be opened
      * @param elementId Identifier for the element to be read
@@ -38,7 +41,7 @@ public class FileStorage implements IStorage {
     @Override
     public String read(String elementId) throws IOException {
 
-        File file = new File(_dataFolder, elementId);
+        File file = new File(mDataFolder, elementId);
         FileInputStream fileInputStream;
         try {
             fileInputStream = new FileInputStream(file);
@@ -65,7 +68,7 @@ public class FileStorage implements IStorage {
 
     @Override
     public boolean write(String elementId, String content) throws IOException {
-        File file = new File(_dataFolder, elementId);
+        File file = new File(mDataFolder, elementId);
         FileOutputStream fileOutputStream = null;
         try {
             fileOutputStream = new FileOutputStream(file);
@@ -90,7 +93,7 @@ public class FileStorage implements IStorage {
 
     @Override
     public void delete(String elementId) {
-        File fileToDelete = new File(_dataFolder, elementId);
+        File fileToDelete = new File(mDataFolder, elementId);
         if(!fileToDelete.delete()) {
             Logger.e("There was a problem removing Split cache file");
         }
@@ -105,7 +108,7 @@ public class FileStorage implements IStorage {
 
     @Override
     public String[] getAllIds() {
-        File dataFolder = new File(_dataFolder, ".");
+        File dataFolder = new File(mDataFolder, ".");
         File[] fileList = dataFolder.listFiles();
         if(fileList == null) {
             return new String[0];
@@ -133,20 +136,20 @@ public class FileStorage implements IStorage {
 
     @Override
     public boolean rename(String currentId, String newId) {
-        File oldFile = new File(_dataFolder, currentId);
-        File newFile = new File(_dataFolder, newId);
+        File oldFile = new File(mDataFolder, currentId);
+        File newFile = new File(mDataFolder, newId);
         return oldFile.renameTo(newFile);
     }
 
     @Override
     public boolean exists(String elementId) {
-        File file = new File(_dataFolder, elementId);
+        File file = new File(mDataFolder, elementId);
         return file.exists();
     }
 
     @Override
     public long lastModified(String elementId) {
-        File file = new File(_dataFolder, elementId);
+        File file = new File(mDataFolder, elementId);
         if(!file.exists()) {
             return 0;
         }
@@ -154,7 +157,7 @@ public class FileStorage implements IStorage {
     }
 
     public long fileSize(String elementId) {
-        return new File(_dataFolder, elementId).length();
+        return new File(mDataFolder, elementId).length();
     }
 
 }

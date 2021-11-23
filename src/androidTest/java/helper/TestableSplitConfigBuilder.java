@@ -43,6 +43,7 @@ public class TestableSplitConfigBuilder {
     private boolean mBackgroundSyncWhenBatteryNotLow = true;
     private boolean mBackgroundSyncWhenWifiOnly = false;
     private boolean mLegacyStorageMigrationEnabled = false;
+    private boolean mIsPersistentAttributesStorageEnabled = false;
 
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
@@ -50,6 +51,7 @@ public class TestableSplitConfigBuilder {
     private DevelopmentSslConfig mDevelopmentSslConfig = null;
     private ImpressionsMode mImpressionsMode = ImpressionsMode.OPTIMIZED;
     private SyncConfig mSyncConfig = SyncConfig.builder().build();
+    private int mOfflineRefreshRate = 10;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -211,6 +213,16 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder isPersistentAttributesStorageEnabled(boolean isPersistentAttributesStorageEnabled) {
+        this.mIsPersistentAttributesStorageEnabled = isPersistentAttributesStorageEnabled;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder offlineRefreshRate(int offlineRefreshRate) {
+        this.mOfflineRefreshRate = offlineRefreshRate;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -255,7 +267,9 @@ public class TestableSplitConfigBuilder {
                     mSyncConfig,
                     mLegacyStorageMigrationEnabled,
                     mImpressionsMode,
-                    mImpressionsCountersRefreshRate);
+                    mImpressionsCountersRefreshRate,
+                    mIsPersistentAttributesStorageEnabled,
+                    mOfflineRefreshRate);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

@@ -17,11 +17,11 @@ plugins {
 }
 
 ext {
-    splitVersion = '2.7.4'
+    splitVersion = '2.8.0'
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     targetCompatibility = '1.8'
     sourceCompatibility = '1.8'
 

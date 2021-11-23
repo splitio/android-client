@@ -1,8 +1,16 @@
 package io.split.android.client.storage.db;
 
+import static androidx.annotation.RestrictTo.Scope.LIBRARY;
+
 import androidx.annotation.RestrictTo;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
+import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.storage.attributes.AttributesStorageImpl;
+import io.split.android.client.storage.attributes.PersistentAttributesStorage;
+import io.split.android.client.storage.attributes.SqLitePersistentAttributesStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
@@ -17,8 +25,6 @@ import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
-
-import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 
 @RestrictTo(LIBRARY)
 public class StorageFactory {
@@ -55,5 +61,13 @@ public class StorageFactory {
             SplitRoomDatabase splitRoomDatabase) {
         return new SqLitePersistentImpressionsCountStorage(splitRoomDatabase,
                 ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
+    }
+
+    public static AttributesStorage getAttributesStorage() {
+        return new AttributesStorageImpl();
+    }
+
+    public static PersistentAttributesStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase, String matchingKey) {
+        return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), matchingKey);
     }
 }

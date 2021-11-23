@@ -1,12 +1,8 @@
 package tests.database;
 
-import android.content.Context;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -18,20 +14,9 @@ import helper.FileHelper;
 import helper.IntegrationHelper;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.db.SplitEntity;
-import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 
-public class SplitDaoTest {
-
-    SplitRoomDatabase mRoomDb;
-    Context mContext;
-
-    @Before
-    public void setup() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mRoomDb = SplitRoomDatabase.getDatabase(mContext, "encripted_api_key");
-        mRoomDb.clearAllTables();
-    }
+public class SplitDaoTest extends GenericDaoTest {
 
     @Test
     public void insertRetrieve() {
