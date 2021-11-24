@@ -21,7 +21,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
+import helper.TestingHelper;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.ConditionType;
@@ -69,6 +71,8 @@ public class SplitClientImplTest {
 
     @Test
     public void null_test_results_in_control() {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
         String test = "test1";
         Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()),
                 Lists.newArrayList(partition("on", 100)));
@@ -80,14 +84,9 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+        client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(countDownLatch));
 
-            @Override
-            public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(null, null), is(equalTo(Treatments.CONTROL)));
-
-            }
-        });
+        assertThat(client.getTreatment(null, null), is(equalTo(Treatments.CONTROL)));
     }
 
     @Test
