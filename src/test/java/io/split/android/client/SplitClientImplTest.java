@@ -1,8 +1,6 @@
 package io.split.android.client;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -64,7 +62,7 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(new Key("test1"), splitsStorage);
 
-        assertThat(client.getTreatment(null), is(equalTo(Treatments.CONTROL)));
+        assertEquals("control", client.getTreatment(null));
 
         verify(splitsStorage, never()).get(anyString());
     }
@@ -86,7 +84,7 @@ public class SplitClientImplTest {
 
         client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(countDownLatch));
 
-        assertThat(client.getTreatment(null, null), is(equalTo(Treatments.CONTROL)));
+        assertEquals("control", client.getTreatment(null));
     }
 
     @Test
@@ -95,8 +93,7 @@ public class SplitClientImplTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@relateiq.com"), splitsStorage);
 
-        assertThat(client.getTreatment("test1"), is(equalTo(Treatments.CONTROL)));
-
+        assertEquals("control", client.getTreatment("test1"));
     }
 
     @Test
@@ -117,13 +114,10 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo("on")));
+                assertEquals("on", client.getTreatment(test));
             }
         });
-
-
     }
-
 
     @Test
     public void last_condition_is_always_default() {
@@ -149,7 +143,7 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo(Treatments.OFF)));
+                assertEquals("off", client.getTreatment(test));
             }
         });
 
@@ -175,7 +169,7 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo("on")));
+                assertEquals("on", client.getTreatment(test));
             }
         });
 
@@ -186,7 +180,7 @@ public class SplitClientImplTest {
             @Override
             public void onPostExecution(SplitClient client) {
 
-                assertThat(client.getTreatment(test), is(equalTo("off")));
+                assertEquals("off", client.getTreatment(test));
             }
         });
 
@@ -196,7 +190,7 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo("on")));
+                assertEquals("on", client.getTreatment(test));
             }
         });
     }
@@ -224,11 +218,9 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo(Treatments.OFF)));
+                assertEquals("off", client.getTreatment(test));
             }
         });
-
-
     }
 
     @Test
@@ -254,8 +246,8 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(parent), is(equalTo(Treatments.ON)));
-                assertThat(client.getTreatment(dependent), is(equalTo(Treatments.ON)));
+                assertEquals("on", client.getTreatment(parent));
+                assertEquals("on", client.getTreatment(dependent));
             }
         });
     }
@@ -283,8 +275,8 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(parent), is(equalTo(Treatments.ON)));
-                assertThat(client.getTreatment(dependent), is(equalTo(Treatments.OFF)));
+                assertEquals("on", client.getTreatment(parent));
+                assertEquals("off", client.getTreatment(dependent));
             }
         });
     }
@@ -306,7 +298,7 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(dependent), is(equalTo(Treatments.ON)));
+                assertEquals("on", client.getTreatment(dependent));
             }
         });
 
@@ -331,9 +323,9 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo("on")));
-                assertThat(client.getTreatment(test, null), is(equalTo("on")));
-                assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("on")));
+                assertEquals("on", client.getTreatment(test));
+                assertEquals("on", client.getTreatment(test, null));
+                assertEquals("on", client.getTreatment(test, ImmutableMap.of()));
             }
         });
 
@@ -343,8 +335,8 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, ImmutableMap.of("age", 10)), is(equalTo("on")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("age", 9)), is(equalTo("off")));
+                assertEquals("off",client.getTreatment(test, ImmutableMap.of("age", 10)));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", 9)));
 
             }
         });
@@ -368,9 +360,9 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo("off")));
-                assertThat(client.getTreatment(test, null), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
+                assertEquals("off", client.getTreatment(test));
+                assertEquals("off", client.getTreatment(test, null));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of()));
             }
         });
 
@@ -380,8 +372,8 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, ImmutableMap.of("age", 10)), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("age", 0)), is(equalTo("on")));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", 10)));
+                assertEquals("on", client.getTreatment(test, ImmutableMap.of("age", 0)));
             }
         });
     }
@@ -404,9 +396,9 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo("off")));
-                assertThat(client.getTreatment(test, null), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
+                assertEquals("off", client.getTreatment(test));
+                assertEquals("off", client.getTreatment(test));
+                assertEquals("off", client.getTreatment(test));
             }
         });
 
@@ -421,14 +413,13 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, ImmutableMap.of("age", 10)), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("age", -20)), is(equalTo("on")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("age", 20)), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("age", -21)), is(equalTo("off")));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", 10)));
+                assertEquals("on", client.getTreatment(test, ImmutableMap.of("age", -20)));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", 20)));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", -21)));
             }
         });
     }
-
 
     @Test
     public void attributes_for_sets() {
@@ -448,9 +439,9 @@ public class SplitClientImplTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo("off")));
-                assertThat(client.getTreatment(test, null), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.of()), is(equalTo("off")));
+                assertEquals("off", client.getTreatment(test));
+                assertEquals("off", client.getTreatment(test, null));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of()));
             }
         });
 
@@ -459,16 +450,14 @@ public class SplitClientImplTest {
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList())), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList(""))), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("talk"))), is(equalTo("off")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms"))), is(equalTo("on")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms", "video"))), is(equalTo("on")));
-                assertThat(client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("video"))), is(equalTo("on")));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList())));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList(""))));
+                assertEquals("off", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("talk"))));
+                assertEquals("on", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms"))));
+                assertEquals("on", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms", "video"))));
+                assertEquals("on", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("video"))));
             }
         });
-
-
     }
 
     @Test
@@ -494,11 +483,11 @@ public class SplitClientImplTest {
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, attributes), is(equalTo("on")));
+                assertEquals("on", client.getTreatment(test, attributes));
                 ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
                 verify(impressionListener).log(impressionCaptor.capture());
-                assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo("foolabel")));
-                assertThat(impressionCaptor.getValue().attributes(), is(attributes));
+                assertEquals("foolabel", impressionCaptor.getValue().appliedRule());
+                assertEquals(attributes, impressionCaptor.getValue().attributes());
             }
         });
 
@@ -589,19 +578,16 @@ public class SplitClientImplTest {
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test), is(equalTo(expected_treatment_on_or_off)));
+                assertEquals(expected_treatment_on_or_off, client.getTreatment(test));
 
                 ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
 
                 verify(impressionListener).log(impressionCaptor.capture());
 
-                assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo(label)));
+                assertEquals(label, impressionCaptor.getValue().appliedRule());
             }
         });
-
-
     }
-
 
     @Test
     public void matching_bucketing_keys_work() {
@@ -625,21 +611,19 @@ public class SplitClientImplTest {
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, Collections.emptyMap()), is(equalTo("off")));
+                assertEquals("off", client.getTreatment(test, Collections.emptyMap()));
             }
         });
 
         Key good_key = new Key("aijaz", "adil");
         client = SplitClientImplFactory.get(good_key, splitsStorage);
 
-
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, Collections.emptyMap()), is(equalTo("on")));
+                assertEquals("on", client.getTreatment(test, Collections.emptyMap()));
             }
         });
-
     }
 
     @Test
@@ -668,13 +652,13 @@ public class SplitClientImplTest {
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                assertThat(client.getTreatment(test, attributes), is(equalTo("on")));
+                assertEquals("on", client.getTreatment(test, attributes));
                 ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
 
                 verify(impressionListener).log(impressionCaptor.capture());
 
-                assertThat(impressionCaptor.getValue().appliedRule(), is(equalTo("foolabel")));
-                assertThat(impressionCaptor.getValue().attributes(), is(equalTo(attributes)));
+                assertEquals("foolabel", impressionCaptor.getValue().appliedRule());
+                assertEquals(attributes, impressionCaptor.getValue().attributes());
             }
         });
     }
