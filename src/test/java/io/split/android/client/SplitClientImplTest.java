@@ -91,7 +91,7 @@ public class SplitClientImplTest {
     public void exceptions_result_in_control() {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@relateiq.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@relateiq.com"), splitsStorage);
 
         assertEquals("control", client.getTreatment("test1"));
     }
@@ -108,7 +108,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -132,7 +132,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage);
 
         try {
             Thread.sleep(1000);
@@ -163,7 +163,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        mClient = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        mClient = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
         mClient.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -173,7 +173,7 @@ public class SplitClientImplTest {
             }
         });
 
-        mClient = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
+        mClient = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage);
 
         mClient.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -184,7 +184,7 @@ public class SplitClientImplTest {
             }
         });
 
-        mClient = SplitClientImplFactory.get(Key.withMatchingKey("trevor@codigo.com"), splitsStorage);
+        mClient = SplitClientImplFactory.get(new Key("trevor@codigo.com"), splitsStorage);
 
         mClient.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -207,7 +207,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
         try {
             Thread.sleep(1000);
@@ -240,7 +240,7 @@ public class SplitClientImplTest {
         when(splitsStorage.get(parent)).thenReturn(parentSplit);
         when(splitsStorage.get(dependent)).thenReturn(dependentSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("key"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -269,7 +269,7 @@ public class SplitClientImplTest {
         when(splitsStorage.get(parent)).thenReturn(parentSplit);
         when(splitsStorage.get(dependent)).thenReturn(dependentSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("key"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -292,7 +292,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(dependent)).thenReturn(dependentSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("key"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("key"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -317,7 +317,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -329,7 +329,7 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
+        client = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -354,7 +354,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -366,7 +366,7 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
+        client = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -390,7 +390,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -407,7 +407,7 @@ public class SplitClientImplTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
+        client = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -433,7 +433,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("adil@codigo.com"), splitsStorage);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("adil@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
 
@@ -445,7 +445,7 @@ public class SplitClientImplTest {
             }
         });
 
-        client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage);
+        client = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
@@ -476,7 +476,7 @@ public class SplitClientImplTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
         ImpressionListener impressionListener = mock(ImpressionListener.class);
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage, impressionListener);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage, impressionListener);
         Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
 
 
@@ -496,7 +496,7 @@ public class SplitClientImplTest {
 
     @Test
     public void not_in_split_if_no_allocation() {
-        traffic_allocation(Key.withMatchingKey("pato@split.io"), 0, "off", "not in split");
+        traffic_allocation(new Key("pato@split.io"), 0, "off", "not in split");
     }
 
     /**
@@ -509,7 +509,7 @@ public class SplitClientImplTest {
      */
     @Test
     public void not_in_split_if_10_percent_allocation() {
-        Key key = Key.withMatchingKey("pato@split.io");
+        Key key = new Key("pato@split.io");
         int i = 0;
         for (; i <= 9; i++) {
             traffic_allocation(key, i, "off", "not in split");
@@ -522,17 +522,17 @@ public class SplitClientImplTest {
 
     @Test
     public void in_split_if_100_percent_allocation() {
-        traffic_allocation(Key.withMatchingKey("pato@split.io"), 100, "on", "in segment all");
+        traffic_allocation(new Key("pato@split.io"), 100, "on", "in segment all");
     }
 
     @Test
     public void in_split_if_1_percent_allocation() {
-        traffic_allocation(Key.withMatchingKey("aaaaaaklmnbv"), 1, -1667452163, "on", "in segment all", 2);
+        traffic_allocation(new Key("aaaaaaklmnbv"), 1, -1667452163, "on", "in segment all", 2);
     }
 
     @Test
     public void whitelist_overrides_traffic_allocation() {
-        traffic_allocation(Key.withMatchingKey("adil@split.io"), 0, "on", "whitelisted user");
+        traffic_allocation(new Key("adil@split.io"), 0, "on", "whitelisted user");
     }
 
     private void traffic_allocation(Key key, int trafficAllocation, String expected_treatment_on_or_off, String label) {
@@ -645,7 +645,7 @@ public class SplitClientImplTest {
         ImpressionListener impressionListener = mock(ImpressionListener.class);
 
 
-        SplitClientImpl client = SplitClientImplFactory.get(Key.withMatchingKey("pato@codigo.com"), splitsStorage, impressionListener);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage, impressionListener);
 
         Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
 
