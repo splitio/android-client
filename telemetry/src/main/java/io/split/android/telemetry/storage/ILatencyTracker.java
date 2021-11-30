@@ -1,4 +1,4 @@
-package io.split.android.client.metrics;
+package io.split.android.telemetry.storage;
 
 /**
  * Created by patricioe on 2/10/16.
