@@ -34,17 +34,12 @@ public class SplitClientImplFactory {
                 new ImpressionListener.NoopImpressionListener(),
                 cfg,
                 eventsManager,
-                mock(SplitsStorage.class),
+                splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
                 mock(AttributesManager.class)
         );
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
         eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         return c;
     }
@@ -59,7 +54,7 @@ public class SplitClientImplFactory {
                 impressionListener,
                 cfg,
                 new SplitEventsManager(cfg),
-                mock(SplitsStorage.class),
+                splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
                 mock(AttributesManager.class)
@@ -75,7 +70,7 @@ public class SplitClientImplFactory {
                 new ImpressionListener.NoopImpressionListener(),
                 SplitClientConfig.builder().build(),
                 eventsManager,
-                mock(SplitsStorage.class),
+                splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
                 mock(AttributesManager.class)
