@@ -4,11 +4,9 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerImpl;
@@ -18,9 +16,6 @@ import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.SyncImpressionListener;
 import io.split.android.client.lifecycle.SplitLifecycleManager;
-import io.split.android.client.metrics.CachedMetrics;
-import io.split.android.client.metrics.FireAndForgetMetrics;
-import io.split.android.client.metrics.HttpMetrics;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
@@ -125,11 +120,6 @@ public class SplitFactoryImpl implements SplitFactory {
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
 
-        URI eventsRootTarget = URI.create(config.eventsEndpoint());
-
-        HttpMetrics httpMetrics = HttpMetrics.create(defaultHttpClient, eventsRootTarget);
-        final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
-
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
@@ -138,14 +128,9 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 
-        // TODO: Setup metrics in task executor
-        CachedMetrics cachedMetrics = new CachedMetrics(httpMetrics, TimeUnit.SECONDS.toMillis(config.metricsRefreshRate()));
-        final FireAndForgetMetrics cachedFireAndForgetMetrics = FireAndForgetMetrics.instance(cachedMetrics, 2, 1000);
-
-
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
-                config, key, defaultHttpClient, cachedFireAndForgetMetrics, splitsFilterQueryString);
+                config, key, defaultHttpClient, splitsFilterQueryString);
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, storageContainer, splitsFilterQueryString, _eventsManager);
@@ -194,10 +179,6 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of lifecycle manager");
                     _factoryMonitor.remove(_apiKey);
                     Logger.i("Successful shutdown of segment fetchers");
-                    uncachedFireAndForget.close();
-                    Logger.i("Successful shutdown of metrics 1");
-                    cachedFireAndForgetMetrics.close();
-                    Logger.i("Successful shutdown of metrics 2");
                     customerImpressionListener.close();
                     Logger.i("Successful shutdown of ImpressionListener");
                     defaultHttpClient.close();
@@ -228,7 +209,6 @@ public class SplitFactoryImpl implements SplitFactory {
                 key,
                 splitParser,
                 customerImpressionListener,
-                cachedFireAndForgetMetrics,
                 config,
                 _eventsManager,
                 storageContainer.getSplitsStorage(),

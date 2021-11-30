@@ -49,7 +49,6 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
-import io.split.android.engine.metrics.Metrics;
 
 class SplitFactoryHelper {
     private static final int  DB_MAGIC_CHARS_COUNT = 4;
@@ -129,15 +128,14 @@ class SplitFactoryHelper {
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
                                   Key key,
                                   HttpClient httpClient,
-                                  Metrics cachedFireAndForgetMetrics,
                                   String splitsFilterQueryString) throws URISyntaxException {
         NetworkHelper networkHelper = new NetworkHelper();
 
         return new SplitApiFacade(
                 ServiceFactory.getSplitsFetcher(networkHelper, httpClient,
-                        splitClientConfig.endpoint(), cachedFireAndForgetMetrics, splitsFilterQueryString),
+                        splitClientConfig.endpoint(), splitsFilterQueryString),
                 ServiceFactory.getMySegmentsFetcher(networkHelper, httpClient,
-                        splitClientConfig.endpoint(), key.matchingKey(), cachedFireAndForgetMetrics),
+                        splitClientConfig.endpoint(), key.matchingKey()),
                 ServiceFactory.getSseAuthenticationFetcher(networkHelper, httpClient,
                         splitClientConfig.authServiceUrl()),
                 ServiceFactory.getEventsRecorder(networkHelper, httpClient,

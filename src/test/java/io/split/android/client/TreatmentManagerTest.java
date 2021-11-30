@@ -1,5 +1,9 @@
 package io.split.android.client;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.common.base.Strings;
 
 import org.junit.Assert;
@@ -31,18 +35,12 @@ import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.metrics.Metrics;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import io.split.android.fake.ImpressionListenerMock;
-import io.split.android.fake.MetricsMock;
 import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
 import io.split.android.fake.SplitEventsManagerStub;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @SuppressWarnings("ConstantConditions")
 public class TreatmentManagerTest {
@@ -50,7 +48,6 @@ public class TreatmentManagerTest {
     SplitFetcher splitFetcher;
     Evaluator evaluator;
     ImpressionListener impressionListener;
-    Metrics metrics;
     ISplitEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
     TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
@@ -77,7 +74,6 @@ public class TreatmentManagerTest {
             evaluator = new EvaluatorImpl(splitsStorage, splitParser);
         }
         impressionListener = new ImpressionListenerMock();
-        metrics = new MetricsMock();
         eventsManagerStub = new SplitEventsManagerStub();
     }
 
@@ -308,7 +304,7 @@ public class TreatmentManagerTest {
         SplitClientConfig config = SplitClientConfig.builder().build();
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
-                new KeyValidatorImpl(), new SplitValidatorImpl(), new MetricsMock(),
+                new KeyValidatorImpl(), new SplitValidatorImpl(),
                 new ImpressionListenerMock(), config, eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class));
     }
 
@@ -328,7 +324,6 @@ public class TreatmentManagerTest {
                 evaluator,
                 mock(KeyValidator.class),
                 mock(SplitValidator.class),
-                mock(Metrics.class),
                 mock(ImpressionListener.class),
                 SplitClientConfig.builder().build(),
                 eventsManager,

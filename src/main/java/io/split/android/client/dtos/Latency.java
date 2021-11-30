@@ -8,4 +8,3 @@ public class Latency {
     public List<Long> latencies;
     public Map<String, String> properties;
 }
-

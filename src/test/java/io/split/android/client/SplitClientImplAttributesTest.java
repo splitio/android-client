@@ -20,7 +20,6 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.metrics.Metrics;
 
 public class SplitClientImplAttributesTest {
 
@@ -32,8 +31,6 @@ public class SplitClientImplAttributesTest {
     MySegmentsStorage mySegmentsStorage;
     @Mock
     ImpressionListener impressionListener;
-    @Mock
-    Metrics metrics;
     @Mock
     SplitsStorage splitsStorage;
     @Mock
@@ -53,7 +50,6 @@ public class SplitClientImplAttributesTest {
                 new Key("test_key"),
                 new SplitParser(mySegmentsStorage),
                 impressionListener,
-                metrics,
                 splitClientConfig,
                 new SplitEventsManager(splitClientConfig),
                 splitsStorage,
