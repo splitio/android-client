@@ -1,5 +1,7 @@
 package io.split.android.client.service.http;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -12,17 +14,11 @@ import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.utils.NetworkHelper;
-import io.split.android.engine.metrics.Metrics;
-import io.split.android.engine.metrics.FetcherMetricsConfig;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class HttpFetcherImpl<T> implements HttpFetcher<T> {
 
     private final HttpClient mClient;
     private final URI mTarget;
-    private Metrics mMetrics;
-    private FetcherMetricsConfig mFetcherMetricsConfig;
     private final NetworkHelper mNetworkHelper;
     private HttpResponseParser<T> mResponseParser;
 
@@ -30,33 +26,18 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                            @NonNull URI target,
                            @NonNull NetworkHelper networkHelper,
                            @NonNull HttpResponseParser<T> responseParser) {
-        this(client, target, null, null, networkHelper, responseParser);
-    }
-
-    public HttpFetcherImpl(@NonNull HttpClient client,
-                           @NonNull URI target,
-                           Metrics metrics,
-                           FetcherMetricsConfig fetcherMetricsConfig,
-                           @NonNull NetworkHelper networkHelper,
-                           @NonNull HttpResponseParser<T> responseParser) {
 
         mClient = checkNotNull(client);
         mTarget = checkNotNull(target);
         mNetworkHelper = checkNotNull(networkHelper);
         mResponseParser = checkNotNull(responseParser);
-        mMetrics = metrics;
-        mFetcherMetricsConfig = fetcherMetricsConfig;
-        if(metrics != null) {
-            checkNotNull(fetcherMetricsConfig);
-        }
     }
 
     @Override
     public T execute(@NonNull Map<String, Object> params,
                      @Nullable Map<String, String> headers) throws HttpFetcherException {
         checkNotNull(params);
-        long start = System.currentTimeMillis();
-        T responseData = null;
+        T responseData;
         try {
             if (!mNetworkHelper.isReachable(mTarget)) {
                 throw new IllegalStateException("Source not reachable");
@@ -70,9 +51,6 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             HttpResponse response = mClient.request(builtUri, HttpMethod.GET, null, headers).execute();
             Logger.d("Received from: " + builtUri.toString() + " -> " + response.getData());
             if (!response.isSuccess()) {
-                if(mMetrics != null) {
-                    mMetrics.count(String.format(mFetcherMetricsConfig.getStatusLabel(), response.getHttpStatus()), 1);
-                }
                 throw new IllegalStateException("http return code " + response.getHttpStatus());
             }
 
@@ -82,14 +60,7 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                 throw new IllegalStateException("Wrong data received from split changes server");
             }
         } catch (Exception e) {
-            if(mMetrics != null) {
-                mMetrics.count(mFetcherMetricsConfig.getExceptionLabel(), 1);
-            }
             throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage());
-        } finally {
-            if(mMetrics != null) {
-                mMetrics.time(mFetcherMetricsConfig.getTimeLabel(), System.currentTimeMillis() - start);
-            }
         }
         return responseData;
     }

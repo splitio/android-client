@@ -20,7 +20,6 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.utils.Logger;
-import io.split.android.engine.metrics.Metrics;
 import io.split.android.grammar.Treatments;
 
 public class TreatmentManagerImpl implements TreatmentManager {
@@ -38,7 +37,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final Evaluator mEvaluator;
     private final KeyValidator mKeyValidator;
     private final SplitValidator mSplitValidator;
-    private final Metrics mMetrics;
     private final ImpressionListener mImpressionListener;
     private final String mMatchingKey;
     private final String mBucketingKey;
@@ -52,13 +50,12 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     public TreatmentManagerImpl(String matchingKey, String bucketingKey,
                                 Evaluator evaluator, KeyValidator keyValidator,
-                                SplitValidator splitValidator, Metrics metrics,
+                                SplitValidator splitValidator,
                                 ImpressionListener impressionListener, SplitClientConfig splitClientConfig,
                                 ISplitEventsManager eventsManager, @NonNull AttributesManager attributesManager, @NonNull AttributesMerger attributesMerger) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
-        mMetrics = metrics;
         mMatchingKey = matchingKey;
         mBucketingKey = bucketingKey;
         mImpressionListener = impressionListener;
@@ -80,7 +77,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         long start = System.currentTimeMillis();
         String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag).treatment();
-        mMetrics.time(Metrics.GET_TREATMENT_TIME, System.currentTimeMillis() - start);
         return treatment;
     }
 
@@ -94,7 +90,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         long start = System.currentTimeMillis();
         SplitResult result = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag);
-        mMetrics.time(Metrics.GET_TREATMENT_WITH_CONFIG_TIME, System.currentTimeMillis() - start);
         return result;
     }
 
@@ -120,7 +115,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
         for (Map.Entry<String, SplitResult> entry : resultWithConfig.entrySet()) {
             result.put(entry.getKey(), entry.getValue().treatment());
         }
-        mMetrics.time(Metrics.GET_TREATMENTS_TIME, System.currentTimeMillis() - start);
         return result;
     }
 
@@ -141,7 +135,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         long start = System.currentTimeMillis();
         Map<String, SplitResult> result = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
-        mMetrics.time(Metrics.GET_TREATMENTS_WITH_CONFIG_TIME, System.currentTimeMillis() - start);
         return result;
     }
 

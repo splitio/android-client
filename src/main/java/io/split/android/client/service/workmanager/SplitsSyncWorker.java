@@ -25,7 +25,7 @@ public class SplitsSyncWorker extends SplitWorker {
         try {
             SplitsStorage splitsStorage = StorageFactory.getSplitsStorage(getDatabase());
             HttpFetcher<SplitChange> splitsFetcher = ServiceFactory.getSplitsFetcher(getNetworkHelper(), getHttpClient(),
-                            getEndPoint(), getMetrics(), splitsStorage.getSplitsFilterQueryString());
+                            getEndPoint(), splitsStorage.getSplitsFilterQueryString());
             SplitsSyncHelper splitsSyncHelper = new SplitsSyncHelper(splitsFetcher, splitsStorage, new SplitChangeProcessor());
             mSplitTask = new SplitsSyncBackgroundTask(splitsSyncHelper, splitsStorage, getCacheExpirationInSeconds());
         } catch (URISyntaxException e) {

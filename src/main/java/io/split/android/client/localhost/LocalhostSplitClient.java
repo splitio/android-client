@@ -61,7 +61,7 @@ public final class LocalhostSplitClient implements SplitClient {
         mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
         mTreatmentManager = new TreatmentManagerImpl(mKey, null,
                 mEvaluator, new KeyValidatorImpl(),
-                new SplitValidatorImpl(), new LocalhostMetrics(), getImpressionsListener(splitClientConfig),
+                new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
                 splitClientConfig, eventsManager, attributesManager, attributesMerger);
     }
 

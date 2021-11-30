@@ -1,5 +1,10 @@
 package io.split.android.client;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -25,12 +30,6 @@ import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.metrics.Metrics;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 /**
  * A basic implementation of SplitClient.
@@ -56,7 +55,6 @@ public final class SplitClientImpl implements SplitClient {
                            Key key,
                            SplitParser splitParser,
                            ImpressionListener impressionListener,
-                           Metrics metrics,
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
                            SplitsStorage splitsStorage,
@@ -77,7 +75,7 @@ public final class SplitClientImpl implements SplitClient {
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = new TreatmentManagerImpl(
                 mMatchingKey, mBucketingKey, new EvaluatorImpl(splitsStorage, splitParser),
-                new KeyValidatorImpl(), new SplitValidatorImpl(), metrics,
+                new KeyValidatorImpl(), new SplitValidatorImpl(),
                 impressionListener, mConfig, eventsManager, attributesManager, new AttributesMergerImpl());
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
         mSyncManager = checkNotNull(syncManager);
