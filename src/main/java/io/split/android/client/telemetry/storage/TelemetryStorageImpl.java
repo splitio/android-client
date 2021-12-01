@@ -44,7 +44,13 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     private final Map<SyncedResource, Map<Long, Long>> httpErrors = Maps.newConcurrentMap();
 
-    public TelemetryStorageImpl() {
+    private final Map<HTTPLatenciesType, AtomicLongArray> httpLatencies = Maps.newConcurrentMap();
+
+    private final ILatencyTracker latencyTracker;
+
+    public TelemetryStorageImpl(ILatencyTracker latencyTracker) {
+        this.latencyTracker = latencyTracker;
+
         initializeMethodExceptionsCounter();
         initializeHttpLatenciesCounter();
         initializeFactoryCounters();
@@ -52,6 +58,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
         initializeEventsData();
         initializeLastSynchronizationData();
         initializeHttpErrors();
+        initializeHttpLatencies();
     }
 
     private void initializeHttpLatenciesCounter() {
@@ -107,6 +114,16 @@ public class TelemetryStorageImpl implements TelemetryStorage {
         httpErrors.put(SyncedResource.TOKEN_SYNC, Maps.newConcurrentMap());
     }
 
+    private void initializeHttpLatencies() {
+        httpLatencies.put(HTTPLatenciesType.EVENTS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.IMPRESSIONS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.TELEMETRY, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.IMPRESSIONS_COUNT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.MY_SEGMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.SPLITS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.TOKEN, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+    }
+
     @Override
     public MethodExceptions popExceptions() {
         MethodExceptions methodExceptions = new MethodExceptions();
@@ -135,8 +152,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public void recordLatency(Method method, long latency) {
-        BinarySearchLatencyTracker binarySearchLatencyTracker = new BinarySearchLatencyTracker();
-        long bucketForLatencyMillis = binarySearchLatencyTracker.getBucketForLatencyMillis(latency);
+        long bucketForLatencyMillis = latencyTracker.getBucketForLatencyMillis(latency);
 
         methodLatencies.get(method).increment((int) bucketForLatencyMillis);
     }
@@ -215,7 +231,17 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public HTTPLatencies popHttpLatencies() {
-        return null;
+        HTTPLatencies latencies = new HTTPLatencies();
+
+        latencies.setTelemetry(httpLatencies.get(HTTPLatenciesType.TELEMETRY).fetchAndClearAll());
+        latencies.setEvents(httpLatencies.get(HTTPLatenciesType.EVENTS).fetchAndClearAll());
+        latencies.setSplits(httpLatencies.get(HTTPLatenciesType.SPLITS).fetchAndClearAll());
+        latencies.setSegments(httpLatencies.get(HTTPLatenciesType.MY_SEGMENT).fetchAndClearAll());
+        latencies.setToken(httpLatencies.get(HTTPLatenciesType.TOKEN).fetchAndClearAll());
+        latencies.setImpressions(httpLatencies.get(HTTPLatenciesType.IMPRESSIONS).fetchAndClearAll());
+        latencies.setImpressionsCount(httpLatencies.get(HTTPLatenciesType.IMPRESSIONS_COUNT).fetchAndClearAll());
+
+        return latencies;
     }
 
     @Override
@@ -279,7 +305,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public void recordSyncLatency(HTTPLatenciesType resource, long latency) {
-
+        httpLatencies.get(resource).increment((int) latencyTracker.getBucketForLatencyMillis(latency));
     }
 
     @Override

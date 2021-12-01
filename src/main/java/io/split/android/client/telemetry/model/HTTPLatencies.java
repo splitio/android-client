@@ -1,87 +1,76 @@
 package io.split.android.client.telemetry.model;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class HTTPLatencies {
 
-    private List<Integer> splits;
+    private List<Long> splits;
 
-    private List<Integer> segments;
+    private List<Long> segments;
 
-    private List<Integer> impressions;
+    private List<Long> impressions;
 
-    private List<Integer> impressionsCount;
+    private List<Long> impressionsCount;
 
-    private List<Integer> events;
+    private List<Long> events;
 
-    private List<Integer> telemetry;
+    private List<Long> telemetry;
 
-    private List<Integer> token;
+    private List<Long> token;
 
-    public HTTPLatencies() {
-        this.splits = new ArrayList<>();
-        this.segments = new ArrayList<>();
-        this.impressions = new ArrayList<>();
-        this.impressionsCount = new ArrayList<>();
-        this.events = new ArrayList<>();
-        this.telemetry = new ArrayList<>();
-        this.token = new ArrayList<>();
-    }
-
-    public List<Integer> getSplits() {
+    public List<Long> getSplits() {
         return splits;
     }
 
-    public void setSplits(List<Integer> splits) {
+    public void setSplits(List<Long> splits) {
         this.splits = splits;
     }
 
-    public List<Integer> getSegments() {
+    public List<Long> getSegments() {
         return segments;
     }
 
-    public void setSegments(List<Integer> segments) {
+    public void setSegments(List<Long> segments) {
         this.segments = segments;
     }
 
-    public List<Integer> getImpressions() {
+    public List<Long> getImpressions() {
         return impressions;
     }
 
-    public void setImpressions(List<Integer> impressions) {
+    public void setImpressions(List<Long> impressions) {
         this.impressions = impressions;
     }
 
-    public List<Integer> getImpressionsCount() {
+    public List<Long> getImpressionsCount() {
         return impressionsCount;
     }
 
-    public void setImpressionsCount(List<Integer> impressionsCount) {
+    public void setImpressionsCount(List<Long> impressionsCount) {
         this.impressionsCount = impressionsCount;
     }
 
-    public List<Integer> getEvents() {
+    public List<Long> getEvents() {
         return events;
     }
 
-    public void setEvents(List<Integer> events) {
+    public void setEvents(List<Long> events) {
         this.events = events;
     }
 
-    public List<Integer> getTelemetry() {
+    public List<Long> getTelemetry() {
         return telemetry;
     }
 
-    public void setTelemetry(List<Integer> telemetry) {
+    public void setTelemetry(List<Long> telemetry) {
         this.telemetry = telemetry;
     }
 
-    public List<Integer> getToken() {
+    public List<Long> getToken() {
         return token;
     }
 
-    public void setToken(List<Integer> token) {
+    public void setToken(List<Long> token) {
         this.token = token;
     }
 }

@@ -1,11 +1,15 @@
 package io.split.android.client.telemetry.storage;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
 
 import com.google.common.util.concurrent.Runnables;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +17,8 @@ import java.util.Map;
 import io.split.android.client.service.synchronizer.ThreadUtils;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.HTTPErrors;
+import io.split.android.client.telemetry.model.HTTPLatencies;
+import io.split.android.client.telemetry.model.HTTPLatenciesType;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSync;
 import io.split.android.client.telemetry.model.LastSynchronizationRecords;
@@ -23,11 +29,13 @@ import io.split.android.client.telemetry.model.SyncedResource;
 
 public class TelemetryStorageImplTest {
 
+    @Mock ILatencyTracker latencyTracker;
     private TelemetryStorageImpl telemetryStorage;
 
     @Before
     public void setUp() {
-        telemetryStorage = new TelemetryStorageImpl();
+        MockitoAnnotations.openMocks(this);
+        telemetryStorage = new TelemetryStorageImpl(latencyTracker);
     }
 
     @Test
@@ -223,6 +231,13 @@ public class TelemetryStorageImplTest {
     }
 
     @Test
+    public void httpLatenciesIsInitialized() {
+        HTTPLatencies httpLatencies = telemetryStorage.popHttpLatencies();
+
+        assertNotNull(httpLatencies);
+    }
+
+    @Test
     public void lastSyncDataBuildsCorrectly() {
         telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.EVENTS, 1000);
         telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.TELEMETRY, 2000);
@@ -311,5 +326,48 @@ public class TelemetryStorageImplTest {
         assertTrue(httpErrors.getSegmentSyncErrs().isEmpty());
         assertTrue(httpErrors.getSplitSyncErrs().isEmpty());
         assertTrue(httpErrors.getTokenGetErrs().isEmpty());
+    }
+
+    @Test
+    public void popHttpLatenciesBuildsObjectCorrectly() {
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.TELEMETRY, 200);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.SPLITS, 10022);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.EVENTS, 300);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.IMPRESSIONS, 200);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.IMPRESSIONS_COUNT, 10);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.MY_SEGMENT, 2000);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.TOKEN, 2000);
+
+        HTTPLatencies httpLatencies = telemetryStorage.popHttpLatencies();
+
+        assertFalse(httpLatencies.getTelemetry().stream().allMatch(l -> l == 0));
+        assertFalse(httpLatencies.getEvents().stream().allMatch(l -> l == 0));
+        assertFalse(httpLatencies.getImpressions().stream().allMatch(l -> l == 0));
+        assertFalse(httpLatencies.getImpressionsCount().stream().allMatch(l -> l == 0));
+        assertFalse(httpLatencies.getSplits().stream().allMatch(l -> l == 0));
+        assertFalse(httpLatencies.getToken().stream().allMatch(l -> l == 0));
+        assertFalse(httpLatencies.getSegments().stream().allMatch(l -> l == 0));
+    }
+
+    @Test
+    public void popHttpLatenciesClearsArray() {
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.TELEMETRY, 200);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.SPLITS, 10022);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.EVENTS, 300);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.IMPRESSIONS, 200);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.IMPRESSIONS_COUNT, 10);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.MY_SEGMENT, 2000);
+        telemetryStorage.recordSyncLatency(HTTPLatenciesType.TOKEN, 2000);
+
+        telemetryStorage.popHttpLatencies();
+        HTTPLatencies httpLatencies = telemetryStorage.popHttpLatencies();
+
+        assertTrue(httpLatencies.getTelemetry().stream().allMatch(l -> l == 0));
+        assertTrue(httpLatencies.getEvents().stream().allMatch(l -> l == 0));
+        assertTrue(httpLatencies.getImpressions().stream().allMatch(l -> l == 0));
+        assertTrue(httpLatencies.getImpressionsCount().stream().allMatch(l -> l == 0));
+        assertTrue(httpLatencies.getSplits().stream().allMatch(l -> l == 0));
+        assertTrue(httpLatencies.getToken().stream().allMatch(l -> l == 0));
+        assertTrue(httpLatencies.getSegments().stream().allMatch(l -> l == 0));
     }
 }
