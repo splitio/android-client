@@ -4,7 +4,7 @@ import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.HTTPLatenciesType;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSynchronizationRecords;
-import io.split.android.client.telemetry.model.Resource;
+import io.split.android.client.telemetry.model.SyncedResource;
 import io.split.android.client.telemetry.model.StreamingEvent;
 
 public interface TelemetryRuntimeProducer {
@@ -17,7 +17,7 @@ public interface TelemetryRuntimeProducer {
 
     void recordSuccessfulSync(LastSynchronizationRecords resource, long time);
 
-    void recordSyncError(Resource resource, int status);
+    void recordSyncError(SyncedResource syncedResource, int status);
 
     void recordSyncLatency(HTTPLatenciesType resource, long latency);
 

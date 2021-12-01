@@ -1,32 +1,50 @@
 package io.split.android.client.telemetry.storage;
 
+import com.google.common.collect.Maps;
+
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.telemetry.model.Config;
+import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.FactoryCounter;
+import io.split.android.client.telemetry.model.HTTPErrors;
+import io.split.android.client.telemetry.model.HTTPLatencies;
+import io.split.android.client.telemetry.model.HTTPLatenciesType;
+import io.split.android.client.telemetry.model.ImpressionsDataType;
+import io.split.android.client.telemetry.model.LastSync;
+import io.split.android.client.telemetry.model.LastSynchronizationRecords;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.model.MethodExceptions;
+import io.split.android.client.telemetry.model.SyncedResource;
+import io.split.android.client.telemetry.model.StreamingEvent;
 import io.split.android.client.telemetry.util.AtomicLongArray;
 
-public class TelemetryStorageImpl implements TelemetryEvaluationProducer, TelemetryEvaluationConsumer, TelemetryInitConsumer, TelemetryInitProducer {
+public class TelemetryStorageImpl implements TelemetryStorage {
 
     private static final int MAX_LATENCY_BUCKET_COUNT = 23;
     private static final int MAX_STREAMING_EVENTS = 20;
     private static final int MAX_TAGS = 10;
 
-    private final Map<Method, AtomicLong> methodExceptionsCounter = new ConcurrentHashMap<>();
-    private final ConcurrentMap<Method, AtomicLongArray> methodLatencies = new ConcurrentHashMap<>();
+    private final Map<Method, AtomicLong> methodExceptionsCounter = Maps.newConcurrentMap();
+    private final ConcurrentMap<Method, AtomicLongArray> methodLatencies = Maps.newConcurrentMap();
 
-    private final Map<FactoryCounter, AtomicLong> factoryCounters = new ConcurrentHashMap<>();
+    private final Map<FactoryCounter, AtomicLong> factoryCounters = Maps.newConcurrentMap();
+
+    private final Map<ImpressionsDataType, AtomicLong> impressionsData = Maps.newConcurrentMap();
+    private final Map<EventsDataRecordsEnum, AtomicLong> eventsData = Maps.newConcurrentMap();
+
+    private final Map<LastSynchronizationRecords, AtomicLong> lastSynchronizationData = Maps.newConcurrentMap();
 
     public TelemetryStorageImpl() {
         initializeMethodExceptionsCounter();
         initializeHttpLatenciesCounter();
         initializeFactoryCounters();
+        initializeImpressionsData();
+        initializeEventsData();
     }
 
     private void initializeHttpLatenciesCounter() {
@@ -48,6 +66,17 @@ public class TelemetryStorageImpl implements TelemetryEvaluationProducer, Teleme
     private void initializeFactoryCounters() {
         factoryCounters.put(FactoryCounter.BUR_TIMEOUTS, new AtomicLong());
         factoryCounters.put(FactoryCounter.NON_READY_USAGES, new AtomicLong());
+    }
+
+    private void initializeImpressionsData() {
+        impressionsData.put(ImpressionsDataType.IMPRESSIONS_QUEUED, new AtomicLong());
+        impressionsData.put(ImpressionsDataType.IMPRESSIONS_DEDUPED, new AtomicLong());
+        impressionsData.put(ImpressionsDataType.IMPRESSIONS_DROPPED, new AtomicLong());
+    }
+
+    private void initializeEventsData() {
+        eventsData.put(EventsDataRecordsEnum.EVENTS_DROPPED, new AtomicLong());
+        eventsData.put(EventsDataRecordsEnum.EVENTS_QUEUED, new AtomicLong());
     }
 
     @Override
@@ -112,5 +141,114 @@ public class TelemetryStorageImpl implements TelemetryEvaluationProducer, Teleme
     @Override
     public void recordNonReadyUsage() {
         factoryCounters.get(FactoryCounter.NON_READY_USAGES).incrementAndGet();
+    }
+
+    @Override
+    public long getImpressionsStats(ImpressionsDataType type) {
+        return impressionsData.get(type).get();
+    }
+
+    @Override
+    public long getEventsStats(EventsDataRecordsEnum type) {
+        return eventsData.get(type).get();
+    }
+
+    @Override
+    public LastSync getLastSynchronization() {
+        LastSync lastSync = new LastSync();
+
+        lastSync.setLastEventSync(lastSynchronizationData.get(LastSynchronizationRecords.EVENTS).get());
+        lastSync.setLastSplitSync(lastSynchronizationData.get(LastSynchronizationRecords.SPLITS).get());
+        lastSync.setLastSegmentSync(lastSynchronizationData.get(LastSynchronizationRecords.SEGMENTS).get());
+        lastSync.setLastTelemetrySync(lastSynchronizationData.get(LastSynchronizationRecords.TELEMETRY).get());
+        lastSync.setLastImpressionSync(lastSynchronizationData.get(LastSynchronizationRecords.IMPRESSIONS).get());
+        lastSync.setLastImpressionCountSync(lastSynchronizationData.get(LastSynchronizationRecords.IMPRESSIONS_COUNT).get());
+
+        return lastSync;
+    }
+
+    @Override
+    public HTTPErrors popHTTPErrors() {
+        return null;
+    }
+
+    @Override
+    public HTTPLatencies popHttpLatencies() {
+        return null;
+    }
+
+    @Override
+    public long popAuthRejections() {
+        return 0;
+    }
+
+    @Override
+    public long popTokenRefreshes() {
+        return 0;
+    }
+
+    @Override
+    public List<StreamingEvent> popStreamingEvents() {
+        return null;
+    }
+
+    @Override
+    public List<String> popTags() {
+        return null;
+    }
+
+    @Override
+    public long getSessionLength() {
+        return 0;
+    }
+
+    @Override
+    public void addTag(String tag) {
+
+    }
+
+    @Override
+    public void recordImpressionStats(ImpressionsDataType dataType, long count) {
+        impressionsData.get(dataType).addAndGet(count);
+    }
+
+    @Override
+    public void recordEventStats(EventsDataRecordsEnum dataType, long count) {
+        eventsData.get(dataType).addAndGet(count);
+    }
+
+    @Override
+    public void recordSuccessfulSync(LastSynchronizationRecords resource, long time) {
+        lastSynchronizationData.put(resource, new AtomicLong(time));
+    }
+
+    @Override
+    public void recordSyncError(SyncedResource syncedResource, int status) {
+
+    }
+
+    @Override
+    public void recordSyncLatency(HTTPLatenciesType resource, long latency) {
+
+    }
+
+    @Override
+    public void recordAuthRejections() {
+
+    }
+
+    @Override
+    public void recordTokenRefreshes() {
+
+    }
+
+    @Override
+    public void recordStreamingEvents(StreamingEvent streamingEvent) {
+
+    }
+
+    @Override
+    public void recordSessionLength(long sessionLength) {
+
     }
 }

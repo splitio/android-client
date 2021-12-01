@@ -1,6 +1,6 @@
 package io.split.android.client.telemetry.model;
 
-public enum Resource {
+public enum SyncedResource {
     SPLIT_SYNC,
     SEGMENT_SYNC,
     IMPRESSION_SYNC,

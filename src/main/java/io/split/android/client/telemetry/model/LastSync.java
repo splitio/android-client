@@ -8,7 +8,7 @@ public class LastSync {
 
     private long lastImpressionSync;
 
-    private long lasImpressionCountSync;
+    private long lastImpressionCountSync;
 
     private long lastEventSync;
 
@@ -41,11 +41,11 @@ public class LastSync {
     }
 
     public long getLasImpressionCountSync() {
-        return lasImpressionCountSync;
+        return lastImpressionCountSync;
     }
 
-    public void setLasImpressionCountSync(long lasImpressionCountSync) {
-        this.lasImpressionCountSync = lasImpressionCountSync;
+    public void setLastImpressionCountSync(long lasImpressionCountSync) {
+        this.lastImpressionCountSync = lasImpressionCountSync;
     }
 
     public long getLastEventSync() {

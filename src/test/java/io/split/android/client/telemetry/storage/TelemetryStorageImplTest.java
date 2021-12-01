@@ -4,16 +4,24 @@ import static org.junit.Assert.*;
 
 import com.google.common.util.concurrent.Runnables;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import io.split.android.client.service.synchronizer.ThreadUtils;
+import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
+import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
 
 public class TelemetryStorageImplTest {
 
-    private final TelemetryStorageImpl telemetryStorage = new TelemetryStorageImpl();
+    private TelemetryStorageImpl telemetryStorage;
+
+    @Before
+    public void setUp() {
+        telemetryStorage = new TelemetryStorageImpl();
+    }
 
     @Test
     public void popExceptionsReturnsCorrectlyBuiltMethodExceptions() {
@@ -123,5 +131,30 @@ public class TelemetryStorageImplTest {
         assertEquals(0, initialUsages);
         assertEquals(2, nonReadyUsages);
         assertEquals(3, newNonReadyUsages);
+    }
+
+    @Test
+    public void impressionsDataIsStoredCorrectly() {
+        telemetryStorage.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 10);
+        telemetryStorage.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 5);
+        telemetryStorage.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DROPPED, 2);
+
+        telemetryStorage.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 10);
+        telemetryStorage.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 5);
+        telemetryStorage.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DROPPED, 2);
+
+        assertEquals(20, telemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_QUEUED));
+    }
+
+    @Test
+    public void eventsDataRecordsIsStoredCorrectly() {
+        telemetryStorage.recordEventStats(EventsDataRecordsEnum.EVENTS_DROPPED, 4);
+        telemetryStorage.recordEventStats(EventsDataRecordsEnum.EVENTS_QUEUED, 5);
+
+        telemetryStorage.recordEventStats(EventsDataRecordsEnum.EVENTS_DROPPED, 2);
+        telemetryStorage.recordEventStats(EventsDataRecordsEnum.EVENTS_QUEUED, 3);
+
+        assertEquals(6, telemetryStorage.getEventsStats(EventsDataRecordsEnum.EVENTS_DROPPED));
+        assertEquals(8, telemetryStorage.getEventsStats(EventsDataRecordsEnum.EVENTS_QUEUED));
     }
 }
