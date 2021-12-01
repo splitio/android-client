@@ -4,6 +4,7 @@ import com.google.common.collect.Maps;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -41,6 +42,8 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     private final AtomicLong sessionLength = new AtomicLong();
 
+    private final Map<SyncedResource, Map<Long, Long>> httpErrors = Maps.newConcurrentMap();
+
     public TelemetryStorageImpl() {
         initializeMethodExceptionsCounter();
         initializeHttpLatenciesCounter();
@@ -48,6 +51,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
         initializeImpressionsData();
         initializeEventsData();
         initializeLastSynchronizationData();
+        initializeHttpErrors();
     }
 
     private void initializeHttpLatenciesCounter() {
@@ -90,6 +94,17 @@ public class TelemetryStorageImpl implements TelemetryStorage {
         lastSynchronizationData.put(LastSynchronizationRecords.MY_SEGMENT, new AtomicLong());
         lastSynchronizationData.put(LastSynchronizationRecords.SPLITS, new AtomicLong());
         lastSynchronizationData.put(LastSynchronizationRecords.TOKEN, new AtomicLong());
+    }
+
+    private void initializeHttpErrors() {
+        httpErrors.put(SyncedResource.EVENT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.SPLIT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.SEGMENT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.TELEMETRY_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.MY_SEGMENT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.IMPRESSION_COUNT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.IMPRESSION_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.TOKEN_SYNC, Maps.newConcurrentMap());
     }
 
     @Override
@@ -183,7 +198,19 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public HTTPErrors popHTTPErrors() {
-        return null;
+        HTTPErrors errors = new HTTPErrors();
+
+        errors.setEventsSyncErrs(httpErrors.get(SyncedResource.EVENT_SYNC));
+        errors.setImpressionCountSyncErrs(httpErrors.get(SyncedResource.IMPRESSION_COUNT_SYNC));
+        errors.setTelemetrySyncErrs(httpErrors.get(SyncedResource.TELEMETRY_SYNC));
+        errors.setImpressionSyncErrs(httpErrors.get(SyncedResource.IMPRESSION_SYNC));
+        errors.setSplitSyncErrs(httpErrors.get(SyncedResource.SPLIT_SYNC));
+        errors.setSegmentSyncErrs(httpErrors.get(SyncedResource.MY_SEGMENT_SYNC));
+        errors.setTokenGetErrs(httpErrors.get(SyncedResource.TOKEN_SYNC));
+
+        initializeHttpErrors();
+
+        return errors;
     }
 
     @Override
@@ -213,7 +240,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public long getSessionLength() {
-        return 0;
+        return sessionLength.get();
     }
 
     @Override
@@ -238,7 +265,16 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public void recordSyncError(SyncedResource syncedResource, int status) {
+        Map<Long, Long> statusMap = httpErrors.get(syncedResource);
+        if (statusMap == null) {
+            return;
+        }
 
+        if (!statusMap.containsKey((long) status)) {
+            statusMap.put((long) status, 0L);
+        }
+
+        statusMap.put((long) status, statusMap.get((long) status) + 1L);
     }
 
     @Override
@@ -263,6 +299,6 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public void recordSessionLength(long sessionLength) {
-
+        this.sessionLength.set(sessionLength);
     }
 }

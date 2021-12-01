@@ -7,14 +7,19 @@ import com.google.common.util.concurrent.Runnables;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import io.split.android.client.service.synchronizer.ThreadUtils;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
+import io.split.android.client.telemetry.model.HTTPErrors;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSync;
 import io.split.android.client.telemetry.model.LastSynchronizationRecords;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
+import io.split.android.client.telemetry.model.SyncedResource;
 
 public class TelemetryStorageImplTest {
 
@@ -160,15 +165,6 @@ public class TelemetryStorageImplTest {
         assertEquals(8, telemetryStorage.getEventsStats(EventsDataRecordsEnum.EVENTS_QUEUED));
     }
 
-    /*
-    initializeMethodExceptionsCounter();
-        initializeHttpLatenciesCounter();
-        initializeFactoryCounters();
-        initializeImpressionsData();
-        initializeEventsData();
-        initializeLastSynchronizationData();
-
-     */
     @Test
     public void methodExceptionsCounterIsInitialized() {
         MethodExceptions methodExceptions = telemetryStorage.popExceptions();
@@ -220,6 +216,13 @@ public class TelemetryStorageImplTest {
     }
 
     @Test
+    public void httpErrorsIsInitialized() {
+        HTTPErrors httpErrors = telemetryStorage.popHTTPErrors();
+
+        assertNotNull(httpErrors);
+    }
+
+    @Test
     public void lastSyncDataBuildsCorrectly() {
         telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.EVENTS, 1000);
         telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.TELEMETRY, 2000);
@@ -238,5 +241,75 @@ public class TelemetryStorageImplTest {
         assertEquals(5000, lastSync.getLastSegmentSync());
         assertEquals(6000, lastSync.getLastSplitSync());
         assertEquals(7000, lastSync.getLastTokenRefresh());
+    }
+
+    @Test
+    public void sessionDataStorage() {
+        telemetryStorage.recordSessionLength(250);
+
+        long sessionLength = telemetryStorage.getSessionLength();
+
+        assertEquals(250, sessionLength);
+    }
+
+    @Test
+    public void popHttpErrorsBuildObjectCorrectly() {
+        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_COUNT_SYNC, 400);
+        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_COUNT_SYNC, 400);
+        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_COUNT_SYNC, 404);
+        telemetryStorage.recordSyncError(SyncedResource.EVENT_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.TELEMETRY_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.MY_SEGMENT_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 404);
+        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 404);
+        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 404);
+        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 500);
+        telemetryStorage.recordSyncError(SyncedResource.TOKEN_SYNC, 401);
+
+        HTTPErrors httpErrors = telemetryStorage.popHTTPErrors();
+
+        Map<Long, Long> expectedCountMap = new HashMap<>();
+        expectedCountMap.put(400L, 2L);
+        expectedCountMap.put(404L, 1L);
+
+        Map<Long, Long> expectedSplitSyncMap = new HashMap<>();
+        expectedSplitSyncMap.put(500L, 1L);
+        expectedSplitSyncMap.put(404L, 3L);
+        expectedSplitSyncMap.put(401L, 1L);
+
+        Map<Long, Long> expectedEventMap = new HashMap<>();
+        expectedEventMap.put(401L, 1L);
+
+        assertEquals(expectedCountMap, httpErrors.getImpressionCountSyncErrs());
+        assertEquals(expectedEventMap, httpErrors.getEventsSyncErrs());
+        assertEquals(expectedEventMap, httpErrors.getImpressionSyncErrs());
+        assertEquals(expectedEventMap, httpErrors.getTelemetrySyncErrs());
+        assertEquals(expectedEventMap, httpErrors.getSegmentSyncErrs());
+        assertEquals(expectedSplitSyncMap, httpErrors.getSplitSyncErrs());
+        assertEquals(expectedEventMap, httpErrors.getTokenGetErrs());
+    }
+
+    @Test
+    public void popHttpErrorsReinitializesMap() {
+        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_COUNT_SYNC, 400);
+        telemetryStorage.recordSyncError(SyncedResource.EVENT_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.TELEMETRY_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.MY_SEGMENT_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 401);
+        telemetryStorage.recordSyncError(SyncedResource.TOKEN_SYNC, 401);
+
+        telemetryStorage.popHTTPErrors();
+        HTTPErrors httpErrors = telemetryStorage.popHTTPErrors();
+
+        assertTrue(httpErrors.getImpressionCountSyncErrs().isEmpty());
+        assertTrue(httpErrors.getEventsSyncErrs().isEmpty());
+        assertTrue(httpErrors.getImpressionSyncErrs().isEmpty());
+        assertTrue(httpErrors.getTelemetrySyncErrs().isEmpty());
+        assertTrue(httpErrors.getSegmentSyncErrs().isEmpty());
+        assertTrue(httpErrors.getSplitSyncErrs().isEmpty());
+        assertTrue(httpErrors.getTokenGetErrs().isEmpty());
     }
 }
