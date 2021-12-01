@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
@@ -23,6 +24,7 @@ import io.split.android.client.telemetry.model.LastSynchronizationRecords;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
+import io.split.android.client.telemetry.model.StreamingEvent;
 import io.split.android.client.telemetry.model.SyncedResource;
 
 public class TelemetryStorageImplTest {
@@ -400,5 +402,59 @@ public class TelemetryStorageImplTest {
         assertEquals(2, telemetryStorage.popTokenRefreshes());
 
         assertEquals(0, telemetryStorage.popTokenRefreshes());
+    }
+
+    @Test
+    public void tagsAreStoredCorrectly() {
+        assertTrue(telemetryStorage.popTags().isEmpty());
+        telemetryStorage.addTag("tag1");
+        telemetryStorage.addTag("tag2");
+
+        List<String> tags = telemetryStorage.popTags();
+        assertTrue(tags.contains("tag1"));
+        assertTrue(tags.contains("tag2"));
+    }
+
+    @Test
+    public void popTagsResetsTagsSet() {
+        assertTrue(telemetryStorage.popTags().isEmpty());
+        telemetryStorage.addTag("tag1");
+        telemetryStorage.addTag("tag2");
+
+        telemetryStorage.popTags();
+
+        assertTrue(telemetryStorage.popTags().isEmpty());
+    }
+
+    @Test
+    public void addingSameTagMultipleTimesReturnsOnlyOneInstance() {
+        assertTrue(telemetryStorage.popTags().isEmpty());
+        telemetryStorage.addTag("tag1");
+        telemetryStorage.addTag("tag1");
+        telemetryStorage.addTag("tag1");
+        telemetryStorage.addTag("tag2");
+
+        List<String> tags = telemetryStorage.popTags();
+
+        assertEquals(2, tags.size());
+    }
+
+    @Test
+    public void onlyStoreUpTo10Tags() {
+        assertTrue(telemetryStorage.popTags().isEmpty());
+        for (int i = 0; i < 12; i++) {
+            telemetryStorage.addTag("tag" + i);
+        }
+
+        List<String> tags = telemetryStorage.popTags();
+
+        assertEquals(10, tags.size());
+    }
+
+    @Test
+    public void popStreamingEventsIsNotNull() {
+        List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
+
+        assertNotNull(streamingEvents);
     }
 }

@@ -3,8 +3,10 @@ package io.split.android.client.telemetry.storage;
 import com.google.common.collect.Maps;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -51,6 +53,9 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     private final Object streamingEventsLock = new Object();
     private final List<StreamingEvent> streamingEvents = new ArrayList<>();
+
+    private final Object tagsLock = new Object();
+    private Set<String> tags = new HashSet<>();
 
     private final ILatencyTracker latencyTracker;
 
@@ -273,7 +278,12 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public List<String> popTags() {
-        return null;
+        synchronized (tagsLock) {
+            List<String> tagList = new ArrayList<>(tags);
+            tags = new HashSet<>();
+
+            return tagList;
+        }
     }
 
     @Override
@@ -283,7 +293,11 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public void addTag(String tag) {
-
+        synchronized (tagsLock) {
+            if (tags.size() < MAX_TAGS) {
+                tags.add(tag);
+            }
+        }
     }
 
     @Override
