@@ -1,12 +1,11 @@
 package io.split.android.client.telemetry.model;
 
-public enum LastSynchronizationRecords {
+public enum OperationType {
     SPLITS,
-    SEGMENTS,
     IMPRESSIONS,
     IMPRESSIONS_COUNT,
     EVENTS,
-    TOKEN,
     TELEMETRY,
+    TOKEN,
     MY_SEGMENT
 }

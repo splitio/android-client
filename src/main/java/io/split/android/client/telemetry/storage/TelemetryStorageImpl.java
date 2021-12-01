@@ -10,21 +10,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.FactoryCounter;
 import io.split.android.client.telemetry.model.HTTPErrors;
 import io.split.android.client.telemetry.model.HTTPLatencies;
-import io.split.android.client.telemetry.model.HTTPLatenciesType;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSync;
-import io.split.android.client.telemetry.model.LastSynchronizationRecords;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
+import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.PushCounterEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
-import io.split.android.client.telemetry.model.SyncedResource;
 import io.split.android.client.telemetry.util.AtomicLongArray;
 
 public class TelemetryStorageImpl implements TelemetryStorage {
@@ -41,13 +38,13 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     private final Map<ImpressionsDataType, AtomicLong> impressionsData = Maps.newConcurrentMap();
     private final Map<EventsDataRecordsEnum, AtomicLong> eventsData = Maps.newConcurrentMap();
 
-    private final Map<LastSynchronizationRecords, AtomicLong> lastSynchronizationData = Maps.newConcurrentMap();
+    private final Map<OperationType, AtomicLong> lastSynchronizationData = Maps.newConcurrentMap();
 
     private final AtomicLong sessionLength = new AtomicLong();
 
-    private final Map<SyncedResource, Map<Long, Long>> httpErrors = Maps.newConcurrentMap();
+    private final Map<OperationType, Map<Long, Long>> httpErrors = Maps.newConcurrentMap();
 
-    private final Map<HTTPLatenciesType, AtomicLongArray> httpLatencies = Maps.newConcurrentMap();
+    private final Map<OperationType, AtomicLongArray> httpLatencies = Maps.newConcurrentMap();
 
     private final Map<PushCounterEvent, AtomicLong> pushCounters = Maps.newConcurrentMap();
 
@@ -137,13 +134,13 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     public LastSync getLastSynchronization() {
         LastSync lastSync = new LastSync();
 
-        lastSync.setLastEventSync(lastSynchronizationData.get(LastSynchronizationRecords.EVENTS).get());
-        lastSync.setLastSplitSync(lastSynchronizationData.get(LastSynchronizationRecords.SPLITS).get());
-        lastSync.setLastSegmentSync(lastSynchronizationData.get(LastSynchronizationRecords.MY_SEGMENT).get());
-        lastSync.setLastTelemetrySync(lastSynchronizationData.get(LastSynchronizationRecords.TELEMETRY).get());
-        lastSync.setLastImpressionSync(lastSynchronizationData.get(LastSynchronizationRecords.IMPRESSIONS).get());
-        lastSync.setLastImpressionCountSync(lastSynchronizationData.get(LastSynchronizationRecords.IMPRESSIONS_COUNT).get());
-        lastSync.setLastTokenRefresh(lastSynchronizationData.get(LastSynchronizationRecords.TOKEN).get());
+        lastSync.setLastEventSync(lastSynchronizationData.get(OperationType.EVENTS).get());
+        lastSync.setLastSplitSync(lastSynchronizationData.get(OperationType.SPLITS).get());
+        lastSync.setLastSegmentSync(lastSynchronizationData.get(OperationType.MY_SEGMENT).get());
+        lastSync.setLastTelemetrySync(lastSynchronizationData.get(OperationType.TELEMETRY).get());
+        lastSync.setLastImpressionSync(lastSynchronizationData.get(OperationType.IMPRESSIONS).get());
+        lastSync.setLastImpressionCountSync(lastSynchronizationData.get(OperationType.IMPRESSIONS_COUNT).get());
+        lastSync.setLastTokenRefresh(lastSynchronizationData.get(OperationType.TOKEN).get());
 
         return lastSync;
     }
@@ -152,13 +149,13 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     public HTTPErrors popHTTPErrors() {
         HTTPErrors errors = new HTTPErrors();
 
-        errors.setEventsSyncErrs(httpErrors.get(SyncedResource.EVENT_SYNC));
-        errors.setImpressionCountSyncErrs(httpErrors.get(SyncedResource.IMPRESSION_COUNT_SYNC));
-        errors.setTelemetrySyncErrs(httpErrors.get(SyncedResource.TELEMETRY_SYNC));
-        errors.setImpressionSyncErrs(httpErrors.get(SyncedResource.IMPRESSION_SYNC));
-        errors.setSplitSyncErrs(httpErrors.get(SyncedResource.SPLIT_SYNC));
-        errors.setSegmentSyncErrs(httpErrors.get(SyncedResource.MY_SEGMENT_SYNC));
-        errors.setTokenGetErrs(httpErrors.get(SyncedResource.TOKEN_SYNC));
+        errors.setEventsSyncErrs(httpErrors.get(OperationType.EVENTS));
+        errors.setImpressionCountSyncErrs(httpErrors.get(OperationType.IMPRESSIONS_COUNT));
+        errors.setTelemetrySyncErrs(httpErrors.get(OperationType.TELEMETRY));
+        errors.setImpressionSyncErrs(httpErrors.get(OperationType.IMPRESSIONS));
+        errors.setSplitSyncErrs(httpErrors.get(OperationType.SPLITS));
+        errors.setSegmentSyncErrs(httpErrors.get(OperationType.MY_SEGMENT));
+        errors.setTokenGetErrs(httpErrors.get(OperationType.TOKEN));
 
         initializeHttpErrors();
 
@@ -169,13 +166,13 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     public HTTPLatencies popHttpLatencies() {
         HTTPLatencies latencies = new HTTPLatencies();
 
-        latencies.setTelemetry(httpLatencies.get(HTTPLatenciesType.TELEMETRY).fetchAndClearAll());
-        latencies.setEvents(httpLatencies.get(HTTPLatenciesType.EVENTS).fetchAndClearAll());
-        latencies.setSplits(httpLatencies.get(HTTPLatenciesType.SPLITS).fetchAndClearAll());
-        latencies.setSegments(httpLatencies.get(HTTPLatenciesType.MY_SEGMENT).fetchAndClearAll());
-        latencies.setToken(httpLatencies.get(HTTPLatenciesType.TOKEN).fetchAndClearAll());
-        latencies.setImpressions(httpLatencies.get(HTTPLatenciesType.IMPRESSIONS).fetchAndClearAll());
-        latencies.setImpressionsCount(httpLatencies.get(HTTPLatenciesType.IMPRESSIONS_COUNT).fetchAndClearAll());
+        latencies.setTelemetry(httpLatencies.get(OperationType.TELEMETRY).fetchAndClearAll());
+        latencies.setEvents(httpLatencies.get(OperationType.EVENTS).fetchAndClearAll());
+        latencies.setSplits(httpLatencies.get(OperationType.SPLITS).fetchAndClearAll());
+        latencies.setSegments(httpLatencies.get(OperationType.MY_SEGMENT).fetchAndClearAll());
+        latencies.setToken(httpLatencies.get(OperationType.TOKEN).fetchAndClearAll());
+        latencies.setImpressions(httpLatencies.get(OperationType.IMPRESSIONS).fetchAndClearAll());
+        latencies.setImpressionsCount(httpLatencies.get(OperationType.IMPRESSIONS_COUNT).fetchAndClearAll());
 
         return latencies;
     }
@@ -235,13 +232,13 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     }
 
     @Override
-    public void recordSuccessfulSync(LastSynchronizationRecords resource, long time) {
+    public void recordSuccessfulSync(OperationType resource, long time) {
         lastSynchronizationData.put(resource, new AtomicLong(time));
     }
 
     @Override
-    public void recordSyncError(SyncedResource syncedResource, int status) {
-        Map<Long, Long> statusMap = httpErrors.get(syncedResource);
+    public void recordSyncError(OperationType OperationType, int status) {
+        Map<Long, Long> statusMap = httpErrors.get(OperationType);
         if (statusMap == null) {
             return;
         }
@@ -254,7 +251,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     }
 
     @Override
-    public void recordSyncLatency(HTTPLatenciesType resource, long latency) {
+    public void recordSyncLatency(OperationType resource, long latency) {
         httpLatencies.get(resource).increment((int) latencyTracker.getBucketForLatencyMillis(latency));
     }
 
@@ -327,34 +324,33 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     }
 
     private void initializeLastSynchronizationData() {
-        lastSynchronizationData.put(LastSynchronizationRecords.IMPRESSIONS, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.IMPRESSIONS_COUNT, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.TELEMETRY, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.EVENTS, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.MY_SEGMENT, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.SPLITS, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.TOKEN, new AtomicLong());
+        lastSynchronizationData.put(OperationType.IMPRESSIONS, new AtomicLong());
+        lastSynchronizationData.put(OperationType.IMPRESSIONS_COUNT, new AtomicLong());
+        lastSynchronizationData.put(OperationType.TELEMETRY, new AtomicLong());
+        lastSynchronizationData.put(OperationType.EVENTS, new AtomicLong());
+        lastSynchronizationData.put(OperationType.MY_SEGMENT, new AtomicLong());
+        lastSynchronizationData.put(OperationType.SPLITS, new AtomicLong());
+        lastSynchronizationData.put(OperationType.TOKEN, new AtomicLong());
     }
 
     private void initializeHttpErrors() {
-        httpErrors.put(SyncedResource.EVENT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.SPLIT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.SEGMENT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.TELEMETRY_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.MY_SEGMENT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.IMPRESSION_COUNT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.IMPRESSION_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.TOKEN_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(OperationType.EVENTS, Maps.newConcurrentMap());
+        httpErrors.put(OperationType.SPLITS, Maps.newConcurrentMap());
+        httpErrors.put(OperationType.TELEMETRY, Maps.newConcurrentMap());
+        httpErrors.put(OperationType.MY_SEGMENT, Maps.newConcurrentMap());
+        httpErrors.put(OperationType.IMPRESSIONS_COUNT, Maps.newConcurrentMap());
+        httpErrors.put(OperationType.IMPRESSIONS, Maps.newConcurrentMap());
+        httpErrors.put(OperationType.TOKEN, Maps.newConcurrentMap());
     }
 
     private void initializeHttpLatencies() {
-        httpLatencies.put(HTTPLatenciesType.EVENTS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.IMPRESSIONS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.TELEMETRY, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.IMPRESSIONS_COUNT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.MY_SEGMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.SPLITS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.TOKEN, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(OperationType.EVENTS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(OperationType.IMPRESSIONS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(OperationType.TELEMETRY, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(OperationType.IMPRESSIONS_COUNT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(OperationType.MY_SEGMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(OperationType.SPLITS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(OperationType.TOKEN, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
     }
 
     private void initializePushCounters() {

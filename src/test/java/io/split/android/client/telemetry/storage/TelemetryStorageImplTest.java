@@ -17,18 +17,16 @@ import java.util.Map;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.HTTPErrors;
 import io.split.android.client.telemetry.model.HTTPLatencies;
-import io.split.android.client.telemetry.model.HTTPLatenciesType;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSync;
-import io.split.android.client.telemetry.model.LastSynchronizationRecords;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
+import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.ConnectionEstablishedStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.OccupancySecStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
-import io.split.android.client.telemetry.model.SyncedResource;
 import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
 
@@ -250,13 +248,13 @@ public class TelemetryStorageImplTest {
 
     @Test
     public void lastSyncDataBuildsCorrectly() {
-        telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.EVENTS, 1000);
-        telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.TELEMETRY, 2000);
-        telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.IMPRESSIONS, 3000);
-        telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.IMPRESSIONS_COUNT, 4000);
-        telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.MY_SEGMENT, 5000);
-        telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.SPLITS, 6000);
-        telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.TOKEN, 7000);
+        telemetryStorage.recordSuccessfulSync(OperationType.EVENTS, 1000);
+        telemetryStorage.recordSuccessfulSync(OperationType.TELEMETRY, 2000);
+        telemetryStorage.recordSuccessfulSync(OperationType.IMPRESSIONS, 3000);
+        telemetryStorage.recordSuccessfulSync(OperationType.IMPRESSIONS_COUNT, 4000);
+        telemetryStorage.recordSuccessfulSync(OperationType.MY_SEGMENT, 5000);
+        telemetryStorage.recordSuccessfulSync(OperationType.SPLITS, 6000);
+        telemetryStorage.recordSuccessfulSync(OperationType.TOKEN, 7000);
 
         LastSync lastSync = telemetryStorage.getLastSynchronization();
 
@@ -280,19 +278,19 @@ public class TelemetryStorageImplTest {
 
     @Test
     public void popHttpErrorsBuildObjectCorrectly() {
-        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_COUNT_SYNC, 400);
-        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_COUNT_SYNC, 400);
-        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_COUNT_SYNC, 404);
-        telemetryStorage.recordSyncError(SyncedResource.EVENT_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.TELEMETRY_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.MY_SEGMENT_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 404);
-        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 404);
-        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 404);
-        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 500);
-        telemetryStorage.recordSyncError(SyncedResource.TOKEN_SYNC, 401);
+        telemetryStorage.recordSyncError(OperationType.IMPRESSIONS_COUNT, 400);
+        telemetryStorage.recordSyncError(OperationType.IMPRESSIONS_COUNT, 400);
+        telemetryStorage.recordSyncError(OperationType.IMPRESSIONS_COUNT, 404);
+        telemetryStorage.recordSyncError(OperationType.EVENTS, 401);
+        telemetryStorage.recordSyncError(OperationType.IMPRESSIONS, 401);
+        telemetryStorage.recordSyncError(OperationType.TELEMETRY, 401);
+        telemetryStorage.recordSyncError(OperationType.MY_SEGMENT, 401);
+        telemetryStorage.recordSyncError(OperationType.SPLITS, 401);
+        telemetryStorage.recordSyncError(OperationType.SPLITS, 404);
+        telemetryStorage.recordSyncError(OperationType.SPLITS, 404);
+        telemetryStorage.recordSyncError(OperationType.SPLITS, 404);
+        telemetryStorage.recordSyncError(OperationType.SPLITS, 500);
+        telemetryStorage.recordSyncError(OperationType.TOKEN, 401);
 
         HTTPErrors httpErrors = telemetryStorage.popHTTPErrors();
 
@@ -319,13 +317,13 @@ public class TelemetryStorageImplTest {
 
     @Test
     public void popHttpErrorsReinitializesMap() {
-        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_COUNT_SYNC, 400);
-        telemetryStorage.recordSyncError(SyncedResource.EVENT_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.IMPRESSION_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.TELEMETRY_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.MY_SEGMENT_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.SPLIT_SYNC, 401);
-        telemetryStorage.recordSyncError(SyncedResource.TOKEN_SYNC, 401);
+        telemetryStorage.recordSyncError(OperationType.IMPRESSIONS_COUNT, 400);
+        telemetryStorage.recordSyncError(OperationType.EVENTS, 401);
+        telemetryStorage.recordSyncError(OperationType.IMPRESSIONS, 401);
+        telemetryStorage.recordSyncError(OperationType.TELEMETRY, 401);
+        telemetryStorage.recordSyncError(OperationType.MY_SEGMENT, 401);
+        telemetryStorage.recordSyncError(OperationType.SPLITS, 401);
+        telemetryStorage.recordSyncError(OperationType.TOKEN, 401);
 
         telemetryStorage.popHTTPErrors();
         HTTPErrors httpErrors = telemetryStorage.popHTTPErrors();
@@ -341,13 +339,13 @@ public class TelemetryStorageImplTest {
 
     @Test
     public void popHttpLatenciesBuildsObjectCorrectly() {
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.TELEMETRY, 200);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.SPLITS, 10022);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.EVENTS, 300);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.IMPRESSIONS, 200);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.IMPRESSIONS_COUNT, 10);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.MY_SEGMENT, 2000);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.TOKEN, 2000);
+        telemetryStorage.recordSyncLatency(OperationType.TELEMETRY, 200);
+        telemetryStorage.recordSyncLatency(OperationType.SPLITS, 10022);
+        telemetryStorage.recordSyncLatency(OperationType.EVENTS, 300);
+        telemetryStorage.recordSyncLatency(OperationType.IMPRESSIONS, 200);
+        telemetryStorage.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, 10);
+        telemetryStorage.recordSyncLatency(OperationType.MY_SEGMENT, 2000);
+        telemetryStorage.recordSyncLatency(OperationType.TOKEN, 2000);
 
         HTTPLatencies httpLatencies = telemetryStorage.popHttpLatencies();
 
@@ -362,13 +360,13 @@ public class TelemetryStorageImplTest {
 
     @Test
     public void popHttpLatenciesClearsArray() {
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.TELEMETRY, 200);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.SPLITS, 10022);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.EVENTS, 300);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.IMPRESSIONS, 200);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.IMPRESSIONS_COUNT, 10);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.MY_SEGMENT, 2000);
-        telemetryStorage.recordSyncLatency(HTTPLatenciesType.TOKEN, 2000);
+        telemetryStorage.recordSyncLatency(OperationType.TELEMETRY, 200);
+        telemetryStorage.recordSyncLatency(OperationType.SPLITS, 10022);
+        telemetryStorage.recordSyncLatency(OperationType.EVENTS, 300);
+        telemetryStorage.recordSyncLatency(OperationType.IMPRESSIONS, 200);
+        telemetryStorage.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, 10);
+        telemetryStorage.recordSyncLatency(OperationType.MY_SEGMENT, 2000);
+        telemetryStorage.recordSyncLatency(OperationType.TOKEN, 2000);
 
         telemetryStorage.popHttpLatencies();
         HTTPLatencies httpLatencies = telemetryStorage.popHttpLatencies();
