@@ -1,20 +1,18 @@
 package io.split.android.client.telemetry.storage;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-
-import com.google.common.util.concurrent.Runnables;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.service.synchronizer.ThreadUtils;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.HTTPErrors;
 import io.split.android.client.telemetry.model.HTTPLatencies;
@@ -238,6 +236,12 @@ public class TelemetryStorageImplTest {
     }
 
     @Test
+    public void pushCountersIsInitialized() {
+        telemetryStorage.popAuthRejections();
+        telemetryStorage.popTokenRefreshes();
+    }
+
+    @Test
     public void lastSyncDataBuildsCorrectly() {
         telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.EVENTS, 1000);
         telemetryStorage.recordSuccessfulSync(LastSynchronizationRecords.TELEMETRY, 2000);
@@ -369,5 +373,32 @@ public class TelemetryStorageImplTest {
         assertTrue(httpLatencies.getSplits().stream().allMatch(l -> l == 0));
         assertTrue(httpLatencies.getToken().stream().allMatch(l -> l == 0));
         assertTrue(httpLatencies.getSegments().stream().allMatch(l -> l == 0));
+    }
+
+    @Test
+    public void authRejectionsAreProperlyCounted() {
+
+        assertEquals(0, telemetryStorage.popAuthRejections());
+
+        telemetryStorage.recordAuthRejections();
+        telemetryStorage.recordAuthRejections();
+        telemetryStorage.recordAuthRejections();
+
+        assertEquals(3, telemetryStorage.popAuthRejections());
+
+        assertEquals(0, telemetryStorage.popAuthRejections());
+    }
+
+    @Test
+    public void tokenRefreshesAreProperlyCounted() {
+
+        assertEquals(0, telemetryStorage.popTokenRefreshes());
+
+        telemetryStorage.recordTokenRefreshes();
+        telemetryStorage.recordTokenRefreshes();
+
+        assertEquals(2, telemetryStorage.popTokenRefreshes());
+
+        assertEquals(0, telemetryStorage.popTokenRefreshes());
     }
 }

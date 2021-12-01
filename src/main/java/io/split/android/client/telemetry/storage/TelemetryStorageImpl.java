@@ -2,9 +2,9 @@ package io.split.android.client.telemetry.storage;
 
 import com.google.common.collect.Maps;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -18,10 +18,11 @@ import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSync;
 import io.split.android.client.telemetry.model.LastSynchronizationRecords;
 import io.split.android.client.telemetry.model.Method;
-import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.model.MethodExceptions;
-import io.split.android.client.telemetry.model.SyncedResource;
+import io.split.android.client.telemetry.model.MethodLatencies;
+import io.split.android.client.telemetry.model.PushCounterEvent;
 import io.split.android.client.telemetry.model.StreamingEvent;
+import io.split.android.client.telemetry.model.SyncedResource;
 import io.split.android.client.telemetry.util.AtomicLongArray;
 
 public class TelemetryStorageImpl implements TelemetryStorage {
@@ -46,6 +47,11 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     private final Map<HTTPLatenciesType, AtomicLongArray> httpLatencies = Maps.newConcurrentMap();
 
+    private final Map<PushCounterEvent, AtomicLong> pushCounters = Maps.newConcurrentMap();
+
+    private final Object streamingEventsLock = new Object();
+    private final List<StreamingEvent> streamingEvents = new ArrayList<>();
+
     private final ILatencyTracker latencyTracker;
 
     public TelemetryStorageImpl(ILatencyTracker latencyTracker) {
@@ -59,6 +65,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
         initializeLastSynchronizationData();
         initializeHttpErrors();
         initializeHttpLatencies();
+        initializePushCounters();
     }
 
     private void initializeHttpLatenciesCounter() {
@@ -122,6 +129,11 @@ public class TelemetryStorageImpl implements TelemetryStorage {
         httpLatencies.put(HTTPLatenciesType.MY_SEGMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
         httpLatencies.put(HTTPLatenciesType.SPLITS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
         httpLatencies.put(HTTPLatenciesType.TOKEN, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+    }
+
+    private void initializePushCounters() {
+        pushCounters.put(PushCounterEvent.AUTH_REJECTIONS, new AtomicLong());
+        pushCounters.put(PushCounterEvent.TOKEN_REFRESHES, new AtomicLong());
     }
 
     @Override
@@ -246,12 +258,12 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public long popAuthRejections() {
-        return 0;
+        return pushCounters.get(PushCounterEvent.AUTH_REJECTIONS).getAndSet(0);
     }
 
     @Override
     public long popTokenRefreshes() {
-        return 0;
+        return pushCounters.get(PushCounterEvent.TOKEN_REFRESHES).getAndSet(0);
     }
 
     @Override
@@ -310,17 +322,21 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public void recordAuthRejections() {
-
+        pushCounters.get(PushCounterEvent.AUTH_REJECTIONS).incrementAndGet();
     }
 
     @Override
     public void recordTokenRefreshes() {
-
+        pushCounters.get(PushCounterEvent.TOKEN_REFRESHES).incrementAndGet();
     }
 
     @Override
     public void recordStreamingEvents(StreamingEvent streamingEvent) {
-
+        synchronized (streamingEvents) {
+            if (streamingEvents.size() < MAX_STREAMING_EVENTS) {
+                streamingEvents.add(streamingEvent);
+            }
+        }
     }
 
     @Override
