@@ -39,12 +39,15 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     private final Map<LastSynchronizationRecords, AtomicLong> lastSynchronizationData = Maps.newConcurrentMap();
 
+    private final AtomicLong sessionLength = new AtomicLong();
+
     public TelemetryStorageImpl() {
         initializeMethodExceptionsCounter();
         initializeHttpLatenciesCounter();
         initializeFactoryCounters();
         initializeImpressionsData();
         initializeEventsData();
+        initializeLastSynchronizationData();
     }
 
     private void initializeHttpLatenciesCounter() {
@@ -77,6 +80,16 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     private void initializeEventsData() {
         eventsData.put(EventsDataRecordsEnum.EVENTS_DROPPED, new AtomicLong());
         eventsData.put(EventsDataRecordsEnum.EVENTS_QUEUED, new AtomicLong());
+    }
+
+    private void initializeLastSynchronizationData() {
+        lastSynchronizationData.put(LastSynchronizationRecords.IMPRESSIONS, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.IMPRESSIONS_COUNT, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.TELEMETRY, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.EVENTS, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.MY_SEGMENT, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.SPLITS, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.TOKEN, new AtomicLong());
     }
 
     @Override
@@ -159,10 +172,11 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
         lastSync.setLastEventSync(lastSynchronizationData.get(LastSynchronizationRecords.EVENTS).get());
         lastSync.setLastSplitSync(lastSynchronizationData.get(LastSynchronizationRecords.SPLITS).get());
-        lastSync.setLastSegmentSync(lastSynchronizationData.get(LastSynchronizationRecords.SEGMENTS).get());
+        lastSync.setLastSegmentSync(lastSynchronizationData.get(LastSynchronizationRecords.MY_SEGMENT).get());
         lastSync.setLastTelemetrySync(lastSynchronizationData.get(LastSynchronizationRecords.TELEMETRY).get());
         lastSync.setLastImpressionSync(lastSynchronizationData.get(LastSynchronizationRecords.IMPRESSIONS).get());
         lastSync.setLastImpressionCountSync(lastSynchronizationData.get(LastSynchronizationRecords.IMPRESSIONS_COUNT).get());
+        lastSync.setLastTokenRefresh(lastSynchronizationData.get(LastSynchronizationRecords.TOKEN).get());
 
         return lastSync;
     }
