@@ -5,12 +5,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.split.android.client.telemetry.model.Config;
+import io.split.android.client.telemetry.model.FactoryCounter;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.util.AtomicLongArray;
 
-public class TelemetryStorageImpl implements TelemetryEvaluationProducer, TelemetryEvaluationConsumer {
+public class TelemetryStorageImpl implements TelemetryEvaluationProducer, TelemetryEvaluationConsumer, TelemetryInitConsumer, TelemetryInitProducer {
 
     private static final int MAX_LATENCY_BUCKET_COUNT = 23;
     private static final int MAX_STREAMING_EVENTS = 20;
@@ -19,9 +21,12 @@ public class TelemetryStorageImpl implements TelemetryEvaluationProducer, Teleme
     private final Map<Method, AtomicLong> methodExceptionsCounter = new ConcurrentHashMap<>();
     private final ConcurrentMap<Method, AtomicLongArray> methodLatencies = new ConcurrentHashMap<>();
 
+    private final Map<FactoryCounter, AtomicLong> factoryCounters = new ConcurrentHashMap<>();
+
     public TelemetryStorageImpl() {
         initializeMethodExceptionsCounter();
         initializeHttpLatenciesCounter();
+        initializeFactoryCounters();
     }
 
     private void initializeHttpLatenciesCounter() {
@@ -38,6 +43,11 @@ public class TelemetryStorageImpl implements TelemetryEvaluationProducer, Teleme
         methodExceptionsCounter.put(Method.TREATMENT_WITH_CONFIG, new AtomicLong());
         methodExceptionsCounter.put(Method.TREATMENTS_WITH_CONFIG, new AtomicLong());
         methodExceptionsCounter.put(Method.TRACK, new AtomicLong());
+    }
+
+    private void initializeFactoryCounters() {
+        factoryCounters.put(FactoryCounter.BUR_TIMEOUTS, new AtomicLong());
+        factoryCounters.put(FactoryCounter.NON_READY_USAGES, new AtomicLong());
     }
 
     @Override
@@ -77,5 +87,30 @@ public class TelemetryStorageImpl implements TelemetryEvaluationProducer, Teleme
     @Override
     public void recordException(Method method) {
         methodExceptionsCounter.get(method).incrementAndGet();
+    }
+
+    @Override
+    public long getBURTimeouts() {
+        return factoryCounters.get(FactoryCounter.BUR_TIMEOUTS).get();
+    }
+
+    @Override
+    public long getNonReadyUsage() {
+        return factoryCounters.get(FactoryCounter.NON_READY_USAGES).get();
+    }
+
+    @Override
+    public void recordConfig(Config config) {
+
+    }
+
+    @Override
+    public void recordBURTimeout() {
+        factoryCounters.get(FactoryCounter.BUR_TIMEOUTS).incrementAndGet();
+    }
+
+    @Override
+    public void recordNonReadyUsage() {
+        factoryCounters.get(FactoryCounter.NON_READY_USAGES).incrementAndGet();
     }
 }

@@ -70,4 +70,58 @@ public class TelemetryStorageImplTest {
         assertFalse(methodLatencies.getTreatmentsWithConfig().stream().allMatch(l -> l == 0));
         assertFalse(methodLatencies.getTreatmentWithConfig().stream().allMatch(l -> l == 0));
     }
+
+    @Test
+    public void secondLatenciesPopHasArraysSetIn0() {
+        telemetryStorage.recordLatency(Method.TRACK, 200);
+        telemetryStorage.recordLatency(Method.TREATMENT, 10022);
+        telemetryStorage.recordLatency(Method.TREATMENT, 300);
+        telemetryStorage.recordLatency(Method.TREATMENTS, 200);
+        telemetryStorage.recordLatency(Method.TREATMENTS_WITH_CONFIG, 10);
+        telemetryStorage.recordLatency(Method.TREATMENT_WITH_CONFIG, 2000);
+
+        telemetryStorage.popLatencies();
+
+        MethodLatencies methodLatencies = telemetryStorage.popLatencies();
+
+        assertTrue(methodLatencies.getTrack().stream().allMatch(l -> l == 0));
+        assertTrue(methodLatencies.getTreatment().stream().allMatch(l -> l == 0));
+        assertTrue(methodLatencies.getTreatments().stream().allMatch(l -> l == 0));
+        assertTrue(methodLatencies.getTreatmentsWithConfig().stream().allMatch(l -> l == 0));
+        assertTrue(methodLatencies.getTreatmentWithConfig().stream().allMatch(l -> l == 0));
+    }
+
+    @Test
+    public void recordBURTimeouts() {
+        long initialTimeouts = telemetryStorage.getBURTimeouts();
+        telemetryStorage.recordBURTimeout();
+        telemetryStorage.recordBURTimeout();
+
+        long burTimeouts = telemetryStorage.getBURTimeouts();
+
+        telemetryStorage.recordBURTimeout();
+
+        long newTimeouts = telemetryStorage.getBURTimeouts();
+
+        assertEquals(0, initialTimeouts);
+        assertEquals(2, burTimeouts);
+        assertEquals(3, newTimeouts);
+    }
+
+    @Test
+    public void recordNonReadyUsages() {
+        long initialUsages = telemetryStorage.getNonReadyUsage();
+        telemetryStorage.recordNonReadyUsage();
+        telemetryStorage.recordNonReadyUsage();
+
+        long nonReadyUsages = telemetryStorage.getNonReadyUsage();
+
+        telemetryStorage.recordNonReadyUsage();
+
+        long newNonReadyUsages = telemetryStorage.getNonReadyUsage();
+
+        assertEquals(0, initialUsages);
+        assertEquals(2, nonReadyUsages);
+        assertEquals(3, newNonReadyUsages);
+    }
 }
