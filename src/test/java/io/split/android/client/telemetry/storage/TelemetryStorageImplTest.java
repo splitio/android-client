@@ -24,8 +24,13 @@ import io.split.android.client.telemetry.model.LastSynchronizationRecords;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
-import io.split.android.client.telemetry.model.StreamingEvent;
+import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.ConnectionEstablishedStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.OccupancySecStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.model.SyncedResource;
+import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
 
 public class TelemetryStorageImplTest {
 
@@ -452,9 +457,37 @@ public class TelemetryStorageImplTest {
     }
 
     @Test
-    public void popStreamingEventsIsNotNull() {
+    public void streamingEventsAreAddedCorrectly() {
+        telemetryStorage.recordStreamingEvents(new ConnectionEstablishedStreamingEvent(1000));
+        telemetryStorage.recordStreamingEvents(new AblyErrorStreamingEvent(200, 1000));
+        telemetryStorage.recordStreamingEvents(new StreamingStatusStreamingEvent(StreamingStatusStreamingEvent.Status.ENABLED, 1000));
+        telemetryStorage.recordStreamingEvents(new OccupancySecStreamingEvent(10, 1000));
+        telemetryStorage.recordStreamingEvents(new TokenRefreshStreamingEvent(2000, 1000));
+        telemetryStorage.recordStreamingEvents(new TokenRefreshStreamingEvent(3000, 2000));
+
         List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
 
-        assertNotNull(streamingEvents);
+        assertEquals(6, streamingEvents.size());
+    }
+
+    @Test
+    public void popStreamingEventClearsStoredList() {
+        telemetryStorage.recordStreamingEvents(new ConnectionEstablishedStreamingEvent(1000));
+        telemetryStorage.recordStreamingEvents(new AblyErrorStreamingEvent(200, 1000));
+
+        telemetryStorage.popStreamingEvents();
+        List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
+
+        assertTrue(streamingEvents.isEmpty());
+    }
+
+    @Test
+    public void onlyStoreUpTo20StreamingEventsAtATime() {
+        for (int i = 0; i < 25; i++) {
+            telemetryStorage.recordStreamingEvents(new ConnectionEstablishedStreamingEvent(1000));
+        }
+        List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
+
+        assertEquals(20, streamingEvents.size());
     }
 }

@@ -5,7 +5,7 @@ import io.split.android.client.telemetry.model.HTTPLatenciesType;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSynchronizationRecords;
 import io.split.android.client.telemetry.model.SyncedResource;
-import io.split.android.client.telemetry.model.StreamingEvent;
+import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 
 public interface TelemetryRuntimeProducer {
 

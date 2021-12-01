@@ -23,7 +23,7 @@ import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.model.PushCounterEvent;
-import io.split.android.client.telemetry.model.StreamingEvent;
+import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.model.SyncedResource;
 import io.split.android.client.telemetry.util.AtomicLongArray;
 
@@ -52,7 +52,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     private final Map<PushCounterEvent, AtomicLong> pushCounters = Maps.newConcurrentMap();
 
     private final Object streamingEventsLock = new Object();
-    private final List<StreamingEvent> streamingEvents = new ArrayList<>();
+    private List<StreamingEvent> streamingEvents = new ArrayList<>();
 
     private final Object tagsLock = new Object();
     private Set<String> tags = new HashSet<>();
@@ -62,83 +62,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     public TelemetryStorageImpl(ILatencyTracker latencyTracker) {
         this.latencyTracker = latencyTracker;
 
-        initializeMethodExceptionsCounter();
-        initializeHttpLatenciesCounter();
-        initializeFactoryCounters();
-        initializeImpressionsData();
-        initializeEventsData();
-        initializeLastSynchronizationData();
-        initializeHttpErrors();
-        initializeHttpLatencies();
-        initializePushCounters();
-    }
-
-    private void initializeHttpLatenciesCounter() {
-        methodLatencies.put(Method.TREATMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        methodLatencies.put(Method.TREATMENTS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        methodLatencies.put(Method.TREATMENT_WITH_CONFIG, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        methodLatencies.put(Method.TREATMENTS_WITH_CONFIG, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        methodLatencies.put(Method.TRACK, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-    }
-
-    private void initializeMethodExceptionsCounter() {
-        methodExceptionsCounter.put(Method.TREATMENT, new AtomicLong());
-        methodExceptionsCounter.put(Method.TREATMENTS, new AtomicLong());
-        methodExceptionsCounter.put(Method.TREATMENT_WITH_CONFIG, new AtomicLong());
-        methodExceptionsCounter.put(Method.TREATMENTS_WITH_CONFIG, new AtomicLong());
-        methodExceptionsCounter.put(Method.TRACK, new AtomicLong());
-    }
-
-    private void initializeFactoryCounters() {
-        factoryCounters.put(FactoryCounter.BUR_TIMEOUTS, new AtomicLong());
-        factoryCounters.put(FactoryCounter.NON_READY_USAGES, new AtomicLong());
-    }
-
-    private void initializeImpressionsData() {
-        impressionsData.put(ImpressionsDataType.IMPRESSIONS_QUEUED, new AtomicLong());
-        impressionsData.put(ImpressionsDataType.IMPRESSIONS_DEDUPED, new AtomicLong());
-        impressionsData.put(ImpressionsDataType.IMPRESSIONS_DROPPED, new AtomicLong());
-    }
-
-    private void initializeEventsData() {
-        eventsData.put(EventsDataRecordsEnum.EVENTS_DROPPED, new AtomicLong());
-        eventsData.put(EventsDataRecordsEnum.EVENTS_QUEUED, new AtomicLong());
-    }
-
-    private void initializeLastSynchronizationData() {
-        lastSynchronizationData.put(LastSynchronizationRecords.IMPRESSIONS, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.IMPRESSIONS_COUNT, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.TELEMETRY, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.EVENTS, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.MY_SEGMENT, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.SPLITS, new AtomicLong());
-        lastSynchronizationData.put(LastSynchronizationRecords.TOKEN, new AtomicLong());
-    }
-
-    private void initializeHttpErrors() {
-        httpErrors.put(SyncedResource.EVENT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.SPLIT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.SEGMENT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.TELEMETRY_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.MY_SEGMENT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.IMPRESSION_COUNT_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.IMPRESSION_SYNC, Maps.newConcurrentMap());
-        httpErrors.put(SyncedResource.TOKEN_SYNC, Maps.newConcurrentMap());
-    }
-
-    private void initializeHttpLatencies() {
-        httpLatencies.put(HTTPLatenciesType.EVENTS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.IMPRESSIONS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.TELEMETRY, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.IMPRESSIONS_COUNT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.MY_SEGMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.SPLITS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(HTTPLatenciesType.TOKEN, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-    }
-
-    private void initializePushCounters() {
-        pushCounters.put(PushCounterEvent.AUTH_REJECTIONS, new AtomicLong());
-        pushCounters.put(PushCounterEvent.TOKEN_REFRESHES, new AtomicLong());
+        initializeProperties();
     }
 
     @Override
@@ -187,11 +111,6 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     @Override
     public long getNonReadyUsage() {
         return factoryCounters.get(FactoryCounter.NON_READY_USAGES).get();
-    }
-
-    @Override
-    public void recordConfig(Config config) {
-
     }
 
     @Override
@@ -273,7 +192,12 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public List<StreamingEvent> popStreamingEvents() {
-        return null;
+        synchronized (streamingEventsLock) {
+            List<StreamingEvent> streamingEventsList = streamingEvents;
+            streamingEvents = new ArrayList<>();
+
+            return streamingEventsList;
+        }
     }
 
     @Override
@@ -346,7 +270,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public void recordStreamingEvents(StreamingEvent streamingEvent) {
-        synchronized (streamingEvents) {
+        synchronized (streamingEventsLock) {
             if (streamingEvents.size() < MAX_STREAMING_EVENTS) {
                 streamingEvents.add(streamingEvent);
             }
@@ -356,5 +280,85 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     @Override
     public void recordSessionLength(long sessionLength) {
         this.sessionLength.set(sessionLength);
+    }
+
+    private void initializeProperties() {
+        initializeMethodExceptionsCounter();
+        initializeHttpLatenciesCounter();
+        initializeFactoryCounters();
+        initializeImpressionsData();
+        initializeEventsData();
+        initializeLastSynchronizationData();
+        initializeHttpErrors();
+        initializeHttpLatencies();
+        initializePushCounters();
+    }
+
+    private void initializeHttpLatenciesCounter() {
+        methodLatencies.put(Method.TREATMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        methodLatencies.put(Method.TREATMENTS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        methodLatencies.put(Method.TREATMENT_WITH_CONFIG, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        methodLatencies.put(Method.TREATMENTS_WITH_CONFIG, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        methodLatencies.put(Method.TRACK, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+    }
+
+    private void initializeMethodExceptionsCounter() {
+        methodExceptionsCounter.put(Method.TREATMENT, new AtomicLong());
+        methodExceptionsCounter.put(Method.TREATMENTS, new AtomicLong());
+        methodExceptionsCounter.put(Method.TREATMENT_WITH_CONFIG, new AtomicLong());
+        methodExceptionsCounter.put(Method.TREATMENTS_WITH_CONFIG, new AtomicLong());
+        methodExceptionsCounter.put(Method.TRACK, new AtomicLong());
+    }
+
+    private void initializeFactoryCounters() {
+        factoryCounters.put(FactoryCounter.BUR_TIMEOUTS, new AtomicLong());
+        factoryCounters.put(FactoryCounter.NON_READY_USAGES, new AtomicLong());
+    }
+
+    private void initializeImpressionsData() {
+        impressionsData.put(ImpressionsDataType.IMPRESSIONS_QUEUED, new AtomicLong());
+        impressionsData.put(ImpressionsDataType.IMPRESSIONS_DEDUPED, new AtomicLong());
+        impressionsData.put(ImpressionsDataType.IMPRESSIONS_DROPPED, new AtomicLong());
+    }
+
+    private void initializeEventsData() {
+        eventsData.put(EventsDataRecordsEnum.EVENTS_DROPPED, new AtomicLong());
+        eventsData.put(EventsDataRecordsEnum.EVENTS_QUEUED, new AtomicLong());
+    }
+
+    private void initializeLastSynchronizationData() {
+        lastSynchronizationData.put(LastSynchronizationRecords.IMPRESSIONS, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.IMPRESSIONS_COUNT, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.TELEMETRY, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.EVENTS, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.MY_SEGMENT, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.SPLITS, new AtomicLong());
+        lastSynchronizationData.put(LastSynchronizationRecords.TOKEN, new AtomicLong());
+    }
+
+    private void initializeHttpErrors() {
+        httpErrors.put(SyncedResource.EVENT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.SPLIT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.SEGMENT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.TELEMETRY_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.MY_SEGMENT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.IMPRESSION_COUNT_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.IMPRESSION_SYNC, Maps.newConcurrentMap());
+        httpErrors.put(SyncedResource.TOKEN_SYNC, Maps.newConcurrentMap());
+    }
+
+    private void initializeHttpLatencies() {
+        httpLatencies.put(HTTPLatenciesType.EVENTS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.IMPRESSIONS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.TELEMETRY, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.IMPRESSIONS_COUNT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.MY_SEGMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.SPLITS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(HTTPLatenciesType.TOKEN, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+    }
+
+    private void initializePushCounters() {
+        pushCounters.put(PushCounterEvent.AUTH_REJECTIONS, new AtomicLong());
+        pushCounters.put(PushCounterEvent.TOKEN_REFRESHES, new AtomicLong());
     }
 }
