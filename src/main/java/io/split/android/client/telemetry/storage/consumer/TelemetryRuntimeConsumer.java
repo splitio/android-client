@@ -1,4 +1,4 @@
-package io.split.android.client.telemetry.storage;
+package io.split.android.client.telemetry.storage.consumer;
 
 import java.util.List;
 
