@@ -42,6 +42,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     private final AtomicLong sessionLength = new AtomicLong();
 
+    private final Object httpErrorsLock = new Object();
     private final Map<OperationType, Map<Long, Long>> httpErrors = Maps.newConcurrentMap();
 
     private final Map<OperationType, AtomicLongArray> httpLatencies = Maps.newConcurrentMap();
@@ -238,16 +239,18 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     @Override
     public void recordSyncError(OperationType OperationType, int status) {
-        Map<Long, Long> statusMap = httpErrors.get(OperationType);
-        if (statusMap == null) {
-            return;
-        }
+        synchronized (httpErrorsLock) {
+            Map<Long, Long> statusMap = httpErrors.get(OperationType);
+            if (statusMap == null) {
+                return;
+            }
 
-        if (!statusMap.containsKey((long) status)) {
-            statusMap.put((long) status, 0L);
-        }
+            if (!statusMap.containsKey((long) status)) {
+                statusMap.put((long) status, 0L);
+            }
 
-        statusMap.put((long) status, statusMap.get((long) status) + 1L);
+            statusMap.put((long) status, statusMap.get((long) status) + 1L);
+        }
     }
 
     @Override
