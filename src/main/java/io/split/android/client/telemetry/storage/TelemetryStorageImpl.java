@@ -136,7 +136,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
         lastSync.setLastEventSync(lastSynchronizationData.get(OperationType.EVENTS).get());
         lastSync.setLastSplitSync(lastSynchronizationData.get(OperationType.SPLITS).get());
-        lastSync.setLastSegmentSync(lastSynchronizationData.get(OperationType.MY_SEGMENT).get());
+        lastSync.setLastMySegmentSync(lastSynchronizationData.get(OperationType.MY_SEGMENT).get());
         lastSync.setLastTelemetrySync(lastSynchronizationData.get(OperationType.TELEMETRY).get());
         lastSync.setLastImpressionSync(lastSynchronizationData.get(OperationType.IMPRESSIONS).get());
         lastSync.setLastImpressionCountSync(lastSynchronizationData.get(OperationType.IMPRESSIONS_COUNT).get());
@@ -154,7 +154,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
         errors.setTelemetrySyncErrs(httpErrors.get(OperationType.TELEMETRY));
         errors.setImpressionSyncErrs(httpErrors.get(OperationType.IMPRESSIONS));
         errors.setSplitSyncErrs(httpErrors.get(OperationType.SPLITS));
-        errors.setSegmentSyncErrs(httpErrors.get(OperationType.MY_SEGMENT));
+        errors.setMySegmentSyncErrs(httpErrors.get(OperationType.MY_SEGMENT));
         errors.setTokenGetErrs(httpErrors.get(OperationType.TOKEN));
 
         initializeHttpErrors();
@@ -169,7 +169,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
         latencies.setTelemetry(httpLatencies.get(OperationType.TELEMETRY).fetchAndClearAll());
         latencies.setEvents(httpLatencies.get(OperationType.EVENTS).fetchAndClearAll());
         latencies.setSplits(httpLatencies.get(OperationType.SPLITS).fetchAndClearAll());
-        latencies.setSegments(httpLatencies.get(OperationType.MY_SEGMENT).fetchAndClearAll());
+        latencies.setMySegments(httpLatencies.get(OperationType.MY_SEGMENT).fetchAndClearAll());
         latencies.setToken(httpLatencies.get(OperationType.TOKEN).fetchAndClearAll());
         latencies.setImpressions(httpLatencies.get(OperationType.IMPRESSIONS).fetchAndClearAll());
         latencies.setImpressionsCount(httpLatencies.get(OperationType.IMPRESSIONS_COUNT).fetchAndClearAll());
@@ -201,7 +201,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     public List<String> popTags() {
         synchronized (tagsLock) {
             List<String> tagList = new ArrayList<>(tags);
-            tags = new HashSet<>();
+            tags.clear();
 
             return tagList;
         }

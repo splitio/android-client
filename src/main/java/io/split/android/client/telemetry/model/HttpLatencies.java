@@ -6,7 +6,7 @@ public class HttpLatencies {
 
     private List<Long> splits;
 
-    private List<Long> segments;
+    private List<Long> mySegments;
 
     private List<Long> impressions;
 
@@ -26,12 +26,12 @@ public class HttpLatencies {
         this.splits = splits;
     }
 
-    public List<Long> getSegments() {
-        return segments;
+    public List<Long> getMySegments() {
+        return mySegments;
     }
 
-    public void setSegments(List<Long> segments) {
-        this.segments = segments;
+    public void setMySegments(List<Long> mySegments) {
+        this.mySegments = mySegments;
     }
 
     public List<Long> getImpressions() {

@@ -4,7 +4,7 @@ public class LastSync {
 
     private long lastSplitSync;
 
-    private long lastSegmentSync;
+    private long lastMySegmentSync;
 
     private long lastImpressionSync;
 
@@ -24,12 +24,12 @@ public class LastSync {
         this.lastSplitSync = lastSplitSync;
     }
 
-    public long getLastSegmentSync() {
-        return lastSegmentSync;
+    public long getLastMySegmentSync() {
+        return lastMySegmentSync;
     }
 
-    public void setLastSegmentSync(long lastSegmentSync) {
-        this.lastSegmentSync = lastSegmentSync;
+    public void setLastMySegmentSync(long lastMySegmentSync) {
+        this.lastMySegmentSync = lastMySegmentSync;
     }
 
     public long getLastImpressionSync() {

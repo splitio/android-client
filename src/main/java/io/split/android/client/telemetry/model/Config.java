@@ -30,8 +30,6 @@ public class Config {
 
     private long timeUntilSDKReady;
 
-    private long BURTimeouts;
-
     private long SDKNotReadyUsage;
 
     private List<String> tags;
@@ -132,14 +130,6 @@ public class Config {
 
     public void setTimeUntilSDKReady(long timeUntilSDKReady) {
         this.timeUntilSDKReady = timeUntilSDKReady;
-    }
-
-    public long getBURTimeouts() {
-        return BURTimeouts;
-    }
-
-    public void setBURTimeouts(long BURTimeouts) {
-        this.BURTimeouts = BURTimeouts;
     }
 
     public long getSDKNotReadyUsage() {
