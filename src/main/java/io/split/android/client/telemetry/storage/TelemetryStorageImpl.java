@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.FactoryCounter;
-import io.split.android.client.telemetry.model.HTTPErrors;
-import io.split.android.client.telemetry.model.HTTPLatencies;
+import io.split.android.client.telemetry.model.HttpErrors;
+import io.split.android.client.telemetry.model.HttpLatencies;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSync;
 import io.split.android.client.telemetry.model.Method;
@@ -146,8 +146,8 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     }
 
     @Override
-    public HTTPErrors popHTTPErrors() {
-        HTTPErrors errors = new HTTPErrors();
+    public HttpErrors popHttpErrors() {
+        HttpErrors errors = new HttpErrors();
 
         errors.setEventsSyncErrs(httpErrors.get(OperationType.EVENTS));
         errors.setImpressionCountSyncErrs(httpErrors.get(OperationType.IMPRESSIONS_COUNT));
@@ -163,8 +163,8 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     }
 
     @Override
-    public HTTPLatencies popHttpLatencies() {
-        HTTPLatencies latencies = new HTTPLatencies();
+    public HttpLatencies popHttpLatencies() {
+        HttpLatencies latencies = new HttpLatencies();
 
         latencies.setTelemetry(httpLatencies.get(OperationType.TELEMETRY).fetchAndClearAll());
         latencies.setEvents(httpLatencies.get(OperationType.EVENTS).fetchAndClearAll());

@@ -2,7 +2,7 @@ package io.split.android.client.telemetry.model;
 
 import java.util.Map;
 
-public class HTTPErrors {
+public class HttpErrors {
 
     private Map<Long, Long> splitSyncErrs;
 

@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
-import io.split.android.client.telemetry.model.HTTPErrors;
-import io.split.android.client.telemetry.model.HTTPLatencies;
+import io.split.android.client.telemetry.model.HttpErrors;
+import io.split.android.client.telemetry.model.HttpLatencies;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSync;
 import io.split.android.client.telemetry.model.Method;
@@ -228,14 +228,14 @@ public class TelemetryStorageImplTest {
 
     @Test
     public void httpErrorsIsInitialized() {
-        HTTPErrors httpErrors = telemetryStorage.popHTTPErrors();
+        HttpErrors httpErrors = telemetryStorage.popHttpErrors();
 
         assertNotNull(httpErrors);
     }
 
     @Test
     public void httpLatenciesIsInitialized() {
-        HTTPLatencies httpLatencies = telemetryStorage.popHttpLatencies();
+        HttpLatencies httpLatencies = telemetryStorage.popHttpLatencies();
 
         assertNotNull(httpLatencies);
     }
@@ -292,7 +292,7 @@ public class TelemetryStorageImplTest {
         telemetryStorage.recordSyncError(OperationType.SPLITS, 500);
         telemetryStorage.recordSyncError(OperationType.TOKEN, 401);
 
-        HTTPErrors httpErrors = telemetryStorage.popHTTPErrors();
+        HttpErrors httpErrors = telemetryStorage.popHttpErrors();
 
         Map<Long, Long> expectedCountMap = new HashMap<>();
         expectedCountMap.put(400L, 2L);
@@ -325,8 +325,8 @@ public class TelemetryStorageImplTest {
         telemetryStorage.recordSyncError(OperationType.SPLITS, 401);
         telemetryStorage.recordSyncError(OperationType.TOKEN, 401);
 
-        telemetryStorage.popHTTPErrors();
-        HTTPErrors httpErrors = telemetryStorage.popHTTPErrors();
+        telemetryStorage.popHttpErrors();
+        HttpErrors httpErrors = telemetryStorage.popHttpErrors();
 
         assertTrue(httpErrors.getImpressionCountSyncErrs().isEmpty());
         assertTrue(httpErrors.getEventsSyncErrs().isEmpty());
@@ -347,7 +347,7 @@ public class TelemetryStorageImplTest {
         telemetryStorage.recordSyncLatency(OperationType.MY_SEGMENT, 2000);
         telemetryStorage.recordSyncLatency(OperationType.TOKEN, 2000);
 
-        HTTPLatencies httpLatencies = telemetryStorage.popHttpLatencies();
+        HttpLatencies httpLatencies = telemetryStorage.popHttpLatencies();
 
         assertFalse(httpLatencies.getTelemetry().stream().allMatch(l -> l == 0));
         assertFalse(httpLatencies.getEvents().stream().allMatch(l -> l == 0));
@@ -369,7 +369,7 @@ public class TelemetryStorageImplTest {
         telemetryStorage.recordSyncLatency(OperationType.TOKEN, 2000);
 
         telemetryStorage.popHttpLatencies();
-        HTTPLatencies httpLatencies = telemetryStorage.popHttpLatencies();
+        HttpLatencies httpLatencies = telemetryStorage.popHttpLatencies();
 
         assertTrue(httpLatencies.getTelemetry().stream().allMatch(l -> l == 0));
         assertTrue(httpLatencies.getEvents().stream().allMatch(l -> l == 0));

@@ -2,7 +2,7 @@ package io.split.android.client.telemetry.model;
 
 import java.util.List;
 
-public class HTTPLatencies {
+public class HttpLatencies {
 
     private List<Long> splits;
 
