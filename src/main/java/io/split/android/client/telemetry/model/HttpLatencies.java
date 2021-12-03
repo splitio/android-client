@@ -26,6 +26,14 @@ public class HttpLatencies {
         this.splits = splits;
     }
 
+    public List<Long> getMySegments() {
+        return mySegments;
+    }
+
+    public void setMySegments(List<Long> mySegments) {
+        this.mySegments = mySegments;
+    }
+
     public List<Long> getImpressions() {
         return impressions;
     }
@@ -64,13 +72,5 @@ public class HttpLatencies {
 
     public void setToken(List<Long> token) {
         this.token = token;
-    }
-
-    public List<Long> getMySegments() {
-        return mySegments;
-    }
-
-    public void setMySegments(List<Long> mySegments) {
-        this.mySegments = mySegments;
     }
 }

@@ -26,6 +26,14 @@ public class HttpErrors {
         this.splitSyncErrs = splitSyncErrs;
     }
 
+    public Map<Long, Long> getMySegmentSyncErrs() {
+        return mySegmentSyncErrs;
+    }
+
+    public void setMySegmentSyncErrs(Map<Long, Long> mySegmentSyncErrs) {
+        this.mySegmentSyncErrs = mySegmentSyncErrs;
+    }
+
     public Map<Long, Long> getImpressionSyncErrs() {
         return impressionSyncErrs;
     }
@@ -64,13 +72,5 @@ public class HttpErrors {
 
     public void setTokenGetErrs(Map<Long, Long> tokenGetErrs) {
         this.tokenGetErrs = tokenGetErrs;
-    }
-
-    public Map<Long, Long> getMySegmentSyncErrs() {
-        return mySegmentSyncErrs;
-    }
-
-    public void setMySegmentSyncErrs(Map<Long, Long> mySegmentSyncErrs) {
-        this.mySegmentSyncErrs = mySegmentSyncErrs;
     }
 }
