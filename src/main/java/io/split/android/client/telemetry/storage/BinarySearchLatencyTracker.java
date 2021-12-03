@@ -1,4 +1,4 @@
-package io.split.android.client.metrics;
+package io.split.android.client.telemetry.storage;
 
 import java.util.Arrays;
 
