@@ -1,4 +1,4 @@
-package io.split.android.client.telemetry.storage;
+package io.split.android.client.telemetry.storage.producer;
 
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
