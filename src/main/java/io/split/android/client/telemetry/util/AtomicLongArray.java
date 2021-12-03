@@ -20,14 +20,14 @@ public class AtomicLongArray {
         }
     }
 
-    public void increment(int index) {
+    public synchronized void increment(int index) {
         if (index < 0 || index >= array.length) {
             return;
         }
         array[index].getAndIncrement();
     }
 
-    public List<Long> fetchAndClearAll() {
+    public synchronized List<Long> fetchAndClearAll() {
         List<Long> listValues = new ArrayList<>();
         for (AtomicLong a : array) {
             listValues.add(a.longValue());

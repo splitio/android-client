@@ -5,4 +5,3 @@ import io.split.android.client.telemetry.storage.consumer.TelemetryStorageConsum
 public interface TelemetryStorage extends TelemetryStorageConsumer, TelemetryStorageProducer {
 
 }
-

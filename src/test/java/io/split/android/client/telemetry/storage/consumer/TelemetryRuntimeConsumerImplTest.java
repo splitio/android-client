@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
-import io.split.android.client.telemetry.model.HTTPErrors;
-import io.split.android.client.telemetry.model.HTTPLatencies;
+import io.split.android.client.telemetry.model.HttpErrors;
+import io.split.android.client.telemetry.model.HttpLatencies;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSync;
 import io.split.android.client.telemetry.model.streaming.ConnectionEstablishedStreamingEvent;
@@ -82,26 +82,26 @@ public class TelemetryRuntimeConsumerImplTest {
 
     @Test
     public void popHttpErrorsFetchesValuesFromStorage() {
-        HTTPErrors mockHttpErrors = new HTTPErrors();
+        HttpErrors mockHttpErrors = new HttpErrors();
         Map<Long, Long> errorMap = new HashMap<>();
         errorMap.put(400L, 1L);
         mockHttpErrors.setTokenGetErrs(errorMap);
-        when(telemetryStorage.popHTTPErrors()).thenReturn(mockHttpErrors);
+        when(telemetryStorage.popHttpErrors()).thenReturn(mockHttpErrors);
 
-        HTTPErrors httpErrors = telemetryRuntimeConsumer.popHTTPErrors();
+        HttpErrors httpErrors = telemetryRuntimeConsumer.popHttpErrors();
 
-        verify(telemetryStorage).popHTTPErrors();
+        verify(telemetryStorage).popHttpErrors();
         assertEquals(errorMap, httpErrors.getTokenGetErrs());
     }
 
     @Test
     public void popHttpLatenciesFetchesValuesFromStorage() {
-        HTTPLatencies mockHttpLatencies = new HTTPLatencies();
+        HttpLatencies mockHttpLatencies = new HttpLatencies();
         List<Long> mockBucketArray = Arrays.asList(1L, 4L);
         mockHttpLatencies.setImpressionsCount(mockBucketArray);
         when(telemetryStorage.popHttpLatencies()).thenReturn(mockHttpLatencies);
 
-        HTTPLatencies httpLatencies = telemetryRuntimeConsumer.popHttpLatencies();
+        HttpLatencies httpLatencies = telemetryRuntimeConsumer.popHttpLatencies();
 
         verify(telemetryStorage).popHttpLatencies();
         assertEquals(mockBucketArray, httpLatencies.getImpressionsCount());

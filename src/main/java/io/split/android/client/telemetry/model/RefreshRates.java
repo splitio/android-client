@@ -4,7 +4,7 @@ public class RefreshRates {
 
     private long splits;
 
-    private long segments;
+    private long mySegments;
 
     private long impressions;
 
@@ -20,12 +20,12 @@ public class RefreshRates {
         this.splits = splits;
     }
 
-    public long getSegments() {
-        return segments;
+    public long getMySegments() {
+        return mySegments;
     }
 
-    public void setSegments(long segments) {
-        this.segments = segments;
+    public void setMySegments(long mySegments) {
+        this.mySegments = mySegments;
     }
 
     public long getImpressions() {
