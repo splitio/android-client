@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -487,5 +488,33 @@ public class TelemetryStorageImplTest {
         List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
 
         assertEquals(20, streamingEvents.size());
+    }
+
+    @Test
+    public void testSyncErrorsMultithreading() throws InterruptedException {
+        Runnable runnable = () -> telemetryStorage.recordSyncError(OperationType.EVENTS, 400);
+
+        for (int i = 0; i < 100; ++i) {
+            long expectedResult = 3;
+
+            Thread t1 = new Thread(runnable);
+            Thread t2 = new Thread(runnable);
+            Thread t3 = new Thread(runnable);
+
+            t1.start();
+            t2.start();
+            t3.start();
+            t1.join();
+            t2.join();
+            t3.join();
+
+            Long endValue = telemetryStorage.popHttpErrors().getEventsSyncErrs().get(400L);
+
+            if (endValue == null || endValue != expectedResult) {
+                fail("endValue was " + endValue);
+            }
+        }
+
+
     }
 }
