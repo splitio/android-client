@@ -22,7 +22,7 @@ import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.PushCounterEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
-import io.split.android.client.telemetry.storage.ILatencyTracker;import io.split.android.client.telemetry.storage.TelemetryStorage;import io.split.android.client.telemetry.util.AtomicLongArray;
+import io.split.android.client.telemetry.util.AtomicLongArray;
 
 public class TelemetryStorageImpl implements TelemetryStorage {
 
