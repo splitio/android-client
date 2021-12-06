@@ -1,5 +1,7 @@
 package io.split.android.client.service.executor;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -22,9 +24,9 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
-import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
-import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
+import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -32,11 +34,12 @@ import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
+import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
+import io.split.android.client.service.telemetry.TelemetryTaskFactory;
+import io.split.android.client.service.telemetry.TelemetryTaskFactoryImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public class SplitTaskFactoryImpl implements SplitTaskFactory {
+public class SplitTaskFactoryImpl implements SplitTaskFactory, TelemetryTaskFactory {
 
     private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageContainer mSplitsStorageContainer;
@@ -44,6 +47,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final String mSplitsFilterQueryString;
     private final SplitEventsManager mEventsManager;
+    private final TelemetryTaskFactory mTelemetryTaskFactory;
 
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
                                 @NonNull SplitApiFacade splitApiFacade,
@@ -59,6 +63,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                 mSplitsStorageContainer.getSplitsStorage(),
                 new SplitChangeProcessor());
+        mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
+                mSplitsStorageContainer.getTelemetryConsumer(),
+                splitClientConfig);
+
     }
 
     @Override
@@ -156,4 +164,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 (persistentAttributesEnabled) ? mSplitsStorageContainer.getPersistentAttributesStorage() : null);
     }
 
+    @Override
+    public TelemetryConfigRecorderTask getTelemetryConfigRecorderTask() {
+        return mTelemetryTaskFactory.getTelemetryConfigRecorderTask();
+    }
 }
