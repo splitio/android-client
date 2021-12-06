@@ -1,7 +1,8 @@
 package io.split.android.client.service.synchronizer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -14,20 +15,18 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.InBytesSizable;
 import io.split.android.client.storage.StoragePusher;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHelper<T> {
 
-    private final StoragePusher mStorage;
+    private final StoragePusher<T> mStorage;
     private final SplitTaskExecutor mSplitTaskExecutor;
-    private AtomicInteger mPushedCount;
-    private AtomicLong mTotalPushedSizeInBytes;
+    private final AtomicInteger mPushedCount;
+    private final AtomicLong mTotalPushedSizeInBytes;
     private final int mMaxQueueSize;
     private final long mMaxQueueSizeInBytes;
     private final SplitTaskType mTaskType;
 
     public RecorderSyncHelperImpl(SplitTaskType taskType,
-                                  StoragePusher storage,
+                                  StoragePusher<T> storage,
                                   int maxQueueSize,
                                   long maxQueueSizeInBytes,
                                   SplitTaskExecutor splitTaskExecutor) {
