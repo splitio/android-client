@@ -13,6 +13,7 @@ public class SdkTargetPath {
     public static final String IMPRESSIONS = "/testImpressions/bulk";
     public static final String IMPRESSIONS_COUNT = "/testImpressions/count";
     public static final String SSE_AUTHENTICATION = "/auth";
+    public static final String TELEMETRY_CONFIG = "/metrics/config";
 
     public static final URI splitChanges(String baseUrl, String queryString) throws URISyntaxException {
         return buildUrl(baseUrl, SPLIT_CHANGES, queryString);
@@ -37,6 +38,10 @@ public class SdkTargetPath {
 
     public static final URI sseAuthentication(String baseUrl) throws URISyntaxException {
         return buildUrl(baseUrl, SSE_AUTHENTICATION);
+    }
+
+    public static URI telemetryConfig(String baseUrl) throws URISyntaxException {
+        return buildUrl(baseUrl, TELEMETRY_CONFIG);
     }
 
     private static URI buildUrl(String baseUrl, String path) throws URISyntaxException {

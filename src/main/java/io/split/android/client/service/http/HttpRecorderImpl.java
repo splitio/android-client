@@ -16,7 +16,7 @@ public class HttpRecorderImpl<T> implements HttpRecorder<T> {
     private final HttpClient mClient;
     private final URI mTarget;
     private final NetworkHelper mNetworkHelper;
-    private HttpRequestBodySerializer<T> mRequestSerializer;
+    private final HttpRequestBodySerializer<T> mRequestSerializer;
 
     public HttpRecorderImpl(@NonNull HttpClient client,
                             @NonNull URI target,
@@ -48,6 +48,3 @@ public class HttpRecorderImpl<T> implements HttpRecorder<T> {
         }
     }
 }
-
-
-
