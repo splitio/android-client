@@ -1,39 +1,57 @@
 package io.split.android.client.telemetry.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 public class Config {
 
+    @SerializedName("oM")
     private final OperationMode operationMode = OperationMode.STANDALONE;
 
+    @SerializedName("st")
     private final String storage = "memory";
 
+    @SerializedName("sE")
     private boolean streamingEnabled;
 
+    @SerializedName("rR")
     private RefreshRates refreshRates;
 
+    @SerializedName("uO")
     private UrlOverrides urlOverrides;
 
+    @SerializedName("iQ")
     private long impressionsQueueSize;
 
+    @SerializedName("eQ")
     private long eventsQueueSize;
 
+    @SerializedName("iM")
     private ImpressionsMode impressionsMode;
 
+    @SerializedName("iL")
     private boolean impressionsListenerEnabled;
 
+    @SerializedName("hP")
     private boolean httpProxyDetected;
 
+    @SerializedName("aF")
     private long activeFactories;
 
+    @SerializedName("rF")
     private long redundantActiveFactories;
 
+    @SerializedName("tR")
     private long timeUntilSDKReady;
 
+    @SerializedName("nR")
     private long SDKNotReadyUsage;
 
+    @SerializedName("t")
     private List<String> tags;
 
+    @SerializedName("i")
     private List<String> integrations;
 
     public OperationMode getOperationMode() {
@@ -156,4 +174,3 @@ public class Config {
         this.integrations = integrations;
     }
 }
-
