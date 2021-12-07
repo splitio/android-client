@@ -1,4 +1,4 @@
-package io.split.android.client.telemetry.storage.consumer;
+package io.split.android.client.telemetry.storage;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -9,10 +9,10 @@ import io.split.android.client.telemetry.model.Config;
 
 public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
 
-    private final TelemetryConsumer mTelemetryConsumer;
+    private final TelemetryStorageConsumer mTelemetryConsumer;
     private final SplitClientConfig mSplitClientConfig;
 
-    public TelemetryConfigProviderImpl(@NonNull TelemetryConsumer telemetryConsumer,
+    public TelemetryConfigProviderImpl(@NonNull TelemetryStorageConsumer telemetryConsumer,
                                        @NonNull SplitClientConfig splitClientConfig) {
         mTelemetryConsumer = checkNotNull(telemetryConsumer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
@@ -20,7 +20,7 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
 
     @Override
     public Config getConfigTelemetry() {
-        //TODO implement
+        // TODO implement
         return new Config();
     }
 }

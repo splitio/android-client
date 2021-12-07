@@ -39,7 +39,7 @@ import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 import io.split.android.client.service.telemetry.TelemetryTaskFactoryImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 
-public class SplitTaskFactoryImpl implements SplitTaskFactory, TelemetryTaskFactory {
+public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageContainer mSplitsStorageContainer;

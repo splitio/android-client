@@ -16,7 +16,7 @@ import java.util.Arrays;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.telemetry.model.Config;
-import io.split.android.client.telemetry.storage.consumer.TelemetryConfigProvider;
+import io.split.android.client.telemetry.storage.TelemetryConfigProvider;
 
 public class TelemetryConfigRecorderTaskTest {
 

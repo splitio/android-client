@@ -11,8 +11,7 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.telemetry.storage.consumer.TelemetryConsumer;
-import io.split.android.client.telemetry.storage.consumer.TelemetryConsumerImpl;
+import io.split.android.client.telemetry.storage.TelemetryStorageConsumer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -81,7 +80,7 @@ public class SplitStorageContainer {
         return mPersistentAttributesStorage;
     }
 
-    public TelemetryConsumer getTelemetryConsumer() {
-        return new TelemetryConsumerImpl(mTelemetryStorage);
+    public TelemetryStorageConsumer getTelemetryConsumer() {
+        return mTelemetryStorage;
     }
 }
