@@ -4,8 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.concurrent.TimeUnit;
-
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.sseclient.FixedIntervalBackoffCounter;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
@@ -14,7 +12,7 @@ import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 // TODO: implement
 public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
 
-    private static final long RETRY_INTERVAL = 500;
+    private static final int RETRY_INTERVAL_SECONDS = 1;
     private static final int MAX_RETRY_ATTEMPTS = 3;
 
     private final TelemetryTaskFactory mTaskFactory;
@@ -25,7 +23,7 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
         SplitTaskExecutor mTaskExecutor = checkNotNull(splitTaskExecutor);
         mTaskFactory = checkNotNull(telemetryTaskFactory);
         mConfigTimer = new RetryBackoffCounterTimer(mTaskExecutor,
-                new FixedIntervalBackoffCounter(RETRY_INTERVAL, TimeUnit.MILLISECONDS),
+                new FixedIntervalBackoffCounter(RETRY_INTERVAL_SECONDS),
                 MAX_RETRY_ATTEMPTS);
     }
 
@@ -42,6 +40,6 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
 
     @Override
     public void destroy() {
-
+        mConfigTimer.stop();
     }
 }

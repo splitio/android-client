@@ -57,6 +57,7 @@ import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.fake.SplitTaskExecutorStub;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -110,7 +111,8 @@ public class SynchronizerTest {
     SplitEventsManager mEventsManager;
     @Mock
     WorkManagerWrapper mWorkManagerWrapper;
-
+    @Mock
+    TelemetrySynchronizer mTelemetrySynchronizer;
 
     public void setup(SplitClientConfig splitClientConfig) {
         MockitoAnnotations.initMocks(this);
@@ -152,7 +154,7 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetrySynchronizer);
     }
 
     @Test
@@ -447,7 +449,7 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(config, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetrySynchronizer);
         mSynchronizer.loadSplitsFromCache();
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
@@ -477,7 +479,7 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(config, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetrySynchronizer);
         mSynchronizer.loadAndSynchronizeSplits();
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
