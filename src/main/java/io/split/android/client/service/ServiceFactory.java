@@ -23,6 +23,8 @@ import io.split.android.client.service.impressions.ImpressionsRequestBodySeriali
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
+import io.split.android.client.telemetry.TelemetryConfigBodySerializer;
+import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.utils.NetworkHelper;
 
 @RestrictTo(RestrictTo.Scope.LIBRARY)
@@ -85,5 +87,14 @@ public class ServiceFactory {
         return new HttpSseAuthTokenFetcher(httpClient,
                 SdkTargetPath.sseAuthentication(endPoint),
                 networkHelper, new SseAuthenticationResponseParser());
+    }
+
+    public static HttpRecorder<Config> getTelemetryConfigRecorder(
+            NetworkHelper networkHelper,
+            HttpClient httpClient,
+            String endpoint) throws URISyntaxException {
+        return new HttpRecorderImpl<>(
+                httpClient, SdkTargetPath.telemetryConfig(endpoint), networkHelper,
+                new TelemetryConfigBodySerializer());
     }
 }

@@ -9,9 +9,12 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
+import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
@@ -31,6 +34,8 @@ import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.telemetry.TelemetrySynchronizer;
+import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -62,6 +67,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final RetryBackoffCounterTimer mMySegmentsSyncRetryTimer;
     private final ImpressionsObserver mImpressionsObserver;
     private final ImpressionsCounter mImpressionsCounter;
+    private TelemetrySynchronizer mTelemetrySynchronizer;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -79,6 +85,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
         mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
+        mTelemetrySynchronizer = new TelemetrySynchronizerImpl(); //TODO provide in constructor
 
         mMySegmentsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
 
@@ -202,6 +209,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
         mLoadLocalAttributesListener = new LoadLocalDataListener(
                 mSplitEventsManager, SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
+
+        mSplitEventsManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                mTelemetrySynchronizer.synchronizeConfig();
+            }
+        });
     }
 
     public void pause() {

@@ -10,6 +10,8 @@ import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.client.telemetry.storage.TelemetryStorageConsumer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -23,6 +25,7 @@ public class SplitStorageContainer {
     private final PersistentImpressionsCountStorage mPersistentImpressionsCountStorage;
     private final AttributesStorage mAttributesStorage;
     private final PersistentAttributesStorage mPersistentAttributesStorage;
+    private final TelemetryStorage mTelemetryStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorage mySegmentsStorage,
@@ -31,7 +34,8 @@ public class SplitStorageContainer {
                                  @NonNull PersistentImpressionsStorage persistentImpressionsStorage,
                                  @NonNull PersistentImpressionsCountStorage persistentImpressionsCountStorage,
                                  @NonNull AttributesStorage attributesStorage,
-                                 @NonNull PersistentAttributesStorage persistentAttributesStorage) {
+                                 @NonNull PersistentAttributesStorage persistentAttributesStorage,
+                                 @NonNull TelemetryStorage telemetryStorage) {
 
         mSplitStorage = checkNotNull(splitStorage);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
@@ -41,6 +45,7 @@ public class SplitStorageContainer {
         mPersistentImpressionsCountStorage = checkNotNull(persistentImpressionsCountStorage);
         mAttributesStorage = checkNotNull(attributesStorage);
         mPersistentAttributesStorage = checkNotNull(persistentAttributesStorage);
+        mTelemetryStorage = checkNotNull(telemetryStorage);
     }
 
     public SplitsStorage getSplitsStorage() {
@@ -73,5 +78,9 @@ public class SplitStorageContainer {
 
     public PersistentAttributesStorage getPersistentAttributesStorage() {
         return mPersistentAttributesStorage;
+    }
+
+    public TelemetryStorageConsumer getTelemetryConsumer() {
+        return mTelemetryStorage;
     }
 }

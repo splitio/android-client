@@ -1,15 +1,22 @@
 package io.split.android.client.telemetry.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class RefreshRates {
 
+    @SerializedName("sp")
     private long splits;
 
+    @SerializedName("se")
     private long mySegments;
 
+    @SerializedName("im")
     private long impressions;
 
+    @SerializedName("ev")
     private long events;
 
+    @SerializedName("te")
     private long telemetry;
 
     public long getSplits() {

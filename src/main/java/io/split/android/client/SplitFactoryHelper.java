@@ -51,7 +51,7 @@ import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
 
 class SplitFactoryHelper {
-    private static final int  DB_MAGIC_CHARS_COUNT = 4;
+    private static final int DB_MAGIC_CHARS_COUNT = 4;
 
     String getDatabaseName(SplitClientConfig config, String apiToken, Context context) {
 
@@ -114,7 +114,8 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenImpressionsCountStorage(splitRoomDatabase),
                 StorageFactory.getAttributesStorage(),
-                StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, key.matchingKey()));
+                StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, key.matchingKey()),
+                StorageFactory.getTelemetryStorage());
     }
 
     String buildSplitsFilterQueryString(SplitClientConfig config) {
@@ -143,7 +144,9 @@ class SplitFactoryHelper {
                 ServiceFactory.getImpressionsRecorder(networkHelper, httpClient,
                         splitClientConfig.eventsEndpoint()),
                 ServiceFactory.getImpressionsCountRecorder(networkHelper, httpClient,
-                        splitClientConfig.eventsEndpoint()));
+                        splitClientConfig.eventsEndpoint()),
+                ServiceFactory.getTelemetryConfigRecorder(networkHelper, httpClient,
+                        splitClientConfig.endpoint()));
     }
 
     WorkManagerWrapper buildWorkManagerWrapper(Context context, SplitClientConfig splitClientConfig,

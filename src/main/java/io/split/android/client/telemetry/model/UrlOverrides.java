@@ -1,15 +1,22 @@
 package io.split.android.client.telemetry.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class UrlOverrides {
 
+    @SerializedName("s")
     private boolean sdkUrl;
 
+    @SerializedName("e")
     private boolean events;
 
+    @SerializedName("a")
     private boolean auth;
 
+    @SerializedName("st")
     private boolean stream;
 
+    @SerializedName("t")
     private boolean telemetry;
 
     public boolean isSdkUrl() {
