@@ -20,25 +20,38 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
     private static final int DEFAULT_MAX_ATTEMPTS = -1;
 
     private final SplitTaskExecutor mTaskExecutor;
-    private final BackoffCounter mStreamingBackoffCounter;
+    private final BackoffCounter mBackoffCounter;
     private final int mRetryAttemptsLimit;
     private final AtomicInteger mCurrentAttempts = new AtomicInteger(0);
     private SplitTask mTask;
     private SplitTaskExecutionListener mListener;
     private String mTaskId;
 
+    /**
+     * Creates an instance which retries tasks indefinitely, using the strategy defined by backoffCounter.
+     *
+     * @param taskExecutor Implementation of SplitTaskExecutor.
+     * @param backoffCounter Will determine the retry interval.
+     */
     public RetryBackoffCounterTimer(@NonNull SplitTaskExecutor taskExecutor,
-                                    @NonNull BackoffCounter streamingBackoffCounter) {
+                                    @NonNull BackoffCounter backoffCounter) {
         mTaskExecutor = checkNotNull(taskExecutor);
-        mStreamingBackoffCounter = checkNotNull(streamingBackoffCounter);
+        mBackoffCounter = checkNotNull(backoffCounter);
         mRetryAttemptsLimit = DEFAULT_MAX_ATTEMPTS;
     }
 
+    /**
+     * Creates an instance which retries tasks up to the number of times specified by retryAttemptsLimit.
+     *
+     * @param taskExecutor Implementation of SplitTaskExecutor.
+     * @param backoffCounter Will determine the retry interval.
+     * @param retryAttemptsLimit Maximum number of attempts for task retry.
+     */
     public RetryBackoffCounterTimer(@NonNull SplitTaskExecutor taskExecutor,
-                                    @NonNull BackoffCounter streamingBackoffCounter,
+                                    @NonNull BackoffCounter backoffCounter,
                                     int retryAttemptsLimit) {
         mTaskExecutor = checkNotNull(taskExecutor);
-        mStreamingBackoffCounter = checkNotNull(streamingBackoffCounter);
+        mBackoffCounter = checkNotNull(backoffCounter);
         mRetryAttemptsLimit = retryAttemptsLimit;
     }
 
@@ -63,7 +76,7 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
         if(mTask == null || mTaskId != null) {
             return;
         }
-        mStreamingBackoffCounter.resetCounter();
+        mBackoffCounter.resetCounter();
         mCurrentAttempts.incrementAndGet();
         mTaskId = mTaskExecutor.schedule(mTask, 0L, this);
     }
@@ -72,7 +85,7 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
         if (mTask == null) {
             return;
         }
-        long retryTime = mStreamingBackoffCounter.getNextRetryTime();
+        long retryTime = mBackoffCounter.getNextRetryTime();
         Logger.d(String.format("Retrying %s task in %d seconds", mTask.getClass().getSimpleName(), retryTime));
         mCurrentAttempts.incrementAndGet();
         mTaskId = mTaskExecutor.schedule(mTask, retryTime, this);
@@ -88,7 +101,7 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
             return;
         }
 
-        mStreamingBackoffCounter.resetCounter();
+        mBackoffCounter.resetCounter();
         if (mListener != null) {
             mListener.taskExecuted(SplitTaskExecutionInfo.success(taskInfo.getTaskType()));
         }
