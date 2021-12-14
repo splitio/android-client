@@ -142,7 +142,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         cleanUpDabase(_splitTaskExecutor, splitTaskFactory);
 
-        final TelemetrySynchronizer telemetrySynchronizer = getTelemetrySynchronizer(_splitTaskExecutor, splitTaskFactory);
+        final TelemetrySynchronizer telemetrySynchronizer = getTelemetrySynchronizer(_splitTaskExecutor, splitTaskFactory, config);
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
@@ -286,11 +286,11 @@ public class SplitFactoryImpl implements SplitFactory {
     }
 
     @NonNull
-    private TelemetrySynchronizer getTelemetrySynchronizer(SplitTaskExecutor _splitTaskExecutor, SplitTaskFactory splitTaskFactory) {
+    private TelemetrySynchronizer getTelemetrySynchronizer(SplitTaskExecutor _splitTaskExecutor, SplitTaskFactory splitTaskFactory, SplitClientConfig config) {
         final TelemetrySessionCreator telemetrySessionCreator = new TelemetrySessionCreatorImpl();
 
         if (telemetrySessionCreator.shouldRecordTelemetry()) {
-            return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory);
+            return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory, config.backgroundSyncPeriod()); // TODO telemetrySyncPeriod
         } else {
             return new TelemetrySynchronizerStub();
         }

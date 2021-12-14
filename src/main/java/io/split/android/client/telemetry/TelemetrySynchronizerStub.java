@@ -16,4 +16,9 @@ public class TelemetrySynchronizerStub implements TelemetrySynchronizer {
     public void destroy() {
         // no-op
     }
+
+    @Override
+    public void flush() {
+        // no-op
+    }
 }
