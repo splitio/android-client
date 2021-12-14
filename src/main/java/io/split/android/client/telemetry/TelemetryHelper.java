@@ -1,6 +1,6 @@
 package io.split.android.client.telemetry;
 
-public interface TelemetrySessionCreator {
+public interface TelemetryHelper {
 
     boolean shouldRecordTelemetry();
 }

@@ -2,7 +2,7 @@ package io.split.android.client.telemetry;
 
 import java.util.Random;
 
-public class TelemetrySessionCreatorImpl implements TelemetrySessionCreator {
+public class TelemetryHelperImpl implements TelemetryHelper {
 
     private static final double MAX_VALUE_PROBABILITY = 1000;
     private static final double ACCEPTANCE_RANGE = 0.001;
