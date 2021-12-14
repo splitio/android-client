@@ -30,8 +30,6 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.telemetry.TelemetrySessionCreator;
-import io.split.android.client.telemetry.TelemetrySessionCreatorImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
@@ -142,7 +140,10 @@ public class SplitFactoryImpl implements SplitFactory {
 
         cleanUpDabase(_splitTaskExecutor, splitTaskFactory);
 
-        final TelemetrySynchronizer telemetrySynchronizer = getTelemetrySynchronizer(_splitTaskExecutor, splitTaskFactory, config);
+        final TelemetrySynchronizer telemetrySynchronizer = getTelemetrySynchronizer(_splitTaskExecutor,
+                splitTaskFactory,
+                config.telemetryRefreshRate(),
+                config.shouldRecordTelemetry());
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
@@ -286,11 +287,12 @@ public class SplitFactoryImpl implements SplitFactory {
     }
 
     @NonNull
-    private TelemetrySynchronizer getTelemetrySynchronizer(SplitTaskExecutor _splitTaskExecutor, SplitTaskFactory splitTaskFactory, SplitClientConfig config) {
-        final TelemetrySessionCreator telemetrySessionCreator = new TelemetrySessionCreatorImpl();
-
-        if (telemetrySessionCreator.shouldRecordTelemetry()) {
-            return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory, config.backgroundSyncPeriod()); // TODO telemetrySyncPeriod
+    private TelemetrySynchronizer getTelemetrySynchronizer(SplitTaskExecutor _splitTaskExecutor,
+                                                           SplitTaskFactory splitTaskFactory,
+                                                           long telemetryRefreshRate,
+                                                           boolean shouldRecordTelemetry) {
+        if (shouldRecordTelemetry) {
+            return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory, telemetryRefreshRate);
         } else {
             return new TelemetrySynchronizerStub();
         }
