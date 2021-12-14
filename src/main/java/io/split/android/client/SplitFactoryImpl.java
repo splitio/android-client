@@ -147,8 +147,7 @@ public class SplitFactoryImpl implements SplitFactory {
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
-                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory(),
-                telemetrySynchronizer);
+                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory());
 
         // Only available for integration tests
         if (synchronizerSpy != null) {
@@ -157,7 +156,7 @@ public class SplitFactoryImpl implements SplitFactory {
         }
 
         _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
-                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer);
+                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, _eventsManager, telemetrySynchronizer);
 
         _syncManager.start();
 

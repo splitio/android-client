@@ -13,6 +13,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
@@ -47,6 +48,7 @@ import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
 
@@ -162,7 +164,9 @@ class SplitFactoryHelper {
                                  SplitTaskFactory splitTaskFactory,
                                  SplitApiFacade splitApiFacade,
                                  HttpClient httpClient,
-                                 Synchronizer synchronizer) {
+                                 Synchronizer synchronizer,
+                                 SplitEventsManager splitEventsManager,
+                                 TelemetrySynchronizer telemetrySynchronizer) {
 
         BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue
                 = new LinkedBlockingDeque<>();
@@ -199,6 +203,6 @@ class SplitFactoryHelper {
         BackoffCounterTimer backoffReconnectTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
 
         return new SyncManagerImpl(config, synchronizer, pushNotificationManager, splitUpdateWorker,
-                mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer);
+                mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer, splitEventsManager, telemetrySynchronizer);
     }
 }
