@@ -30,7 +30,11 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.telemetry.TelemetrySessionCreator;
+import io.split.android.client.telemetry.TelemetrySessionCreatorImpl;
+import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
+import io.split.android.client.telemetry.TelemetrySynchronizerStub;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -138,11 +142,12 @@ public class SplitFactoryImpl implements SplitFactory {
 
         cleanUpDabase(_splitTaskExecutor, splitTaskFactory);
 
+        final TelemetrySynchronizer telemetrySynchronizer = getTelemetrySynchronizer(_splitTaskExecutor, splitTaskFactory);
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
                 context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory(),
-                new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory));
+                telemetrySynchronizer);
 
         // Only available for integration tests
         if (synchronizerSpy != null) {
@@ -278,5 +283,16 @@ public class SplitFactoryImpl implements SplitFactory {
         return new AttributesManagerImpl(storageContainer.getAttributesStorage(),
                 new AttributesValidatorImpl(),
                 validationLogger);
+    }
+
+    @NonNull
+    private TelemetrySynchronizer getTelemetrySynchronizer(SplitTaskExecutor _splitTaskExecutor, SplitTaskFactory splitTaskFactory) {
+        final TelemetrySessionCreator telemetrySessionCreator = new TelemetrySessionCreatorImpl();
+
+        if (telemetrySessionCreator.shouldRecordTelemetry()) {
+            return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory);
+        } else {
+            return new TelemetrySynchronizerStub();
+        }
     }
 }
