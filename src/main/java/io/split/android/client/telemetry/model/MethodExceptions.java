@@ -1,15 +1,22 @@
 package io.split.android.client.telemetry.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class MethodExceptions {
 
+    @SerializedName("t")
     private long treatment;
 
+    @SerializedName("ts")
     private long treatments;
 
+    @SerializedName("tc")
     private long treatmentWithConfig;
 
+    @SerializedName("tcs")
     private long treatmentsWithConfig;
 
+    @SerializedName("tr")
     private long track;
 
     public long getTreatment() {

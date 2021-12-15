@@ -1,19 +1,28 @@
 package io.split.android.client.telemetry.model;
 
+import com.google.gson.annotations.SerializedName;
+
 public class LastSync {
 
+    @SerializedName("sp")
     private long lastSplitSync;
 
+    @SerializedName("ms")
     private long lastMySegmentSync;
 
+    @SerializedName("im")
     private long lastImpressionSync;
 
+    @SerializedName("ic")
     private long lastImpressionCountSync;
 
+    @SerializedName("ev")
     private long lastEventSync;
 
+    @SerializedName("te")
     private long lastTelemetrySync;
 
+    @SerializedName("to")
     private long lastTokenRefresh;
 
     public long getLastSplitSync() {
