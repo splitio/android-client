@@ -151,15 +151,8 @@ public class SplitFactoryImpl implements SplitFactory {
             synchronizer = synchronizerSpy;
         }
 
-        _syncManager = factoryHelper.buildSyncManager(key.matchingKey(),
-                config,
-                _splitTaskExecutor,
-                splitTaskFactory,
-                splitApiFacade,
-                defaultHttpClient,
-                synchronizer,
-                _eventsManager,
-                getTelemetrySynchronizer(_splitTaskExecutor,
+        _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
+                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, _eventsManager, getTelemetrySynchronizer(_splitTaskExecutor,
                         splitTaskFactory,
                         config.telemetryRefreshRate(),
                         config.shouldRecordTelemetry()));
