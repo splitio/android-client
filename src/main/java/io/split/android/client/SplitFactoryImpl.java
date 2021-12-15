@@ -140,10 +140,6 @@ public class SplitFactoryImpl implements SplitFactory {
 
         cleanUpDabase(_splitTaskExecutor, splitTaskFactory);
 
-        final TelemetrySynchronizer telemetrySynchronizer = getTelemetrySynchronizer(_splitTaskExecutor,
-                splitTaskFactory,
-                config.telemetryRefreshRate(),
-                config.shouldRecordTelemetry());
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
@@ -155,8 +151,18 @@ public class SplitFactoryImpl implements SplitFactory {
             synchronizer = synchronizerSpy;
         }
 
-        _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
-                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, _eventsManager, telemetrySynchronizer);
+        _syncManager = factoryHelper.buildSyncManager(key.matchingKey(),
+                config,
+                _splitTaskExecutor,
+                splitTaskFactory,
+                splitApiFacade,
+                defaultHttpClient,
+                synchronizer,
+                _eventsManager,
+                getTelemetrySynchronizer(_splitTaskExecutor,
+                        splitTaskFactory,
+                        config.telemetryRefreshRate(),
+                        config.shouldRecordTelemetry()));
 
         _syncManager.start();
 
