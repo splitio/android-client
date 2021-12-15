@@ -269,7 +269,8 @@ public class TestableSplitConfigBuilder {
                     mImpressionsMode,
                     mImpressionsCountersRefreshRate,
                     mIsPersistentAttributesStorageEnabled,
-                    mOfflineRefreshRate);
+                    mOfflineRefreshRate,
+                    mServiceEndpoints.getTelemetryEndpoint());
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "
