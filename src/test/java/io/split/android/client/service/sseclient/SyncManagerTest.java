@@ -158,4 +158,11 @@ public class SyncManagerTest {
 
         verify(mTelemetrySynchronizer).synchronizeStats();
     }
+
+    @Test
+    public void flushCallsFlushOnTelemetrySynchronizer() {
+        mSyncManager.flush();
+
+        verify(mTelemetrySynchronizer).flush();
+    }
 }
