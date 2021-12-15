@@ -14,9 +14,14 @@ import java.util.Set;
 public class Json {
 
     private static final Gson _json = new GsonBuilder().serializeNulls().create();
+    private static final Gson _nonNullJson = new GsonBuilder().create();
 
     public static String toJson(Object obj) {
         return _json.toJson(obj);
+    }
+
+    public static String toJsonIgnoringNulls(Object obj) {
+        return _nonNullJson.toJson(obj);
     }
 
     public static <T> T fromJson(String json, Type typeOfT) throws JsonSyntaxException {

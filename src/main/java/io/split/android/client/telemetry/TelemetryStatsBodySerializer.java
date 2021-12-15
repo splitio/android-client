@@ -10,6 +10,6 @@ public class TelemetryStatsBodySerializer implements HttpRequestBodySerializer<S
 
     @Override
     public String serialize(@NonNull Stats data) {
-        return Json.toJson(data);
+        return Json.toJsonIgnoringNulls(data);
     }
 }

@@ -10,6 +10,6 @@ public class TelemetryConfigBodySerializer implements HttpRequestBodySerializer<
 
     @Override
     public String serialize(@NonNull Config data) {
-        return Json.toJson(data);
+        return Json.toJsonIgnoringNulls(data);
     }
 }
