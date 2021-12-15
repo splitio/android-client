@@ -13,9 +13,6 @@ import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 
 public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
 
-    private static final int RETRY_INTERVAL_SECONDS = 1;
-    private static final int MAX_RETRY_ATTEMPTS = 3;
-
     private final TelemetryTaskFactory mTaskFactory;
     private final RetryBackoffCounterTimer mConfigTimer;
     private final SplitTaskExecutor mTaskExecutor;
@@ -29,8 +26,8 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
         this(splitTaskExecutor,
                 telemetryTaskFactory,
                 new RetryBackoffCounterTimer(splitTaskExecutor,
-                        new FixedIntervalBackoffCounter(RETRY_INTERVAL_SECONDS),
-                        MAX_RETRY_ATTEMPTS),
+                        new FixedIntervalBackoffCounter(ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS),
+                        ServiceConstants.TELEMETRY_CONFIG_MAX_RETRY_ATTEMPTS),
                 telemetrySyncPeriod);
     }
 
