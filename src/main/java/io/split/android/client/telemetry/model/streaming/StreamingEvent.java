@@ -1,13 +1,18 @@
 package io.split.android.client.telemetry.model.streaming;
 
+import com.google.gson.annotations.SerializedName;
+
 import io.split.android.client.telemetry.model.EventTypeEnum;
 
 public class StreamingEvent {
 
+    @SerializedName("e")
     private final EventTypeEnum eventType;
 
+    @SerializedName("d")
     private final Long eventData;
 
+    @SerializedName("t")
     private final long timestamp;
 
     public StreamingEvent(EventTypeEnum eventType, Long eventData, long timestamp) {
@@ -28,4 +33,3 @@ public class StreamingEvent {
         return timestamp;
     }
 }
-

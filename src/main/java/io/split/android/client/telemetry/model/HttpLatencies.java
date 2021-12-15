@@ -1,21 +1,30 @@
 package io.split.android.client.telemetry.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 public class HttpLatencies {
 
+    @SerializedName("sp")
     private List<Long> splits;
 
+    @SerializedName("ms")
     private List<Long> mySegments;
 
+    @SerializedName("im")
     private List<Long> impressions;
 
+    @SerializedName("ic")
     private List<Long> impressionsCount;
 
+    @SerializedName("ev")
     private List<Long> events;
 
+    @SerializedName("te")
     private List<Long> telemetry;
 
+    @SerializedName("to")
     private List<Long> token;
 
     public List<Long> getSplits() {

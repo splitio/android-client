@@ -1,21 +1,30 @@
 package io.split.android.client.telemetry.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.Map;
 
 public class HttpErrors {
 
+    @SerializedName("sp")
     private Map<Long, Long> splitSyncErrs;
 
+    @SerializedName("ms")
     private Map<Long, Long> mySegmentSyncErrs;
 
+    @SerializedName("im")
     private Map<Long, Long> impressionSyncErrs;
 
+    @SerializedName("ic")
     private Map<Long, Long> impressionCountSyncErrs;
 
+    @SerializedName("ev")
     private Map<Long, Long> eventsSyncErrs;
 
+    @SerializedName("te")
     private Map<Long, Long> telemetrySyncErrs;
 
+    @SerializedName("to")
     private Map<Long, Long> tokenGetErrs;
 
     public Map<Long, Long> getSplitSyncErrs() {

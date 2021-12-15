@@ -1,17 +1,24 @@
 package io.split.android.client.telemetry.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 public class MethodLatencies {
 
+    @SerializedName("t")
     private List<Long> treatment;
 
+    @SerializedName("ts")
     private List<Long> treatments;
 
+    @SerializedName("tc")
     private List<Long> treatmentWithConfig;
 
+    @SerializedName("tcs")
     private List<Long> treatmentsWithConfig;
 
+    @SerializedName("tr")
     private List<Long> track;
 
     public List<Long> getTreatment() {
