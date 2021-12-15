@@ -67,7 +67,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final RetryBackoffCounterTimer mMySegmentsSyncRetryTimer;
     private final ImpressionsObserver mImpressionsObserver;
     private final ImpressionsCounter mImpressionsCounter;
-    private TelemetrySynchronizer mTelemetrySynchronizer;
+    private final TelemetrySynchronizer mTelemetrySynchronizer;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -75,7 +75,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull SplitTaskFactory splitTaskFactory,
                             @NonNull SplitEventsManager splitEventsManager,
                             @NonNull WorkManagerWrapper workManagerWrapper,
-                            @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory) {
+                            @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
+                            @NonNull TelemetrySynchronizer telemetrySynchronizer) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
@@ -85,7 +86,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
         mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
-        mTelemetrySynchronizer = new TelemetrySynchronizerImpl(); //TODO provide in constructor
+        mTelemetrySynchronizer = checkNotNull(telemetrySynchronizer);
 
         mMySegmentsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
 
@@ -233,6 +234,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mSplitsSyncRetryTimer.stop();
         mMySegmentsSyncRetryTimer.stop();
         mSplitsUpdateRetryTimer.stop();
+        mTelemetrySynchronizer.destroy();
         flush();
     }
 

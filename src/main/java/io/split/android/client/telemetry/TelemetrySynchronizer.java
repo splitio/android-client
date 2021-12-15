@@ -5,4 +5,6 @@ public interface TelemetrySynchronizer {
     void synchronizeConfig();
 
     void synchronizeStats();
+
+    void destroy();
 }

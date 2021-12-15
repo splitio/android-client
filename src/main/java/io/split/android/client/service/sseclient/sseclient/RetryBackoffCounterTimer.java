@@ -8,28 +8,60 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.utils.Logger;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
 
-    private SplitTaskExecutor mTaskExecutor;
-    private ReconnectBackoffCounter mStreamingBackoffCounter;
+    private static final int DEFAULT_MAX_ATTEMPTS = -1;
+
+    private final SplitTaskExecutor mTaskExecutor;
+    private final BackoffCounter mBackoffCounter;
+    private final int mRetryAttemptsLimit;
+    private final AtomicInteger mCurrentAttempts = new AtomicInteger(0);
     private SplitTask mTask;
     private SplitTaskExecutionListener mListener;
     private String mTaskId;
 
+    /**
+     * Creates an instance which retries tasks indefinitely, using the strategy defined by backoffCounter.
+     *
+     * @param taskExecutor Implementation of SplitTaskExecutor.
+     * @param backoffCounter Will determine the retry interval.
+     */
     public RetryBackoffCounterTimer(@NonNull SplitTaskExecutor taskExecutor,
-                                    @NonNull ReconnectBackoffCounter streamingBackoffCounter) {
+                                    @NonNull BackoffCounter backoffCounter) {
         mTaskExecutor = checkNotNull(taskExecutor);
-        mStreamingBackoffCounter = checkNotNull(streamingBackoffCounter);
+        mBackoffCounter = checkNotNull(backoffCounter);
+        mRetryAttemptsLimit = DEFAULT_MAX_ATTEMPTS;
+    }
+
+    /**
+     * Creates an instance which retries tasks up to the number of times specified by retryAttemptsLimit.
+     *
+     * @param taskExecutor Implementation of SplitTaskExecutor.
+     * @param backoffCounter Will determine the retry interval.
+     * @param retryAttemptsLimit Maximum number of attempts for task retry.
+     */
+    public RetryBackoffCounterTimer(@NonNull SplitTaskExecutor taskExecutor,
+                                    @NonNull BackoffCounter backoffCounter,
+                                    int retryAttemptsLimit) {
+        mTaskExecutor = checkNotNull(taskExecutor);
+        mBackoffCounter = checkNotNull(backoffCounter);
+        mRetryAttemptsLimit = retryAttemptsLimit;
     }
 
     synchronized public void setTask(@NonNull SplitTask task, @Nullable SplitTaskExecutionListener listener) {
         mTask = checkNotNull(task);
         mListener = listener;
+    }
+
+    synchronized public void setTask(@NonNull SplitTask task) {
+        setTask(task, null);
     }
 
     synchronized public void stop() {
@@ -44,28 +76,33 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
         if(mTask == null || mTaskId != null) {
             return;
         }
-        mStreamingBackoffCounter.resetCounter();
+        mBackoffCounter.resetCounter();
+        mCurrentAttempts.incrementAndGet();
         mTaskId = mTaskExecutor.schedule(mTask, 0L, this);
     }
 
     synchronized private void schedule() {
-        if(mTask == null) {
+        if (mTask == null) {
             return;
         }
-        long retryTime = mStreamingBackoffCounter.getNextRetryTime();
-        Logger.d(String.format("Retrying %s task in %d seconds", mTask.getClass().getSimpleName(),  retryTime));
+        long retryTime = mBackoffCounter.getNextRetryTime();
+        Logger.d(String.format("Retrying %s task in %d seconds", mTask.getClass().getSimpleName(), retryTime));
+        mCurrentAttempts.incrementAndGet();
         mTaskId = mTaskExecutor.schedule(mTask, retryTime, this);
     }
 
     @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
         mTaskId = null;
-        if(taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
-            schedule();
+        if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+            if (mRetryAttemptsLimit == DEFAULT_MAX_ATTEMPTS || mCurrentAttempts.get() < mRetryAttemptsLimit) {
+                schedule();
+            }
             return;
         }
-        mStreamingBackoffCounter.resetCounter();
-        if(mListener != null) {
+
+        mBackoffCounter.resetCounter();
+        if (mListener != null) {
             mListener.taskExecuted(SplitTaskExecutionInfo.success(taskInfo.getTaskType()));
         }
     }
