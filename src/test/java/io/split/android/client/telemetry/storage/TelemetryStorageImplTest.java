@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -119,23 +118,6 @@ public class TelemetryStorageImplTest {
     }
 
     @Test
-    public void recordBURTimeouts() {
-        long initialTimeouts = telemetryStorage.getBURTimeouts();
-        telemetryStorage.recordBURTimeout();
-        telemetryStorage.recordBURTimeout();
-
-        long burTimeouts = telemetryStorage.getBURTimeouts();
-
-        telemetryStorage.recordBURTimeout();
-
-        long newTimeouts = telemetryStorage.getBURTimeouts();
-
-        assertEquals(0, initialTimeouts);
-        assertEquals(2, burTimeouts);
-        assertEquals(3, newTimeouts);
-    }
-
-    @Test
     public void recordNonReadyUsages() {
         long initialUsages = telemetryStorage.getNonReadyUsage();
         telemetryStorage.recordNonReadyUsage();
@@ -193,11 +175,17 @@ public class TelemetryStorageImplTest {
 
     @Test
     public void factoryCounterIsInitialized() {
-        long burTimeouts = telemetryStorage.getBURTimeouts();
         long nonReadyUsages = telemetryStorage.getNonReadyUsage();
+        long redundantFactories = telemetryStorage.getRedundantFactories();
+        long activeFactories = telemetryStorage.getActiveFactories();
+        long timeUntilReady = telemetryStorage.getTimeUntilReady();
+        long timeUntilReadyFromCache = telemetryStorage.getTimeUntilReadyFromCache();
 
-        assertEquals(0, burTimeouts);
         assertEquals(0, nonReadyUsages);
+        assertEquals(0, redundantFactories);
+        assertEquals(0, activeFactories);
+        assertEquals(0, timeUntilReady);
+        assertEquals(0, timeUntilReadyFromCache);
     }
 
     @Test
@@ -488,5 +476,40 @@ public class TelemetryStorageImplTest {
         List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
 
         assertEquals(20, streamingEvents.size());
+    }
+
+    @Test
+    public void activeFactoriesAreRecordedCorrectly() {
+        long initialActiveFactories = telemetryStorage.getActiveFactories();
+
+        telemetryStorage.recordActiveFactories(4);
+
+        assertEquals(0, initialActiveFactories);
+        assertEquals(4, telemetryStorage.getActiveFactories());
+    }
+
+    @Test
+    public void redundantFactoriesAreRecordedCorrectly() {
+        long initialRedundantFactories = telemetryStorage.getRedundantFactories();
+
+        telemetryStorage.recordRedundantFactories(4);
+
+        assertEquals(0, initialRedundantFactories);
+        assertEquals(4, telemetryStorage.getRedundantFactories());
+    }
+
+    @Test
+    public void timeUntilReadyIsRecordedCorrectly() {
+        telemetryStorage.recordTimeUntilReady(200);
+
+        assertEquals(200, telemetryStorage.getTimeUntilReady());
+    }
+
+    @Test
+    public void timeUntilReadyFromCacheIsRecordedCorrectly() {
+
+        telemetryStorage.recordTimeUntilReadyFromCache(300);
+
+        assertEquals(300, telemetryStorage.getTimeUntilReadyFromCache());
     }
 }

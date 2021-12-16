@@ -53,7 +53,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     private List<StreamingEvent> streamingEvents = new ArrayList<>();
 
     private final Object tagsLock = new Object();
-    private Set<String> tags = new HashSet<>();
+    private final Set<String> tags = new HashSet<>();
 
     private final ILatencyTracker latencyTracker;
 
@@ -102,23 +102,53 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     }
 
     @Override
-    public long getBURTimeouts() {
-        return factoryCounters.get(FactoryCounter.BUR_TIMEOUTS).get();
-    }
-
-    @Override
     public long getNonReadyUsage() {
         return factoryCounters.get(FactoryCounter.NON_READY_USAGES).get();
     }
 
     @Override
-    public void recordBURTimeout() {
-        factoryCounters.get(FactoryCounter.BUR_TIMEOUTS).incrementAndGet();
+    public long getActiveFactories() {
+        return factoryCounters.get(FactoryCounter.ACTIVE_FACTORIES).get();
+    }
+
+    @Override
+    public long getRedundantFactories() {
+        return factoryCounters.get(FactoryCounter.REDUNDANT_FACTORIES).get();
+    }
+
+    @Override
+    public long getTimeUntilReady() {
+        return factoryCounters.get(FactoryCounter.SDK_READY_TIME).get();
+    }
+
+    @Override
+    public long getTimeUntilReadyFromCache() {
+        return factoryCounters.get(FactoryCounter.SDK_READY_FROM_CACHE).get();
     }
 
     @Override
     public void recordNonReadyUsage() {
         factoryCounters.get(FactoryCounter.NON_READY_USAGES).incrementAndGet();
+    }
+
+    @Override
+    public void recordActiveFactories(int count) {
+        factoryCounters.get(FactoryCounter.ACTIVE_FACTORIES).set(count);
+    }
+
+    @Override
+    public void recordRedundantFactories(int count) {
+        factoryCounters.get(FactoryCounter.REDUNDANT_FACTORIES).set(count);
+    }
+
+    @Override
+    public void recordTimeUntilReady(long time) {
+        factoryCounters.get(FactoryCounter.SDK_READY_TIME).set(time);
+    }
+
+    @Override
+    public void recordTimeUntilReadyFromCache(long time) {
+        factoryCounters.get(FactoryCounter.SDK_READY_FROM_CACHE).set(time);
     }
 
     @Override
@@ -311,8 +341,11 @@ public class TelemetryStorageImpl implements TelemetryStorage {
     }
 
     private void initializeFactoryCounters() {
-        factoryCounters.put(FactoryCounter.BUR_TIMEOUTS, new AtomicLong());
         factoryCounters.put(FactoryCounter.NON_READY_USAGES, new AtomicLong());
+        factoryCounters.put(FactoryCounter.SDK_READY_TIME, new AtomicLong());
+        factoryCounters.put(FactoryCounter.SDK_READY_FROM_CACHE, new AtomicLong());
+        factoryCounters.put(FactoryCounter.REDUNDANT_FACTORIES, new AtomicLong());
+        factoryCounters.put(FactoryCounter.ACTIVE_FACTORIES, new AtomicLong());
     }
 
     private void initializeImpressionsData() {
