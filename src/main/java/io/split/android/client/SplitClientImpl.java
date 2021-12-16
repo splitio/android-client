@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +20,8 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.model.Method;
+import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
@@ -46,6 +49,7 @@ public final class SplitClientImpl implements SplitClient {
     private final ValidationMessageLogger mValidationLogger;
     private final SyncManager mSyncManager;
     private final AttributesManager mAttributesManager;
+    private final TelemetryEvaluationProducer mTelemetryEvaluationProducer;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -60,8 +64,35 @@ public final class SplitClientImpl implements SplitClient {
                            SplitsStorage splitsStorage,
                            EventPropertiesProcessor eventPropertiesProcessor,
                            SyncManager syncManager,
-                           AttributesManager attributesManager) {
+                           AttributesManager attributesManager,
+                           TelemetryEvaluationProducer telemetryEvaluationProducer) {
+        this(container,
+                key,
+                splitParser,
+                impressionListener,
+                config,
+                eventsManager,
+                splitsStorage,
+                eventPropertiesProcessor,
+                new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage),
+                syncManager,
+                attributesManager,
+                telemetryEvaluationProducer);
+    }
 
+    @VisibleForTesting
+    public SplitClientImpl(SplitFactory container,
+                           Key key,
+                           SplitParser splitParser,
+                           ImpressionListener impressionListener,
+                           SplitClientConfig config,
+                           SplitEventsManager eventsManager,
+                           SplitsStorage splitsStorage,
+                           EventPropertiesProcessor eventPropertiesProcessor,
+                           EventValidator eventValidator,
+                           SyncManager syncManager,
+                           AttributesManager attributesManager,
+                           TelemetryEvaluationProducer telemetryEvaluationProducer) {
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
 
@@ -71,12 +102,13 @@ public final class SplitClientImpl implements SplitClient {
         mSplitFactory = checkNotNull(container);
         mConfig = checkNotNull(config);
         mEventsManager = checkNotNull(eventsManager);
-        mEventValidator = new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage);
+        mEventValidator = checkNotNull(eventValidator);
         mValidationLogger = new ValidationMessageLoggerImpl();
+        mTelemetryEvaluationProducer = telemetryEvaluationProducer;
         mTreatmentManager = new TreatmentManagerImpl(
                 mMatchingKey, mBucketingKey, new EvaluatorImpl(splitsStorage, splitParser),
                 new KeyValidatorImpl(), new SplitValidatorImpl(),
-                impressionListener, mConfig, eventsManager, attributesManager, new AttributesMergerImpl());
+                impressionListener, mConfig, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryEvaluationProducer);
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
         mSyncManager = checkNotNull(syncManager);
         mAttributesManager = checkNotNull(attributesManager);
@@ -242,9 +274,15 @@ public final class SplitClientImpl implements SplitClient {
         if (!processedProperties.isValid()) {
             return false;
         }
+
+        long startTime = System.currentTimeMillis();
+
         event.properties = processedProperties.getProperties();
         event.setSizeInBytes(ESTIMATED_EVENT_SIZE_WITHOUT_PROPS + processedProperties.getSizeInBytes());
         mSyncManager.pushEvent(event);
+
+        mTelemetryEvaluationProducer.recordLatency(Method.TRACK, System.currentTimeMillis() - startTime);
+
         return true;
     }
 }

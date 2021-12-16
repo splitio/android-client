@@ -14,6 +14,7 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.engine.experiments.SplitParser;
 
 /**
@@ -37,7 +38,8 @@ public class SplitClientImplFactory {
                 splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
-                mock(AttributesManager.class)
+                mock(AttributesManager.class),
+                mock(TelemetryStorage.class)
         );
         eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
         eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
@@ -57,7 +59,8 @@ public class SplitClientImplFactory {
                 splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
-                mock(AttributesManager.class)
+                mock(AttributesManager.class),
+                mock(TelemetryStorage.class)
         );
     }
 
@@ -73,7 +76,8 @@ public class SplitClientImplFactory {
                 splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
-                mock(AttributesManager.class)
+                mock(AttributesManager.class),
+                mock(TelemetryStorage.class)
         );
     }
 }
