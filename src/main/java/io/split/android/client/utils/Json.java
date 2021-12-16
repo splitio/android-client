@@ -14,14 +14,14 @@ import java.util.Set;
 public class Json {
 
     private static final Gson _json = new GsonBuilder().serializeNulls().create();
-    private static final Gson _nonNullJson = new GsonBuilder().create();
+    private static volatile Gson _nonNullJson;
 
     public static String toJson(Object obj) {
         return _json.toJson(obj);
     }
 
     public static String toJsonIgnoringNulls(Object obj) {
-        return _nonNullJson.toJson(obj);
+        return getNonNullsGsonInstance().toJson(obj);
     }
 
     public static <T> T fromJson(String json, Type typeOfT) throws JsonSyntaxException {
@@ -48,5 +48,17 @@ public class Json {
             }
         }
         return map;
+    }
+
+    private static Gson getNonNullsGsonInstance() {
+        if (_nonNullJson == null) {
+            synchronized (Json.class) {
+                if (_nonNullJson == null) {
+                    _nonNullJson = new GsonBuilder().create();
+                }
+            }
+        }
+
+        return _nonNullJson;
     }
 }
