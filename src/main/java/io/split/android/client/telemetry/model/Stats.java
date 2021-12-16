@@ -102,10 +102,6 @@ public class Stats {
         this.impressionsDropped = impressionsDropped;
     }
 
-    public long getSplitCount() {
-        return splitCount;
-    }
-
     public void setSplitCount(long splitCount) {
         this.splitCount = splitCount;
     }
