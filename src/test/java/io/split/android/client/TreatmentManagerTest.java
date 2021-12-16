@@ -1,5 +1,9 @@
 package io.split.android.client;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +31,7 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
@@ -51,6 +56,7 @@ public class TreatmentManagerTest {
     ImpressionListener impressionListener;
     ISplitEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
+    TelemetryEvaluationProducer telemetryEvaluationProducer = mock(TelemetryEvaluationProducer.class);
     TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
 
     @Before
@@ -330,7 +336,7 @@ public class TreatmentManagerTest {
                 eventsManager,
                 attributesManager,
                 mock(AttributesMerger.class),
-                mock(TelemetryEvaluationProducer.class)
+                telemetryEvaluationProducer
         );
     }
 
