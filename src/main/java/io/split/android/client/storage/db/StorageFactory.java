@@ -24,13 +24,14 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.telemetry.storage.BinarySearchLatencyTracker;
+import io.split.android.client.telemetry.storage.NoOpTelemetryStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.telemetry.storage.InMemoryTelemetryStorage;
 
 @RestrictTo(LIBRARY)
 public class StorageFactory {
 
-    private static final TelemetryStorage telemetryStorageInstance = new InMemoryTelemetryStorage(new BinarySearchLatencyTracker());
+    private static volatile TelemetryStorage telemetryStorageInstance;
 
     public static SplitsStorage getSplitsStorage(SplitRoomDatabase splitRoomDatabase) {
         PersistentSplitsStorage persistentSplitsStorage
@@ -75,7 +76,19 @@ public class StorageFactory {
         return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), matchingKey);
     }
 
-    public static TelemetryStorage getTelemetryStorage() {
+    public static TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry) {
+        if (telemetryStorageInstance == null) {
+            synchronized (StorageFactory.class) {
+                if (telemetryStorageInstance == null) {
+                    if (shouldRecordTelemetry) {
+                        telemetryStorageInstance = new InMemoryTelemetryStorage(new BinarySearchLatencyTracker());
+                    } else {
+                        telemetryStorageInstance = new NoOpTelemetryStorage();
+                    }
+                }
+            }
+        }
+
         return telemetryStorageInstance;
     }
 }

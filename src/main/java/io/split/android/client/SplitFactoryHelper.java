@@ -107,7 +107,7 @@ class SplitFactoryHelper {
         return headersBuilder.build();
     }
 
-    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key) {
+    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key, boolean shouldRecordTelemetry) {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, key.matchingKey()),
@@ -117,7 +117,7 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistenImpressionsCountStorage(splitRoomDatabase),
                 StorageFactory.getAttributesStorage(),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, key.matchingKey()),
-                StorageFactory.getTelemetryStorage());
+                StorageFactory.getTelemetryStorage(shouldRecordTelemetry));
     }
 
     String buildSplitsFilterQueryString(SplitClientConfig config) {

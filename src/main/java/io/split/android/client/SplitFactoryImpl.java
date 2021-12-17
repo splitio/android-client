@@ -127,7 +127,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
 
-        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key);
+        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key, config.shouldRecordTelemetry());
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 
