@@ -25,4 +25,9 @@ public class TelemetryTaskFactoryImpl implements TelemetryTaskFactory {
     public TelemetryConfigRecorderTask getTelemetryConfigRecorderTask() {
         return new TelemetryConfigRecorderTask(mTelemetryConfigRecorder, mTelemetryConfigProvider);
     }
+
+    @Override
+    public TelemetryStatsRecorderTask getTelemetryStatsRecorderTask() {
+        return new TelemetryStatsRecorderTask();
+    }
 }

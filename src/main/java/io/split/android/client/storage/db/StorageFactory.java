@@ -5,8 +5,6 @@ import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 import androidx.annotation.RestrictTo;
 
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
-import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.AttributesStorageImpl;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
@@ -26,11 +24,15 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.telemetry.storage.BinarySearchLatencyTracker;
+import io.split.android.client.telemetry.storage.NoOpTelemetryStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.telemetry.storage.TelemetryStorageImpl;
+import io.split.android.client.telemetry.storage.InMemoryTelemetryStorage;
 
 @RestrictTo(LIBRARY)
 public class StorageFactory {
+
+    private static volatile TelemetryStorage telemetryStorageInstance;
+
     public static SplitsStorage getSplitsStorage(SplitRoomDatabase splitRoomDatabase) {
         PersistentSplitsStorage persistentSplitsStorage
                 = new SqLitePersistentSplitsStorage(splitRoomDatabase);
@@ -74,7 +76,19 @@ public class StorageFactory {
         return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), matchingKey);
     }
 
-    public static TelemetryStorage getTelemetryStorage() {
-        return new TelemetryStorageImpl(new BinarySearchLatencyTracker());
+    public static TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry) {
+        if (telemetryStorageInstance == null) {
+            synchronized (StorageFactory.class) {
+                if (telemetryStorageInstance == null) {
+                    if (shouldRecordTelemetry) {
+                        telemetryStorageInstance = new InMemoryTelemetryStorage(new BinarySearchLatencyTracker());
+                    } else {
+                        telemetryStorageInstance = new NoOpTelemetryStorage();
+                    }
+                }
+            }
+        }
+
+        return telemetryStorageInstance;
     }
 }
