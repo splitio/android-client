@@ -22,47 +22,7 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.engine.experiments.SplitParser;
 
-public class SplitClientImplAttributesTest {
-
-    @Mock
-    SplitFactory container;
-    @Mock
-    AttributesManager attributesManager;
-    @Mock
-    MySegmentsStorage mySegmentsStorage;
-    @Mock
-    ImpressionListener impressionListener;
-    @Mock
-    SplitsStorage splitsStorage;
-    @Mock
-    EventPropertiesProcessor eventPropertiesProcessor;
-    @Mock
-    SyncManager syncManager;
-    @Mock
-    TelemetryEvaluationProducer telemetryEvaluationProducer;
-
-    private SplitClientImpl splitClient;
-
-    @Before
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-
-        SplitClientConfig splitClientConfig = SplitClientConfig.builder().build();
-
-        splitClient = new SplitClientImpl(
-                container,
-                new Key("test_key"),
-                new SplitParser(mySegmentsStorage),
-                impressionListener,
-                splitClientConfig,
-                new SplitEventsManager(splitClientConfig),
-                splitsStorage,
-                eventPropertiesProcessor,
-                syncManager,
-                attributesManager,
-                telemetryEvaluationProducer
-        );
-    }
+public class SplitClientImplAttributesTest extends SplitClientImplBaseTest {
 
     @Test
     public void setAttributeCallsSetAttributeOnAttributesManager() {

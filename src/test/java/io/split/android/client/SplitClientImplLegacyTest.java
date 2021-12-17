@@ -46,7 +46,7 @@ import io.split.android.helpers.SplitHelper;
 /**
  * Tests for SplitClientImpl
  */
-public class SplitClientImplTest {
+public class SplitClientImplLegacyTest {
 
     SplitClient mClient;
 

@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,7 @@ import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
+import io.split.android.grammar.Treatments;
 
 /**
  * A basic implementation of SplitClient.
@@ -77,7 +79,11 @@ public final class SplitClientImpl implements SplitClient {
                 new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage),
                 syncManager,
                 attributesManager,
-                telemetryEvaluationProducer);
+                telemetryEvaluationProducer,
+                new TreatmentManagerImpl(
+                        key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser, telemetryEvaluationProducer),
+                        new KeyValidatorImpl(), new SplitValidatorImpl(),
+                        impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryEvaluationProducer));
     }
 
     @VisibleForTesting
@@ -92,23 +98,19 @@ public final class SplitClientImpl implements SplitClient {
                            EventValidator eventValidator,
                            SyncManager syncManager,
                            AttributesManager attributesManager,
-                           TelemetryEvaluationProducer telemetryEvaluationProducer) {
+                           TelemetryEvaluationProducer telemetryEvaluationProducer,
+                           TreatmentManager treatmentManager) {
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
 
-        String mBucketingKey = key.bucketingKey();
         mMatchingKey = checkNotNull(key.matchingKey());
-
         mSplitFactory = checkNotNull(container);
         mConfig = checkNotNull(config);
         mEventsManager = checkNotNull(eventsManager);
         mEventValidator = checkNotNull(eventValidator);
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTelemetryEvaluationProducer = telemetryEvaluationProducer;
-        mTreatmentManager = new TreatmentManagerImpl(
-                mMatchingKey, mBucketingKey, new EvaluatorImpl(splitsStorage, splitParser),
-                new KeyValidatorImpl(), new SplitValidatorImpl(),
-                impressionListener, mConfig, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryEvaluationProducer);
+        mTreatmentManager = treatmentManager;
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
         mSyncManager = checkNotNull(syncManager);
         mAttributesManager = checkNotNull(attributesManager);
@@ -137,22 +139,66 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatment(split, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatment(split, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e("Client getTreatment exception", exception);
+
+            mTelemetryEvaluationProducer.recordException(Method.TREATMENT);
+
+            return Treatments.CONTROL;
+        }
     }
 
     @Override
     public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentWithConfig(split, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatmentWithConfig(split, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e("Client getTreatmentWithConfig exception", exception);
+
+            mTelemetryEvaluationProducer.recordException(Method.TREATMENT_WITH_CONFIG);
+
+            return new SplitResult(Treatments.CONTROL);
+        }
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatments(splits, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatments(splits, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e("Client getTreatments exception", exception);
+
+            mTelemetryEvaluationProducer.recordException(Method.TREATMENTS);
+
+            Map<String, String> result = new HashMap<>();
+
+            for (String split : splits) {
+                result.put(split, Treatments.CONTROL);
+            }
+
+            return result;
+        }
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e("Client getTreatmentsWithConfig exception", exception);
+
+            mTelemetryEvaluationProducer.recordException(Method.TREATMENTS_WITH_CONFIG);
+
+            Map<String, SplitResult> result = new HashMap<>();
+
+            for (String split : splits) {
+                result.put(split, new SplitResult(Treatments.CONTROL));
+            }
+
+            return result;
+        }
     }
 
     public void on(SplitEvent event, SplitEventTask task) {
@@ -243,46 +289,52 @@ public final class SplitClientImpl implements SplitClient {
     private final static int ESTIMATED_EVENT_SIZE_WITHOUT_PROPS = 1024;
 
     private boolean track(String key, String trafficType, String eventType, double value, Map<String, Object> properties) {
-        final String validationTag = "track";
-        final boolean isSdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
-        if (mIsClientDestroyed) {
-            mValidationLogger.e("Client has already been destroyed - no calls possible", validationTag);
-            return false;
-        }
-
-        Event event = new Event();
-        event.eventTypeId = eventType;
-        event.trafficTypeName = trafficType;
-        event.key = key;
-        event.value = value;
-        event.timestamp = System.currentTimeMillis();
-        event.properties = properties;
-
-        ValidationErrorInfo errorInfo = mEventValidator.validate(event, isSdkReady);
-        if (errorInfo != null) {
-
-            if (errorInfo.isError()) {
-                mValidationLogger.e(errorInfo, validationTag);
+        try {
+            final String validationTag = "track";
+            final boolean isSdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
+            if (mIsClientDestroyed) {
+                mValidationLogger.e("Client has already been destroyed - no calls possible", validationTag);
                 return false;
             }
-            mValidationLogger.w(errorInfo, validationTag);
-            event.trafficTypeName = event.trafficTypeName.toLowerCase();
-        }
 
-        ProcessedEventProperties processedProperties =
-                mEventPropertiesProcessor.process(event.properties);
-        if (!processedProperties.isValid()) {
+            Event event = new Event();
+            event.eventTypeId = eventType;
+            event.trafficTypeName = trafficType;
+            event.key = key;
+            event.value = value;
+            event.timestamp = System.currentTimeMillis();
+            event.properties = properties;
+
+            ValidationErrorInfo errorInfo = mEventValidator.validate(event, isSdkReady);
+            if (errorInfo != null) {
+
+                if (errorInfo.isError()) {
+                    mValidationLogger.e(errorInfo, validationTag);
+                    return false;
+                }
+                mValidationLogger.w(errorInfo, validationTag);
+                event.trafficTypeName = event.trafficTypeName.toLowerCase();
+            }
+
+            ProcessedEventProperties processedProperties =
+                    mEventPropertiesProcessor.process(event.properties);
+            if (!processedProperties.isValid()) {
+                return false;
+            }
+
+            long startTime = System.currentTimeMillis();
+
+            event.properties = processedProperties.getProperties();
+            event.setSizeInBytes(ESTIMATED_EVENT_SIZE_WITHOUT_PROPS + processedProperties.getSizeInBytes());
+            mSyncManager.pushEvent(event);
+
+            mTelemetryEvaluationProducer.recordLatency(Method.TRACK, System.currentTimeMillis() - startTime);
+
+            return true;
+        } catch (Exception exception) {
+            mTelemetryEvaluationProducer.recordException(Method.TRACK);
+
             return false;
         }
-
-        long startTime = System.currentTimeMillis();
-
-        event.properties = processedProperties.getProperties();
-        event.setSizeInBytes(ESTIMATED_EVENT_SIZE_WITHOUT_PROPS + processedProperties.getSizeInBytes());
-        mSyncManager.pushEvent(event);
-
-        mTelemetryEvaluationProducer.recordLatency(Method.TRACK, System.currentTimeMillis() - startTime);
-
-        return true;
     }
 }

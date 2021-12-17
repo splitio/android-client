@@ -32,7 +32,8 @@ public class DependencyMatcher implements Matcher {
                 (String) matchValue,
                 bucketingKey,
                 _split,
-                attributes
+                attributes,
+                null
         );
 
         return _treatments.contains(result.getTreatment());

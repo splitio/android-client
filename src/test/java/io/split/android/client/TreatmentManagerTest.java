@@ -78,7 +78,7 @@ public class TreatmentManagerTest {
 
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
 
-            evaluator = new EvaluatorImpl(splitsStorage, splitParser);
+            evaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryEvaluationProducer);
         }
         impressionListener = new ImpressionListenerMock();
         eventsManagerStub = new SplitEventsManagerStub();
@@ -321,9 +321,9 @@ public class TreatmentManagerTest {
 
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(true);
-        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split", new HashMap<>())).thenReturn(new EvaluationResult("test", "test"));
-        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_1", new HashMap<>())).thenReturn(new EvaluationResult("test", "test"));
-        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_2", new HashMap<>())).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split", new HashMap<>(), Method.TREATMENT)).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_1", new HashMap<>(), Method.TREATMENT)).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_2", new HashMap<>(), Method.TREATMENT)).thenReturn(new EvaluationResult("test", "test"));
 
         return new TreatmentManagerImpl(
                 "matching_key",

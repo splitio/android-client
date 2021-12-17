@@ -1,5 +1,6 @@
 package io.split.android.client;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -64,7 +65,7 @@ public class TreatmentManagerTelemetryTest {
                 telemetryEvaluationProducer
         );
 
-        when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
+        when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap(), any())).thenReturn(new EvaluationResult("test", "label"));
     }
 
     @Test

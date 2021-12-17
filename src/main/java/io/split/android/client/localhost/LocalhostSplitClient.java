@@ -17,6 +17,7 @@ import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -28,6 +29,7 @@ import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.engine.experiments.SplitParser;
+import io.split.android.grammar.Treatments;
 
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
@@ -61,7 +63,7 @@ public final class LocalhostSplitClient implements SplitClient {
         mFactoryRef = new WeakReference<>(checkNotNull(container));
         mKey = checkNotNull(key);
         mEventsManager = checkNotNull(eventsManager);
-        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
+        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryEvaluationProducer);
         mTreatmentManager = new TreatmentManagerImpl(mKey, null,
                 mEvaluator, new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
@@ -70,27 +72,69 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public String getTreatment(String split) {
-        return mTreatmentManager.getTreatment(split, null, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatment(split, null, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return Treatments.CONTROL;
+        }
     }
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatment(split, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatment(split, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return Treatments.CONTROL;
+        }
     }
 
     @Override
     public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentWithConfig(split, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatmentWithConfig(split, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return new SplitResult(Treatments.CONTROL);
+        }
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatments(splits, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatments(splits, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            Map<String, String> result = new HashMap<>();
+
+            for (String split : splits) {
+                result.put(split, Treatments.CONTROL);
+            }
+
+            return result;
+        }
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            Map<String, SplitResult> result = new HashMap<>();
+
+            for (String split : splits) {
+                result.put(split, new SplitResult(Treatments.CONTROL));
+            }
+
+            return result;
+        }
     }
 
     @Override

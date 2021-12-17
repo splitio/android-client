@@ -6,6 +6,8 @@ import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.model.Method;
+import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
@@ -18,27 +20,30 @@ public class EvaluatorImpl implements Evaluator {
 
     private final SplitsStorage mSplitsStorage;
     private final SplitParser mSplitParser;
+    private final TelemetryEvaluationProducer mTelemetryEvaluationProducer;
 
-    public EvaluatorImpl(SplitsStorage splitsStorage, SplitParser splitParser) {
+    public EvaluatorImpl(SplitsStorage splitsStorage, SplitParser splitParser, TelemetryEvaluationProducer telemetryEvaluationProducer) {
         mSplitsStorage = splitsStorage;
         mSplitParser = splitParser;
+        mTelemetryEvaluationProducer = telemetryEvaluationProducer;
     }
 
     @Override
-    public EvaluationResult getTreatment(String matchingKey, String bucketingKey, String splitName, Map<String, Object> attributes) {
+    public EvaluationResult getTreatment(String matchingKey, String bucketingKey, String splitName, Map<String, Object> attributes, Method callingMethod) {
 
         try {
             ParsedSplit parsedSplit = mSplitParser.parse(mSplitsStorage.get(splitName));
             if (parsedSplit == null) {
                 return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.DEFINITION_NOT_FOUND);
             }
-            return getTreatment(matchingKey, bucketingKey, parsedSplit, attributes);
 
+            return getTreatment(matchingKey, bucketingKey, parsedSplit, attributes);
         } catch (ChangeNumberExceptionWrapper ex) {
             Logger.e(ex, "Catch Change Number Exception");
         } catch (Exception e) {
             Logger.e(e, "Catch All Exception");
         }
+        mTelemetryEvaluationProducer.recordException(callingMethod);
         return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
     }
 
