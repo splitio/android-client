@@ -1,9 +1,8 @@
 package io.split.android.client;
 
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,7 +38,6 @@ import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
-import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import io.split.android.fake.ImpressionListenerMock;
@@ -51,7 +49,6 @@ import io.split.android.helpers.FileHelper;
 @SuppressWarnings("ConstantConditions")
 public class TreatmentManagerTest {
 
-    SplitFetcher splitFetcher;
     Evaluator evaluator;
     ImpressionListener impressionListener;
     ISplitEventsManager eventsManagerStub;
@@ -321,9 +318,9 @@ public class TreatmentManagerTest {
 
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(true);
-        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split", new HashMap<>(), Method.TREATMENT)).thenReturn(new EvaluationResult("test", "test"));
-        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_1", new HashMap<>(), Method.TREATMENT)).thenReturn(new EvaluationResult("test", "test"));
-        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_2", new HashMap<>(), Method.TREATMENT)).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split"), anyMap(), any())).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split_1"), anyMap(), any())).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split_2"), anyMap(), any())).thenReturn(new EvaluationResult("test", "test"));
 
         return new TreatmentManagerImpl(
                 "matching_key",
