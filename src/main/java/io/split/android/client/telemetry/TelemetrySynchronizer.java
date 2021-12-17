@@ -7,4 +7,6 @@ public interface TelemetrySynchronizer {
     void synchronizeStats();
 
     void destroy();
+
+    void flush();
 }

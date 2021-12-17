@@ -8,7 +8,6 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
-import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.telemetry.model.Stats;
 import io.split.android.client.telemetry.storage.TelemetryStatsProvider;
 

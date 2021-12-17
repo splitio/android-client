@@ -30,15 +30,15 @@ import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
 
-public class TelemetryStorageImplTest {
+public class InMemoryTelemetryStorageTest {
 
     @Mock ILatencyTracker latencyTracker;
-    private TelemetryStorageImpl telemetryStorage;
+    private InMemoryTelemetryStorage telemetryStorage;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetryStorage = new TelemetryStorageImpl(latencyTracker);
+        telemetryStorage = new InMemoryTelemetryStorage(latencyTracker);
     }
 
     @Test
