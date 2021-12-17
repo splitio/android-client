@@ -35,10 +35,6 @@ public class NoOpTelemetryStorage implements TelemetryStorage {
 
     }
 
-    @Override
-    public long getBURTimeouts() {
-        return 0;
-    }
 
     @Override
     public long getNonReadyUsage() {
@@ -46,12 +42,17 @@ public class NoOpTelemetryStorage implements TelemetryStorage {
     }
 
     @Override
-    public void recordBURTimeout() {
-
+    public long getTimeUntilReadyFromCache() {
+        return 0;
     }
 
     @Override
     public void recordNonReadyUsage() {
+
+    }
+
+    @Override
+    public void recordTimeUntilReadyFromCache(long timeUntilReadyFromCache) {
 
     }
 
