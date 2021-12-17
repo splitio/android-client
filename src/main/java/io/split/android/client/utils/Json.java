@@ -13,11 +13,11 @@ import java.util.Set;
 
 public class Json {
 
-    private static final Gson _json = new GsonBuilder().serializeNulls().create();
-    private static volatile Gson _nonNullJson;
+    private static final Gson mJson = new GsonBuilder().serializeNulls().create();
+    private static volatile Gson mNonNullJson;
 
     public static String toJson(Object obj) {
-        return _json.toJson(obj);
+        return mJson.toJson(obj);
     }
 
     public static String toJsonIgnoringNulls(Object obj) {
@@ -25,7 +25,7 @@ public class Json {
     }
 
     public static <T> T fromJson(String json, Type typeOfT) throws JsonSyntaxException {
-        return _json.fromJson(json, typeOfT);
+        return mJson.fromJson(json, typeOfT);
     }
 
     public static <T> List<T> fromJsonList(String json, Class<T> clz) throws JsonSyntaxException {
@@ -35,11 +35,11 @@ public class Json {
     }
 
     public static <T> T fromJson(String json, Class<T> clz) throws JsonSyntaxException {
-        return _json.fromJson(json, clz);
+        return mJson.fromJson(json, clz);
     }
 
     public static Map<String, Object> genericValueMapFromJson(String json, Type attributesMapType) {
-        Map<String, Object> map = _json.fromJson(json, attributesMapType);
+        Map<String, Object> map = mJson.fromJson(json, attributesMapType);
 
         Set<Map.Entry<String, Object>> entries = map.entrySet();
         for (Map.Entry<String, Object> entry : entries) {
@@ -51,14 +51,14 @@ public class Json {
     }
 
     private static Gson getNonNullsGsonInstance() {
-        if (_nonNullJson == null) {
+        if (mNonNullJson == null) {
             synchronized (Json.class) {
-                if (_nonNullJson == null) {
-                    _nonNullJson = new GsonBuilder().create();
+                if (mNonNullJson == null) {
+                    mNonNullJson = new GsonBuilder().create();
                 }
             }
         }
 
-        return _nonNullJson;
+        return mNonNullJson;
     }
 }
