@@ -27,10 +27,14 @@ public class TelemetryStatsRecorderTask implements SplitTask {
     @Override
     public SplitTaskExecutionInfo execute() {
         try {
-            mTelemetryStatsRecorder.execute(mTelemetryStatsProvider.getTelemetryStats());
+            Stats pendingStats = mTelemetryStatsProvider.getTelemetryStats();
+
+            mTelemetryStatsRecorder.execute(pendingStats);
+
+            mTelemetryStatsProvider.clearStats();
 
             return SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_STATS_TASK);
-        } catch (HttpRecorderException e) {
+        } catch (Exception e) {
 
             return SplitTaskExecutionInfo.error(SplitTaskType.TELEMETRY_STATS_TASK);
         }

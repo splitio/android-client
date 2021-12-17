@@ -1,6 +1,7 @@
 package io.split.android.client.service.telemetry;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +31,13 @@ public class TelemetryStatsRecorderTaskTest {
     }
 
     @Test
+    public void successfulExecutionClearsValuesOnProvider() {
+        telemetryConfigRecorderTask.execute();
+
+        verify(statsProvider).clearStats();
+    }
+
+    @Test
     public void executeFetchesStatsFromProvider() {
 
         telemetryConfigRecorderTask.execute();
@@ -47,5 +55,16 @@ public class TelemetryStatsRecorderTaskTest {
 
         verify(recorder).execute(captor.capture());
         assertEquals(expectedStats, captor.getValue());
+    }
+
+    @Test
+    public void unsuccessfulExecutionDoesNotClearValuesOnProvider() {
+        when(statsProvider.getTelemetryStats()).thenAnswer(invocation -> {
+            throw new Exception("test exception");
+        });
+
+        telemetryConfigRecorderTask.execute();
+
+        verify(statsProvider, times(0)).clearStats();
     }
 }

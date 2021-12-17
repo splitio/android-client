@@ -45,7 +45,7 @@ public class Stats {
     private long segmentCount;
 
     @SerializedName("skC")
-    private long segmentKeyCount;
+    private final long segmentKeyCount = 1;
 
     @SerializedName("sL")
     private long sessionLengthMs;
@@ -110,10 +110,6 @@ public class Stats {
         this.segmentCount = segmentCount;
     }
 
-    public void setSegmentKeyCount(long segmentKeyCount) {
-        this.segmentKeyCount = segmentKeyCount;
-    }
-
     public void setSessionLengthMs(long sessionLengthMs) {
         this.sessionLengthMs = sessionLengthMs;
     }
@@ -132,5 +128,9 @@ public class Stats {
 
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+
+    public List<String> getTags() {
+        return tags;
     }
 }

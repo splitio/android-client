@@ -29,7 +29,7 @@ public class TelemetryStatsBodySerializerTest {
     public void jsonIsBuiltAsExpected() {
         String serializedStats = telemetryStatsBodySerializer.serialize(getMockStats());
 
-        assertEquals("{\"lS\":{\"sp\":1000,\"ms\":2000,\"im\":3000,\"ic\":4000,\"ev\":5000,\"te\":6000,\"to\":7000},\"mL\":{\"t\":[0,0,2,0],\"ts\":[0,0,3,0],\"tc\":[0,0,5,0],\"tcs\":[0,0,4,0],\"tr\":[0,0,1,0]},\"mE\":{\"t\":2,\"ts\":3,\"tc\":5,\"tcs\":4,\"tr\":1},\"hE\":{},\"hL\":{\"sp\":[0,0,3,0],\"ms\":[0,0,5,0],\"im\":[0,0,1,0],\"ic\":[0,0,4,0],\"ev\":[0,0,2,0],\"te\":[1,0,0,0],\"to\":[0,0,6,0]},\"tR\":4,\"aR\":5,\"iQ\":2,\"iDe\":5,\"iDr\":4,\"spC\":456,\"seC\":4,\"skC\":8,\"sL\":2000,\"eQ\":4,\"eD\":2,\"sE\":[{\"e\":\"0\",\"t\":5000},{\"e\":\"20\",\"d\":4,\"t\":2000}],\"t\":[\"tag1\",\"tag2\"]}", serializedStats);
+        assertEquals("{\"lS\":{\"sp\":1000,\"ms\":2000,\"im\":3000,\"ic\":4000,\"ev\":5000,\"te\":6000,\"to\":7000},\"mL\":{\"t\":[0,0,2,0],\"ts\":[0,0,3,0],\"tc\":[0,0,5,0],\"tcs\":[0,0,4,0],\"tr\":[0,0,1,0]},\"mE\":{\"t\":2,\"ts\":3,\"tc\":5,\"tcs\":4,\"tr\":1},\"hE\":{},\"hL\":{\"sp\":[0,0,3,0],\"ms\":[0,0,5,0],\"im\":[0,0,1,0],\"ic\":[0,0,4,0],\"ev\":[0,0,2,0],\"te\":[1,0,0,0],\"to\":[0,0,6,0]},\"tR\":4,\"aR\":5,\"iQ\":2,\"iDe\":5,\"iDr\":4,\"spC\":456,\"seC\":4,\"skC\":1,\"sL\":2000,\"eQ\":4,\"eD\":2,\"sE\":[{\"e\":\"0\",\"t\":5000},{\"e\":\"20\",\"d\":4,\"t\":2000}],\"t\":[\"tag1\",\"tag2\"]}", serializedStats);
     }
 
     private Stats getMockStats() {
@@ -85,7 +85,6 @@ public class TelemetryStatsBodySerializerTest {
         stats.setTags(Arrays.asList("tag1", "tag2"));
         stats.setTokenRefreshes(4);
         stats.setStreamingEvents(Arrays.asList(new ConnectionEstablishedStreamingEvent(5000), new OccupancySecStreamingEvent(4, 2000)));
-        stats.setSegmentKeyCount(8);
 
         return stats;
     }
