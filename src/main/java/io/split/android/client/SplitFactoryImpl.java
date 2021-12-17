@@ -10,6 +10,8 @@ import java.util.List;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerImpl;
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -68,6 +70,7 @@ public class SplitFactoryImpl implements SplitFactory {
                              SynchronizerSpy synchronizerSpy)
             throws URISyntaxException {
 
+        long initializationStartTime = System.currentTimeMillis();
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
         setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
@@ -224,6 +227,24 @@ public class SplitFactoryImpl implements SplitFactory {
                 new SplitValidatorImpl(), splitParser);
 
         _eventsManager.getExecutorResources().setSplitClient(_client);
+
+        int activeFactoriesCount = _factoryMonitor.count(_apiKey);
+        storageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
+        storageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
+
+        _client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                storageContainer.getTelemetryStorage().recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
+            }
+        });
+
+        _client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                storageContainer.getTelemetryStorage().recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
+            }
+        });
 
         Logger.i("Android SDK initialized!");
     }

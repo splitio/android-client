@@ -21,6 +21,7 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
+import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.grammar.Treatments;
 
@@ -49,7 +50,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final AttributesManager mAttributesManager;
     @NonNull
     private final AttributesMerger mAttributesMerger;
-    private final TelemetryEvaluationProducer mTelemetryEvaluationProducer;
+    private final TelemetryStorageProducer mTelemetryStorageProducer;
 
     public TreatmentManagerImpl(String matchingKey,
                                 String bucketingKey,
@@ -61,7 +62,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 ISplitEventsManager eventsManager,
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
-                                @NonNull TelemetryEvaluationProducer telemetryEvaluationProducer) {
+                                @NonNull TelemetryStorageProducer telemetryStorageProducer) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -73,7 +74,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mValidationLogger = new ValidationMessageLoggerImpl();
         mAttributesManager = checkNotNull(attributesManager);
         mAttributesMerger = checkNotNull(attributesMerger);
-        mTelemetryEvaluationProducer = checkNotNull(telemetryEvaluationProducer);
+        mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
     }
 
     @Override
@@ -297,12 +298,14 @@ public class TreatmentManagerImpl implements TreatmentManager {
         if (!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY) &&
                 !mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)) {
             mValidationLogger.w("the SDK is not ready, results may be incorrect. Make sure to wait for SDK readiness before using this method", validationTag);
+            mTelemetryStorageProducer.recordNonReadyUsage();
+
             return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null);
         }
         return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, splitName, attributes, callingMethod);
     }
 
     private void recordLatency(Method treatment, long startTime) {
-        mTelemetryEvaluationProducer.recordLatency(treatment, System.currentTimeMillis() - startTime);
+        mTelemetryStorageProducer.recordLatency(treatment, System.currentTimeMillis() - startTime);
     }
 }

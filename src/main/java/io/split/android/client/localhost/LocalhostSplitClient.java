@@ -5,6 +5,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.SplitClient;
@@ -13,15 +18,11 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitResult;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
-import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
-import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.impressions.ImpressionListener;
-import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.KeyValidatorImpl;
@@ -30,11 +31,6 @@ import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.grammar.Treatments;
-
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * An implementation of SplitClient that considers all partitions
@@ -58,16 +54,16 @@ public final class LocalhostSplitClient implements SplitClient {
                                 @NonNull SplitParser splitParser,
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
-                                @NonNull TelemetryEvaluationProducer telemetryEvaluationProducer) {
+                                @NonNull TelemetryStorageProducer telemetryStorageProducer) {
 
         mFactoryRef = new WeakReference<>(checkNotNull(container));
         mKey = checkNotNull(key);
         mEventsManager = checkNotNull(eventsManager);
-        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryEvaluationProducer);
+        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryStorageProducer);
         mTreatmentManager = new TreatmentManagerImpl(mKey, null,
                 mEvaluator, new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
-                splitClientConfig, eventsManager, attributesManager, attributesMerger, telemetryEvaluationProducer);
+                splitClientConfig, eventsManager, attributesManager, attributesMerger, telemetryStorageProducer);
     }
 
     @Override

@@ -30,8 +30,7 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.telemetry.model.Method;
-import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
+import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
@@ -53,7 +52,7 @@ public class TreatmentManagerTest {
     ImpressionListener impressionListener;
     ISplitEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
-    TelemetryEvaluationProducer telemetryEvaluationProducer = mock(TelemetryEvaluationProducer.class);
+    TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
     TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
 
     @Before
@@ -75,7 +74,7 @@ public class TreatmentManagerTest {
 
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
 
-            evaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryEvaluationProducer);
+            evaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryStorageProducer);
         }
         impressionListener = new ImpressionListenerMock();
         eventsManagerStub = new SplitEventsManagerStub();
@@ -309,7 +308,7 @@ public class TreatmentManagerTest {
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
                 new KeyValidatorImpl(), new SplitValidatorImpl(),
-                new ImpressionListenerMock(), config, eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryEvaluationProducer.class));
+                new ImpressionListenerMock(), config, eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class));
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -333,7 +332,7 @@ public class TreatmentManagerTest {
                 eventsManager,
                 attributesManager,
                 mock(AttributesMerger.class),
-                telemetryEvaluationProducer
+                telemetryStorageProducer
         );
     }
 

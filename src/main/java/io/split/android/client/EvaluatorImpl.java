@@ -3,7 +3,6 @@ package io.split.android.client;
 import java.util.Map;
 
 import io.split.android.client.dtos.ConditionType;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
@@ -11,7 +10,6 @@ import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
-import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.splitter.Splitter;
 import io.split.android.grammar.Treatments;

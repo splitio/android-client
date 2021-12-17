@@ -31,6 +31,9 @@ import io.split.android.client.telemetry.storage.TelemetryStorageImpl;
 
 @RestrictTo(LIBRARY)
 public class StorageFactory {
+
+    private static final TelemetryStorage telemetryStorage = new TelemetryStorageImpl(new BinarySearchLatencyTracker());
+
     public static SplitsStorage getSplitsStorage(SplitRoomDatabase splitRoomDatabase) {
         PersistentSplitsStorage persistentSplitsStorage
                 = new SqLitePersistentSplitsStorage(splitRoomDatabase);
@@ -75,6 +78,6 @@ public class StorageFactory {
     }
 
     public static TelemetryStorage getTelemetryStorage() {
-        return new TelemetryStorageImpl(new BinarySearchLatencyTracker());
+        return telemetryStorage;
     }
 }

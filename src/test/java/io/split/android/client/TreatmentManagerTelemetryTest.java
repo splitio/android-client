@@ -14,14 +14,18 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManagerImpl;
@@ -43,7 +47,7 @@ public class TreatmentManagerTelemetryTest {
     @Mock
     AttributesMerger attributesMerger;
     @Mock
-    TelemetryEvaluationProducer telemetryEvaluationProducer;
+    TelemetryStorageProducer telemetryStorageProducer;
 
     private TreatmentManagerImpl treatmentManager;
 
@@ -62,7 +66,7 @@ public class TreatmentManagerTelemetryTest {
                 eventsManager,
                 attributesManager,
                 attributesMerger,
-                telemetryEvaluationProducer
+                telemetryStorageProducer
         );
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap(), any())).thenReturn(new EvaluationResult("test", "label"));
@@ -73,7 +77,7 @@ public class TreatmentManagerTelemetryTest {
 
         treatmentManager.getTreatment("split", new HashMap<>(), false);
 
-        verify(telemetryEvaluationProducer).recordLatency(eq(Method.TREATMENT), anyLong());
+        verify(telemetryStorageProducer).recordLatency(eq(Method.TREATMENT), anyLong());
     }
 
     @Test
@@ -81,20 +85,29 @@ public class TreatmentManagerTelemetryTest {
 
         treatmentManager.getTreatments(Arrays.asList("split"), new HashMap<>(), false);
 
-        verify(telemetryEvaluationProducer).recordLatency(eq(Method.TREATMENTS), anyLong());
+        verify(telemetryStorageProducer).recordLatency(eq(Method.TREATMENTS), anyLong());
     }
 
     @Test
     public void getTreatmentWithConfigRecordsLatencyInTelemetry() {
         treatmentManager.getTreatmentWithConfig("split", new HashMap<>(), false);
 
-        verify(telemetryEvaluationProducer).recordLatency(eq(Method.TREATMENT_WITH_CONFIG), anyLong());
+        verify(telemetryStorageProducer).recordLatency(eq(Method.TREATMENT_WITH_CONFIG), anyLong());
     }
 
     @Test
     public void getTreatmentsWithConfigRecordsLatencyInTelemetry() {
         treatmentManager.getTreatmentsWithConfig(Arrays.asList("split"), new HashMap<>(), false);
 
-        verify(telemetryEvaluationProducer).recordLatency(eq(Method.TREATMENTS_WITH_CONFIG), anyLong());
+        verify(telemetryStorageProducer).recordLatency(eq(Method.TREATMENTS_WITH_CONFIG), anyLong());
+    }
+
+    @Test
+    public void nonReadyUsagesAreRecordedInProducer() {
+        when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(false);
+
+        treatmentManager.getTreatment("test", Collections.emptyMap(), false);
+
+        verify(telemetryStorageProducer).recordNonReadyUsage();
     }
 }

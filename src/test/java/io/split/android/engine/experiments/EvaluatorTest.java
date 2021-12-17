@@ -23,6 +23,7 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
+import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 
@@ -34,7 +35,7 @@ import static org.mockito.Mockito.when;
 public class EvaluatorTest {
 
     private Evaluator evaluator;
-    private final TelemetryEvaluationProducer telemetryEvaluationProducer = mock(TelemetryEvaluationProducer.class);
+    private final TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
 
     @Before
     public void loadSplitsFromFile(){
@@ -43,7 +44,7 @@ public class EvaluatorTest {
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
-            Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
+            Set<String> mySegments = new HashSet<>(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
             SplitParser splitParser = new SplitParser(mySegmentsStorage);
 
@@ -56,7 +57,7 @@ public class EvaluatorTest {
 
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
 
-            evaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryEvaluationProducer);
+            evaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryStorageProducer);
         }
     }
 
@@ -144,11 +145,11 @@ public class EvaluatorTest {
             throw new Exception("test exception");
         });
 
-        evaluator = new EvaluatorImpl(mockStorage, new SplitParser(mock(MySegmentsStorage.class)), telemetryEvaluationProducer);
+        evaluator = new EvaluatorImpl(mockStorage, new SplitParser(mock(MySegmentsStorage.class)), telemetryStorageProducer);
 
         evaluator.getTreatment("anyKey", "anyKey", "split", Collections.emptyMap(), Method.TREATMENT);
 
-        verify(telemetryEvaluationProducer).recordException(Method.TREATMENT);
+        verify(telemetryStorageProducer).recordException(Method.TREATMENT);
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {
