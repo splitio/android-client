@@ -13,4 +13,3 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Test with Gradle
-        run: cd project; ./gradlew test
