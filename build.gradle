@@ -14,6 +14,7 @@ plugins {
     id 'com.android.library'
     id 'maven-publish'
     id 'signing'
+    id 'org.sonarqube' version '3.2.0'
 }
 
 ext {
@@ -206,4 +207,10 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 artifacts {
     archives sourcesJar
     archives javadocJar
+}
+
+sonarqube {
+    properties {
+        property "sonar.projectKey", "splitio_android-client"
+    }
 }
