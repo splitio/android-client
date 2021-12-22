@@ -6,10 +6,10 @@ on:
 
 jobs:
   build-app:
-    name: Test App
+    name: Build App
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-
       - name: Test with Gradle
+        run: cd project; ./gradlew test
