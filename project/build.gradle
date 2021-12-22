@@ -12,7 +12,15 @@ buildscript {
         // in the individual module build.gradle files
     }
 }
+plugins {
+    id 'org.sonarqube' version '3.2.0'
+}
 
+sonarqube {
+    properties {
+        property 'sonar.projectKey', 'splitio_android-client'
+    }
+}
 allprojects {
     repositories {
         google()
