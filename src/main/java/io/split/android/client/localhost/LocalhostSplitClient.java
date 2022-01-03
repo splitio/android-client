@@ -59,7 +59,7 @@ public final class LocalhostSplitClient implements SplitClient {
         mFactoryRef = new WeakReference<>(checkNotNull(container));
         mKey = checkNotNull(key);
         mEventsManager = checkNotNull(eventsManager);
-        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryStorageProducer);
+        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
         mTreatmentManager = new TreatmentManagerImpl(mKey, null,
                 mEvaluator, new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),

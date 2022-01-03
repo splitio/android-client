@@ -3,8 +3,6 @@ package io.split.android.engine.experiments;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -57,7 +55,7 @@ public class EvaluatorTest {
 
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
 
-            evaluator = new EvaluatorImpl(splitsStorage, splitParser, telemetryStorageProducer);
+            evaluator = new EvaluatorImpl(splitsStorage, splitParser);
         }
     }
 
@@ -65,7 +63,7 @@ public class EvaluatorTest {
     public void testWhitelisted() {
         String matchingKey = "nico_test";
         String splitName = "FACUNDO_TEST";
-        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null, Method.TREATMENT);
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
         Assert.assertNotNull(result);
         Assert.assertEquals("on", result.getTreatment());
         Assert.assertEquals("whitelisted", result.getLabel());
@@ -75,7 +73,7 @@ public class EvaluatorTest {
     public void testWhitelistedOff() {
         String matchingKey = "bla";
         String splitName = "FACUNDO_TEST";
-        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null, Method.TREATMENT);
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
         Assert.assertNotNull(result);
         Assert.assertEquals("off", result.getTreatment());
         Assert.assertNull(result.getConfigurations());
@@ -86,7 +84,7 @@ public class EvaluatorTest {
     public void testDefaultTreatmentFacundo() {
         String matchingKey = "anyKey";
         String splitName = "FACUNDO_TEST";
-        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null, Method.TREATMENT);
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
         Assert.assertNotNull(result);
         Assert.assertEquals("off", result.getTreatment());
         Assert.assertNull(result.getConfigurations());
@@ -97,7 +95,7 @@ public class EvaluatorTest {
     public void testInSegmentTestKey() {
         String matchingKey = "anyKey";
         String splitName = "a_new_split_2";
-        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null, Method.TREATMENT);
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
         Assert.assertNotNull(result);
         Assert.assertEquals("off", result.getTreatment());
         Assert.assertNull(result.getConfigurations());
@@ -108,7 +106,7 @@ public class EvaluatorTest {
     public void testKilledSplit() {
         String matchingKey = "anyKey";
         String splitName = "Test";
-        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null, Method.TREATMENT);
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
         Assert.assertNotNull(result);
         Assert.assertEquals("off", result.getTreatment());
         Assert.assertNotNull(result.getConfigurations());
@@ -119,7 +117,7 @@ public class EvaluatorTest {
     public void testNotInSplit() {
         String matchingKey = "anyKey";
         String splitName = "split_not_available_to_test_right_now";
-        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null, Method.TREATMENT);
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
         Assert.assertNotNull(result);
         Assert.assertEquals(Treatments.CONTROL, result.getTreatment());
         Assert.assertNull(result.getConfigurations());
@@ -130,26 +128,11 @@ public class EvaluatorTest {
     public void testBrokenSplit() {
         String matchingKey = "anyKey";
         String splitName = "broken_split";
-        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null, Method.TREATMENT);
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
         Assert.assertNotNull(result);
         Assert.assertEquals(Treatments.CONTROL, result.getTreatment());
         Assert.assertNull(result.getConfigurations());
         Assert.assertEquals(TreatmentLabels.DEFINITION_NOT_FOUND, result.getLabel());
-    }
-
-    @Test
-    public void exceptionIsTrackedInTelemetry() {
-        SplitsStorage mockStorage = mock(SplitsStorage.class);
-
-        when(mockStorage.get(any())).thenAnswer(invocation -> {
-            throw new Exception("test exception");
-        });
-
-        evaluator = new EvaluatorImpl(mockStorage, new SplitParser(mock(MySegmentsStorage.class)), telemetryStorageProducer);
-
-        evaluator.getTreatment("anyKey", "anyKey", "split", Collections.emptyMap(), Method.TREATMENT);
-
-        verify(telemetryStorageProducer).recordException(Method.TREATMENT);
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {
@@ -159,6 +142,4 @@ public class EvaluatorTest {
         }
         return splitsMap;
     }
-
-
 }

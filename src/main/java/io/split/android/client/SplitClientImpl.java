@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +28,7 @@ import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
+import io.split.android.client.validators.TreatmentManagerHelper;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
@@ -81,7 +81,7 @@ public final class SplitClientImpl implements SplitClient {
                 attributesManager,
                 telemetryStorageProducer,
                 new TreatmentManagerImpl(
-                        key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser, telemetryStorageProducer),
+                        key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser),
                         new KeyValidatorImpl(), new SplitValidatorImpl(),
                         impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer));
     }
@@ -159,7 +159,7 @@ public final class SplitClientImpl implements SplitClient {
 
             mTelemetryStorageProducer.recordException(Method.TREATMENT_WITH_CONFIG);
 
-            return new SplitResult(Treatments.CONTROL);
+            return new SplitResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
         }
     }
 
@@ -172,13 +172,7 @@ public final class SplitClientImpl implements SplitClient {
 
             mTelemetryStorageProducer.recordException(Method.TREATMENTS);
 
-            Map<String, String> result = new HashMap<>();
-
-            for (String split : splits) {
-                result.put(split, Treatments.CONTROL);
-            }
-
-            return result;
+            return TreatmentManagerHelper.controlTreatmentsForSplits(splits);
         }
     }
 
@@ -191,13 +185,7 @@ public final class SplitClientImpl implements SplitClient {
 
             mTelemetryStorageProducer.recordException(Method.TREATMENTS_WITH_CONFIG);
 
-            Map<String, SplitResult> result = new HashMap<>();
-
-            for (String split : splits) {
-                result.put(split, new SplitResult(Treatments.CONTROL));
-            }
-
-            return result;
+            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits);
         }
     }
 
