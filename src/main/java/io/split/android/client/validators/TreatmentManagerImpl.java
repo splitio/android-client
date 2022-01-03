@@ -87,7 +87,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         long start = System.currentTimeMillis();
 
-        String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag, Method.TREATMENT).treatment();
+        String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag).treatment();
 
         recordLatency(Method.TREATMENT, start);
 
@@ -104,7 +104,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         long start = System.currentTimeMillis();
 
-        SplitResult result = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag, Method.TREATMENT_WITH_CONFIG);
+        SplitResult result = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag);
 
         recordLatency(Method.TREATMENT_WITH_CONFIG, start);
 
@@ -128,7 +128,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         long start = System.currentTimeMillis();
 
-        Map<String, SplitResult> resultWithConfig = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag, Method.TREATMENTS);
+        Map<String, SplitResult> resultWithConfig = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
         Map<String, String> result = new HashMap<>();
 
         for (Map.Entry<String, SplitResult> entry : resultWithConfig.entrySet()) {
@@ -157,14 +157,14 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         long start = System.currentTimeMillis();
 
-        Map<String, SplitResult> result = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag, Method.TREATMENTS_WITH_CONFIG);
+        Map<String, SplitResult> result = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
 
         recordLatency(Method.TREATMENTS_WITH_CONFIG, start);
 
         return result;
     }
 
-    private SplitResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> attributes, String validationTag, Method callingMethod) {
+    private SplitResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> attributes, String validationTag) {
 
         ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
         if (errorInfo != null) {
@@ -183,7 +183,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             splitName = split.trim();
         }
 
-        EvaluationResult evaluationResult = evaluateIfReady(splitName, mAttributesMerger.merge(mAttributesManager.getAllAttributes(), attributes), validationTag, callingMethod);
+        EvaluationResult evaluationResult = evaluateIfReady(splitName, mAttributesMerger.merge(mAttributesManager.getAllAttributes(), attributes), validationTag);
         SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
 
         if (evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
@@ -204,7 +204,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         return splitResult;
     }
 
-    private Map<String, SplitResult> getTreatmentsWithConfigWithoutMetrics(List<String> splits, Map<String, Object> attributes, String validationTag, Method callingMethod) {
+    private Map<String, SplitResult> getTreatmentsWithConfigWithoutMetrics(List<String> splits, Map<String, Object> attributes, String validationTag) {
 
         ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
         if (errorInfo != null) {
@@ -230,7 +230,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 mValidationLogger.w(errorInfo, validationTag);
             }
 
-            EvaluationResult result = evaluateIfReady(split.trim(), mergedAttributes, validationTag, callingMethod);
+            EvaluationResult result = evaluateIfReady(split.trim(), mergedAttributes, validationTag);
             results.put(split.trim(), new SplitResult(result.getTreatment(), result.getConfigurations()));
 
             if (result.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
@@ -293,13 +293,13 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     private EvaluationResult evaluateIfReady(String splitName,
-                                             Map<String, Object> attributes, String validationTag, Method callingMethod) {
+                                             Map<String, Object> attributes, String validationTag) {
         if (!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY) &&
                 !mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)) {
             mValidationLogger.w("the SDK is not ready, results may be incorrect. Make sure to wait for SDK readiness before using this method", validationTag);
             return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null);
         }
-        return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, splitName, attributes, callingMethod);
+        return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, splitName, attributes);
     }
 
     private void recordLatency(Method treatment, long startTime) {

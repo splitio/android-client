@@ -81,7 +81,7 @@ public final class SplitClientImpl implements SplitClient {
                 attributesManager,
                 telemetryEvaluationProducer,
                 new TreatmentManagerImpl(
-                        key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser, telemetryEvaluationProducer),
+                        key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser),
                         new KeyValidatorImpl(), new SplitValidatorImpl(),
                         impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryEvaluationProducer));
     }
@@ -159,7 +159,7 @@ public final class SplitClientImpl implements SplitClient {
 
             mTelemetryEvaluationProducer.recordException(Method.TREATMENT_WITH_CONFIG);
 
-            return new SplitResult(Treatments.CONTROL);
+            return new SplitResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
         }
     }
 

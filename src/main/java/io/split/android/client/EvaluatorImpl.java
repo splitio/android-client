@@ -3,15 +3,11 @@ package io.split.android.client;
 import java.util.Map;
 
 import io.split.android.client.dtos.ConditionType;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.telemetry.model.Method;
-import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
-import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.splitter.Splitter;
 import io.split.android.grammar.Treatments;
@@ -20,16 +16,14 @@ public class EvaluatorImpl implements Evaluator {
 
     private final SplitsStorage mSplitsStorage;
     private final SplitParser mSplitParser;
-    private final TelemetryEvaluationProducer mTelemetryEvaluationProducer;
 
-    public EvaluatorImpl(SplitsStorage splitsStorage, SplitParser splitParser, TelemetryEvaluationProducer telemetryEvaluationProducer) {
+    public EvaluatorImpl(SplitsStorage splitsStorage, SplitParser splitParser) {
         mSplitsStorage = splitsStorage;
         mSplitParser = splitParser;
-        mTelemetryEvaluationProducer = telemetryEvaluationProducer;
     }
 
     @Override
-    public EvaluationResult getTreatment(String matchingKey, String bucketingKey, String splitName, Map<String, Object> attributes, Method callingMethod) {
+    public EvaluationResult getTreatment(String matchingKey, String bucketingKey, String splitName, Map<String, Object> attributes) {
 
         try {
             ParsedSplit parsedSplit = mSplitParser.parse(mSplitsStorage.get(splitName));
@@ -43,7 +37,6 @@ public class EvaluatorImpl implements Evaluator {
         } catch (Exception e) {
             Logger.e(e, "Catch All Exception");
         }
-        mTelemetryEvaluationProducer.recordException(callingMethod);
         return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
     }
 
