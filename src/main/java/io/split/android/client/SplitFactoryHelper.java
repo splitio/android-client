@@ -148,7 +148,9 @@ class SplitFactoryHelper {
                 ServiceFactory.getImpressionsCountRecorder(networkHelper, httpClient,
                         splitClientConfig.eventsEndpoint()),
                 ServiceFactory.getTelemetryConfigRecorder(networkHelper, httpClient,
-                        splitClientConfig.endpoint()));
+                        splitClientConfig.telemetryEndpoint()),
+                ServiceFactory.getTelemetryStatsRecorder(networkHelper, httpClient,
+                        splitClientConfig.telemetryEndpoint()));
     }
 
     WorkManagerWrapper buildWorkManagerWrapper(Context context, SplitClientConfig splitClientConfig,

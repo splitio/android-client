@@ -276,6 +276,7 @@ public class TestableSplitConfigBuilder {
                     mImpressionsCountersRefreshRate,
                     mIsPersistentAttributesStorageEnabled,
                     mOfflineRefreshRate,
+                    mServiceEndpoints.getTelemetryEndpoint(),
                     mTelemetryRefreshRate);
             return config;
         } catch (Exception e) {

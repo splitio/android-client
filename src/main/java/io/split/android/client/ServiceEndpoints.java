@@ -10,11 +10,13 @@ public class ServiceEndpoints {
     private static final String EVENTS_ENDPOINT = "https://events.split.io/api";
     private static final String AUTH_SERVICE_ENDPOINT = "https://auth.split.io/api/v2";
     private static final String STREAMING_SERVICE_ENDPOINT = "https://streaming.split.io/sse";
+    private static final String TELEMETRY_SERVICE_ENDPOINT = "https://telemetry.split.io/api/v1";
 
     private String mSdkEndpoint = SDK_ENDPOINT;
     private String mEventsEndpoint = EVENTS_ENDPOINT;
     private String mAuthServiceEndpoint = AUTH_SERVICE_ENDPOINT;
     private String mStreamingServiceEndpoint = STREAMING_SERVICE_ENDPOINT;
+    private String mTelemetryServiceEndpoint = TELEMETRY_SERVICE_ENDPOINT;
 
     private ServiceEndpoints() {
     }
@@ -51,6 +53,13 @@ public class ServiceEndpoints {
         this.mStreamingServiceEndpoint = endpoint;
     }
 
+    public void setTelemetryServiceEndpoint(String telemetryServiceEndpoint) {
+        mTelemetryServiceEndpoint = telemetryServiceEndpoint;
+    }
+
+    public String getTelemetryEndpoint() {
+        return mTelemetryServiceEndpoint;
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -66,7 +75,7 @@ public class ServiceEndpoints {
         /**
          * The rest endpoint that sdk will hit for latest features and segments.
          *
-         * @param Endpoint MUST NOT be null
+         * @param url MUST NOT be null
          * @return this builder
          */
         public Builder apiEndpoint(@NonNull String url) {
@@ -77,7 +86,7 @@ public class ServiceEndpoints {
         /**
          * The rest endpoint that sdk will hit to send events and impressions
          *
-         * @param eventsEndpoint MUST NOT be null
+         * @param url MUST NOT be null
          * @return this builder
          */
         public Builder eventsEndpoint(@NonNull String url) {
@@ -89,7 +98,7 @@ public class ServiceEndpoints {
          * The rest endpoint that sdk will hit to get an SSE authentication token
          * to subscribe to SSE channels and receive update events
          *
-         * @param authServiceEndpoint MUST NOT be null
+         * @param url MUST NOT be null
          * @return this builder
          */
         public Builder sseAuthServiceEndpoint(@NonNull String url) {
@@ -101,11 +110,22 @@ public class ServiceEndpoints {
          * The rest endpoint that sdk will hit to subscribe to SSE channels
          * and receive update events
          *
-         * @param streamingServiceEndpoint MUST NOT be null
+         * @param url MUST NOT be null
          * @return this builder
          */
         public Builder streamingServiceEndpoint(@NonNull String url) {
             mServiceEndpoints.setStreamingServiceEndpoint(checkNotNull(url));
+            return this;
+        }
+
+        /**
+         * The endpoint that sdk will hit to send telemetry.
+         *
+         * @param url MUST NOT be null
+         * @return this builder
+         */
+        public Builder telemetryServiceEndpoint(@NonNull String url) {
+            mServiceEndpoints.setTelemetryServiceEndpoint(checkNotNull(url));
             return this;
         }
 

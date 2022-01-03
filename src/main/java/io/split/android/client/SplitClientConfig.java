@@ -75,6 +75,7 @@ public class SplitClientConfig {
 
     private String _endpoint;
     private String _eventsEndpoint;
+    private String _telemetryEndpoint;
     private static String _hostname;
     private static String _ip;
 
@@ -179,9 +180,11 @@ public class SplitClientConfig {
                               int impCountersRefreshRate,
                               boolean isPersistentAttributesEnabled,
                               int offlineRefreshRate,
+                              String telemetryEndpoint,
                               long telemetryRefreshRate) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
+        _telemetryEndpoint = telemetryEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
         _segmentsRefreshRate = segmentsRefreshRate;
         _impressionsRefreshRate = impressionsRefreshRate;
@@ -271,6 +274,10 @@ public class SplitClientConfig {
 
     public String eventsEndpoint() {
         return _eventsEndpoint;
+    }
+
+    public String telemetryEndpoint() {
+        return _telemetryEndpoint;
     }
 
     public int featuresRefreshRate() {
@@ -1166,6 +1173,7 @@ public class SplitClientConfig {
                     _impCountersRefreshRate,
                     _isPersistentAttributesEnabled,
                     _offlineRefreshRate,
+                    _serviceEndpoints.getTelemetryEndpoint(),
                     _telemetryRefreshRate);
         }
 

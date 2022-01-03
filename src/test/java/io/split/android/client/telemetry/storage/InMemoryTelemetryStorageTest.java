@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -119,23 +118,6 @@ public class InMemoryTelemetryStorageTest {
     }
 
     @Test
-    public void recordBURTimeouts() {
-        long initialTimeouts = telemetryStorage.getBURTimeouts();
-        telemetryStorage.recordBURTimeout();
-        telemetryStorage.recordBURTimeout();
-
-        long burTimeouts = telemetryStorage.getBURTimeouts();
-
-        telemetryStorage.recordBURTimeout();
-
-        long newTimeouts = telemetryStorage.getBURTimeouts();
-
-        assertEquals(0, initialTimeouts);
-        assertEquals(2, burTimeouts);
-        assertEquals(3, newTimeouts);
-    }
-
-    @Test
     public void recordNonReadyUsages() {
         long initialUsages = telemetryStorage.getNonReadyUsage();
         telemetryStorage.recordNonReadyUsage();
@@ -189,15 +171,6 @@ public class InMemoryTelemetryStorageTest {
         MethodLatencies methodLatencies = telemetryStorage.popLatencies();
 
         assertNotNull(methodLatencies);
-    }
-
-    @Test
-    public void factoryCounterIsInitialized() {
-        long burTimeouts = telemetryStorage.getBURTimeouts();
-        long nonReadyUsages = telemetryStorage.getNonReadyUsage();
-
-        assertEquals(0, burTimeouts);
-        assertEquals(0, nonReadyUsages);
     }
 
     @Test
@@ -488,5 +461,12 @@ public class InMemoryTelemetryStorageTest {
         List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
 
         assertEquals(20, streamingEvents.size());
+    }
+
+    @Test
+    public void recordSdkReadyFromCacheValueIsStoreCorrectly() {
+        telemetryStorage.recordTimeUntilReadyFromCache(500);
+
+        assertEquals(500, telemetryStorage.getTimeUntilReadyFromCache());
     }
 }

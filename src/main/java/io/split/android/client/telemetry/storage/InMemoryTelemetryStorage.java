@@ -102,23 +102,23 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     }
 
     @Override
-    public long getBURTimeouts() {
-        return factoryCounters.get(FactoryCounter.BUR_TIMEOUTS).get();
-    }
-
-    @Override
     public long getNonReadyUsage() {
         return factoryCounters.get(FactoryCounter.NON_READY_USAGES).get();
     }
 
     @Override
-    public void recordBURTimeout() {
-        factoryCounters.get(FactoryCounter.BUR_TIMEOUTS).incrementAndGet();
+    public void recordNonReadyUsage() {
+        factoryCounters.get(FactoryCounter.NON_READY_USAGES).incrementAndGet();
     }
 
     @Override
-    public void recordNonReadyUsage() {
-        factoryCounters.get(FactoryCounter.NON_READY_USAGES).incrementAndGet();
+    public void recordTimeUntilReadyFromCache(long timeUntilReadyFromCache) {
+        factoryCounters.get(FactoryCounter.READY_FROM_CACHE).set(timeUntilReadyFromCache);
+    }
+
+    @Override
+    public long getTimeUntilReadyFromCache() {
+        return factoryCounters.get(FactoryCounter.READY_FROM_CACHE).get();
     }
 
     @Override
@@ -311,8 +311,8 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     }
 
     private void initializeFactoryCounters() {
-        factoryCounters.put(FactoryCounter.BUR_TIMEOUTS, new AtomicLong());
         factoryCounters.put(FactoryCounter.NON_READY_USAGES, new AtomicLong());
+        factoryCounters.put(FactoryCounter.READY_FROM_CACHE, new AtomicLong());
     }
 
     private void initializeImpressionsData() {
