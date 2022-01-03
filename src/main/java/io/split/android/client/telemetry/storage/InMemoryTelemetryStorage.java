@@ -24,7 +24,7 @@ import io.split.android.client.telemetry.model.PushCounterEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.util.AtomicLongArray;
 
-public class TelemetryStorageImpl implements TelemetryStorage {
+public class InMemoryTelemetryStorage implements TelemetryStorage {
 
     private static final int MAX_LATENCY_BUCKET_COUNT = 23;
     private static final int MAX_STREAMING_EVENTS = 20;
@@ -57,7 +57,7 @@ public class TelemetryStorageImpl implements TelemetryStorage {
 
     private final ILatencyTracker latencyTracker;
 
-    public TelemetryStorageImpl(ILatencyTracker latencyTracker) {
+    public InMemoryTelemetryStorage(ILatencyTracker latencyTracker) {
         this.latencyTracker = latencyTracker;
 
         initializeProperties();

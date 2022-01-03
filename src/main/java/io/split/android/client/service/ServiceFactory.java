@@ -24,7 +24,9 @@ import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
 import io.split.android.client.telemetry.TelemetryConfigBodySerializer;
+import io.split.android.client.telemetry.TelemetryStatsBodySerializer;
 import io.split.android.client.telemetry.model.Config;
+import io.split.android.client.telemetry.model.Stats;
 import io.split.android.client.utils.NetworkHelper;
 
 @RestrictTo(RestrictTo.Scope.LIBRARY)
@@ -96,5 +98,15 @@ public class ServiceFactory {
         return new HttpRecorderImpl<>(
                 httpClient, SdkTargetPath.telemetryConfig(endpoint), networkHelper,
                 new TelemetryConfigBodySerializer());
+    }
+
+    public static HttpRecorder<Stats> getTelemetryStatsRecorder(
+            NetworkHelper networkHelper,
+            HttpClient httpClient,
+            String endpoint) throws URISyntaxException {
+        return new HttpRecorderImpl<>(
+                httpClient, SdkTargetPath.telemetryConfig(endpoint), networkHelper,
+                new TelemetryStatsBodySerializer()
+        );
     }
 }

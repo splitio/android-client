@@ -35,6 +35,7 @@ import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
+import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 import io.split.android.client.service.telemetry.TelemetryTaskFactoryImpl;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -64,9 +65,11 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 mSplitsStorageContainer.getSplitsStorage(),
                 new SplitChangeProcessor());
         mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
+                mSplitApiFacade.getTelemetryStatsRecorder(),
                 mSplitsStorageContainer.getTelemetryStorage(),
-                splitClientConfig);
-
+                splitClientConfig,
+                mSplitsStorageContainer.getSplitsStorage(),
+                mSplitsStorageContainer.getMySegmentsStorage());
     }
 
     @Override
@@ -167,5 +170,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public TelemetryConfigRecorderTask getTelemetryConfigRecorderTask() {
         return mTelemetryTaskFactory.getTelemetryConfigRecorderTask();
+    }
+
+    @Override
+    public TelemetryStatsRecorderTask getTelemetryStatsRecorderTask() {
+        return mTelemetryTaskFactory.getTelemetryStatsRecorderTask();
     }
 }
