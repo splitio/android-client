@@ -260,36 +260,12 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     private Map<String, SplitResult> controlTreatmentsForSplitsWithConfig(List<String> splits, String validationTag) {
-        Map<String, SplitResult> results = new HashMap<>();
-        for (String split : splits) {
-            ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
-            if (errorInfo != null) {
-                if (errorInfo.isError()) {
-                    mValidationLogger.e(errorInfo, validationTag);
-                    continue;
-                }
-                mValidationLogger.w(errorInfo, validationTag);
-            }
-            results.put(split.trim(), new SplitResult(Treatments.CONTROL));
-        }
-        return results;
+        return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits, validationTag, mSplitValidator, mValidationLogger);
     }
 
     @SuppressWarnings("SameParameterValue")
     private Map<String, String> controlTreatmentsForSplits(List<String> splits, String validationTag) {
-        Map<String, String> results = new HashMap<>();
-        for (String split : splits) {
-            ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
-            if (errorInfo != null) {
-                if (errorInfo.isError()) {
-                    mValidationLogger.e(errorInfo, validationTag);
-                    continue;
-                }
-                mValidationLogger.w(errorInfo, validationTag);
-            }
-            results.put(split.trim(), Treatments.CONTROL);
-        }
-        return results;
+        return TreatmentManagerHelper.controlTreatmentsForSplits(splits, validationTag, mSplitValidator, mValidationLogger);
     }
 
     private EvaluationResult evaluateIfReady(String splitName,

@@ -29,6 +29,7 @@ import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
+import io.split.android.client.validators.TreatmentManagerHelper;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
@@ -172,13 +173,7 @@ public final class SplitClientImpl implements SplitClient {
 
             mTelemetryEvaluationProducer.recordException(Method.TREATMENTS);
 
-            Map<String, String> result = new HashMap<>();
-
-            for (String split : splits) {
-                result.put(split, Treatments.CONTROL);
-            }
-
-            return result;
+            return TreatmentManagerHelper.controlTreatmentsForSplits(splits);
         }
     }
 
@@ -191,13 +186,7 @@ public final class SplitClientImpl implements SplitClient {
 
             mTelemetryEvaluationProducer.recordException(Method.TREATMENTS_WITH_CONFIG);
 
-            Map<String, SplitResult> result = new HashMap<>();
-
-            for (String split : splits) {
-                result.put(split, new SplitResult(Treatments.CONTROL));
-            }
-
-            return result;
+            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits);
         }
     }
 
