@@ -1,4 +1,4 @@
-package tests.integration;
+package tests.integration.telemetry;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
@@ -26,6 +26,7 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
@@ -103,8 +104,8 @@ public class TelemetryIntegrationTest {
                 .build();
 
         return IntegrationHelper.buildFactory(
-                IntegrationHelper.dummyApiKey(),
-                IntegrationHelper.dummyUserKey(),
+                "dummy_api_key",
+                new Key("dummy_user_key"),
                 config,
                 mContext,
                 null,
