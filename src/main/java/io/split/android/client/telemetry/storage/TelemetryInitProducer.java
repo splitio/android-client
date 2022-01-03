@@ -10,5 +10,5 @@ public interface TelemetryInitProducer {
 
     void recordTimeUntilReady(long time);
 
-    void recordTimeUntilReadyFromCache(long time);
+    void recordTimeUntilReadyFromCache(long timeUntilReadyFromCache);
 }

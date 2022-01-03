@@ -1,4 +1,4 @@
-package io.split.android.client.localhost;
+package io.split.android.client.telemetry.storage;
 
 import java.util.List;
 
@@ -12,9 +12,9 @@ import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
-import io.split.android.client.telemetry.storage.TelemetryStorage;
 
-public class LocalhostTelemetryStorage implements TelemetryStorage {
+public class NoOpTelemetryStorage implements TelemetryStorage {
+
     @Override
     public MethodExceptions popExceptions() {
         return null;
@@ -34,6 +34,7 @@ public class LocalhostTelemetryStorage implements TelemetryStorage {
     public void recordException(Method method) {
 
     }
+
 
     @Override
     public long getNonReadyUsage() {
@@ -81,7 +82,7 @@ public class LocalhostTelemetryStorage implements TelemetryStorage {
     }
 
     @Override
-    public void recordTimeUntilReadyFromCache(long time) {
+    public void recordTimeUntilReadyFromCache(long timeUntilReadyFromCache) {
 
     }
 

@@ -89,7 +89,7 @@ public class TelemetryIntegrationTest {
 
         countDownLatch.await(30, TimeUnit.SECONDS);
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage();
+        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
         assertEquals(1, telemetryStorage.getNonReadyUsage());
         assertEquals(1, telemetryStorage.getActiveFactories());
         assertEquals(0, telemetryStorage.getRedundantFactories());

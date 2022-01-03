@@ -30,6 +30,15 @@ public class TelemetryConfigBodySerializerTest {
         assertEquals(expectedJson, serializedConfig);
     }
 
+    @Test
+    public void nullValuesAreIgnoredForJson() {
+
+        final String expectedJson = "{\"oM\":\"0\",\"st\":\"memory\",\"sE\":true,\"iQ\":4000,\"eQ\":3000,\"iM\":\"1\",\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"nR\":3,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
+        final String serializedConfig = telemetryConfigBodySerializer.serialize(buildMockConfigWithNulls());
+
+        assertEquals(expectedJson, serializedConfig);
+    }
+
     private Config buildMockConfig() {
         Config config = new Config();
 
@@ -50,6 +59,25 @@ public class TelemetryConfigBodySerializerTest {
         config.setStreamingEnabled(true);
         config.setRefreshRates(refreshRates);
         config.setUrlOverrides(urlOverrides);
+        config.setImpressionsQueueSize(4000);
+        config.setEventsQueueSize(3000);
+        config.setImpressionsMode(ImpressionsMode.DEBUG);
+        config.setImpressionsListenerEnabled(true);
+        config.setHttpProxyDetected(true);
+        config.setActiveFactories(1);
+        config.setRedundantActiveFactories(0);
+        config.setTimeUntilSDKReady(300);
+        config.setSDKNotReadyUsage(3);
+        config.setTags(Arrays.asList("tag1", "tag2"));
+        config.setIntegrations(Arrays.asList("integration1", "integration2"));
+
+        return config;
+    }
+
+    private Config buildMockConfigWithNulls() {
+        Config config = new Config();
+
+        config.setStreamingEnabled(true);
         config.setImpressionsQueueSize(4000);
         config.setEventsQueueSize(3000);
         config.setImpressionsMode(ImpressionsMode.DEBUG);

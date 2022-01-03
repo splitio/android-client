@@ -37,4 +37,7 @@ public class ServiceConstants {
     public static final String PROPERTIES_EXTENSION = "properties";
     public static final String YML_EXTENSION = "yml";
     public static final String YAML_EXTENSION = "yaml";
+
+    public static final int TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS = 1;
+    public static final int TELEMETRY_CONFIG_MAX_RETRY_ATTEMPTS = 3;
 }
