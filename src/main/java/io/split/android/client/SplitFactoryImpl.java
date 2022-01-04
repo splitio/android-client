@@ -58,6 +58,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitLifecycleManager _lifecyleManager;
     private final SyncManager _syncManager;
     private final SplitRoomDatabase _splitDatabase;
+    private final long mInitializationStartTime;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
@@ -70,6 +71,7 @@ public class SplitFactoryImpl implements SplitFactory {
                              SynchronizerSpy synchronizerSpy)
             throws URISyntaxException {
 
+        mInitializationStartTime = System.currentTimeMillis();
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
         setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
@@ -151,11 +153,12 @@ public class SplitFactoryImpl implements SplitFactory {
             synchronizer = synchronizerSpy;
         }
 
+        TelemetrySynchronizer telemetrySynchronizer = getTelemetrySynchronizer(_splitTaskExecutor,
+                splitTaskFactory,
+                config.telemetryRefreshRate(),
+                config.shouldRecordTelemetry());
         _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
-                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, _eventsManager, getTelemetrySynchronizer(_splitTaskExecutor,
-                        splitTaskFactory,
-                        config.telemetryRefreshRate(),
-                        config.shouldRecordTelemetry()));
+                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, _eventsManager, telemetrySynchronizer);
 
         _syncManager.start();
 
@@ -195,6 +198,12 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of task executor");
                     storageContainer.getAttributesStorage().destroy();
                     Logger.i("Successful shutdown of attributes storage");
+                    if (config.shouldRecordTelemetry()) {
+                        storageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - mInitializationStartTime);
+                        telemetrySynchronizer.flush();
+                        telemetrySynchronizer.destroy();
+                        Logger.i("Successful shutdown of telemetry");
+                    }
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
