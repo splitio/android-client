@@ -12,25 +12,21 @@ import io.split.android.grammar.Treatments;
 
 public class TreatmentManagerHelper {
 
-    public static Map<String, SplitResult> controlTreatmentsForSplitsWithConfig(@NonNull List<String> splits, @Nullable String validationTag, @Nullable SplitValidator mSplitValidator, @Nullable ValidationMessageLogger mValidationLogger) {
+    public static Map<String, SplitResult> controlTreatmentsForSplitsWithConfig(@NonNull List<String> splits, @Nullable String validationTag, @Nullable SplitValidator validator, @Nullable ValidationMessageLogger logger) {
         Map<String, SplitResult> results = new HashMap<>();
         for (String split : splits) {
-            if (validate(validationTag, mSplitValidator, split, mValidationLogger)) continue;
-
+            performValidation(split, validationTag, validator, logger);
             results.put(split.trim(), new SplitResult(Treatments.CONTROL));
         }
-
         return results;
     }
 
-    public static Map<String, String> controlTreatmentsForSplits(@NonNull List<String> splits, @Nullable String validationTag, @Nullable SplitValidator mSplitValidator, @Nullable ValidationMessageLogger mValidationLogger) {
+    public static Map<String, String> controlTreatmentsForSplits(@NonNull List<String> splits, @Nullable String validationTag, @Nullable SplitValidator validator, @Nullable ValidationMessageLogger logger) {
         Map<String, String> results = new HashMap<>();
         for (String split : splits) {
-            if (validate(validationTag, mSplitValidator, split, mValidationLogger)) continue;
-
+            performValidation(split, validationTag, validator, logger);
             results.put(split.trim(), Treatments.CONTROL);
         }
-
         return results;
     }
 
@@ -42,23 +38,19 @@ public class TreatmentManagerHelper {
         return controlTreatmentsForSplitsWithConfig(splits, null, null, null);
     }
 
-    private static boolean validate(String validationTag, SplitValidator mSplitValidator, String split, @Nullable ValidationMessageLogger mValidationLogger) {
-        if (mSplitValidator != null) {
-            ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
+    private static void performValidation(String split, String validationTag, SplitValidator validator, ValidationMessageLogger mValidationLogger) {
+        if (validator != null) {
+            ValidationErrorInfo errorInfo = validator.validateName(split);
             if (errorInfo != null) {
                 if (errorInfo.isError()) {
                     if (mValidationLogger != null) {
                         mValidationLogger.e(errorInfo, validationTag);
                     }
-                    return true;
                 }
-
                 if (mValidationLogger != null) {
                     mValidationLogger.w(errorInfo, validationTag);
                 }
             }
         }
-
-        return false;
     }
 }
