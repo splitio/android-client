@@ -27,6 +27,7 @@ import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidatorImpl;
+import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerHelper;
@@ -53,6 +54,7 @@ public final class SplitClientImpl implements SplitClient {
     private final SyncManager mSyncManager;
     private final AttributesManager mAttributesManager;
     private final TelemetryEvaluationProducer mTelemetryEvaluationProducer;
+    private final SplitValidator mSplitValidator;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -68,7 +70,8 @@ public final class SplitClientImpl implements SplitClient {
                            EventPropertiesProcessor eventPropertiesProcessor,
                            SyncManager syncManager,
                            AttributesManager attributesManager,
-                           TelemetryEvaluationProducer telemetryEvaluationProducer) {
+                           TelemetryEvaluationProducer telemetryEvaluationProducer,
+                           SplitValidator splitValidator) {
         this(container,
                 key,
                 splitParser,
@@ -83,8 +86,9 @@ public final class SplitClientImpl implements SplitClient {
                 telemetryEvaluationProducer,
                 new TreatmentManagerImpl(
                         key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser),
-                        new KeyValidatorImpl(), new SplitValidatorImpl(),
-                        impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryEvaluationProducer));
+                        new KeyValidatorImpl(), splitValidator,
+                        impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryEvaluationProducer),
+                splitValidator);
     }
 
     @VisibleForTesting
@@ -100,7 +104,8 @@ public final class SplitClientImpl implements SplitClient {
                            SyncManager syncManager,
                            AttributesManager attributesManager,
                            TelemetryEvaluationProducer telemetryEvaluationProducer,
-                           TreatmentManager treatmentManager) {
+                           TreatmentManager treatmentManager,
+                           SplitValidator splitValidator) {
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
 
@@ -115,6 +120,7 @@ public final class SplitClientImpl implements SplitClient {
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
         mSyncManager = checkNotNull(syncManager);
         mAttributesManager = checkNotNull(attributesManager);
+        mSplitValidator = checkNotNull(splitValidator);
     }
 
     @Override
@@ -173,7 +179,7 @@ public final class SplitClientImpl implements SplitClient {
 
             mTelemetryEvaluationProducer.recordException(Method.TREATMENTS);
 
-            return TreatmentManagerHelper.controlTreatmentsForSplits(splits);
+            return TreatmentManagerHelper.controlTreatmentsForSplits(splits, mSplitValidator);
         }
     }
 
@@ -186,7 +192,7 @@ public final class SplitClientImpl implements SplitClient {
 
             mTelemetryEvaluationProducer.recordException(Method.TREATMENTS_WITH_CONFIG);
 
-            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits);
+            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits, mSplitValidator);
         }
     }
 
