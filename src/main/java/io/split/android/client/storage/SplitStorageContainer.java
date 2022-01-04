@@ -80,7 +80,7 @@ public class SplitStorageContainer {
         return mPersistentAttributesStorage;
     }
 
-    public TelemetryStorageConsumer getTelemetryConsumer() {
+    public TelemetryStorage getTelemetryStorage() {
         return mTelemetryStorage;
     }
 }

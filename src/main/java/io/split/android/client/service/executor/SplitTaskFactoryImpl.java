@@ -66,11 +66,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 new SplitChangeProcessor());
         mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
                 mSplitApiFacade.getTelemetryStatsRecorder(),
-                mSplitsStorageContainer.getTelemetryConsumer(),
+                mSplitsStorageContainer.getTelemetryStorage(),
                 splitClientConfig,
                 mSplitsStorageContainer.getSplitsStorage(),
                 mSplitsStorageContainer.getMySegmentsStorage());
-
     }
 
     @Override

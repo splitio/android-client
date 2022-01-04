@@ -42,12 +42,42 @@ public class NoOpTelemetryStorage implements TelemetryStorage {
     }
 
     @Override
+    public long getActiveFactories() {
+        return 0;
+    }
+
+    @Override
+    public long getRedundantFactories() {
+        return 0;
+    }
+
+    @Override
+    public long getTimeUntilReady() {
+        return 0;
+    }
+
+    @Override
     public long getTimeUntilReadyFromCache() {
         return 0;
     }
 
     @Override
     public void recordNonReadyUsage() {
+
+    }
+
+    @Override
+    public void recordActiveFactories(int count) {
+
+    }
+
+    @Override
+    public void recordRedundantFactories(int count) {
+
+    }
+
+    @Override
+    public void recordTimeUntilReady(long time) {
 
     }
 

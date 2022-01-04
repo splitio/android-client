@@ -4,5 +4,11 @@ public interface TelemetryInitConsumer {
 
     long getNonReadyUsage();
 
+    long getActiveFactories();
+
+    long getRedundantFactories();
+
+    long getTimeUntilReady();
+
     long getTimeUntilReadyFromCache();
 }

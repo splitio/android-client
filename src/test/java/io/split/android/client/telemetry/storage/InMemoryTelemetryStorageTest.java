@@ -174,6 +174,21 @@ public class InMemoryTelemetryStorageTest {
     }
 
     @Test
+    public void factoryCounterIsInitialized() {
+        long nonReadyUsages = telemetryStorage.getNonReadyUsage();
+        long redundantFactories = telemetryStorage.getRedundantFactories();
+        long activeFactories = telemetryStorage.getActiveFactories();
+        long timeUntilReady = telemetryStorage.getTimeUntilReady();
+        long timeUntilReadyFromCache = telemetryStorage.getTimeUntilReadyFromCache();
+
+        assertEquals(0, nonReadyUsages);
+        assertEquals(0, redundantFactories);
+        assertEquals(0, activeFactories);
+        assertEquals(0, timeUntilReady);
+        assertEquals(0, timeUntilReadyFromCache);
+    }
+
+    @Test
     public void impressionsDataIsInitialized() {
         long impressionsStatsDeduped = telemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_DEDUPED);
         long impressionsStatsQueued = telemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_QUEUED);
@@ -464,6 +479,40 @@ public class InMemoryTelemetryStorageTest {
     }
 
     @Test
+    public void activeFactoriesAreRecordedCorrectly() {
+        long initialActiveFactories = telemetryStorage.getActiveFactories();
+
+        telemetryStorage.recordActiveFactories(4);
+
+        assertEquals(0, initialActiveFactories);
+        assertEquals(4, telemetryStorage.getActiveFactories());
+    }
+
+    @Test
+    public void redundantFactoriesAreRecordedCorrectly() {
+        long initialRedundantFactories = telemetryStorage.getRedundantFactories();
+
+        telemetryStorage.recordRedundantFactories(4);
+
+        assertEquals(0, initialRedundantFactories);
+        assertEquals(4, telemetryStorage.getRedundantFactories());
+    }
+
+    @Test
+    public void timeUntilReadyIsRecordedCorrectly() {
+        telemetryStorage.recordTimeUntilReady(200);
+
+        assertEquals(200, telemetryStorage.getTimeUntilReady());
+    }
+
+    @Test
+    public void timeUntilReadyFromCacheIsRecordedCorrectly() {
+
+        telemetryStorage.recordTimeUntilReadyFromCache(300L);
+
+        assertEquals(300, telemetryStorage.getTimeUntilReadyFromCache());
+    }
+
     public void recordSdkReadyFromCacheValueIsStoreCorrectly() {
         telemetryStorage.recordTimeUntilReadyFromCache(500);
 

@@ -19,6 +19,8 @@ import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.telemetry.model.Method;
+import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.grammar.Treatments;
 
@@ -47,12 +49,19 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final AttributesManager mAttributesManager;
     @NonNull
     private final AttributesMerger mAttributesMerger;
+    private final TelemetryEvaluationProducer mTelemetryEvaluationProducer;
 
-    public TreatmentManagerImpl(String matchingKey, String bucketingKey,
-                                Evaluator evaluator, KeyValidator keyValidator,
+    public TreatmentManagerImpl(String matchingKey,
+                                String bucketingKey,
+                                Evaluator evaluator,
+                                KeyValidator keyValidator,
                                 SplitValidator splitValidator,
-                                ImpressionListener impressionListener, SplitClientConfig splitClientConfig,
-                                ISplitEventsManager eventsManager, @NonNull AttributesManager attributesManager, @NonNull AttributesMerger attributesMerger) {
+                                ImpressionListener impressionListener,
+                                SplitClientConfig splitClientConfig,
+                                ISplitEventsManager eventsManager,
+                                @NonNull AttributesManager attributesManager,
+                                @NonNull AttributesMerger attributesMerger,
+                                @NonNull TelemetryEvaluationProducer telemetryEvaluationProducer) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -64,6 +73,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mValidationLogger = new ValidationMessageLoggerImpl();
         mAttributesManager = checkNotNull(attributesManager);
         mAttributesMerger = checkNotNull(attributesMerger);
+        mTelemetryEvaluationProducer = checkNotNull(telemetryEvaluationProducer);
     }
 
     @Override
@@ -76,7 +86,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         }
 
         long start = System.currentTimeMillis();
+
         String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag).treatment();
+
+        recordLatency(Method.TREATMENT, start);
+
         return treatment;
     }
 
@@ -89,7 +103,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         }
 
         long start = System.currentTimeMillis();
+
         SplitResult result = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag);
+
+        recordLatency(Method.TREATMENT_WITH_CONFIG, start);
+
         return result;
     }
 
@@ -109,12 +127,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
         }
 
         long start = System.currentTimeMillis();
+
         Map<String, SplitResult> resultWithConfig = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
         Map<String, String> result = new HashMap<>();
 
         for (Map.Entry<String, SplitResult> entry : resultWithConfig.entrySet()) {
             result.put(entry.getKey(), entry.getValue().treatment());
         }
+
+        recordLatency(Method.TREATMENTS, start);
+
         return result;
     }
 
@@ -134,7 +156,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         }
 
         long start = System.currentTimeMillis();
+
         Map<String, SplitResult> result = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
+
+        recordLatency(Method.TREATMENTS_WITH_CONFIG, start);
+
         return result;
     }
 
@@ -234,36 +260,12 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     private Map<String, SplitResult> controlTreatmentsForSplitsWithConfig(List<String> splits, String validationTag) {
-        Map<String, SplitResult> results = new HashMap<>();
-        for (String split : splits) {
-            ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
-            if (errorInfo != null) {
-                if (errorInfo.isError()) {
-                    mValidationLogger.e(errorInfo, validationTag);
-                    continue;
-                }
-                mValidationLogger.w(errorInfo, validationTag);
-            }
-            results.put(split.trim(), new SplitResult(Treatments.CONTROL));
-        }
-        return results;
+        return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits, mSplitValidator, validationTag, mValidationLogger);
     }
 
     @SuppressWarnings("SameParameterValue")
     private Map<String, String> controlTreatmentsForSplits(List<String> splits, String validationTag) {
-        Map<String, String> results = new HashMap<>();
-        for (String split : splits) {
-            ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
-            if (errorInfo != null) {
-                if (errorInfo.isError()) {
-                    mValidationLogger.e(errorInfo, validationTag);
-                    continue;
-                }
-                mValidationLogger.w(errorInfo, validationTag);
-            }
-            results.put(split.trim(), Treatments.CONTROL);
-        }
-        return results;
+        return TreatmentManagerHelper.controlTreatmentsForSplits(splits, mSplitValidator, validationTag, mValidationLogger);
     }
 
     private EvaluationResult evaluateIfReady(String splitName,
@@ -274,5 +276,9 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null);
         }
         return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, splitName, attributes);
+    }
+
+    private void recordLatency(Method treatment, long startTime) {
+        mTelemetryEvaluationProducer.recordLatency(treatment, System.currentTimeMillis() - startTime);
     }
 }
