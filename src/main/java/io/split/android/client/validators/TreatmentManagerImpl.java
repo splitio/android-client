@@ -261,12 +261,12 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     private Map<String, SplitResult> controlTreatmentsForSplitsWithConfig(List<String> splits, String validationTag) {
-        return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits, validationTag, mSplitValidator, mValidationLogger);
+        return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits, mSplitValidator, validationTag, mValidationLogger);
     }
 
     @SuppressWarnings("SameParameterValue")
     private Map<String, String> controlTreatmentsForSplits(List<String> splits, String validationTag) {
-        return TreatmentManagerHelper.controlTreatmentsForSplits(splits, validationTag, mSplitValidator, mValidationLogger);
+        return TreatmentManagerHelper.controlTreatmentsForSplits(splits, mSplitValidator, validationTag, mValidationLogger);
     }
 
     private EvaluationResult evaluateIfReady(String splitName,

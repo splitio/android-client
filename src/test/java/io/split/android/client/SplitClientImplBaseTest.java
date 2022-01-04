@@ -14,6 +14,7 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.EventValidator;
+import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.engine.experiments.SplitParser;
 
@@ -39,6 +40,8 @@ public abstract class SplitClientImplBaseTest {
     protected EventValidator eventValidator;
     @Mock
     protected TreatmentManager treatmentManager;
+    @Mock
+    protected SplitValidator splitValidator;
 
     protected SplitClientImpl splitClient;
 
@@ -61,7 +64,8 @@ public abstract class SplitClientImplBaseTest {
                 syncManager,
                 attributesManager,
                 telemetryStorageProducer,
-                treatmentManager
+                treatmentManager,
+                splitValidator
         );
     }
 }

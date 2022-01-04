@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.SplitResult;
@@ -23,7 +24,7 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"), "tag", validator, logger);
+        TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"), validator, "tag", logger);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");
@@ -33,7 +34,7 @@ public class TreatmentManagerHelperTest {
     @Test
     public void controlTreatmentsForSplitsDoesNotValidateSplitsWhenValidatorOrLoggerAreNull() {
 
-        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"));
+        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"), mock(SplitValidator.class));
 
         Assert.assertEquals(2, result.size());
     }
@@ -45,7 +46,7 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"), "tag", validator, logger);
+        TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"), validator, "tag", logger);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");
@@ -55,7 +56,7 @@ public class TreatmentManagerHelperTest {
     @Test
     public void controlTreatmentsForSplitsWithConfigDoesNotValidateSplitsWhenValidatorOrLoggerAreNull() {
 
-        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"));
+        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"), mock(SplitValidator.class));
 
         Assert.assertEquals(2, result.size());
     }
@@ -63,7 +64,7 @@ public class TreatmentManagerHelperTest {
     @Test
     public void controlTreatmentsForSplitsReturnsControlTreatments() {
 
-        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"));
+        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"), mock(SplitValidator.class));
 
         Assert.assertTrue(result.values().stream().allMatch(Treatments.CONTROL::equals));
     }
@@ -71,8 +72,42 @@ public class TreatmentManagerHelperTest {
     @Test
     public void controlTreatmentsForSplitsWithConfigReturnsControlTreatments() {
 
-        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"));
+        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"), mock(SplitValidator.class));
 
         Assert.assertTrue(result.values().stream().allMatch(splitResult -> Treatments.CONTROL.equals(splitResult.treatment())));
+    }
+
+    @Test
+    public void controlTreatmentsForSplitsWithConfigOnlyAddsValueForValidSplits() {
+        SplitValidator validator = mock(SplitValidator.class);
+        ValidationMessageLogger logger = mock(ValidationMessageLogger.class);
+
+        when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
+
+        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"), validator,"tag", logger);
+
+        verify(validator).validateName("split1");
+        verify(validator).validateName("split2");
+        verify(logger, atMostOnce()).e("message", "tag");
+        Assert.assertEquals(1, result.size());
+        Assert.assertTrue(result.containsKey("split1"));
+        Assert.assertFalse(result.containsKey("split2"));
+    }
+
+    @Test
+    public void controlTreatmentsForSplitsOnlyAddsValuesForValidSplits() {
+        SplitValidator validator = mock(SplitValidator.class);
+        ValidationMessageLogger logger = mock(ValidationMessageLogger.class);
+
+        when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
+
+        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"), validator, "tag", logger);
+
+        verify(validator).validateName("split1");
+        verify(validator).validateName("split2");
+        verify(logger, atMostOnce()).e("message", "tag");
+        Assert.assertEquals(1, result.size());
+        Assert.assertTrue(result.containsKey("split1"));
+        Assert.assertFalse(result.containsKey("split2"));
     }
 }
