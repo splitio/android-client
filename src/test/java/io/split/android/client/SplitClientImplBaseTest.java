@@ -11,7 +11,6 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.SplitValidator;

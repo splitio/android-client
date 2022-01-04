@@ -22,6 +22,7 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
+import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;

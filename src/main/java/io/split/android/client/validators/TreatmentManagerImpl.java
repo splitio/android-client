@@ -20,7 +20,6 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.telemetry.model.Method;
-import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.grammar.Treatments;

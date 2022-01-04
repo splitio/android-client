@@ -1,11 +1,13 @@
 package io.split.android.engine.experiments;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,16 +21,9 @@ import io.split.android.client.TreatmentLabels;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.telemetry.model.Method;
-import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class EvaluatorTest {
 
