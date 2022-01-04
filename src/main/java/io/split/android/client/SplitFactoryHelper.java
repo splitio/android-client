@@ -49,6 +49,7 @@ import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
 
@@ -168,7 +169,8 @@ class SplitFactoryHelper {
                                  HttpClient httpClient,
                                  Synchronizer synchronizer,
                                  SplitEventsManager splitEventsManager,
-                                 TelemetrySynchronizer telemetrySynchronizer) {
+                                 TelemetrySynchronizer telemetrySynchronizer,
+                                 TelemetryRuntimeProducer telemetryRuntimeProducer) {
 
         BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue
                 = new LinkedBlockingDeque<>();
@@ -200,7 +202,7 @@ class SplitFactoryHelper {
         PushNotificationManager pushNotificationManager =
                 new PushNotificationManager(pushManagerEventBroadcaster, sseAuthenticator, sseClient,
                         new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
-                        new SseDisconnectionTimer(new SplitTaskExecutorImpl()), null);
+                        new SseDisconnectionTimer(new SplitTaskExecutorImpl()), telemetryRuntimeProducer, null);
 
         BackoffCounterTimer backoffReconnectTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
 
