@@ -22,13 +22,11 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
-import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
-import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerHelper;
 import io.split.android.client.validators.TreatmentManagerImpl;
@@ -78,7 +76,6 @@ public final class SplitClientImpl implements SplitClient {
                 impressionListener,
                 config,
                 eventsManager,
-                splitsStorage,
                 eventPropertiesProcessor,
                 new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage),
                 syncManager,
@@ -86,7 +83,7 @@ public final class SplitClientImpl implements SplitClient {
                 telemetryStorageProducer,
                 new TreatmentManagerImpl(
                         key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser),
-                        new KeyValidatorImpl(), new SplitValidatorImpl(),
+                        new KeyValidatorImpl(), splitValidator,
                         impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer),
                 splitValidator);
     }
@@ -98,7 +95,6 @@ public final class SplitClientImpl implements SplitClient {
                            ImpressionListener impressionListener,
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
-                           SplitsStorage splitsStorage,
                            EventPropertiesProcessor eventPropertiesProcessor,
                            EventValidator eventValidator,
                            SyncManager syncManager,

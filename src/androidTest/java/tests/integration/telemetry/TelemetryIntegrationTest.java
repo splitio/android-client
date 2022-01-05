@@ -64,7 +64,6 @@ public class TelemetryIntegrationTest {
 
         // Perform usages before SDK is ready
         client.getTreatment("test");
-        client.getTreatment("test");
 
         SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(countDownLatch);
         client.on(SplitEvent.SDK_READY, readyFromCacheTask);
@@ -72,7 +71,7 @@ public class TelemetryIntegrationTest {
         countDownLatch.await(30, TimeUnit.SECONDS);
 
         TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        assertEquals(2, telemetryStorage.getNonReadyUsage());
+        assertEquals(1, telemetryStorage.getNonReadyUsage());
         assertEquals(1, telemetryStorage.getActiveFactories());
         assertEquals(0, telemetryStorage.getRedundantFactories());
         assertTrue(telemetryStorage.getTimeUntilReadyFromCache() > 0);

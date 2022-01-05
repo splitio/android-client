@@ -57,7 +57,6 @@ public abstract class SplitClientImplBaseTest {
                 impressionListener,
                 splitClientConfig,
                 new SplitEventsManager(splitClientConfig),
-                splitsStorage,
                 eventPropertiesProcessor,
                 eventValidator,
                 syncManager,

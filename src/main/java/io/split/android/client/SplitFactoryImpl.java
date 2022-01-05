@@ -233,23 +233,25 @@ public class SplitFactoryImpl implements SplitFactory {
 
         _eventsManager.getExecutorResources().setSplitClient(_client);
 
-        int activeFactoriesCount = _factoryMonitor.count(_apiKey);
-        storageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
-        storageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
+        if (config.shouldRecordTelemetry()) {
+            int activeFactoriesCount = _factoryMonitor.count(_apiKey);
+            storageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
+            storageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
 
-        _client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                storageContainer.getTelemetryStorage().recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
-            }
-        });
+            _client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+                @Override
+                public void onPostExecution(SplitClient client) {
+                    storageContainer.getTelemetryStorage().recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
+                }
+            });
 
-        _client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                storageContainer.getTelemetryStorage().recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
-            }
-        });
+            _client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
+                @Override
+                public void onPostExecution(SplitClient client) {
+                    storageContainer.getTelemetryStorage().recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
+                }
+            });
+        }
 
         Logger.i("Android SDK initialized!");
     }
