@@ -16,6 +16,11 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
+import io.split.android.client.telemetry.model.streaming.OccupancyPriStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.OccupancySecStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.StreamingEvent;
+import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 
 public class NotificationManagerKeeper {
@@ -34,12 +39,14 @@ public class NotificationManagerKeeper {
     private static String CHANNEL_SEC_KEY = "SEC";
 
     Map<String, Publisher> mPublishers = Maps.newConcurrentMap();
-    private PushManagerEventBroadcaster mBroadcasterChannel;
-    private AtomicLong mLastControlTimestamp = new AtomicLong(0);
-    private AtomicBoolean mIsStreamingActive = new AtomicBoolean(true);
+    private final PushManagerEventBroadcaster mBroadcasterChannel;
+    private final AtomicLong mLastControlTimestamp = new AtomicLong(0);
+    private final AtomicBoolean mIsStreamingActive = new AtomicBoolean(true);
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
-    public NotificationManagerKeeper(PushManagerEventBroadcaster broadcasterChannel) {
+    public NotificationManagerKeeper(PushManagerEventBroadcaster broadcasterChannel, TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mBroadcasterChannel = broadcasterChannel;
+        mTelemetryRuntimeProducer = telemetryRuntimeProducer;
         /// By default we consider one publisher en primary channel available
         mPublishers.put(CHANNEL_PRI_KEY, new Publisher(1, 0));
         mPublishers.put(CHANNEL_SEC_KEY, new Publisher(0, 0));
@@ -55,17 +62,20 @@ public class NotificationManagerKeeper {
                 case STREAMING_PAUSED:
                     mIsStreamingActive.set(false);
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
+                    mTelemetryRuntimeProducer.recordStreamingEvents(new StreamingStatusStreamingEvent(StreamingStatusStreamingEvent.Status.PAUSED, System.currentTimeMillis()));
                     break;
 
                 case STREAMING_DISABLED:
                     mIsStreamingActive.set(false);
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_DISABLED));
+                    mTelemetryRuntimeProducer.recordStreamingEvents(new StreamingStatusStreamingEvent(StreamingStatusStreamingEvent.Status.DISABLED, System.currentTimeMillis()));
                     break;
 
                 case STREAMING_ENABLED:
                     mIsStreamingActive.set(true);
                     if (publishersCount() > 0) {
                         mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
+                        mTelemetryRuntimeProducer.recordStreamingEvents(new StreamingStatusStreamingEvent(StreamingStatusStreamingEvent.Status.ENABLED, System.currentTimeMillis()));
                     }
                     break;
 
@@ -92,6 +102,11 @@ public class NotificationManagerKeeper {
         }
         int prevPublishersCount = publishersCount();
         updateChannelInfo(channelKey, notification.getMetrics().getPublishers(), notification.getTimestamp());
+
+        StreamingEvent streamingEvent = (channelKey.equals(CHANNEL_PRI_KEY)) ?
+                new OccupancyPriStreamingEvent(publishersCount(), System.currentTimeMillis()) :
+                new OccupancySecStreamingEvent(publishersCount(), System.currentTimeMillis());
+        mTelemetryRuntimeProducer.recordStreamingEvents(streamingEvent);
 
         if (publishersCount() == 0 && prevPublishersCount > 0) {
             mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));

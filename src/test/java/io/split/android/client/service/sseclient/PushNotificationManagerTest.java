@@ -29,6 +29,7 @@ import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.fake.SseClientMock;
 
@@ -222,6 +223,7 @@ public class PushNotificationManagerTest {
 
         verify(mTelemetryRuntimeProducer).recordTokenRefreshes();
         verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.TOKEN), longThat(argument -> argument > 0));
+        verify(mTelemetryRuntimeProducer).recordStreamingEvents(any(TokenRefreshStreamingEvent.class));
     }
 
     @Test

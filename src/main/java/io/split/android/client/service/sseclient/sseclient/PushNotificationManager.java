@@ -1,12 +1,14 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Thread.sleep;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -21,13 +23,10 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEven
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Thread.interrupted;
-import static java.lang.Thread.sleep;
-import static java.lang.reflect.Modifier.PRIVATE;
 
 public class PushNotificationManager {
 
@@ -70,6 +69,7 @@ public class PushNotificationManager {
     }
 
     public void start() {
+        mTelemetryRuntimeProducer.recordStreamingEvents(new SyncModeUpdateStreamingEvent(SyncModeUpdateStreamingEvent.Mode.STREAMING, System.currentTimeMillis()));
         Logger.d("Push notification manager started");
         connect();
     }
@@ -189,6 +189,7 @@ public class PushNotificationManager {
             }
 
             mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.TOKEN, System.currentTimeMillis());
+            mTelemetryRuntimeProducer.recordStreamingEvents(new TokenRefreshStreamingEvent(token.getExpirationTime(), System.currentTimeMillis()));
             mTelemetryRuntimeProducer.recordTokenRefreshes();
 
             long delay = authResult.getSseConnectionDelay();

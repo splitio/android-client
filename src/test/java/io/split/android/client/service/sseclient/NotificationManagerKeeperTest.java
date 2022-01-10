@@ -14,8 +14,12 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
+import io.split.android.client.telemetry.model.EventTypeEnum;
+import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -40,11 +44,14 @@ public class NotificationManagerKeeperTest {
     @Mock
     OccupancyNotification.Metrics mMetrics;
 
+    @Mock
+    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        mManagerKeeper = new NotificationManagerKeeper(mBroadcasterChannel);
+        mManagerKeeper = new NotificationManagerKeeper(mBroadcasterChannel, mTelemetryRuntimeProducer);
         when(mOccupancyNotification.getMetrics()).thenReturn(mMetrics);
     }
 
@@ -204,4 +211,47 @@ public class NotificationManagerKeeperTest {
         verify(mBroadcasterChannel, never()).pushMessage(any());
     }
 
+    @Test
+    public void pausedStreamingIsRecordedInTelemetry() {
+        ArgumentCaptor<StreamingStatusStreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingStatusStreamingEvent.class);
+
+        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_PAUSED);
+        when(mControlNotification.getTimestamp()).thenReturn(20L);
+        mManagerKeeper.handleControlNotification(mControlNotification);
+
+        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
+        Assert.assertEquals(StreamingStatusStreamingEvent.Status.PAUSED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
+        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS, argumentCaptor.getValue().getEventType());
+        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+    }
+
+    @Test
+    public void enabledStreamingIsRecordedInTelemetry() {
+        ArgumentCaptor<StreamingStatusStreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingStatusStreamingEvent.class);
+
+        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_ENABLED);
+        when(mControlNotification.getTimestamp()).thenReturn(20L);
+
+        mManagerKeeper.handleControlNotification(mControlNotification);
+
+        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
+        Assert.assertEquals(StreamingStatusStreamingEvent.Status.ENABLED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
+        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS, argumentCaptor.getValue().getEventType());
+        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+    }
+
+    @Test
+    public void disabledStreamingIsRecordedInTelemetry() {
+        ArgumentCaptor<StreamingStatusStreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingStatusStreamingEvent.class);
+
+        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_DISABLED);
+        when(mControlNotification.getTimestamp()).thenReturn(20L);
+
+        mManagerKeeper.handleControlNotification(mControlNotification);
+
+        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
+        Assert.assertEquals(StreamingStatusStreamingEvent.Status.DISABLED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
+        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS, argumentCaptor.getValue().getEventType());
+        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+    }
 }
