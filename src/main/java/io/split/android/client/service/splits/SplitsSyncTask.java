@@ -19,6 +19,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.synchronizer.SplitsChangeChecker;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -35,13 +37,15 @@ public class SplitsSyncTask implements SplitTask {
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final SplitEventsManager mEventsManager;
     private SplitsChangeChecker mChangeChecker;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
                           @NonNull SplitsStorage splitsStorage,
                           boolean checkCacheExpiration,
                           long cacheExpirationInSeconds,
                           String splitsFilterQueryString,
-                          @NonNull SplitEventsManager eventsManager) {
+                          @NonNull SplitEventsManager eventsManager,
+                          @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
 
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
@@ -50,11 +54,13 @@ public class SplitsSyncTask implements SplitTask {
         mSplitsFilterQueryString = splitsFilterQueryString;
         mEventsManager = checkNotNull(eventsManager);
         mChangeChecker = new SplitsChangeChecker();
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
+        long startTime = System.currentTimeMillis();
         long storedChangeNumber = mSplitsStorage.getTill();
         long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
         String storedSplitsFilterQueryString = mSplitsStorage.getSplitsFilterQueryString();
@@ -78,6 +84,8 @@ public class SplitsSyncTask implements SplitTask {
             }
             mEventsManager.notifyInternalEvent(event);
         }
+
+        mTelemetryRuntimeProducer.recordSyncLatency(OperationType.SPLITS, System.currentTimeMillis() - startTime);
         return result;
     }
 

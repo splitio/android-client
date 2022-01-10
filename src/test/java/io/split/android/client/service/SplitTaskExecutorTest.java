@@ -6,11 +6,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +22,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 import static java.lang.Thread.sleep;
 import static org.mockito.Mockito.mock;
@@ -30,9 +31,13 @@ public class SplitTaskExecutorTest {
 
     SplitTaskExecutor mTaskExecutor;
 
+    @Mock
+    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+
     @Before
     public void setup() {
-        mTaskExecutor = new SplitTaskExecutorImpl();
+        MockitoAnnotations.openMocks(this);
+        mTaskExecutor = new SplitTaskExecutorImpl(mTelemetryRuntimeProducer);
     }
 
     @Test

@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
@@ -26,8 +28,10 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
     private final Map<String, ScheduledFuture> mScheduledTasks;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
-    public SplitTaskExecutorImpl() {
+    public SplitTaskExecutorImpl(@NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
@@ -155,26 +159,53 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     private static class SplitTaskBatchWrapper implements Runnable {
         List<SplitTaskBatchItem> mTaskQueue;
+        final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
-        SplitTaskBatchWrapper(List<SplitTaskBatchItem> taskQueue) {
+        SplitTaskBatchWrapper(List<SplitTaskBatchItem> taskQueue, TelemetryRuntimeProducer telemetryRuntimeProducer) {
             mTaskQueue = checkNotNull(taskQueue);
+            mTelemetryRuntimeProducer = telemetryRuntimeProducer;
         }
 
         @Override
         public void run() {
             try {
                 for(SplitTaskBatchItem enqueued : mTaskQueue) {
+                    long startTime = System.currentTimeMillis();
                     SplitTaskExecutionInfo info = enqueued.getTask().execute();
                     SplitTaskExecutionListener listener = enqueued.getListener();
                     if (listener != null) {
                         listener.taskExecuted(info);
                     }
+                    long latency = System.currentTimeMillis() - startTime;
+                    mTelemetryRuntimeProducer.recordSyncLatency(getOperationType(info.getTaskType()), latency);
                 }
 
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
             }
 
+        }
+
+        @Nullable
+        private OperationType getOperationType(SplitTaskType taskType) {
+            switch (taskType) {
+                case SPLITS_SYNC:
+                    return OperationType.SPLITS;
+                case MY_SEGMENTS_SYNC:
+                    return OperationType.MY_SEGMENT;
+                case TELEMETRY_STATS_TASK:
+                    return OperationType.TELEMETRY;
+                case EVENTS_RECORDER:
+                    return OperationType.EVENTS;
+                case IMPRESSIONS_RECORDER:
+                    return OperationType.IMPRESSIONS;
+                case IMPRESSIONS_COUNT_RECORDER:
+                    return OperationType.IMPRESSIONS_COUNT;
+                case SSE_AUTHENTICATION_TASK:
+                    return OperationType.TOKEN;
+            }
+
+            return null;
         }
     }
 }
