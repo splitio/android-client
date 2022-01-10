@@ -11,18 +11,22 @@ import static org.mockito.Mockito.when;
 import androidx.work.WorkManager;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.executor.SplitTask;
@@ -41,6 +45,8 @@ import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.telemetry.TelemetrySyncTaskExecutionListenerFactory;
+import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
+import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
@@ -88,11 +94,6 @@ public class SynchronizerImplTelemetryTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-    }
-
-    @Test
-    public void eventsSyncTelemetryListenerIsAdded() {
-
         EventsRecorderTask eventsRecorderTask = mock(EventsRecorderTask.class);
         when(eventsRecorderTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.EVENTS_RECORDER));
 
@@ -110,7 +111,7 @@ public class SynchronizerImplTelemetryTest {
         RetryBackoffCounterTimerFactory mRetryBackoffCounterFactory = mock(RetryBackoffCounterTimerFactory.class);
         when(mRetryBackoffCounterFactory.create(mTaskExecutor, 1)).thenReturn(mock(RetryBackoffCounterTimer.class));
 
-        SynchronizerImpl sync = new SynchronizerImpl(
+        mSynchronizer = new SynchronizerImpl(
                 mConfig,
                 mTaskExecutor,
                 mSplitStorageContainer,
@@ -121,5 +122,28 @@ public class SynchronizerImplTelemetryTest {
                 mTelemetryRuntimeProducer,
                 mTelemetrySynTaskExecutionListenerFactory
         );
+    }
+
+    @Test
+    public void pushEventRecordsInTelemetry() {
+
+        mSynchronizer.pushEvent(new Event());
+
+        verify(mTelemetryRuntimeProducer).recordEventStats(EventsDataRecordsEnum.EVENTS_QUEUED, 1);
+    }
+
+    @Test
+    public void pushImpressionRecordsInTelemetry() {
+
+        mSynchronizer.pushImpression(new Impression("key",
+                "key",
+                "split",
+                "treatment",
+                10000,
+                "rule",
+                25L,
+                Collections.emptyMap()));
+
+        verify(mTelemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
     }
 }
