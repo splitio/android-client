@@ -3,6 +3,7 @@ package io.split.android.client.telemetry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -17,6 +18,7 @@ import org.mockito.stubbing.Answer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -41,12 +43,13 @@ public class TelemetrySynchronizerImplTest {
     private TelemetryStatsRecorderTask telemetryStatsRecorderTask;
     @Mock
     private TelemetryRuntimeProducer telemetryRuntimeProducer;
+    @Mock private TelemetrySyncTaskExecutionListenerFactory telemetrySyncTaskExecutionListenerFactory;
     private TelemetrySynchronizerImpl telemetrySynchronizer;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetryRuntimeProducer, 15L);
+        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetryRuntimeProducer, telemetrySyncTaskExecutionListenerFactory, 15L);
     }
 
     @Test
@@ -120,32 +123,30 @@ public class TelemetrySynchronizerImplTest {
     }
 
     @Test
-    public void synchronizeConfigRecordsSuccessfulSync() {
+    public void synchronizeConfigAddsTelemetryListener() {
 
+        TelemetrySyncTaskExecutionListener eventListener = mock(TelemetrySyncTaskExecutionListener.class);
+        when(telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_CONFIG_TASK, OperationType.TELEMETRY)).thenReturn(eventListener);
         when(taskFactory.getTelemetryConfigRecorderTask()).thenReturn(telemetryConfigTask);
+
+        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetryRuntimeProducer, telemetrySyncTaskExecutionListenerFactory, 15L);
 
         telemetrySynchronizer.synchronizeConfig();
 
-        verify(telemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.TELEMETRY), anyLong());
+        verify(configTimer).setTask(telemetryConfigTask, eventListener);
     }
 
     @Test
-    public void synchronizeStatsRecordsSuccessfulSync() {
+    public void synchronizeStatsAddsTelemetryListener() {
 
+        TelemetrySyncTaskExecutionListener eventListener = mock(TelemetrySyncTaskExecutionListener.class);
+        when(telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_STATS_TASK, OperationType.TELEMETRY)).thenReturn(eventListener);
         when(taskFactory.getTelemetryStatsRecorderTask()).thenReturn(telemetryStatsRecorderTask);
-        when(telemetryStatsRecorderTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.EVENTS_RECORDER));
 
-        when(taskExecutor.schedule(eq(telemetryStatsRecorderTask), anyLong(), anyLong(), any())).thenAnswer(new Answer<String>() {
-            @Override
-            public String answer(InvocationOnMock invocation) {
-                telemetryStatsRecorderTask.execute();
-
-                return "id";
-            }
-        });
+        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetryRuntimeProducer, telemetrySyncTaskExecutionListenerFactory, 15L);
 
         telemetrySynchronizer.synchronizeStats();
 
-        verify(telemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.TELEMETRY), anyLong());
+        verify(taskExecutor).schedule(eq(telemetryStatsRecorderTask), eq(0L), eq(15L), eq(eventListener));
     }
 }

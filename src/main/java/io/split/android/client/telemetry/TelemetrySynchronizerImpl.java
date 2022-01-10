@@ -6,9 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.service.ServiceConstants;
-
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.FixedIntervalBackoffCounter;
@@ -23,10 +20,12 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
     private final RetryBackoffCounterTimer mConfigTimer;
     private final SplitTaskExecutor mTaskExecutor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private final TelemetrySyncTaskExecutionListenerFactory mTelemetrySyncTaskExecutionListenerFactory;
     private final long mTelemetrySyncPeriod;
 
     private String statsTaskId = null;
-    private final SplitTaskExecutionListener mStatsSyncListener;
+    private final TelemetrySyncTaskExecutionListener mStatsSyncListener;
+    private final TelemetrySyncTaskExecutionListener mConfigSyncListener;
 
     public TelemetrySynchronizerImpl(@NonNull SplitTaskExecutor splitTaskExecutor,
                                      @NonNull TelemetryTaskFactory telemetryTaskFactory,
@@ -38,6 +37,7 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
                         new FixedIntervalBackoffCounter(ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS),
                         ServiceConstants.TELEMETRY_CONFIG_MAX_RETRY_ATTEMPTS),
                 telemetryRuntimeProducer,
+                new TelemetrySyncTaskExecutionListenerFactoryImpl(telemetryRuntimeProducer),
                 telemetrySyncPeriod);
     }
 
@@ -46,19 +46,23 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
                                      @NonNull TelemetryTaskFactory telemetryTaskFactory,
                                      @NonNull RetryBackoffCounterTimer configTimer,
                                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                     @NonNull TelemetrySyncTaskExecutionListenerFactory telemetrySyncTaskExecutionListenerFactory,
                                      long telemetrySyncPeriod) {
         mTaskExecutor = checkNotNull(splitTaskExecutor);
         mTaskFactory = checkNotNull(telemetryTaskFactory);
         mConfigTimer = checkNotNull(configTimer);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mTelemetrySyncPeriod = telemetrySyncPeriod;
-        mStatsSyncListener = new TelemetrySyncTaskExecutionListener(mTelemetryRuntimeProducer, SplitTaskType.TELEMETRY_STATS_TASK, OperationType.TELEMETRY);
+
+        mTelemetrySyncTaskExecutionListenerFactory = checkNotNull(telemetrySyncTaskExecutionListenerFactory);
+        mStatsSyncListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_STATS_TASK, OperationType.TELEMETRY);
+        mConfigSyncListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_CONFIG_TASK, OperationType.TELEMETRY);
     }
 
     @Override
     public void synchronizeConfig() {
         mConfigTimer.setTask(mTaskFactory.getTelemetryConfigRecorderTask(),
-                new TelemetrySyncTaskExecutionListener(mTelemetryRuntimeProducer, SplitTaskType.TELEMETRY_CONFIG_TASK, OperationType.TELEMETRY));
+                mConfigSyncListener);
         mConfigTimer.start();
     }
 
