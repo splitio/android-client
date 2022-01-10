@@ -29,7 +29,7 @@ public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
 
         splitClient.track("any");
 
-        verify(telemetryEvaluationProducer).recordLatency(eq(Method.TRACK), anyLong());
+        verify(telemetryStorageProducer).recordLatency(eq(Method.TRACK), anyLong());
     }
 
     @Test
@@ -40,7 +40,7 @@ public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
 
         splitClient.track("event");
 
-        verify(telemetryEvaluationProducer).recordException(Method.TRACK);
+        verify(telemetryStorageProducer).recordException(Method.TRACK);
     }
 
     @Test
@@ -51,7 +51,7 @@ public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
 
         splitClient.getTreatment("test");
 
-        verify(telemetryEvaluationProducer).recordException(Method.TREATMENT);
+        verify(telemetryStorageProducer).recordException(Method.TREATMENT);
     }
 
     @Test
@@ -62,7 +62,7 @@ public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
 
         splitClient.getTreatments(Arrays.asList("test", "test2"), Collections.emptyMap());
 
-        verify(telemetryEvaluationProducer).recordException(Method.TREATMENTS);
+        verify(telemetryStorageProducer).recordException(Method.TREATMENTS);
     }
 
     @Test
@@ -73,7 +73,7 @@ public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
 
         splitClient.getTreatmentWithConfig("test", Collections.emptyMap());
 
-        verify(telemetryEvaluationProducer).recordException(Method.TREATMENT_WITH_CONFIG);
+        verify(telemetryStorageProducer).recordException(Method.TREATMENT_WITH_CONFIG);
     }
 
     @Test
@@ -84,6 +84,6 @@ public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
 
         splitClient.getTreatmentsWithConfig(Arrays.asList("test", "test2"), Collections.emptyMap());
 
-        verify(telemetryEvaluationProducer).recordException(Method.TREATMENTS_WITH_CONFIG);
+        verify(telemetryStorageProducer).recordException(Method.TREATMENTS_WITH_CONFIG);
     }
 }

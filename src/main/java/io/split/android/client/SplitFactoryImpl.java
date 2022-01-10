@@ -10,6 +10,8 @@ import java.util.List;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerImpl;
+import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -60,7 +62,6 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitLifecycleManager _lifecyleManager;
     private final SyncManager _syncManager;
     private final SplitRoomDatabase _splitDatabase;
-    private final long mInitializationStartTime;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
@@ -73,7 +74,7 @@ public class SplitFactoryImpl implements SplitFactory {
                              SynchronizerSpy synchronizerSpy)
             throws URISyntaxException {
 
-        mInitializationStartTime = System.currentTimeMillis();
+        final long initializationStartTime = System.currentTimeMillis();
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
         setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
@@ -202,7 +203,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     storageContainer.getAttributesStorage().destroy();
                     Logger.i("Successful shutdown of attributes storage");
                     if (config.shouldRecordTelemetry()) {
-                        storageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - mInitializationStartTime);
+                        storageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
                         telemetrySynchronizer.flush();
                         telemetrySynchronizer.destroy();
                         Logger.i("Successful shutdown of telemetry");
@@ -241,6 +242,26 @@ public class SplitFactoryImpl implements SplitFactory {
                 new SplitValidatorImpl(), splitParser);
 
         _eventsManager.getExecutorResources().setSplitClient(_client);
+
+        if (config.shouldRecordTelemetry()) {
+            int activeFactoriesCount = _factoryMonitor.count(_apiKey);
+            storageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
+            storageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
+
+            _client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+                @Override
+                public void onPostExecution(SplitClient client) {
+                    storageContainer.getTelemetryStorage().recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
+                }
+            });
+
+            _client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
+                @Override
+                public void onPostExecution(SplitClient client) {
+                    storageContainer.getTelemetryStorage().recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
+                }
+            });
+        }
 
         Logger.i("Android SDK initialized!");
     }

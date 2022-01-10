@@ -45,6 +45,7 @@ public class TestableSplitConfigBuilder {
     private boolean mLegacyStorageMigrationEnabled = false;
     private boolean mIsPersistentAttributesStorageEnabled = false;
     private long mTelemetryRefreshRate = 3600;
+    private boolean mShouldRecordTelemetry = false;
 
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
@@ -57,7 +58,6 @@ public class TestableSplitConfigBuilder {
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
     }
-
 
     public TestableSplitConfigBuilder featuresRefreshRate(int featuresRefreshRate) {
         this.mFeaturesRefreshRate = featuresRefreshRate;
@@ -229,6 +229,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder shouldRecordTelemetry(boolean shouldRecordTelemetry) {
+        this.mShouldRecordTelemetry = shouldRecordTelemetry;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -277,7 +282,8 @@ public class TestableSplitConfigBuilder {
                     mIsPersistentAttributesStorageEnabled,
                     mOfflineRefreshRate,
                     mServiceEndpoints.getTelemetryEndpoint(),
-                    mTelemetryRefreshRate);
+                    mTelemetryRefreshRate,
+                    mShouldRecordTelemetry);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

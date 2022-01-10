@@ -181,7 +181,8 @@ public class SplitClientConfig {
                               boolean isPersistentAttributesEnabled,
                               int offlineRefreshRate,
                               String telemetryEndpoint,
-                              long telemetryRefreshRate) {
+                              long telemetryRefreshRate,
+                              boolean shouldRecordTelemetry) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _telemetryEndpoint = telemetryEndpoint;
@@ -234,7 +235,7 @@ public class SplitClientConfig {
             Logger.instance().debugLevel(true);
         }
 
-        _shouldRecordTelemetry = new TelemetryHelperImpl().shouldRecordTelemetry();
+        _shouldRecordTelemetry = shouldRecordTelemetry;
     }
 
     private static boolean isTestMode() {
@@ -1174,7 +1175,8 @@ public class SplitClientConfig {
                     _isPersistentAttributesEnabled,
                     _offlineRefreshRate,
                     _serviceEndpoints.getTelemetryEndpoint(),
-                    _telemetryRefreshRate);
+                    _telemetryRefreshRate,
+                    new TelemetryHelperImpl().shouldRecordTelemetry());
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

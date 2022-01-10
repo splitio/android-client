@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,13 +21,12 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
-import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
+import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
-import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerHelper;
 import io.split.android.client.validators.TreatmentManagerImpl;
@@ -53,7 +51,7 @@ public final class SplitClientImpl implements SplitClient {
     private final ValidationMessageLogger mValidationLogger;
     private final SyncManager mSyncManager;
     private final AttributesManager mAttributesManager;
-    private final TelemetryEvaluationProducer mTelemetryEvaluationProducer;
+    private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final SplitValidator mSplitValidator;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
@@ -70,7 +68,7 @@ public final class SplitClientImpl implements SplitClient {
                            EventPropertiesProcessor eventPropertiesProcessor,
                            SyncManager syncManager,
                            AttributesManager attributesManager,
-                           TelemetryEvaluationProducer telemetryEvaluationProducer,
+                           TelemetryStorageProducer telemetryStorageProducer,
                            SplitValidator splitValidator) {
         this(container,
                 key,
@@ -78,16 +76,15 @@ public final class SplitClientImpl implements SplitClient {
                 impressionListener,
                 config,
                 eventsManager,
-                splitsStorage,
                 eventPropertiesProcessor,
                 new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage),
                 syncManager,
                 attributesManager,
-                telemetryEvaluationProducer,
+                telemetryStorageProducer,
                 new TreatmentManagerImpl(
                         key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser),
                         new KeyValidatorImpl(), splitValidator,
-                        impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryEvaluationProducer),
+                        impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer),
                 splitValidator);
     }
 
@@ -98,12 +95,11 @@ public final class SplitClientImpl implements SplitClient {
                            ImpressionListener impressionListener,
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
-                           SplitsStorage splitsStorage,
                            EventPropertiesProcessor eventPropertiesProcessor,
                            EventValidator eventValidator,
                            SyncManager syncManager,
                            AttributesManager attributesManager,
-                           TelemetryEvaluationProducer telemetryEvaluationProducer,
+                           TelemetryStorageProducer telemetryStorageProducer,
                            TreatmentManager treatmentManager,
                            SplitValidator splitValidator) {
         checkNotNull(splitParser);
@@ -115,7 +111,7 @@ public final class SplitClientImpl implements SplitClient {
         mEventsManager = checkNotNull(eventsManager);
         mEventValidator = checkNotNull(eventValidator);
         mValidationLogger = new ValidationMessageLoggerImpl();
-        mTelemetryEvaluationProducer = telemetryEvaluationProducer;
+        mTelemetryStorageProducer = telemetryStorageProducer;
         mTreatmentManager = treatmentManager;
         mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
         mSyncManager = checkNotNull(syncManager);
@@ -151,7 +147,7 @@ public final class SplitClientImpl implements SplitClient {
         } catch (Exception exception) {
             Logger.e("Client getTreatment exception", exception);
 
-            mTelemetryEvaluationProducer.recordException(Method.TREATMENT);
+            mTelemetryStorageProducer.recordException(Method.TREATMENT);
 
             return Treatments.CONTROL;
         }
@@ -164,7 +160,7 @@ public final class SplitClientImpl implements SplitClient {
         } catch (Exception exception) {
             Logger.e("Client getTreatmentWithConfig exception", exception);
 
-            mTelemetryEvaluationProducer.recordException(Method.TREATMENT_WITH_CONFIG);
+            mTelemetryStorageProducer.recordException(Method.TREATMENT_WITH_CONFIG);
 
             return new SplitResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
         }
@@ -177,7 +173,7 @@ public final class SplitClientImpl implements SplitClient {
         } catch (Exception exception) {
             Logger.e("Client getTreatments exception", exception);
 
-            mTelemetryEvaluationProducer.recordException(Method.TREATMENTS);
+            mTelemetryStorageProducer.recordException(Method.TREATMENTS);
 
             return TreatmentManagerHelper.controlTreatmentsForSplits(splits, mSplitValidator);
         }
@@ -190,7 +186,7 @@ public final class SplitClientImpl implements SplitClient {
         } catch (Exception exception) {
             Logger.e("Client getTreatmentsWithConfig exception", exception);
 
-            mTelemetryEvaluationProducer.recordException(Method.TREATMENTS_WITH_CONFIG);
+            mTelemetryStorageProducer.recordException(Method.TREATMENTS_WITH_CONFIG);
 
             return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits, mSplitValidator);
         }
@@ -323,11 +319,11 @@ public final class SplitClientImpl implements SplitClient {
             event.setSizeInBytes(ESTIMATED_EVENT_SIZE_WITHOUT_PROPS + processedProperties.getSizeInBytes());
             mSyncManager.pushEvent(event);
 
-            mTelemetryEvaluationProducer.recordLatency(Method.TRACK, System.currentTimeMillis() - startTime);
+            mTelemetryStorageProducer.recordLatency(Method.TRACK, System.currentTimeMillis() - startTime);
 
             return true;
         } catch (Exception exception) {
-            mTelemetryEvaluationProducer.recordException(Method.TRACK);
+            mTelemetryStorageProducer.recordException(Method.TRACK);
 
             return false;
         }
