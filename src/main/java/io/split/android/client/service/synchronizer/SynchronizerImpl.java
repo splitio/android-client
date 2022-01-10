@@ -30,6 +30,8 @@ import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.telemetry.TelemetrySyncTaskExecutionListener;
+import io.split.android.client.telemetry.TelemetrySyncTaskExecutionListenerFactory;
+import io.split.android.client.telemetry.TelemetrySyncTaskExecutionListenerFactoryImpl;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.OperationType;
@@ -51,6 +53,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private RecorderSyncHelper<Event> mEventsSyncHelper;
     private RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
+    private final TelemetrySyncTaskExecutionListener mEventsTelemetryTaskListener;
+    private final TelemetrySyncTaskExecutionListener mImpressionsTelemetryTaskListener;
+    private final TelemetrySyncTaskExecutionListener mImpressionsCountTelemetryTaskListener;
+    private final TelemetrySyncTaskExecutionListener mSplitsTelemetryTaskListener;
+    private final TelemetrySyncTaskExecutionListener mMySegmentsTelemetryTaskListener;
 
     private LoadLocalDataListener mLoadLocalSplitsListener;
     private LoadLocalDataListener mLoadLocalMySegmentsListener;
@@ -75,7 +82,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull SplitEventsManager splitEventsManager,
                             @NonNull WorkManagerWrapper workManagerWrapper,
                             @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
-                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                            @NonNull TelemetrySyncTaskExecutionListenerFactory telemetrySyncTaskExecutionListenerFactory) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
@@ -92,6 +100,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mImpressionsCounter = new ImpressionsCounter();
 
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+
+        mEventsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.EVENTS_RECORDER, OperationType.EVENTS);
+        mImpressionsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.IMPRESSIONS_RECORDER, OperationType.IMPRESSIONS);
+        mImpressionsCountTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.IMPRESSIONS_COUNT_RECORDER, OperationType.IMPRESSIONS_COUNT);
+        mSplitsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.SPLITS_SYNC, OperationType.SPLITS);
+        mMySegmentsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.MY_SEGMENTS_SYNC, OperationType.MY_SEGMENT);
 
         setupListeners();
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
@@ -195,7 +209,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitClientConfig.eventsQueueSize(),
                 ServiceConstants.MAX_EVENTS_SIZE_BYTES,
                 mTaskExecutor,
-                new TelemetrySyncTaskExecutionListener(mTelemetryRuntimeProducer, SplitTaskType.EVENTS_RECORDER, OperationType.EVENTS));
+                mEventsTelemetryTaskListener);
 
         mImpressionsSyncHelper = new RecorderSyncHelperImpl<>(
                 SplitTaskType.IMPRESSIONS_RECORDER,
@@ -203,7 +217,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitClientConfig.impressionsQueueSize(),
                 mSplitClientConfig.impressionsChunkSize(),
                 mTaskExecutor,
-                new TelemetrySyncTaskExecutionListener(mTelemetryRuntimeProducer, SplitTaskType.IMPRESSIONS_RECORDER, OperationType.IMPRESSIONS));
+                mImpressionsTelemetryTaskListener);
 
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 mSplitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
@@ -286,7 +300,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null));
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createImpressionsCountRecorderTask(),
-                new TelemetrySyncTaskExecutionListener(mTelemetryRuntimeProducer, SplitTaskType.IMPRESSIONS_COUNT_RECORDER, OperationType.IMPRESSIONS_COUNT)));
+                mImpressionsCountTelemetryTaskListener));
         mTaskExecutor.executeSerially(enqueued);
     }
 
@@ -299,7 +313,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitTaskFactory.createSplitsSyncTask(false),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.featuresRefreshRate(),
-                new TelemetrySyncTaskExecutionListener(mTelemetryRuntimeProducer, SplitTaskType.SPLITS_SYNC, OperationType.SPLITS));
+                mSplitsTelemetryTaskListener);
     }
 
     private void scheduleMySegmentsFetcherTask() {
@@ -307,7 +321,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitTaskFactory.createMySegmentsSyncTask(false),
                 mSplitClientConfig.segmentsRefreshRate(),
                 mSplitClientConfig.segmentsRefreshRate(),
-                new TelemetrySyncTaskExecutionListener(mTelemetryRuntimeProducer, SplitTaskType.MY_SEGMENTS_SYNC, OperationType.MY_SEGMENT));
+                mMySegmentsTelemetryTaskListener);
     }
 
     private void scheduleEventsRecorderTask() {
@@ -332,7 +346,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitTaskFactory.createImpressionsCountRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
                 mSplitClientConfig.impressionsCounterRefreshRate(),
-                new TelemetrySyncTaskExecutionListener(mTelemetryRuntimeProducer, SplitTaskType.IMPRESSIONS_COUNT_RECORDER, OperationType.IMPRESSIONS_COUNT));
+                mImpressionsCountTelemetryTaskListener);
     }
 
     private void submitSplitLoadingTask(SplitTaskExecutionListener listener) {

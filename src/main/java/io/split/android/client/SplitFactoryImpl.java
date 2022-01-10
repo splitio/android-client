@@ -30,6 +30,7 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.telemetry.TelemetrySyncTaskExecutionListenerFactoryImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
@@ -146,7 +147,7 @@ public class SplitFactoryImpl implements SplitFactory {
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
-                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory(), storageContainer.getTelemetryStorage());
+                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory(), storageContainer.getTelemetryStorage(), new TelemetrySyncTaskExecutionListenerFactoryImpl(storageContainer.getTelemetryStorage()));
 
         // Only available for integration tests
         if (synchronizerSpy != null) {

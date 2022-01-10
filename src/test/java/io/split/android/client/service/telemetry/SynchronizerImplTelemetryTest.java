@@ -40,6 +40,7 @@ import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
+import io.split.android.client.telemetry.TelemetrySyncTaskExecutionListenerFactory;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
@@ -61,6 +62,8 @@ public class SynchronizerImplTelemetryTest {
     SplitTaskExecutionListener mTaskExecutionListener;
     @Mock
     TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    @Mock
+    TelemetrySyncTaskExecutionListenerFactory mTelemetrySynTaskExecutionListenerFactory;
     @Mock
     RetryBackoffCounterTimerFactory mRetryBackoffFactory;
     @Mock
@@ -88,9 +91,7 @@ public class SynchronizerImplTelemetryTest {
     }
 
     @Test
-    public void eventsSyncIsTrackedInTelemetry() {
-
-        CountDownLatch countDownLatch = new CountDownLatch(1);
+    public void eventsSyncTelemetryListenerIsAdded() {
 
         EventsRecorderTask eventsRecorderTask = mock(EventsRecorderTask.class);
         when(eventsRecorderTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.EVENTS_RECORDER));
@@ -117,9 +118,8 @@ public class SynchronizerImplTelemetryTest {
                 mEventsManager,
                 mWorkManagerWrapper,
                 mRetryBackoffCounterFactory,
-                mTelemetryRuntimeProducer
+                mTelemetryRuntimeProducer,
+                mTelemetrySynTaskExecutionListenerFactory
         );
-
-        verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.EVENTS), anyLong());
     }
 }
