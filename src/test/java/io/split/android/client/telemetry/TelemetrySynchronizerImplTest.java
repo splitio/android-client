@@ -1,7 +1,6 @@
 package io.split.android.client.telemetry;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -12,14 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
-import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
@@ -27,7 +19,6 @@ import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 import io.split.android.client.telemetry.model.OperationType;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class TelemetrySynchronizerImplTest {
 
@@ -42,14 +33,14 @@ public class TelemetrySynchronizerImplTest {
     @Mock
     private TelemetryStatsRecorderTask telemetryStatsRecorderTask;
     @Mock
-    private TelemetryRuntimeProducer telemetryRuntimeProducer;
-    @Mock private TelemetrySyncTaskExecutionListenerFactory telemetrySyncTaskExecutionListenerFactory;
+    private TelemetrySyncTaskExecutionListenerFactory telemetrySyncTaskExecutionListenerFactory;
+
     private TelemetrySynchronizerImpl telemetrySynchronizer;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetryRuntimeProducer, telemetrySyncTaskExecutionListenerFactory, 15L);
+        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetrySyncTaskExecutionListenerFactory, 15L);
     }
 
     @Test
@@ -129,7 +120,7 @@ public class TelemetrySynchronizerImplTest {
         when(telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_CONFIG_TASK, OperationType.TELEMETRY)).thenReturn(eventListener);
         when(taskFactory.getTelemetryConfigRecorderTask()).thenReturn(telemetryConfigTask);
 
-        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetryRuntimeProducer, telemetrySyncTaskExecutionListenerFactory, 15L);
+        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetrySyncTaskExecutionListenerFactory, 15L);
 
         telemetrySynchronizer.synchronizeConfig();
 
@@ -143,7 +134,7 @@ public class TelemetrySynchronizerImplTest {
         when(telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_STATS_TASK, OperationType.TELEMETRY)).thenReturn(eventListener);
         when(taskFactory.getTelemetryStatsRecorderTask()).thenReturn(telemetryStatsRecorderTask);
 
-        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetryRuntimeProducer, telemetrySyncTaskExecutionListenerFactory, 15L);
+        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetrySyncTaskExecutionListenerFactory, 15L);
 
         telemetrySynchronizer.synchronizeStats();
 

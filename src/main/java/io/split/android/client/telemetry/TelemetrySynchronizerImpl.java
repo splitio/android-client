@@ -19,8 +19,6 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
     private final TelemetryTaskFactory mTaskFactory;
     private final RetryBackoffCounterTimer mConfigTimer;
     private final SplitTaskExecutor mTaskExecutor;
-    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
-    private final TelemetrySyncTaskExecutionListenerFactory mTelemetrySyncTaskExecutionListenerFactory;
     private final long mTelemetrySyncPeriod;
 
     private String statsTaskId = null;
@@ -36,7 +34,6 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
                 new RetryBackoffCounterTimer(splitTaskExecutor,
                         new FixedIntervalBackoffCounter(ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS),
                         ServiceConstants.TELEMETRY_CONFIG_MAX_RETRY_ATTEMPTS),
-                telemetryRuntimeProducer,
                 new TelemetrySyncTaskExecutionListenerFactoryImpl(telemetryRuntimeProducer),
                 telemetrySyncPeriod);
     }
@@ -45,16 +42,13 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
     public TelemetrySynchronizerImpl(@NonNull SplitTaskExecutor splitTaskExecutor,
                                      @NonNull TelemetryTaskFactory telemetryTaskFactory,
                                      @NonNull RetryBackoffCounterTimer configTimer,
-                                     @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                                      @NonNull TelemetrySyncTaskExecutionListenerFactory telemetrySyncTaskExecutionListenerFactory,
                                      long telemetrySyncPeriod) {
         mTaskExecutor = checkNotNull(splitTaskExecutor);
         mTaskFactory = checkNotNull(telemetryTaskFactory);
         mConfigTimer = checkNotNull(configTimer);
-        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mTelemetrySyncPeriod = telemetrySyncPeriod;
 
-        mTelemetrySyncTaskExecutionListenerFactory = checkNotNull(telemetrySyncTaskExecutionListenerFactory);
         mStatsSyncListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_STATS_TASK, OperationType.TELEMETRY);
         mConfigSyncListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_CONFIG_TASK, OperationType.TELEMETRY);
     }
