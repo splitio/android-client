@@ -1,5 +1,7 @@
 package io.split.android.client.telemetry.model.streaming;
 
+import com.google.gson.annotations.SerializedName;
+
 import io.split.android.client.telemetry.model.EventTypeEnum;
 
 public class SyncModeUpdateStreamingEvent extends StreamingEvent {
@@ -9,7 +11,10 @@ public class SyncModeUpdateStreamingEvent extends StreamingEvent {
     }
 
     public enum Mode {
-        STREAMING(0), POLLING(1);
+        @SerializedName("0")
+        STREAMING(0),
+        @SerializedName("1")
+        POLLING(1);
 
         private final int numericValue;
 

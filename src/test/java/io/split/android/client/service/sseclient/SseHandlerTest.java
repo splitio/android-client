@@ -1,5 +1,13 @@
 package io.split.android.client.service.sseclient;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,13 +34,10 @@ import io.split.android.client.service.sseclient.notifications.SplitsChangeNotif
 import io.split.android.client.service.sseclient.notifications.StreamingError;
 import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.SseConnectionErrorStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.StreamingEvent;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 
 public class SseHandlerTest {
@@ -51,10 +56,13 @@ public class SseHandlerTest {
     @Mock
     NotificationProcessor mNotificationProcessor;
 
+    @Mock
+    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+
     @Before
     public void setup() {
-        MockitoAnnotations.initMocks(this);
-        mSseHandler = new SseHandler(mNotificationParser, mNotificationProcessor, mManagerKeeper, mBroadcasterChannel);
+        MockitoAnnotations.openMocks(this);
+        mSseHandler = new SseHandler(mNotificationParser, mNotificationProcessor, mManagerKeeper, mBroadcasterChannel, mTelemetryRuntimeProducer);
         when(mNotificationParser.isError(any())).thenReturn(false);
     }
 
@@ -216,10 +224,7 @@ public class SseHandlerTest {
 
     @Test
     public void incomingIgnorableSseErrorTest() {
-        IncomingNotification incomingNotification =
-                new IncomingNotification(NotificationType.ERROR, "", "", 100);
         StreamingError notification = new StreamingError("msg", 50000, 50000);
-
 
         when(mNotificationParser.isError(any())).thenReturn(true);
         when(mNotificationParser.parseError(anyString())).thenReturn(notification);
@@ -227,6 +232,63 @@ public class SseHandlerTest {
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
         verify(mBroadcasterChannel, never()).pushMessage(any());
+    }
+
+    @Test
+    public void ablyErrorIsRecordedInTelemetry() {
+        when(mNotificationParser.isError(any())).thenReturn(true);
+        int code = 40000;
+        StreamingError notification = new StreamingError("msg", code, code);
+
+        when(mNotificationParser.isError(anyMap())).thenReturn(true);
+        when(mNotificationParser.parseError(anyString())).thenReturn(notification);
+
+        mSseHandler.handleIncomingMessage(buildMessage("{}"));
+
+        ArgumentCaptor<StreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingEvent.class);
+
+        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
+        Assert.assertTrue(argumentCaptor.getValue() instanceof AblyErrorStreamingEvent);
+        Assert.assertEquals(40000, argumentCaptor.getValue().getEventData().longValue());
+        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+    }
+
+    @Test
+    public void sseRecoverableConnectionErrorIsRecordedInTelemetry() {
+        when(mNotificationParser.isError(any())).thenReturn(true);
+        int code = 40000;
+        StreamingError notification = new StreamingError("msg", code, code);
+
+        when(mNotificationParser.isError(anyMap())).thenReturn(true);
+        when(mNotificationParser.parseError(anyString())).thenReturn(notification);
+
+        mSseHandler.handleError(false);
+
+        ArgumentCaptor<StreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingEvent.class);
+
+        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
+        Assert.assertTrue(argumentCaptor.getValue() instanceof SseConnectionErrorStreamingEvent);
+        Assert.assertEquals(SseConnectionErrorStreamingEvent.Status.NON_REQUESTED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
+        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+    }
+
+    @Test
+    public void sseNonRecoverableConnectionErrorIsRecordedInTelemetry() {
+        when(mNotificationParser.isError(any())).thenReturn(true);
+        int code = 40000;
+        StreamingError notification = new StreamingError("msg", code, code);
+
+        when(mNotificationParser.isError(anyMap())).thenReturn(true);
+        when(mNotificationParser.parseError(anyString())).thenReturn(notification);
+
+        mSseHandler.handleError(true);
+
+        ArgumentCaptor<StreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingEvent.class);
+
+        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
+        Assert.assertTrue(argumentCaptor.getValue() instanceof SseConnectionErrorStreamingEvent);
+        Assert.assertEquals(SseConnectionErrorStreamingEvent.Status.REQUESTED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
+        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
     }
 
     private Map<String, String> buildMessage(String data) {

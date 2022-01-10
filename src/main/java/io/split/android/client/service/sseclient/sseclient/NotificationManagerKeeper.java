@@ -35,8 +35,8 @@ public class NotificationManagerKeeper {
         }
     }
 
-    private static String CHANNEL_PRI_KEY = "PRI";
-    private static String CHANNEL_SEC_KEY = "SEC";
+    private static final String CHANNEL_PRI_KEY = "PRI";
+    private static final String CHANNEL_SEC_KEY = "SEC";
 
     Map<String, Publisher> mPublishers = Maps.newConcurrentMap();
     private final PushManagerEventBroadcaster mBroadcasterChannel;

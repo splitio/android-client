@@ -193,8 +193,7 @@ class SplitFactoryHelper {
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
         EventStreamParser eventStreamParser = new EventStreamParser();
 
-        NotificationManagerKeeper managerKeeper = new NotificationManagerKeeper(pushManagerEventBroadcaster, telemetryRuntimeProducer);
-        SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, managerKeeper, pushManagerEventBroadcaster);
+        SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, telemetryRuntimeProducer, pushManagerEventBroadcaster);
         SseClient sseClient = new SseClientImpl(streamingServiceUrl, httpClient, eventStreamParser, sseHandler);
         SseAuthenticator sseAuthenticator =
                 new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(), userKey, new SseJwtParser());
