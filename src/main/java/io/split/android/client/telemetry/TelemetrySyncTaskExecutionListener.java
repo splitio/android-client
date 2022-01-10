@@ -2,8 +2,6 @@ package io.split.android.client.telemetry;
 
 import androidx.annotation.NonNull;
 
-import com.google.common.base.Function;
-
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -32,7 +30,7 @@ public class TelemetrySyncTaskExecutionListener implements SplitTaskExecutionLis
         if (SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())) {
             mTelemetryRuntimeProducer.recordSuccessfulSync(mOperationType, System.currentTimeMillis());
         } else if (SplitTaskExecutionStatus.ERROR.equals(taskInfo.getStatus())) {
-//            mTelemetryRuntimeProducer.recordSyncError(mOperationType, taskInfo.getIntegerValue("http_status")); TODO
+            mTelemetryRuntimeProducer.recordSyncError(mOperationType, taskInfo.getIntegerValue("http_status"));
         }
     }
 }

@@ -12,7 +12,10 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.HashMap;
+
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -41,12 +44,14 @@ public class TelemetrySyncTaskExecutionListenerTest {
     public void syncErrorIsRecordedWhenTaskFails() {
         telemetrySyncTaskExecutionListener = new TelemetrySyncTaskExecutionListener(runtimeProducer, SplitTaskType.GENERIC_TASK, OperationType.SPLITS);
 
-        telemetrySyncTaskExecutionListener.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK));
+        HashMap<String, Object> taskData = new HashMap<String, Object>();
+        taskData.put("http_status", 400);
+        telemetrySyncTaskExecutionListener.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK, taskData));
 
         verify(runtimeProducer).recordSyncError(eq(OperationType.SPLITS), intThat(new ArgumentMatcher<Integer>() {
             @Override
             public boolean matches(Integer argument) {
-                return argument >= 400;
+                return argument == 400;
             }
         }));
     }
