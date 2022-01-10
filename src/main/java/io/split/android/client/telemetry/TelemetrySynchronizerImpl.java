@@ -57,21 +57,8 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
 
     @Override
     public void synchronizeConfig() {
-        mConfigTimer.setTask(mTaskFactory.getTelemetryConfigRecorderTask(), new SplitTaskExecutionListener() {
-            @Override
-            public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-                if (SplitTaskType.TELEMETRY_CONFIG_TASK.equals(taskInfo.getTaskType())) {
-                    switch (taskInfo.getStatus()) {
-                        case SUCCESS:
-                            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.TELEMETRY, System.currentTimeMillis());
-                            break;
-                        case ERROR:
-                            //TODO mTelemetryRuntimeProducer.recordSyncError(OperationType.TELEMETRY);
-                            break;
-                    }
-                }
-            }
-        });
+        mConfigTimer.setTask(mTaskFactory.getTelemetryConfigRecorderTask(),
+                new TelemetrySyncTaskExecutionListener(mTelemetryRuntimeProducer, SplitTaskType.TELEMETRY_CONFIG_TASK, OperationType.TELEMETRY));
         mConfigTimer.start();
     }
 
