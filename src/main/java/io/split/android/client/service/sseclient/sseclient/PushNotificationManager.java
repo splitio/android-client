@@ -45,12 +45,12 @@ public class PushNotificationManager {
     private AtomicBoolean mIsStopped;
     private Future mConnectionTask;
 
-    public PushNotificationManager(PushManagerEventBroadcaster pushManagerEventBroadcaster,
-                                   SseAuthenticator sseAuthenticator,
-                                   SseClient sseClient,
-                                   SseRefreshTokenTimer refreshTokenTimer,
-                                   TelemetryRuntimeProducer telemetryRuntimeProducer,
-                                   ScheduledExecutorService executorService) {
+    public PushNotificationManager(@NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                                   @NonNull SseAuthenticator sseAuthenticator,
+                                   @NonNull SseClient sseClient,
+                                   @NonNull SseRefreshTokenTimer refreshTokenTimer,
+                                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                   @Nullable ScheduledExecutorService executorService) {
         this(pushManagerEventBroadcaster,
                 sseAuthenticator,
                 sseClient,
