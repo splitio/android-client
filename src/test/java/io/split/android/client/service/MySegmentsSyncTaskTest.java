@@ -1,11 +1,18 @@
 package io.split.android.client.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -18,21 +25,11 @@ import java.util.Map;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
-
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class MySegmentsSyncTaskTest {
 
@@ -118,6 +115,15 @@ public class MySegmentsSyncTaskTest {
 
         verify(mMySegmentsFetcher, times(1)).execute(noParams, null);
         verify(mySegmentsStorage, times(1)).set(any());
+    }
+
+    @Test
+    public void addHttpStatusWhenHttpRequestFails() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(new HttpFetcherException("", "", 500));
+
+        SplitTaskExecutionInfo result = mTask.execute();
+
+        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
     }
 
     @After

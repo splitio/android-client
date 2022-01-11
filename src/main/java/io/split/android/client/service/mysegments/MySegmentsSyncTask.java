@@ -56,7 +56,7 @@ public class MySegmentsSyncTask implements SplitTask {
             fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
-            return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
+            return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC, Collections.singletonMap(SplitTaskExecutionInfo.HTTP_STATUS, e.getHttpStatus()));
         } catch (Exception e) {
             logError("Unknown error while retrieving my segments: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
