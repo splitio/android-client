@@ -52,7 +52,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         String taskId = null;
         if (!mScheduler.isShutdown()) {
             ScheduledFuture taskFuture = mScheduler.scheduleAtFixedRate(
-                    new TaskWrapper(task, executionListener),
+                    new TaskWrapper(task, executionListener, mTelemetryRuntimeProducer),
                     initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
             taskId = UUID.randomUUID().toString();
             mScheduledTasks.put(taskId, taskFuture);
@@ -70,7 +70,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         String taskId = null;
         if (!mScheduler.isShutdown()) {
             ScheduledFuture taskFuture = mScheduler.schedule(
-                    new TaskWrapper(task, executionListener),
+                    new TaskWrapper(task, executionListener, mTelemetryRuntimeProducer),
                     initialDelayInSecs, TimeUnit.SECONDS);
             taskId = UUID.randomUUID().toString();
             mScheduledTasks.put(taskId, taskFuture);
@@ -83,7 +83,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                        @Nullable SplitTaskExecutionListener executionListener) {
         checkNotNull(task);
         if (!mScheduler.isShutdown()) {
-            mScheduler.submit(new TaskWrapper(task, executionListener));
+            mScheduler.submit(new TaskWrapper(task, executionListener, mTelemetryRuntimeProducer));
         }
     }
 
@@ -101,7 +101,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     @Override
     public void executeSerially(List<SplitTaskBatchItem> taskQueue) {
-        SplitTaskBatchWrapper queue = new SplitTaskBatchWrapper(taskQueue);
+        SplitTaskBatchWrapper queue = new SplitTaskBatchWrapper(taskQueue, mTelemetryRuntimeProducer);
         mScheduler.submit(queue);
     }
 
@@ -135,20 +135,29 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static class TaskWrapper implements Runnable {
         private final SplitTask mTask;
         private WeakReference<SplitTaskExecutionListener> mExecutionListener;
+        private final WeakReference<TelemetryRuntimeProducer> mTelemetryRuntimeProducer;
 
         TaskWrapper(SplitTask task,
-                    SplitTaskExecutionListener executionListener) {
+                    SplitTaskExecutionListener executionListener,
+                    TelemetryRuntimeProducer telemetryRuntimeProducer) {
             mTask = checkNotNull(task);
             mExecutionListener = new WeakReference<>(executionListener);
+            mTelemetryRuntimeProducer = new WeakReference<>(telemetryRuntimeProducer);
         }
 
         @Override
         public void run() {
             try {
+                long startTime = System.currentTimeMillis();
                 SplitTaskExecutionInfo info = mTask.execute();
                 SplitTaskExecutionListener listener = mExecutionListener.get();
                 if (listener != null) {
                     listener.taskExecuted(info);
+                }
+                long latency = System.currentTimeMillis() - startTime;
+                TelemetryRuntimeProducer telemetryRuntimeProducer = mTelemetryRuntimeProducer.get();
+                if (telemetryRuntimeProducer != null) {
+                    telemetryRuntimeProducer.recordSyncLatency(OperationType.getFromTaskType(info.getTaskType()), latency);
                 }
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
@@ -158,12 +167,12 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     }
 
     private static class SplitTaskBatchWrapper implements Runnable {
-        List<SplitTaskBatchItem> mTaskQueue;
-        final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+        private final List<SplitTaskBatchItem> mTaskQueue;
+        private final WeakReference<TelemetryRuntimeProducer> mTelemetryRuntimeProducer;
 
         SplitTaskBatchWrapper(List<SplitTaskBatchItem> taskQueue, TelemetryRuntimeProducer telemetryRuntimeProducer) {
             mTaskQueue = checkNotNull(taskQueue);
-            mTelemetryRuntimeProducer = telemetryRuntimeProducer;
+            mTelemetryRuntimeProducer = new WeakReference<>(telemetryRuntimeProducer);
         }
 
         @Override
@@ -176,36 +185,17 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                     if (listener != null) {
                         listener.taskExecuted(info);
                     }
+
                     long latency = System.currentTimeMillis() - startTime;
-                    mTelemetryRuntimeProducer.recordSyncLatency(getOperationType(info.getTaskType()), latency);
+                    TelemetryRuntimeProducer telemetryRuntimeProducer = mTelemetryRuntimeProducer.get();
+                    if (telemetryRuntimeProducer != null) {
+                        telemetryRuntimeProducer.recordSyncLatency(OperationType.getFromTaskType(info.getTaskType()), latency);
+                    }
                 }
 
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
             }
-
-        }
-
-        @Nullable
-        private OperationType getOperationType(SplitTaskType taskType) {
-            switch (taskType) {
-                case SPLITS_SYNC:
-                    return OperationType.SPLITS;
-                case MY_SEGMENTS_SYNC:
-                    return OperationType.MY_SEGMENT;
-                case TELEMETRY_STATS_TASK:
-                    return OperationType.TELEMETRY;
-                case EVENTS_RECORDER:
-                    return OperationType.EVENTS;
-                case IMPRESSIONS_RECORDER:
-                    return OperationType.IMPRESSIONS;
-                case IMPRESSIONS_COUNT_RECORDER:
-                    return OperationType.IMPRESSIONS_COUNT;
-                case SSE_AUTHENTICATION_TASK:
-                    return OperationType.TOKEN;
-            }
-
-            return null;
         }
     }
 }

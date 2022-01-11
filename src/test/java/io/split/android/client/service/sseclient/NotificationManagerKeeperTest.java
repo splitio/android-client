@@ -15,6 +15,8 @@ import io.split.android.client.service.sseclient.notifications.ControlNotificati
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
 import io.split.android.client.telemetry.model.EventTypeEnum;
+import io.split.android.client.telemetry.model.streaming.OccupancyPriStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
@@ -253,5 +255,20 @@ public class NotificationManagerKeeperTest {
         Assert.assertEquals(StreamingStatusStreamingEvent.Status.DISABLED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
         Assert.assertEquals(EventTypeEnum.STREAMING_STATUS, argumentCaptor.getValue().getEventType());
         Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+    }
+
+    @Test
+    public void occupancyPriIsRecordedInTelemetry() {
+        when(mOccupancyNotification.getChannel()).thenReturn(CONTROL_PRI_CHANNEL);
+        when(mOccupancyNotification.getTimestamp()).thenReturn(20L);
+        when(mMetrics.getPublishers()).thenReturn(0);
+        when(mOccupancyNotification.isControlPriChannel()).thenReturn(true);
+        when(mOccupancyNotification.isControlSecChannel()).thenReturn(false);
+        mManagerKeeper.handleOccupancyNotification(mOccupancyNotification);
+
+        ArgumentCaptor<StreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingEvent.class);
+
+        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
+        Assert.assertTrue(argumentCaptor.getValue() instanceof OccupancyPriStreamingEvent);
     }
 }

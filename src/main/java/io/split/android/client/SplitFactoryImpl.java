@@ -202,12 +202,10 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of task executor");
                     storageContainer.getAttributesStorage().destroy();
                     Logger.i("Successful shutdown of attributes storage");
-                    if (config.shouldRecordTelemetry()) {
-                        storageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
-                        telemetrySynchronizer.flush();
-                        telemetrySynchronizer.destroy();
-                        Logger.i("Successful shutdown of telemetry");
-                    }
+                    storageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
+                    telemetrySynchronizer.flush();
+                    telemetrySynchronizer.destroy();
+                    Logger.i("Successful shutdown of telemetry");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {

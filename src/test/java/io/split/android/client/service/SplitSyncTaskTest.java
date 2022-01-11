@@ -16,7 +16,6 @@ import static org.mockito.Mockito.when;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -72,7 +71,7 @@ public class SplitSyncTaskTest {
         // And updateTimestamp is 0
         // Retry is off, so splitSyncHelper.sync should be called
         mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                false, 1000, mQueryString, mEventsManager);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -86,7 +85,7 @@ public class SplitSyncTaskTest {
     public void cleanOldCacheDisabled() throws HttpFetcherException {
     // Cache should not be cleared when cache expired
         mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                false, 100L, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                false, 100L, mQueryString, mEventsManager);
         when(mSplitsStorage.getTill()).thenReturn(300L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(100L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -106,7 +105,7 @@ public class SplitSyncTaskTest {
         params.put("since", 100L);
         // Cache should be cleared when cache expired
         mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                true, 100L, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                true, 100L, mQueryString, mEventsManager);
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(100L); // Dummy value clearing depends on cacheHasExpired function value
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -127,7 +126,7 @@ public class SplitSyncTaskTest {
         Map<String, Object> params = new HashMap<>();
         params.put("since", 100L);
         mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                true, 100L, otherQs, mEventsManager, mTelemetryRuntimeProducer);
+                true, 100L, otherQs, mEventsManager);
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -149,7 +148,7 @@ public class SplitSyncTaskTest {
         Map<String, Object> params = new HashMap<>();
         params.put("since", 100L);
         mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                true,100L, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                true,100L, mQueryString, mEventsManager);
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -168,7 +167,7 @@ public class SplitSyncTaskTest {
         // And updateTimestamp is 0
         // Retry is off, so splitSyncHelper.sync should be called
         mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                false, 1000, mQueryString, mEventsManager);
         when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -186,7 +185,7 @@ public class SplitSyncTaskTest {
         // And updateTimestamp is 0
         // Retry is off, so splitSyncHelper.sync should be called
         mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                false, 1000, mQueryString, mEventsManager);
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -195,20 +194,6 @@ public class SplitSyncTaskTest {
         mTask.execute();
 
         verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
-    }
-
-    @Test
-    public void executionRecordsLatencyInTelemetry() {
-        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
-                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(100L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
-
-        mTask.execute();
-
-        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.SPLITS), longThat(argument -> argument > 0));
     }
 
     @After

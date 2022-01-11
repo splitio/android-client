@@ -6,6 +6,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -22,10 +23,14 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 import static java.lang.Thread.sleep;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class SplitTaskExecutorTest {
 
@@ -253,15 +258,67 @@ public class SplitTaskExecutorTest {
         Assert.assertEquals(4, task.callCount);
     }
 
+    @Test
+    public void submitRecordsLatencyInTelemetry() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        TestTask task = new TestTask(latch, SplitTaskType.SPLITS_SYNC, 1);
+
+        CountDownLatch listenerLatch = new CountDownLatch(1);
+        TestListener listener = new TestListener(listenerLatch);
+
+        mTaskExecutor.submit(task, listener);
+        latch.await(15, TimeUnit.SECONDS);
+        listenerLatch.await(15, TimeUnit.SECONDS);
+
+        Assert.assertTrue(task.taskHasBeenCalled);
+        Assert.assertTrue(listener.taskExecutedCalled);
+        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.SPLITS), longThat(argument -> argument > 0));
+    }
+
+    @Test
+    public void executeSeriallyRecordsLatencyInTelemetry() throws InterruptedException {
+        final int taskCount = 2;
+        CompletionTracker tracker = new CompletionTracker(2);
+        List<SerialListener> listeners = new ArrayList<>();
+        // Enqueing 4 task to run serially
+        // Listener is identified by an integer
+        CountDownLatch latch = new CountDownLatch(taskCount * 2);
+        List<SplitTaskBatchItem> taskList = new ArrayList<>();
+
+        listeners.add(new SerialListener(0, tracker, latch));
+        taskList.add(new SplitTaskBatchItem(new TestTask(latch, SplitTaskType.TELEMETRY_STATS_TASK, 1), listeners.get(0)));
+        listeners.add(new SerialListener(1, tracker, latch));
+        taskList.add(new SplitTaskBatchItem(new TestTask(latch, SplitTaskType.EVENTS_RECORDER, 1), listeners.get(1)));
+
+        // Executing tasks serially
+        mTaskExecutor.executeSerially(taskList);
+
+        // Awaiting to coundown latches in tasks
+        latch.await(40, TimeUnit.SECONDS);
+
+        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TELEMETRY), longThat(argument -> argument > 0));
+        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.EVENTS), longThat(argument -> argument > 0));
+    }
+
     @After
     public void tearDown() {
     }
 
     class TestTask implements SplitTask {
         CountDownLatch latch;
+        SplitTaskType type;
+        long delayInMillis;
 
         TestTask(CountDownLatch latch) {
             this.latch = latch;
+            this.type = SplitTaskType.IMPRESSIONS_RECORDER;
+            this.delayInMillis = 0;
+        }
+
+        TestTask(CountDownLatch latch, SplitTaskType taskType, int delayInMillis) {
+            this.latch = latch;
+            this.type = taskType;
+            this.delayInMillis = delayInMillis;
         }
 
         public boolean shouldThrowException = false;
@@ -272,11 +329,16 @@ public class SplitTaskExecutorTest {
         public SplitTaskExecutionInfo execute() {
             callCount++;
             taskHasBeenCalled = true;
+            try {
+                latch.await(delayInMillis, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             latch.countDown();
             if (shouldThrowException) {
                 throw new IllegalStateException();
             }
-            return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
+            return SplitTaskExecutionInfo.success(type);
         }
     }
 
