@@ -165,7 +165,10 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         private void recordLatency(long startTime, SplitTaskExecutionInfo info, TelemetryRuntimeProducer telemetryRuntimeProducer) {
             long latency = System.currentTimeMillis() - startTime;
             if (telemetryRuntimeProducer != null) {
-                telemetryRuntimeProducer.recordSyncLatency(OperationType.getFromTaskType(info.getTaskType()), latency);
+                OperationType operationType = OperationType.getFromTaskType(info.getTaskType());
+                if (operationType != null) {
+                    telemetryRuntimeProducer.recordSyncLatency(operationType, latency);
+                }
             }
         }
     }
@@ -201,7 +204,10 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         private void recordLatency(long startTime, SplitTaskExecutionInfo info, TelemetryRuntimeProducer telemetryRuntimeProducer) {
             long latency = System.currentTimeMillis() - startTime;
             if (telemetryRuntimeProducer != null) {
-                telemetryRuntimeProducer.recordSyncLatency(OperationType.getFromTaskType(info.getTaskType()), latency);
+                OperationType operationType = OperationType.getFromTaskType(info.getTaskType());
+                if (operationType != null) {
+                    telemetryRuntimeProducer.recordSyncLatency(operationType, latency);
+                }
             }
         }
     }
