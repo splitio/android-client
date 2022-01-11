@@ -1,7 +1,14 @@
 package io.split.android.client.service.http;
 
-public class HttpRecorderException extends Exception {
+import androidx.annotation.Nullable;
+
+public class HttpRecorderException extends HttpGeneralException {
+
+    public HttpRecorderException(String path, String message, @Nullable Integer httpStatus) {
+        super(path, message, httpStatus);
+    }
+
     public HttpRecorderException(String path, String message) {
-        super("Error while sending data to " + path + ": " + message);
+        super(path, message);
     }
 }

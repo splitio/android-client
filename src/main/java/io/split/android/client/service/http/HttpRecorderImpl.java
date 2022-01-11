@@ -41,8 +41,11 @@ public class HttpRecorderImpl<T> implements HttpRecorder<T> {
 
             HttpResponse response = mClient.request(mTarget, HttpMethod.POST, serializedData).execute();
             if (!response.isSuccess()) {
-                throw new IllegalStateException("http return code " + response.getHttpStatus());
+                int httpStatus = response.getHttpStatus();
+                throw new HttpRecorderException(mTarget.toString(), "http return code " + httpStatus, httpStatus);
             }
+        } catch (HttpRecorderException httpRecorderException) {
+            throw httpRecorderException;
         } catch (Exception e) {
             throw new HttpRecorderException(mTarget.toString(), e.getLocalizedMessage());
         }
