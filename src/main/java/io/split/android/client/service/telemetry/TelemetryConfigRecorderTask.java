@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
+
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -34,7 +36,7 @@ public class TelemetryConfigRecorderTask implements SplitTask {
         } catch (HttpRecorderException e) {
             Logger.e(e);
 
-            return SplitTaskExecutionInfo.error(SplitTaskType.TELEMETRY_CONFIG_TASK);
+            return SplitTaskExecutionInfo.error(SplitTaskType.TELEMETRY_CONFIG_TASK, Collections.singletonMap(SplitTaskExecutionInfo.HTTP_STATUS, e.getHttpStatus()));
         }
     }
 }

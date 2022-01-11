@@ -1,16 +1,22 @@
 package io.split.android.client.service.telemetry;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.telemetry.model.Stats;
@@ -22,17 +28,17 @@ public class TelemetryStatsRecorderTaskTest {
     private HttpRecorder<Stats> recorder;
     @Mock
     private TelemetryStatsProvider statsProvider;
-    private TelemetryStatsRecorderTask telemetryConfigRecorderTask;
+    private TelemetryStatsRecorderTask telemetryStatsRecorderTask;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetryConfigRecorderTask = new TelemetryStatsRecorderTask(recorder, statsProvider);
+        telemetryStatsRecorderTask = new TelemetryStatsRecorderTask(recorder, statsProvider);
     }
 
     @Test
     public void successfulExecutionClearsValuesOnProvider() {
-        telemetryConfigRecorderTask.execute();
+        telemetryStatsRecorderTask.execute();
 
         verify(statsProvider).clearStats();
     }
@@ -40,7 +46,7 @@ public class TelemetryStatsRecorderTaskTest {
     @Test
     public void executeFetchesStatsFromProvider() {
 
-        telemetryConfigRecorderTask.execute();
+        telemetryStatsRecorderTask.execute();
 
         verify(statsProvider).getTelemetryStats();
     }
@@ -51,7 +57,7 @@ public class TelemetryStatsRecorderTaskTest {
         when(statsProvider.getTelemetryStats()).thenReturn(expectedStats);
         ArgumentCaptor<Stats> captor = ArgumentCaptor.forClass(Stats.class);
 
-        telemetryConfigRecorderTask.execute();
+        telemetryStatsRecorderTask.execute();
 
         verify(recorder).execute(captor.capture());
         assertEquals(expectedStats, captor.getValue());
@@ -63,8 +69,20 @@ public class TelemetryStatsRecorderTaskTest {
             throw new Exception("test exception");
         });
 
-        telemetryConfigRecorderTask.execute();
+        telemetryStatsRecorderTask.execute();
 
         verify(statsProvider, times(0)).clearStats();
+    }
+
+    @Test
+    public void httpExceptionAddsHttpStatusToResult() throws HttpRecorderException {
+
+        doThrow(new HttpRecorderException("", "", 500)).when(recorder).execute(any());
+
+        SplitTaskExecutionInfo result = telemetryStatsRecorderTask.execute();
+
+        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+        Assert.assertEquals(SplitTaskType.TELEMETRY_STATS_TASK, result.getTaskType());
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 }

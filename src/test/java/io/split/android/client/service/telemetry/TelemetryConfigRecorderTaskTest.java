@@ -2,6 +2,7 @@ package io.split.android.client.service.telemetry;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +14,9 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
 
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.telemetry.model.Config;
@@ -62,5 +66,17 @@ public class TelemetryConfigRecorderTaskTest {
         verify(recorder).execute(argumentCaptor.capture());
         assertEquals(mockConfigTelemetry.isImpressionsListenerEnabled(), argumentCaptor.getValue().isImpressionsListenerEnabled());
         assertEquals(mockConfigTelemetry.getTags(), argumentCaptor.getValue().getTags());
+    }
+
+    @Test
+    public void httpExceptionAddsHttpStatusToResult() throws HttpRecorderException {
+
+        doThrow(new HttpRecorderException("", "", 500)).when(recorder).execute(any());
+
+        SplitTaskExecutionInfo result = telemetryConfigRecorderTask.execute();
+
+        assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+        assertEquals(SplitTaskType.TELEMETRY_CONFIG_TASK, result.getTaskType());
+        assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 }
