@@ -123,6 +123,24 @@ public class EventsRecorderTaskTest {
         Assert.assertNull(result.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES));
     }
 
+    @Test
+    public void addHttpStatusToResultWhenTaskFails() throws HttpRecorderException {
+
+        when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 500)).when(mEventsRecorder).execute(mDefaultParams);
+
+        EventsRecorderTask task = new EventsRecorderTask(
+                mEventsRecorder,
+                mPersistentEventsStorage,
+                mDefaultConfig);
+
+        SplitTaskExecutionInfo result = task.execute();
+
+        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+    }
+
     @After
     public void tearDown() {
         reset(mEventsRecorder);

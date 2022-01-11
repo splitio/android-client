@@ -43,6 +43,7 @@ public class EventsRecorderTask implements SplitTask {
         long nonSentBytes = 0;
         List<Event> events;
         List<Event> failingEvents = new ArrayList<>();
+        Integer httpStatus = null;
         do {
             events = mPersistenEventsStorage.pop(mConfig.getEventsPerPush());
             if (events.size() > 0) {
@@ -60,6 +61,7 @@ public class EventsRecorderTask implements SplitTask {
                             e.getLocalizedMessage());
                     e.printStackTrace();
                     failingEvents.addAll(events);
+                    httpStatus = e.getHttpStatus();
                 }
             }
         } while (events.size() == mConfig.getEventsPerPush());
@@ -74,6 +76,9 @@ public class EventsRecorderTask implements SplitTask {
             Map<String, Object> data = new HashMap<>();
             data.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, nonSentRecords);
             data.put(SplitTaskExecutionInfo.NON_SENT_BYTES, nonSentBytes);
+            if (httpStatus != null) {
+                data.put(SplitTaskExecutionInfo.HTTP_STATUS, httpStatus);
+            }
             return SplitTaskExecutionInfo.error(
                     SplitTaskType.EVENTS_RECORDER, data);
         }
