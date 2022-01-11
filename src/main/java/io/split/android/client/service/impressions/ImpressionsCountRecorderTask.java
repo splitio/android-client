@@ -3,7 +3,9 @@ package io.split.android.client.service.impressions;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
@@ -34,6 +36,7 @@ public class ImpressionsCountRecorderTask implements SplitTask {
         SplitTaskExecutionStatus status = SplitTaskExecutionStatus.SUCCESS;
         int nonSentRecords = 0;
         long nonSentBytes = 0;
+        Integer httpErrorStatus = null;
 
         List<ImpressionsCountPerFeature> countList = new ArrayList<>();
         List<ImpressionsCountPerFeature> failedSent = new ArrayList<>();
@@ -51,6 +54,7 @@ public class ImpressionsCountRecorderTask implements SplitTask {
                             "Saving to send them in a new iteration" +
                             e.getLocalizedMessage());
                     failedSent.addAll(countList);
+                    httpErrorStatus = e.getHttpStatus();
                 }
             }
         } while (countList.size() == POP_COUNT);
@@ -60,8 +64,11 @@ public class ImpressionsCountRecorderTask implements SplitTask {
         }
 
         if (status == SplitTaskExecutionStatus.ERROR) {
+            Map<String, Object> data = (httpErrorStatus != null) ? Collections.singletonMap(SplitTaskExecutionInfo.HTTP_STATUS, httpErrorStatus) :
+                    Collections.emptyMap();
+
             return SplitTaskExecutionInfo.error(
-                    SplitTaskType.IMPRESSIONS_COUNT_RECORDER);
+                    SplitTaskType.IMPRESSIONS_COUNT_RECORDER, data);
         }
         return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_COUNT_RECORDER);
     }

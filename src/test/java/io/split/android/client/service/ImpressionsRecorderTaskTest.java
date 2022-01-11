@@ -127,6 +127,26 @@ public class ImpressionsRecorderTaskTest {
         Assert.assertNull(result.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES));
     }
 
+    @Test
+    public void httpStatusIsAddedToResultWhenError() throws HttpRecorderException {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 500)).when(mImpressionsRecorder).execute(mDefaultParams);
+
+        ImpressionsRecorderTask task = new ImpressionsRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mDefaultConfig);
+
+        SplitTaskExecutionInfo result = task.execute();
+
+        verify(mImpressionsRecorder, times(1)).execute(mDefaultParams);
+
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+    }
+
     @After
     public void tearDown() {
         reset(mImpressionsRecorder);

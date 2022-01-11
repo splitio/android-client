@@ -122,6 +122,23 @@ public class ImpressionsCountRecorderTaskTest {
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
+    @Test
+    public void addHttpStatusWhenHttpError() throws HttpRecorderException {
+
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultImpressions)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 500)).when(mImpressionsRecorder).execute(mDefaultParams);
+
+        ImpressionsCountRecorderTask task = new ImpressionsCountRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage);
+
+        SplitTaskExecutionInfo result = task.execute();
+
+        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+    }
+
     @After
     public void tearDown() {
         reset(mImpressionsRecorder);

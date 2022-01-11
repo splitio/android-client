@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ public class ImpressionsRecorderTask implements SplitTask {
         long nonSentBytes = 0;
         List<KeyImpression> impressions;
         List<KeyImpression> failingImpressions = new ArrayList<>();
+        Integer httpErrorStatus = null;
         do {
             impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
             if (impressions.size() > 0) {
@@ -59,11 +61,12 @@ public class ImpressionsRecorderTask implements SplitTask {
                             "Saving to send them in a new iteration" +
                             e.getLocalizedMessage());
                     failingImpressions.addAll(impressions);
+                    httpErrorStatus = e.getHttpStatus();
                 }
             }
         } while (impressions.size() == mConfig.getImpressionsPerPush());
 
-        if(failingImpressions.size() > 0) {
+        if (failingImpressions.size() > 0) {
             mPersistenImpressionsStorage.setActive(failingImpressions);
         }
 
@@ -71,6 +74,9 @@ public class ImpressionsRecorderTask implements SplitTask {
             Map<String, Object> data = new HashMap<>();
             data.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, nonSentRecords);
             data.put(SplitTaskExecutionInfo.NON_SENT_BYTES, nonSentBytes);
+            if (httpErrorStatus != null) {
+                data.put(SplitTaskExecutionInfo.HTTP_STATUS, httpErrorStatus);
+            }
             return SplitTaskExecutionInfo.error(
                     SplitTaskType.IMPRESSIONS_RECORDER, data);
         }
