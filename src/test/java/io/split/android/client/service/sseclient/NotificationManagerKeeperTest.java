@@ -220,6 +220,7 @@ public class NotificationManagerKeeperTest {
 
         when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_PAUSED);
         when(mControlNotification.getTimestamp()).thenReturn(20L);
+
         mManagerKeeper.handleControlNotification(mControlNotification);
 
         verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());

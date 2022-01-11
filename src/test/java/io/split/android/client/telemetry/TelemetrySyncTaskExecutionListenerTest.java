@@ -43,7 +43,7 @@ public class TelemetrySyncTaskExecutionListenerTest {
         telemetrySyncTaskExecutionListener = new TelemetrySyncTaskExecutionListener(runtimeProducer, SplitTaskType.GENERIC_TASK, OperationType.SPLITS);
 
         HashMap<String, Object> taskData = new HashMap<String, Object>();
-        taskData.put("http_status", 400);
+        taskData.put("HTTP_STATUS", 400);
         telemetrySyncTaskExecutionListener.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK, taskData));
 
         verify(runtimeProducer).recordSyncError(eq(OperationType.SPLITS), intThat(new ArgumentMatcher<Integer>() {

@@ -30,7 +30,7 @@ public class TelemetrySyncTaskExecutionListener implements SplitTaskExecutionLis
         if (SplitTaskExecutionStatus.SUCCESS.equals(taskInfo.getStatus())) {
             mTelemetryRuntimeProducer.recordSuccessfulSync(mOperationType, System.currentTimeMillis());
         } else if (SplitTaskExecutionStatus.ERROR.equals(taskInfo.getStatus())) {
-            mTelemetryRuntimeProducer.recordSyncError(mOperationType, taskInfo.getIntegerValue("http_status"));
+            mTelemetryRuntimeProducer.recordSyncError(mOperationType, taskInfo.getIntegerValue(SplitTaskExecutionInfo.HTTP_STATUS));
         }
     }
 }

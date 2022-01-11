@@ -236,12 +236,7 @@ public class SseHandlerTest {
 
     @Test
     public void ablyErrorIsRecordedInTelemetry() {
-        when(mNotificationParser.isError(any())).thenReturn(true);
-        int code = 40000;
-        StreamingError notification = new StreamingError("msg", code, code);
-
-        when(mNotificationParser.isError(anyMap())).thenReturn(true);
-        when(mNotificationParser.parseError(anyString())).thenReturn(notification);
+        setupNotification();
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
@@ -255,12 +250,7 @@ public class SseHandlerTest {
 
     @Test
     public void sseRecoverableConnectionErrorIsRecordedInTelemetry() {
-        when(mNotificationParser.isError(any())).thenReturn(true);
-        int code = 40000;
-        StreamingError notification = new StreamingError("msg", code, code);
-
-        when(mNotificationParser.isError(anyMap())).thenReturn(true);
-        when(mNotificationParser.parseError(anyString())).thenReturn(notification);
+        setupNotification();
 
         mSseHandler.handleError(false);
 
@@ -274,12 +264,7 @@ public class SseHandlerTest {
 
     @Test
     public void sseNonRecoverableConnectionErrorIsRecordedInTelemetry() {
-        when(mNotificationParser.isError(any())).thenReturn(true);
-        int code = 40000;
-        StreamingError notification = new StreamingError("msg", code, code);
-
-        when(mNotificationParser.isError(anyMap())).thenReturn(true);
-        when(mNotificationParser.parseError(anyString())).thenReturn(notification);
+        setupNotification();
 
         mSseHandler.handleError(true);
 
@@ -289,6 +274,15 @@ public class SseHandlerTest {
         Assert.assertTrue(argumentCaptor.getValue() instanceof SseConnectionErrorStreamingEvent);
         Assert.assertEquals(SseConnectionErrorStreamingEvent.Status.REQUESTED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
         Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+    }
+
+    private void setupNotification() {
+        when(mNotificationParser.isError(any())).thenReturn(true);
+        int code = 40000;
+        StreamingError notification = new StreamingError("msg", code, code);
+
+        when(mNotificationParser.isError(anyMap())).thenReturn(true);
+        when(mNotificationParser.parseError(anyString())).thenReturn(notification);
     }
 
     private Map<String, String> buildMessage(String data) {
