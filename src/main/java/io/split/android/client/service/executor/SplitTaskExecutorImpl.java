@@ -154,15 +154,19 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                 if (listener != null) {
                     listener.taskExecuted(info);
                 }
-                long latency = System.currentTimeMillis() - startTime;
-                TelemetryRuntimeProducer telemetryRuntimeProducer = mTelemetryRuntimeProducer.get();
-                if (telemetryRuntimeProducer != null) {
-                    telemetryRuntimeProducer.recordSyncLatency(OperationType.getFromTaskType(info.getTaskType()), latency);
-                }
+
+                recordLatency(startTime, info, mTelemetryRuntimeProducer.get());
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
             }
 
+        }
+
+        private void recordLatency(long startTime, SplitTaskExecutionInfo info, TelemetryRuntimeProducer telemetryRuntimeProducer) {
+            long latency = System.currentTimeMillis() - startTime;
+            if (telemetryRuntimeProducer != null) {
+                telemetryRuntimeProducer.recordSyncLatency(OperationType.getFromTaskType(info.getTaskType()), latency);
+            }
         }
     }
 
@@ -186,15 +190,18 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                         listener.taskExecuted(info);
                     }
 
-                    long latency = System.currentTimeMillis() - startTime;
-                    TelemetryRuntimeProducer telemetryRuntimeProducer = mTelemetryRuntimeProducer.get();
-                    if (telemetryRuntimeProducer != null) {
-                        telemetryRuntimeProducer.recordSyncLatency(OperationType.getFromTaskType(info.getTaskType()), latency);
-                    }
+                    recordLatency(startTime, info, mTelemetryRuntimeProducer.get());
                 }
 
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
+            }
+        }
+
+        private void recordLatency(long startTime, SplitTaskExecutionInfo info, TelemetryRuntimeProducer telemetryRuntimeProducer) {
+            long latency = System.currentTimeMillis() - startTime;
+            if (telemetryRuntimeProducer != null) {
+                telemetryRuntimeProducer.recordSyncLatency(OperationType.getFromTaskType(info.getTaskType()), latency);
             }
         }
     }
