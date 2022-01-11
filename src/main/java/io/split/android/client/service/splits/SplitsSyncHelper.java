@@ -2,6 +2,7 @@ package io.split.android.client.service.splits;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
@@ -16,6 +17,7 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.service.executor.SplitTaskExecutionInfo.HTTP_STATUS;
 
 public class SplitsSyncHelper {
 
@@ -41,9 +43,9 @@ public class SplitsSyncHelper {
             }
             mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
         } catch (HttpFetcherException e) {
-            logError("Newtwork error while fetching splits" + e.getLocalizedMessage());
+            logError("Network error while fetching splits" + e.getLocalizedMessage());
 
-            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
+            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC, getHttpStatusMap(e));
         } catch (Exception e) {
             logError("Unexpected while fetching splits" + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
@@ -52,15 +54,19 @@ public class SplitsSyncHelper {
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
-    private long now() {
-        return System.currentTimeMillis() / 1000;
-    }
-
     public boolean cacheHasExpired(long storedChangeNumber, long updateTimestamp, long cacheExpirationInSeconds) {
         long elepased = now() - updateTimestamp;
         return storedChangeNumber > -1
                 && updateTimestamp > 0
                 && (elepased > cacheExpirationInSeconds);
+    }
+
+    private Map<String, Object> getHttpStatusMap(HttpFetcherException exception) {
+        return Collections.singletonMap(HTTP_STATUS, exception.getHttpStatus());
+    }
+
+    private long now() {
+        return System.currentTimeMillis() / 1000;
     }
 
     private void logError(String message) {

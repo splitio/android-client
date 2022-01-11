@@ -169,6 +169,18 @@ public class SplitsSyncHelperTest {
         Assert.assertFalse(expired);
     }
 
+    @Test
+    public void httpExceptionAddsHttpStatusDataToTaskInfo() throws HttpFetcherException {
+        when(mSplitsFetcher.execute(mDefaultParams, null))
+                .thenThrow(new HttpFetcherException("error", "error", 500));
+
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams, true, false);
+
+        verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+    }
+
     @After
     public void tearDown() {
         reset(mSplitsFetcher);
