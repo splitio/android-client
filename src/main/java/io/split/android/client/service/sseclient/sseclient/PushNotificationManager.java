@@ -175,7 +175,9 @@ public class PushNotificationManager {
         @Override
         public void run() {
 
+            final long startTime = System.currentTimeMillis();
             SseAuthenticationResult authResult = mSseAuthenticator.authenticate();
+            mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TOKEN, System.currentTimeMillis() - startTime);
 
             if(authResult.isSuccess() && !authResult.isPushEnabled()) {
                 Logger.d("Streaming disabled for api key");
@@ -187,6 +189,9 @@ public class PushNotificationManager {
             if(!authResult.isSuccess() && !authResult.isErrorRecoverable()) {
                 Logger.d("Streaming no recoverable auth error.");
                 mTelemetryRuntimeProducer.recordAuthRejections();
+                if (authResult.getHttpStatus() != null) {
+                    mTelemetryRuntimeProducer.recordSyncError(OperationType.TOKEN, authResult.getHttpStatus());
+                }
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_NON_RETRYABLE_ERROR));
                 mIsStopped.set(true);
                 return;

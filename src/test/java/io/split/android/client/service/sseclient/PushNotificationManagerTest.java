@@ -35,6 +35,7 @@ import io.split.android.fake.SseClientMock;
 
 import static java.lang.Thread.sleep;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.never;
@@ -241,6 +242,31 @@ public class PushNotificationManagerTest {
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
 
         verify(mTelemetryRuntimeProducer).recordAuthRejections();
+    }
+
+    @Test
+    public void connectErrorTracksSyncErrorInTelemetryWhenThereIsHttpStatus() throws InterruptedException, HttpException {
+        SseClientMock sseClient = new SseClientMock();
+        sseClient.mConnectLatch = new CountDownLatch(1);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+
+        SseAuthenticationResult result = new SseAuthenticationResult(
+                false, false, false, 0, null, 500);
+
+        when(mAuthenticator.authenticate()).thenReturn(result);
+
+        mPushManager.start();
+        sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
+
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.TOKEN, 500);
+    }
+
+    @Test
+    public void authenticationLatencyIsTracked() throws InterruptedException {
+        performSuccessfulConnection();
+
+        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TOKEN), longThat(argument -> argument > 0));
     }
 
     private void performSuccessfulConnection() throws InterruptedException {

@@ -28,8 +28,6 @@ public enum OperationType {
                 return OperationType.IMPRESSIONS;
             case IMPRESSIONS_COUNT_RECORDER:
                 return OperationType.IMPRESSIONS_COUNT;
-            case SSE_AUTHENTICATION_TASK:
-                return OperationType.TOKEN;
         }
 
         return null;
