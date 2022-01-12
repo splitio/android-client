@@ -270,8 +270,6 @@ public class SplitTaskExecutorTest {
         latch.await(15, TimeUnit.SECONDS);
         listenerLatch.await(15, TimeUnit.SECONDS);
 
-        Assert.assertTrue(task.taskHasBeenCalled);
-        Assert.assertTrue(listener.taskExecutedCalled);
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.SPLITS), anyLong());
     }
 

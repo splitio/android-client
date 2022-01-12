@@ -151,11 +151,10 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                 long startTime = System.currentTimeMillis();
                 SplitTaskExecutionInfo info = mTask.execute();
                 SplitTaskExecutionListener listener = mExecutionListener.get();
+                recordLatency(startTime, info, mTelemetryRuntimeProducer.get());
                 if (listener != null) {
                     listener.taskExecuted(info);
                 }
-
-                recordLatency(startTime, info, mTelemetryRuntimeProducer.get());
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
             }
@@ -189,11 +188,10 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                     long startTime = System.currentTimeMillis();
                     SplitTaskExecutionInfo info = enqueued.getTask().execute();
                     SplitTaskExecutionListener listener = enqueued.getListener();
+                    recordLatency(startTime, info, mTelemetryRuntimeProducer.get());
                     if (listener != null) {
                         listener.taskExecuted(info);
                     }
-
-                    recordLatency(startTime, info, mTelemetryRuntimeProducer.get());
                 }
 
             } catch (Exception e) {

@@ -61,12 +61,11 @@ public class TelemetryIntegrationTest {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         SplitClient client = getTelemetrySplitFactory().client();
+        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(countDownLatch);
+        client.on(SplitEvent.SDK_READY, readyFromCacheTask);
 
         // Perform usages before SDK is ready
         client.getTreatment("test");
-
-        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(countDownLatch);
-        client.on(SplitEvent.SDK_READY, readyFromCacheTask);
 
         countDownLatch.await(30, TimeUnit.SECONDS);
 
