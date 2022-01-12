@@ -49,7 +49,7 @@ public class LastSync {
         this.lastImpressionSync = lastImpressionSync;
     }
 
-    public long getLasImpressionCountSync() {
+    public long getLastImpressionCountSync() {
         return lastImpressionCountSync;
     }
 

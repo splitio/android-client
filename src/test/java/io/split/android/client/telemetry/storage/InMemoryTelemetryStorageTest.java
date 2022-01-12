@@ -250,7 +250,7 @@ public class InMemoryTelemetryStorageTest {
         assertEquals(1000, lastSync.getLastEventSync());
         assertEquals(2000, lastSync.getLastTelemetrySync());
         assertEquals(3000, lastSync.getLastImpressionSync());
-        assertEquals(4000, lastSync.getLasImpressionCountSync());
+        assertEquals(4000, lastSync.getLastImpressionCountSync());
         assertEquals(5000, lastSync.getLastMySegmentSync());
         assertEquals(6000, lastSync.getLastSplitSync());
         assertEquals(7000, lastSync.getLastTokenRefresh());

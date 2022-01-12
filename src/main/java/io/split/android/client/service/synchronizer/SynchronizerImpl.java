@@ -101,14 +101,14 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
 
+        mSplitsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.SPLITS_SYNC, OperationType.SPLITS);
+        mMySegmentsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.MY_SEGMENTS_SYNC, OperationType.MY_SEGMENT);
         mEventsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.EVENTS_RECORDER, OperationType.EVENTS);
         mImpressionsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.IMPRESSIONS_RECORDER, OperationType.IMPRESSIONS);
         mImpressionsCountTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.IMPRESSIONS_COUNT_RECORDER, OperationType.IMPRESSIONS_COUNT);
-        mSplitsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.SPLITS_SYNC, OperationType.SPLITS);
-        mMySegmentsTelemetryTaskListener = telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.MY_SEGMENTS_SYNC, OperationType.MY_SEGMENT);
 
         setupListeners();
-        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
+        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsTelemetryTaskListener);
 
         if (mSplitClientConfig.synchronizeInBackground()) {
             mWorkManagerWrapper.setFetcherExecutionListener(this);
@@ -162,13 +162,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeMySegments() {
-        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), null);
+        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), mMySegmentsTelemetryTaskListener);
         mMySegmentsSyncRetryTimer.start();
     }
 
     @Override
     public void forceMySegmentsSync() {
-        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), null);
+        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), mMySegmentsTelemetryTaskListener);
         mMySegmentsSyncRetryTimer.start();
     }
 
@@ -282,6 +282,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
             }
 
             mTelemetryRuntimeProducer.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
+        } else {
+            mTelemetryRuntimeProducer.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 1);
         }
     }
 
@@ -374,11 +376,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         switch (taskInfo.getTaskType()) {
             case SPLITS_SYNC:
                 Logger.d("Loading split definitions updated in background");
-                submitSplitLoadingTask(null);
+                submitSplitLoadingTask(mSplitsTelemetryTaskListener);
                 break;
             case MY_SEGMENTS_SYNC:
                 Logger.d("Loading my segments updated in background");
-                submitMySegmentsLoadingTask(null);
+                submitMySegmentsLoadingTask(mMySegmentsTelemetryTaskListener);
                 break;
         }
     }

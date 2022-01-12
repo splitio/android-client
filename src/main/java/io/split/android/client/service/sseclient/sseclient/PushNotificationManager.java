@@ -170,9 +170,9 @@ public class PushNotificationManager {
 
             if(!authResult.isSuccess() && !authResult.isErrorRecoverable()) {
                 Logger.d("Streaming no recoverable auth error.");
+                mTelemetryRuntimeProducer.recordAuthRejections();
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_NON_RETRYABLE_ERROR));
                 mIsStopped.set(true);
-                mTelemetryRuntimeProducer.recordAuthRejections();
                 return;
             }
 
