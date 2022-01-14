@@ -265,6 +265,7 @@ public class PushNotificationManagerTest {
     @Test
     public void authenticationLatencyIsTracked() throws InterruptedException {
         performSuccessfulConnection();
+        Thread.sleep(1000);
 
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TOKEN), longThat(argument -> argument > 0));
     }

@@ -269,6 +269,7 @@ public class SplitTaskExecutorTest {
         mTaskExecutor.submit(task, listener);
         latch.await(15, TimeUnit.SECONDS);
         listenerLatch.await(15, TimeUnit.SECONDS);
+        Thread.sleep(1000);
 
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.SPLITS), anyLong());
     }
@@ -278,7 +279,7 @@ public class SplitTaskExecutorTest {
         final int taskCount = 2;
         CompletionTracker tracker = new CompletionTracker(2);
         List<SerialListener> listeners = new ArrayList<>();
-        // Enqueing 4 task to run serially
+        // Enqueuing 4 task to run serially
         // Listener is identified by an integer
         CountDownLatch latch = new CountDownLatch(taskCount * 2);
         List<SplitTaskBatchItem> taskList = new ArrayList<>();
@@ -291,8 +292,9 @@ public class SplitTaskExecutorTest {
         // Executing tasks serially
         mTaskExecutor.executeSerially(taskList);
 
-        // Awaiting to coundown latches in tasks
+        // Awaiting to countdown latches in tasks
         latch.await(40, TimeUnit.SECONDS);
+        Thread.sleep(1000);
 
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TELEMETRY), anyLong());
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.EVENTS), anyLong());

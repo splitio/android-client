@@ -39,7 +39,11 @@ public class SseAuthenticator {
 
         } catch (HttpFetcherException httpFetcherException) {
             logError("Unexpected " + httpFetcherException.getLocalizedMessage());
-            return unexpectedHttpError(httpFetcherException.getHttpStatus());
+            if (httpFetcherException.getHttpStatus() != null) {
+                return unexpectedHttpError(httpFetcherException.getHttpStatus());
+            } else {
+                return unexpectedError();
+            }
         } catch (Exception e) {
             logError("Unexpected " + e.getLocalizedMessage());
             return unexpectedError();
@@ -74,7 +78,7 @@ public class SseAuthenticator {
         return new SseAuthenticationResult(false, true);
     }
 
-    private SseAuthenticationResult unexpectedHttpError(Integer httpStatus) {
+    private SseAuthenticationResult unexpectedHttpError(int httpStatus) {
         return new SseAuthenticationResult(httpStatus);
     }
 }

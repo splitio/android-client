@@ -66,7 +66,7 @@ public class TelemetryStatsRecorderTaskTest {
     @Test
     public void unsuccessfulExecutionDoesNotClearValuesOnProvider() {
         when(statsProvider.getTelemetryStats()).thenAnswer(invocation -> {
-            throw new Exception("test exception");
+            throw new HttpRecorderException("test exception", "");
         });
 
         telemetryStatsRecorderTask.execute();
