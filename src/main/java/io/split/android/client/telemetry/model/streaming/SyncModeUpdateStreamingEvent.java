@@ -8,7 +8,7 @@ public class SyncModeUpdateStreamingEvent extends StreamingEvent {
         super(EventTypeEnum.SYNC_MODE_UPDATE, (long) mode.getNumericValue(), timestamp);
     }
 
-    enum Mode {
+    public enum Mode {
         STREAMING(0), POLLING(1);
 
         private final int numericValue;

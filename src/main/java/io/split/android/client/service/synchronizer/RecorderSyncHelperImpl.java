@@ -3,12 +3,14 @@ package io.split.android.client.service.synchronizer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -24,12 +26,14 @@ class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHe
     private final int mMaxQueueSize;
     private final long mMaxQueueSizeInBytes;
     private final SplitTaskType mTaskType;
+    private final SplitTaskExecutionListener mTaskExecutionListener;
 
     public RecorderSyncHelperImpl(SplitTaskType taskType,
                                   StoragePusher<T> storage,
                                   int maxQueueSize,
                                   long maxQueueSizeInBytes,
-                                  SplitTaskExecutor splitTaskExecutor) {
+                                  SplitTaskExecutor splitTaskExecutor,
+                                  @Nullable SplitTaskExecutionListener taskExecutionListener) {
         mTaskType = checkNotNull(taskType);
         mStorage = checkNotNull(storage);
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
@@ -37,6 +41,7 @@ class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHe
         mTotalPushedSizeInBytes = new AtomicLong(0);
         mMaxQueueSize = maxQueueSize;
         mMaxQueueSizeInBytes = maxQueueSizeInBytes;
+        mTaskExecutionListener = taskExecutionListener;
     }
 
     @Override
@@ -61,6 +66,10 @@ class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHe
                     SplitTaskExecutionInfo.NON_SENT_RECORDS));
             mTotalPushedSizeInBytes.addAndGet(taskInfo.getLongValue(
                     SplitTaskExecutionInfo.NON_SENT_BYTES));
+        }
+
+        if (mTaskExecutionListener != null) {
+            mTaskExecutionListener.taskExecuted(taskInfo);
         }
     }
 

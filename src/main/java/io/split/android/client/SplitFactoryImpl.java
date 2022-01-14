@@ -32,9 +32,11 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.telemetry.TelemetrySyncTaskExecutionListenerFactoryImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -72,7 +74,7 @@ public class SplitFactoryImpl implements SplitFactory {
                              SynchronizerSpy synchronizerSpy)
             throws URISyntaxException {
 
-        long initializationStartTime = System.currentTimeMillis();
+        final long initializationStartTime = System.currentTimeMillis();
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
         setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
@@ -146,7 +148,7 @@ public class SplitFactoryImpl implements SplitFactory {
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
-                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory());
+                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory(), storageContainer.getTelemetryStorage(), new TelemetrySyncTaskExecutionListenerFactoryImpl(storageContainer.getTelemetryStorage()));
 
         // Only available for integration tests
         if (synchronizerSpy != null) {
@@ -154,11 +156,13 @@ public class SplitFactoryImpl implements SplitFactory {
             synchronizer = synchronizerSpy;
         }
 
+        TelemetrySynchronizer telemetrySynchronizer = getTelemetrySynchronizer(_splitTaskExecutor,
+                splitTaskFactory,
+                storageContainer.getTelemetryStorage(),
+                config.telemetryRefreshRate(),
+                config.shouldRecordTelemetry());
         _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
-                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, _eventsManager, getTelemetrySynchronizer(_splitTaskExecutor,
-                        splitTaskFactory,
-                        config.telemetryRefreshRate(),
-                        config.shouldRecordTelemetry()));
+                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, _eventsManager, telemetrySynchronizer, storageContainer.getTelemetryStorage());
 
         _syncManager.start();
 
@@ -198,6 +202,12 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of task executor");
                     storageContainer.getAttributesStorage().destroy();
                     Logger.i("Successful shutdown of attributes storage");
+                    if (config.shouldRecordTelemetry()) {
+                        storageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
+                        telemetrySynchronizer.flush();
+                        telemetrySynchronizer.destroy();
+                        Logger.i("Successful shutdown of telemetry");
+                    }
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
@@ -312,10 +322,11 @@ public class SplitFactoryImpl implements SplitFactory {
     @NonNull
     private TelemetrySynchronizer getTelemetrySynchronizer(SplitTaskExecutor _splitTaskExecutor,
                                                            SplitTaskFactory splitTaskFactory,
+                                                           TelemetryRuntimeProducer telemetryRuntimeProducer,
                                                            long telemetryRefreshRate,
                                                            boolean shouldRecordTelemetry) {
         if (shouldRecordTelemetry) {
-            return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory, telemetryRefreshRate);
+            return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory, telemetryRuntimeProducer, telemetryRefreshRate);
         } else {
             return new TelemetrySynchronizerStub();
         }
