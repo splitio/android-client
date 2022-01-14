@@ -22,7 +22,6 @@ import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamin
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
