@@ -103,10 +103,11 @@ public class NotificationManagerKeeper {
         int prevPublishersCount = publishersCount();
         updateChannelInfo(channelKey, notification.getMetrics().getPublishers(), notification.getTimestamp());
 
-        StreamingEvent streamingEvent = (channelKey.equals(CHANNEL_PRI_KEY)) ?
-                new OccupancyPriStreamingEvent(publishersCount(), System.currentTimeMillis()) :
-                new OccupancySecStreamingEvent(publishersCount(), System.currentTimeMillis());
-        mTelemetryRuntimeProducer.recordStreamingEvents(streamingEvent);
+        if (CHANNEL_PRI_KEY.equals(channelKey)) {
+            mTelemetryRuntimeProducer.recordStreamingEvents(new OccupancyPriStreamingEvent(publishersCount(), System.currentTimeMillis()));
+        } else if (CHANNEL_SEC_KEY.equals(channelKey)) {
+            mTelemetryRuntimeProducer.recordStreamingEvents(new OccupancySecStreamingEvent(publishersCount(), System.currentTimeMillis()));
+        }
 
         if (publishersCount() == 0 && prevPublishersCount > 0) {
             mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
