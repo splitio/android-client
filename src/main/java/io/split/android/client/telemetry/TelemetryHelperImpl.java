@@ -7,6 +7,6 @@ public class TelemetryHelperImpl implements TelemetryHelper {
 
     @Override
     public boolean shouldRecordTelemetry() {
-        return Math.random() * (MAX_VALUE_PROBABILITY + 1) <= ACCEPTANCE_RANGE;
+        return Math.random() * (MAX_VALUE_PROBABILITY + 1) / MAX_VALUE_PROBABILITY <= ACCEPTANCE_RANGE;
     }
 }
