@@ -13,6 +13,8 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -21,11 +23,14 @@ public class ImpressionsCountRecorderTask implements SplitTask {
     private final PersistentImpressionsCountStorage mPersistentStorage;
     private final HttpRecorder<ImpressionsCount> mHttpRecorder;
     private static int POP_COUNT = ServiceConstants.DEFAULT_IMPRESSION_COUNT_ROWS_POP;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public ImpressionsCountRecorderTask(@NonNull HttpRecorder<ImpressionsCount> httpRecorder,
-                                        @NonNull PersistentImpressionsCountStorage persistentStorage) {
+                                        @NonNull PersistentImpressionsCountStorage persistentStorage,
+                                        @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mHttpRecorder = checkNotNull(httpRecorder);
         mPersistentStorage = checkNotNull(persistentStorage);
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
@@ -42,7 +47,9 @@ public class ImpressionsCountRecorderTask implements SplitTask {
             if (countList.size() > 0) {
                 try {
                     Logger.d("Posting %d Split impressions count", countList.size());
+                    long startTime = System.currentTimeMillis();
                     mHttpRecorder.execute(new ImpressionsCount(countList));
+                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, System.currentTimeMillis() - startTime);
                     mPersistentStorage.delete(countList);
                     Logger.d("%d split impressions count sent", countList.size());
                 } catch (HttpRecorderException e) {

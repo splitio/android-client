@@ -160,7 +160,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     public ImpressionsCountRecorderTask createImpressionsCountRecorderTask() {
         return new ImpressionsCountRecorderTask(
                 mSplitApiFacade.getImpressionsCountRecorder(),
-                mSplitsStorageContainer.getImpressionsCountStorage());
+                mSplitsStorageContainer.getImpressionsCountStorage(),
+                mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override
