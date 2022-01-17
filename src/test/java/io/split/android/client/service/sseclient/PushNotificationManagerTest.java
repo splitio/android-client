@@ -35,6 +35,7 @@ import io.split.android.fake.SseClientMock;
 
 import static java.lang.Thread.sleep;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.never;
@@ -241,6 +242,20 @@ public class PushNotificationManagerTest {
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
 
         verify(mTelemetryRuntimeProducer).recordAuthRejections();
+    }
+
+    @Test
+    public void recordLatencyOnTelemetry() throws InterruptedException {
+        setupOkAuthResponse();
+        SseClientMock sseClient = new SseClientMock();
+        sseClient.mConnectLatch = new CountDownLatch(1);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+
+        mPushManager.start();
+        sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
+
+        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TOKEN), anyLong());
     }
 
     private void performSuccessfulConnection() throws InterruptedException {

@@ -175,7 +175,9 @@ public class PushNotificationManager {
         @Override
         public void run() {
 
+            long startTime = System.currentTimeMillis();
             SseAuthenticationResult authResult = mSseAuthenticator.authenticate();
+            mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TOKEN, System.currentTimeMillis() - startTime);
 
             if(authResult.isSuccess() && !authResult.isPushEnabled()) {
                 Logger.d("Streaming disabled for api key");
