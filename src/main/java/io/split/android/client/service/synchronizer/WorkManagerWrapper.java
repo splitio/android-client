@@ -191,6 +191,8 @@ public class WorkManagerWrapper {
                 ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.eventsEndpoint());
         dataBuilder.putInt(
                 ServiceConstants.WORKER_PARAM_EVENTS_PER_PUSH, mSplitClientConfig.eventsPerPush());
+        dataBuilder.putBoolean(
+                ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
         return buildInputData(dataBuilder.build());
     }
 

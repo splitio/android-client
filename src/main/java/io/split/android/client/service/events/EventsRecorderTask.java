@@ -17,6 +17,8 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -26,13 +28,16 @@ public class EventsRecorderTask implements SplitTask {
     private final PersistentEventsStorage mPersistenEventsStorage;
     private final HttpRecorder<List<Event>> mHttpRecorder;
     private final EventsRecorderTaskConfig mConfig;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public EventsRecorderTask(@NonNull HttpRecorder<List<Event>> httpRecorder,
                               @NonNull PersistentEventsStorage persistenEventsStorage,
-                              @NonNull EventsRecorderTaskConfig config) {
+                              @NonNull EventsRecorderTaskConfig config,
+                              @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mHttpRecorder = checkNotNull(httpRecorder);
         mPersistenEventsStorage = checkNotNull(persistenEventsStorage);
         mConfig = checkNotNull(config);
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
@@ -48,7 +53,9 @@ public class EventsRecorderTask implements SplitTask {
             if (events.size() > 0) {
                 try {
                     Logger.d("Posting %d Split events", events.size());
+                    long startTime = System.currentTimeMillis();
                     mHttpRecorder.execute(events);
+                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.EVENTS, System.currentTimeMillis() - startTime);
                     mPersistenEventsStorage.delete(events);
                     Logger.d("%d split events sent", events.size());
                 } catch (HttpRecorderException e) {

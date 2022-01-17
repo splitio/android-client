@@ -77,7 +77,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         return new EventsRecorderTask(
                 mSplitApiFacade.getEventsRecorder(),
                 mSplitsStorageContainer.getEventsStorage(),
-                new EventsRecorderTaskConfig(mSplitClientConfig.eventsPerPush()));
+                new EventsRecorderTaskConfig(mSplitClientConfig.eventsPerPush()),
+                mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override
