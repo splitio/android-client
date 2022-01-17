@@ -15,6 +15,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.synchronizer.SplitsChangeChecker;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class SplitsSyncTask implements SplitTask {
 
@@ -27,13 +29,15 @@ public class SplitsSyncTask implements SplitTask {
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final SplitEventsManager mEventsManager;
     private SplitsChangeChecker mChangeChecker;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
                           @NonNull SplitsStorage splitsStorage,
                           boolean checkCacheExpiration,
                           long cacheExpirationInSeconds,
                           String splitsFilterQueryString,
-                          @NonNull SplitEventsManager eventsManager) {
+                          @NonNull SplitEventsManager eventsManager,
+                          @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
 
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
@@ -42,6 +46,7 @@ public class SplitsSyncTask implements SplitTask {
         mSplitsFilterQueryString = splitsFilterQueryString;
         mEventsManager = checkNotNull(eventsManager);
         mChangeChecker = new SplitsChangeChecker();
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
@@ -62,7 +67,9 @@ public class SplitsSyncTask implements SplitTask {
         }
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, storedChangeNumber);
+        long startTime = System.currentTimeMillis();
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(params, splitsFilterHasChanged || shouldClearExpiredCache, false);
+        mTelemetryRuntimeProducer.recordSyncLatency(OperationType.SPLITS, System.currentTimeMillis() - startTime);
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
             SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
             if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
