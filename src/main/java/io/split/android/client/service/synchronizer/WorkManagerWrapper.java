@@ -182,6 +182,7 @@ public class WorkManagerWrapper {
         Data.Builder dataBuilder = new Data.Builder();
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_KEY, mKey);
+        dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
         return buildInputData(dataBuilder.build());
     }
 

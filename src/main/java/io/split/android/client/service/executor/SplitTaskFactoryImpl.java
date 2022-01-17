@@ -105,7 +105,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         return new MySegmentsSyncTask(
                 mSplitApiFacade.getMySegmentsFetcher(),
                 mSplitsStorageContainer.getMySegmentsStorage(),
-                avoidCache, mEventsManager);
+                avoidCache, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override

@@ -22,11 +22,15 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -37,7 +41,6 @@ import static org.mockito.Mockito.when;
 public class MySegmentsSyncTaskTest {
 
     Map<String, Object> noParams = Collections.emptyMap();
-    Map<String, String> noHeaders = Collections.emptyMap();
 
     @Mock
     HttpFetcher mMySegmentsFetcher;
@@ -45,6 +48,8 @@ public class MySegmentsSyncTaskTest {
     MySegmentsStorage mySegmentsStorage;
     @Mock
     SplitEventsManager mEventsManager;
+    @Mock
+    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     List<MySegment> mMySegments = null;
 
@@ -52,8 +57,8 @@ public class MySegmentsSyncTaskTest {
 
     @Before
     public void setup() {
-        MockitoAnnotations.initMocks(this);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager);
+        MockitoAnnotations.openMocks(this);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer);
         loadMySegments();
     }
 
@@ -77,7 +82,7 @@ public class MySegmentsSyncTaskTest {
     public void correctExecutionNoCache() throws HttpFetcherException {
         Map<String, String> headers = new HashMap<>();
         headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, null);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, null, mTelemetryRuntimeProducer);
         when(mMySegmentsFetcher.execute(noParams, headers)).thenReturn(mMySegments);
 
         mTask.execute();
@@ -100,7 +105,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer);
         when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(IllegalStateException.class);
 
         mTask.execute();
@@ -120,10 +125,12 @@ public class MySegmentsSyncTaskTest {
         verify(mySegmentsStorage, times(1)).set(any());
     }
 
-    @After
-    public void tearDown() {
-        reset(mMySegmentsFetcher);
-        reset(mySegmentsStorage);
+    @Test
+    public void latencyIsTrackedInTelemetry() {
+
+        mTask.execute();
+
+        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.MY_SEGMENT), anyLong());
     }
 
     private void loadMySegments() {
