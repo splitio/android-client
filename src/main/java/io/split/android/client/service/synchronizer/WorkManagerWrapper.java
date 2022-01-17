@@ -1,5 +1,7 @@
 package io.split.android.client.service.synchronizer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -30,8 +32,6 @@ import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.SplitsSyncWorker;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class WorkManagerWrapper {
@@ -201,6 +201,9 @@ public class WorkManagerWrapper {
         dataBuilder.putInt(
                 ServiceConstants.WORKER_PARAM_IMPRESSIONS_PER_PUSH,
                 mSplitClientConfig.impressionsPerPush());
+        dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY,
+                mSplitClientConfig.shouldRecordTelemetry());
+
         return buildInputData(dataBuilder.build());
     }
 

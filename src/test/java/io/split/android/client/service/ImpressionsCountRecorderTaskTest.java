@@ -41,8 +41,6 @@ public class ImpressionsCountRecorderTaskTest {
 
     List<ImpressionsCountPerFeature> mDefaultImpressions;
     ImpressionsCount mDefaultParams;
-    ImpressionsRecorderTaskConfig mDefaultConfig
-            = new ImpressionsRecorderTaskConfig(DEFAULT_POP_CONFIG, 512L);
 
     @Before
     public void setup() {

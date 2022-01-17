@@ -87,7 +87,9 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 mSplitsStorageContainer.getImpressionsStorage(),
                 new ImpressionsRecorderTaskConfig(
                         mSplitClientConfig.impressionsPerPush(),
-                        ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES));
+                        ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES,
+                        mSplitClientConfig.shouldRecordTelemetry()),
+                        mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override
