@@ -44,6 +44,6 @@ public class TelemetryTaskFactoryImpl implements TelemetryTaskFactory {
 
     @Override
     public TelemetryStatsRecorderTask getTelemetryStatsRecorderTask() {
-        return new TelemetryStatsRecorderTask(mTelemetryStatsRecorder, mTelemetryStatsProvider);
+        return new TelemetryStatsRecorderTask(mTelemetryStatsRecorder, mTelemetryStatsProvider, mTelemetryRuntimeProducer);
     }
 }
