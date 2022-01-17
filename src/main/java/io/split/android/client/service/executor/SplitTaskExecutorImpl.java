@@ -13,8 +13,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import io.split.android.client.telemetry.model.OperationType;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
@@ -28,10 +26,8 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
     private final PausableScheduledThreadPoolExecutor mScheduler;
     private final Map<String, ScheduledFuture> mScheduledTasks;
-    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
-    public SplitTaskExecutorImpl(@NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
-        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+    public SplitTaskExecutorImpl() {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
@@ -52,7 +48,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         String taskId = null;
         if (!mScheduler.isShutdown()) {
             ScheduledFuture taskFuture = mScheduler.scheduleAtFixedRate(
-                    new TaskWrapper(task, executionListener, mTelemetryRuntimeProducer),
+                    new TaskWrapper(task, executionListener),
                     initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
             taskId = UUID.randomUUID().toString();
             mScheduledTasks.put(taskId, taskFuture);
@@ -70,7 +66,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
         String taskId = null;
         if (!mScheduler.isShutdown()) {
             ScheduledFuture taskFuture = mScheduler.schedule(
-                    new TaskWrapper(task, executionListener, mTelemetryRuntimeProducer),
+                    new TaskWrapper(task, executionListener),
                     initialDelayInSecs, TimeUnit.SECONDS);
             taskId = UUID.randomUUID().toString();
             mScheduledTasks.put(taskId, taskFuture);
@@ -83,7 +79,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                        @Nullable SplitTaskExecutionListener executionListener) {
         checkNotNull(task);
         if (!mScheduler.isShutdown()) {
-            mScheduler.submit(new TaskWrapper(task, executionListener, mTelemetryRuntimeProducer));
+            mScheduler.submit(new TaskWrapper(task, executionListener));
         }
     }
 
@@ -101,7 +97,7 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
     @Override
     public void executeSerially(List<SplitTaskBatchItem> taskQueue) {
-        SplitTaskBatchWrapper queue = new SplitTaskBatchWrapper(taskQueue, mTelemetryRuntimeProducer);
+        SplitTaskBatchWrapper queue = new SplitTaskBatchWrapper(taskQueue);
         mScheduler.submit(queue);
     }
 
@@ -135,60 +131,41 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
     private static class TaskWrapper implements Runnable {
         private final SplitTask mTask;
         private WeakReference<SplitTaskExecutionListener> mExecutionListener;
-        private final WeakReference<TelemetryRuntimeProducer> mTelemetryRuntimeProducer;
 
         TaskWrapper(SplitTask task,
-                    SplitTaskExecutionListener executionListener,
-                    TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                    SplitTaskExecutionListener executionListener) {
             mTask = checkNotNull(task);
             mExecutionListener = new WeakReference<>(executionListener);
-            mTelemetryRuntimeProducer = new WeakReference<>(telemetryRuntimeProducer);
         }
 
         @Override
         public void run() {
             try {
-                long startTime = System.currentTimeMillis();
                 SplitTaskExecutionInfo info = mTask.execute();
                 SplitTaskExecutionListener listener = mExecutionListener.get();
-                recordLatency(startTime, info, mTelemetryRuntimeProducer.get());
                 if (listener != null) {
                     listener.taskExecuted(info);
                 }
+
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
-            }
-
-        }
-
-        private void recordLatency(long startTime, SplitTaskExecutionInfo info, TelemetryRuntimeProducer telemetryRuntimeProducer) {
-            long latency = System.currentTimeMillis() - startTime;
-            if (telemetryRuntimeProducer != null) {
-                OperationType operationType = OperationType.getFromTaskType(info.getTaskType());
-                if (operationType != null) {
-                    telemetryRuntimeProducer.recordSyncLatency(operationType, latency);
-                }
             }
         }
     }
 
     private static class SplitTaskBatchWrapper implements Runnable {
         private final List<SplitTaskBatchItem> mTaskQueue;
-        private final WeakReference<TelemetryRuntimeProducer> mTelemetryRuntimeProducer;
 
-        SplitTaskBatchWrapper(List<SplitTaskBatchItem> taskQueue, TelemetryRuntimeProducer telemetryRuntimeProducer) {
+        SplitTaskBatchWrapper(List<SplitTaskBatchItem> taskQueue) {
             mTaskQueue = checkNotNull(taskQueue);
-            mTelemetryRuntimeProducer = new WeakReference<>(telemetryRuntimeProducer);
         }
 
         @Override
         public void run() {
             try {
                 for(SplitTaskBatchItem enqueued : mTaskQueue) {
-                    long startTime = System.currentTimeMillis();
                     SplitTaskExecutionInfo info = enqueued.getTask().execute();
                     SplitTaskExecutionListener listener = enqueued.getListener();
-                    recordLatency(startTime, info, mTelemetryRuntimeProducer.get());
                     if (listener != null) {
                         listener.taskExecuted(info);
                     }
@@ -196,16 +173,6 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
 
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
-            }
-        }
-
-        private void recordLatency(long startTime, SplitTaskExecutionInfo info, TelemetryRuntimeProducer telemetryRuntimeProducer) {
-            long latency = System.currentTimeMillis() - startTime;
-            if (telemetryRuntimeProducer != null) {
-                OperationType operationType = OperationType.getFromTaskType(info.getTaskType());
-                if (operationType != null) {
-                    telemetryRuntimeProducer.recordSyncLatency(operationType, latency);
-                }
             }
         }
     }

@@ -55,7 +55,7 @@ public class PushNotificationManager {
                 sseAuthenticator,
                 sseClient,
                 refreshTokenTimer,
-                new SseDisconnectionTimer(new SplitTaskExecutorImpl(telemetryRuntimeProducer)),
+                new SseDisconnectionTimer(new SplitTaskExecutorImpl()),
                 telemetryRuntimeProducer,
                 executorService);
     }
