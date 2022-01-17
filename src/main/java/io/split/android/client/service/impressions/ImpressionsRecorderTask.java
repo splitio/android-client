@@ -51,11 +51,10 @@ public class ImpressionsRecorderTask implements SplitTask {
         do {
             impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
             if (impressions.size() > 0) {
+                long startTime = System.currentTimeMillis();
                 try {
                     Logger.d("Posting %d Split impressions", impressions.size());
-                    long startTime = System.currentTimeMillis();
                     mHttpRecorder.execute(impressions);
-                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS, System.currentTimeMillis() - startTime);
                     mPersistenImpressionsStorage.delete(impressions);
                     Logger.d("%d split impressions sent", impressions.size());
                 } catch (HttpRecorderException e) {
@@ -66,6 +65,8 @@ public class ImpressionsRecorderTask implements SplitTask {
                             "Saving to send them in a new iteration" +
                             e.getLocalizedMessage());
                     failingImpressions.addAll(impressions);
+                } finally {
+                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS, System.currentTimeMillis() - startTime);
                 }
             }
         } while (impressions.size() == mConfig.getImpressionsPerPush());

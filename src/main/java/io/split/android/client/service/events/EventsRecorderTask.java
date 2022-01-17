@@ -51,11 +51,10 @@ public class EventsRecorderTask implements SplitTask {
         do {
             events = mPersistenEventsStorage.pop(mConfig.getEventsPerPush());
             if (events.size() > 0) {
+                long startTime = System.currentTimeMillis();
                 try {
                     Logger.d("Posting %d Split events", events.size());
-                    long startTime = System.currentTimeMillis();
                     mHttpRecorder.execute(events);
-                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.EVENTS, System.currentTimeMillis() - startTime);
                     mPersistenEventsStorage.delete(events);
                     Logger.d("%d split events sent", events.size());
                 } catch (HttpRecorderException e) {
@@ -67,6 +66,8 @@ public class EventsRecorderTask implements SplitTask {
                             e.getLocalizedMessage());
                     e.printStackTrace();
                     failingEvents.addAll(events);
+                } finally {
+                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.EVENTS, System.currentTimeMillis() - startTime);
                 }
             }
         } while (events.size() == mConfig.getEventsPerPush());
