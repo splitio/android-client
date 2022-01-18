@@ -68,14 +68,14 @@ public class TelemetrySynchronizerImplTest {
 
         telemetrySynchronizer.synchronizeStats();
 
-        verify(taskExecutor).schedule(eq(telemetryStatsRecorderTask), eq(0L), eq(15L), any());
+        verify(taskExecutor).schedule(eq(telemetryStatsRecorderTask), eq(5L), eq(15L), any());
     }
 
     @Test
     public void destroyStopsStatsSynchronizationStopsTaskOnTaskExecutor() {
         when(taskExecutor.schedule(
                 any(),
-                eq(0L),
+                eq(5L),
                 eq(15L),
                 any()
         )).thenReturn("taskId");
@@ -138,6 +138,6 @@ public class TelemetrySynchronizerImplTest {
 
         telemetrySynchronizer.synchronizeStats();
 
-        verify(taskExecutor).schedule(eq(telemetryStatsRecorderTask), eq(0L), eq(15L), eq(eventListener));
+        verify(taskExecutor).schedule(eq(telemetryStatsRecorderTask), eq(5L), eq(15L), eq(eventListener));
     }
 }

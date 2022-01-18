@@ -64,7 +64,7 @@ public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
     public void synchronizeStats() {
         statsTaskId = mTaskExecutor.schedule(
                 mTaskFactory.getTelemetryStatsRecorderTask(),
-                ServiceConstants.NO_INITIAL_DELAY,
+                ServiceConstants.TELEMETRY_STATS_INITIAL_DELAY,
                 mTelemetrySyncPeriod,
                 mStatsSyncListener
         );
