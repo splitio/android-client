@@ -75,15 +75,13 @@ public class TelemetryConfigRecorderTaskTest {
     }
 
     @Test
-    public void httpExceptionAddsHttpStatusToResult() throws HttpRecorderException {
+    public void errorIsTrackedInTelemetry() throws HttpRecorderException {
 
         doThrow(new HttpRecorderException("", "", 500)).when(recorder).execute(any());
 
-        SplitTaskExecutionInfo result = telemetryConfigRecorderTask.execute();
+        telemetryConfigRecorderTask.execute();
 
-        assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
-        assertEquals(SplitTaskType.TELEMETRY_CONFIG_TASK, result.getTaskType());
-        assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        verify(telemetryRuntimeProducer).recordSyncError(OperationType.TELEMETRY, 500);
     }
 
     @Test

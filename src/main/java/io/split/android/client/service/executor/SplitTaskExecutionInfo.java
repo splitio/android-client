@@ -17,7 +17,6 @@ public class SplitTaskExecutionInfo {
     public static final String IS_VALID_API_KEY = "IS_VALID_API_KEY";
     public static final String PARSED_SSE_JWT = "PARSED_SSE_JWT";
     public static final String UNEXPECTED_ERROR = "UNEXPECTED_ERROR";
-    public static final String HTTP_STATUS = "HTTP_STATUS";
 
     final private SplitTaskType taskType;
     final private SplitTaskExecutionStatus status;

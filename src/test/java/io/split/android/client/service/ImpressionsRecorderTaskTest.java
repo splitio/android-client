@@ -136,7 +136,7 @@ public class ImpressionsRecorderTaskTest {
     }
 
     @Test
-    public void httpStatusIsAddedToResultWhenError() throws HttpRecorderException {
+    public void errorIsRecordedInTelemetry() throws HttpRecorderException {
         when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
                 .thenReturn(mDefaultParams)
                 .thenReturn(new ArrayList<>());
@@ -148,12 +148,9 @@ public class ImpressionsRecorderTaskTest {
                 mDefaultConfig,
                 mTelemetryRuntimeProducer);
 
-        SplitTaskExecutionInfo result = task.execute();
+        task.execute();
 
-        verify(mImpressionsRecorder, times(1)).execute(mDefaultParams);
-
-        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
-        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.IMPRESSIONS, 500);
     }
 
     @Test

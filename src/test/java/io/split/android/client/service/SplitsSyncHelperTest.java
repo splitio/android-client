@@ -4,7 +4,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +23,8 @@ import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -32,10 +37,15 @@ import static org.mockito.Mockito.when;
 
 public class SplitsSyncHelperTest {
 
+    @Mock
     HttpFetcher<SplitChange> mSplitsFetcher;
+    @Mock
     SplitsStorage mSplitsStorage;
     SplitChange mSplitChange = null;
+    @Spy
     SplitChangeProcessor mSplitChangeProcessor;
+    @Mock
+    private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     SplitsSyncHelper mSplitsSyncHelper;
 
@@ -44,12 +54,10 @@ public class SplitsSyncHelperTest {
 
     @Before
     public void setup() {
+        MockitoAnnotations.openMocks(this);
         mDefaultParams.clear();
         mDefaultParams.put("since", -1L);
-        mSplitsFetcher = (HttpFetcher<SplitChange>) Mockito.mock(HttpFetcher.class);
-        mSplitsStorage = Mockito.mock(SplitsStorage.class);
-        mSplitChangeProcessor = Mockito.spy(SplitChangeProcessor.class);
-        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor);
+        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mTelemetryRuntimeProducer);
         loadSplitChanges();
     }
 
@@ -170,15 +178,13 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
-    public void httpExceptionAddsHttpStatusDataToTaskInfo() throws HttpFetcherException {
+    public void errorIsRecordedInTelemetry() throws HttpFetcherException {
         when(mSplitsFetcher.execute(mDefaultParams, null))
                 .thenThrow(new HttpFetcherException("error", "error", 500));
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mDefaultParams, true, false);
+        mSplitsSyncHelper.sync(mDefaultParams, true, false);
 
-        verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
-        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
-        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.SPLITS, 500);
     }
 
     @After

@@ -268,8 +268,12 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     }
 
     @Override
-    public void recordSyncError(OperationType OperationType, int status) {
+    public void recordSyncError(OperationType OperationType, Integer status) {
         synchronized (httpErrorsLock) {
+            if (status == null) {
+                return;
+            }
+
             Map<Long, Long> statusMap = httpErrors.get(OperationType);
             if (statusMap == null) {
                 return;

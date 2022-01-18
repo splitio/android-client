@@ -157,7 +157,7 @@ public class NoOpTelemetryStorage implements TelemetryStorage {
     }
 
     @Override
-    public void recordSyncError(OperationType syncedResource, int status) {
+    public void recordSyncError(OperationType syncedResource, Integer status) {
 
     }
 

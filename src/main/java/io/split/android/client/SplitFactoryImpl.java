@@ -342,14 +342,8 @@ public class SplitFactoryImpl implements SplitFactory {
         eventsManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                telemetryInitProducer.recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
-            }
-        });
-
-        eventsManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
                 telemetrySynchronizer.synchronizeConfig();
+                telemetryInitProducer.recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
             }
         });
     }

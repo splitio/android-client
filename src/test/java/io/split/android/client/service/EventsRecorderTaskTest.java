@@ -131,7 +131,7 @@ public class EventsRecorderTaskTest {
     }
 
     @Test
-    public void addHttpStatusToResultWhenTaskFails() throws HttpRecorderException {
+    public void recordErrorInTelemetry() throws HttpRecorderException {
 
         when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
                 .thenReturn(mDefaultParams)
@@ -144,9 +144,9 @@ public class EventsRecorderTaskTest {
                 mDefaultConfig,
                 mTelemetryRuntimeProducer);
 
-        SplitTaskExecutionInfo result = task.execute();
+        task.execute();
 
-        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.EVENTS, 500);
     }
 
     @Test

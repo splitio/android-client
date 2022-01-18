@@ -39,9 +39,6 @@ public class ImpressionsCountRecorderTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
         SplitTaskExecutionStatus status = SplitTaskExecutionStatus.SUCCESS;
-        int nonSentRecords = 0;
-        long nonSentBytes = 0;
-        Integer httpErrorStatus = null;
 
         List<ImpressionsCountPerFeature> countList = new ArrayList<>();
         List<ImpressionsCountPerFeature> failedSent = new ArrayList<>();
@@ -49,9 +46,11 @@ public class ImpressionsCountRecorderTask implements SplitTask {
             countList = mPersistentStorage.pop(POP_COUNT);
             if (countList.size() > 0) {
                 long startTime = System.currentTimeMillis();
+                long latency = 0;
                 try {
                     Logger.d("Posting %d Split impressions count", countList.size());
                     mHttpRecorder.execute(new ImpressionsCount(countList));
+                    latency = System.currentTimeMillis() - startTime;
                     mPersistentStorage.delete(countList);
                     Logger.d("%d split impressions count sent", countList.size());
                 } catch (HttpRecorderException e) {
@@ -61,24 +60,21 @@ public class ImpressionsCountRecorderTask implements SplitTask {
                             e.getLocalizedMessage());
                     failedSent.addAll(countList);
 
-                    httpErrorStatus = e.getHttpStatus();
+                    mTelemetryRuntimeProducer.recordSyncError(OperationType.IMPRESSIONS_COUNT, e.getHttpStatus());
                 } finally {
-                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, System.currentTimeMillis() - startTime);
+                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, latency);
                 }
             }
         } while (countList.size() == POP_COUNT);
 
-        if(failedSent.size() > 0) {
+        if (failedSent.size() > 0) {
             mPersistentStorage.setActive(failedSent);
         }
 
         if (status == SplitTaskExecutionStatus.ERROR) {
-            Map<String, Object> data = (httpErrorStatus != null) ? Collections.singletonMap(SplitTaskExecutionInfo.HTTP_STATUS, httpErrorStatus) :
-                    Collections.emptyMap();
-
-            return SplitTaskExecutionInfo.error(
-                    SplitTaskType.IMPRESSIONS_COUNT_RECORDER, data);
+            return SplitTaskExecutionInfo.error(SplitTaskType.IMPRESSIONS_COUNT_RECORDER);
         }
+
         return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_COUNT_RECORDER);
     }
 }

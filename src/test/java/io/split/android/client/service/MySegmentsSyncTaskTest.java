@@ -121,12 +121,12 @@ public class MySegmentsSyncTaskTest {
     }
 
     @Test
-    public void addHttpStatusWhenHttpRequestFails() throws HttpFetcherException {
+    public void errorIsTrackedInTelemetry() throws HttpFetcherException {
         when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(new HttpFetcherException("", "", 500));
 
-        SplitTaskExecutionInfo result = mTask.execute();
+        mTask.execute();
 
-        Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.MY_SEGMENT, 500);
     }
 
     @Test

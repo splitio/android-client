@@ -7,15 +7,14 @@ public class TelemetryHelperImplTest {
 
     @Test
     public void test() {
-        boolean success = false;
+        int successCount = 0;
 
         for (int i = 0; i < 10000; i++) {
             if (new TelemetryHelperImpl().shouldRecordTelemetry()) {
-                success = true;
-                break;
+                successCount++;
             }
         }
 
-        Assert.assertTrue(success);
+        Assert.assertTrue(successCount >= 5 && successCount <= 30);
     }
 }
