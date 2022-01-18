@@ -245,7 +245,6 @@ public class SplitFactoryImpl implements SplitFactory {
             _client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
                 @Override
                 public void onPostExecution(SplitClient client) {
-                    Logger.i("Telemetry recording time until ready from cache");
                     storageContainer.getTelemetryStorage().recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
                 }
             });
@@ -253,7 +252,6 @@ public class SplitFactoryImpl implements SplitFactory {
             _client.on(SplitEvent.SDK_READY, new SplitEventTask() {
                 @Override
                 public void onPostExecution(SplitClient client) {
-                    Logger.i("Telemetry recording time until ready");
                     storageContainer.getTelemetryStorage().recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
                 }
             });
