@@ -5,7 +5,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.BufferedReader;
@@ -267,9 +266,7 @@ public class PushNotificationManagerTest {
         performSuccessfulConnection();
         Thread.sleep(1000);
 
-        mPushManager.start();
-
-        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TOKEN), longThat(argument -> argument > 0));
+        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TOKEN), anyLong());
     }
 
     private void performSuccessfulConnection() throws InterruptedException {

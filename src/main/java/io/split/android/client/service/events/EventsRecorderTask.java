@@ -67,6 +67,7 @@ public class EventsRecorderTask implements SplitTask {
                             e.getLocalizedMessage());
                     e.printStackTrace();
                     failingEvents.addAll(events);
+
                     httpStatus = e.getHttpStatus();
                 } finally {
                     mTelemetryRuntimeProducer.recordSyncLatency(OperationType.EVENTS, System.currentTimeMillis() - startTime);

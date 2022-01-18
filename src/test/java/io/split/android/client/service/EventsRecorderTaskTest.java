@@ -149,6 +149,7 @@ public class EventsRecorderTaskTest {
         Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
     }
 
+    @Test
     public void recordLatencyInTelemetry() {
 
         when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))

@@ -41,6 +41,7 @@ public class TelemetryConfigRecorderTask implements SplitTask {
             return SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_CONFIG_TASK);
         } catch (HttpRecorderException e) {
             Logger.e(e);
+
             return SplitTaskExecutionInfo.error(SplitTaskType.TELEMETRY_CONFIG_TASK, Collections.singletonMap(SplitTaskExecutionInfo.HTTP_STATUS, e.getHttpStatus()));
         } finally {
             mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TELEMETRY, System.currentTimeMillis() - startTime);

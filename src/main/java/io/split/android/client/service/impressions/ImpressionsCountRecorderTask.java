@@ -60,6 +60,7 @@ public class ImpressionsCountRecorderTask implements SplitTask {
                             "Saving to send them in a new iteration" +
                             e.getLocalizedMessage());
                     failedSent.addAll(countList);
+
                     httpErrorStatus = e.getHttpStatus();
                 } finally {
                     mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, System.currentTimeMillis() - startTime);

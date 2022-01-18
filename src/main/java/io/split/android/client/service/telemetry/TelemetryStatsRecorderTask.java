@@ -15,6 +15,7 @@ import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.Stats;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStatsProvider;
+import io.split.android.client.utils.Logger;
 
 public class TelemetryStatsRecorderTask implements SplitTask {
 
@@ -43,6 +44,7 @@ public class TelemetryStatsRecorderTask implements SplitTask {
 
             return SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_STATS_TASK);
         } catch (HttpRecorderException e) {
+            Logger.e(e);
 
             return SplitTaskExecutionInfo.error(SplitTaskType.TELEMETRY_STATS_TASK, Collections.singletonMap(SplitTaskExecutionInfo.HTTP_STATUS, e.getHttpStatus()));
         } finally {
