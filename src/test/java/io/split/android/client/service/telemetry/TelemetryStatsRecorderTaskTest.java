@@ -92,6 +92,7 @@ public class TelemetryStatsRecorderTaskTest {
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
+    @Test
     public void latencyIsRecordedInTelemetry() {
         telemetryStatsRecorderTask.execute();
 

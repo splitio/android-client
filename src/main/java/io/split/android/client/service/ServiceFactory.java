@@ -105,7 +105,7 @@ public class ServiceFactory {
             HttpClient httpClient,
             String endpoint) throws URISyntaxException {
         return new HttpRecorderImpl<>(
-                httpClient, SdkTargetPath.telemetryConfig(endpoint), networkHelper,
+                httpClient, SdkTargetPath.telemetryStats(endpoint), networkHelper,
                 new TelemetryStatsBodySerializer()
         );
     }
