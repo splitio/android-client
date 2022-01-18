@@ -28,7 +28,6 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import static java.lang.Thread.sleep;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -36,13 +35,10 @@ public class SplitTaskExecutorTest {
 
     SplitTaskExecutor mTaskExecutor;
 
-    @Mock
-    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
-
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        mTaskExecutor = new SplitTaskExecutorImpl(mTelemetryRuntimeProducer);
+        mTaskExecutor = new SplitTaskExecutorImpl();
     }
 
     @Test
@@ -256,48 +252,6 @@ public class SplitTaskExecutorTest {
 
         Assert.assertTrue(task.taskHasBeenCalled);
         Assert.assertEquals(4, task.callCount);
-    }
-
-    @Test
-    public void submitRecordsLatencyInTelemetry() throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        TestTask task = new TestTask(latch, SplitTaskType.SPLITS_SYNC);
-
-        CountDownLatch listenerLatch = new CountDownLatch(1);
-        TestListener listener = new TestListener(listenerLatch);
-
-        mTaskExecutor.submit(task, listener);
-        latch.await(15, TimeUnit.SECONDS);
-        listenerLatch.await(15, TimeUnit.SECONDS);
-        Thread.sleep(1000);
-
-        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.SPLITS), anyLong());
-    }
-
-    @Test
-    public void executeSeriallyRecordsLatencyInTelemetry() throws InterruptedException {
-        final int taskCount = 2;
-        CompletionTracker tracker = new CompletionTracker(2);
-        List<SerialListener> listeners = new ArrayList<>();
-        // Enqueuing 4 task to run serially
-        // Listener is identified by an integer
-        CountDownLatch latch = new CountDownLatch(taskCount * 2);
-        List<SplitTaskBatchItem> taskList = new ArrayList<>();
-
-        listeners.add(new SerialListener(0, tracker, latch));
-        taskList.add(new SplitTaskBatchItem(new TestTask(latch, SplitTaskType.TELEMETRY_STATS_TASK), listeners.get(0)));
-        listeners.add(new SerialListener(1, tracker, latch));
-        taskList.add(new SplitTaskBatchItem(new TestTask(latch, SplitTaskType.EVENTS_RECORDER), listeners.get(1)));
-
-        // Executing tasks serially
-        mTaskExecutor.executeSerially(taskList);
-
-        // Awaiting to countdown latches in tasks
-        latch.await(40, TimeUnit.SECONDS);
-        Thread.sleep(1000);
-
-        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TELEMETRY), anyLong());
-        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.EVENTS), anyLong());
     }
 
     @After

@@ -1,11 +1,10 @@
 package io.split.android.client.service.impressions;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
-import com.google.common.collect.Lists;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,22 +17,25 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ImpressionsRecorderTask implements SplitTask {
     public final static int FAILING_CHUNK_SIZE = 20;
     private final PersistentImpressionsStorage mPersistenImpressionsStorage;
     private final HttpRecorder<List<KeyImpression>> mHttpRecorder;
     private final ImpressionsRecorderTaskConfig mConfig;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public ImpressionsRecorderTask(@NonNull HttpRecorder<List<KeyImpression>> httpRecorder,
                                    @NonNull PersistentImpressionsStorage persistenEventsStorage,
-                                   @NonNull ImpressionsRecorderTaskConfig config) {
+                                   @NonNull ImpressionsRecorderTaskConfig config,
+                                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mHttpRecorder = checkNotNull(httpRecorder);
         mPersistenImpressionsStorage = checkNotNull(persistenEventsStorage);
         mConfig = checkNotNull(config);
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
@@ -48,6 +50,7 @@ public class ImpressionsRecorderTask implements SplitTask {
         do {
             impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
             if (impressions.size() > 0) {
+                long startTime = System.currentTimeMillis();
                 try {
                     Logger.d("Posting %d Split impressions", impressions.size());
                     mHttpRecorder.execute(impressions);
@@ -62,6 +65,8 @@ public class ImpressionsRecorderTask implements SplitTask {
                             e.getLocalizedMessage());
                     failingImpressions.addAll(impressions);
                     httpErrorStatus = e.getHttpStatus();
+                } finally {
+                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS, System.currentTimeMillis() - startTime);
                 }
             }
         } while (impressions.size() == mConfig.getImpressionsPerPush());

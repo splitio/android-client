@@ -1,5 +1,16 @@
 package io.split.android.client.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,7 +21,6 @@ import org.mockito.Mockito;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -19,17 +29,9 @@ import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.service.impressions.ImpressionsCount;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
-import io.split.android.client.service.impressions.ImpressionsRecorderTask;
-import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class ImpressionsCountRecorderTaskTest {
 
@@ -38,11 +40,10 @@ public class ImpressionsCountRecorderTaskTest {
 
     HttpRecorder<ImpressionsCount> mImpressionsRecorder;
     PersistentImpressionsCountStorage mPersistentImpressionsStorage;
+    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     List<ImpressionsCountPerFeature> mDefaultImpressions;
     ImpressionsCount mDefaultParams;
-    ImpressionsRecorderTaskConfig mDefaultConfig
-            = new ImpressionsRecorderTaskConfig(DEFAULT_POP_CONFIG, 512L);
 
     @Before
     public void setup() {
@@ -50,6 +51,7 @@ public class ImpressionsCountRecorderTaskTest {
         mDefaultParams = new ImpressionsCount(mDefaultImpressions);
         mImpressionsRecorder = (HttpRecorder<ImpressionsCount>) Mockito.mock(HttpRecorder.class);
         mPersistentImpressionsStorage = Mockito.mock(PersistentImpressionsCountStorage.class);
+        mTelemetryRuntimeProducer = Mockito.mock(TelemetryRuntimeProducer.class);
     }
 
     @Test
@@ -64,7 +66,8 @@ public class ImpressionsCountRecorderTaskTest {
 
         ImpressionsCountRecorderTask task = new ImpressionsCountRecorderTask(
                 mImpressionsRecorder,
-                mPersistentImpressionsStorage);
+                mPersistentImpressionsStorage,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
@@ -87,7 +90,8 @@ public class ImpressionsCountRecorderTaskTest {
 
         ImpressionsCountRecorderTask task = new ImpressionsCountRecorderTask(
                 mImpressionsRecorder,
-                mPersistentImpressionsStorage);
+                mPersistentImpressionsStorage,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
@@ -109,7 +113,8 @@ public class ImpressionsCountRecorderTaskTest {
 
         ImpressionsCountRecorderTask task = new ImpressionsCountRecorderTask(
                 mImpressionsRecorder,
-                mPersistentImpressionsStorage);
+                mPersistentImpressionsStorage,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
@@ -132,11 +137,29 @@ public class ImpressionsCountRecorderTaskTest {
 
         ImpressionsCountRecorderTask task = new ImpressionsCountRecorderTask(
                 mImpressionsRecorder,
-                mPersistentImpressionsStorage);
+                mPersistentImpressionsStorage,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
         Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
+    }
+
+    @Test
+    public void latencyIsRecordedInTelemetry() {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultImpressions)
+                .thenReturn(mDefaultImpressions)
+                .thenReturn(new ArrayList<>());
+
+        ImpressionsCountRecorderTask task = new ImpressionsCountRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSyncLatency(eq(OperationType.IMPRESSIONS_COUNT), anyLong());
     }
 
     @After

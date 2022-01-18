@@ -21,11 +21,15 @@ public class MySegmentsSyncWorker extends SplitWorker {
         super(context, workerParams);
         String key =
                 workerParams.getInputData().getString(ServiceConstants.WORKER_PARAM_KEY);
+        boolean shouldRecordTelemetry = workerParams.getInputData().getBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
         try {
             mSplitTask = new MySegmentsSyncTask(
                     ServiceFactory.getMySegmentsFetcher(getNetworkHelper(), getHttpClient(),
                             getEndPoint(), key),
-                    StorageFactory.getMySegmentsStorage(getDatabase(), key), false, null);
+                    StorageFactory.getMySegmentsStorage(getDatabase(), key),
+                    false,
+                    null,
+                    StorageFactory.getTelemetryStorage(shouldRecordTelemetry));
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
         }

@@ -26,10 +26,14 @@ public class EventsRecorderWorker extends SplitWorker {
                     ServiceConstants.WORKER_PARAM_EVENTS_PER_PUSH,
                     ServiceConstants.DEFAULT_RECORDS_PER_PUSH);
 
+            boolean shouldRecordTelemetry = workerParams.getInputData().getBoolean(
+                    ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
+
             mSplitTask = new EventsRecorderTask(ServiceFactory.getEventsRecorder(
                     getNetworkHelper(), getHttpClient(), getEndPoint()),
                     StorageFactory.getPersistenEventsStorage(getDatabase()),
-                    new EventsRecorderTaskConfig(eventsPerPush));
+                    new EventsRecorderTaskConfig(eventsPerPush),
+                    StorageFactory.getTelemetryStorage(shouldRecordTelemetry));
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
         }

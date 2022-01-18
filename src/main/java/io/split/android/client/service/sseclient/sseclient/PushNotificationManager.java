@@ -55,7 +55,7 @@ public class PushNotificationManager {
                 sseAuthenticator,
                 sseClient,
                 refreshTokenTimer,
-                new SseDisconnectionTimer(new SplitTaskExecutorImpl(telemetryRuntimeProducer)),
+                new SseDisconnectionTimer(new SplitTaskExecutorImpl()),
                 telemetryRuntimeProducer,
                 executorService);
     }
@@ -175,7 +175,7 @@ public class PushNotificationManager {
         @Override
         public void run() {
 
-            final long startTime = System.currentTimeMillis();
+            long startTime = System.currentTimeMillis();
             SseAuthenticationResult authResult = mSseAuthenticator.authenticate();
             mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TOKEN, System.currentTimeMillis() - startTime);
 

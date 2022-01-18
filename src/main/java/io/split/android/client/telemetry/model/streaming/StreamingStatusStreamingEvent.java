@@ -14,7 +14,9 @@ public class StreamingStatusStreamingEvent extends StreamingEvent {
         @SerializedName("0")
         DISABLED(0),
         @SerializedName("1")
-        ENABLED(1), PAUSED(2);
+        ENABLED(1),
+        @SerializedName("2")
+        PAUSED(2);
 
         private final int numericValue;
 

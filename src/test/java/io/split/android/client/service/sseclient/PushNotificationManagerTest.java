@@ -267,6 +267,8 @@ public class PushNotificationManagerTest {
         performSuccessfulConnection();
         Thread.sleep(1000);
 
+        mPushManager.start();
+
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TOKEN), longThat(argument -> argument > 0));
     }
 

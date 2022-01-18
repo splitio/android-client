@@ -3,6 +3,8 @@ package io.split.android.client.service.telemetry;
 import static junit.framework.TestCase.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,7 +21,9 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
+import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.Stats;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStatsProvider;
 
 public class TelemetryStatsRecorderTaskTest {
@@ -28,12 +32,14 @@ public class TelemetryStatsRecorderTaskTest {
     private HttpRecorder<Stats> recorder;
     @Mock
     private TelemetryStatsProvider statsProvider;
+    @Mock
+    private TelemetryRuntimeProducer telemetryRuntimeProducer;
     private TelemetryStatsRecorderTask telemetryStatsRecorderTask;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetryStatsRecorderTask = new TelemetryStatsRecorderTask(recorder, statsProvider);
+        telemetryStatsRecorderTask = new TelemetryStatsRecorderTask(recorder, statsProvider, telemetryRuntimeProducer);
     }
 
     @Test
@@ -84,5 +90,11 @@ public class TelemetryStatsRecorderTaskTest {
         Assert.assertEquals(500, result.getIntegerValue("HTTP_STATUS").intValue());
         Assert.assertEquals(SplitTaskType.TELEMETRY_STATS_TASK, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+    }
+
+    public void latencyIsRecordedInTelemetry() {
+        telemetryStatsRecorderTask.execute();
+
+        verify(telemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TELEMETRY), anyLong());
     }
 }
