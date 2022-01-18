@@ -36,6 +36,7 @@ import io.split.android.client.telemetry.TelemetrySyncTaskExecutionListenerFacto
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
+import io.split.android.client.telemetry.storage.TelemetryInitProducer;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
@@ -162,7 +163,13 @@ public class SplitFactoryImpl implements SplitFactory {
                 config.telemetryRefreshRate(),
                 config.shouldRecordTelemetry());
         _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
-                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, _eventsManager, telemetrySynchronizer, storageContainer.getTelemetryStorage());
+                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, telemetrySynchronizer, storageContainer.getTelemetryStorage());
+
+        registerTelemetryTasksInEventManager(_eventsManager,
+                telemetrySynchronizer,
+                storageContainer.getTelemetryStorage(),
+                initializationStartTime,
+                config.shouldRecordTelemetry());
 
         _syncManager.start();
 
@@ -242,20 +249,6 @@ public class SplitFactoryImpl implements SplitFactory {
         _eventsManager.getExecutorResources().setSplitClient(_client);
 
         if (config.shouldRecordTelemetry()) {
-            _client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
-                @Override
-                public void onPostExecution(SplitClient client) {
-                    storageContainer.getTelemetryStorage().recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
-                }
-            });
-
-            _client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-                @Override
-                public void onPostExecution(SplitClient client) {
-                    storageContainer.getTelemetryStorage().recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
-                }
-            });
-
             int activeFactoriesCount = _factoryMonitor.count(_apiKey);
             storageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
             storageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
@@ -328,5 +321,36 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             return new TelemetrySynchronizerStub();
         }
+    }
+
+    private void registerTelemetryTasksInEventManager(SplitEventsManager eventsManager,
+                                                      TelemetrySynchronizer telemetrySynchronizer,
+                                                      TelemetryInitProducer telemetryInitProducer,
+                                                      long initializationStartTime,
+                                                      boolean shouldRecordTelemetry) {
+        if (!shouldRecordTelemetry) {
+            return;
+        }
+
+        eventsManager.register(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                telemetryInitProducer.recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
+            }
+        });
+
+        eventsManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                telemetryInitProducer.recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
+            }
+        });
+
+        eventsManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                telemetrySynchronizer.synchronizeConfig();
+            }
+        });
     }
 }

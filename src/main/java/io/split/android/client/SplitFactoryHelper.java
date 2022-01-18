@@ -13,13 +13,11 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
@@ -37,7 +35,6 @@ import io.split.android.client.service.sseclient.sseclient.PushNotificationManag
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseClient;
 import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
-import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.service.synchronizer.SyncManager;
@@ -167,7 +164,6 @@ class SplitFactoryHelper {
                                  SplitApiFacade splitApiFacade,
                                  HttpClient httpClient,
                                  Synchronizer synchronizer,
-                                 SplitEventsManager splitEventsManager,
                                  TelemetrySynchronizer telemetrySynchronizer,
                                  TelemetryRuntimeProducer telemetryRuntimeProducer) {
 
@@ -204,6 +200,6 @@ class SplitFactoryHelper {
         BackoffCounterTimer backoffReconnectTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
 
         return new SyncManagerImpl(config, synchronizer, pushNotificationManager, splitUpdateWorker,
-                mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer, splitEventsManager, telemetrySynchronizer);
+                mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer, telemetrySynchronizer);
     }
 }
