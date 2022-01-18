@@ -3,6 +3,7 @@ package io.split.android.client.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -169,6 +170,24 @@ public class ImpressionsRecorderTaskTest {
         task.execute();
 
         verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSyncLatency(eq(OperationType.IMPRESSIONS), anyLong());
+    }
+
+    @Test
+    public void successIsRecordedInTelemetry() {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+
+        ImpressionsRecorderTask task = new ImpressionsRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSuccessfulSync(eq(OperationType.IMPRESSIONS), longThat(arg -> arg > 0));
     }
 
     private List<KeyImpression> createImpressions() {

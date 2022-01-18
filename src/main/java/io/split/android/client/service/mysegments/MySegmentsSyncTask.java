@@ -58,10 +58,14 @@ public class MySegmentsSyncTask implements SplitTask {
         long latency = 0;
         try {
             List<MySegment> segments = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
-            latency = System.currentTimeMillis() - startTime;
+
+            long now = System.currentTimeMillis();
+            latency = now - startTime;
             List<String> oldSegments = new ArrayList(mMySegmentsStorage.getAll());
             List<String> mySegments = getNameList(segments);
             mMySegmentsStorage.set(mySegments);
+
+            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.MY_SEGMENT, now);
             fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());

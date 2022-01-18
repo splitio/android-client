@@ -3,6 +3,7 @@ package io.split.android.client.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -59,8 +60,6 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void correctExecution() throws HttpFetcherException {
-
-
         when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
 
         mTask.execute();
@@ -130,11 +129,21 @@ public class MySegmentsSyncTaskTest {
     }
 
     @Test
-    public void latencyIsTrackedInTelemetry() {
+    public void latencyIsTrackedInTelemetry() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
 
         mTask.execute();
 
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.MY_SEGMENT), anyLong());
+    }
+
+    @Test
+    public void successIsTrackedInTelemetry() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
+
+        mTask.execute();
+
+        verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.MY_SEGMENT), longThat(arg -> arg > 0));
     }
 
     private void loadMySegments() {

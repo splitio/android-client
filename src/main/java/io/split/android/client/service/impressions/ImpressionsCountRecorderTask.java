@@ -50,7 +50,11 @@ public class ImpressionsCountRecorderTask implements SplitTask {
                 try {
                     Logger.d("Posting %d Split impressions count", countList.size());
                     mHttpRecorder.execute(new ImpressionsCount(countList));
-                    latency = System.currentTimeMillis() - startTime;
+
+                    long now = System.currentTimeMillis();
+                    latency = now - startTime;
+                    mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.IMPRESSIONS_COUNT, now);
+
                     mPersistentStorage.delete(countList);
                     Logger.d("%d split impressions count sent", countList.size());
                 } catch (HttpRecorderException e) {

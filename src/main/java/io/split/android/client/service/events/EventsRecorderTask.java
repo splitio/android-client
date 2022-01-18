@@ -56,7 +56,11 @@ public class EventsRecorderTask implements SplitTask {
                 try {
                     Logger.d("Posting %d Split events", events.size());
                     mHttpRecorder.execute(events);
-                    latency = System.currentTimeMillis() - startTime;
+
+                    long now = System.currentTimeMillis();
+                    latency = now - startTime;
+                    mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.EVENTS, now);
+
                     mPersistenEventsStorage.delete(events);
                     Logger.d("%d split events sent", events.size());
                 } catch (HttpRecorderException e) {

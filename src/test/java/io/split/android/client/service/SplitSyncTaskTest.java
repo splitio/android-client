@@ -210,6 +210,19 @@ public class SplitSyncTaskTest {
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.SPLITS), anyLong());
     }
 
+    @Test
+    public void recordSuccessInTelemetry() {
+        mTask = new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorage,
+                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+
+        mTask.execute();
+
+        verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.SPLITS), longThat(arg -> arg > 0));
+    }
+
     @After
     public void tearDown() {
         reset(mSplitsStorage);

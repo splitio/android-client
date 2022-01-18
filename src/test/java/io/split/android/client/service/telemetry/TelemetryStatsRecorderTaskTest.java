@@ -2,6 +2,7 @@ package io.split.android.client.service.telemetry;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -95,5 +96,13 @@ public class TelemetryStatsRecorderTaskTest {
         telemetryStatsRecorderTask.execute();
 
         verify(telemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TELEMETRY), anyLong());
+    }
+
+    @Test
+    public void successIsTrackedInTelemetry() {
+
+        telemetryStatsRecorderTask.execute();
+
+        verify(telemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.TELEMETRY), longThat(arg -> arg > 0));
     }
 }

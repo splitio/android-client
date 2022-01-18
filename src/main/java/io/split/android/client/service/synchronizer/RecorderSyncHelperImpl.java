@@ -26,14 +26,12 @@ class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHe
     private final int mMaxQueueSize;
     private final long mMaxQueueSizeInBytes;
     private final SplitTaskType mTaskType;
-    private final SplitTaskExecutionListener mTaskExecutionListener;
 
     public RecorderSyncHelperImpl(SplitTaskType taskType,
                                   StoragePusher<T> storage,
                                   int maxQueueSize,
                                   long maxQueueSizeInBytes,
-                                  SplitTaskExecutor splitTaskExecutor,
-                                  @Nullable SplitTaskExecutionListener taskExecutionListener) {
+                                  SplitTaskExecutor splitTaskExecutor) {
         mTaskType = checkNotNull(taskType);
         mStorage = checkNotNull(storage);
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
@@ -41,7 +39,6 @@ class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHe
         mTotalPushedSizeInBytes = new AtomicLong(0);
         mMaxQueueSize = maxQueueSize;
         mMaxQueueSizeInBytes = maxQueueSizeInBytes;
-        mTaskExecutionListener = taskExecutionListener;
     }
 
     @Override
@@ -66,10 +63,6 @@ class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHe
                     SplitTaskExecutionInfo.NON_SENT_RECORDS));
             mTotalPushedSizeInBytes.addAndGet(taskInfo.getLongValue(
                     SplitTaskExecutionInfo.NON_SENT_BYTES));
-        }
-
-        if (mTaskExecutionListener != null) {
-            mTaskExecutionListener.taskExecuted(taskInfo);
         }
     }
 

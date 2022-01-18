@@ -40,6 +40,8 @@ public class TelemetryStatsRecorderTask implements SplitTask {
 
             mTelemetryStatsProvider.clearStats();
 
+            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.TELEMETRY, System.currentTimeMillis());
+
             return SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_STATS_TASK);
         } catch (HttpRecorderException e) {
             Logger.e(e);
