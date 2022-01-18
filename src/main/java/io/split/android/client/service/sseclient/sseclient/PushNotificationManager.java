@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.SseJwtToken;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
@@ -43,6 +44,21 @@ public class PushNotificationManager {
     private AtomicBoolean mIsPaused;
     private AtomicBoolean mIsStopped;
     private Future mConnectionTask;
+
+    public PushNotificationManager(@NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                                   @NonNull SseAuthenticator sseAuthenticator,
+                                   @NonNull SseClient sseClient,
+                                   @NonNull SseRefreshTokenTimer refreshTokenTimer,
+                                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                   @Nullable ScheduledExecutorService executorService) {
+        this(pushManagerEventBroadcaster,
+                sseAuthenticator,
+                sseClient,
+                refreshTokenTimer,
+                new SseDisconnectionTimer(new SplitTaskExecutorImpl()),
+                telemetryRuntimeProducer,
+                executorService);
+    }
 
     @VisibleForTesting
     public PushNotificationManager(@NonNull PushManagerEventBroadcaster broadcasterChannel,
@@ -159,7 +175,9 @@ public class PushNotificationManager {
         @Override
         public void run() {
 
+            long startTime = System.currentTimeMillis();
             SseAuthenticationResult authResult = mSseAuthenticator.authenticate();
+            mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TOKEN, System.currentTimeMillis() - startTime);
 
             if(authResult.isSuccess() && !authResult.isPushEnabled()) {
                 Logger.d("Streaming disabled for api key");

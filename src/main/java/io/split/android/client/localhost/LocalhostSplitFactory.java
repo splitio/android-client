@@ -62,9 +62,10 @@ public final class LocalhostSplitFactory implements SplitFactory {
         FileStorage fileStorage = new FileStorage(context.getCacheDir(), ServiceConstants.LOCALHOST_FOLDER);
         SplitsStorage splitsStorage = new LocalhostSplitsStorage(mLocalhostFileName, context, fileStorage, mEventsManager);
         SplitParser splitParser = new SplitParser(new EmptyMySegmentsStorage());
+        NoOpTelemetryStorage telemetryStorageProducer = new NoOpTelemetryStorage();
         SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
         AttributesManager attributesManager = new AttributesManagerImpl(new AttributesStorageImpl(), new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
-        mClient = new LocalhostSplitClient(this, config, key, splitsStorage, mEventsManager, splitParser, attributesManager, new AttributesMergerImpl(), new NoOpTelemetryStorage());
+        mClient = new LocalhostSplitClient(this, config, key, splitsStorage, mEventsManager, splitParser, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer);
         mEventsManager.getExecutorResources().setSplitClient(mClient);
         mManager = new SplitManagerImpl(splitsStorage,
                 new SplitValidatorImpl(), splitParser);

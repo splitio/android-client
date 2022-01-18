@@ -1,5 +1,7 @@
 package io.split.android.client.telemetry.model.streaming;
 
+import com.google.gson.annotations.SerializedName;
+
 import io.split.android.client.telemetry.model.EventTypeEnum;
 
 public class StreamingStatusStreamingEvent extends StreamingEvent {
@@ -9,7 +11,12 @@ public class StreamingStatusStreamingEvent extends StreamingEvent {
     }
 
     public enum Status {
-        DISABLED(0), ENABLED(1), PAUSED(2);
+        @SerializedName("0")
+        DISABLED(0),
+        @SerializedName("1")
+        ENABLED(1),
+        @SerializedName("2")
+        PAUSED(2);
 
         private final int numericValue;
 

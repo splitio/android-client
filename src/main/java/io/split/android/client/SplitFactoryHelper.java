@@ -33,7 +33,6 @@ import io.split.android.client.service.sseclient.notifications.SplitsChangeNotif
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
-import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseClient;
@@ -193,16 +192,14 @@ class SplitFactoryHelper {
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
         EventStreamParser eventStreamParser = new EventStreamParser();
 
-        NotificationManagerKeeper managerKeeper = new NotificationManagerKeeper(pushManagerEventBroadcaster, telemetryRuntimeProducer);
-        SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, managerKeeper, pushManagerEventBroadcaster);
+        SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, telemetryRuntimeProducer, pushManagerEventBroadcaster);
         SseClient sseClient = new SseClientImpl(streamingServiceUrl, httpClient, eventStreamParser, sseHandler);
         SseAuthenticator sseAuthenticator =
                 new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(), userKey, new SseJwtParser());
 
         PushNotificationManager pushNotificationManager =
                 new PushNotificationManager(pushManagerEventBroadcaster, sseAuthenticator, sseClient,
-                        new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
-                        new SseDisconnectionTimer(new SplitTaskExecutorImpl()), telemetryRuntimeProducer, null);
+                        new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster), telemetryRuntimeProducer, null);
 
         BackoffCounterTimer backoffReconnectTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
 

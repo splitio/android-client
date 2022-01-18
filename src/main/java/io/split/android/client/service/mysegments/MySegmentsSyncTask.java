@@ -23,6 +23,8 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.synchronizer.MySegmentsChangeChecker;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -33,22 +35,26 @@ public class MySegmentsSyncTask implements SplitTask {
     private final MySegmentsStorage mMySegmentsStorage;
     private final boolean mAvoidCache;
     private final SplitEventsManager mEventsManager;
-    private MySegmentsChangeChecker mMySegmentsChangeChecker;
+    private final MySegmentsChangeChecker mMySegmentsChangeChecker;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public MySegmentsSyncTask(@NonNull HttpFetcher<List<MySegment>> mySegmentsFetcher,
                               @NonNull MySegmentsStorage mySegmentsStorage,
                               boolean avoidCache,
-                              SplitEventsManager eventsManager) {
+                              SplitEventsManager eventsManager,
+                              @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mMySegmentsFetcher = checkNotNull(mySegmentsFetcher);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mAvoidCache = avoidCache;
         mEventsManager = eventsManager;
         mMySegmentsChangeChecker = new MySegmentsChangeChecker();
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
+        long startTime = System.currentTimeMillis();
         try {
             List<String> oldSegments = new ArrayList(mMySegmentsStorage.getAll());
             List<String> mySegments = getNameList(mMySegmentsFetcher.execute(new HashMap<>(), getHeaders()));
@@ -60,6 +66,8 @@ public class MySegmentsSyncTask implements SplitTask {
         } catch (Exception e) {
             logError("Unknown error while retrieving my segments: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
+        } finally {
+            mTelemetryRuntimeProducer.recordSyncLatency(OperationType.MY_SEGMENT, System.currentTimeMillis() - startTime);
         }
         Logger.d("My Segments have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC);

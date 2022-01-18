@@ -1,6 +1,8 @@
 package io.split.android.client.service.telemetry;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,7 +15,9 @@ import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
+import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.Stats;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStatsProvider;
 
 public class TelemetryStatsRecorderTaskTest {
@@ -22,12 +26,14 @@ public class TelemetryStatsRecorderTaskTest {
     private HttpRecorder<Stats> recorder;
     @Mock
     private TelemetryStatsProvider statsProvider;
+    @Mock
+    private TelemetryRuntimeProducer telemetryRuntimeProducer;
     private TelemetryStatsRecorderTask telemetryConfigRecorderTask;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetryConfigRecorderTask = new TelemetryStatsRecorderTask(recorder, statsProvider);
+        telemetryConfigRecorderTask = new TelemetryStatsRecorderTask(recorder, statsProvider, telemetryRuntimeProducer);
     }
 
     @Test
@@ -66,5 +72,12 @@ public class TelemetryStatsRecorderTaskTest {
         telemetryConfigRecorderTask.execute();
 
         verify(statsProvider, times(0)).clearStats();
+    }
+
+    @Test
+    public void latencyIsRecordedInTelemetry() {
+        telemetryConfigRecorderTask.execute();
+
+        verify(telemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TELEMETRY), anyLong());
     }
 }

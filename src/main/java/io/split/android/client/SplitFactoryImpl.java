@@ -130,9 +130,9 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitEventsManager _eventsManager = new SplitEventsManager(config);
 
-        SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
-
         SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key, config.shouldRecordTelemetry());
+
+        SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
 
         SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
 
@@ -186,6 +186,10 @@ public class SplitFactoryImpl implements SplitFactory {
             public void run() {
                 Logger.w("Shutdown called for split");
                 try {
+                    storageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
+                    telemetrySynchronizer.flush();
+                    telemetrySynchronizer.destroy();
+                    Logger.i("Successful shutdown of telemetry");
                     _syncManager.stop();
                     Logger.i("Flushing impressions and events");
                     _lifecyleManager.destroy();
@@ -202,12 +206,6 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of task executor");
                     storageContainer.getAttributesStorage().destroy();
                     Logger.i("Successful shutdown of attributes storage");
-                    if (config.shouldRecordTelemetry()) {
-                        storageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
-                        telemetrySynchronizer.flush();
-                        telemetrySynchronizer.destroy();
-                        Logger.i("Successful shutdown of telemetry");
-                    }
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {

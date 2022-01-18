@@ -77,7 +77,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         return new EventsRecorderTask(
                 mSplitApiFacade.getEventsRecorder(),
                 mSplitsStorageContainer.getEventsStorage(),
-                new EventsRecorderTaskConfig(mSplitClientConfig.eventsPerPush()));
+                new EventsRecorderTaskConfig(mSplitClientConfig.eventsPerPush()),
+                mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override
@@ -87,14 +88,16 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 mSplitsStorageContainer.getImpressionsStorage(),
                 new ImpressionsRecorderTaskConfig(
                         mSplitClientConfig.impressionsPerPush(),
-                        ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES));
+                        ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES,
+                        mSplitClientConfig.shouldRecordTelemetry()),
+                        mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override
     public SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration) {
 
         return new SplitsSyncTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), checkCacheExpiration,
-                mSplitClientConfig.cacheExpirationInSeconds(), mSplitsFilterQueryString, mEventsManager);
+                mSplitClientConfig.cacheExpirationInSeconds(), mSplitsFilterQueryString, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override
@@ -102,7 +105,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         return new MySegmentsSyncTask(
                 mSplitApiFacade.getMySegmentsFetcher(),
                 mSplitsStorageContainer.getMySegmentsStorage(),
-                avoidCache, mEventsManager);
+                avoidCache, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override
@@ -158,7 +161,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     public ImpressionsCountRecorderTask createImpressionsCountRecorderTask() {
         return new ImpressionsCountRecorderTask(
                 mSplitApiFacade.getImpressionsCountRecorder(),
-                mSplitsStorageContainer.getImpressionsCountStorage());
+                mSplitsStorageContainer.getImpressionsCountStorage(),
+                mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override
