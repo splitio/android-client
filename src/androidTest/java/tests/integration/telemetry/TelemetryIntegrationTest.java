@@ -134,31 +134,6 @@ public class TelemetryIntegrationTest {
     }
 
     @Test
-    public void recordSuccessfulSynchronizations() throws InterruptedException {
-        client.getTreatment("test_split");
-        client.track("test_traffic_type", "test_split");
-        client.destroy();
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        countDownLatch.await(5, TimeUnit.SECONDS);
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        LastSync lastSynchronization = telemetryStorage.getLastSynchronization();
-        assertTrue(lastSynchronization.getLastSplitSync() > 0);
-        assertTrue(lastSynchronization.getLastMySegmentSync() > 0);
-        assertTrue(lastSynchronization.getLastEventSync() > 0);
-        assertTrue(lastSynchronization.getLastTelemetrySync() > 0);
-        assertTrue(lastSynchronization.getLastImpressionSync() > 0);
-        assertTrue(lastSynchronization.getLastImpressionCountSync() > 0);
-
-        HttpLatencies httpLatencies = telemetryStorage.popHttpLatencies();
-        assertFalse(httpLatencies.getSplits().stream().allMatch(aLong -> aLong == 0));
-        assertFalse(httpLatencies.getMySegments().stream().allMatch(aLong -> aLong == 0));
-        assertFalse(httpLatencies.getEvents().stream().allMatch(aLong -> aLong == 0));
-        assertFalse(httpLatencies.getImpressions().stream().allMatch(aLong -> aLong == 0));
-        assertFalse(httpLatencies.getImpressionsCount().stream().allMatch(aLong -> aLong == 0));
-        assertFalse(httpLatencies.getTelemetry().stream().allMatch(aLong -> aLong == 0));
-    }
-
-    @Test
     public void configIsPostedAfterInitialization() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -168,9 +143,8 @@ public class TelemetryIntegrationTest {
 
     @Test
     public void statsAreFlushedOnDestroy() throws InterruptedException {
-        Thread.sleep(1000);
         client.destroy();
-        Thread.sleep(1000);
+        Thread.sleep(5200);
 
         assertEquals(1, statsEndpointHits.get());
     }

@@ -41,6 +41,8 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         config.setHttpProxyDetected(mSplitClientConfig.proxy() != null);
         config.setSDKNotReadyUsage(mTelemetryConsumer.getNonReadyUsage());
         config.setUrlOverrides(buildUrlOverrides(mSplitClientConfig));
+        config.setImpressionsQueueSize(mSplitClientConfig.impressionsQueueSize());
+        config.setEventsQueueSize(mSplitClientConfig.eventsQueueSize());
 
         return config;
     }
@@ -51,6 +53,7 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         refreshRates.setSplits(splitClientConfig.featuresRefreshRate());
         refreshRates.setMySegments(splitClientConfig.segmentsRefreshRate());
         refreshRates.setImpressions(splitClientConfig.impressionsRefreshRate());
+        refreshRates.setEvents(splitClientConfig.eventFlushInterval());
 
         return refreshRates;
     }
