@@ -135,6 +135,10 @@ public class IntegrationHelper {
     }
 
     public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled) {
+        return lowRefreshRateConfig(streamingEnabled, false);
+    }
+
+    public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled, boolean telemetryEnabled) {
         TestableSplitConfigBuilder builder = new TestableSplitConfigBuilder()
                 .ready(30000)
                 .featuresRefreshRate(3)
@@ -142,6 +146,7 @@ public class IntegrationHelper {
                 .impressionsRefreshRate(3)
                 .impressionsChunkSize(999999)
                 .streamingEnabled(streamingEnabled)
+                .shouldRecordTelemetry(telemetryEnabled)
                 .enableDebug()
                 .trafficType("account");
         return builder.build();

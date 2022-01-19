@@ -1,6 +1,7 @@
 package tests.integration.telemetry;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 
 import android.content.Context;
@@ -12,9 +13,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import helper.DatabaseHelper;
@@ -34,6 +39,11 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
+import io.split.android.client.telemetry.model.HttpLatencies;
+import io.split.android.client.telemetry.model.ImpressionsDataType;
+import io.split.android.client.telemetry.model.LastSync;
+import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
 import okhttp3.mockwebserver.Dispatcher;
@@ -46,6 +56,9 @@ public class TelemetryIntegrationTest {
     private Context mContext;
     private SplitRoomDatabase testDatabase;
     private MockWebServer mWebServer;
+    private SplitClient client;
+    private AtomicInteger configEndpointHits;
+    private AtomicInteger statsEndpointHits;
 
     @Before
     public void setUp() {
@@ -53,24 +66,26 @@ public class TelemetryIntegrationTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         testDatabase = DatabaseHelper.getTestDatabase(mContext);
         testDatabase.clearAllTables();
+
+        configEndpointHits = new AtomicInteger(0);
+        statsEndpointHits = new AtomicInteger(0);
+        initializeClient(false);
+    }
+
+    @After
+    public void tearDown() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        if (mWebServer != null) {
+            mWebServer.shutdown();
+        }
+        client.destroy();
+        clearStorage();
     }
 
     @Test
-    public void telemetryInitTest() throws InterruptedException {
-        insertSplitsFromFileIntoDB();
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        SplitClient client = getTelemetrySplitFactory().client();
-        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(countDownLatch);
-        client.on(SplitEvent.SDK_READY, readyFromCacheTask);
-
-        // Perform usages before SDK is ready
-        client.getTreatment("test");
-
-        countDownLatch.await(30, TimeUnit.SECONDS);
+    public void telemetryInitTest() {
 
         TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        assertEquals(1, telemetryStorage.getNonReadyUsage());
+//        assertEquals(1, telemetryStorage.getNonReadyUsage());
         assertEquals(1, telemetryStorage.getActiveFactories());
         assertEquals(0, telemetryStorage.getRedundantFactories());
         assertTrue(telemetryStorage.getTimeUntilReadyFromCache() > 0);
@@ -78,16 +93,169 @@ public class TelemetryIntegrationTest {
         assertTrue(telemetryStorage.getTimeUntilReady() >= telemetryStorage.getTimeUntilReadyFromCache());
     }
 
-    @After
-    public void tearDown() throws IOException {
-        if (mWebServer != null) {
-            mWebServer.shutdown();
+    @Test
+    public void telemetryEvaluationLatencyTest() {
+
+        client.getTreatment("test_split");
+        client.getTreatments(Arrays.asList("test_split", "test_split_2"), null);
+        client.getTreatmentWithConfig("test_split", null);
+        client.getTreatmentsWithConfig(Arrays.asList("test_split", "test_split_2"), null);
+        client.track("test_traffic_type", "test_split");
+
+        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
+        MethodLatencies methodLatencies = telemetryStorage.popLatencies();
+        assertFalse(methodLatencies.getTreatment().stream().allMatch(aLong -> aLong == 0L));
+        assertFalse(methodLatencies.getTreatments().stream().allMatch(aLong -> aLong == 0L));
+        assertFalse(methodLatencies.getTreatmentWithConfig().stream().allMatch(aLong -> aLong == 0L));
+        assertFalse(methodLatencies.getTreatmentsWithConfig().stream().allMatch(aLong -> aLong == 0L));
+        assertFalse(methodLatencies.getTrack().stream().allMatch(aLong -> aLong == 0L));
+    }
+
+    @Test
+    public void recordImpressionStats() {
+
+        client.getTreatment("test_feature");
+
+        client.getTreatment("test_feature");
+
+        client.getTreatment("test_feature");
+
+        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
+        assertEquals(1, telemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_QUEUED));
+        assertEquals(2, telemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_DEDUPED));
+    }
+
+    @Test
+    public void recordEventsStats() {
+        client.track("event", "traffic_type");
+
+        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
+        assertEquals(1, telemetryStorage.getEventsStats(EventsDataRecordsEnum.EVENTS_QUEUED));
+    }
+
+    @Test
+    public void recordSuccessfulSynchronizations() throws InterruptedException {
+        client.getTreatment("test_split");
+        client.track("test_traffic_type", "test_split");
+        client.destroy();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        countDownLatch.await(5, TimeUnit.SECONDS);
+        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
+        LastSync lastSynchronization = telemetryStorage.getLastSynchronization();
+        assertTrue(lastSynchronization.getLastSplitSync() > 0);
+        assertTrue(lastSynchronization.getLastMySegmentSync() > 0);
+        assertTrue(lastSynchronization.getLastEventSync() > 0);
+        assertTrue(lastSynchronization.getLastTelemetrySync() > 0);
+        assertTrue(lastSynchronization.getLastImpressionSync() > 0);
+        assertTrue(lastSynchronization.getLastImpressionCountSync() > 0);
+
+        HttpLatencies httpLatencies = telemetryStorage.popHttpLatencies();
+        assertFalse(httpLatencies.getSplits().stream().allMatch(aLong -> aLong == 0));
+        assertFalse(httpLatencies.getMySegments().stream().allMatch(aLong -> aLong == 0));
+        assertFalse(httpLatencies.getEvents().stream().allMatch(aLong -> aLong == 0));
+        assertFalse(httpLatencies.getImpressions().stream().allMatch(aLong -> aLong == 0));
+        assertFalse(httpLatencies.getImpressionsCount().stream().allMatch(aLong -> aLong == 0));
+        assertFalse(httpLatencies.getTelemetry().stream().allMatch(aLong -> aLong == 0));
+    }
+
+    @Test
+    public void configIsPostedAfterInitialization() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        countDownLatch.await(1, TimeUnit.SECONDS);
+        assertEquals(1, configEndpointHits.get());
+    }
+
+    @Test
+    public void statsAreFlushedOnDestroy() throws InterruptedException {
+        Thread.sleep(1000);
+        client.destroy();
+        Thread.sleep(1000);
+
+        assertEquals(1, statsEndpointHits.get());
+    }
+
+    @Test
+    public void statsAreSentOnSynchronizerStart() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        countDownLatch.await(5200, TimeUnit.MILLISECONDS);
+
+        assertEquals(1, statsEndpointHits.get());
+    }
+
+    @Test
+    public void recordAuthRejections() {
+        client.destroy();
+
+        final Dispatcher dispatcher = new Dispatcher() {
+
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                String path = request.getPath();
+                if (path.contains("/mySegments")) {
+                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                } else if (path.contains("/splitChanges")) {
+                    long changeNumber = -1;
+                    return new MockResponse().setResponseCode(200)
+                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
+                } else if (path.contains("/events/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("metrics")) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("auth")) {
+                    return new MockResponse().setResponseCode(401);
+                } else {
+                    return new MockResponse().setResponseCode(404);
+                }
+            }
+        };
+
+        mWebServer.setDispatcher(dispatcher);
+
+        initializeClient(true);
+        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
+
+        assertEquals(1, telemetryStorage.popAuthRejections());
+    }
+
+    @Test
+    public void recordSessionLength() throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        initializeClient(true);
+        countDownLatch.await(1, TimeUnit.SECONDS);
+
+        client.destroy();
+        countDownLatch.await(500, TimeUnit.MILLISECONDS);
+        long sessionLength = StorageFactory.getTelemetryStorage(true).getSessionLength();
+        assertTrue(sessionLength > 0);
+    }
+
+    private void initializeClient(boolean streamingEnabled) {
+        insertSplitsFromFileIntoDB();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        client = getTelemetrySplitFactory(mWebServer, streamingEnabled).client();
+
+        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(countDownLatch);
+        client.on(SplitEvent.SDK_READY, readyFromCacheTask);
+
+        try {
+            countDownLatch.await(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
-    private SplitFactory getTelemetrySplitFactory() {
-        final String url = mWebServer.url("/").url().toString();
+    private SplitFactory getTelemetrySplitFactory(boolean streamingEnabled) {
+        return getTelemetrySplitFactory(mWebServer, streamingEnabled);
+    }
+
+    private SplitFactory getTelemetrySplitFactory(MockWebServer webServer, boolean streamingEnabled) {
+        final String url = webServer.url("/").url().toString();
         ServiceEndpoints endpoints = ServiceEndpoints.builder()
+                .eventsEndpoint(url)
+                .telemetryServiceEndpoint(url)
+                .sseAuthServiceEndpoint(url)
                 .apiEndpoint(url).eventsEndpoint(url).build();
 
         SplitClientConfig config = new TestableSplitConfigBuilder()
@@ -97,7 +265,7 @@ public class TelemetryIntegrationTest {
                 .segmentsRefreshRate(9999)
                 .impressionsRefreshRate(9999)
                 .readTimeout(3000)
-                .streamingEnabled(false)
+                .streamingEnabled(streamingEnabled)
                 .shouldRecordTelemetry(true)
                 .build();
 
@@ -145,15 +313,21 @@ public class TelemetryIntegrationTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/mySegments")) {
+                String path = request.getPath();
+                if (path.contains("/mySegments")) {
                     return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
-                } else if (request.getPath().contains("/splitChanges")) {
-
+                } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
-
                     return new MockResponse().setResponseCode(200)
                             .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
-                } else if (request.getPath().contains("/events/bulk")) {
+                } else if (path.contains("/events/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("/metrics")) {
+                    if (path.contains("/config")) {
+                        configEndpointHits.incrementAndGet();
+                    } else if (path.contains("/usage")) {
+                        statsEndpointHits.incrementAndGet();
+                    }
                     return new MockResponse().setResponseCode(200);
                 } else {
                     return new MockResponse().setResponseCode(404);
@@ -162,5 +336,12 @@ public class TelemetryIntegrationTest {
         };
 
         mWebServer.setDispatcher(dispatcher);
+    }
+
+    private void clearStorage() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Class<StorageFactory> clazz = StorageFactory.class;
+        Method method = clazz.getDeclaredMethod("clearTelemetryStorage");
+        method.setAccessible(true);
+        method.invoke(null, new Object[] {});
     }
 }
