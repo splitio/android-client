@@ -36,9 +36,12 @@ public class TelemetryConfigRecorderTask implements SplitTask {
         try {
             mTelemetryConfigRecorder.execute(mTelemetryConfigProvider.getConfigTelemetry());
 
+            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.TELEMETRY, System.currentTimeMillis());
+
             return SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_CONFIG_TASK);
         } catch (HttpRecorderException e) {
             Logger.e(e);
+            mTelemetryRuntimeProducer.recordSyncError(OperationType.TELEMETRY, e.getHttpStatus());
 
             return SplitTaskExecutionInfo.error(SplitTaskType.TELEMETRY_CONFIG_TASK);
         } finally {

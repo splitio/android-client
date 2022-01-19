@@ -7,7 +7,7 @@ import java.util.List;
 public class Config {
 
     @SerializedName("oM")
-    private final OperationMode operationMode = OperationMode.STANDALONE;
+    private final int operationMode = OperationMode.STANDALONE.getNumericValue();
 
     @SerializedName("st")
     private final String storage = "memory";
@@ -45,6 +45,9 @@ public class Config {
     @SerializedName("tR")
     private long timeUntilSDKReady;
 
+    @SerializedName("tC")
+    private long timeUntilSDKReadyFromCache;
+
     @SerializedName("nR")
     private long SDKNotReadyUsage;
 
@@ -54,7 +57,7 @@ public class Config {
     @SerializedName("i")
     private List<String> integrations;
 
-    public OperationMode getOperationMode() {
+    public int getOperationMode() {
         return operationMode;
     }
 
@@ -148,6 +151,14 @@ public class Config {
 
     public void setTimeUntilSDKReady(long timeUntilSDKReady) {
         this.timeUntilSDKReady = timeUntilSDKReady;
+    }
+
+    public long getTimeUntilSDKReadyFromCache() {
+        return timeUntilSDKReadyFromCache;
+    }
+
+    public void setTimeUntilSDKReadyFromCache(long timeUntilSDKReadyFromCache) {
+        this.timeUntilSDKReadyFromCache = timeUntilSDKReadyFromCache;
     }
 
     public long getSDKNotReadyUsage() {

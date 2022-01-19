@@ -3,6 +3,7 @@ package io.split.android.client.service;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -131,6 +132,25 @@ public class EventsRecorderTaskTest {
     }
 
     @Test
+    public void recordErrorInTelemetry() throws HttpRecorderException {
+
+        when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 500)).when(mEventsRecorder).execute(mDefaultParams);
+
+        EventsRecorderTask task = new EventsRecorderTask(
+                mEventsRecorder,
+                mPersistentEventsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.EVENTS, 500);
+    }
+
+    @Test
     public void recordLatencyInTelemetry() {
 
         when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
@@ -147,6 +167,25 @@ public class EventsRecorderTaskTest {
         task.execute();
 
         verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSyncLatency(eq(OperationType.EVENTS), anyLong());
+    }
+
+    @Test
+    public void recordSuccessInTelemetry() throws HttpRecorderException {
+
+        when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+
+        EventsRecorderTask task = new EventsRecorderTask(
+                mEventsRecorder,
+                mPersistentEventsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSuccessfulSync(eq(OperationType.EVENTS), longThat(arg -> arg > 0));
     }
 
     private List<Event> createEvents() {

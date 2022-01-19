@@ -53,8 +53,8 @@ public class ServiceEndpoints {
         this.mStreamingServiceEndpoint = endpoint;
     }
 
-    public void setTelemetryServiceEndpoint(String telemetryServiceEndpoint) {
-        mTelemetryServiceEndpoint = telemetryServiceEndpoint;
+    public void setTelemetryServiceEndpoint(String endpoint) {
+        this.mTelemetryServiceEndpoint = endpoint;
     }
 
     public String getTelemetryEndpoint() {
@@ -131,6 +131,28 @@ public class ServiceEndpoints {
 
         public ServiceEndpoints build() {
             return mServiceEndpoints;
+        }
+    }
+
+    public static class EndpointValidator {
+        public static boolean sdkEndpointIsOverridden(String endpoint) {
+            return !SDK_ENDPOINT.equals(endpoint);
+        }
+
+        public static boolean eventsEndpointIsOverridden(String endpoint) {
+            return !EVENTS_ENDPOINT.equals(endpoint);
+        }
+
+        public static boolean streamingEndpointIsOverridden(String endpoint) {
+            return !STREAMING_SERVICE_ENDPOINT.equals(endpoint);
+        }
+
+        public static boolean authEndpointIsOverridden(String endpoint) {
+            return !AUTH_SERVICE_ENDPOINT.equals(endpoint);
+        }
+
+        public static boolean telemetryEndpointIsOverridden(String endpoint) {
+            return !TELEMETRY_SERVICE_ENDPOINT.equals(endpoint);
         }
     }
 }

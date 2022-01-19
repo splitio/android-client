@@ -128,7 +128,7 @@ public class SplitClientConfig {
     private ImpressionsMode _impressionsMode;
     private final boolean _isPersistentAttributesEnabled;
     private final int _offlineRefreshRate;
-    private final boolean _shouldRecordTelemetry;
+    private boolean _shouldRecordTelemetry;
     private final long _telemetryRefreshRate;
 
     // To be set during startup
@@ -500,6 +500,10 @@ public class SplitClientConfig {
 
     public long telemetryRefreshRate() {
         return _telemetryRefreshRate;
+    }
+
+    private void enableTelemetry() {
+        this._shouldRecordTelemetry = true;
     }
 
     public static final class Builder {

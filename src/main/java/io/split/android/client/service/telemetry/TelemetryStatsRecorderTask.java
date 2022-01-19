@@ -8,10 +8,12 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
+import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.Stats;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStatsProvider;
+import io.split.android.client.utils.Logger;
 
 public class TelemetryStatsRecorderTask implements SplitTask {
 
@@ -38,8 +40,12 @@ public class TelemetryStatsRecorderTask implements SplitTask {
 
             mTelemetryStatsProvider.clearStats();
 
+            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.TELEMETRY, System.currentTimeMillis());
+
             return SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_STATS_TASK);
-        } catch (Exception e) {
+        } catch (HttpRecorderException e) {
+            Logger.e(e);
+            mTelemetryRuntimeProducer.recordSyncError(OperationType.TELEMETRY, e.getHttpStatus());
 
             return SplitTaskExecutionInfo.error(SplitTaskType.TELEMETRY_STATS_TASK);
         } finally {

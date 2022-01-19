@@ -5,7 +5,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.BufferedReader;
@@ -245,15 +244,27 @@ public class PushNotificationManagerTest {
     }
 
     @Test
-    public void recordLatencyOnTelemetry() throws InterruptedException {
-        setupOkAuthResponse();
+    public void connectErrorTracksSyncErrorInTelemetryWhenThereIsHttpStatus() throws InterruptedException, HttpException {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
                 mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
+        SseAuthenticationResult result = new SseAuthenticationResult(
+                false, false, false, 0, null, 500);
+
+        when(mAuthenticator.authenticate()).thenReturn(result);
+
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
+
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.TOKEN, 500);
+    }
+
+    @Test
+    public void authenticationLatencyIsTracked() throws InterruptedException {
+        performSuccessfulConnection();
+        Thread.sleep(1000);
 
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TOKEN), anyLong());
     }

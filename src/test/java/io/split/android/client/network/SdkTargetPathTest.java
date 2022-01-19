@@ -36,4 +36,11 @@ public class SdkTargetPathTest {
 
         assertEquals("/metrics/config", uri.getRawPath());
     }
+
+    @Test
+    public void statsTelemetryPathIsCorrect() throws URISyntaxException {
+        URI uri = SdkTargetPath.telemetryStats("https://split.io");
+
+        assertEquals("/metrics/usage", uri.getRawPath());
+    }
 }

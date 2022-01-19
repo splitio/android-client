@@ -1,5 +1,17 @@
 package io.split.android.client.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,7 +22,6 @@ import org.mockito.Mockito;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -19,22 +30,9 @@ import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.service.impressions.ImpressionsCount;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
-import io.split.android.client.service.impressions.ImpressionsRecorderTask;
-import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class ImpressionsCountRecorderTaskTest {
 
@@ -131,6 +129,24 @@ public class ImpressionsCountRecorderTaskTest {
     }
 
     @Test
+    public void errorIsRecordedInTelemetry() throws HttpRecorderException {
+
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultImpressions)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 500)).when(mImpressionsRecorder).execute(mDefaultParams);
+
+        ImpressionsCountRecorderTask task = new ImpressionsCountRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.IMPRESSIONS_COUNT, 500);
+    }
+
+    @Test
     public void latencyIsRecordedInTelemetry() {
         when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
                 .thenReturn(mDefaultImpressions)
@@ -145,6 +161,23 @@ public class ImpressionsCountRecorderTaskTest {
         task.execute();
 
         verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSyncLatency(eq(OperationType.IMPRESSIONS_COUNT), anyLong());
+    }
+
+    @Test
+    public void successIsRecordedInTelemetry() {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultImpressions)
+                .thenReturn(mDefaultImpressions)
+                .thenReturn(new ArrayList<>());
+
+        ImpressionsCountRecorderTask task = new ImpressionsCountRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSuccessfulSync(eq(OperationType.IMPRESSIONS_COUNT), longThat(arg -> arg > 0));
     }
 
     @After

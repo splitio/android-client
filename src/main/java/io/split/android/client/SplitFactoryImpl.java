@@ -32,11 +32,10 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.telemetry.TelemetrySyncTaskExecutionListenerFactoryImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.telemetry.storage.TelemetryInitProducer;
 import io.split.android.client.utils.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -148,7 +147,7 @@ public class SplitFactoryImpl implements SplitFactory {
         Synchronizer synchronizer = new SynchronizerImpl(
                 config, _splitTaskExecutor, storageContainer, splitTaskFactory,
                 _eventsManager, factoryHelper.buildWorkManagerWrapper(
-                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory(), storageContainer.getTelemetryStorage(), new TelemetrySyncTaskExecutionListenerFactoryImpl(storageContainer.getTelemetryStorage()));
+                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory(), storageContainer.getTelemetryStorage());
 
         // Only available for integration tests
         if (synchronizerSpy != null) {
@@ -158,11 +157,16 @@ public class SplitFactoryImpl implements SplitFactory {
 
         TelemetrySynchronizer telemetrySynchronizer = getTelemetrySynchronizer(_splitTaskExecutor,
                 splitTaskFactory,
-                storageContainer.getTelemetryStorage(),
                 config.telemetryRefreshRate(),
                 config.shouldRecordTelemetry());
         _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
-                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, _eventsManager, telemetrySynchronizer, storageContainer.getTelemetryStorage());
+                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, telemetrySynchronizer, storageContainer.getTelemetryStorage());
+
+        registerTelemetryTasksInEventManager(_eventsManager,
+                telemetrySynchronizer,
+                storageContainer.getTelemetryStorage(),
+                initializationStartTime,
+                config.shouldRecordTelemetry());
 
         _syncManager.start();
 
@@ -245,20 +249,6 @@ public class SplitFactoryImpl implements SplitFactory {
             int activeFactoriesCount = _factoryMonitor.count(_apiKey);
             storageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
             storageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
-
-            _client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-                @Override
-                public void onPostExecution(SplitClient client) {
-                    storageContainer.getTelemetryStorage().recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
-                }
-            });
-
-            _client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
-                @Override
-                public void onPostExecution(SplitClient client) {
-                    storageContainer.getTelemetryStorage().recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
-                }
-            });
         }
 
         Logger.i("Android SDK initialized!");
@@ -320,13 +310,37 @@ public class SplitFactoryImpl implements SplitFactory {
     @NonNull
     private TelemetrySynchronizer getTelemetrySynchronizer(SplitTaskExecutor _splitTaskExecutor,
                                                            SplitTaskFactory splitTaskFactory,
-                                                           TelemetryRuntimeProducer telemetryRuntimeProducer,
                                                            long telemetryRefreshRate,
                                                            boolean shouldRecordTelemetry) {
         if (shouldRecordTelemetry) {
-            return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory, telemetryRuntimeProducer, telemetryRefreshRate);
+            return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory, telemetryRefreshRate);
         } else {
             return new TelemetrySynchronizerStub();
         }
+    }
+
+    private void registerTelemetryTasksInEventManager(SplitEventsManager eventsManager,
+                                                      TelemetrySynchronizer telemetrySynchronizer,
+                                                      TelemetryInitProducer telemetryInitProducer,
+                                                      long initializationStartTime,
+                                                      boolean shouldRecordTelemetry) {
+        if (!shouldRecordTelemetry) {
+            return;
+        }
+
+        eventsManager.register(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                telemetryInitProducer.recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
+            }
+        });
+
+        eventsManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                telemetrySynchronizer.synchronizeConfig();
+                telemetryInitProducer.recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
+            }
+        });
     }
 }

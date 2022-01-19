@@ -3,7 +3,9 @@ package io.split.android.client.service.impressions;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
@@ -37,8 +39,6 @@ public class ImpressionsCountRecorderTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
         SplitTaskExecutionStatus status = SplitTaskExecutionStatus.SUCCESS;
-        int nonSentRecords = 0;
-        long nonSentBytes = 0;
 
         List<ImpressionsCountPerFeature> countList = new ArrayList<>();
         List<ImpressionsCountPerFeature> failedSent = new ArrayList<>();
@@ -46,9 +46,15 @@ public class ImpressionsCountRecorderTask implements SplitTask {
             countList = mPersistentStorage.pop(POP_COUNT);
             if (countList.size() > 0) {
                 long startTime = System.currentTimeMillis();
+                long latency = 0;
                 try {
                     Logger.d("Posting %d Split impressions count", countList.size());
                     mHttpRecorder.execute(new ImpressionsCount(countList));
+
+                    long now = System.currentTimeMillis();
+                    latency = now - startTime;
+                    mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.IMPRESSIONS_COUNT, now);
+
                     mPersistentStorage.delete(countList);
                     Logger.d("%d split impressions count sent", countList.size());
                 } catch (HttpRecorderException e) {
@@ -57,20 +63,22 @@ public class ImpressionsCountRecorderTask implements SplitTask {
                             "Saving to send them in a new iteration" +
                             e.getLocalizedMessage());
                     failedSent.addAll(countList);
+
+                    mTelemetryRuntimeProducer.recordSyncError(OperationType.IMPRESSIONS_COUNT, e.getHttpStatus());
                 } finally {
-                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, System.currentTimeMillis() - startTime);
+                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, latency);
                 }
             }
         } while (countList.size() == POP_COUNT);
 
-        if(failedSent.size() > 0) {
+        if (failedSent.size() > 0) {
             mPersistentStorage.setActive(failedSent);
         }
 
         if (status == SplitTaskExecutionStatus.ERROR) {
-            return SplitTaskExecutionInfo.error(
-                    SplitTaskType.IMPRESSIONS_COUNT_RECORDER);
+            return SplitTaskExecutionInfo.error(SplitTaskType.IMPRESSIONS_COUNT_RECORDER);
         }
+
         return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_COUNT_RECORDER);
     }
 }

@@ -1,18 +1,25 @@
 package io.split.android.client.service.telemetry;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.telemetry.model.OperationType;
@@ -28,17 +35,17 @@ public class TelemetryStatsRecorderTaskTest {
     private TelemetryStatsProvider statsProvider;
     @Mock
     private TelemetryRuntimeProducer telemetryRuntimeProducer;
-    private TelemetryStatsRecorderTask telemetryConfigRecorderTask;
+    private TelemetryStatsRecorderTask telemetryStatsRecorderTask;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetryConfigRecorderTask = new TelemetryStatsRecorderTask(recorder, statsProvider, telemetryRuntimeProducer);
+        telemetryStatsRecorderTask = new TelemetryStatsRecorderTask(recorder, statsProvider, telemetryRuntimeProducer);
     }
 
     @Test
     public void successfulExecutionClearsValuesOnProvider() {
-        telemetryConfigRecorderTask.execute();
+        telemetryStatsRecorderTask.execute();
 
         verify(statsProvider).clearStats();
     }
@@ -46,7 +53,7 @@ public class TelemetryStatsRecorderTaskTest {
     @Test
     public void executeFetchesStatsFromProvider() {
 
-        telemetryConfigRecorderTask.execute();
+        telemetryStatsRecorderTask.execute();
 
         verify(statsProvider).getTelemetryStats();
     }
@@ -57,7 +64,7 @@ public class TelemetryStatsRecorderTaskTest {
         when(statsProvider.getTelemetryStats()).thenReturn(expectedStats);
         ArgumentCaptor<Stats> captor = ArgumentCaptor.forClass(Stats.class);
 
-        telemetryConfigRecorderTask.execute();
+        telemetryStatsRecorderTask.execute();
 
         verify(recorder).execute(captor.capture());
         assertEquals(expectedStats, captor.getValue());
@@ -66,18 +73,36 @@ public class TelemetryStatsRecorderTaskTest {
     @Test
     public void unsuccessfulExecutionDoesNotClearValuesOnProvider() {
         when(statsProvider.getTelemetryStats()).thenAnswer(invocation -> {
-            throw new Exception("test exception");
+            throw new HttpRecorderException("test exception", "");
         });
 
-        telemetryConfigRecorderTask.execute();
+        telemetryStatsRecorderTask.execute();
 
         verify(statsProvider, times(0)).clearStats();
     }
 
     @Test
+    public void errorIsTrackedInTelemetry() throws HttpRecorderException {
+
+        doThrow(new HttpRecorderException("", "", 500)).when(recorder).execute(any());
+
+        telemetryStatsRecorderTask.execute();
+
+        verify(telemetryRuntimeProducer).recordSyncError(OperationType.TELEMETRY, 500);
+    }
+
+    @Test
     public void latencyIsRecordedInTelemetry() {
-        telemetryConfigRecorderTask.execute();
+        telemetryStatsRecorderTask.execute();
 
         verify(telemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TELEMETRY), anyLong());
+    }
+
+    @Test
+    public void successIsTrackedInTelemetry() {
+
+        telemetryStatsRecorderTask.execute();
+
+        verify(telemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.TELEMETRY), longThat(arg -> arg > 0));
     }
 }

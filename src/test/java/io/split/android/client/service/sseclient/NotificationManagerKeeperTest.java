@@ -224,7 +224,7 @@ public class NotificationManagerKeeperTest {
 
         verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
         Assert.assertEquals(StreamingStatusStreamingEvent.Status.PAUSED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS, argumentCaptor.getValue().getEventType());
+        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS.getNumericValue(), argumentCaptor.getValue().getEventType());
         Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
     }
 
@@ -239,7 +239,7 @@ public class NotificationManagerKeeperTest {
 
         verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
         Assert.assertEquals(StreamingStatusStreamingEvent.Status.ENABLED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS, argumentCaptor.getValue().getEventType());
+        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS.getNumericValue(), argumentCaptor.getValue().getEventType());
         Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
     }
 
@@ -254,7 +254,7 @@ public class NotificationManagerKeeperTest {
 
         verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
         Assert.assertEquals(StreamingStatusStreamingEvent.Status.DISABLED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS, argumentCaptor.getValue().getEventType());
+        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS.getNumericValue(), argumentCaptor.getValue().getEventType());
         Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
     }
 

@@ -1,21 +1,19 @@
 package io.split.android.client.service.synchronizer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.events.SplitEvent;
-import io.split.android.client.events.SplitEventTask;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
@@ -23,8 +21,6 @@ import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
 
@@ -47,7 +43,6 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
                            @NonNull MySegmentsUpdateWorker mySegmentUpdateWorker,
                            @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
                            @NonNull BackoffCounterTimer streamingReconnectTimer,
-                           @NonNull SplitEventsManager splitEventsManager,
                            @NonNull TelemetrySynchronizer telemetrySynchronizer) {
 
         mSynchronizer = checkNotNull(synchronizer);
@@ -61,13 +56,6 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener {
 
         isPollingEnabled = new AtomicBoolean(false);
         mIsPaused = new AtomicBoolean(false);
-
-        splitEventsManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                mTelemetrySynchronizer.synchronizeConfig();
-            }
-        });
     }
 
     @Override

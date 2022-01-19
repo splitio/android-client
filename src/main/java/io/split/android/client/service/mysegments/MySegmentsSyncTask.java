@@ -55,19 +55,28 @@ public class MySegmentsSyncTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
         long startTime = System.currentTimeMillis();
+        long latency = 0;
         try {
+            List<MySegment> segments = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
+
+            long now = System.currentTimeMillis();
+            latency = now - startTime;
             List<String> oldSegments = new ArrayList(mMySegmentsStorage.getAll());
-            List<String> mySegments = getNameList(mMySegmentsFetcher.execute(new HashMap<>(), getHeaders()));
+            List<String> mySegments = getNameList(segments);
             mMySegmentsStorage.set(mySegments);
+
+            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.MY_SEGMENT, now);
             fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
+            mTelemetryRuntimeProducer.recordSyncError(OperationType.MY_SEGMENT, e.getHttpStatus());
+
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
         } catch (Exception e) {
             logError("Unknown error while retrieving my segments: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
         } finally {
-            mTelemetryRuntimeProducer.recordSyncLatency(OperationType.MY_SEGMENT, System.currentTimeMillis() - startTime);
+            mTelemetryRuntimeProducer.recordSyncLatency(OperationType.MY_SEGMENT, latency);
         }
         Logger.d("My Segments have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC);

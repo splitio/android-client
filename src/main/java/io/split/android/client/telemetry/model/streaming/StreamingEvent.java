@@ -7,7 +7,7 @@ import io.split.android.client.telemetry.model.EventTypeEnum;
 public class StreamingEvent {
 
     @SerializedName("e")
-    private final EventTypeEnum eventType;
+    private final int eventType;
 
     @SerializedName("d")
     private final Long eventData;
@@ -16,12 +16,12 @@ public class StreamingEvent {
     private final long timestamp;
 
     public StreamingEvent(EventTypeEnum eventType, Long eventData, long timestamp) {
-        this.eventType = eventType;
+        this.eventType = eventType.getNumericValue();
         this.eventData = eventData;
         this.timestamp = timestamp;
     }
 
-    public EventTypeEnum getEventType() {
+    public int getEventType() {
         return eventType;
     }
 

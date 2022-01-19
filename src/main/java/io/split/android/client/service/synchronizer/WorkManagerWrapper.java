@@ -175,6 +175,7 @@ public class WorkManagerWrapper {
         Data.Builder dataBuilder = new Data.Builder();
         dataBuilder.putLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION, mSplitClientConfig.cacheExpirationInSeconds());
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
+        dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
         return buildInputData(dataBuilder.build());
     }
 

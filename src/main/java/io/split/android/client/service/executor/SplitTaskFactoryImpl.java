@@ -63,7 +63,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mEventsManager = eventsManager;
         mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                 mSplitsStorageContainer.getSplitsStorage(),
-                new SplitChangeProcessor());
+                new SplitChangeProcessor(),
+                mSplitsStorageContainer.getTelemetryStorage());
         mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
                 mSplitApiFacade.getTelemetryStatsRecorder(),
                 mSplitsStorageContainer.getTelemetryStorage(),

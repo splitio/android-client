@@ -1,11 +1,19 @@
 package io.split.android.client.service;
 
-import org.junit.After;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -18,25 +26,13 @@ import java.util.Map;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class MySegmentsSyncTaskTest {
 
@@ -64,8 +60,6 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void correctExecution() throws HttpFetcherException {
-
-
         when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
 
         mTask.execute();
@@ -126,11 +120,30 @@ public class MySegmentsSyncTaskTest {
     }
 
     @Test
-    public void latencyIsTrackedInTelemetry() {
+    public void errorIsTrackedInTelemetry() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(new HttpFetcherException("", "", 500));
+
+        mTask.execute();
+
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.MY_SEGMENT, 500);
+    }
+
+    @Test
+    public void latencyIsTrackedInTelemetry() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
 
         mTask.execute();
 
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.MY_SEGMENT), anyLong());
+    }
+
+    @Test
+    public void successIsTrackedInTelemetry() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
+
+        mTask.execute();
+
+        verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.MY_SEGMENT), longThat(arg -> arg > 0));
     }
 
     private void loadMySegments() {

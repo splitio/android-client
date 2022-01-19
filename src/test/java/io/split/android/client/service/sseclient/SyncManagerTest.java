@@ -1,7 +1,5 @@
 package io.split.android.client.service.sseclient;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -15,8 +13,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.events.SplitEvent;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
@@ -55,9 +51,6 @@ public class SyncManagerTest {
     BackoffCounterTimer mBackoffTimer;
 
     @Mock
-    SplitEventsManager mEventsManager;
-
-    @Mock
     TelemetrySynchronizer mTelemetrySynchronizer;
 
 
@@ -69,7 +62,7 @@ public class SyncManagerTest {
         MockitoAnnotations.openMocks(this);
         mSyncManager = new SyncManagerImpl(
                 mConfig, mSynchronizer, mPushNotificationManager,
-                mSplitsUpdateWorker, mMySegmentUpdateWorker, mPushManagerEventBroadcaster, mBackoffTimer, mEventsManager, mTelemetrySynchronizer);
+                mSplitsUpdateWorker, mMySegmentUpdateWorker, mPushManagerEventBroadcaster, mBackoffTimer, mTelemetrySynchronizer);
         when(mConfig.streamingEnabled()).thenReturn(true);
 
     }
@@ -145,11 +138,6 @@ public class SyncManagerTest {
         mSyncManager.pause();
 
         verify(mTelemetrySynchronizer).flush();
-    }
-
-    @Test
-    public void instantiationAddsListenerToEventManager() {
-        verify(mEventsManager).register(eq(SplitEvent.SDK_READY), any());
     }
 
     @Test

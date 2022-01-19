@@ -32,15 +32,13 @@ public class TelemetrySynchronizerImplTest {
     private TelemetryConfigRecorderTask telemetryConfigTask;
     @Mock
     private TelemetryStatsRecorderTask telemetryStatsRecorderTask;
-    @Mock
-    private TelemetrySyncTaskExecutionListenerFactory telemetrySyncTaskExecutionListenerFactory;
 
     private TelemetrySynchronizerImpl telemetrySynchronizer;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetrySyncTaskExecutionListenerFactory, 15L);
+        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, 15L);
     }
 
     @Test
@@ -68,14 +66,14 @@ public class TelemetrySynchronizerImplTest {
 
         telemetrySynchronizer.synchronizeStats();
 
-        verify(taskExecutor).schedule(eq(telemetryStatsRecorderTask), eq(0L), eq(15L), any());
+        verify(taskExecutor).schedule(eq(telemetryStatsRecorderTask), eq(5L), eq(15L), any());
     }
 
     @Test
     public void destroyStopsStatsSynchronizationStopsTaskOnTaskExecutor() {
         when(taskExecutor.schedule(
                 any(),
-                eq(0L),
+                eq(5L),
                 eq(15L),
                 any()
         )).thenReturn("taskId");
@@ -111,33 +109,5 @@ public class TelemetrySynchronizerImplTest {
         telemetrySynchronizer.flush();
 
         verify(taskExecutor).submit(eq(telemetryStatsRecorderTask), any());
-    }
-
-    @Test
-    public void synchronizeConfigAddsTelemetryListener() {
-
-        TelemetrySyncTaskExecutionListener eventListener = mock(TelemetrySyncTaskExecutionListener.class);
-        when(telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_CONFIG_TASK, OperationType.TELEMETRY)).thenReturn(eventListener);
-        when(taskFactory.getTelemetryConfigRecorderTask()).thenReturn(telemetryConfigTask);
-
-        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetrySyncTaskExecutionListenerFactory, 15L);
-
-        telemetrySynchronizer.synchronizeConfig();
-
-        verify(configTimer).setTask(telemetryConfigTask, eventListener);
-    }
-
-    @Test
-    public void synchronizeStatsAddsTelemetryListener() {
-
-        TelemetrySyncTaskExecutionListener eventListener = mock(TelemetrySyncTaskExecutionListener.class);
-        when(telemetrySyncTaskExecutionListenerFactory.create(SplitTaskType.TELEMETRY_STATS_TASK, OperationType.TELEMETRY)).thenReturn(eventListener);
-        when(taskFactory.getTelemetryStatsRecorderTask()).thenReturn(telemetryStatsRecorderTask);
-
-        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor, taskFactory, configTimer, telemetrySyncTaskExecutionListenerFactory, 15L);
-
-        telemetrySynchronizer.synchronizeStats();
-
-        verify(taskExecutor).schedule(eq(telemetryStatsRecorderTask), eq(0L), eq(15L), eq(eventListener));
     }
 }

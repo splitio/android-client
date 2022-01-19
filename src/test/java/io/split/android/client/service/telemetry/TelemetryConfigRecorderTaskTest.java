@@ -2,6 +2,8 @@ package io.split.android.client.service.telemetry;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -15,6 +17,9 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
 
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.telemetry.model.Config;
@@ -71,9 +76,27 @@ public class TelemetryConfigRecorderTaskTest {
     }
 
     @Test
+    public void errorIsTrackedInTelemetry() throws HttpRecorderException {
+
+        doThrow(new HttpRecorderException("", "", 500)).when(recorder).execute(any());
+
+        telemetryConfigRecorderTask.execute();
+
+        verify(telemetryRuntimeProducer).recordSyncError(OperationType.TELEMETRY, 500);
+    }
+
+    @Test
     public void latencyIsTrackedInTelemetry() {
         telemetryConfigRecorderTask.execute();
 
         verify(telemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TELEMETRY), anyLong());
+    }
+
+    @Test
+    public void successIsTrackedInTelemetry() {
+
+        telemetryConfigRecorderTask.execute();
+
+        verify(telemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.TELEMETRY), longThat(arg -> arg > 0));
     }
 }

@@ -15,7 +15,7 @@ public interface TelemetryRuntimeProducer {
 
     void recordSuccessfulSync(OperationType resource, long time);
 
-    void recordSyncError(OperationType syncedResource, int status);
+    void recordSyncError(OperationType syncedResource, Integer status);
 
     void recordSyncLatency(OperationType resource, long latency);
 

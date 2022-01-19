@@ -24,7 +24,7 @@ public class TelemetryConfigBodySerializerTest {
     @Test
     public void jsonIsBuiltAsExpected() {
 
-        final String expectedJson = "{\"oM\":\"0\",\"st\":\"memory\",\"sE\":true,\"rR\":{\"sp\":4000,\"se\":5000,\"im\":3000,\"ev\":2000,\"te\":1000},\"uO\":{\"s\":true,\"e\":true,\"a\":true,\"st\":true,\"t\":true},\"iQ\":4000,\"eQ\":3000,\"iM\":\"1\",\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"nR\":3,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
+        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"rR\":{\"sp\":4000,\"se\":5000,\"im\":3000,\"ev\":2000,\"te\":1000},\"uO\":{\"s\":true,\"e\":true,\"a\":true,\"st\":true,\"t\":true},\"iQ\":4000,\"eQ\":3000,\"iM\":\"1\",\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
         final String serializedConfig = telemetryConfigBodySerializer.serialize(buildMockConfig());
 
         assertEquals(expectedJson, serializedConfig);
@@ -33,7 +33,7 @@ public class TelemetryConfigBodySerializerTest {
     @Test
     public void nullValuesAreIgnoredForJson() {
 
-        final String expectedJson = "{\"oM\":\"0\",\"st\":\"memory\",\"sE\":true,\"iQ\":4000,\"eQ\":3000,\"iM\":\"1\",\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"nR\":3,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
+        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"iQ\":4000,\"eQ\":3000,\"iM\":\"1\",\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
         final String serializedConfig = telemetryConfigBodySerializer.serialize(buildMockConfigWithNulls());
 
         assertEquals(expectedJson, serializedConfig);
