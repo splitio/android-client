@@ -1,3 +1,8 @@
+2.9.0 (Jan 21, 2021)
+- Updated SDK telemetry storage, metrics and updater to be more effective and send less often.
+- Updated deprecated dependencies.
+- Added exception handling for SplitClient and SplitManager methods.
+
 2.8.1: (Nov 24, 2021)
 - Added support for a user key containing white spaces.
 
