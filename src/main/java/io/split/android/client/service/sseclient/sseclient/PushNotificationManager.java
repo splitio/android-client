@@ -1,12 +1,14 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Thread.sleep;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -15,17 +17,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.SseJwtToken;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.Thread.interrupted;
-import static java.lang.Thread.sleep;
-import static java.lang.reflect.Modifier.PRIVATE;
 
 public class PushNotificationManager {
 
@@ -35,6 +37,7 @@ public class PushNotificationManager {
     private final PushManagerEventBroadcaster mBroadcasterChannel;
     private final SseAuthenticator mSseAuthenticator;
     private final SseClient mSseClient;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private SseRefreshTokenTimer mRefreshTokenTimer;
     private SseDisconnectionTimer mDisconnectionTimer;
 
@@ -42,18 +45,35 @@ public class PushNotificationManager {
     private AtomicBoolean mIsStopped;
     private Future mConnectionTask;
 
-    @VisibleForTesting(otherwise = PRIVATE)
+    public PushNotificationManager(@NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                                   @NonNull SseAuthenticator sseAuthenticator,
+                                   @NonNull SseClient sseClient,
+                                   @NonNull SseRefreshTokenTimer refreshTokenTimer,
+                                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                   @Nullable ScheduledExecutorService executorService) {
+        this(pushManagerEventBroadcaster,
+                sseAuthenticator,
+                sseClient,
+                refreshTokenTimer,
+                new SseDisconnectionTimer(new SplitTaskExecutorImpl()),
+                telemetryRuntimeProducer,
+                executorService);
+    }
+
+    @VisibleForTesting
     public PushNotificationManager(@NonNull PushManagerEventBroadcaster broadcasterChannel,
                                    @NonNull SseAuthenticator sseAuthenticator,
                                    @NonNull SseClient sseClient,
                                    @NonNull SseRefreshTokenTimer refreshTokenTimer,
                                    @NonNull SseDisconnectionTimer disconnectionTimer,
+                                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                                    @Nullable ScheduledExecutorService executor) {
         mBroadcasterChannel = checkNotNull(broadcasterChannel);
         mSseAuthenticator = checkNotNull(sseAuthenticator);
         mSseClient = checkNotNull(sseClient);
         mRefreshTokenTimer = checkNotNull(refreshTokenTimer);
         mDisconnectionTimer = checkNotNull(disconnectionTimer);
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mIsStopped = new AtomicBoolean(false);
         mIsPaused = new AtomicBoolean(false);
 
@@ -65,6 +85,7 @@ public class PushNotificationManager {
     }
 
     public void start() {
+        mTelemetryRuntimeProducer.recordStreamingEvents(new SyncModeUpdateStreamingEvent(SyncModeUpdateStreamingEvent.Mode.STREAMING, System.currentTimeMillis()));
         Logger.d("Push notification manager started");
         connect();
     }
@@ -154,7 +175,9 @@ public class PushNotificationManager {
         @Override
         public void run() {
 
+            long startTime = System.currentTimeMillis();
             SseAuthenticationResult authResult = mSseAuthenticator.authenticate();
+            mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TOKEN, System.currentTimeMillis() - startTime);
 
             if(authResult.isSuccess() && !authResult.isPushEnabled()) {
                 Logger.d("Streaming disabled for api key");
@@ -165,6 +188,10 @@ public class PushNotificationManager {
 
             if(!authResult.isSuccess() && !authResult.isErrorRecoverable()) {
                 Logger.d("Streaming no recoverable auth error.");
+                mTelemetryRuntimeProducer.recordAuthRejections();
+                if (authResult.getHttpStatus() != null) {
+                    mTelemetryRuntimeProducer.recordSyncError(OperationType.TOKEN, authResult.getHttpStatus());
+                }
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_NON_RETRYABLE_ERROR));
                 mIsStopped.set(true);
                 return;
@@ -182,6 +209,9 @@ public class PushNotificationManager {
                 return;
             }
 
+            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.TOKEN, System.currentTimeMillis());
+            mTelemetryRuntimeProducer.recordStreamingEvents(new TokenRefreshStreamingEvent(token.getExpirationTime(), System.currentTimeMillis()));
+            mTelemetryRuntimeProducer.recordTokenRefreshes();
 
             long delay = authResult.getSseConnectionDelay();
             // Delay returns false if some error occurs

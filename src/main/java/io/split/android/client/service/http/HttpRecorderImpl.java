@@ -16,7 +16,7 @@ public class HttpRecorderImpl<T> implements HttpRecorder<T> {
     private final HttpClient mClient;
     private final URI mTarget;
     private final NetworkHelper mNetworkHelper;
-    private HttpRequestBodySerializer<T> mRequestSerializer;
+    private final HttpRequestBodySerializer<T> mRequestSerializer;
 
     public HttpRecorderImpl(@NonNull HttpClient client,
                             @NonNull URI target,
@@ -41,13 +41,13 @@ public class HttpRecorderImpl<T> implements HttpRecorder<T> {
 
             HttpResponse response = mClient.request(mTarget, HttpMethod.POST, serializedData).execute();
             if (!response.isSuccess()) {
-                throw new IllegalStateException("http return code " + response.getHttpStatus());
+                int httpStatus = response.getHttpStatus();
+                throw new HttpRecorderException(mTarget.toString(), "http return code " + httpStatus, httpStatus);
             }
+        } catch (HttpRecorderException httpRecorderException) {
+            throw httpRecorderException;
         } catch (Exception e) {
             throw new HttpRecorderException(mTarget.toString(), e.getLocalizedMessage());
         }
     }
 }
-
-
-

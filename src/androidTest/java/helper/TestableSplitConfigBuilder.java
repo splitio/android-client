@@ -1,15 +1,15 @@
 package helper;
 
-        import java.lang.reflect.Constructor;
+import java.lang.reflect.Constructor;
 
-        import io.split.android.client.ServiceEndpoints;
-        import io.split.android.client.SplitClientConfig;
-        import io.split.android.client.SyncConfig;
-        import io.split.android.client.impressions.ImpressionListener;
-        import io.split.android.client.network.DevelopmentSslConfig;
-        import io.split.android.client.service.impressions.ImpressionsMode;
-        import io.split.android.client.utils.Logger;
-        import okhttp3.Authenticator;
+import io.split.android.client.ServiceEndpoints;
+import io.split.android.client.SplitClientConfig;
+import io.split.android.client.SyncConfig;
+import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.network.DevelopmentSslConfig;
+import io.split.android.client.service.impressions.ImpressionsMode;
+import io.split.android.client.utils.Logger;
+import okhttp3.Authenticator;
 
 public class TestableSplitConfigBuilder {
 
@@ -44,6 +44,8 @@ public class TestableSplitConfigBuilder {
     private boolean mBackgroundSyncWhenWifiOnly = false;
     private boolean mLegacyStorageMigrationEnabled = false;
     private boolean mIsPersistentAttributesStorageEnabled = false;
+    private long mTelemetryRefreshRate = 3600;
+    private boolean mShouldRecordTelemetry = false;
 
     private boolean mStreamingEnabled = true;
     private int mAuthRetryBackoffBase = 1;
@@ -56,7 +58,6 @@ public class TestableSplitConfigBuilder {
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
     }
-
 
     public TestableSplitConfigBuilder featuresRefreshRate(int featuresRefreshRate) {
         this.mFeaturesRefreshRate = featuresRefreshRate;
@@ -223,6 +224,16 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder telemetryRefreshRate(long telemetryRefreshRate) {
+        this.mTelemetryRefreshRate = telemetryRefreshRate;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder shouldRecordTelemetry(boolean shouldRecordTelemetry) {
+        this.mShouldRecordTelemetry = shouldRecordTelemetry;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -269,7 +280,10 @@ public class TestableSplitConfigBuilder {
                     mImpressionsMode,
                     mImpressionsCountersRefreshRate,
                     mIsPersistentAttributesStorageEnabled,
-                    mOfflineRefreshRate);
+                    mOfflineRefreshRate,
+                    mServiceEndpoints.getTelemetryEndpoint(),
+                    mTelemetryRefreshRate,
+                    mShouldRecordTelemetry);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

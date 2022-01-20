@@ -1,5 +1,11 @@
 package io.split.android.client.service.sseclient;
 
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -7,8 +13,8 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
@@ -18,12 +24,7 @@ import io.split.android.client.service.sseclient.sseclient.PushNotificationManag
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
-
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import io.split.android.client.telemetry.TelemetrySynchronizer;
 
 public class SyncManagerTest {
 
@@ -49,16 +50,19 @@ public class SyncManagerTest {
     @Mock
     BackoffCounterTimer mBackoffTimer;
 
+    @Mock
+    TelemetrySynchronizer mTelemetrySynchronizer;
+
 
     SyncManager mSyncManager;
 
 
     @Before
     public void setup() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         mSyncManager = new SyncManagerImpl(
                 mConfig, mSynchronizer, mPushNotificationManager,
-                mSplitsUpdateWorker, mMySegmentUpdateWorker, mPushManagerEventBroadcaster, mBackoffTimer);
+                mSplitsUpdateWorker, mMySegmentUpdateWorker, mPushManagerEventBroadcaster, mBackoffTimer, mTelemetrySynchronizer);
         when(mConfig.streamingEnabled()).thenReturn(true);
 
     }
@@ -120,5 +124,33 @@ public class SyncManagerTest {
 
         verify(mSynchronizer, times(1)).synchronizeSplits();
         verify(mSynchronizer, times(1)).synchronizeMySegments();
+    }
+
+    @Test
+    public void stopCallsDestroyOnTelemetrySynchronizer() {
+        mSyncManager.stop();
+
+        verify(mTelemetrySynchronizer).destroy();
+    }
+
+    @Test
+    public void pauseCallsFlushOnTelemetrySynchronizer() {
+        mSyncManager.pause();
+
+        verify(mTelemetrySynchronizer).flush();
+    }
+
+    @Test
+    public void startCallsSynchronizeStatsOnTelemetryManager() {
+        mSyncManager.start();
+
+        verify(mTelemetrySynchronizer).synchronizeStats();
+    }
+
+    @Test
+    public void flushCallsFlushOnTelemetrySynchronizer() {
+        mSyncManager.flush();
+
+        verify(mTelemetrySynchronizer).flush();
     }
 }

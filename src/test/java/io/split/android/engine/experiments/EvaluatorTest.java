@@ -1,5 +1,8 @@
 package io.split.android.engine.experiments;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,12 +24,8 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class EvaluatorTest {
 
-    private SplitFetcher splitFetcher;
     private Evaluator evaluator;
 
     @Before
@@ -36,7 +35,7 @@ public class EvaluatorTest {
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
-            Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
+            Set<String> mySegments = new HashSet<>(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
             SplitParser splitParser = new SplitParser(mySegmentsStorage);
 
@@ -136,6 +135,4 @@ public class EvaluatorTest {
         }
         return splitsMap;
     }
-
-
 }

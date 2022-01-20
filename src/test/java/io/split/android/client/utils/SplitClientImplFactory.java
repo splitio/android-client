@@ -1,9 +1,11 @@
 package io.split.android.client.utils;
 
+import static org.mockito.Mockito.mock;
+
+import io.split.android.client.EventPropertiesProcessor;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientImpl;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.EventPropertiesProcessor;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.events.SplitEventsManager;
@@ -12,10 +14,9 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.client.validators.SplitValidator;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.metrics.Metrics;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * Created by fernandomartin on 2/17/18.
@@ -33,13 +34,14 @@ public class SplitClientImplFactory {
                 key,
                 splitParser,
                 new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
                 cfg,
                 eventsManager,
                 splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
-                mock(AttributesManager.class)
+                mock(AttributesManager.class),
+                mock(TelemetryStorage.class),
+                mock(SplitValidator.class)
         );
         eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
         eventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
@@ -54,13 +56,14 @@ public class SplitClientImplFactory {
                 key,
                 splitParser,
                 impressionListener,
-                new Metrics.NoopMetrics(),
                 cfg,
                 new SplitEventsManager(cfg),
                 splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
-                mock(AttributesManager.class)
+                mock(AttributesManager.class),
+                mock(TelemetryStorage.class),
+                mock(SplitValidator.class)
         );
     }
 
@@ -71,13 +74,14 @@ public class SplitClientImplFactory {
                 key,
                 splitParser,
                 new ImpressionListener.NoopImpressionListener(),
-                new Metrics.NoopMetrics(),
                 SplitClientConfig.builder().build(),
                 eventsManager,
                 splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
-                mock(AttributesManager.class)
+                mock(AttributesManager.class),
+                mock(TelemetryStorage.class),
+                mock(SplitValidator.class)
         );
     }
 }

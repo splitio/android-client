@@ -1,5 +1,7 @@
 package io.split.android.client.service.synchronizer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -30,8 +32,6 @@ import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.SplitsSyncWorker;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class WorkManagerWrapper {
@@ -175,6 +175,7 @@ public class WorkManagerWrapper {
         Data.Builder dataBuilder = new Data.Builder();
         dataBuilder.putLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION, mSplitClientConfig.cacheExpirationInSeconds());
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
+        dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
         return buildInputData(dataBuilder.build());
     }
 
@@ -182,6 +183,7 @@ public class WorkManagerWrapper {
         Data.Builder dataBuilder = new Data.Builder();
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_KEY, mKey);
+        dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
         return buildInputData(dataBuilder.build());
     }
 
@@ -191,6 +193,8 @@ public class WorkManagerWrapper {
                 ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.eventsEndpoint());
         dataBuilder.putInt(
                 ServiceConstants.WORKER_PARAM_EVENTS_PER_PUSH, mSplitClientConfig.eventsPerPush());
+        dataBuilder.putBoolean(
+                ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
         return buildInputData(dataBuilder.build());
     }
 
@@ -201,6 +205,9 @@ public class WorkManagerWrapper {
         dataBuilder.putInt(
                 ServiceConstants.WORKER_PARAM_IMPRESSIONS_PER_PUSH,
                 mSplitClientConfig.impressionsPerPush());
+        dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY,
+                mSplitClientConfig.shouldRecordTelemetry());
+
         return buildInputData(dataBuilder.build());
     }
 

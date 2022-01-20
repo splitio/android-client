@@ -1,6 +1,17 @@
 package io.split.android.client.service;
 
-import org.junit.After;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,14 +30,8 @@ import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class ImpressionsRecorderTaskTest {
 
@@ -35,17 +40,18 @@ public class ImpressionsRecorderTaskTest {
 
     HttpRecorder<List<KeyImpression>> mImpressionsRecorder;
     PersistentImpressionsStorage mPersistentImpressionsStorage;
-
+    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     List<KeyImpression> mDefaultParams = new ArrayList<>();
     ImpressionsRecorderTaskConfig mDefaultConfig
-            = new ImpressionsRecorderTaskConfig(DEFAULT_POP_CONFIG, 512L);
+            = new ImpressionsRecorderTaskConfig(DEFAULT_POP_CONFIG, 512L, true);
 
     @Before
     public void setup() {
         mDefaultParams = createImpressions();
         mImpressionsRecorder = (HttpRecorder<List<KeyImpression>>) Mockito.mock(HttpRecorder.class);
         mPersistentImpressionsStorage = Mockito.mock(PersistentImpressionsStorage.class);
+        mTelemetryRuntimeProducer = mock(TelemetryRuntimeProducer.class);
     }
 
     @Test
@@ -61,7 +67,8 @@ public class ImpressionsRecorderTaskTest {
         ImpressionsRecorderTask task = new ImpressionsRecorderTask(
                 mImpressionsRecorder,
                 mPersistentImpressionsStorage,
-                mDefaultConfig);
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
@@ -87,7 +94,8 @@ public class ImpressionsRecorderTaskTest {
         ImpressionsRecorderTask task = new ImpressionsRecorderTask(
                 mImpressionsRecorder,
                 mPersistentImpressionsStorage,
-                mDefaultConfig);
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
@@ -112,7 +120,8 @@ public class ImpressionsRecorderTaskTest {
         ImpressionsRecorderTask task = new ImpressionsRecorderTask(
                 mImpressionsRecorder,
                 mPersistentImpressionsStorage,
-                mDefaultConfig);
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
@@ -127,10 +136,58 @@ public class ImpressionsRecorderTaskTest {
         Assert.assertNull(result.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES));
     }
 
-    @After
-    public void tearDown() {
-        reset(mImpressionsRecorder);
-        reset(mPersistentImpressionsStorage);
+    @Test
+    public void errorIsRecordedInTelemetry() throws HttpRecorderException {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 500)).when(mImpressionsRecorder).execute(mDefaultParams);
+
+        ImpressionsRecorderTask task = new ImpressionsRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.IMPRESSIONS, 500);
+    }
+
+    @Test
+    public void latencyIsRecordedInTelemetry() {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+
+        ImpressionsRecorderTask task = new ImpressionsRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSyncLatency(eq(OperationType.IMPRESSIONS), anyLong());
+    }
+
+    @Test
+    public void successIsRecordedInTelemetry() {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+
+        ImpressionsRecorderTask task = new ImpressionsRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSuccessfulSync(eq(OperationType.IMPRESSIONS), longThat(arg -> arg > 0));
     }
 
     private List<KeyImpression> createImpressions() {

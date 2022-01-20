@@ -18,7 +18,6 @@ import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
@@ -32,12 +31,10 @@ import io.split.android.client.service.sseclient.notifications.SplitsChangeNotif
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
-import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseClient;
 import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
-import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.service.synchronizer.SyncManager;
@@ -47,12 +44,13 @@ import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.telemetry.TelemetrySynchronizer;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
-import io.split.android.engine.metrics.Metrics;
 
 class SplitFactoryHelper {
-    private static final int  DB_MAGIC_CHARS_COUNT = 4;
+    private static final int DB_MAGIC_CHARS_COUNT = 4;
 
     String getDatabaseName(SplitClientConfig config, String apiToken, Context context) {
 
@@ -106,7 +104,7 @@ class SplitFactoryHelper {
         return headersBuilder.build();
     }
 
-    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key) {
+    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key, boolean shouldRecordTelemetry) {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, key.matchingKey()),
@@ -115,7 +113,8 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenImpressionsCountStorage(splitRoomDatabase),
                 StorageFactory.getAttributesStorage(),
-                StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, key.matchingKey()));
+                StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, key.matchingKey()),
+                StorageFactory.getTelemetryStorage(shouldRecordTelemetry));
     }
 
     String buildSplitsFilterQueryString(SplitClientConfig config) {
@@ -129,15 +128,14 @@ class SplitFactoryHelper {
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
                                   Key key,
                                   HttpClient httpClient,
-                                  Metrics cachedFireAndForgetMetrics,
                                   String splitsFilterQueryString) throws URISyntaxException {
         NetworkHelper networkHelper = new NetworkHelper();
 
         return new SplitApiFacade(
                 ServiceFactory.getSplitsFetcher(networkHelper, httpClient,
-                        splitClientConfig.endpoint(), cachedFireAndForgetMetrics, splitsFilterQueryString),
+                        splitClientConfig.endpoint(), splitsFilterQueryString),
                 ServiceFactory.getMySegmentsFetcher(networkHelper, httpClient,
-                        splitClientConfig.endpoint(), key.matchingKey(), cachedFireAndForgetMetrics),
+                        splitClientConfig.endpoint(), key.matchingKey()),
                 ServiceFactory.getSseAuthenticationFetcher(networkHelper, httpClient,
                         splitClientConfig.authServiceUrl()),
                 ServiceFactory.getEventsRecorder(networkHelper, httpClient,
@@ -145,7 +143,11 @@ class SplitFactoryHelper {
                 ServiceFactory.getImpressionsRecorder(networkHelper, httpClient,
                         splitClientConfig.eventsEndpoint()),
                 ServiceFactory.getImpressionsCountRecorder(networkHelper, httpClient,
-                        splitClientConfig.eventsEndpoint()));
+                        splitClientConfig.eventsEndpoint()),
+                ServiceFactory.getTelemetryConfigRecorder(networkHelper, httpClient,
+                        splitClientConfig.telemetryEndpoint()),
+                ServiceFactory.getTelemetryStatsRecorder(networkHelper, httpClient,
+                        splitClientConfig.telemetryEndpoint()));
     }
 
     WorkManagerWrapper buildWorkManagerWrapper(Context context, SplitClientConfig splitClientConfig,
@@ -161,7 +163,9 @@ class SplitFactoryHelper {
                                  SplitTaskFactory splitTaskFactory,
                                  SplitApiFacade splitApiFacade,
                                  HttpClient httpClient,
-                                 Synchronizer synchronizer) {
+                                 Synchronizer synchronizer,
+                                 TelemetrySynchronizer telemetrySynchronizer,
+                                 TelemetryRuntimeProducer telemetryRuntimeProducer) {
 
         BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue
                 = new LinkedBlockingDeque<>();
@@ -184,20 +188,18 @@ class SplitFactoryHelper {
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());
         EventStreamParser eventStreamParser = new EventStreamParser();
 
-        NotificationManagerKeeper managerKeeper = new NotificationManagerKeeper(pushManagerEventBroadcaster);
-        SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, managerKeeper, pushManagerEventBroadcaster);
+        SseHandler sseHandler = new SseHandler(notificationParser, notificationProcessor, telemetryRuntimeProducer, pushManagerEventBroadcaster);
         SseClient sseClient = new SseClientImpl(streamingServiceUrl, httpClient, eventStreamParser, sseHandler);
         SseAuthenticator sseAuthenticator =
                 new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(), userKey, new SseJwtParser());
 
         PushNotificationManager pushNotificationManager =
                 new PushNotificationManager(pushManagerEventBroadcaster, sseAuthenticator, sseClient,
-                        new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
-                        new SseDisconnectionTimer(new SplitTaskExecutorImpl()), null);
+                        new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster), telemetryRuntimeProducer, null);
 
         BackoffCounterTimer backoffReconnectTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
 
         return new SyncManagerImpl(config, synchronizer, pushNotificationManager, splitUpdateWorker,
-                mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer);
+                mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer, telemetrySynchronizer);
     }
 }

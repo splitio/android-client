@@ -23,9 +23,11 @@ import io.split.android.client.service.impressions.ImpressionsRequestBodySeriali
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
+import io.split.android.client.telemetry.TelemetryConfigBodySerializer;
+import io.split.android.client.telemetry.TelemetryStatsBodySerializer;
+import io.split.android.client.telemetry.model.Config;
+import io.split.android.client.telemetry.model.Stats;
 import io.split.android.client.utils.NetworkHelper;
-import io.split.android.engine.metrics.FetcherMetricsConfig;
-import io.split.android.engine.metrics.Metrics;
 
 @RestrictTo(RestrictTo.Scope.LIBRARY)
 public class ServiceFactory {
@@ -34,18 +36,10 @@ public class ServiceFactory {
             NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint,
-            Metrics cachedFireAndForgetMetrics,
             String splitFilterQueryString) throws URISyntaxException {
 
-        FetcherMetricsConfig splitsfetcherMetricsConfig = new FetcherMetricsConfig(
-                Metrics.SPLIT_CHANGES_FETCHER_EXCEPTION,
-                Metrics.SPLIT_CHANGES_FETCHER_TIME,
-                Metrics.SPLIT_CHANGES_FETCHER_STATUS
-        );
-
         return new HttpFetcherImpl<SplitChange>(httpClient,
-                SdkTargetPath.splitChanges(endPoint, splitFilterQueryString), cachedFireAndForgetMetrics,
-                splitsfetcherMetricsConfig,
+                SdkTargetPath.splitChanges(endPoint, splitFilterQueryString),
                 networkHelper, new SplitChangeResponseParser());
     }
 
@@ -53,17 +47,10 @@ public class ServiceFactory {
             NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint,
-            String key,
-            Metrics cachedFireAndForgetMetrics) throws URISyntaxException {
-        FetcherMetricsConfig mySegmentsfetcherMetricsConfig = new FetcherMetricsConfig(
-                Metrics.MY_SEGMENTS_FETCHER_EXCEPTION,
-                Metrics.MY_SEGMENTS_FETCHER_TIME,
-                Metrics.MY_SEGMENTS_FETCHER_STATUS
-        );
+            String key) throws URISyntaxException {
 
         return new HttpFetcherImpl<List<MySegment>>(httpClient,
-                SdkTargetPath.mySegments(endPoint, key), cachedFireAndForgetMetrics,
-                mySegmentsfetcherMetricsConfig,
+                SdkTargetPath.mySegments(endPoint, key),
                 networkHelper, new MySegmentsResponseParser());
     }
 
@@ -102,5 +89,24 @@ public class ServiceFactory {
         return new HttpSseAuthTokenFetcher(httpClient,
                 SdkTargetPath.sseAuthentication(endPoint),
                 networkHelper, new SseAuthenticationResponseParser());
+    }
+
+    public static HttpRecorder<Config> getTelemetryConfigRecorder(
+            NetworkHelper networkHelper,
+            HttpClient httpClient,
+            String endpoint) throws URISyntaxException {
+        return new HttpRecorderImpl<>(
+                httpClient, SdkTargetPath.telemetryConfig(endpoint), networkHelper,
+                new TelemetryConfigBodySerializer());
+    }
+
+    public static HttpRecorder<Stats> getTelemetryStatsRecorder(
+            NetworkHelper networkHelper,
+            HttpClient httpClient,
+            String endpoint) throws URISyntaxException {
+        return new HttpRecorderImpl<>(
+                httpClient, SdkTargetPath.telemetryStats(endpoint), networkHelper,
+                new TelemetryStatsBodySerializer()
+        );
     }
 }

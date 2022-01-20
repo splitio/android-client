@@ -22,16 +22,20 @@ public class ImpressionsRecorderWorker extends SplitWorker {
             int impressionsPerPush = workerParams.getInputData().getInt(
                     ServiceConstants.WORKER_PARAM_IMPRESSIONS_PER_PUSH,
                     ServiceConstants.DEFAULT_RECORDS_PER_PUSH);
+            boolean shouldRecordTelemetry = workerParams.getInputData().getBoolean(
+                    ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
 
             ImpressionsRecorderTaskConfig config =
                     new ImpressionsRecorderTaskConfig(
                             impressionsPerPush,
-                            ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES);
+                            ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES,
+                            shouldRecordTelemetry);
 
             mSplitTask = new ImpressionsRecorderTask(ServiceFactory.getImpressionsRecorder(
-                            getNetworkHelper(), getHttpClient(), getEndPoint()),
-                            StorageFactory.getPersistenImpressionsStorage(getDatabase()),
-                            config);
+                    getNetworkHelper(), getHttpClient(), getEndPoint()),
+                    StorageFactory.getPersistenImpressionsStorage(getDatabase()),
+                    config,
+                    StorageFactory.getTelemetryStorage(config.shouldRecordTelemetry()));
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
         }

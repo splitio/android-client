@@ -1,6 +1,16 @@
 package io.split.android.client.service;
 
-import org.junit.After;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,14 +28,8 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.events.PersistentEventsStorage;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class EventsRecorderTaskTest {
 
@@ -34,7 +38,7 @@ public class EventsRecorderTaskTest {
 
     HttpRecorder<List<Event>> mEventsRecorder;
     PersistentEventsStorage mPersistentEventsStorage;
-
+    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     List<Event> mDefaultParams = new ArrayList<>();
     EventsRecorderTaskConfig mDefaultConfig = new EventsRecorderTaskConfig(DEFAULT_POP_CONFIG);
@@ -44,6 +48,7 @@ public class EventsRecorderTaskTest {
         mDefaultParams = createEvents();
         mEventsRecorder = (HttpRecorder<List<Event>>) Mockito.mock(HttpRecorder.class);
         mPersistentEventsStorage = Mockito.mock(PersistentEventsStorage.class);
+        mTelemetryRuntimeProducer = Mockito.mock(TelemetryRuntimeProducer.class);
     }
 
     @Test
@@ -57,7 +62,8 @@ public class EventsRecorderTaskTest {
         EventsRecorderTask task = new EventsRecorderTask(
                 mEventsRecorder,
                 mPersistentEventsStorage,
-                mDefaultConfig);
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
@@ -83,7 +89,8 @@ public class EventsRecorderTaskTest {
         EventsRecorderTask task = new EventsRecorderTask(
                 mEventsRecorder,
                 mPersistentEventsStorage,
-                mDefaultConfig);
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
@@ -109,7 +116,8 @@ public class EventsRecorderTaskTest {
         EventsRecorderTask task = new EventsRecorderTask(
                 mEventsRecorder,
                 mPersistentEventsStorage,
-                mDefaultConfig);
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
 
         SplitTaskExecutionInfo result = task.execute();
 
@@ -123,10 +131,61 @@ public class EventsRecorderTaskTest {
         Assert.assertNull(result.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES));
     }
 
-    @After
-    public void tearDown() {
-        reset(mEventsRecorder);
-        reset(mPersistentEventsStorage);
+    @Test
+    public void recordErrorInTelemetry() throws HttpRecorderException {
+
+        when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 500)).when(mEventsRecorder).execute(mDefaultParams);
+
+        EventsRecorderTask task = new EventsRecorderTask(
+                mEventsRecorder,
+                mPersistentEventsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.EVENTS, 500);
+    }
+
+    @Test
+    public void recordLatencyInTelemetry() {
+
+        when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+
+        EventsRecorderTask task = new EventsRecorderTask(
+                mEventsRecorder,
+                mPersistentEventsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSyncLatency(eq(OperationType.EVENTS), anyLong());
+    }
+
+    @Test
+    public void recordSuccessInTelemetry() throws HttpRecorderException {
+
+        when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+
+        EventsRecorderTask task = new EventsRecorderTask(
+                mEventsRecorder,
+                mPersistentEventsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSuccessfulSync(eq(OperationType.EVENTS), longThat(arg -> arg > 0));
     }
 
     private List<Event> createEvents() {
