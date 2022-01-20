@@ -246,34 +246,70 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean setAttribute(String attributeName, Object value) {
-        return mAttributesManager.setAttribute(attributeName, value);
+        try {
+            return mAttributesManager.setAttribute(attributeName, value);
+        } catch (Exception exception) {
+            Logger.e("Error setting attribute: " + exception.getLocalizedMessage());
+
+            return false;
+        }
     }
 
     @Nullable
     @Override
     public Object getAttribute(String attributeName) {
-        return mAttributesManager.getAttribute(attributeName);
+        try {
+            return mAttributesManager.getAttribute(attributeName);
+        } catch (Exception exception) {
+            Logger.e("Error getting attribute: " + exception.getLocalizedMessage());
+
+            return null;
+        }
     }
 
     @Override
     public boolean setAttributes(Map<String, Object> attributes) {
-        return mAttributesManager.setAttributes(attributes);
+        try {
+            return mAttributesManager.setAttributes(attributes);
+        } catch (Exception exception) {
+            Logger.e("Error setting attributes: " + exception.getLocalizedMessage());
+
+            return false;
+        }
     }
 
     @NonNull
     @Override
     public Map<String, Object> getAllAttributes() {
-        return mAttributesManager.getAllAttributes();
+        try {
+            return mAttributesManager.getAllAttributes();
+        } catch (Exception exception) {
+            Logger.e("Error getting attributes: " + exception.getLocalizedMessage());
+
+            return Collections.emptyMap();
+        }
     }
 
     @Override
     public boolean removeAttribute(String attributeName) {
-        return mAttributesManager.removeAttribute(attributeName);
+        try {
+            return mAttributesManager.removeAttribute(attributeName);
+        } catch (Exception exception) {
+            Logger.e("Error removing attribute: " + exception.getLocalizedMessage());
+
+            return false;
+        }
     }
 
     @Override
     public boolean clearAttributes() {
-        return mAttributesManager.clearAttributes();
+        try {
+            return mAttributesManager.clearAttributes();
+        } catch (Exception exception) {
+            Logger.e("Error clearing attributes: " + exception.getLocalizedMessage());
+
+            return false;
+        }
     }
 
     // Estimated event size without properties
