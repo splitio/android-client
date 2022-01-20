@@ -92,7 +92,7 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.2.0'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.google.code.gson:gson:2.8.8'
+    implementation 'com.google.code.gson:gson:2.8.9'
     implementation 'com.google.guava:guava:31.0.1-android'
 
     implementation 'org.yaml:snakeyaml:1.29'
