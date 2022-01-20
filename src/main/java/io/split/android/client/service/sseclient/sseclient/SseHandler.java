@@ -149,11 +149,12 @@ public class SseHandler {
                 return;
             }
 
+            mTelemetryRuntimeProducer.recordStreamingEvents(new AblyErrorStreamingEvent(errorNotification.getCode(), System.currentTimeMillis()));
+
             PushStatusEvent message = new PushStatusEvent(
                     errorNotification.isRetryable() ? EventType.PUSH_RETRYABLE_ERROR : EventType.PUSH_NON_RETRYABLE_ERROR);
             mBroadcasterChannel.pushMessage(message);
 
-            mTelemetryRuntimeProducer.recordStreamingEvents(new AblyErrorStreamingEvent(errorNotification.getCode(), System.currentTimeMillis()));
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse occupancy notification: "
                     + jsonData + " -> " + e.getLocalizedMessage());

@@ -46,7 +46,6 @@ public class ImpressionsRecorderTask implements SplitTask {
         long nonSentBytes = 0;
         List<KeyImpression> impressions;
         List<KeyImpression> failingImpressions = new ArrayList<>();
-        Integer httpErrorStatus = null;
         do {
             impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
             if (impressions.size() > 0) {

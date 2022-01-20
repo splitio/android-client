@@ -7,7 +7,7 @@ public class RefreshRates {
     @SerializedName("sp")
     private long splits;
 
-    @SerializedName("se")
+    @SerializedName("ms")
     private long mySegments;
 
     @SerializedName("im")

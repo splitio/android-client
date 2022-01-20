@@ -91,4 +91,8 @@ public class StorageFactory {
 
         return telemetryStorageInstance;
     }
+
+    private static void clearTelemetryStorage() {
+        telemetryStorageInstance = null;
+    }
 }
