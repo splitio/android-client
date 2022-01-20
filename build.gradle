@@ -49,7 +49,6 @@ android {
 
     configurations {
         javadocDeps
-        all*.exclude group: 'com.google.guava', module: 'listenablefuture'
     }
 
     lintOptions {
@@ -94,7 +93,7 @@ dependencies {
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.google.code.gson:gson:2.8.8'
-    implementation 'com.google.guava:guava:18.0'
+    implementation 'com.google.guava:guava:31.0.1-android'
 
     implementation 'org.yaml:snakeyaml:1.29'
     implementation 'org.jetbrains:annotations:22.0.0'
