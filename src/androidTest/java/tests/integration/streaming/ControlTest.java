@@ -1,5 +1,7 @@
 package tests.integration.streaming;
 
+import static junit.framework.TestCase.assertEquals;
+
 import android.content.Context;
 
 import androidx.core.util.Pair;
@@ -30,6 +32,9 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.service.synchronizer.ThreadUtils;
+import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.FileHelper;
@@ -83,7 +88,6 @@ public class ControlTest {
 
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
-        String dataFolderName = apiKeyAndDb.second;
 
         mUserKey = IntegrationHelper.dummyUserKey();
     }
@@ -100,7 +104,7 @@ public class ControlTest {
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(true);
+        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(true, true);
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, mUserKey,
@@ -121,10 +125,16 @@ public class ControlTest {
 
         String treatmentReady = mClient.getTreatment(splitName);
 
-//        /// Pause streaming
+        // Pause streaming
         synchronizerSpy.startPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_PAUSED");
         synchronizerSpy.startPeriodicFetchLatch.await(5, TimeUnit.SECONDS);
+        StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
+            if (event instanceof StreamingStatusStreamingEvent) {
+                return event.getEventData().intValue() == 2;
+            }
+            return false;
+        });
 
         pushMySegmentsUpdatePayload("new_segment");
 
@@ -135,6 +145,12 @@ public class ControlTest {
         synchronizerSpy.stopPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_ENABLED");
         synchronizerSpy.stopPeriodicFetchLatch.await(5, TimeUnit.SECONDS);
+        StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
+            if (event instanceof StreamingStatusStreamingEvent) {
+                return event.getEventData().intValue() == 1;
+            }
+            return false;
+        });
 
         updateTask.mLatch = new CountDownLatch(1);
         pushMySegmentsUpdatePayload("new_segment");
@@ -148,6 +164,15 @@ public class ControlTest {
         updateTask.mLatch.await(10, TimeUnit.SECONDS);
         pushMySegmentsUpdatePayload("new_segment");
         sleep(1000);
+        StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
+            if (event instanceof StreamingStatusStreamingEvent) {
+                return event.getEventData().intValue() == 0;
+            }
+            return false;
+        });
+
+        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
+        assertEquals(1, telemetryStorage.popTokenRefreshes());
 
         String treatmentDisabled = mClient.getTreatment(splitName);
 
@@ -173,7 +198,6 @@ public class ControlTest {
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
-
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),

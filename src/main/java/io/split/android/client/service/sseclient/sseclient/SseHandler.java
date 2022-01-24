@@ -1,6 +1,7 @@
 package io.split.android.client.service.sseclient.sseclient;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.google.gson.JsonSyntaxException;
 
@@ -16,6 +17,9 @@ import io.split.android.client.service.sseclient.notifications.NotificationParse
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.notifications.StreamingError;
+import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.SseConnectionErrorStreamingEvent;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -26,16 +30,26 @@ public class SseHandler {
     private final NotificationParser mNotificationParser;
     private final NotificationProcessor mNotificationProcessor;
     private final NotificationManagerKeeper mNotificationManagerKeeper;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public SseHandler(@NonNull NotificationParser notificationParser,
                       @NonNull NotificationProcessor notificationProcessor,
-                      @NonNull NotificationManagerKeeper notificationManagerKeeper,
+                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                       @NonNull PushManagerEventBroadcaster broadcasterChannel) {
+        this(notificationParser, notificationProcessor, new NotificationManagerKeeper(broadcasterChannel, telemetryRuntimeProducer), broadcasterChannel, telemetryRuntimeProducer);
+    }
 
+    @VisibleForTesting
+    public SseHandler(@NonNull NotificationParser notificationParser,
+                      @NonNull NotificationProcessor notificationProcessor,
+                      @NonNull NotificationManagerKeeper managerKeeper,
+                      @NonNull PushManagerEventBroadcaster broadcasterChannel,
+                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mNotificationParser = checkNotNull(notificationParser);
         mNotificationProcessor = checkNotNull(notificationProcessor);
         mBroadcasterChannel = checkNotNull(broadcasterChannel);
-        mNotificationManagerKeeper = checkNotNull(notificationManagerKeeper);
+        mNotificationManagerKeeper = checkNotNull(managerKeeper);
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     public boolean isConnectionConfirmed(Map<String, String> values) {
@@ -86,6 +100,13 @@ public class SseHandler {
     public void handleError(boolean retryable) {
         PushStatusEvent event = new PushStatusEvent(retryable ? EventType.PUSH_RETRYABLE_ERROR : EventType.PUSH_NON_RETRYABLE_ERROR);
         mBroadcasterChannel.pushMessage(event);
+
+        mTelemetryRuntimeProducer.recordStreamingEvents(
+                new SseConnectionErrorStreamingEvent(
+                        (retryable) ? SseConnectionErrorStreamingEvent.Status.REQUESTED : SseConnectionErrorStreamingEvent.Status.NON_REQUESTED,
+                        System.currentTimeMillis()
+                )
+        );
     }
 
     private void handleControlNotification(IncomingNotification incomingNotification) {
@@ -127,6 +148,8 @@ public class SseHandler {
                 Logger.w("Error ignored");
                 return;
             }
+
+            mTelemetryRuntimeProducer.recordStreamingEvents(new AblyErrorStreamingEvent(errorNotification.getCode(), System.currentTimeMillis()));
 
             PushStatusEvent message = new PushStatusEvent(
                     errorNotification.isRetryable() ? EventType.PUSH_RETRYABLE_ERROR : EventType.PUSH_NON_RETRYABLE_ERROR);

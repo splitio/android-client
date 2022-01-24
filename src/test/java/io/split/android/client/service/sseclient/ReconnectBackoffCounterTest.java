@@ -30,7 +30,7 @@ public class ReconnectBackoffCounterTest {
     }
 
     private void testWithBase(int base, long[] results) {
-        ReconnectBackoffCounter counter
+        BackoffCounter counter
                 = new ReconnectBackoffCounter(base);
         long v1 = counter.getNextRetryTime();
         long v2 = counter.getNextRetryTime();
@@ -49,7 +49,7 @@ public class ReconnectBackoffCounterTest {
         Assert.assertEquals(1L, vReset);
     }
 
-    private void callRetry(ReconnectBackoffCounter counter, int times) {
+    private void callRetry(BackoffCounter counter, int times) {
         for (int i = 0; i < times; i++) {
             counter.getNextRetryTime();
         }

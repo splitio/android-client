@@ -7,6 +7,7 @@ import java.util.Map;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.service.sseclient.SseJwtParser;
@@ -36,9 +37,16 @@ public class SseAuthenticator {
             params.put(USER_KEY_PARAM, mUserKey);
             authResponse = mAuthFetcher.execute(params, null);
 
+        } catch (HttpFetcherException httpFetcherException) {
+            logError("Unexpected " + httpFetcherException.getLocalizedMessage());
+            if (httpFetcherException.getHttpStatus() != null) {
+                return unexpectedHttpError(httpFetcherException.getHttpStatus());
+            } else {
+                return unexpectedError();
+            }
         } catch (Exception e) {
             logError("Unexpected " + e.getLocalizedMessage());
-            return unexectedError();
+            return unexpectedError();
         }
         Logger.d("SSE Authentication done, now parsing token");
 
@@ -53,20 +61,24 @@ public class SseAuthenticator {
         }
 
         try {
-            long sseConnetionDelay = authResponse.getSseConnectionDelay() != null ? authResponse.getSseConnectionDelay().longValue() : ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
+            long sseConnectionDelay = authResponse.getSseConnectionDelay() != null ? authResponse.getSseConnectionDelay().longValue() : ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
             return new SseAuthenticationResult(true, true, true,
-                    sseConnetionDelay, mJwtParser.parse(authResponse.getToken()));
+                    sseConnectionDelay, mJwtParser.parse(authResponse.getToken()));
         } catch (InvalidJwtTokenException e) {
             Logger.e("Error while parsing Jwt");
         }
-        return unexectedError();
+        return unexpectedError();
     }
 
     private void logError(String message) {
         Logger.e("Error while authenticating to SSE server: " + message);
     }
 
-    private SseAuthenticationResult unexectedError() {
+    private SseAuthenticationResult unexpectedError() {
         return new SseAuthenticationResult(false, true);
+    }
+
+    private SseAuthenticationResult unexpectedHttpError(int httpStatus) {
+        return new SseAuthenticationResult(httpStatus);
     }
 }

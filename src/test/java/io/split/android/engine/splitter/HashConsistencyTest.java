@@ -143,7 +143,7 @@ public class HashConsistencyTest {
             long expected_hash = Long.parseLong(parts[2]);
             int expected_bucket = Integer.parseInt(parts[3]);
 
-            int hash = Hashing.murmur3_32(seed).hashString(key, Charset.forName("UTF-8")).asInt();
+            int hash = Hashing.murmur3_32_fixed(seed).hashString(key, Charset.forName("UTF-8")).asInt();
             int bucket = Splitter.bucket(hash);
 
             Assert.assertEquals(expected_hash, hash);

@@ -146,15 +146,15 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
                 if (listener != null) {
                     listener.taskExecuted(info);
                 }
+
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
             }
-
         }
     }
 
     private static class SplitTaskBatchWrapper implements Runnable {
-        List<SplitTaskBatchItem> mTaskQueue;
+        private final List<SplitTaskBatchItem> mTaskQueue;
 
         SplitTaskBatchWrapper(List<SplitTaskBatchItem> taskQueue) {
             mTaskQueue = checkNotNull(taskQueue);
@@ -174,7 +174,6 @@ public class SplitTaskExecutorImpl implements SplitTaskExecutor {
             } catch (Exception e) {
                 Logger.e("An error has ocurred while running task on executor: " + e.getLocalizedMessage());
             }
-
         }
     }
 }

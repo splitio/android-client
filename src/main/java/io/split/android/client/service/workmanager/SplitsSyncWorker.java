@@ -8,6 +8,7 @@ import androidx.work.WorkerParameters;
 import java.net.URISyntaxException;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -23,10 +24,11 @@ public class SplitsSyncWorker extends SplitWorker {
                             @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
         try {
+            boolean shouldRecordTelemetry = workerParams.getInputData().getBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
             SplitsStorage splitsStorage = StorageFactory.getSplitsStorage(getDatabase());
             HttpFetcher<SplitChange> splitsFetcher = ServiceFactory.getSplitsFetcher(getNetworkHelper(), getHttpClient(),
-                            getEndPoint(), getMetrics(), splitsStorage.getSplitsFilterQueryString());
-            SplitsSyncHelper splitsSyncHelper = new SplitsSyncHelper(splitsFetcher, splitsStorage, new SplitChangeProcessor());
+                            getEndPoint(), splitsStorage.getSplitsFilterQueryString());
+            SplitsSyncHelper splitsSyncHelper = new SplitsSyncHelper(splitsFetcher, splitsStorage, new SplitChangeProcessor(), StorageFactory.getTelemetryStorage(shouldRecordTelemetry));
             mSplitTask = new SplitsSyncBackgroundTask(splitsSyncHelper, splitsStorage, getCacheExpirationInSeconds());
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
