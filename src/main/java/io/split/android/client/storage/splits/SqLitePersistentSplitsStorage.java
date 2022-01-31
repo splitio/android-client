@@ -1,8 +1,10 @@
 package io.split.android.client.storage.splits;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.room.Query;
+import androidx.annotation.VisibleForTesting;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonSyntaxException;
@@ -12,23 +14,30 @@ import java.util.List;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
+import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
+import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorImpl;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
-import io.split.android.client.storage.db.SplitQueryDao;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     private static  final int MAX_ROWS_PER_QUERY = ServiceConstants.MAX_ROWS_PER_QUERY;
     private static final int SQL_PARAM_BIND_SIZE = 20;
-    SplitRoomDatabase mDatabase;
+    private final SplitParallelTaskExecutor<List<Split>> mParallelTaskExecutor;
+    private final SplitRoomDatabase mDatabase;
 
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database) {
+        this(database, new SplitParallelTaskExecutorImpl<List<Split>>());
+    }
+
+    @VisibleForTesting
+    public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database, @NonNull SplitParallelTaskExecutor<List<Split>> parallelTaskExecutor) {
         mDatabase = checkNotNull(database);
+        mParallelTaskExecutor = checkNotNull(parallelTaskExecutor);
     }
 
     @Override
@@ -112,18 +121,27 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     private List<Split> loadSplits() {
-        List<Split> splits = new ArrayList<>();
-        int count = 1;
-        long rowIdFrom = 0;
-        while(count > 0) {
-            List<SplitEntity> entities = mDatabase.splitQueryDao().get(rowIdFrom, MAX_ROWS_PER_QUERY);
-            splits.addAll(convertEntitiesToSplitList(entities));
-            count = entities.size();
-            if(count > 0) {
-                rowIdFrom = entities.get(entities.size() - 1).getRowId();
-            };
+        List<SplitEntity> allEntities = mDatabase.splitDao().getAll();
+        int entitiesCount = allEntities.size();
+        if (entitiesCount > mParallelTaskExecutor.getAvailableThreads()) {
+            int partitionSize = entitiesCount / mParallelTaskExecutor.getAvailableThreads();
+            List<List<SplitEntity>> partitions = Lists.partition(allEntities, partitionSize);
+            List<SplitDeferredTaskItem<List<Split>>> taskList = new ArrayList<>(partitions.size());
+
+            for (List<SplitEntity> partition : partitions) {
+                taskList.add(new SplitDeferredTaskItem<>(() -> convertEntitiesToSplitList(partition)));
+            }
+
+            List<List<Split>> result = mParallelTaskExecutor.execute(taskList);
+            List<Split> splits = new ArrayList<>();
+            for (List<Split> subList : result) {
+                splits.addAll(subList);
+            }
+
+            return splits;
+        } else {
+            return convertEntitiesToSplitList(allEntities);
         }
-        return splits;
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
