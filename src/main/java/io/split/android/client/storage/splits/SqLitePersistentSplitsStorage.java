@@ -123,16 +123,9 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     private List<Split> loadSplits() {
         List<SplitEntity> allEntities = mDatabase.splitDao().getAll();
         int entitiesCount = allEntities.size();
+
         if (entitiesCount > mParallelTaskExecutor.getAvailableThreads()) {
-            int partitionSize = entitiesCount / mParallelTaskExecutor.getAvailableThreads();
-            List<List<SplitEntity>> partitions = Lists.partition(allEntities, partitionSize);
-            List<SplitDeferredTaskItem<List<Split>>> taskList = new ArrayList<>(partitions.size());
-
-            for (List<SplitEntity> partition : partitions) {
-                taskList.add(new SplitDeferredTaskItem<>(() -> convertEntitiesToSplitList(partition)));
-            }
-
-            List<List<Split>> result = mParallelTaskExecutor.execute(taskList);
+            List<List<Split>> result = mParallelTaskExecutor.execute(getSplitDeserializationTasks(allEntities, entitiesCount));
             List<Split> splits = new ArrayList<>();
             for (List<Split> subList : result) {
                 splits.addAll(subList);
@@ -142,6 +135,19 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         } else {
             return convertEntitiesToSplitList(allEntities);
         }
+    }
+
+    private List<SplitDeferredTaskItem<List<Split>>> getSplitDeserializationTasks(List<SplitEntity> allEntities, int entitiesCount) {
+        int availableThreads = mParallelTaskExecutor.getAvailableThreads();
+        int partitionSize = availableThreads > 0 ? entitiesCount / availableThreads : 1;
+        List<List<SplitEntity>> partitions = Lists.partition(allEntities, partitionSize);
+        List<SplitDeferredTaskItem<List<Split>>> taskList = new ArrayList<>(partitions.size());
+
+        for (List<SplitEntity> partition : partitions) {
+            taskList.add(new SplitDeferredTaskItem<>(() -> convertEntitiesToSplitList(partition)));
+        }
+
+        return taskList;
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {

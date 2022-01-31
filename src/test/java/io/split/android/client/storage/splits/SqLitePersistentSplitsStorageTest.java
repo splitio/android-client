@@ -1,6 +1,7 @@
 package io.split.android.client.storage.splits;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -12,6 +13,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
@@ -34,6 +37,7 @@ public class SqLitePersistentSplitsStorageTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        when(mParallelTaskExecutor.getAvailableThreads()).thenReturn(2);
         mStorage = new SqLitePersistentSplitsStorage(mDatabase, mParallelTaskExecutor);
     }
 
@@ -64,8 +68,36 @@ public class SqLitePersistentSplitsStorageTest {
         assertEquals(expectedNumberOfLists, argumentCaptor.getValue().size());
     }
 
+    @Test
+    public void amountOfSplitsEqualsAmountOfEntities() {
+        when(mParallelTaskExecutor.getAvailableThreads()).thenReturn(4);
+        List<SplitEntity> mockEntities = getMockEntities(3);
+        when(mSplitDao.getAll()).thenReturn(mockEntities);
+        when(mDatabase.splitDao()).thenReturn(mSplitDao);
+
+        List<Split> splits = mStorage.getAll();
+
+        assertEquals(3, splits.size());
+    }
+
+    @Test
+    public void amountOfSplitsEqualsAmountOfEntitiesWhenParallel() {
+        when(mParallelTaskExecutor.getAvailableThreads()).thenReturn(2);
+        List<SplitEntity> mockEntities = getMockEntities(3);
+        when(mSplitDao.getAll()).thenReturn(mockEntities);
+        when(mDatabase.splitDao()).thenReturn(mSplitDao);
+        when(mParallelTaskExecutor.execute(any())).thenReturn(
+                Arrays.asList(Collections.singletonList(new Split()),
+                        Collections.singletonList(new Split()),
+                        Collections.singletonList(new Split())));
+
+        List<Split> splits = mStorage.getAll();
+
+        assertEquals(3, splits.size());
+    }
+
     private List<SplitEntity> getMockEntities(int amount) {
-        ArrayList<SplitEntity> entities = new ArrayList();
+        ArrayList<SplitEntity> entities = new ArrayList<>();
         String jsonTemplate = "{\"name\":\"%s\", \"changeNumber\": %d}";
         long initialChangeNumber = 9999;
 
