@@ -36,13 +36,6 @@ public class SplitEntityConverterImplTest {
     }
 
     @Test
-    public void getAllUsesParallelExecutorWhenThereAreMoreThan50Splits() {
-        mConverter.getFromEntityList(getMockEntities(51));
-
-        verify(mParallelTaskExecutor).execute(anyCollection());
-    }
-
-    @Test
     public void tasksAreCreatedAccordingToTheAmountOfThreadsAvailable() {
         ArgumentCaptor<List<SplitDeferredTaskItem<List<Split>>>> argumentCaptor = ArgumentCaptor.forClass(List.class);
 

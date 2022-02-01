@@ -72,7 +72,7 @@ public class SplitParallelTaskExecutorImplTest {
 
         executor.execute(listOfTasks);
 
-        assertTrue(Math.abs(yesStartTime.get() - noStartTime.get()) < 1);
+        assertTrue(Math.abs(yesStartTime.get() - noStartTime.get()) < 2);
     }
 
     @Test

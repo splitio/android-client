@@ -27,6 +27,10 @@ public class SplitEntityConverterImpl implements SplitEntityConverter {
 
     @Override
     public List<Split> getFromEntityList(List<SplitEntity> entities) {
+        if (entities == null) {
+            return new ArrayList<>();
+        }
+
         int entitiesCount = entities.size();
 
         if (entitiesCount > mParallelTaskExecutor.getAvailableThreads()) {
