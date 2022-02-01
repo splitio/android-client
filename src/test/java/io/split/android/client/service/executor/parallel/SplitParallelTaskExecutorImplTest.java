@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -72,5 +73,21 @@ public class SplitParallelTaskExecutorImplTest {
         executor.execute(listOfTasks);
 
         assertTrue(Math.abs(yesStartTime.get() - noStartTime.get()) < 1);
+    }
+
+    @Test
+    public void resultIsReturnedWhenComputationExceeds5Seconds() {
+        List<SplitDeferredTaskItem<String>> splitDeferredTaskItems = Collections.singletonList(
+                new SplitDeferredTaskItem<>(() -> {
+                    Thread.sleep(6000);
+
+                    return "no";
+                })
+        );
+
+        long startTime = System.currentTimeMillis();
+        executor.execute(splitDeferredTaskItems);
+
+        assertTrue(System.currentTimeMillis() - startTime < 6000);
     }
 }

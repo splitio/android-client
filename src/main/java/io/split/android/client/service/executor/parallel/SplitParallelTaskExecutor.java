@@ -11,4 +11,6 @@ import java.util.List;
 public interface SplitParallelTaskExecutor<T> {
 
     List<T> execute(Collection<SplitDeferredTaskItem<T>> taskItems);
+
+    int getAvailableThreads();
 }
