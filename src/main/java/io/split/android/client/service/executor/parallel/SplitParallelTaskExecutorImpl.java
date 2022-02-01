@@ -1,5 +1,7 @@
 package io.split.android.client.service.executor.parallel;
 
+import androidx.annotation.WorkerThread;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +23,7 @@ public class SplitParallelTaskExecutorImpl<T> implements SplitParallelTaskExecut
     private final ExecutorService mScheduler = Executors.newFixedThreadPool(mThreads);
 
     @Override
+    @WorkerThread
     public List<T> execute(Collection<SplitDeferredTaskItem<T>> splitDeferredTaskItems) {
         try {
             List<Future<T>> futures = mScheduler.invokeAll(splitDeferredTaskItems, TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
