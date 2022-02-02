@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactory;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactoryImpl;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
@@ -21,17 +22,27 @@ import io.split.android.client.utils.Json;
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     private static final int SQL_PARAM_BIND_SIZE = 20;
-    private final SplitEntityConverter mSplitEntityConverter;
+    private final SplitListTransformer<SplitEntity, Split> mEntityToSplitTransformer;
+    private final SplitListTransformer<Split, SplitEntity> mSplitToEntityTransformer;
     private final SplitRoomDatabase mDatabase;
 
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database) {
-        this(database, new SplitEntityConverterImpl(new SplitParallelTaskExecutorFactoryImpl()));
+        this(database, new SplitParallelTaskExecutorFactoryImpl());
     }
 
     @VisibleForTesting
-    public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database, @NonNull SplitEntityConverter splitEntityConverter) {
+    public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database,
+                                         @NonNull SplitListTransformer<SplitEntity, Split> entityToSplitTransformer,
+                                         @NonNull SplitListTransformer<Split, SplitEntity> splitToEntityTransformer) {
         mDatabase = checkNotNull(database);
-        mSplitEntityConverter = checkNotNull(splitEntityConverter);
+        mEntityToSplitTransformer = checkNotNull(entityToSplitTransformer);
+        mSplitToEntityTransformer = checkNotNull(splitToEntityTransformer);
+    }
+
+    private SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database, @NonNull SplitParallelTaskExecutorFactory executorFactory) {
+        this(database,
+                new SplitEntityToSplitTransformer(executorFactory.createForList(Split.class)),
+                new SplitToSplitEntityTransformer(executorFactory.createForList(SplitEntity.class)));
     }
 
     @Override
@@ -115,11 +126,11 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     private List<Split> loadSplits() {
-        return mSplitEntityConverter.getFromEntityList(mDatabase.splitDao().getAll());
+        return mEntityToSplitTransformer.transform(mDatabase.splitDao().getAll());
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
-        return mSplitEntityConverter.getFromSplitList(splits);
+        return mSplitToEntityTransformer.transform(splits);
     }
 
     private List<String> splitNameList(List<Split> splits) {

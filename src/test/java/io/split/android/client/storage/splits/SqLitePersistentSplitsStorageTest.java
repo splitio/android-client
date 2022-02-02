@@ -11,6 +11,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.db.SplitDao;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -20,7 +21,9 @@ public class SqLitePersistentSplitsStorageTest {
     @Mock
     private SplitRoomDatabase mDatabase;
     @Mock
-    private SplitEntityConverter mSplitEntityConverter;
+    private SplitListTransformer<SplitEntity, Split> mEntityToSplitTransformer;
+    @Mock
+    private SplitListTransformer<Split, SplitEntity> mSplitToSplitEntityTransformer;
     @Mock
     private SplitDao mSplitDao;
     private SqLitePersistentSplitsStorage mStorage;
@@ -28,18 +31,19 @@ public class SqLitePersistentSplitsStorageTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        mStorage = new SqLitePersistentSplitsStorage(mDatabase, mSplitEntityConverter);
+
+        mStorage = new SqLitePersistentSplitsStorage(mDatabase, mEntityToSplitTransformer, mSplitToSplitEntityTransformer);
     }
 
     @Test
-    public void getAllUsesConverter() {
+    public void getAllUsesTransformer() {
         List<SplitEntity> mockEntities = getMockEntities();
         when(mSplitDao.getAll()).thenReturn(mockEntities);
         when(mDatabase.splitDao()).thenReturn(mSplitDao);
 
         mStorage.getAll();
 
-        verify(mSplitEntityConverter).getFromEntityList(mockEntities);
+        verify(mEntityToSplitTransformer).transform(mockEntities);
     }
 
     private List<SplitEntity> getMockEntities() {
