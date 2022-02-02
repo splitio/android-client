@@ -13,11 +13,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class SplitParallelTaskExecutorImplTest {
 
-    private SplitParallelTaskExecutorImpl<String> executor;
+    private SplitParallelTaskExecutor<String> executor;
 
     @Before
     public void setUp() {
-        executor = new SplitParallelTaskExecutorImpl<>();
+        executor = new SplitParallelTaskExecutorFactoryImpl().create(String.class);
     }
 
     @Test

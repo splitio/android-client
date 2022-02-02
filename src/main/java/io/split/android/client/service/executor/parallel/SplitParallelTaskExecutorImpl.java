@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -18,9 +17,14 @@ public class SplitParallelTaskExecutorImpl<T> implements SplitParallelTaskExecut
 
     private static final int TIMEOUT_IN_SECONDS = 5;
 
-    private final int mThreads = Runtime.getRuntime().availableProcessors();
+    private final int mThreads;
 
-    private final ExecutorService mScheduler = Executors.newFixedThreadPool(mThreads);
+    private final ExecutorService mScheduler;
+
+    public SplitParallelTaskExecutorImpl(int threads, ExecutorService scheduler) {
+        mThreads = threads;
+        mScheduler = scheduler;
+    }
 
     @Override
     @WorkerThread

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactoryImpl;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorImpl;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
@@ -25,7 +26,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     private final SplitRoomDatabase mDatabase;
 
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database) {
-        this(database, new SplitEntityConverterImpl(new SplitParallelTaskExecutorImpl<>()));
+        this(database, new SplitEntityConverterImpl(new SplitParallelTaskExecutorFactoryImpl()));
     }
 
     @VisibleForTesting

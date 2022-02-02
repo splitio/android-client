@@ -2,7 +2,6 @@ package io.split.android.client.storage.splits;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,39 +19,49 @@ import java.util.List;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
+import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactory;
 import io.split.android.client.storage.db.SplitEntity;
 
 public class SplitEntityConverterImplTest {
 
     @Mock
-    private SplitParallelTaskExecutor<List<Split>> mParallelTaskExecutor;
+    private SplitParallelTaskExecutor<List<Split>> mSplitTaskExecutor;
+    @Mock
+    private SplitParallelTaskExecutor<List<SplitEntity>> mEntityTaskExecutor;
+    @Mock
+    private SplitParallelTaskExecutorFactory mTaskExecutorFactory;
     private SplitEntityConverterImpl mConverter;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(mParallelTaskExecutor.getAvailableThreads()).thenReturn(2);
-        mConverter = new SplitEntityConverterImpl(mParallelTaskExecutor);
+        when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(2);
+        when(mEntityTaskExecutor.getAvailableThreads()).thenReturn(2);
+
+        when(mTaskExecutorFactory.createForList(Split.class)).thenReturn(mSplitTaskExecutor);
+        when(mTaskExecutorFactory.createForList(SplitEntity.class)).thenReturn(mEntityTaskExecutor);
+
+        mConverter = new SplitEntityConverterImpl(mTaskExecutorFactory);
     }
 
     @Test
     public void tasksAreCreatedAccordingToTheAmountOfThreadsAvailable() {
         ArgumentCaptor<List<SplitDeferredTaskItem<List<Split>>>> argumentCaptor = ArgumentCaptor.forClass(List.class);
 
-        when(mParallelTaskExecutor.getAvailableThreads()).thenReturn(4);
+        when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
         List<SplitEntity> mockEntities = getMockEntities(65);
 
         int expectedNumberOfLists = 5;
 
         mConverter.getFromEntityList(mockEntities);
 
-        verify(mParallelTaskExecutor).execute(argumentCaptor.capture());
+        verify(mSplitTaskExecutor).execute(argumentCaptor.capture());
         assertEquals(expectedNumberOfLists, argumentCaptor.getValue().size());
     }
 
     @Test
     public void amountOfSplitsEqualsAmountOfEntities() {
-        when(mParallelTaskExecutor.getAvailableThreads()).thenReturn(4);
+        when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
         List<SplitEntity> mockEntities = getMockEntities(3);
 
         List<Split> splits = mConverter.getFromEntityList(mockEntities);
@@ -62,9 +71,9 @@ public class SplitEntityConverterImplTest {
 
     @Test
     public void amountOfSplitsEqualsAmountOfEntitiesWhenParallel() {
-        when(mParallelTaskExecutor.getAvailableThreads()).thenReturn(2);
+        when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(2);
         List<SplitEntity> mockEntities = getMockEntities(3);
-        when(mParallelTaskExecutor.execute(any())).thenReturn(
+        when(mSplitTaskExecutor.execute(any())).thenReturn(
                 Arrays.asList(Collections.singletonList(new Split()),
                         Collections.singletonList(new Split()),
                         Collections.singletonList(new Split())));

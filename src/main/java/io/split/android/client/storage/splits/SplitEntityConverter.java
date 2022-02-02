@@ -8,4 +8,6 @@ import io.split.android.client.storage.db.SplitEntity;
 public interface SplitEntityConverter {
 
     List<Split> getFromEntityList(List<SplitEntity> entities);
+
+    List<SplitEntity> getFromSplitList(List<Split> splits);
 }
