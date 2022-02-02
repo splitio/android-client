@@ -13,7 +13,6 @@ import java.util.List;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactoryImpl;
-import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorImpl;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -120,18 +119,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
-        List<SplitEntity> splitEntities = new ArrayList<>();
-        if (splits == null) {
-            return splitEntities;
-        }
-        for (Split split : splits) {
-            SplitEntity entity = new SplitEntity();
-            entity.setName(split.name);
-            entity.setBody(Json.toJson(split));
-            entity.setUpdatedAt(System.currentTimeMillis() / 1000);
-            splitEntities.add(entity);
-        }
-        return splitEntities;
+        return mSplitEntityConverter.getFromSplitList(splits);
     }
 
     private List<String> splitNameList(List<Split> splits) {
