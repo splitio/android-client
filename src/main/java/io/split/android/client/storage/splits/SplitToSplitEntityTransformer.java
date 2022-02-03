@@ -1,5 +1,7 @@
 package io.split.android.client.storage.splits;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import com.google.common.collect.Lists;
@@ -17,8 +19,8 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
 
     private final SplitParallelTaskExecutor<List<SplitEntity>> mTaskExecutor;
 
-    public SplitToSplitEntityTransformer(SplitParallelTaskExecutor<List<SplitEntity>> taskExecutor) {
-        mTaskExecutor = taskExecutor;
+    public SplitToSplitEntityTransformer(@NonNull SplitParallelTaskExecutor<List<SplitEntity>> taskExecutor) {
+        mTaskExecutor = checkNotNull(taskExecutor);
     }
 
     @Override

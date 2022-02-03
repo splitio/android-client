@@ -59,7 +59,7 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
     }
 
     @NonNull
-    private List<Split> convertEntitiesToSplitList(List<SplitEntity> entities) {
+    private static List<Split> convertEntitiesToSplitList(List<SplitEntity> entities) {
         List<Split> splits = new ArrayList<>();
 
         if (entities == null) {
