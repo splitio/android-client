@@ -46,7 +46,7 @@ public class MySegmentsV2PayloadDecoder {
         return (keyMap[internal] & 1 << offset) != 0;
     }
 
-    public BigInteger hashKey(String key) {
+    public static BigInteger hashKey(String key) {
         return MurmurHash3.unsignedHash128x64(key.getBytes(StringHelper.defaultCharset()))[0];
     }
 
