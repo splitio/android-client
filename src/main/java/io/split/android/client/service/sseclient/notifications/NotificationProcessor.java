@@ -74,6 +74,10 @@ public class NotificationProcessor {
         mMySegmentsNotificationProcessors.put(userKey, processor);
     }
 
+    public void unregisterMySegmentsProcessor(String userKey) {
+        mMySegmentsNotificationProcessors.remove(userKey);
+    }
+
     private void processSplitUpdate(SplitsChangeNotification notification) {
         mSplitsUpdateNotificationsQueue.offer(notification);
     }
