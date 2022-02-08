@@ -13,12 +13,16 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
+import io.split.android.client.service.mysegments.MySegmentsTaskFactoryConfiguration;
+import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProviderImpl;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
@@ -41,6 +45,10 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactory;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegister;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
@@ -165,7 +173,8 @@ class SplitFactoryHelper {
                                  HttpClient httpClient,
                                  Synchronizer synchronizer,
                                  TelemetrySynchronizer telemetrySynchronizer,
-                                 TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                                 TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                 MySegmentsSynchronizer tempMySegmentsSynchronizer) {
 
         BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue
                 = new LinkedBlockingDeque<>();
@@ -175,8 +184,10 @@ class SplitFactoryHelper {
 
         SplitUpdatesWorker splitUpdateWorker = new SplitUpdatesWorker(synchronizer,
                 splitsUpdateNotificationQueue);
-        MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(synchronizer,
+
+        MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(tempMySegmentsSynchronizer,
                 mySegmentChangeNotificationQueue);
+        ((MySegmentsSynchronizerRegister) synchronizer).registerMySegmentsSynchronizer(userKey, tempMySegmentsSynchronizer);
 
         NotificationParser notificationParser = new NotificationParser();
         NotificationProcessor notificationProcessor =
@@ -201,4 +212,5 @@ class SplitFactoryHelper {
         return new SyncManagerImpl(config, synchronizer, pushNotificationManager, splitUpdateWorker,
                 mySegmentUpdateWorker, pushManagerEventBroadcaster, backoffReconnectTimer, telemetrySynchronizer);
     }
+
 }

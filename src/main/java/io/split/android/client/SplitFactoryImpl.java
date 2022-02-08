@@ -26,10 +26,13 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
+import io.split.android.client.service.mysegments.MySegmentsTaskFactoryConfiguration;
+import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProviderImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
@@ -160,7 +163,14 @@ public class SplitFactoryImpl implements SplitFactory {
                 config.telemetryRefreshRate(),
                 config.shouldRecordTelemetry());
         _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
-                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, telemetrySynchronizer, storageContainer.getTelemetryStorage());
+                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer, telemetrySynchronizer, storageContainer.getTelemetryStorage(),
+                /* TODO: This parameter is temporary */
+                new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(), _splitTaskExecutor, config.segmentsRefreshRate())
+                        .getSynchronizer(new MySegmentsTaskFactoryProviderImpl(storageContainer.getTelemetryStorage()).getFactory(
+                                new MySegmentsTaskFactoryConfiguration(splitApiFacade.getMySegmentsFetcher(), storageContainer.getMySegmentsStorage(), _eventsManager)
+                        ), _eventsManager)
+
+        );
 
         registerTelemetryTasksInEventManager(_eventsManager,
                 telemetrySynchronizer,
