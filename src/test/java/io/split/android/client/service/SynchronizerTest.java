@@ -1,8 +1,20 @@
 package io.split.android.client.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.LiveData;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
@@ -42,15 +54,17 @@ import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
-import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.mysegments.LoadMySegmentsTask;
+import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
-import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegister;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
@@ -60,22 +74,9 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.fake.SplitTaskExecutorStub;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 public class SynchronizerTest {
 
-    Synchronizer mSynchronizer;
+    private SynchronizerImpl mSynchronizer;
 
     SplitTaskExecutor mTaskExecutor;
     @Mock
@@ -88,8 +89,6 @@ public class SynchronizerTest {
     PersistentEventsStorage mEventsStorage;
     @Mock
     PersistentImpressionsStorage mImpressionsStorage;
-    @Mock
-    SplitTaskExecutionListener mTaskExecutionListener;
     @Mock
     TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
@@ -113,9 +112,13 @@ public class SynchronizerTest {
     SplitEventsManager mEventsManager;
     @Mock
     WorkManagerWrapper mWorkManagerWrapper;
+    @Mock
+    MySegmentsTaskFactory mMySegmentsTaskFactory;
+    @Mock
+    MySegmentsSynchronizer mMySegmentsSynchronizer;
 
     public void setup(SplitClientConfig splitClientConfig) {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         mTaskExecutor = spy(new SplitTaskExecutorStub());
         HttpFetcher<SplitChange> splitsFetcher = Mockito.mock(HttpFetcher.class);
@@ -138,7 +141,6 @@ public class SynchronizerTest {
         when(mSplitStorageContainer.getImpressionsStorage()).thenReturn(mImpressionsStorage);
 
         when(mTaskFactory.createSplitsSyncTask(anyBoolean())).thenReturn(Mockito.mock(SplitsSyncTask.class));
-        when(mTaskFactory.createMySegmentsSyncTask(anyBoolean())).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
         when(mTaskFactory.createLoadSplitsTask()).thenReturn(Mockito.mock(LoadSplitsTask.class));
@@ -146,11 +148,8 @@ public class SynchronizerTest {
         when(mTaskFactory.createImpressionsCountRecorderTask()).thenReturn(Mockito.mock(ImpressionsCountRecorderTask.class));
         when(mTaskFactory.createSaveImpressionsCountTask(any())).thenReturn(Mockito.mock(SaveImpressionsCountTask.class));
 
-        when(mWorkManager.getWorkInfoByIdLiveData(any())).thenReturn(mock(LiveData.class));
-
         when(mRetryBackoffFactory.create(any(), anyInt()))
                 .thenReturn(mRetryTimerSplitsSync)
-                .thenReturn(mRetryTimerMySegmentsSync)
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor,
@@ -158,25 +157,25 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void splitExecutorSchedule() throws InterruptedException {
+    public void splitExecutorSchedule() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
+        MySegmentsSynchronizer mySegmentsSynchronizer = mock(MySegmentsSynchronizer.class);
+        mSynchronizer.registerMySegmentsSynchronizer("userKey", mySegmentsSynchronizer);
         mSynchronizer.startPeriodicFetching();
         mSynchronizer.startPeriodicRecording();
-        verify(mTaskExecutor, times(1)).schedule(
+        verify(mTaskExecutor).schedule(
                 any(SplitsSyncTask.class), anyLong(), anyLong(),
                 any());
-        verify(mTaskExecutor, times(1)).schedule(
-                any(MySegmentsSyncTask.class), anyLong(), anyLong(),
-                any());
-        verify(mTaskExecutor, times(1)).schedule(
+        verify(mySegmentsSynchronizer).scheduleSegmentsSyncTask();
+        verify(mTaskExecutor).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
-        verify(mTaskExecutor, times(1)).schedule(
+        verify(mTaskExecutor).schedule(
                 any(ImpressionsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
 
@@ -200,8 +199,10 @@ public class SynchronizerTest {
                 any(ExistingPeriodicWorkPolicy.class),
                 any(PeriodicWorkRequest.class));
 
-        verify(mWorkManagerWrapper, times(1)).removeWork();
+        verify(mWorkManagerWrapper).removeWork();
         verify(mWorkManagerWrapper, never()).scheduleWork();
+
+        mSynchronizer.unregisterMySegmentsSynchronizer("userKey");
     }
 
     @Test
@@ -445,19 +446,24 @@ public class SynchronizerTest {
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
         when(mRetryBackoffFactory.create(any(), anyInt()))
                 .thenReturn(mRetryTimerSplitsSync)
-                .thenReturn(mRetryTimerMySegmentsSync)
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(config, executor,
                 mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer);
+
+        LoadMySegmentsTask loadMySegmentsTask = mock(LoadMySegmentsTask.class);
+        when(loadMySegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
+        when(mMySegmentsTaskFactory.createLoadMySegmentsTask()).thenReturn(loadMySegmentsTask);
+
+        ((MySegmentsSynchronizerRegister) mSynchronizer).registerMySegmentsSynchronizer("", mMySegmentsSynchronizer);
+
         mSynchronizer.loadSplitsFromCache();
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
-        verify(mEventsManager, times(1))
-                .notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
-        verify(mEventsManager, times(1))
+        verify(mMySegmentsSynchronizer).loadMySegmentsFromCache();
+        verify(mEventsManager)
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-        verify(mEventsManager, times(1))
+        verify(mEventsManager)
                 .notifyInternalEvent(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
     }
 
@@ -487,7 +493,7 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void stop() {
+    public void destroy() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .sychronizeInBackground(false)
                 .build();
@@ -495,13 +501,12 @@ public class SynchronizerTest {
 
         mSynchronizer.destroy();
 
-        verify(mRetryTimerSplitsSync, times(1)).stop();
-        verify(mRetryTimerMySegmentsSync, times(1)).stop();
-        verify(mRetryTimerSplitsUpdate, times(1)).stop();
-        verify(mTaskExecutor, times(1)).submit(
+        verify(mRetryTimerSplitsUpdate).stop();
+        verify(mRetryTimerSplitsUpdate).stop();
+        verify(mTaskExecutor).submit(
                 any(ImpressionsRecorderTask.class),
                 any(RecorderSyncHelper.class));
-        verify(mTaskExecutor, times(1)).submit(
+        verify(mTaskExecutor).submit(
                 any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
     }
