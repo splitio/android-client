@@ -503,7 +503,7 @@ public class SynchronizerTest {
         mSynchronizer.destroy();
 
         verify(mRetryTimerSplitsUpdate).stop();
-        verify(mRetryTimerSplitsUpdate).stop();
+        verify(mRetryTimerSplitsSync).stop();
         verify(mTaskExecutor).submit(
                 any(ImpressionsRecorderTask.class),
                 any(RecorderSyncHelper.class));

@@ -11,6 +11,8 @@ import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 
 public class MySegmentsSynchronizerFactoryImpl implements MySegmentsSynchronizerFactory {
 
+    private static final int BACKOFF_BASE = 1;
+
     private final RetryBackoffCounterTimerFactory mRetryBackoffCounterTimerFactory;
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final int mSegmentsRefreshRate;
@@ -25,7 +27,7 @@ public class MySegmentsSynchronizerFactoryImpl implements MySegmentsSynchronizer
 
     @Override
     public MySegmentsSynchronizer getSynchronizer(MySegmentsTaskFactory mySegmentsTaskFactory, SplitEventsManager splitEventsManager) {
-        return new MySegmentsSynchronizerImpl(mRetryBackoffCounterTimerFactory.create(mSplitTaskExecutor, 1),
+        return new MySegmentsSynchronizerImpl(mRetryBackoffCounterTimerFactory.create(mSplitTaskExecutor, BACKOFF_BASE),
                 mSplitTaskExecutor,
                 splitEventsManager,
                 mySegmentsTaskFactory,
