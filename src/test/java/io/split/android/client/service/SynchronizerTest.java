@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import androidx.annotation.NonNull;
@@ -509,6 +510,77 @@ public class SynchronizerTest {
         verify(mTaskExecutor).submit(
                 any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
+    }
+
+    @Test
+    public void loadMySegmentsFromCacheDelegatesToRegisteredSyncs() {
+        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+
+        mSynchronizer.loadMySegmentsFromCache();
+
+        verify(mMySegmentsSynchronizer).loadMySegmentsFromCache();
+    }
+
+    @Test
+    public void synchronizeMySegmentsDelegatesToRegisteredSyncs() {
+        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+
+        mSynchronizer.synchronizeMySegments();
+
+        verify(mMySegmentsSynchronizer).synchronizeMySegments();
+    }
+
+    @Test
+    public void forceMySegmentsSyncDelegatesToRegisteredSyncs() {
+        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+
+        mSynchronizer.forceMySegmentsSync();
+
+        verify(mMySegmentsSynchronizer).forceMySegmentsSync();
+    }
+
+    @Test
+    public void destroyDelegatesToRegisteredSyncs() {
+        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+
+        mSynchronizer.destroy();
+
+        verify(mMySegmentsSynchronizer).destroy();
+    }
+
+    @Test
+    public void startPeriodicFetchingDelegatesToRegisteredSyncs() {
+        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+
+        mSynchronizer.startPeriodicFetching();
+
+        verify(mMySegmentsSynchronizer).scheduleSegmentsSyncTask();
+    }
+
+    @Test
+    public void stopPeriodicFetchingDelegatesToRegisteredSyncs() {
+        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+
+        mSynchronizer.stopPeriodicFetching();
+
+        verify(mMySegmentsSynchronizer).stopPeriodicFetching();
+    }
+
+    @Test
+    public void unregisterMySegmentsSynchronizerExcludesSyncFromDelegation() {
+        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+        mSynchronizer.unregisterMySegmentsSynchronizer("userKey");
+
+        mSynchronizer.loadMySegmentsFromCache();
+
+        verifyNoInteractions(mMySegmentsSynchronizer);
     }
 
     @After

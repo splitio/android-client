@@ -169,7 +169,6 @@ public class SplitFactoryImpl implements SplitFactory {
                         .getSynchronizer(new MySegmentsTaskFactoryProviderImpl(storageContainer.getTelemetryStorage()).getFactory(
                                 new MySegmentsTaskFactoryConfiguration(splitApiFacade.getMySegmentsFetcher(), storageContainer.getMySegmentsStorage(), _eventsManager)
                         ), _eventsManager)
-
         );
 
         registerTelemetryTasksInEventManager(_eventsManager,
