@@ -82,7 +82,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
         }
     }
 
-    public void notifyMySegmentRefreshNeeded() {
+    private void notifyMySegmentRefreshNeeded() {
         mConfiguration.getMySegmentUpdateNotificationsQueue().offer(new MySegmentChangeNotification());
     }
 

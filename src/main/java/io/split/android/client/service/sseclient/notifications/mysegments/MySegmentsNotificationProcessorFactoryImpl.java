@@ -20,10 +20,10 @@ public class MySegmentsNotificationProcessorFactoryImpl implements MySegmentsNot
                                                       @NonNull SplitTaskExecutor splitTaskExecutor,
                                                       @NonNull MySegmentsV2PayloadDecoder mySegmentsPayloadDecoder,
                                                       @NonNull CompressionUtilProvider compressionProvider) {
-        this.mNotificationParser = notificationParser;
-        this.mSplitTaskExecutor = splitTaskExecutor;
-        this.mMySegmentsPayloadDecoder = mySegmentsPayloadDecoder;
-        this.mCompressionProvider = compressionProvider;
+        mNotificationParser = checkNotNull(notificationParser);
+        mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
+        mMySegmentsPayloadDecoder = checkNotNull(mySegmentsPayloadDecoder);
+        mCompressionProvider = checkNotNull(compressionProvider);
     }
 
     @Override

@@ -180,9 +180,8 @@ class SplitFactoryHelper {
 
         NotificationParser notificationParser = new NotificationParser();
         NotificationProcessor notificationProcessor =
-                new NotificationProcessor(userKey, splitTaskExecutor, splitTaskFactory,
-                        notificationParser, new MySegmentsV2PayloadDecoder(), new CompressionUtilProvider(),
-                        mySegmentChangeNotificationQueue, splitsUpdateNotificationQueue);
+                new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
+                        notificationParser, splitsUpdateNotificationQueue);
         PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
 
         URI streamingServiceUrl = URI.create(config.streamingServiceUrl());

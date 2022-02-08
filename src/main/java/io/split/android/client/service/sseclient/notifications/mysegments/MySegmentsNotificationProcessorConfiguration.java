@@ -9,6 +9,7 @@ import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 
 public class MySegmentsNotificationProcessorConfiguration {
+
     private final MySegmentsTaskFactory mMySegmentsTaskFactory;
     private final BlockingQueue<MySegmentChangeNotification> mMySegmentUpdateNotificationsQueue;
     private final BigInteger mHashedUserKey;
