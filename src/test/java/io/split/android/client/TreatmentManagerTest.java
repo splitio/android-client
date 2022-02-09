@@ -300,7 +300,7 @@ public class TreatmentManagerTest {
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
                 new KeyValidatorImpl(), new SplitValidatorImpl(),
-                new ImpressionListenerMock(), config, eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class));
+                new ImpressionListenerMock(), config.labelsEnabled(), eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class));
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -320,7 +320,7 @@ public class TreatmentManagerTest {
                 mock(KeyValidator.class),
                 mock(SplitValidator.class),
                 mock(ImpressionListener.class),
-                SplitClientConfig.builder().build(),
+                SplitClientConfig.builder().build().labelsEnabled(),
                 eventsManager,
                 attributesManager,
                 mock(AttributesMerger.class),
