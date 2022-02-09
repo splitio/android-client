@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
@@ -14,15 +14,15 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
 
     private final TelemetryStorageConsumer mTelemetryStorageConsumer;
     private final SplitsStorage mSplitsStorage;
-    private final MySegmentsStorage mMySegmentsStorage;
+    private final MySegmentsStorageContainer mMySegmentsStorageContainer;
     private Stats pendingStats = null;
 
     public TelemetryStatsProviderImpl(@NonNull TelemetryStorageConsumer telemetryStorageConsumer,
                                       @NonNull SplitsStorage splitsStorage,
-                                      @NonNull MySegmentsStorage mySegmentsStorage) {
+                                      @NonNull MySegmentsStorageContainer mySegmentsStorage) {
         mTelemetryStorageConsumer = checkNotNull(telemetryStorageConsumer);
         mSplitsStorage = checkNotNull(splitsStorage);
-        mMySegmentsStorage = checkNotNull(mySegmentsStorage);
+        mMySegmentsStorageContainer = checkNotNull(mySegmentsStorage);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
         stats.setSplitCount(mSplitsStorage.getAll().size());
         stats.setTags(mTelemetryStorageConsumer.popTags());
         stats.setMethodLatencies(mTelemetryStorageConsumer.popLatencies());
-        stats.setSegmentCount(mMySegmentsStorage.getAll().size());
+        stats.setSegmentCount(mMySegmentsStorageContainer.getUniqueAmount());
         stats.setSessionLengthMs(mTelemetryStorageConsumer.getSessionLength());
         stats.setLastSynchronizations(mTelemetryStorageConsumer.getLastSynchronization());
         stats.setImpressionsDropped(mTelemetryStorageConsumer.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_DROPPED));

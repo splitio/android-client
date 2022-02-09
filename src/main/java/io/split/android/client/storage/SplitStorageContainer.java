@@ -8,17 +8,17 @@ import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.telemetry.storage.TelemetryStorageConsumer;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitStorageContainer {
 
     private final SplitsStorage mSplitStorage;
-    private final MySegmentsStorage mMySegmentsStorage;
+    private final MySegmentsStorageContainer mMySegmentsStorageContainer;
     private final PersistentSplitsStorage mPersistentSplitsStorage;
     private final PersistentEventsStorage mPersistentEventsStorage;
     private final PersistentImpressionsStorage mPersistentImpressionsStorage;
@@ -28,7 +28,7 @@ public class SplitStorageContainer {
     private final TelemetryStorage mTelemetryStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
-                                 @NonNull MySegmentsStorage mySegmentsStorage,
+                                 @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
                                  @NonNull PersistentSplitsStorage persistentSplitsStorage,
                                  @NonNull PersistentEventsStorage persistentEventsStorage,
                                  @NonNull PersistentImpressionsStorage persistentImpressionsStorage,
@@ -38,7 +38,7 @@ public class SplitStorageContainer {
                                  @NonNull TelemetryStorage telemetryStorage) {
 
         mSplitStorage = checkNotNull(splitStorage);
-        mMySegmentsStorage = checkNotNull(mySegmentsStorage);
+        mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
         mPersistentSplitsStorage = checkNotNull(persistentSplitsStorage);
         mPersistentEventsStorage = checkNotNull(persistentEventsStorage);
         mPersistentImpressionsStorage = checkNotNull(persistentImpressionsStorage);
@@ -52,8 +52,12 @@ public class SplitStorageContainer {
         return mSplitStorage;
     }
 
-    public MySegmentsStorage getMySegmentsStorage() {
-        return mMySegmentsStorage;
+    public MySegmentsStorageContainer getMySegmentsStorageContainer() {
+        return mMySegmentsStorageContainer;
+    }
+
+    public MySegmentsStorage getMySegmentsStorage(String matchingKey) {
+        return mMySegmentsStorageContainer.getStorageForKey(matchingKey);
     }
 
     public PersistentSplitsStorage getPersistentSplitsStorage() {

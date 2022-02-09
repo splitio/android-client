@@ -9,8 +9,6 @@ import java.net.URISyntaxException;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.ServiceFactory;
-import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.utils.Logger;
@@ -26,7 +24,7 @@ public class MySegmentsSyncWorker extends SplitWorker {
             mSplitTask = new MySegmentsSyncTask(
                     ServiceFactory.getMySegmentsFetcher(getNetworkHelper(), getHttpClient(),
                             getEndPoint(), key),
-                    StorageFactory.getMySegmentsStorage(getDatabase(), key),
+                    StorageFactory.getMySegmentsStorage(getDatabase()).getStorageForKey(key),
                     false,
                     null,
                     StorageFactory.getTelemetryStorage(shouldRecordTelemetry));
