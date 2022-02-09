@@ -1,11 +1,11 @@
 package io.split.android.client.service.executor;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
-
-import static androidx.core.util.Preconditions.checkNotNull;
 
 public class SplitTaskBatchItem {
     private final SplitTask task;

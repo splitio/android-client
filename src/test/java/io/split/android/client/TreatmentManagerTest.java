@@ -37,9 +37,7 @@ import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import io.split.android.fake.ImpressionListenerMock;
-import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
 import io.split.android.fake.SplitEventsManagerStub;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
@@ -297,11 +295,6 @@ public class TreatmentManagerTest {
     }
 
     private TreatmentManager createTreatmentManager(String matchingKey, String bucketingKey) {
-
-        FileHelper fileHelper = new FileHelper();
-        List<String> mySegments = Arrays.asList("s1", "s2", "test_copy");
-        RefreshableMySegmentsFetcherProvider mySegmentsProvider = new RefreshableMySegmentsFetcherProviderStub(mySegments);
-        List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
 
         SplitClientConfig config = SplitClientConfig.builder().build();
         return new TreatmentManagerImpl(
