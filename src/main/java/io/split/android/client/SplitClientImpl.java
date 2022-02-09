@@ -84,7 +84,7 @@ public final class SplitClientImpl implements SplitClient {
                 new TreatmentManagerImpl(
                         key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser),
                         new KeyValidatorImpl(), splitValidator,
-                        impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer),
+                        impressionListener, config.labelsEnabled(), eventsManager, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer),
                 splitValidator);
     }
 
