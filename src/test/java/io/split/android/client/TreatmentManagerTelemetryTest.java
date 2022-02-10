@@ -60,7 +60,7 @@ public class TreatmentManagerTelemetryTest {
                 keyValidator,
                 splitValidator,
                 impressionListener,
-                SplitClientConfig.builder().build(),
+                SplitClientConfig.builder().build().labelsEnabled(),
                 eventsManager,
                 attributesManager,
                 attributesMerger,
