@@ -116,7 +116,7 @@ class SplitFactoryHelper {
     SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key, boolean shouldRecordTelemetry) {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
-                StorageFactory.getMySegmentsStorage(splitRoomDatabase, key.matchingKey()),
+                StorageFactory.getMySegmentsStorage(splitRoomDatabase),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenEventsStorage(splitRoomDatabase),
                 StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase),
