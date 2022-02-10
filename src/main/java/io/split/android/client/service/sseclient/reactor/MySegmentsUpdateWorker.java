@@ -7,7 +7,7 @@ import androidx.annotation.NonNull;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
-import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.utils.Logger;
 
 /**
@@ -15,11 +15,11 @@ import io.split.android.client.utils.Logger;
  */
 public class MySegmentsUpdateWorker extends UpdateWorker {
 
-    private final Synchronizer mSynchronizer;
+    private final MySegmentsSynchronizer mSynchronizer;
     private final BlockingQueue<MySegmentChangeNotification> mNotificationsQueue;
 
     public MySegmentsUpdateWorker(
-            @NonNull Synchronizer synchronizer,
+            @NonNull MySegmentsSynchronizer synchronizer,
             @NonNull BlockingQueue<MySegmentChangeNotification> notificationsQueue) {
         super();
         mSynchronizer = checkNotNull(synchronizer);

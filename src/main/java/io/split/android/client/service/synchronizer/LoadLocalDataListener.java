@@ -11,7 +11,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-class LoadLocalDataListener implements SplitTaskExecutionListener {
+public class LoadLocalDataListener implements SplitTaskExecutionListener {
 
     private final SplitEventsManager mSplitEventsManager;
     private final SplitInternalEvent mEventToFire;

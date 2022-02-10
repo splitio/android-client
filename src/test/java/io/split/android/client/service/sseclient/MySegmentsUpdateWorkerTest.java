@@ -1,5 +1,9 @@
 package io.split.android.client.service.sseclient;
 
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -8,21 +12,16 @@ import org.mockito.MockitoAnnotations;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
-import io.split.android.client.service.synchronizer.Synchronizer;
-
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 
 public class MySegmentsUpdateWorkerTest {
 
     MySegmentsUpdateWorker mWorker;
 
     @Mock
-    Synchronizer mSynchronizer;
+    MySegmentsSynchronizer mSynchronizer;
 
     BlockingQueue<MySegmentChangeNotification> mNotificationQueue;
 
