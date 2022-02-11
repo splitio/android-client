@@ -117,6 +117,7 @@ public class SynchronizerTest {
     MySegmentsTaskFactory mMySegmentsTaskFactory;
     @Mock
     MySegmentsSynchronizer mMySegmentsSynchronizer;
+    private final String mUserKey = "user_key";
 
     public void setup(SplitClientConfig splitClientConfig) {
         MockitoAnnotations.openMocks(this);
@@ -131,7 +132,7 @@ public class SynchronizerTest {
         MySegmentsStorage mySegmentsStorage = Mockito.mock(MySegmentsStorage.class);
 
         when(mSplitApiFacade.getSplitFetcher()).thenReturn(splitsFetcher);
-        when(mSplitApiFacade.getMySegmentsFetcher()).thenReturn(mySegmentsFetcher);
+        when(mSplitApiFacade.getMySegmentsFetcher(mUserKey)).thenReturn(mySegmentsFetcher);
         when(mSplitApiFacade.getEventsRecorder()).thenReturn(eventsRecorder);
         when(mSplitApiFacade.getImpressionsRecorder()).thenReturn(impressionsRecorder);
 

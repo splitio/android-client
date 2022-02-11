@@ -102,19 +102,6 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache) {
-        return new MySegmentsSyncTask(
-                mSplitApiFacade.getMySegmentsFetcher(),
-                mSplitsStorageContainer.getMySegmentsStorage(),
-                avoidCache, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
-    }
-
-    @Override
-    public LoadMySegmentsTask createLoadMySegmentsTask() {
-        return new LoadMySegmentsTask(mSplitsStorageContainer.getMySegmentsStorage());
-    }
-
-    @Override
     public LoadSplitsTask createLoadSplitsTask() {
         return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage());
     }
@@ -122,18 +109,6 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SplitKillTask createSplitKillTask(Split split) {
         return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage(), split, mEventsManager);
-    }
-
-    @Override
-    public MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments) {
-        return new MySegmentsOverwriteTask(mSplitsStorageContainer.getMySegmentsStorage(), segments, mEventsManager);
-    }
-
-    @Override
-    public MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, String segmentName) {
-        return new MySegmentsUpdateTask(
-                mSplitsStorageContainer.getMySegmentsStorage(), add,
-                segmentName, mEventsManager);
     }
 
     @Override

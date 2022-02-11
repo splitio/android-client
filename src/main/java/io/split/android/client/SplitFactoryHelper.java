@@ -20,6 +20,7 @@ import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryConfiguration;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProviderImpl;
@@ -142,8 +143,8 @@ class SplitFactoryHelper {
         return new SplitApiFacade(
                 ServiceFactory.getSplitsFetcher(networkHelper, httpClient,
                         splitClientConfig.endpoint(), splitsFilterQueryString),
-                ServiceFactory.getMySegmentsFetcher(networkHelper, httpClient,
-                        splitClientConfig.endpoint(), key.matchingKey()),
+                new MySegmentsFetcherFactoryImpl(networkHelper, httpClient,
+                        splitClientConfig.endpoint()),
                 ServiceFactory.getSseAuthenticationFetcher(networkHelper, httpClient,
                         splitClientConfig.authServiceUrl()),
                 ServiceFactory.getEventsRecorder(networkHelper, httpClient,

@@ -18,7 +18,7 @@ import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 
-public interface SplitTaskFactory extends TelemetryTaskFactory, MySegmentsTaskFactory {
+public interface SplitTaskFactory extends TelemetryTaskFactory {
     EventsRecorderTask createEventsRecorderTask();
 
     ImpressionsRecorderTask createImpressionsRecorderTask();
