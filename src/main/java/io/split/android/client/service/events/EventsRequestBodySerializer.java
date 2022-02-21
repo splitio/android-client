@@ -16,7 +16,15 @@ public class EventsRequestBodySerializer implements HttpRequestBodySerializer<Li
         List<SerializedEvent> data = new ArrayList<>();
 
         for (Event event : inputData) {
-            data.add(new SerializedEvent(event));
+            SerializedEvent serializedEvent = new SerializedEvent();
+            serializedEvent.eventTypeId = event.eventTypeId;
+            serializedEvent.trafficTypeName = event.trafficTypeName;
+            serializedEvent.key = event.key;
+            serializedEvent.value = event.value;
+            serializedEvent.timestamp = event.timestamp;
+            serializedEvent.properties = event.properties;
+
+            data.add(serializedEvent);
         }
 
         return Json.toJson(data);
