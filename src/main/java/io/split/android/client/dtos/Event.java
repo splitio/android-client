@@ -16,7 +16,7 @@ public class Event implements InBytesSizable, Identifiable {
     public Map<String,Object> properties;
 
     transient public long storageId;
-    transient private int sizeInBytes = 0;
+    private int sizeInBytes = 0;
 
     @Override
     public boolean equals(Object o) {
