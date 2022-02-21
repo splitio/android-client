@@ -4,7 +4,7 @@ import com.google.common.base.Objects;
 
 import java.util.Map;
 
-public class SerializedEvent {
+public class SerializableEvent {
 
     public String eventTypeId;
     public String trafficTypeName;

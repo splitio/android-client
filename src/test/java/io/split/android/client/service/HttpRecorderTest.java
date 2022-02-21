@@ -13,7 +13,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.SerializedEvent;
+import io.split.android.client.dtos.SerializableEvent;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
@@ -81,8 +81,8 @@ public class HttpRecorderTest {
     public void testSuccessfulEventsSend() throws HttpException {
         boolean exceptionWasThrown = false;
         List<Event> events = createEvents();
-        List<SerializedEvent> serializedEvents = createSerializedEventsObjects(events);
-        String jsonEvents = Json.toJson(serializedEvents);
+        List<SerializableEvent> serializableEvents = createSerializedEventsObjects(events);
+        String jsonEvents = Json.toJson(serializableEvents);
         when(mNetworkHelperMock.isReachable(mEventsUrl)).thenReturn(true);
         HttpRequest request = mock(HttpRequest.class);
 
@@ -218,21 +218,21 @@ public class HttpRecorderTest {
         return events;
     }
 
-    private List<SerializedEvent> createSerializedEventsObjects(List<Event> events) {
-        List<SerializedEvent> serializedEvents = new ArrayList<>();
+    private List<SerializableEvent> createSerializedEventsObjects(List<Event> events) {
+        List<SerializableEvent> serializableEvents = new ArrayList<>();
 
         for (Event event : events) {
-            SerializedEvent serializedEvent = new SerializedEvent();
-            serializedEvent.eventTypeId = event.eventTypeId;
-            serializedEvent.trafficTypeName = event.trafficTypeName;
-            serializedEvent.key = event.key;
-            serializedEvent.value = event.value;
-            serializedEvent.timestamp = event.timestamp;
-            serializedEvent.properties = event.properties;
+            SerializableEvent serializableEvent = new SerializableEvent();
+            serializableEvent.eventTypeId = event.eventTypeId;
+            serializableEvent.trafficTypeName = event.trafficTypeName;
+            serializableEvent.key = event.key;
+            serializableEvent.value = event.value;
+            serializableEvent.timestamp = event.timestamp;
+            serializableEvent.properties = event.properties;
 
-            serializedEvents.add(serializedEvent);
+            serializableEvents.add(serializableEvent);
         }
 
-        return serializedEvents;
+        return serializableEvents;
     }
 }

@@ -2,7 +2,7 @@ package io.split.android.client.dtos;
 
 import io.split.android.client.storage.InBytesSizable;
 
-public class Event extends SerializedEvent implements InBytesSizable, Identifiable {
+public class Event extends SerializableEvent implements InBytesSizable, Identifiable {
 
     transient public long storageId;
     private int sizeInBytes = 0;
