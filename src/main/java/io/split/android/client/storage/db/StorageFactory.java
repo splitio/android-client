@@ -5,8 +5,8 @@ import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 import androidx.annotation.RestrictTo;
 
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.storage.attributes.AttributesStorage;
-import io.split.android.client.storage.attributes.AttributesStorageImpl;
+import io.split.android.client.storage.attributes.AttributesStorageContainer;
+import io.split.android.client.storage.attributes.AttributesStorageContainerImpl;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.attributes.SqLitePersistentAttributesStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
@@ -32,6 +32,7 @@ public class StorageFactory {
 
     private static volatile TelemetryStorage telemetryStorageInstance;
     private static volatile MySegmentsStorageContainer mySegmentsStorageContainerInstance;
+    private static volatile AttributesStorageContainer attributesStorageContainerInstance;
 
     public static SplitsStorage getSplitsStorage(SplitRoomDatabase splitRoomDatabase) {
         PersistentSplitsStorage persistentSplitsStorage
@@ -65,8 +66,8 @@ public class StorageFactory {
                 ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
     }
 
-    public static AttributesStorage getAttributesStorage() {
-        return new AttributesStorageImpl();
+    public static AttributesStorageContainer getAttributesStorage() {
+        return attributesStorageContainerInstance;
     }
 
     public static PersistentAttributesStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase, String matchingKey) {
@@ -101,6 +102,19 @@ public class StorageFactory {
         return mySegmentsStorageContainerInstance;
     }
 
+    private static AttributesStorageContainer getAttributesStorageContainerInstance() {
+        if (attributesStorageContainerInstance == null) {
+            synchronized (StorageFactory.class) {
+                if (attributesStorageContainerInstance == null) {
+                    attributesStorageContainerInstance = new AttributesStorageContainerImpl();
+                }
+            }
+        }
+
+        return attributesStorageContainerInstance;
+    }
+
+    @SuppressWarnings("unused")
     private static void clearTelemetryStorage() {
         telemetryStorageInstance = null;
     }
