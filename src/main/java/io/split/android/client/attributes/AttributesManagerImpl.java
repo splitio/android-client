@@ -23,7 +23,7 @@ public class AttributesManagerImpl implements AttributesManager {
     @Nullable private final AttributeTaskFactory mAttributeTaskFactory;
     @Nullable private final SplitTaskExecutor mSplitTaskExecutor;
 
-    public AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
+    AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
                                  @NonNull AttributesValidator attributesValidator,
                                  @NonNull ValidationMessageLogger validationMessageLogger) {
         mAttributesStorage = checkNotNull(attributesStorage);
@@ -34,7 +34,7 @@ public class AttributesManagerImpl implements AttributesManager {
         mSplitTaskExecutor = null;
     }
 
-    public AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
+    AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
                                  @NonNull AttributesValidator attributesValidator,
                                  @NonNull ValidationMessageLogger validationMessageLogger,
                                  @Nullable PersistentAttributesStorage persistentAttributesStorage,
