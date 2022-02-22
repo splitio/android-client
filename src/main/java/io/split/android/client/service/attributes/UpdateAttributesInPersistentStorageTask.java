@@ -11,10 +11,12 @@ import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 
 public class UpdateAttributesInPersistentStorageTask implements SplitTask {
 
+    private final String mMatchingKey;
     private final PersistentAttributesStorage mPersistentAttributesStorage;
     private final Map<String, Object> mAttributes;
 
-    public UpdateAttributesInPersistentStorageTask(PersistentAttributesStorage persistentAttributesStorage, Map<String, Object> attributes) {
+    public UpdateAttributesInPersistentStorageTask(String matchingKey, PersistentAttributesStorage persistentAttributesStorage, Map<String, Object> attributes) {
+        mMatchingKey = matchingKey;
         mPersistentAttributesStorage = persistentAttributesStorage;
         mAttributes = attributes;
     }
@@ -22,7 +24,7 @@ public class UpdateAttributesInPersistentStorageTask implements SplitTask {
     @NonNull
     @Override
     public SplitTaskExecutionInfo execute() {
-        mPersistentAttributesStorage.set(mAttributes);
+        mPersistentAttributesStorage.set(mMatchingKey, mAttributes);
 
         return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
     }

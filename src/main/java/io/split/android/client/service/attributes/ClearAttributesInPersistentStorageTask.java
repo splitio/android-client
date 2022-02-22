@@ -9,16 +9,18 @@ import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 
 public class ClearAttributesInPersistentStorageTask implements SplitTask {
 
+    private final String mMatchingKey;
     private final PersistentAttributesStorage mPersistentAttributesStorage;
 
-    public ClearAttributesInPersistentStorageTask(PersistentAttributesStorage persistentAttributesStorage) {
+    public ClearAttributesInPersistentStorageTask(String matchingKey, PersistentAttributesStorage persistentAttributesStorage) {
+        mMatchingKey = matchingKey;
         mPersistentAttributesStorage = persistentAttributesStorage;
     }
 
     @NonNull
     @Override
     public SplitTaskExecutionInfo execute() {
-        mPersistentAttributesStorage.clear();
+        mPersistentAttributesStorage.clear(mMatchingKey);
 
         return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
     }

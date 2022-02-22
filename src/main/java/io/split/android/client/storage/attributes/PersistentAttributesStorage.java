@@ -7,10 +7,10 @@ import java.util.Map;
 
 public interface PersistentAttributesStorage {
 
-    void set(@Nullable Map<String, Object> attributes);
+    void set(String matchingKey, @Nullable Map<String, Object> attributes);
 
     @NonNull
-    Map<String, Object> getAll();
+    Map<String, Object> getAll(String matchingKey);
 
-    void clear();
+    void clear(String matchingKey);
 }

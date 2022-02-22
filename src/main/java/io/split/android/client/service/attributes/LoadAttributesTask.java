@@ -11,11 +11,13 @@ import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 
 public class LoadAttributesTask implements SplitTask {
 
+    private final String mMatchingKey;
     private final AttributesStorage mAttributesStorage;
     @Nullable
     private final PersistentAttributesStorage mPersistentAttributesStorage;
 
-    public LoadAttributesTask(@NonNull AttributesStorage attributesStorage, @Nullable PersistentAttributesStorage persistentAttributesStorage) {
+    public LoadAttributesTask(@NonNull String matchingKey, @NonNull AttributesStorage attributesStorage, @Nullable PersistentAttributesStorage persistentAttributesStorage) {
+        mMatchingKey = matchingKey;
         mAttributesStorage = attributesStorage;
         mPersistentAttributesStorage = persistentAttributesStorage;
     }
@@ -24,7 +26,7 @@ public class LoadAttributesTask implements SplitTask {
     @Override
     public SplitTaskExecutionInfo execute() {
         if (mPersistentAttributesStorage != null) {
-            mAttributesStorage.set(mPersistentAttributesStorage.getAll());
+            mAttributesStorage.set(mPersistentAttributesStorage.getAll(mMatchingKey));
         }
         return SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_ATTRIBUTES);
     }
