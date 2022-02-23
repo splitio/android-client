@@ -3,7 +3,6 @@ package tests.integration.streaming;
 import android.content.Context;
 
 import androidx.core.util.Pair;
-import androidx.room.Room;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -103,15 +102,15 @@ public class MySegmentsSyncProcessTest {
 
         testMySegmentsUpdate();
         sleep(500);
-        MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
+        MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
         testMySegmentsPush(MSG_SEGMENT_UPDATE_PAYLOAD);
         sleep(500);
-        MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
+        MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
         testMySegmentsPush(MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD);
         sleep(1000);
-        MySegmentEntity mySegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKeys(mUserKey.matchingKey());
+        MySegmentEntity mySegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
         Assert.assertEquals("segment1,segment2,segment3", mySegmentEntity.getSegmentList());
         Assert.assertEquals("segment1", mySegmentEntityPayload.getSegmentList());

@@ -12,5 +12,5 @@ public interface MySegmentDao {
     void update(MySegmentEntity mySegment);
 
     @Query("SELECT user_key, segment_list, updated_at FROM my_segments WHERE user_key = :userKey")
-    MySegmentEntity getByUserKeys(String userKey);
+    MySegmentEntity getByUserKey(String userKey);
 }

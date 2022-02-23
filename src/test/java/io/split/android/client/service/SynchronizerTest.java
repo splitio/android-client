@@ -120,8 +120,6 @@ public class SynchronizerTest {
     MySegmentsSynchronizer mMySegmentsSynchronizer;
     private final String mUserKey = "user_key";
 
-    private final String mUserKey = "user_key";
-
     public void setup(SplitClientConfig splitClientConfig) {
         MockitoAnnotations.openMocks(this);
 

@@ -38,7 +38,7 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
 
     @Override
     public List<String> getSnapshot(String userKey) {
-        return getMySegmentsFromEntity(mDatabase.mySegmentDao().getByUserKeys(userKey));
+        return getMySegmentsFromEntity(mDatabase.mySegmentDao().getByUserKey(userKey));
     }
 
     @Override

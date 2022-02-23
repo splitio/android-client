@@ -167,7 +167,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 /* TODO: This parameter is temporary */
                 new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(), _splitTaskExecutor, config.segmentsRefreshRate())
                         .getSynchronizer(new MySegmentsTaskFactoryProviderImpl(storageContainer.getTelemetryStorage()).getFactory(
-                                new MySegmentsTaskFactoryConfiguration(splitApiFacade.getMySegmentsFetcher(key.matchingKey()), storageContainer.getMySegmentsStorage(), _eventsManager)
+                                new MySegmentsTaskFactoryConfiguration(splitApiFacade.getMySegmentsFetcher(key.matchingKey()), storageContainer.getMySegmentsStorage(key.matchingKey()), _eventsManager)
                         ), _eventsManager)
         );
 
