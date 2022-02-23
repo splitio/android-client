@@ -353,7 +353,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void submitAttributesLoadingTask(SplitTaskExecutionListener listener, boolean persistentAttributesEnabled) {
         /* TODO: launch task for every client */
-        AttributeTaskFactoryImpl attributeTaskFactory = new AttributeTaskFactoryImpl("user_key", mSplitsStorageContainer.getAttributesStorage("user_key"));
+       AttributeTaskFactoryImpl attributeTaskFactory = new AttributeTaskFactoryImpl("user_key", mSplitsStorageContainer.getAttributesStorage("user_key"));
 
         mTaskExecutor.submit(attributeTaskFactory.createLoadAttributesTask(mSplitsStorageContainer.getPersistentAttributesStorage()),
                 listener);
