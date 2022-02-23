@@ -1,5 +1,7 @@
 package io.split.android.client.storage.attributes;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -17,6 +19,11 @@ public class AttributesStorageContainerImpl implements AttributesStorageContaine
 
             return mStorageMap.get(matchingKey);
         }
+    }
+
+    @Override
+    public Map<String, AttributesStorage> getCurrentStorages() {
+        return new HashMap<>(mStorageMap);
     }
 
     @Override

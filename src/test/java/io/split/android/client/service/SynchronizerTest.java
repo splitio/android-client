@@ -65,6 +65,7 @@ import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTi
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegister;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -118,6 +119,8 @@ public class SynchronizerTest {
     MySegmentsTaskFactory mMySegmentsTaskFactory;
     @Mock
     MySegmentsSynchronizer mMySegmentsSynchronizer;
+    @Mock
+    AttributesSynchronizer mAttributesSynchronizer;
     private final String mUserKey = "user_key";
 
     public void setup(SplitClientConfig splitClientConfig) {
@@ -467,8 +470,6 @@ public class SynchronizerTest {
         verify(mMySegmentsSynchronizer).loadMySegmentsFromCache();
         verify(mEventsManager)
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-        verify(mEventsManager)
-                .notifyInternalEvent(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
     }
 
     @Test
@@ -584,6 +585,27 @@ public class SynchronizerTest {
         mSynchronizer.loadMySegmentsFromCache();
 
         verifyNoInteractions(mMySegmentsSynchronizer);
+    }
+
+    @Test
+    public void loadAttributesFromCacheDelegatesToRegisteredAttributesSynchronizers() {
+        setup(SplitClientConfig.builder().persistentAttributesEnabled(true).build());
+        mSynchronizer.registerAttributesSynchronizer("userKey", mAttributesSynchronizer);
+
+        mSynchronizer.loadAttributesFromCache();
+
+        verify(mAttributesSynchronizer).loadAttributesFromCache();
+    }
+
+    @Test
+    public void unregisterAttributesSynchronizerExcludesSyncFromDelegation() {
+        setup(SplitClientConfig.builder().persistentAttributesEnabled(true).build());
+        mSynchronizer.registerAttributesSynchronizer("userKey", mAttributesSynchronizer);
+        mSynchronizer.unregisterAttributesSynchronizer("userKey");
+
+        mSynchronizer.loadAttributesFromCache();
+
+        verifyNoInteractions(mAttributesSynchronizer);
     }
 
     @After
