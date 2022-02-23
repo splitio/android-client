@@ -3,7 +3,6 @@ package tests.integration.streaming;
 import android.content.Context;
 
 import androidx.core.util.Pair;
-import androidx.room.Room;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -34,7 +33,6 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
-import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
@@ -128,7 +126,7 @@ public class MySegmentsChangeV2Test {
         pushMessage(TestingData.SEGMENT_REMOVAL_NOTIFICATION);
 
         updateLatch.await(20, TimeUnit.SECONDS);
-        MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKeys(userKey);
+        MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(userKey);
 
         Assert.assertEquals(1, mSynchronizerSpy.mForceMySegmentSyncCalledCount.get());
         Assert.assertTrue(mySegmentEntity.getSegmentList().contains("new_segment_added"));

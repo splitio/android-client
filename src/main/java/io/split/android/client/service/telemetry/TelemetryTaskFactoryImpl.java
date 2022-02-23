@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.Stats;
@@ -29,11 +30,11 @@ public class TelemetryTaskFactoryImpl implements TelemetryTaskFactory {
                                     @NonNull TelemetryStorage telemetryStorage,
                                     @NonNull SplitClientConfig splitClientConfig,
                                     @NonNull SplitsStorage splitsStorage,
-                                    @NonNull MySegmentsStorage mySegmentsStorage) {
+                                    @NonNull MySegmentsStorageContainer mySegmentsStorageContainer) {
         mTelemetryConfigRecorder = telemetryConfigRecorder;
         mTelemetryConfigProvider = new TelemetryConfigProviderImpl(telemetryStorage, splitClientConfig);
         mTelemetryStatsRecorder = telemetryStatsRecorder;
-        mTelemetryStatsProvider = new TelemetryStatsProviderImpl(telemetryStorage, splitsStorage, mySegmentsStorage);
+        mTelemetryStatsProvider = new TelemetryStatsProviderImpl(telemetryStorage, splitsStorage, mySegmentsStorageContainer);
         mTelemetryRuntimeProducer = telemetryStorage;
     }
 

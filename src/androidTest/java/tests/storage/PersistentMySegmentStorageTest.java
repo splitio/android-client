@@ -25,6 +25,7 @@ public class PersistentMySegmentStorageTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
     PersistentMySegmentsStorage mPersistentMySegmentsStorage;
+    private final String mUserKey = "userkey-1";
 
     @Before
     public void setUp() {
@@ -32,26 +33,25 @@ public class PersistentMySegmentStorageTest {
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
 
-
-        String userKey = "userkey-1";
         MySegmentEntity entity = new MySegmentEntity();
-        entity.setUserKey(userKey);
+        entity.setUserKey(mUserKey);
         entity.setSegmentList("s1,s2,s3");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
         entity = new MySegmentEntity();
-        entity.setUserKey("userkey-2");
+        String mUserKey2 = "userkey-2";
+        entity.setUserKey(mUserKey2);
         entity.setSegmentList("s10,s20");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb, userKey);
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb);
     }
 
     @Test
     public void getMySegments() {
-        Set<String> snapshot = new HashSet(mPersistentMySegmentsStorage.getSnapshot());
+        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
 
         Assert.assertEquals(3, snapshot.size());
         Assert.assertTrue(snapshot.contains("s1"));
@@ -62,9 +62,9 @@ public class PersistentMySegmentStorageTest {
     @Test
     public void updateSegments() {
 
-        mPersistentMySegmentsStorage.set(Arrays.asList("a1,a2,a3,a4"));
+        mPersistentMySegmentsStorage.set(mUserKey, Arrays.asList("a1,a2,a3,a4"));
 
-        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot());
+        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
 
         Assert.assertEquals(4, snapshot.size());
         Assert.assertTrue(snapshot.contains("a1"));
@@ -77,18 +77,18 @@ public class PersistentMySegmentStorageTest {
     public void updateEmptyMySegment() {
         List<String> splits = new ArrayList<>();
 
-        mPersistentMySegmentsStorage.set(new ArrayList<>());
+        mPersistentMySegmentsStorage.set(mUserKey, new ArrayList<>());
 
-        List<String> snapshot = mPersistentMySegmentsStorage.getSnapshot();
+        List<String> snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
         Assert.assertEquals(0, snapshot.size());
     }
 
     @Test
     public void addNullMySegmentsList() {
-        mPersistentMySegmentsStorage.set(null);
+        mPersistentMySegmentsStorage.set(mUserKey, null);
 
-        List<String> snapshot = mPersistentMySegmentsStorage.getSnapshot();
+        List<String> snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
         Assert.assertEquals(3, snapshot.size());
     }

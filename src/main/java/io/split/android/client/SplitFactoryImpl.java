@@ -136,7 +136,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
 
-        SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
+        SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage(key.matchingKey()));
 
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
@@ -167,7 +167,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 /* TODO: This parameter is temporary */
                 new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(), _splitTaskExecutor, config.segmentsRefreshRate())
                         .getSynchronizer(new MySegmentsTaskFactoryProviderImpl(storageContainer.getTelemetryStorage()).getFactory(
-                                new MySegmentsTaskFactoryConfiguration(splitApiFacade.getMySegmentsFetcher(key.matchingKey()), storageContainer.getMySegmentsStorage(), _eventsManager)
+                                new MySegmentsTaskFactoryConfiguration(splitApiFacade.getMySegmentsFetcher(key.matchingKey()), storageContainer.getMySegmentsStorage(key.matchingKey()), _eventsManager)
                         ), _eventsManager)
         );
 

@@ -19,7 +19,8 @@ import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
-import io.split.android.client.storage.mysegments.MySegmentsStorageImpl;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainerImpl;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
 
@@ -29,6 +30,7 @@ public class LoadMySegmentsTaskTest {
     PersistentMySegmentsStorage mPersistentMySegmentsStorage;
     MySegmentsStorage mMySegmentsStorage;
     final String mUserKey = "userkey-1";
+    private MySegmentsStorageContainer mMySegmentsStorageContainer;
 
     @Before
     public void setUp() {
@@ -48,8 +50,9 @@ public class LoadMySegmentsTaskTest {
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb, mUserKey);
-        mMySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb);
+        mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
+        mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
     }
 
     @Test

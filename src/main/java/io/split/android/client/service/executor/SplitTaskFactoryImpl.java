@@ -70,7 +70,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 mSplitsStorageContainer.getTelemetryStorage(),
                 splitClientConfig,
                 mSplitsStorageContainer.getSplitsStorage(),
-                mSplitsStorageContainer.getMySegmentsStorage());
+                mSplitsStorageContainer.getMySegmentsStorageContainer());
     }
 
     @Override
