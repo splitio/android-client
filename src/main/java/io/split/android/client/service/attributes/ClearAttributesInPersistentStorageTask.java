@@ -1,5 +1,7 @@
 package io.split.android.client.service.attributes;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import io.split.android.client.service.executor.SplitTask;
@@ -12,9 +14,9 @@ public class ClearAttributesInPersistentStorageTask implements SplitTask {
     private final String mMatchingKey;
     private final PersistentAttributesStorage mPersistentAttributesStorage;
 
-    public ClearAttributesInPersistentStorageTask(String matchingKey, PersistentAttributesStorage persistentAttributesStorage) {
-        mMatchingKey = matchingKey;
-        mPersistentAttributesStorage = persistentAttributesStorage;
+    public ClearAttributesInPersistentStorageTask(@NonNull String matchingKey, @NonNull PersistentAttributesStorage persistentAttributesStorage) {
+        mMatchingKey = checkNotNull(matchingKey);
+        mPersistentAttributesStorage = checkNotNull(persistentAttributesStorage);
     }
 
     @NonNull

@@ -1,5 +1,7 @@
 package io.split.android.client.service.attributes;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import java.util.Map;
@@ -15,10 +17,10 @@ public class UpdateAttributesInPersistentStorageTask implements SplitTask {
     private final PersistentAttributesStorage mPersistentAttributesStorage;
     private final Map<String, Object> mAttributes;
 
-    public UpdateAttributesInPersistentStorageTask(String matchingKey, PersistentAttributesStorage persistentAttributesStorage, Map<String, Object> attributes) {
-        mMatchingKey = matchingKey;
-        mPersistentAttributesStorage = persistentAttributesStorage;
-        mAttributes = attributes;
+    public UpdateAttributesInPersistentStorageTask(@NonNull String matchingKey, @NonNull PersistentAttributesStorage persistentAttributesStorage, @NonNull Map<String, Object> attributes) {
+        mMatchingKey = checkNotNull(matchingKey);
+        mPersistentAttributesStorage = checkNotNull(persistentAttributesStorage);
+        mAttributes = checkNotNull(attributes);
     }
 
     @NonNull
