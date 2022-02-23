@@ -16,6 +16,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -351,7 +352,10 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void submitAttributesLoadingTask(SplitTaskExecutionListener listener, boolean persistentAttributesEnabled) {
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadAttributesTask(persistentAttributesEnabled),
+        /* TODO: launch task for every client */
+       AttributeTaskFactoryImpl attributeTaskFactory = new AttributeTaskFactoryImpl("user_key", mSplitsStorageContainer.getAttributesStorage("user_key"));
+
+        mTaskExecutor.submit(attributeTaskFactory.createLoadAttributesTask(mSplitsStorageContainer.getPersistentAttributesStorage()),
                 listener);
     }
 

@@ -10,12 +10,15 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitManager;
 import io.split.android.client.SplitManagerImpl;
 import io.split.android.client.attributes.AttributesManager;
+import io.split.android.client.attributes.AttributesManagerFactory;
+import io.split.android.client.attributes.AttributesManagerFactoryImpl;
 import io.split.android.client.attributes.AttributesManagerImpl;
 import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.storage.attributes.AttributesStorageImpl;
 import io.split.android.client.storage.legacy.FileStorage;
@@ -64,7 +67,9 @@ public final class LocalhostSplitFactory implements SplitFactory {
         SplitParser splitParser = new SplitParser(new EmptyMySegmentsStorage());
         NoOpTelemetryStorage telemetryStorageProducer = new NoOpTelemetryStorage();
         SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
-        AttributesManager attributesManager = new AttributesManagerImpl(new AttributesStorageImpl(), new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
+        AttributesManagerFactory attributesManagerFactory = new AttributesManagerFactoryImpl(new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
+        AttributesStorageImpl attributesStorage = new AttributesStorageImpl();
+        AttributesManager attributesManager = attributesManagerFactory.getManager(key, attributesStorage);
         mClient = new LocalhostSplitClient(this, config, key, splitsStorage, mEventsManager, splitParser, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer);
         mEventsManager.getExecutorResources().setSplitClient(mClient);
         mManager = new SplitManagerImpl(splitsStorage,

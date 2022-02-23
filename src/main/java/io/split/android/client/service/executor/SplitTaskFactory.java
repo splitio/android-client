@@ -4,13 +4,11 @@ import java.util.List;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.CleanUpDatabaseTask;
-import io.split.android.client.service.attributes.LoadAttributesTask;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
-import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitKillTask;
@@ -38,7 +36,4 @@ public interface SplitTaskFactory extends TelemetryTaskFactory {
     SaveImpressionsCountTask createSaveImpressionsCountTask(List<ImpressionsCountPerFeature> count);
 
     ImpressionsCountRecorderTask createImpressionsCountRecorderTask();
-
-    LoadAttributesTask createLoadAttributesTask(boolean persistentAttributesEnabled);
-
 }

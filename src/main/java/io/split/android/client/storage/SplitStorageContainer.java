@@ -3,6 +3,7 @@ package io.split.android.client.storage;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.storage.attributes.AttributesStorageContainer;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
@@ -23,7 +24,7 @@ public class SplitStorageContainer {
     private final PersistentEventsStorage mPersistentEventsStorage;
     private final PersistentImpressionsStorage mPersistentImpressionsStorage;
     private final PersistentImpressionsCountStorage mPersistentImpressionsCountStorage;
-    private final AttributesStorage mAttributesStorage;
+    private final AttributesStorageContainer mAttributesStorageContainer;
     private final PersistentAttributesStorage mPersistentAttributesStorage;
     private final TelemetryStorage mTelemetryStorage;
 
@@ -33,7 +34,7 @@ public class SplitStorageContainer {
                                  @NonNull PersistentEventsStorage persistentEventsStorage,
                                  @NonNull PersistentImpressionsStorage persistentImpressionsStorage,
                                  @NonNull PersistentImpressionsCountStorage persistentImpressionsCountStorage,
-                                 @NonNull AttributesStorage attributesStorage,
+                                 @NonNull AttributesStorageContainer attributesStorageContainer,
                                  @NonNull PersistentAttributesStorage persistentAttributesStorage,
                                  @NonNull TelemetryStorage telemetryStorage) {
 
@@ -43,7 +44,7 @@ public class SplitStorageContainer {
         mPersistentEventsStorage = checkNotNull(persistentEventsStorage);
         mPersistentImpressionsStorage = checkNotNull(persistentImpressionsStorage);
         mPersistentImpressionsCountStorage = checkNotNull(persistentImpressionsCountStorage);
-        mAttributesStorage = checkNotNull(attributesStorage);
+        mAttributesStorageContainer = checkNotNull(attributesStorageContainer);
         mPersistentAttributesStorage = checkNotNull(persistentAttributesStorage);
         mTelemetryStorage = checkNotNull(telemetryStorage);
     }
@@ -76,8 +77,12 @@ public class SplitStorageContainer {
         return mPersistentImpressionsCountStorage;
     }
 
-    public AttributesStorage getAttributesStorage() {
-        return mAttributesStorage;
+    public AttributesStorage getAttributesStorage(String matchingKey) {
+        return mAttributesStorageContainer.getStorageForKey(matchingKey);
+    }
+
+    public AttributesStorageContainer getAttributesStorageContainer() {
+        return mAttributesStorageContainer;
     }
 
     public PersistentAttributesStorage getPersistentAttributesStorage() {

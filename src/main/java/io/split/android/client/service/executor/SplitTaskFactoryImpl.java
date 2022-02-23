@@ -23,10 +23,6 @@ import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
-import io.split.android.client.service.mysegments.LoadMySegmentsTask;
-import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
-import io.split.android.client.service.mysegments.MySegmentsSyncTask;
-import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -139,12 +135,6 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 mSplitApiFacade.getImpressionsCountRecorder(),
                 mSplitsStorageContainer.getImpressionsCountStorage(),
                 mSplitsStorageContainer.getTelemetryStorage());
-    }
-
-    @Override
-    public LoadAttributesTask createLoadAttributesTask(boolean persistentAttributesEnabled) {
-        return new LoadAttributesTask(mSplitsStorageContainer.getAttributesStorage(),
-                (persistentAttributesEnabled) ? mSplitsStorageContainer.getPersistentAttributesStorage() : null);
     }
 
     @Override

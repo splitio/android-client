@@ -9,7 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributesManagerImpl;
+import io.split.android.client.attributes.AttributesManagerFactory;
+import io.split.android.client.attributes.AttributesManagerFactoryImpl;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -34,6 +35,8 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
 import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
@@ -217,7 +220,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.i("Successful shutdown of manager");
                     _splitTaskExecutor.stop();
                     Logger.i("Successful shutdown of task executor");
-                    storageContainer.getAttributesStorage().destroy();
+                    storageContainer.getAttributesStorageContainer().destroy();
                     Logger.i("Successful shutdown of attributes storage");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
@@ -235,6 +238,12 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
+        AttributesManagerFactory attributesManagerFactory = getAttributesManagerFactory(config.persistentAttributesEnabled(),
+                validationLogger,
+                _splitTaskExecutor,
+                storageContainer.getPersistentAttributesStorage());
+
+        AttributesStorage attributesStorage = storageContainer.getAttributesStorage(key.matchingKey());
         _client = new SplitClientImpl(this,
                 key,
                 splitParser,
@@ -244,7 +253,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 storageContainer.getSplitsStorage(),
                 new EventPropertiesProcessorImpl(),
                 _syncManager,
-                getAttributesManager(config.persistentAttributesEnabled(), validationLogger, _splitTaskExecutor, storageContainer),
+                attributesManagerFactory.getManager(key.matchingKey(), attributesStorage),
                 storageContainer.getTelemetryStorage(),
                 new SplitValidatorImpl());
 
@@ -261,6 +270,15 @@ public class SplitFactoryImpl implements SplitFactory {
         }
 
         Logger.i("Android SDK initialized!");
+    }
+
+    //TODO temp
+    private AttributesManagerFactory getAttributesManagerFactory(boolean persistentAttributesEnabled, ValidationMessageLogger validationLogger, SplitTaskExecutor _splitTaskExecutor, PersistentAttributesStorage persistentAttributesStorage) {
+        if (persistentAttributesEnabled) {
+            return new AttributesManagerFactoryImpl(new AttributesValidatorImpl(), validationLogger, persistentAttributesStorage, _splitTaskExecutor);
+        } else {
+            return new AttributesManagerFactoryImpl(new AttributesValidatorImpl(), validationLogger);
+        }
     }
 
     public SplitClient client() {
@@ -298,22 +316,6 @@ public class SplitFactoryImpl implements SplitFactory {
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,
                                SplitTaskFactory splitTaskFactory) {
         splitTaskExecutor.submit(splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000), null);
-    }
-
-    @NonNull
-    private AttributesManagerImpl getAttributesManager(boolean persistentAttributesEnabled, ValidationMessageLogger validationLogger, SplitTaskExecutor _splitTaskExecutor, SplitStorageContainer storageContainer) {
-        if (persistentAttributesEnabled) {
-            return new AttributesManagerImpl(storageContainer.getAttributesStorage(),
-                    new AttributesValidatorImpl(),
-                    validationLogger,
-                    storageContainer.getPersistentAttributesStorage(),
-                    new AttributeTaskFactoryImpl(),
-                    _splitTaskExecutor);
-        }
-
-        return new AttributesManagerImpl(storageContainer.getAttributesStorage(),
-                new AttributesValidatorImpl(),
-                validationLogger);
     }
 
     @NonNull
