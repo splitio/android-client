@@ -67,7 +67,7 @@ public class StorageFactory {
     }
 
     public static AttributesStorageContainer getAttributesStorage() {
-        return attributesStorageContainerInstance;
+        return getAttributesStorageContainerInstance();
     }
 
     public static PersistentAttributesStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase, String matchingKey) {
