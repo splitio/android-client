@@ -13,6 +13,7 @@ import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.AttributeMatcher;
@@ -44,14 +45,14 @@ public final class SplitParser {
 
     public static final int CONDITIONS_UPPER_LIMIT = 50;
 
-    private MySegmentsStorage mMySegmentsStorage;
+    private final MySegmentsStorageContainer mMySegmentsStorageContainer;
 
-    public static SplitParser get(MySegmentsStorage mySegmentsStorage) {
-        return new SplitParser(mySegmentsStorage);
+    public static SplitParser get(MySegmentsStorageContainer mySegmentsStorageContainer) {
+        return new SplitParser(mySegmentsStorageContainer);
     }
 
-    public SplitParser(MySegmentsStorage mySegmentsStorage) {
-        mMySegmentsStorage = checkNotNull(mySegmentsStorage);
+    public SplitParser(MySegmentsStorageContainer mySegmentsStorageContainer) {
+        mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
     }
 
     public @Nullable ParsedSplit parse(@Nullable Split split) {
@@ -102,7 +103,6 @@ public final class SplitParser {
         return new CombiningMatcher(matcherGroup.combiner, toCombine);
     }
 
-
     private AttributeMatcher toMatcher(Matcher matcher) {
         io.split.android.engine.matchers.Matcher delegate;
         switch (matcher.matcherType) {
@@ -111,7 +111,7 @@ public final class SplitParser {
                 break;
             case IN_SEGMENT:
                 checkNotNull(matcher.userDefinedSegmentMatcherData);
-                delegate = new MySegmentsMatcher(mMySegmentsStorage.getAll(), matcher.userDefinedSegmentMatcherData.segmentName);
+                delegate = new MySegmentsMatcher(mMySegmentsStorageContainer, matcher.userDefinedSegmentMatcherData.segmentName);
                 break;
             case WHITELIST:
                 checkNotNull(matcher.whitelistMatcherData);

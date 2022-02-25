@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.Evaluator;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 
 /**
  * Created by guillermo on 12/12/17.
@@ -11,16 +12,16 @@ import io.split.android.client.Evaluator;
 
 public class MySegmentsMatcher implements Matcher {
 
-    private Set<String> _mySegments;
-    private String _segmentName;
+    private final String mSegmentName;
+    private final MySegmentsStorageContainer mMySegmentsStorageContainer;
 
-    public MySegmentsMatcher(Set<String> mySegments, String segmentName) {
-        _mySegments = mySegments;
-        _segmentName = segmentName;
+    public MySegmentsMatcher(MySegmentsStorageContainer mySegmentsStorageContainer, String segmentName) {
+        mMySegmentsStorageContainer = mySegmentsStorageContainer;
+        mSegmentName = segmentName;
     }
 
     @Override
     public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, Evaluator evaluator) {
-        return _mySegments.contains(_segmentName);
+        return mMySegmentsStorageContainer.getStorageForKey(bucketingKey).getAll().contains(mSegmentName);
     }
 }
