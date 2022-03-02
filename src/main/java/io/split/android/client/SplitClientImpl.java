@@ -36,9 +36,6 @@ import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.grammar.Treatments;
 
-/**
- * A basic implementation of SplitClient.
- */
 public final class SplitClientImpl implements SplitClient {
 
     private final SplitFactory mSplitFactory;
@@ -69,7 +66,8 @@ public final class SplitClientImpl implements SplitClient {
                            SyncManager syncManager,
                            AttributesManager attributesManager,
                            TelemetryStorageProducer telemetryStorageProducer,
-                           SplitValidator splitValidator) {
+                           SplitValidator splitValidator,
+                           TreatmentManager treatmentManager) {
         this(container,
                 key,
                 splitParser,
@@ -81,10 +79,7 @@ public final class SplitClientImpl implements SplitClient {
                 syncManager,
                 attributesManager,
                 telemetryStorageProducer,
-                new TreatmentManagerImpl(
-                        key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser),
-                        new KeyValidatorImpl(), splitValidator,
-                        impressionListener, config.labelsEnabled(), eventsManager, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer),
+                treatmentManager,
                 splitValidator);
     }
 

@@ -1,5 +1,7 @@
 package io.split.android.client.events;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.VisibleForTesting;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -21,8 +23,6 @@ import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
 import io.split.android.client.utils.ConcurrentSet;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Created by sarrubia on 4/3/18.

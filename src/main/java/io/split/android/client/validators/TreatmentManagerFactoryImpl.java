@@ -5,15 +5,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.Evaluator;
-import io.split.android.client.EvaluatorFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
-import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
-import io.split.android.engine.experiments.SplitParser;
 
 public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
 

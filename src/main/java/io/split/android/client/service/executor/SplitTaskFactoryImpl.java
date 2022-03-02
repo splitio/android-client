@@ -11,11 +11,10 @@ import io.split.android.client.FilterGrouper;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
-import io.split.android.client.service.attributes.LoadAttributesTask;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
@@ -43,14 +42,14 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitClientConfig mSplitClientConfig;
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final String mSplitsFilterQueryString;
-    private final SplitEventsManager mEventsManager;
+    private final ISplitEventsManager mEventsManager;
     private final TelemetryTaskFactory mTelemetryTaskFactory;
 
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
                                 @NonNull SplitApiFacade splitApiFacade,
                                 @NonNull SplitStorageContainer splitStorageContainer,
                                 @Nullable String splistFilterQueryString,
-                                SplitEventsManager eventsManager) {
+                                ISplitEventsManager eventsManager) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
