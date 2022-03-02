@@ -1,5 +1,7 @@
 package io.split.android.client.service.sseclient;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -156,5 +158,27 @@ public class SyncManagerTest {
         mSyncManager.flush();
 
         verify(mTelemetrySynchronizer).flush();
+    }
+
+    @Test
+    public void startCallsStartOnAllSegmentsWorkers() {
+        MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
+        ((MySegmentsUpdateWorkerRegister) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
+
+        mSyncManager.start();
+
+        verify(mMySegmentUpdateWorker).start();
+        verify(anyKeyUpdateWorker).start();
+    }
+
+    @Test
+    public void stopCallsStopOnMyAllSegmentsWorkers() {
+        MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
+        ((MySegmentsUpdateWorkerRegister) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
+
+        mSyncManager.stop();
+
+        verify(mMySegmentUpdateWorker).stop();
+        verify(anyKeyUpdateWorker).stop();
     }
 }
