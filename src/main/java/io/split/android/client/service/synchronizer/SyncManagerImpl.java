@@ -63,7 +63,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     @Override
     public void start() {
         if (mMySegmentUpdateWorkers.isEmpty()) {
-            throw new IllegalStateException("No MySegmentsUpdateWorkers have been registered");
+            Logger.w("No MySegmentsUpdateWorkers have been registered");
         }
 
         mSynchronizer.loadAndSynchronizeSplits();
