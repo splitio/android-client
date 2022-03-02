@@ -140,7 +140,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
 
-        SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage(key.matchingKey()));
+        SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorageContainer());
 
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(

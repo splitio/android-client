@@ -13,6 +13,7 @@ import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.validators.SplitValidator;
@@ -27,7 +28,7 @@ public class SplitClientImplFactory {
     public static SplitClientImpl get(Key key, SplitsStorage splitsStorage) {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventsManager = new SplitEventsManager(cfg);
-        SplitParser splitParser = new SplitParser(mock(MySegmentsStorage.class));
+        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class));
 
         SplitClientImpl c = new SplitClientImpl(
                 mock(SplitFactory.class),
@@ -49,7 +50,7 @@ public class SplitClientImplFactory {
     }
 
     public static SplitClientImpl get(Key key, SplitsStorage splitsStorage, ImpressionListener impressionListener) {
-        SplitParser splitParser = new SplitParser(mock(MySegmentsStorage.class));
+        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class));
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         return new SplitClientImpl(
                 mock(SplitFactory.class),
@@ -68,7 +69,7 @@ public class SplitClientImplFactory {
     }
 
     public static SplitClientImpl get(Key key, SplitsStorage splitsStorage, SplitEventsManager eventsManager) {
-        SplitParser splitParser = new SplitParser(mock(MySegmentsStorage.class));
+        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class));
         return new SplitClientImpl(
                 mock(SplitFactory.class),
                 key,

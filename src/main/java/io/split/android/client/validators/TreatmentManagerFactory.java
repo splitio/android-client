@@ -7,5 +7,5 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
 public interface TreatmentManagerFactory {
 
-    TreatmentManager getTreatmentManager(Key key, MySegmentsStorage mySegmentsStorage, ISplitEventsManager eventsManager, AttributesManager attributesManager);
+    TreatmentManager getTreatmentManager(Key key, ISplitEventsManager eventsManager, AttributesManager attributesManager);
 }

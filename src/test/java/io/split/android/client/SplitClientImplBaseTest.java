@@ -10,6 +10,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.EventValidator;
@@ -23,6 +24,8 @@ public abstract class SplitClientImplBaseTest {
     protected SplitFactory container;
     @Mock
     protected AttributesManager attributesManager;
+    @Mock
+    protected MySegmentsStorageContainer mySegmentsStorageContainer;
     @Mock
     protected MySegmentsStorage mySegmentsStorage;
     @Mock
@@ -53,7 +56,7 @@ public abstract class SplitClientImplBaseTest {
         splitClient = new SplitClientImpl(
                 container,
                 new Key("test_key"),
-                new SplitParser(mySegmentsStorage),
+                new SplitParser(mySegmentsStorageContainer),
                 impressionListener,
                 splitClientConfig,
                 new SplitEventsManager(splitClientConfig),
