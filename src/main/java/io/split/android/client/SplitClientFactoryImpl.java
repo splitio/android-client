@@ -67,6 +67,8 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final AttributesSynchronizerRegister mAttributesSynchronizerRegister;
     private final MySegmentsUpdateWorkerRegister mMySegmentsUpdateWorkerRegister;
     private final ImpressionListener mCustomerImpressionListener;
+    private final SplitValidatorImpl mSplitValidator;
+    private final EventPropertiesProcessorImpl mEventPropertiesProcessor;
 
     public SplitClientFactoryImpl(@NonNull SplitFactory splitFactory,
                                   @NonNull SplitClientConfig config,
@@ -99,9 +101,10 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 splitTaskExecutor,
                 mStorageContainer.getPersistentAttributesStorage());
         mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer());
+        mSplitValidator = new SplitValidatorImpl();
         mTreatmentManagerFactory = new TreatmentManagerFactoryImpl(
                 keyValidator,
-                new SplitValidatorImpl(),
+                mSplitValidator,
                 customerImpressionListener,
                 config.labelsEnabled(),
                 new AttributesMergerImpl(),
@@ -111,6 +114,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
         mMySegmentsSynchronizerRegister = (MySegmentsSynchronizerRegister) synchronizer;
         mAttributesSynchronizerRegister = (AttributesSynchronizerRegister) synchronizer;
         mMySegmentsUpdateWorkerRegister = (MySegmentsUpdateWorkerRegister) mSyncManager;
+        mEventPropertiesProcessor = new EventPropertiesProcessorImpl();
     }
 
     @Override
@@ -162,11 +166,11 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mConfig,
                 eventsManager,
                 mStorageContainer.getSplitsStorage(),
-                new EventPropertiesProcessorImpl(),
+                mEventPropertiesProcessor,
                 mSyncManager,
                 mAttributesManagerFactory.getManager(key.matchingKey(), attributesStorage),
                 mStorageContainer.getTelemetryStorage(),
-                new SplitValidatorImpl(),
+                mSplitValidator,
                 mTreatmentManagerFactory.getTreatmentManager(key,
                         eventsManager,
                         mAttributesManagerFactory.getManager(key.matchingKey(), attributesStorage)));
