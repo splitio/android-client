@@ -8,7 +8,7 @@ import io.split.android.client.events.executors.SplitEventExecutorResources;
  *
  * Takes care of handling events common to all clients.
  */
-public class FactoryEventsManager implements ISplitEventsManager, EventsManagerRegister {
+public class FactoryEventsManager implements ISplitEventsManager, EventsManagerRegistry {
     public FactoryEventsManager(SplitClientConfig config) {
 
     }
