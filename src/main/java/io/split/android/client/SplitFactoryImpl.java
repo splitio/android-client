@@ -33,6 +33,7 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerFactoryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorage;
@@ -171,7 +172,10 @@ public class SplitFactoryImpl implements SplitFactory {
                 new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(), _splitTaskExecutor, config.segmentsRefreshRate())
                         .getSynchronizer(new MySegmentsTaskFactoryProviderImpl(storageContainer.getTelemetryStorage()).getFactory(
                                 new MySegmentsTaskFactoryConfiguration(splitApiFacade.getMySegmentsFetcher(key.matchingKey()), storageContainer.getMySegmentsStorage(key.matchingKey()), _eventsManager)
-                        ), _eventsManager)
+                        ), _eventsManager),
+                /* TODO: This parameter is temporary */
+                new AttributesSynchronizerFactoryImpl(_splitTaskExecutor, storageContainer.getPersistentAttributesStorage())
+                        .getSynchronizer(new AttributeTaskFactoryImpl(key.matchingKey(), storageContainer.getAttributesStorage(key.matchingKey())), _eventsManager)
         );
 
         registerTelemetryTasksInEventManager(_eventsManager,

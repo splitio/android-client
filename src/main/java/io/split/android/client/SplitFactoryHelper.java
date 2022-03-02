@@ -46,6 +46,8 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegister;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactory;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
@@ -175,7 +177,8 @@ class SplitFactoryHelper {
                                  Synchronizer synchronizer,
                                  TelemetrySynchronizer telemetrySynchronizer,
                                  TelemetryRuntimeProducer telemetryRuntimeProducer,
-                                 MySegmentsSynchronizer tempMySegmentsSynchronizer) {
+                                 MySegmentsSynchronizer tempMySegmentsSynchronizer,
+                                 AttributesSynchronizer tempAttributesSynchronizer) {
 
         BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue
                 = new LinkedBlockingDeque<>();
@@ -189,6 +192,8 @@ class SplitFactoryHelper {
         MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(tempMySegmentsSynchronizer,
                 mySegmentChangeNotificationQueue);
         ((MySegmentsSynchronizerRegister) synchronizer).registerMySegmentsSynchronizer(userKey, tempMySegmentsSynchronizer);
+
+        ((AttributesSynchronizerRegister) synchronizer).registerAttributesSynchronizer(userKey, tempAttributesSynchronizer);
 
         NotificationParser notificationParser = new NotificationParser();
         NotificationProcessor notificationProcessor =

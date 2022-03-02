@@ -29,6 +29,8 @@ import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegister;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegister;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -41,7 +43,7 @@ import io.split.android.client.utils.Logger;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegister {
+public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegister, AttributesSynchronizerRegister {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitStorageContainer mSplitsStorageContainer;
@@ -54,7 +56,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
 
     private LoadLocalDataListener mLoadLocalSplitsListener;
-    private LoadLocalDataListener mLoadLocalAttributesListener;
 
     private String mSplitsFetcherTaskId;
     private String mEventsRecorderTaskId;
@@ -66,6 +67,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final ImpressionsCounter mImpressionsCounter;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final ConcurrentMap<String, MySegmentsSynchronizer> mMySegmentsSynchronizers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AttributesSynchronizer> mAttributesSynchronizers = new ConcurrentHashMap<>();
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -115,7 +117,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadAttributesFromCache() {
-        submitAttributesLoadingTask(mLoadLocalAttributesListener, mSplitClientConfig.persistentAttributesEnabled());
+        for (AttributesSynchronizer attributesSynchronizer : mAttributesSynchronizers.values()) {
+            attributesSynchronizer.loadAttributesFromCache();
+        }
     }
 
     @Override
@@ -210,9 +214,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 mSplitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-
-        mLoadLocalAttributesListener = new LoadLocalDataListener(
-                mSplitEventsManager, SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
     }
 
     public void pause() {
@@ -285,6 +286,16 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mMySegmentsSynchronizers.remove(userKey);
     }
 
+    @Override
+    public void registerAttributesSynchronizer(String userKey, AttributesSynchronizer attributesSynchronizer) {
+        mAttributesSynchronizers.put(userKey, attributesSynchronizer);
+    }
+
+    @Override
+    public void unregisterAttributesSynchronizer(String userKey) {
+        mAttributesSynchronizers.remove(userKey);
+    }
+
     private void saveImpressionsCount() {
         if (!isOptimizedImpressionsMode()) {
             return;
@@ -348,14 +359,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void submitSplitLoadingTask(SplitTaskExecutionListener listener) {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
-                listener);
-    }
-
-    private void submitAttributesLoadingTask(SplitTaskExecutionListener listener, boolean persistentAttributesEnabled) {
-        /* TODO: launch task for every client */
-       AttributeTaskFactoryImpl attributeTaskFactory = new AttributeTaskFactoryImpl("user_key", mSplitsStorageContainer.getAttributesStorage("user_key"));
-
-        mTaskExecutor.submit(attributeTaskFactory.createLoadAttributesTask(mSplitsStorageContainer.getPersistentAttributesStorage()),
                 listener);
     }
 
