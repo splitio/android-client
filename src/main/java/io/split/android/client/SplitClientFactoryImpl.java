@@ -24,7 +24,7 @@ import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProviderImpl;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
-import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegister;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
@@ -65,7 +65,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final EventsManagerRegister mEventsManagerRegister;
     private final MySegmentsSynchronizerRegister mMySegmentsSynchronizerRegister;
     private final AttributesSynchronizerRegister mAttributesSynchronizerRegister;
-    private final MySegmentsUpdateWorkerRegister mMySegmentsUpdateWorkerRegister;
+    private final MySegmentsUpdateWorkerRegistry mMySegmentsUpdateWorkerRegistry;
     private final ImpressionListener mCustomerImpressionListener;
     private final SplitValidatorImpl mSplitValidator;
     private final EventPropertiesProcessorImpl mEventPropertiesProcessor;
@@ -113,7 +113,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
         );
         mMySegmentsSynchronizerRegister = (MySegmentsSynchronizerRegister) synchronizer;
         mAttributesSynchronizerRegister = (AttributesSynchronizerRegister) synchronizer;
-        mMySegmentsUpdateWorkerRegister = (MySegmentsUpdateWorkerRegister) mSyncManager;
+        mMySegmentsUpdateWorkerRegistry = (MySegmentsUpdateWorkerRegistry) mSyncManager;
         mEventPropertiesProcessor = new EventPropertiesProcessorImpl();
     }
 
@@ -151,7 +151,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
 
         MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(mySegmentsSynchronizer,
                 mySegmentChangeNotificationQueue);
-        mMySegmentsUpdateWorkerRegister.registerMySegmentsUpdateWorker(key.matchingKey(), mySegmentUpdateWorker);
+        mMySegmentsUpdateWorkerRegistry.registerMySegmentsUpdateWorker(key.matchingKey(), mySegmentUpdateWorker);
 
         mMySegmentsSynchronizerRegister.registerMySegmentsSynchronizer(key.matchingKey(),
                 mySegmentsSynchronizer);
