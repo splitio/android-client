@@ -8,7 +8,7 @@ import androidx.annotation.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -27,7 +27,7 @@ public class SplitsSyncTask implements SplitTask {
     private final boolean mCheckCacheExpiration;
     private final long mCacheExpirationInSeconds;
     private final SplitsSyncHelper mSplitsSyncHelper;
-    private final SplitEventsManager mEventsManager;
+    private final ISplitEventsManager mEventsManager;
     private SplitsChangeChecker mChangeChecker;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
@@ -36,7 +36,7 @@ public class SplitsSyncTask implements SplitTask {
                           boolean checkCacheExpiration,
                           long cacheExpirationInSeconds,
                           String splitsFilterQueryString,
-                          @NonNull SplitEventsManager eventsManager,
+                          @NonNull ISplitEventsManager eventsManager,
                           @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
 
         mSplitsStorage = checkNotNull(splitsStorage);

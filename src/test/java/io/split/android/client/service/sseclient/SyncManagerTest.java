@@ -18,6 +18,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEven
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegister;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
@@ -62,7 +63,10 @@ public class SyncManagerTest {
         MockitoAnnotations.openMocks(this);
         mSyncManager = new SyncManagerImpl(
                 mConfig, mSynchronizer, mPushNotificationManager,
-                mSplitsUpdateWorker, mMySegmentUpdateWorker, mPushManagerEventBroadcaster, mBackoffTimer, mTelemetrySynchronizer);
+                mSplitsUpdateWorker, mPushManagerEventBroadcaster,
+                mBackoffTimer, mTelemetrySynchronizer);
+
+        ((MySegmentsUpdateWorkerRegister) mSyncManager).registerMySegmentsUpdateWorker("user_key", mMySegmentUpdateWorker);
         when(mConfig.streamingEnabled()).thenReturn(true);
 
     }
