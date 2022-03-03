@@ -135,7 +135,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitApiFacade mSplitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryString);
 
-        FactoryEventsManager mFactoryEventsManager = new FactoryEventsManager(config);
+        FactoryEventsManager mFactoryEventsManager = new FactoryEventsManager();
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, mSplitApiFacade, mStorageContainer, splitsFilterQueryString, mFactoryEventsManager);

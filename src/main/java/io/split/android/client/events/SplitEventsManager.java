@@ -4,74 +4,45 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.VisibleForTesting;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.executors.SplitEventExecutorAbstract;
 import io.split.android.client.events.executors.SplitEventExecutorFactory;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
-import io.split.android.client.utils.ConcurrentSet;
 import io.split.android.client.utils.Logger;
 
 /**
  * Created by sarrubia on 4/3/18.
  */
 
-public class SplitEventsManager implements ISplitEventsManager, Runnable {
+public class SplitEventsManager extends BaseEventsManager implements ISplitEventsManager, ListenableEventsManager, Runnable {
 
-    private final static int QUEUE_CAPACITY = 20;
-
-    private SplitClientConfig _config;
-
-    // TODO: Analyze removing this annotation
-    @SuppressWarnings("FieldCanBeLocal")
-    private final ScheduledExecutorService _scheduler;
-
-    private ArrayBlockingQueue<SplitInternalEvent> _queue;
-
-    private Map<SplitEvent, List<SplitEventTask>> _suscriptions;
+    private final Map<SplitEvent, List<SplitEventTask>> _suscriptions;
 
     private SplitEventExecutorResources _resources;
 
-    private Map<SplitEvent, Integer> _executionTimes;
-
-    private Set<SplitInternalEvent> _triggered;
-
-    @VisibleForTesting
-    public void setExecutionResources(SplitEventExecutorResources resources) {
-        _resources = resources;
-    }
+    private final Map<SplitEvent, Integer> _executionTimes;
 
     public SplitEventsManager(SplitClientConfig config) {
+        super();
 
-        _config = config;
-
-        _queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
         _suscriptions = new ConcurrentHashMap<>();
-
         _executionTimes = new ConcurrentHashMap<>();
         _resources = new SplitEventExecutorResourcesImpl();
-        _triggered = new ConcurrentSet<SplitInternalEvent>();
 
-        registerMaxAllowebExecutionTimesPerEvent();
+        registerMaxAllowedExecutionTimesPerEvent();
 
         Runnable SDKReadyTimeout = new Runnable() {
             @Override
             public void run() {
                 try {
-                    if (_config.blockUntilReady() > 0) {
-                        Thread.sleep(_config.blockUntilReady());
+                    if (config.blockUntilReady() > 0) {
+                        Thread.sleep(config.blockUntilReady());
                         notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
                     }
                 } catch (InterruptedException e) {
@@ -85,37 +56,30 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
             }
         };
         new Thread(SDKReadyTimeout).start();
+    }
 
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("Split-EventsManager-%d")
-                .setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                    @Override
-                    public void uncaughtException(Thread t, Throwable e) {
-                        Logger.e("Unexpected error " + e.getLocalizedMessage());
-                    }
-                })
-                .build();
-        _scheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
-        _scheduler.submit(this);
-
+    @VisibleForTesting
+    public void setExecutionResources(SplitEventExecutorResources resources) {
+        _resources = resources;
     }
 
     /**
-     * This method should registering the allowed maximum times of event trigger
+     * This method should register the allowed maximum times of event trigger
      * EXAMPLE: SDK_READY should be triggered only once
      */
-    private void registerMaxAllowebExecutionTimesPerEvent() {
+    private void registerMaxAllowedExecutionTimesPerEvent() {
         _executionTimes.put(SplitEvent.SDK_READY, 1);
         _executionTimes.put(SplitEvent.SDK_READY_TIMED_OUT, 1);
         _executionTimes.put(SplitEvent.SDK_READY_FROM_CACHE, 1);
         _executionTimes.put(SplitEvent.SDK_UPDATE, -1);
     }
 
+    @Override
     public SplitEventExecutorResources getExecutorResources() {
         return _resources;
     }
 
+    @Override
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
         checkNotNull(internalEvent);
         // Avoid adding to queue for fetched events if sdk is ready
@@ -160,16 +124,7 @@ public class SplitEventsManager implements ISplitEventsManager, Runnable {
     }
 
     @Override
-    public void run() {
-        // This code was intentionally designed this way
-        // TODO: Analize refactor
-        //noinspection InfiniteLoopStatement,InfiniteLoopStatement
-        while (true) {
-            triggerEventsWhenAreAvailable();
-        }
-    }
-
-    private void triggerEventsWhenAreAvailable() {
+    protected void triggerEventsWhenAreAvailable() {
         try {
             SplitInternalEvent event = _queue.take(); //Blocking method (waiting if necessary until an element becomes available.)
             _triggered.add(event);

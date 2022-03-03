@@ -41,7 +41,6 @@ import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreaming
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 
-@VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegister, AttributesSynchronizerRegister {
 
     private final SplitTaskExecutor mTaskExecutor;
