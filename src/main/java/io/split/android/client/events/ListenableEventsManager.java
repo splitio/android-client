@@ -7,4 +7,6 @@ public interface ListenableEventsManager {
     SplitEventExecutorResources getExecutorResources();
 
     void register(SplitEvent event, SplitEventTask task);
+
+    boolean eventAlreadyTriggered(SplitEvent event);
 }

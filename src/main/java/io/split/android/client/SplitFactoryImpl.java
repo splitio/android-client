@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.events.FactoryEventsManager;
+import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
@@ -135,10 +135,10 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitApiFacade mSplitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryString);
 
-        FactoryEventsManager mFactoryEventsManager = new FactoryEventsManager();
+        EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
-                config, mSplitApiFacade, mStorageContainer, splitsFilterQueryString, mFactoryEventsManager);
+                config, mSplitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator);
 
         cleanUpDabase(_splitTaskExecutor, splitTaskFactory);
 
@@ -147,7 +147,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 _splitTaskExecutor,
                 mStorageContainer,
                 splitTaskFactory,
-                mFactoryEventsManager,
+                mEventsManagerCoordinator,
                 factoryHelper.buildWorkManagerWrapper(
                         context, config, apiToken, key.matchingKey(), databaseName),
                 new RetryBackoffCounterTimerFactory(),
@@ -235,7 +235,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         mSplitClientFactory = new SplitClientFactoryImpl(
                 this, config, _syncManager, mSynchronizer, telemetrySynchronizer,
-                mFactoryEventsManager, mStorageContainer, _splitTaskExecutor, mSplitApiFacade,
+                mEventsManagerCoordinator, mStorageContainer, _splitTaskExecutor, mSplitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener
         );
 

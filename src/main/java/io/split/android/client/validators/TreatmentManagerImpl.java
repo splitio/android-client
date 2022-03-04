@@ -16,6 +16,7 @@ import io.split.android.client.TreatmentLabels;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
@@ -43,7 +44,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final String mBucketingKey;
     private final boolean mLabelsEnabled;
     private final ValidationMessageLogger mValidationLogger;
-    private final ISplitEventsManager mEventsManager;
+    private final ListenableEventsManager mEventsManager;
     @NonNull
     private final AttributesManager mAttributesManager;
     @NonNull
@@ -57,7 +58,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 SplitValidator splitValidator,
                                 ImpressionListener impressionListener,
                                 boolean labelsEnabled,
-                                ISplitEventsManager eventsManager,
+                                ListenableEventsManager eventsManager,
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
                                 @NonNull TelemetryStorageProducer telemetryStorageProducer) {

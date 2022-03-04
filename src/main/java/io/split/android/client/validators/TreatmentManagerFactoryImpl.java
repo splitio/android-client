@@ -9,6 +9,7 @@ import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 
@@ -39,7 +40,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
     }
 
     @Override
-    public TreatmentManager getTreatmentManager(Key key, ISplitEventsManager eventsManager, AttributesManager attributesManager) {
+    public TreatmentManager getTreatmentManager(Key key, ListenableEventsManager eventsManager, AttributesManager attributesManager) {
         return new TreatmentManagerImpl(
                 key.matchingKey(),
                 key.bucketingKey(),

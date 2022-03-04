@@ -1,42 +1,42 @@
 package io.split.android.client.events;
 
+import androidx.annotation.NonNull;
+
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 import io.split.android.client.utils.ConcurrentSet;
 import io.split.android.client.utils.Logger;
+import io.split.android.engine.scheduler.PausableThreadPoolExecutor;
+import io.split.android.engine.scheduler.PausableThreadPoolExecutorImpl;
 
 public abstract class BaseEventsManager implements Runnable {
 
     private final static int QUEUE_CAPACITY = 20;
 
-    protected final ArrayBlockingQueue<SplitInternalEvent> _queue;
+    protected final ArrayBlockingQueue<SplitInternalEvent> mQueue;
 
-    protected final Set<SplitInternalEvent> _triggered;
+    protected final Set<SplitInternalEvent> mTriggered;
 
     public BaseEventsManager() {
 
-        _queue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-        _triggered = new ConcurrentSet<>();
+        mQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
+        mTriggered = new ConcurrentSet<>();
 
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setDaemon(true)
                 .setNameFormat("Split-FactoryEventsManager-%d")
                 .setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                     @Override
-                    public void uncaughtException(Thread t, Throwable e) {
+                    public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
                         Logger.e("Unexpected error " + e.getLocalizedMessage());
                     }
                 })
                 .build();
-        ScheduledExecutorService mScheduler = Executors.newSingleThreadScheduledExecutor(threadFactory);
-
-        mScheduler.submit(this);
+        launch(threadFactory);
     }
 
     @Override
@@ -46,6 +46,12 @@ public abstract class BaseEventsManager implements Runnable {
         while (true) {
             triggerEventsWhenAreAvailable();
         }
+    }
+
+    private void launch(ThreadFactory threadFactory) {
+        PausableThreadPoolExecutor mScheduler = PausableThreadPoolExecutorImpl.newSingleThreadExecutor(threadFactory);
+        mScheduler.submit(this);
+        mScheduler.resume();
     }
 
     protected abstract void triggerEventsWhenAreAvailable();

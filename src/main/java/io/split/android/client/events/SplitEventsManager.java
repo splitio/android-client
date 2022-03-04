@@ -22,19 +22,18 @@ import io.split.android.client.utils.Logger;
 
 public class SplitEventsManager extends BaseEventsManager implements ISplitEventsManager, ListenableEventsManager, Runnable {
 
-    private final Map<SplitEvent, List<SplitEventTask>> _suscriptions;
+    private final Map<SplitEvent, List<SplitEventTask>> mSubscriptions;
 
-    private SplitEventExecutorResources _resources;
+    private SplitEventExecutorResources mResources;
 
-    private final Map<SplitEvent, Integer> _executionTimes;
+    private final Map<SplitEvent, Integer> mExecutionTimes;
 
     public SplitEventsManager(SplitClientConfig config) {
         super();
 
-        _suscriptions = new ConcurrentHashMap<>();
-        _executionTimes = new ConcurrentHashMap<>();
-        _resources = new SplitEventExecutorResourcesImpl();
-
+        mSubscriptions = new ConcurrentHashMap<>();
+        mExecutionTimes = new ConcurrentHashMap<>();
+        mResources = new SplitEventExecutorResourcesImpl();
         registerMaxAllowedExecutionTimesPerEvent();
 
         Runnable SDKReadyTimeout = new Runnable() {
@@ -60,7 +59,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
     @VisibleForTesting
     public void setExecutionResources(SplitEventExecutorResources resources) {
-        _resources = resources;
+        mResources = resources;
     }
 
     /**
@@ -68,15 +67,15 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
      * EXAMPLE: SDK_READY should be triggered only once
      */
     private void registerMaxAllowedExecutionTimesPerEvent() {
-        _executionTimes.put(SplitEvent.SDK_READY, 1);
-        _executionTimes.put(SplitEvent.SDK_READY_TIMED_OUT, 1);
-        _executionTimes.put(SplitEvent.SDK_READY_FROM_CACHE, 1);
-        _executionTimes.put(SplitEvent.SDK_UPDATE, -1);
+        mExecutionTimes.put(SplitEvent.SDK_READY, 1);
+        mExecutionTimes.put(SplitEvent.SDK_READY_TIMED_OUT, 1);
+        mExecutionTimes.put(SplitEvent.SDK_READY_FROM_CACHE, 1);
+        mExecutionTimes.put(SplitEvent.SDK_UPDATE, -1);
     }
 
     @Override
     public SplitEventExecutorResources getExecutorResources() {
-        return _resources;
+        return mResources;
     }
 
     @Override
@@ -92,7 +91,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
             return;
         }
         try {
-            _queue.add(internalEvent);
+            mQueue.add(internalEvent);
         } catch (IllegalStateException e) {
             Logger.d("Internal events queue is full");
         }
@@ -104,30 +103,30 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
         checkNotNull(task);
 
         // If event is already triggered, execute the task
-        if (_executionTimes.containsKey(event) && _executionTimes.get(event) == 0) {
+        if (mExecutionTimes.containsKey(event) && mExecutionTimes.get(event) == 0) {
             executeTask(event, task);
             return;
         }
 
-        if (!_suscriptions.containsKey(event)) {
-            _suscriptions.put(event, new ArrayList<>());
+        if (!mSubscriptions.containsKey(event)) {
+            mSubscriptions.put(event, new ArrayList<>());
         }
-        _suscriptions.get(event).add(task);
+        mSubscriptions.get(event).add(task);
     }
 
     public boolean eventAlreadyTriggered(SplitEvent event) {
-        return _executionTimes.get(event) == 0;
+        return mExecutionTimes.get(event) == 0;
     }
 
     private boolean wasTriggered(SplitInternalEvent event) {
-        return _triggered.contains(event);
+        return mTriggered.contains(event);
     }
 
     @Override
     protected void triggerEventsWhenAreAvailable() {
         try {
-            SplitInternalEvent event = _queue.take(); //Blocking method (waiting if necessary until an element becomes available.)
-            _triggered.add(event);
+            SplitInternalEvent event = mQueue.take(); //Blocking method (waiting if necessary until an element becomes available.)
+            mTriggered.add(event);
             switch (event) {
                 case SPLITS_UPDATED:
                 case MY_SEGMENTS_UPDATED:
@@ -177,7 +176,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
     // MARK: Helper functions.
     private boolean isTriggered(SplitEvent event) {
-        Integer times = _executionTimes.get(event);
+        Integer times = mExecutionTimes.get(event);
         return times != null ? times == 0 : false;
     }
 
@@ -191,14 +190,14 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
     private void trigger(SplitEvent event) {
         // If executionTimes is zero, maximum executions has been reached
-        if (_executionTimes.get(event) == 0) {
+        if (mExecutionTimes.get(event) == 0) {
             return;
             // If executionTimes is grater than zero, maximum executions decrease 1
-        } else if (_executionTimes.get(event) > 0) {
-            _executionTimes.put(event, _executionTimes.get(event) - 1);
+        } else if (mExecutionTimes.get(event) > 0) {
+            mExecutionTimes.put(event, mExecutionTimes.get(event) - 1);
         } //If executionTimes is lower than zero, execute it without limitation
-        if (_suscriptions.containsKey(event)) {
-            List<SplitEventTask> toExecute = _suscriptions.get(event);
+        if (mSubscriptions.containsKey(event)) {
+            List<SplitEventTask> toExecute = mSubscriptions.get(event);
             for (SplitEventTask task : toExecute) {
                 executeTask(event, task);
             }
@@ -206,7 +205,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     }
 
     private void executeTask(SplitEvent event, SplitEventTask task) {
-        SplitEventExecutorAbstract executor = SplitEventExecutorFactory.factory(event, task, _resources);
+        SplitEventExecutorAbstract executor = SplitEventExecutorFactory.factory(event, task, mResources);
         if (executor != null) {
             executor.execute();
         }
