@@ -6,5 +6,5 @@ import io.split.android.client.api.Key;
 
 public interface SplitClientFactory {
 
-    SplitClient getClient(@NonNull Key key);
+    SplitClient getClient(@NonNull Key key, boolean isDefaultClient);
 }

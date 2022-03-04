@@ -118,8 +118,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     }
 
     @Override
-    public SplitClient getClient(@NonNull Key key) {
-
+    public SplitClient getClient(@NonNull Key key, boolean isDefaultClient) {
         final long initializationStartTime = System.currentTimeMillis();
 
         MySegmentsStorage mySegmentsStorage = mStorageContainer.getMySegmentsStorage(key.matchingKey());
@@ -177,11 +176,13 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
 
         eventsManager.getExecutorResources().setSplitClient(splitClient);
 
-        registerTelemetryTasksInEventManager(eventsManager,
-                mTelemetrySynchronizer,
-                mStorageContainer.getTelemetryStorage(),
-                initializationStartTime,
-                mConfig.shouldRecordTelemetry());
+        if (isDefaultClient) {
+            registerTelemetryTasksInEventManager(eventsManager,
+                    mTelemetrySynchronizer,
+                    mStorageContainer.getTelemetryStorage(),
+                    initializationStartTime,
+                    mConfig.shouldRecordTelemetry());
+        }
 
         return splitClient;
     }
