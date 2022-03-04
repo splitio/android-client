@@ -10,8 +10,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import io.split.android.client.SplitClient;
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientFactory;
+import io.split.android.client.SplitClientFactoryImpl;
+import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.api.Key;
+import io.split.android.client.events.EventsManagerCoordinator;
+import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.telemetry.TelemetrySynchronizer;
+import io.split.android.client.validators.KeyValidator;
+import io.split.android.client.validators.ValidationMessageLogger;
 
 public class SplitClientContainerImpl implements SplitClientContainer {
 
@@ -23,9 +36,41 @@ public class SplitClientContainerImpl implements SplitClientContainer {
         mSplitClientFactory = checkNotNull(splitClientFactory);
     }
 
+    public SplitClientContainerImpl(@NonNull SplitFactoryImpl splitFactory,
+                                    @NonNull SplitClientConfig config,
+                                    @NonNull SyncManager mSyncManager,
+                                    @NonNull Synchronizer mSynchronizer,
+                                    @NonNull TelemetrySynchronizer telemetrySynchronizer,
+                                    @NonNull EventsManagerCoordinator mEventsManagerCoordinator,
+                                    @NonNull SplitStorageContainer mStorageContainer,
+                                    @NonNull SplitTaskExecutor splitTaskExecutor,
+                                    @NonNull SplitApiFacade mSplitApiFacade,
+                                    @NonNull ValidationMessageLogger validationLogger,
+                                    @NonNull KeyValidator keyValidator,
+                                    @NonNull ImpressionListener customerImpressionListener) {
+        mSplitClientFactory = new SplitClientFactoryImpl(splitFactory,
+                this,
+                config,
+                mSyncManager,
+                mSynchronizer,
+                telemetrySynchronizer,
+                mEventsManagerCoordinator,
+                mStorageContainer,
+                splitTaskExecutor,
+                mSplitApiFacade,
+                validationLogger,
+                keyValidator,
+                customerImpressionListener);
+    }
+
     @Override
     public SplitClient getClient(Key key) {
         return getOrCreateClientForKey(key);
+    }
+
+    @Override
+    public void remove(String key) {
+        mClientInstances.remove(key);
     }
 
     private SplitClient getOrCreateClientForKey(Key key) {

@@ -237,11 +237,9 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer());
 
         mClientContainer = new SplitClientContainerImpl(
-                new SplitClientFactoryImpl(
-                        this, config, mSyncManager, mSynchronizer, telemetrySynchronizer,
-                        mEventsManagerCoordinator, mStorageContainer, _splitTaskExecutor, mSplitApiFacade,
-                        validationLogger, keyValidator, customerImpressionListener
-                )
+            this, config, mSyncManager, mSynchronizer, telemetrySynchronizer,
+                mEventsManagerCoordinator, mStorageContainer, _splitTaskExecutor, mSplitApiFacade,
+                validationLogger, keyValidator, customerImpressionListener
         );
 
         // Initialize default client
@@ -280,7 +278,7 @@ public class SplitFactoryImpl implements SplitFactory {
     @Override
     public void destroy() {
         synchronized (SplitFactoryImpl.class) {
-            if (!mIsTerminated) {
+            if (mClientContainer.getAll().isEmpty() && !mIsTerminated) {
                 new Thread(mDestroyer).start();
             }
         }

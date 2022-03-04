@@ -9,5 +9,7 @@ public interface SplitClientContainer {
 
     SplitClient getClient(Key key);
 
+    void remove(String key);
+
     Set<SplitClient> getAll();
 }

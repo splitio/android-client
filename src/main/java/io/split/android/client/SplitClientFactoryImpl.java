@@ -34,6 +34,7 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactory;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
+import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
@@ -51,6 +52,7 @@ import io.split.android.engine.experiments.SplitParser;
 public class SplitClientFactoryImpl implements SplitClientFactory {
 
     private final SplitFactory mSplitFactory;
+    private final SplitClientContainer mClientContainer;
     private final SplitClientConfig mConfig;
     private final SyncManager mSyncManager;
     private final MySegmentsSynchronizerFactory mMySegmentsSynchronizerFactory;
@@ -71,6 +73,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final EventPropertiesProcessorImpl mEventPropertiesProcessor;
 
     public SplitClientFactoryImpl(@NonNull SplitFactory splitFactory,
+                                  @NonNull SplitClientContainer clientContainer,
                                   @NonNull SplitClientConfig config,
                                   @NonNull SyncManager syncManager,
                                   @NonNull Synchronizer synchronizer,
@@ -83,6 +86,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull KeyValidator keyValidator,
                                   @NonNull ImpressionListener customerImpressionListener) {
         mSplitFactory = checkNotNull(splitFactory);
+        mClientContainer = checkNotNull(clientContainer);
         mConfig = checkNotNull(config);
         mSyncManager = checkNotNull(syncManager);
         mEventsManagerRegistry = checkNotNull(eventsManagerRegistry);
@@ -159,6 +163,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 attributesSynchronizer);
 
         SplitClientImpl splitClient = new SplitClientImpl(mSplitFactory,
+                mClientContainer,
                 key,
                 mSplitParser,
                 mCustomerImpressionListener,

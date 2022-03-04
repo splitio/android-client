@@ -19,6 +19,7 @@ import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
@@ -39,6 +40,7 @@ import io.split.android.grammar.Treatments;
 public final class SplitClientImpl implements SplitClient {
 
     private final SplitFactory mSplitFactory;
+    private final SplitClientContainer mClientContainer;
     private final SplitClientConfig mConfig;
     private final String mMatchingKey;
     private final SplitEventsManager mEventsManager;
@@ -56,6 +58,7 @@ public final class SplitClientImpl implements SplitClient {
     private boolean mIsClientDestroyed = false;
 
     public SplitClientImpl(SplitFactory container,
+                           SplitClientContainer clientContainer,
                            Key key,
                            SplitParser splitParser,
                            ImpressionListener impressionListener,
@@ -69,6 +72,7 @@ public final class SplitClientImpl implements SplitClient {
                            SplitValidator splitValidator,
                            TreatmentManager treatmentManager) {
         this(container,
+                clientContainer,
                 key,
                 splitParser,
                 impressionListener,
@@ -85,6 +89,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @VisibleForTesting
     public SplitClientImpl(SplitFactory container,
+                           SplitClientContainer clientContainer,
                            Key key,
                            SplitParser splitParser,
                            ImpressionListener impressionListener,
@@ -100,8 +105,9 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
 
-        mMatchingKey = checkNotNull(key.matchingKey());
         mSplitFactory = checkNotNull(container);
+        mClientContainer = checkNotNull(clientContainer);
+        mMatchingKey = checkNotNull(key.matchingKey());
         mConfig = checkNotNull(config);
         mEventsManager = checkNotNull(eventsManager);
         mEventValidator = checkNotNull(eventValidator);
@@ -117,6 +123,7 @@ public final class SplitClientImpl implements SplitClient {
     @Override
     public void destroy() {
         mIsClientDestroyed = true;
+        mClientContainer.remove(mMatchingKey);
         mSplitFactory.destroy();
     }
 
