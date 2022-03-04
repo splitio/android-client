@@ -18,11 +18,10 @@ import java.util.HashMap;
 
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
-import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.telemetry.model.Method;
-import io.split.android.client.telemetry.storage.TelemetryEvaluationProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.SplitValidator;
@@ -39,7 +38,7 @@ public class TreatmentManagerTelemetryTest {
     @Mock
     ImpressionListener impressionListener;
     @Mock
-    ISplitEventsManager eventsManager;
+    ListenableEventsManager eventsManager;
     @Mock
     AttributesManager attributesManager;
     @Mock

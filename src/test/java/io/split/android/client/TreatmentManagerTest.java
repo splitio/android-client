@@ -26,6 +26,7 @@ import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
@@ -49,7 +50,7 @@ public class TreatmentManagerTest {
 
     Evaluator evaluator;
     ImpressionListener impressionListener;
-    ISplitEventsManager eventsManagerStub;
+    ListenableEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
     TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
     TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
@@ -308,7 +309,7 @@ public class TreatmentManagerTest {
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
-        ISplitEventsManager eventsManager = mock(ISplitEventsManager.class);
+        ListenableEventsManager eventsManager = mock(ListenableEventsManager.class);
         Evaluator evaluator = mock(Evaluator.class);
 
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);

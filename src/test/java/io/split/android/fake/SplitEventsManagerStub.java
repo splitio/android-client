@@ -1,12 +1,13 @@
 package io.split.android.fake;
 
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 
-public class SplitEventsManagerStub implements ISplitEventsManager {
+public class SplitEventsManagerStub implements ISplitEventsManager, ListenableEventsManager {
 
     public boolean isSdkReadyTriggered = true;
 
