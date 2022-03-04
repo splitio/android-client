@@ -1,6 +1,6 @@
 package io.split.android.client.service.synchronizer.attributes;
 
-public interface AttributesSynchronizerRegister {
+public interface AttributesSynchronizerRegistry {
 
     void registerAttributesSynchronizer(String userKey, AttributesSynchronizer attributesSynchronizer);
 

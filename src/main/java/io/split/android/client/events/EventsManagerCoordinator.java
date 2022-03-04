@@ -10,7 +10,7 @@ import io.split.android.client.utils.Logger;
 /**
  * Special case event manager which handles events that should be shared among all client instances.
  */
-public class EventsManagerCoordinator extends BaseEventsManager implements ISplitEventsManager, EventsManagerRegister {
+public class EventsManagerCoordinator extends BaseEventsManager implements ISplitEventsManager, EventsManagerRegistry {
 
     private final ConcurrentMap<String, ISplitEventsManager> mChildren = new ConcurrentHashMap<>();
     private final Object mEventLock = new Object();

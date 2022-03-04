@@ -11,7 +11,7 @@ import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerFactory;
 import io.split.android.client.attributes.AttributesManagerFactoryImpl;
 import io.split.android.client.attributes.AttributesMergerImpl;
-import io.split.android.client.events.EventsManagerRegister;
+import io.split.android.client.events.EventsManagerRegistry;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -24,16 +24,16 @@ import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProviderImpl;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
-import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegister;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerFactoryImpl;
-import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegister;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactory;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
-import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegister;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
@@ -62,10 +62,10 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final SplitParser mSplitParser;
     private final AttributesManagerFactory mAttributesManagerFactory;
     private final TreatmentManagerFactory mTreatmentManagerFactory;
-    private final EventsManagerRegister mEventsManagerRegister;
-    private final MySegmentsSynchronizerRegister mMySegmentsSynchronizerRegister;
-    private final AttributesSynchronizerRegister mAttributesSynchronizerRegister;
-    private final MySegmentsUpdateWorkerRegister mMySegmentsUpdateWorkerRegister;
+    private final EventsManagerRegistry mEventsManagerRegistry;
+    private final MySegmentsSynchronizerRegistry mMySegmentsSynchronizerRegistry;
+    private final AttributesSynchronizerRegistry mAttributesSynchronizerRegistry;
+    private final MySegmentsUpdateWorkerRegistry mMySegmentsUpdateWorkerRegistry;
     private final ImpressionListener mCustomerImpressionListener;
     private final SplitValidatorImpl mSplitValidator;
     private final EventPropertiesProcessorImpl mEventPropertiesProcessor;
@@ -75,7 +75,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull SyncManager syncManager,
                                   @NonNull Synchronizer synchronizer,
                                   @NonNull TelemetrySynchronizer telemetrySynchronizer,
-                                  @NonNull EventsManagerRegister eventsManagerRegister,
+                                  @NonNull EventsManagerRegistry eventsManagerRegistry,
                                   @NonNull SplitStorageContainer storageContainer,
                                   @NonNull SplitTaskExecutor splitTaskExecutor,
                                   @NonNull SplitApiFacade splitApiFacade,
@@ -85,7 +85,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
         mSplitFactory = checkNotNull(splitFactory);
         mConfig = checkNotNull(config);
         mSyncManager = checkNotNull(syncManager);
-        mEventsManagerRegister = checkNotNull(eventsManagerRegister);
+        mEventsManagerRegistry = checkNotNull(eventsManagerRegistry);
         mStorageContainer = checkNotNull(storageContainer);
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mTelemetrySynchronizer = checkNotNull(telemetrySynchronizer);
@@ -111,9 +111,9 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mStorageContainer.getTelemetryStorage(),
                 new EvaluatorImpl(mStorageContainer.getSplitsStorage(), mSplitParser)
         );
-        mMySegmentsSynchronizerRegister = (MySegmentsSynchronizerRegister) synchronizer;
-        mAttributesSynchronizerRegister = (AttributesSynchronizerRegister) synchronizer;
-        mMySegmentsUpdateWorkerRegister = (MySegmentsUpdateWorkerRegister) mSyncManager;
+        mMySegmentsSynchronizerRegistry = (MySegmentsSynchronizerRegistry) synchronizer;
+        mAttributesSynchronizerRegistry = (AttributesSynchronizerRegistry) synchronizer;
+        mMySegmentsUpdateWorkerRegistry = (MySegmentsUpdateWorkerRegistry) mSyncManager;
         mEventPropertiesProcessor = new EventPropertiesProcessorImpl();
     }
 
@@ -125,7 +125,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
         MySegmentsStorage mySegmentsStorage = mStorageContainer.getMySegmentsStorage(key.matchingKey());
 
         SplitEventsManager eventsManager = new SplitEventsManager(mConfig);
-        mEventsManagerRegister.registerEventsManager(key.matchingKey(), eventsManager);
+        mEventsManagerRegistry.registerEventsManager(key.matchingKey(), eventsManager);
 
         MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(
                 mMySegmentsTaskFactoryProvider.getFactory(
@@ -151,12 +151,12 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
 
         MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(mySegmentsSynchronizer,
                 mySegmentChangeNotificationQueue);
-        mMySegmentsUpdateWorkerRegister.registerMySegmentsUpdateWorker(key.matchingKey(), mySegmentUpdateWorker);
+        mMySegmentsUpdateWorkerRegistry.registerMySegmentsUpdateWorker(key.matchingKey(), mySegmentUpdateWorker);
 
-        mMySegmentsSynchronizerRegister.registerMySegmentsSynchronizer(key.matchingKey(),
+        mMySegmentsSynchronizerRegistry.registerMySegmentsSynchronizer(key.matchingKey(),
                 mySegmentsSynchronizer);
 
-        mAttributesSynchronizerRegister.registerAttributesSynchronizer(key.matchingKey(),
+        mAttributesSynchronizerRegistry.registerAttributesSynchronizer(key.matchingKey(),
                 attributesSynchronizer);
 
         SplitClientImpl splitClient = new SplitClientImpl(mSplitFactory,

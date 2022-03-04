@@ -1,6 +1,6 @@
 package io.split.android.client.events;
 
-public interface EventsManagerRegister {
+public interface EventsManagerRegistry {
 
     void registerEventsManager(String matchingKey, ISplitEventsManager splitEventsManager);
 
