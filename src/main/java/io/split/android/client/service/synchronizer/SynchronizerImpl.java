@@ -31,9 +31,9 @@ import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
-import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegister;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
-import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegister;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
@@ -42,7 +42,7 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegister, AttributesSynchronizerRegister {
+public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegistry, AttributesSynchronizerRegistry {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitStorageContainer mSplitsStorageContainer;

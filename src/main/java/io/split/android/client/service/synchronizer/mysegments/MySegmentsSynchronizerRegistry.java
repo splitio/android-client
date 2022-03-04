@@ -1,6 +1,6 @@
 package io.split.android.client.service.synchronizer.mysegments;
 
-public interface MySegmentsSynchronizerRegister {
+public interface MySegmentsSynchronizerRegistry {
 
     void registerMySegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer);
 

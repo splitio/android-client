@@ -1,6 +1,5 @@
 package io.split.android.client.service.sseclient;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -20,7 +19,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEven
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
-import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegister;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
@@ -68,7 +67,7 @@ public class SyncManagerTest {
                 mSplitsUpdateWorker, mPushManagerEventBroadcaster,
                 mBackoffTimer, mTelemetrySynchronizer);
 
-        ((MySegmentsUpdateWorkerRegister) mSyncManager).registerMySegmentsUpdateWorker("user_key", mMySegmentUpdateWorker);
+        ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("user_key", mMySegmentUpdateWorker);
         when(mConfig.streamingEnabled()).thenReturn(true);
 
     }
@@ -163,7 +162,7 @@ public class SyncManagerTest {
     @Test
     public void startCallsStartOnAllSegmentsWorkers() {
         MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
-        ((MySegmentsUpdateWorkerRegister) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
+        ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
 
         mSyncManager.start();
 
@@ -174,7 +173,7 @@ public class SyncManagerTest {
     @Test
     public void stopCallsStopOnMyAllSegmentsWorkers() {
         MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
-        ((MySegmentsUpdateWorkerRegister) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
+        ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
 
         mSyncManager.stop();
 

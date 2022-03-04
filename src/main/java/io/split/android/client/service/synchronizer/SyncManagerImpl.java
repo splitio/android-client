@@ -4,8 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.SplitClientConfig;
@@ -18,24 +16,25 @@ import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEven
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
-import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegister;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistryImpl;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.utils.Logger;
 
-public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, MySegmentsUpdateWorkerRegister {
+public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, MySegmentsUpdateWorkerRegistry {
 
     private final SplitClientConfig mSplitClientConfig;
     private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final Synchronizer mSynchronizer;
     private final PushNotificationManager mPushNotificationManager;
     private final SplitUpdatesWorker mSplitUpdateWorker;
-    private final ConcurrentMap<String, MySegmentsUpdateWorker> mMySegmentUpdateWorkers;
     private final BackoffCounterTimer mStreamingReconnectTimer;
     private final AtomicBoolean mIsPaused;
     private final TelemetrySynchronizer mTelemetrySynchronizer;
+    private final MySegmentsUpdateWorkerRegistry mMySegmentsUpdateWorkerRegistry;
 
     private final AtomicBoolean isPollingEnabled;
 
@@ -54,7 +53,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mPushManagerEventBroadcaster = checkNotNull(pushManagerEventBroadcaster);
         mStreamingReconnectTimer = checkNotNull(streamingReconnectTimer);
         mTelemetrySynchronizer = checkNotNull(telemetrySynchronizer);
-        mMySegmentUpdateWorkers = new ConcurrentHashMap<>();
+        mMySegmentsUpdateWorkerRegistry = new MySegmentsUpdateWorkerRegistryImpl();
 
         isPollingEnabled = new AtomicBoolean(false);
         mIsPaused = new AtomicBoolean(false);
@@ -62,10 +61,6 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void start() {
-        if (mMySegmentUpdateWorkers.isEmpty()) {
-            Logger.w("No MySegmentsUpdateWorkers have been registered");
-        }
-
         mSynchronizer.loadAndSynchronizeSplits();
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
@@ -74,9 +69,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         if (mSplitClientConfig.streamingEnabled()) {
             mPushManagerEventBroadcaster.register(this);
             mSplitUpdateWorker.start();
-            for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
-                mySegmentsUpdateWorker.start();
-            }
+            mMySegmentsUpdateWorkerRegistry.start();
             mPushNotificationManager.start();
             mStreamingReconnectTimer.setTask(new SplitTask() {
                 @NonNull
@@ -144,9 +137,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mTelemetrySynchronizer.destroy();
         mPushNotificationManager.stop();
         mSplitUpdateWorker.stop();
-        for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
-            mySegmentsUpdateWorker.stop();
-        }
+        mMySegmentsUpdateWorkerRegistry.stop();
     }
 
     @Override
@@ -206,12 +197,12 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void registerMySegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker) {
-        mMySegmentUpdateWorkers.put(matchingKey, mySegmentsUpdateWorker);
+        mMySegmentsUpdateWorkerRegistry.registerMySegmentsUpdateWorker(matchingKey, mySegmentsUpdateWorker);
     }
 
     @Override
     public void unregisterMySegmentsUpdateWorker(String matchingKey) {
-        mMySegmentUpdateWorkers.remove(matchingKey);
+        mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(matchingKey);
     }
 
     private void enablePolling() {
