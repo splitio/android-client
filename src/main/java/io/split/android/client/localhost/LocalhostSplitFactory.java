@@ -9,6 +9,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitManager;
 import io.split.android.client.SplitManagerImpl;
+import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesManagerFactory;
 import io.split.android.client.attributes.AttributesManagerFactoryImpl;
@@ -79,6 +80,11 @@ public final class LocalhostSplitFactory implements SplitFactory {
 
     @Override
     public SplitClient client() {
+        return mClient;
+    }
+
+    @Override
+    public SplitClient client(Key key) {
         return mClient;
     }
 

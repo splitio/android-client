@@ -14,6 +14,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
@@ -44,6 +45,7 @@ public class SplitClientImplFactory {
         AttributesManager attributesManager = mock(AttributesManager.class);
         SplitClientImpl c = new SplitClientImpl(
                 mock(SplitFactory.class),
+                mock(SplitClientContainer.class),
                 key,
                 splitParser,
                 new ImpressionListener.NoopImpressionListener(),
@@ -67,6 +69,7 @@ public class SplitClientImplFactory {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         return new SplitClientImpl(
                 mock(SplitFactory.class),
+                mock(SplitClientContainer.class),
                 key,
                 splitParser,
                 impressionListener,
@@ -86,6 +89,7 @@ public class SplitClientImplFactory {
         SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class));
         return new SplitClientImpl(
                 mock(SplitFactory.class),
+                mock(SplitClientContainer.class),
                 key,
                 splitParser,
                 new ImpressionListener.NoopImpressionListener(),
