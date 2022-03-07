@@ -28,15 +28,19 @@ import io.split.android.client.validators.ValidationMessageLogger;
 
 public class SplitClientContainerImpl implements SplitClientContainer {
 
+    private final String mDefaultMatchingKey;
     private final ConcurrentMap<String, SplitClient> mClientInstances = new ConcurrentHashMap<>();
     private final SplitClientFactory mSplitClientFactory;
     private final Object mClientCreationLock = new Object();
 
-    public SplitClientContainerImpl(@NonNull SplitClientFactory splitClientFactory) {
+    public SplitClientContainerImpl(@NonNull String defaultMatchingKey,
+                                    @NonNull SplitClientFactory splitClientFactory) {
+        mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mSplitClientFactory = checkNotNull(splitClientFactory);
     }
 
-    public SplitClientContainerImpl(@NonNull SplitFactoryImpl splitFactory,
+    public SplitClientContainerImpl(@NonNull String defaultMatchingKey,
+                                    @NonNull SplitFactoryImpl splitFactory,
                                     @NonNull SplitClientConfig config,
                                     @NonNull SyncManager mSyncManager,
                                     @NonNull Synchronizer mSynchronizer,
@@ -48,6 +52,7 @@ public class SplitClientContainerImpl implements SplitClientContainer {
                                     @NonNull ValidationMessageLogger validationLogger,
                                     @NonNull KeyValidator keyValidator,
                                     @NonNull ImpressionListener customerImpressionListener) {
+        mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mSplitClientFactory = new SplitClientFactoryImpl(splitFactory,
                 this,
                 config,
@@ -79,7 +84,7 @@ public class SplitClientContainerImpl implements SplitClientContainer {
                 return mClientInstances.get(key.matchingKey());
             }
 
-            boolean isDefaultClient = mClientInstances.isEmpty();
+            boolean isDefaultClient = mDefaultMatchingKey.equals(key.matchingKey());
             SplitClient newClient = mSplitClientFactory.getClient(key, isDefaultClient);
 
             mClientInstances.put(key.matchingKey(), newClient);

@@ -2,7 +2,10 @@ package io.split.android.client.shared;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
@@ -25,7 +28,7 @@ public class SplitClientContainerImplTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        mClientContainer = new SplitClientContainerImpl(mSplitClientFactory);
+        mClientContainer = new SplitClientContainerImpl("matching_key", mSplitClientFactory);
     }
 
     @Test
@@ -58,5 +61,35 @@ public class SplitClientContainerImplTest {
         assertEquals(2, allClients.size());
         assertTrue(allClients.contains(firstClient));
         assertTrue(allClients.contains(secondClient));
+    }
+
+    @Test
+    public void defaultClientIsCorrectlyRequested() {
+        Key defaultKey = new Key("default_key", "default_key");
+
+        SplitClient clientMock = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(defaultKey), anyBoolean())).thenReturn(clientMock);
+
+        SplitClientContainer container = new SplitClientContainerImpl("default_key",
+                mSplitClientFactory);
+
+        container.getClient(defaultKey);
+
+        verify(mSplitClientFactory).getClient(defaultKey, true);
+    }
+
+    @Test
+    public void defaultClientIsNotRequestedWhenKeyIsNotDefault() {
+        Key nonDefaultKey = new Key("non_default_key", "non_default_key");
+
+        SplitClient clientMock = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(nonDefaultKey), anyBoolean())).thenReturn(clientMock);
+
+        SplitClientContainer container = new SplitClientContainerImpl("default_key",
+                mSplitClientFactory);
+
+        container.getClient(nonDefaultKey);
+
+        verify(mSplitClientFactory).getClient(nonDefaultKey, false);
     }
 }

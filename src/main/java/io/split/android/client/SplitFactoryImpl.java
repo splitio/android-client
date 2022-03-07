@@ -237,7 +237,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer());
 
         mClientContainer = new SplitClientContainerImpl(
-            this, config, mSyncManager, mSynchronizer, telemetrySynchronizer,
+            mDefaultClientKey.matchingKey(), this, config, mSyncManager, mSynchronizer, telemetrySynchronizer,
                 mEventsManagerCoordinator, mStorageContainer, _splitTaskExecutor, mSplitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener
         );
