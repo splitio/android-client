@@ -12,7 +12,6 @@ import java.util.Map;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
-import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
@@ -30,7 +29,6 @@ import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerHelper;
-import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
