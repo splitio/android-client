@@ -1,40 +1,43 @@
 package io.split.android.client.service.sseclient.sseclient;
 
-import androidx.annotation.NonNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.HashMap;
-import java.util.Map;
+import androidx.annotation.NonNull;
+import androidx.core.util.Pair;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.http.RepeatableParameterHttpFetcher;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.service.sseclient.SseJwtParser;
+import io.split.android.client.utils.ConcurrentSet;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SseAuthenticator {
     private static final String USER_KEY_PARAM = "users";
 
-    private final HttpFetcher<SseAuthenticationResponse> mAuthFetcher;
-    private final String mUserKey;
+    private final RepeatableParameterHttpFetcher<SseAuthenticationResponse> mAuthFetcher;
+    private final Set<String> mUserKeys;
     private final SseJwtParser mJwtParser;
 
-    public SseAuthenticator(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
-                            @NonNull String userKey,
+    public SseAuthenticator(@NonNull RepeatableParameterHttpFetcher<SseAuthenticationResponse> authFetcher,
                             @NonNull SseJwtParser jwtParser) {
         mAuthFetcher = checkNotNull(authFetcher);
-        mUserKey = checkNotNull(userKey);
+        mUserKeys = new ConcurrentSet<>();
         mJwtParser = checkNotNull(jwtParser);
     }
 
     public SseAuthenticationResult authenticate() {
         SseAuthenticationResponse authResponse;
         try {
-            Map<String, Object> params = new HashMap<>();
-            params.put(USER_KEY_PARAM, mUserKey);
+            Set<Pair<String, Object>> params = new HashSet<>();
+            for (String userKey : mUserKeys) {
+                params.add(new Pair<>(USER_KEY_PARAM, userKey));
+            }
             authResponse = mAuthFetcher.execute(params, null);
 
         } catch (HttpFetcherException httpFetcherException) {
@@ -68,6 +71,14 @@ public class SseAuthenticator {
             Logger.e("Error while parsing Jwt");
         }
         return unexpectedError();
+    }
+
+    public void registerKey(String userKey) {
+        mUserKeys.add(userKey);
+    }
+
+    public void unregisterKey(String userKey) {
+        mUserKeys.remove(userKey);
     }
 
     private void logError(String message) {
