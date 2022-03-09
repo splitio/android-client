@@ -19,6 +19,7 @@ import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -34,12 +35,18 @@ public class SplitClientContainerImpl implements SplitClientContainer {
     private final SplitClientFactory mSplitClientFactory;
     private final Object mClientCreationLock = new Object();
     private final SseAuthenticator mSseAuthenticator;
+    private final PushNotificationManager mPushNotificationManager;
+    private final boolean mStreamingEnabled;
 
-    public SplitClientContainerImpl(@NonNull String defaultMatchingKey,
+    public SplitClientContainerImpl(boolean streamingEnabled,
+                                    @NonNull String defaultMatchingKey,
                                     @NonNull SplitClientFactory splitClientFactory,
-                                    @NonNull SseAuthenticator sseAuthenticator) {
+                                    @NonNull SseAuthenticator sseAuthenticator,
+                                    @NonNull PushNotificationManager pushNotificationManager) {
+        mStreamingEnabled = streamingEnabled;
         mSseAuthenticator = checkNotNull(sseAuthenticator);
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
+        mPushNotificationManager = checkNotNull(pushNotificationManager);
         mSplitClientFactory = checkNotNull(splitClientFactory);
     }
 
@@ -56,9 +63,12 @@ public class SplitClientContainerImpl implements SplitClientContainer {
                                     @NonNull ValidationMessageLogger validationLogger,
                                     @NonNull KeyValidator keyValidator,
                                     @NonNull ImpressionListener customerImpressionListener,
-                                    @NonNull SseAuthenticator sseAuthenticator) {
+                                    @NonNull SseAuthenticator sseAuthenticator,
+                                    @NonNull PushNotificationManager pushNotificationManager) {
         mSseAuthenticator = checkNotNull(sseAuthenticator);
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
+        mPushNotificationManager = checkNotNull(pushNotificationManager);
+        mStreamingEnabled = config.streamingEnabled();
         mSplitClientFactory = new SplitClientFactoryImpl(splitFactory,
                 this,
                 config,
@@ -83,7 +93,7 @@ public class SplitClientContainerImpl implements SplitClientContainer {
     @Override
     public void remove(String key) {
         mClientInstances.remove(key);
-        mSseAuthenticator.unregisterKey(key);
+        removeKeyFromAuthenticator(key);
     }
 
     private SplitClient getOrCreateClientForKey(Key key) {
@@ -94,11 +104,23 @@ public class SplitClientContainerImpl implements SplitClientContainer {
 
             boolean isDefaultClient = mDefaultMatchingKey.equals(key.matchingKey());
             SplitClient newClient = mSplitClientFactory.getClient(key, isDefaultClient);
-
             mClientInstances.put(key.matchingKey(), newClient);
+
+            addKeyToAuthenticator(key);
         }
 
         return mClientInstances.get(key.matchingKey());
+    }
+
+    private void addKeyToAuthenticator(Key key) {
+        mSseAuthenticator.registerKey(key.matchingKey());
+        if (mStreamingEnabled) {
+            mPushNotificationManager.start();
+        }
+    }
+
+    private void removeKeyFromAuthenticator(String key) {
+        mSseAuthenticator.unregisterKey(key);
     }
 
     @Override

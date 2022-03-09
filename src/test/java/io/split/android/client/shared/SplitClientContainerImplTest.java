@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
@@ -18,6 +19,7 @@ import java.util.Collection;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientFactory;
 import io.split.android.client.api.Key;
+import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 
 public class SplitClientContainerImplTest {
@@ -26,12 +28,14 @@ public class SplitClientContainerImplTest {
     private SplitClientFactory mSplitClientFactory;
     @Mock
     private SseAuthenticator mSseAuthenticator;
+    @Mock
+    private PushNotificationManager mPushNotificationManager;
     private SplitClientContainer mClientContainer;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        mClientContainer = new SplitClientContainerImpl("matching_key", mSplitClientFactory, mSseAuthenticator);
+        mClientContainer = new SplitClientContainerImpl(true, "matching_key", mSplitClientFactory, mSseAuthenticator, mPushNotificationManager);
     }
 
     @Test
@@ -73,8 +77,8 @@ public class SplitClientContainerImplTest {
         SplitClient clientMock = mock(SplitClient.class);
         when(mSplitClientFactory.getClient(eq(defaultKey), anyBoolean())).thenReturn(clientMock);
 
-        SplitClientContainer container = new SplitClientContainerImpl("default_key",
-                mSplitClientFactory, mSseAuthenticator);
+        SplitClientContainer container = new SplitClientContainerImpl(true, "default_key",
+                mSplitClientFactory, mSseAuthenticator, mPushNotificationManager);
 
         container.getClient(defaultKey);
 
@@ -88,11 +92,34 @@ public class SplitClientContainerImplTest {
         SplitClient clientMock = mock(SplitClient.class);
         when(mSplitClientFactory.getClient(eq(nonDefaultKey), anyBoolean())).thenReturn(clientMock);
 
-        SplitClientContainer container = new SplitClientContainerImpl("default_key",
-                mSplitClientFactory, mSseAuthenticator);
+        SplitClientContainer container = new SplitClientContainerImpl(true, "default_key",
+                mSplitClientFactory, mSseAuthenticator, mPushNotificationManager);
 
         container.getClient(nonDefaultKey);
 
         verify(mSplitClientFactory).getClient(nonDefaultKey, false);
+    }
+
+    @Test
+    public void pushNotificationManagerIsStartedWhenAddingNewKeyAndStreamingIsEnabled() {
+        Key key = new Key("new_key");
+        SplitClient clientMock = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(key), anyBoolean())).thenReturn(clientMock);
+
+        mClientContainer.getClient(key);
+
+        verify(mPushNotificationManager).start();
+    }
+
+    @Test
+    public void pushNotificationManagerIsNotStartedWhenStreamingIsNotEnabled() {
+        Key key = new Key("new_key");
+        SplitClient clientMock = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(key), anyBoolean())).thenReturn(clientMock);
+
+        SplitClientContainer container = new SplitClientContainerImpl(false, key.matchingKey(), mSplitClientFactory, mSseAuthenticator, mPushNotificationManager);
+        container.getClient(key);
+
+        verifyNoInteractions(mPushNotificationManager);
     }
 }

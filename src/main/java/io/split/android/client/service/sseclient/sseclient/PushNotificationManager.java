@@ -38,12 +38,12 @@ public class PushNotificationManager {
     private final SseAuthenticator mSseAuthenticator;
     private final SseClient mSseClient;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
-    private SseRefreshTokenTimer mRefreshTokenTimer;
-    private SseDisconnectionTimer mDisconnectionTimer;
+    private final SseRefreshTokenTimer mRefreshTokenTimer;
+    private final SseDisconnectionTimer mDisconnectionTimer;
 
-    private AtomicBoolean mIsPaused;
-    private AtomicBoolean mIsStopped;
-    private Future mConnectionTask;
+    private final AtomicBoolean mIsPaused;
+    private final AtomicBoolean mIsStopped;
+    private Future<?> mConnectionTask;
 
     public PushNotificationManager(@NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                    @NonNull SseAuthenticator sseAuthenticator,
@@ -77,7 +77,7 @@ public class PushNotificationManager {
         mIsStopped = new AtomicBoolean(false);
         mIsPaused = new AtomicBoolean(false);
 
-        if(executor != null) {
+        if (executor != null) {
             mExecutor = executor;
         } else {
             mExecutor = buildExecutor();
@@ -106,13 +106,13 @@ public class PushNotificationManager {
     }
 
     public void resume() {
-        if(!mIsPaused.get()) {
+        if (!mIsPaused.get()) {
             return;
         }
         Logger.d("Push notification manager resumed");
         mIsPaused.set(false);
         mDisconnectionTimer.cancel();
-        if(mSseClient.status() == SseClient.DISCONNECTED && !mIsStopped.get()) {
+        if (mSseClient.status() == SseClient.DISCONNECTED && !mIsStopped.get()) {
             connect();
         }
     }
@@ -131,11 +131,11 @@ public class PushNotificationManager {
         mSseClient.disconnect();
     }
 
-    private void connect() {
-        if(mSseClient.status() == SseClient.CONNECTED) {
+    public void connect() {
+        if (mSseClient.status() == SseClient.CONNECTED) {
             mSseClient.disconnect();
         }
-        if(mConnectionTask != null && (!mConnectionTask.isDone() || !mConnectionTask.isCancelled())) {
+        if (mConnectionTask != null && (!mConnectionTask.isDone() || !mConnectionTask.isCancelled())) {
             mConnectionTask.cancel(true);
         }
         mConnectionTask = mExecutor.submit(new StreamingConnection());
@@ -179,14 +179,14 @@ public class PushNotificationManager {
             SseAuthenticationResult authResult = mSseAuthenticator.authenticate();
             mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TOKEN, System.currentTimeMillis() - startTime);
 
-            if(authResult.isSuccess() && !authResult.isPushEnabled()) {
+            if (authResult.isSuccess() && !authResult.isPushEnabled()) {
                 Logger.d("Streaming disabled for api key");
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
                 mIsStopped.set(true);
                 return;
             }
 
-            if(!authResult.isSuccess() && !authResult.isErrorRecoverable()) {
+            if (!authResult.isSuccess() && !authResult.isErrorRecoverable()) {
                 Logger.d("Streaming no recoverable auth error.");
                 mTelemetryRuntimeProducer.recordAuthRejections();
                 if (authResult.getHttpStatus() != null) {
@@ -197,13 +197,13 @@ public class PushNotificationManager {
                 return;
             }
 
-            if( !authResult.isSuccess() && authResult.isErrorRecoverable()) {
+            if (!authResult.isSuccess() && authResult.isErrorRecoverable()) {
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RETRYABLE_ERROR));
                 return;
             }
 
             SseJwtToken token = authResult.getJwtToken();
-            if(token == null || token.getChannels() == null || token.getRawJwt() == null) {
+            if (token == null || token.getChannels() == null || token.getRawJwt() == null) {
                 Logger.d("Streaming auth error. Retrying");
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RETRYABLE_ERROR));
                 return;
@@ -220,7 +220,7 @@ public class PushNotificationManager {
             }
 
             // If host app is in bg or push manager stopped, abort the process
-            if(mIsPaused.get() || mIsStopped.get()) {
+            if (mIsPaused.get() || mIsStopped.get()) {
                 return;
             }
 
@@ -231,10 +231,6 @@ public class PushNotificationManager {
                     mRefreshTokenTimer.schedule(token.getIssuedAtTime(), token.getExpirationTime());
                 }
             });
-        }
-
-        private void logError(String message, Exception e) {
-            Logger.e(message + " : " + e.getLocalizedMessage());
         }
 
         private boolean delay(long seconds) {
