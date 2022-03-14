@@ -25,6 +25,7 @@ import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProviderI
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
+import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
@@ -71,6 +72,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final ImpressionListener mCustomerImpressionListener;
     private final SplitValidatorImpl mSplitValidator;
     private final EventPropertiesProcessorImpl mEventPropertiesProcessor;
+    private final SseAuthenticator mSseAuthenticator;
 
     public SplitClientFactoryImpl(@NonNull SplitFactory splitFactory,
                                   @NonNull SplitClientContainer clientContainer,
@@ -84,7 +86,8 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull SplitApiFacade splitApiFacade,
                                   @NonNull ValidationMessageLogger validationLogger,
                                   @NonNull KeyValidator keyValidator,
-                                  @NonNull ImpressionListener customerImpressionListener) {
+                                  @NonNull ImpressionListener customerImpressionListener,
+                                  @NonNull SseAuthenticator sseAuthenticator) {
         mSplitFactory = checkNotNull(splitFactory);
         mClientContainer = checkNotNull(clientContainer);
         mConfig = checkNotNull(config);
@@ -119,6 +122,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
         mAttributesSynchronizerRegistry = (AttributesSynchronizerRegistry) synchronizer;
         mMySegmentsUpdateWorkerRegistry = (MySegmentsUpdateWorkerRegistry) mSyncManager;
         mEventPropertiesProcessor = new EventPropertiesProcessorImpl();
+        mSseAuthenticator = checkNotNull(sseAuthenticator);
     }
 
     @Override
@@ -180,6 +184,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                         mAttributesManagerFactory.getManager(key.matchingKey(), attributesStorage)));
 
         eventsManager.getExecutorResources().setSplitClient(splitClient);
+        mSseAuthenticator.registerKey(key.matchingKey());
 
         if (isDefaultClient) {
             registerTelemetryTasksInEventManager(eventsManager,

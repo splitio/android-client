@@ -19,6 +19,7 @@ import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -32,9 +33,12 @@ public class SplitClientContainerImpl implements SplitClientContainer {
     private final ConcurrentMap<String, SplitClient> mClientInstances = new ConcurrentHashMap<>();
     private final SplitClientFactory mSplitClientFactory;
     private final Object mClientCreationLock = new Object();
+    private final SseAuthenticator mSseAuthenticator;
 
     public SplitClientContainerImpl(@NonNull String defaultMatchingKey,
-                                    @NonNull SplitClientFactory splitClientFactory) {
+                                    @NonNull SplitClientFactory splitClientFactory,
+                                    @NonNull SseAuthenticator sseAuthenticator) {
+        mSseAuthenticator = checkNotNull(sseAuthenticator);
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mSplitClientFactory = checkNotNull(splitClientFactory);
     }
@@ -51,7 +55,9 @@ public class SplitClientContainerImpl implements SplitClientContainer {
                                     @NonNull SplitApiFacade mSplitApiFacade,
                                     @NonNull ValidationMessageLogger validationLogger,
                                     @NonNull KeyValidator keyValidator,
-                                    @NonNull ImpressionListener customerImpressionListener) {
+                                    @NonNull ImpressionListener customerImpressionListener,
+                                    @NonNull SseAuthenticator sseAuthenticator) {
+        mSseAuthenticator = checkNotNull(sseAuthenticator);
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mSplitClientFactory = new SplitClientFactoryImpl(splitFactory,
                 this,
@@ -65,7 +71,8 @@ public class SplitClientContainerImpl implements SplitClientContainer {
                 mSplitApiFacade,
                 validationLogger,
                 keyValidator,
-                customerImpressionListener);
+                customerImpressionListener,
+                sseAuthenticator);
     }
 
     @Override
@@ -76,6 +83,7 @@ public class SplitClientContainerImpl implements SplitClientContainer {
     @Override
     public void remove(String key) {
         mClientInstances.remove(key);
+        mSseAuthenticator.unregisterKey(key);
     }
 
     private SplitClient getOrCreateClientForKey(Key key) {

@@ -18,17 +18,20 @@ import java.util.Collection;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientFactory;
 import io.split.android.client.api.Key;
+import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 
 public class SplitClientContainerImplTest {
 
     @Mock
     private SplitClientFactory mSplitClientFactory;
+    @Mock
+    private SseAuthenticator mSseAuthenticator;
     private SplitClientContainer mClientContainer;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        mClientContainer = new SplitClientContainerImpl("matching_key", mSplitClientFactory);
+        mClientContainer = new SplitClientContainerImpl("matching_key", mSplitClientFactory, mSseAuthenticator);
     }
 
     @Test
@@ -71,7 +74,7 @@ public class SplitClientContainerImplTest {
         when(mSplitClientFactory.getClient(eq(defaultKey), anyBoolean())).thenReturn(clientMock);
 
         SplitClientContainer container = new SplitClientContainerImpl("default_key",
-                mSplitClientFactory);
+                mSplitClientFactory, mSseAuthenticator);
 
         container.getClient(defaultKey);
 
@@ -86,7 +89,7 @@ public class SplitClientContainerImplTest {
         when(mSplitClientFactory.getClient(eq(nonDefaultKey), anyBoolean())).thenReturn(clientMock);
 
         SplitClientContainer container = new SplitClientContainerImpl("default_key",
-                mSplitClientFactory);
+                mSplitClientFactory, mSseAuthenticator);
 
         container.getClient(nonDefaultKey);
 

@@ -135,13 +135,13 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
 
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
-        SplitApiFacade mSplitApiFacade = factoryHelper.buildApiFacade(
+        SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryString);
 
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
-                config, mSplitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator);
+                config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator);
 
         cleanUpDabase(_splitTaskExecutor, splitTaskFactory);
 
@@ -167,6 +167,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 config.telemetryRefreshRate(),
                 config.shouldRecordTelemetry());
 
+        SseAuthenticator sseAuthenticator = new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(),
+                new SseJwtParser());
         mSyncManager = factoryHelper.buildSyncManager(
                 config,
                 _splitTaskExecutor,
@@ -175,7 +177,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 mSynchronizer,
                 telemetrySynchronizer,
                 mStorageContainer.getTelemetryStorage(),
-                new SseAuthenticator(mSplitApiFacade.getSseAuthenticationFetcher(), key.matchingKey(), new SseJwtParser())
+                sseAuthenticator
         );
 
         final ImpressionListener splitImpressionListener
@@ -238,8 +240,8 @@ public class SplitFactoryImpl implements SplitFactory {
 
         mClientContainer = new SplitClientContainerImpl(
             mDefaultClientKey.matchingKey(), this, config, mSyncManager, mSynchronizer, telemetrySynchronizer,
-                mEventsManagerCoordinator, mStorageContainer, _splitTaskExecutor, mSplitApiFacade,
-                validationLogger, keyValidator, customerImpressionListener
+                mEventsManagerCoordinator, mStorageContainer, _splitTaskExecutor, splitApiFacade,
+                validationLogger, keyValidator, customerImpressionListener, sseAuthenticator
         );
 
         // Initialize default client
