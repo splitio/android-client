@@ -84,7 +84,7 @@ public class PushNotificationManager {
         }
     }
 
-    public void start() {
+    public synchronized void start() {
         mTelemetryRuntimeProducer.recordStreamingEvents(new SyncModeUpdateStreamingEvent(SyncModeUpdateStreamingEvent.Mode.STREAMING, System.currentTimeMillis()));
         Logger.d("Push notification manager started");
         connect();
@@ -117,7 +117,7 @@ public class PushNotificationManager {
         }
     }
 
-    public void stop() {
+    public synchronized void stop() {
         Logger.d("Shutting down SSE client");
         mIsStopped.set(true);
         disconnect();

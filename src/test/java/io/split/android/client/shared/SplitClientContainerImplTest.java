@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -167,6 +168,21 @@ public class SplitClientContainerImplTest {
         mClientContainer.getClient(key);
 
         verify(mPushNotificationManager).start();
+    }
+
+    @Test
+    public void pushNotificationManagerIsReStartedWhenAddingNewKeyAndStreamingIsEnabled() {
+        Key key = new Key("default_key");
+        Key newKey = new Key("new_key");
+        SplitClient clientMock = mock(SplitClient.class);
+        SplitClient clientMock2 = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
+        when(mSplitClientFactory.getClient(eq(newKey), any(), any(), anyBoolean())).thenReturn(clientMock2);
+
+        mClientContainer.getClient(key);
+        mClientContainer.getClient(newKey);
+
+        verify(mPushNotificationManager, times(2)).start();
     }
 
     @Test
