@@ -10,11 +10,8 @@ import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
-import io.split.android.client.service.http.HttpSseAuthTokenFetcher;
-import io.split.android.client.service.http.RepeatableParameterHttpFetcher;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
 import io.split.android.client.service.impressions.ImpressionsCount;
-import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.Stats;
@@ -24,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SplitApiFacade {
     private final HttpFetcher<SplitChange> mSplitFetcher;
     private final MySegmentsFetcherFactory mMySegmentsFetcherFactory;
-    private final RepeatableParameterHttpFetcher<SseAuthenticationResponse> mSseAuthenticationFetcher;
+    private final HttpFetcher<SseAuthenticationResponse> mSseAuthenticationFetcher;
     private final HttpRecorder<List<Event>> mEventsRecorder;
     private final HttpRecorder<List<KeyImpression>> mImpressionsRecorder;
     private final HttpRecorder<ImpressionsCount> mImpressionsCountRecorder;
@@ -33,7 +30,7 @@ public class SplitApiFacade {
 
     public SplitApiFacade(@NonNull HttpFetcher<SplitChange> splitFetcher,
                           @NonNull MySegmentsFetcherFactory mySegmentsFetcherFactory,
-                          @NonNull RepeatableParameterHttpFetcher<SseAuthenticationResponse> sseAuthenticationFetcher,
+                          @NonNull HttpFetcher<SseAuthenticationResponse> sseAuthenticationFetcher,
                           @NonNull HttpRecorder<List<Event>> eventsRecorder,
                           @NonNull HttpRecorder<List<KeyImpression>> impressionsRecorder,
                           @NonNull HttpRecorder<ImpressionsCount> impressionsCountRecorder,
@@ -57,7 +54,7 @@ public class SplitApiFacade {
         return mMySegmentsFetcherFactory.getFetcher(matchingKey);
     }
 
-    public RepeatableParameterHttpFetcher<SseAuthenticationResponse> getSseAuthenticationFetcher() {
+    public HttpFetcher<SseAuthenticationResponse> getSseAuthenticationFetcher() {
         return mSseAuthenticationFetcher;
     }
 

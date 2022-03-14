@@ -3,14 +3,14 @@ package io.split.android.client.service.sseclient.sseclient;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
-import androidx.core.util.Pair;
 
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
-import io.split.android.client.service.http.RepeatableParameterHttpFetcher;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.service.sseclient.SseJwtParser;
@@ -20,11 +20,11 @@ import io.split.android.client.utils.Logger;
 public class SseAuthenticator {
     private static final String USER_KEY_PARAM = "users";
 
-    private final RepeatableParameterHttpFetcher<SseAuthenticationResponse> mAuthFetcher;
+    private final HttpFetcher<SseAuthenticationResponse> mAuthFetcher;
     private final Set<String> mUserKeys;
     private final SseJwtParser mJwtParser;
 
-    public SseAuthenticator(@NonNull RepeatableParameterHttpFetcher<SseAuthenticationResponse> authFetcher,
+    public SseAuthenticator(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
                             @NonNull SseJwtParser jwtParser) {
         mAuthFetcher = checkNotNull(authFetcher);
         mUserKeys = new ConcurrentSet<>();
@@ -34,10 +34,8 @@ public class SseAuthenticator {
     public SseAuthenticationResult authenticate() {
         SseAuthenticationResponse authResponse;
         try {
-            Set<Pair<String, Object>> params = new HashSet<>();
-            for (String userKey : mUserKeys) {
-                params.add(new Pair<>(USER_KEY_PARAM, userKey));
-            }
+            Map<String, Object> params = new HashMap<>();
+            params.put(USER_KEY_PARAM, mUserKeys);
             authResponse = mAuthFetcher.execute(params, null);
 
         } catch (HttpFetcherException httpFetcherException) {

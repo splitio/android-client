@@ -1,5 +1,12 @@
 package io.split.android.client.service.sseclient;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import androidx.core.util.Pair;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -7,22 +14,16 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpSseAuthTokenFetcher;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticationResult;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import androidx.core.util.Pair;
 
 public class SseAuthenticatorTest {
 
@@ -123,13 +124,15 @@ public class SseAuthenticatorTest {
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
         authenticator.registerKey("user1");
         authenticator.registerKey("user2");
-        Set<Pair<String, Object>> set = new HashSet<>();
-        set.add(new Pair<>("users", "user1"));
-        set.add(new Pair<>("users", "user2"));
+        Map<String, Object> map = new HashMap<>();
+        Set<String> usersSet = new HashSet<>();
+        usersSet.add("user1");
+        usersSet.add("user2");
+        map.put("users", usersSet);
 
         authenticator.authenticate();
 
-        verify(mFetcher).execute(set, null);
+        verify(mFetcher).execute(map, null);
     }
 
     @Test
@@ -142,12 +145,14 @@ public class SseAuthenticatorTest {
         authenticator.registerKey("user2");
         authenticator.registerKey("user3");
         authenticator.unregisterKey("user1");
-        Set<Pair<String, Object>> set = new HashSet<>();
-        set.add(new Pair<>("users", "user2"));
-        set.add(new Pair<>("users", "user3"));
+        Map<String, Object> map = new HashMap<>();
+        Set<String> usersSet = new HashSet<>();
+        usersSet.add("user2");
+        usersSet.add("user3");
+        map.put("users", usersSet);
 
         authenticator.authenticate();
 
-        verify(mFetcher).execute(set, null);
+        verify(mFetcher).execute(map, null);
     }
 }

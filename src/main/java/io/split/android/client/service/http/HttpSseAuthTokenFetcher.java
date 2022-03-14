@@ -1,13 +1,14 @@
 package io.split.android.client.service.http;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.util.Pair;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
@@ -16,9 +17,7 @@ import io.split.android.client.network.URIBuilder;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.utils.NetworkHelper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public class HttpSseAuthTokenFetcher implements RepeatableParameterHttpFetcher<SseAuthenticationResponse> {
+public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationResponse> {
 
     private final HttpClient mClient;
     private final URI mTarget;
@@ -37,7 +36,7 @@ public class HttpSseAuthTokenFetcher implements RepeatableParameterHttpFetcher<S
     }
 
     @Override
-    public SseAuthenticationResponse execute(@NonNull Set<Pair<String, Object>> params,
+    public SseAuthenticationResponse execute(@NonNull Map<String, Object> params,
                                              @Nullable Map<String, String> headers) throws HttpFetcherException {
         checkNotNull(params);
         SseAuthenticationResponse responseData;
@@ -46,7 +45,7 @@ public class HttpSseAuthTokenFetcher implements RepeatableParameterHttpFetcher<S
             if (!mNetworkHelper.isReachable(mTarget)) {
                 throw new IllegalStateException("Source not reachable");
             }
-            URI build = getUri(params);
+            URI build = getUri(params, mTarget);
             HttpResponse response = mClient.request(build, HttpMethod.GET).execute();
 
             if (!response.isSuccess()) {
@@ -67,11 +66,15 @@ public class HttpSseAuthTokenFetcher implements RepeatableParameterHttpFetcher<S
         return responseData;
     }
 
-    private URI getUri(Set<Pair<String, Object>> params) throws URISyntaxException {
-        URIBuilder uriBuilder = new URIBuilder(mTarget);
-        for (Pair<String, Object> param : params) {
-            if (param.first != null && param.second != null) {
-                uriBuilder.addParameter(param.first, param.second.toString());
+    private static URI getUri(Map<String, Object> params, URI target) throws URISyntaxException {
+        URIBuilder uriBuilder = new URIBuilder(target);
+        for (Map.Entry<String, Object> param : params.entrySet()) {
+            if (param.getValue() instanceof Iterable) {
+                for (Object paramValue : ((Iterable<Object>) param.getValue())) {
+                    uriBuilder.addParameter(param.getKey(), paramValue.toString());
+                }
+            } else {
+                uriBuilder.addParameter(param.getKey(), String.valueOf(param.getValue()));
             }
         }
 
