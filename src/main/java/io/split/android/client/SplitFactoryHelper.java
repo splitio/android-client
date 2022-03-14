@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
@@ -22,9 +24,12 @@ import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryI
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactoryImpl;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
@@ -37,6 +42,12 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerFactoryImpl;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
+import io.split.android.client.shared.ClientComponentsRegister;
+import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
@@ -54,13 +65,13 @@ class SplitFactoryHelper {
 
         String dbName = buildDatabaseName(config, apiToken);
         File dbPath = context.getDatabasePath(dbName);
-        if(dbPath.exists()) {
+        if (dbPath.exists()) {
             return dbName;
         }
 
         String legacyName = buildLegacyDatabaseName(config, apiToken);
         File legacyDb = context.getDatabasePath(legacyName);
-        if(legacyDb.exists()) {
+        if (legacyDb.exists()) {
             legacyDb.renameTo(dbPath);
         }
         return dbName;
@@ -68,7 +79,7 @@ class SplitFactoryHelper {
 
     private String buildDatabaseName(SplitClientConfig config, String apiToken) {
         int apiTokenLength = apiToken.length();
-        if(apiTokenLength > DB_MAGIC_CHARS_COUNT) {
+        if (apiTokenLength > DB_MAGIC_CHARS_COUNT) {
             String begin = apiToken.substring(0, DB_MAGIC_CHARS_COUNT);
             String end = apiToken.substring(apiTokenLength - DB_MAGIC_CHARS_COUNT);
             return begin + end;
@@ -204,13 +215,46 @@ class SplitFactoryHelper {
 
     @NonNull
     TelemetrySynchronizer getTelemetrySynchronizer(SplitTaskExecutor _splitTaskExecutor,
-                                                           SplitTaskFactory splitTaskFactory,
-                                                           long telemetryRefreshRate,
-                                                           boolean shouldRecordTelemetry) {
+                                                   SplitTaskFactory splitTaskFactory,
+                                                   long telemetryRefreshRate,
+                                                   boolean shouldRecordTelemetry) {
         if (shouldRecordTelemetry) {
             return new TelemetrySynchronizerImpl(_splitTaskExecutor, splitTaskFactory, telemetryRefreshRate);
         } else {
             return new TelemetrySynchronizerStub();
         }
+    }
+
+    @NonNull
+    public ClientComponentsRegisterImpl getClientComponentsRegister(SplitClientConfig config,
+                                                                    SplitTaskExecutor taskExecutor,
+                                                                    EventsManagerCoordinator eventsManagerCoordinator,
+                                                                    Synchronizer synchronizer,
+                                                                    NotificationParser notificationParser,
+                                                                    NotificationProcessor notificationProcessor,
+                                                                    SseAuthenticator sseAuthenticator,
+                                                                    SplitStorageContainer storageContainer,
+                                                                    SyncManager syncManager,
+                                                                    String defaultMatchingKey) {
+        MySegmentsV2PayloadDecoder mySegmentsV2PayloadDecoder = new MySegmentsV2PayloadDecoder();
+
+        return new ClientComponentsRegisterImpl(
+                new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(),
+                        taskExecutor,
+                        config.segmentsRefreshRate()),
+                storageContainer,
+                new AttributesSynchronizerFactoryImpl(taskExecutor, storageContainer.getPersistentAttributesStorage()),
+                (AttributesSynchronizerRegistry) synchronizer,
+                (MySegmentsSynchronizerRegistry) synchronizer,
+                (MySegmentsUpdateWorkerRegistry) syncManager,
+                eventsManagerCoordinator,
+                sseAuthenticator,
+                notificationProcessor,
+                defaultMatchingKey,
+                new MySegmentsNotificationProcessorFactoryImpl(notificationParser,
+                        taskExecutor,
+                        mySegmentsV2PayloadDecoder,
+                        new CompressionUtilProvider()),
+                mySegmentsV2PayloadDecoder);
     }
 }

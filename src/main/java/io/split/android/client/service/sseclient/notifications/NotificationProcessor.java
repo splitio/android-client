@@ -1,28 +1,23 @@
 package io.split.android.client.service.sseclient.notifications;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import com.google.gson.JsonSyntaxException;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
-import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessor;
+import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorRegistry;
 import io.split.android.client.utils.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-public class NotificationProcessor {
+public class NotificationProcessor implements MySegmentsNotificationProcessorRegistry {
 
     private final NotificationParser mNotificationParser;
     private final SplitTaskExecutor mSplitTaskExecutor;
@@ -70,12 +65,14 @@ public class NotificationProcessor {
         }
     }
 
-    public void registerMySegmentsProcessor(String userKey, MySegmentsNotificationProcessor processor) {
-        mMySegmentsNotificationProcessors.put(userKey, processor);
+    @Override
+    public void registerMySegmentsProcessor(String matchingKey, MySegmentsNotificationProcessor processor) {
+        mMySegmentsNotificationProcessors.put(matchingKey, processor);
     }
 
-    public void unregisterMySegmentsProcessor(String userKey) {
-        mMySegmentsNotificationProcessors.remove(userKey);
+    @Override
+    public void unregisterMySegmentsProcessor(String matchingKey) {
+        mMySegmentsNotificationProcessors.remove(matchingKey);
     }
 
     private void processSplitUpdate(SplitsChangeNotification notification) {
