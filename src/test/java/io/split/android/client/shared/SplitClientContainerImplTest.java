@@ -20,7 +20,6 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.SplitClient;
@@ -29,7 +28,6 @@ import io.split.android.client.SplitClientFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
@@ -57,9 +55,7 @@ public class SplitClientContainerImplTest {
     private ClientComponentsRegister mClientComponentsRegister;
     @Mock
     private SplitTaskExecutor mSplitTaskExecutor;
-    private SplitTaskExecutionListener mListener;
 
-    private CountDownLatch mStreamingConnectionLatch = new CountDownLatch(1);
     private final String mDefaultMatchingKey = "matching_key";
     private SplitClientContainer mClientContainer;
 
@@ -80,14 +76,6 @@ public class SplitClientContainerImplTest {
                 mSplitClientFactory,
                 mClientComponentsRegister
         );
-    }
-
-    private SplitTaskExecutionListener getListener() {
-        if (mListener == null) {
-            mListener = taskInfo -> mStreamingConnectionLatch.countDown();
-        }
-
-        return mListener;
     }
 
     @Test
