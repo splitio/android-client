@@ -31,6 +31,8 @@ import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProviderI
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManagerDeferredStartTask;
 import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsBackgroundSyncScheduleTask;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.validators.KeyValidator;
@@ -50,8 +52,11 @@ public class SplitClientContainerImpl implements SplitClientContainer {
     private final PushNotificationManager mPushNotificationManager;
     private final boolean mStreamingEnabled;
     private final AtomicBoolean mConnecting = new AtomicBoolean(false);
+    private final AtomicBoolean mSchedulingBackgroundSync = new AtomicBoolean(false);
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final SplitTaskExecutionListener mStreamingConnectionExecutionListener;
+    private final SplitTaskExecutionListener mSchedulingBackgroundSyncExecutionListener;
+    private final MySegmentsWorkManagerWrapper mWorkManagerWrapper;
 
     public SplitClientContainerImpl(@NonNull String defaultMatchingKey,
                                     @NonNull SplitFactoryImpl splitFactory,
@@ -65,7 +70,8 @@ public class SplitClientContainerImpl implements SplitClientContainer {
                                     @NonNull KeyValidator keyValidator,
                                     @NonNull ImpressionListener customerImpressionListener,
                                     @NonNull PushNotificationManager pushNotificationManager,
-                                    @NonNull ClientComponentsRegister clientComponentsRegister) {
+                                    @NonNull ClientComponentsRegister clientComponentsRegister,
+                                    @NonNull MySegmentsWorkManagerWrapper workManagerWrapper) {
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mPushNotificationManager = checkNotNull(pushNotificationManager);
         mStreamingEnabled = config.streamingEnabled();
@@ -87,6 +93,8 @@ public class SplitClientContainerImpl implements SplitClientContainer {
         mClientComponentsRegister = checkNotNull(clientComponentsRegister);
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mStreamingConnectionExecutionListener = new StreamingConnectionExecutionListener(mConnecting);
+        mSchedulingBackgroundSyncExecutionListener = new WorkManagerSchedulingListener(mSchedulingBackgroundSync);
+        mWorkManagerWrapper = checkNotNull(workManagerWrapper);
     }
 
     @VisibleForTesting
@@ -99,7 +107,8 @@ public class SplitClientContainerImpl implements SplitClientContainer {
                                     SplitTaskExecutor splitTaskExecutor,
                                     SplitClientConfig config,
                                     SplitClientFactory splitClientFactory,
-                                    ClientComponentsRegister clientComponentsRegister) {
+                                    ClientComponentsRegister clientComponentsRegister,
+                                    MySegmentsWorkManagerWrapper workManagerWrapper) {
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mPushNotificationManager = checkNotNull(pushNotificationManager);
         mStreamingEnabled = streamingEnabled;
@@ -111,6 +120,8 @@ public class SplitClientContainerImpl implements SplitClientContainer {
         mClientComponentsRegister = checkNotNull(clientComponentsRegister);
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mStreamingConnectionExecutionListener = new StreamingConnectionExecutionListener(mConnecting);
+        mSchedulingBackgroundSyncExecutionListener = new WorkManagerSchedulingListener(mConnecting);
+        mWorkManagerWrapper = checkNotNull(workManagerWrapper);
     }
 
     @Override
@@ -153,6 +164,12 @@ public class SplitClientContainerImpl implements SplitClientContainer {
         if (mStreamingEnabled) {
             connectToStreaming();
         }
+
+        if (mConfig.synchronizeInBackground()) {
+            scheduleMySegmentsWork();
+        } else {
+            mWorkManagerWrapper.removeWork();
+        }
     }
 
     private MySegmentsTaskFactory getMySegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
@@ -173,6 +190,15 @@ public class SplitClientContainerImpl implements SplitClientContainer {
         }
     }
 
+    private void scheduleMySegmentsWork() {
+        if (!mSchedulingBackgroundSync.get()) {
+            mSchedulingBackgroundSync.set(true);
+            mSplitTaskExecutor.schedule(new MySegmentsBackgroundSyncScheduleTask(mWorkManagerWrapper, mClientInstances.keySet()),
+                    ServiceConstants.MIN_INITIAL_DELAY,
+                    mSchedulingBackgroundSyncExecutionListener);
+        }
+    }
+
     @VisibleForTesting
     static class StreamingConnectionExecutionListener implements SplitTaskExecutionListener {
 
@@ -185,6 +211,21 @@ public class SplitClientContainerImpl implements SplitClientContainer {
         @Override
         public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
             mConnecting.set(false);
+        }
+    }
+
+    @VisibleForTesting
+    static class WorkManagerSchedulingListener implements SplitTaskExecutionListener {
+
+        private final AtomicBoolean mScheduling;
+
+        WorkManagerSchedulingListener(AtomicBoolean connecting) {
+            mScheduling = connecting;
+        }
+
+        @Override
+        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+            mScheduling.set(false);
         }
     }
 }

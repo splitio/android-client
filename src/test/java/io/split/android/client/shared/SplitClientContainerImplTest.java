@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -34,6 +35,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManagerDeferredStartTask;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
@@ -55,6 +57,8 @@ public class SplitClientContainerImplTest {
     private ClientComponentsRegister mClientComponentsRegister;
     @Mock
     private SplitTaskExecutor mSplitTaskExecutor;
+    @Mock
+    private MySegmentsWorkManagerWrapper mWorkManagerWrapper;
 
     private final String mDefaultMatchingKey = "matching_key";
     private SplitClientContainer mClientContainer;
@@ -74,7 +78,8 @@ public class SplitClientContainerImplTest {
                 mSplitTaskExecutor,
                 mConfig,
                 mSplitClientFactory,
-                mClientComponentsRegister
+                mClientComponentsRegister,
+                mWorkManagerWrapper
         );
     }
 
@@ -128,7 +133,8 @@ public class SplitClientContainerImplTest {
                 mSplitTaskExecutor,
                 mConfig,
                 mSplitClientFactory,
-                mClientComponentsRegister
+                mClientComponentsRegister,
+                mWorkManagerWrapper
         );
 
         container.getClient(defaultKey);
@@ -153,7 +159,8 @@ public class SplitClientContainerImplTest {
                 mSplitTaskExecutor,
                 mConfig,
                 mSplitClientFactory,
-                mClientComponentsRegister
+                mClientComponentsRegister,
+                mWorkManagerWrapper
         );
 
         container.getClient(nonDefaultKey);
@@ -203,7 +210,8 @@ public class SplitClientContainerImplTest {
                 mSplitTaskExecutor,
                 mConfig,
                 mSplitClientFactory,
-                mClientComponentsRegister
+                mClientComponentsRegister,
+                mWorkManagerWrapper
         );
         container.getClient(key);
 
@@ -233,6 +241,56 @@ public class SplitClientContainerImplTest {
         streamingConnectionExecutionListener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
 
         assertFalse(result.get());
+    }
+
+    @Test
+    public void schedulingTaskListenerSetsResultToFalse() {
+        AtomicBoolean result = new AtomicBoolean(true);
+        SplitClientContainerImpl.WorkManagerSchedulingListener listener = new SplitClientContainerImpl.WorkManagerSchedulingListener(result);
+        listener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+
+        assertFalse(result.get());
+    }
+
+    @Test
+    public void jobsAreScheduledInWorkManagerAfterClientIsCreatedAndSyncInBackgroundIsOn() {
+        Key key = new Key("matching_key");
+        SplitClient clientMock = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
+        when(mConfig.synchronizeInBackground()).thenReturn(true);
+
+        mClientContainer.getClient(key);
+
+        verify(mSplitTaskExecutor).schedule(any(), eq(5L), any());
+    }
+
+    @Test
+    public void jobsAreNotScheduledInWorkManagerAfterClientIsCreatedAndSyncInBackgroundIsOff() {
+        Key key = new Key("matching_key");
+        SplitClient clientMock = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
+        when(mConfig.synchronizeInBackground()).thenReturn(false);
+
+        mClientContainer.getClient(key);
+
+        verify(mSplitTaskExecutor, times(0)).schedule(any(), eq(5L), any());
+        verify(mWorkManagerWrapper).removeWork();
+    }
+
+    @Test
+    public void jobsAreScheduledOnceInWorkManagerAfterClientIsCreatedAndSyncInBackgroundIsOn() {
+        Key key = new Key("default_key");
+        Key newKey = new Key("new_key");
+        SplitClient clientMock = mock(SplitClient.class);
+        SplitClient clientMock2 = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
+        when(mSplitClientFactory.getClient(eq(newKey), any(), any(), anyBoolean())).thenReturn(clientMock2);
+        when(mConfig.synchronizeInBackground()).thenReturn(true);
+
+        mClientContainer.getClient(key);
+        mClientContainer.getClient(newKey);
+
+        verify(mSplitTaskExecutor).schedule(any(), eq(5L), any());
     }
 
     private void scheduleStreamingConnection() {

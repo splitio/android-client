@@ -27,6 +27,7 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
@@ -34,11 +35,10 @@ import io.split.android.client.service.workmanager.SplitsSyncWorker;
 import io.split.android.client.utils.Logger;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-public class WorkManagerWrapper {
+public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
     final private WorkManager mWorkManager;
     final private String mDatabaseName;
     final private String mApiKey;
-    final private Set<String> mKeys;
     final private SplitClientConfig mSplitClientConfig;
     final private Constraints mConstraints;
     private WeakReference<SplitTaskExecutionListener> mFetcherExecutionListener;
@@ -49,13 +49,11 @@ public class WorkManagerWrapper {
     public WorkManagerWrapper(@NonNull WorkManager workManager,
                               @NonNull SplitClientConfig splitClientConfig,
                               @NonNull String apiKey,
-                              @NonNull String databaseName,
-                              @NonNull Set<String> keys) {
+                              @NonNull String databaseName) {
         mWorkManager = checkNotNull(workManager);
         mDatabaseName = checkNotNull(databaseName);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mApiKey = checkNotNull(apiKey);
-        mKeys = checkNotNull(keys);
         mShouldLoadFromLocal = new HashSet<>();
         mConstraints = buildConstraints();
     }
@@ -64,6 +62,7 @@ public class WorkManagerWrapper {
         mFetcherExecutionListener = new WeakReference<>(fetcherExecutionListener);
     }
 
+    @Override
     public void removeWork() {
         mWorkManager.cancelUniqueWork(SplitTaskType.SPLITS_SYNC.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.MY_SEGMENTS_SYNC.toString());
@@ -78,14 +77,17 @@ public class WorkManagerWrapper {
         scheduleWork(SplitTaskType.SPLITS_SYNC.toString(), SplitsSyncWorker.class,
                 buildSplitSyncInputData());
 
-        scheduleWork(SplitTaskType.MY_SEGMENTS_SYNC.toString(), MySegmentsSyncWorker.class,
-                buildMySegmentsSyncInputData());
-
         scheduleWork(SplitTaskType.EVENTS_RECORDER.toString(), EventsRecorderWorker.class,
                 buildEventsRecorderInputData());
 
         scheduleWork(SplitTaskType.IMPRESSIONS_RECORDER.toString(),
                 ImpressionsRecorderWorker.class, buildImpressionsRecorderInputData());
+    }
+
+    @Override
+    public void scheduleMySegmentsWork(Set<String> keys) {
+        scheduleWork(SplitTaskType.MY_SEGMENTS_SYNC.toString(), MySegmentsSyncWorker.class,
+                buildMySegmentsSyncInputData(keys));
     }
 
     private void scheduleWork(String requestType,
@@ -179,9 +181,9 @@ public class WorkManagerWrapper {
         return buildInputData(dataBuilder.build());
     }
 
-    private Data buildMySegmentsSyncInputData() {
+    private Data buildMySegmentsSyncInputData(Set<String> keys) {
         Data.Builder dataBuilder = new Data.Builder();
-        String[] keysArray = new String[mKeys.size()];
+        String[] keysArray = new String[keys.size()];
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
         dataBuilder.putStringArray(ServiceConstants.WORKER_PARAM_KEY, keysArray);
         dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
