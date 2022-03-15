@@ -1,45 +1,43 @@
 package io.split.android.client.shared;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Collection;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientFactory;
-import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.api.Key;
-import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
-import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
-import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.service.sseclient.sseclient.PushNotificationManagerDeferredStartTask;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
-import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
-import io.split.android.client.telemetry.TelemetrySynchronizer;
-import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.validators.KeyValidator;
-import io.split.android.client.validators.ValidationMessageLogger;
 
 public class SplitClientContainerImplTest {
 
@@ -57,6 +55,11 @@ public class SplitClientContainerImplTest {
     private PushNotificationManager mPushNotificationManager;
     @Mock
     private ClientComponentsRegister mClientComponentsRegister;
+    @Mock
+    private SplitTaskExecutor mSplitTaskExecutor;
+    private SplitTaskExecutionListener mListener;
+
+    private CountDownLatch mStreamingConnectionLatch = new CountDownLatch(1);
     private final String mDefaultMatchingKey = "matching_key";
     private SplitClientContainer mClientContainer;
 
@@ -72,10 +75,19 @@ public class SplitClientContainerImplTest {
                 mMySegmentsTaskFactoryProvider,
                 mSplitApiFacade,
                 mStorageContainer,
+                mSplitTaskExecutor,
                 mConfig,
                 mSplitClientFactory,
                 mClientComponentsRegister
         );
+    }
+
+    private SplitTaskExecutionListener getListener() {
+        if (mListener == null) {
+            mListener = taskInfo -> mStreamingConnectionLatch.countDown();
+        }
+
+        return mListener;
     }
 
     @Test
@@ -125,6 +137,7 @@ public class SplitClientContainerImplTest {
                 mMySegmentsTaskFactoryProvider,
                 mSplitApiFacade,
                 mStorageContainer,
+                mSplitTaskExecutor,
                 mConfig,
                 mSplitClientFactory,
                 mClientComponentsRegister
@@ -149,6 +162,7 @@ public class SplitClientContainerImplTest {
                 mMySegmentsTaskFactoryProvider,
                 mSplitApiFacade,
                 mStorageContainer,
+                mSplitTaskExecutor,
                 mConfig,
                 mSplitClientFactory,
                 mClientComponentsRegister
@@ -167,11 +181,11 @@ public class SplitClientContainerImplTest {
 
         mClientContainer.getClient(key);
 
-        verify(mPushNotificationManager).start();
+        scheduleStreamingConnection();
     }
 
     @Test
-    public void pushNotificationManagerIsReStartedWhenAddingNewKeyAndStreamingIsEnabled() {
+    public void pushNotificationManagerIsStartedOnlyOnceWhenAddingMultipleClientsAndStreamingIsEnabled() {
         Key key = new Key("default_key");
         Key newKey = new Key("new_key");
         SplitClient clientMock = mock(SplitClient.class);
@@ -182,7 +196,7 @@ public class SplitClientContainerImplTest {
         mClientContainer.getClient(key);
         mClientContainer.getClient(newKey);
 
-        verify(mPushNotificationManager, times(2)).start();
+        scheduleStreamingConnection();
     }
 
     @Test
@@ -198,6 +212,7 @@ public class SplitClientContainerImplTest {
                 mMySegmentsTaskFactoryProvider,
                 mSplitApiFacade,
                 mStorageContainer,
+                mSplitTaskExecutor,
                 mConfig,
                 mSplitClientFactory,
                 mClientComponentsRegister
@@ -221,5 +236,21 @@ public class SplitClientContainerImplTest {
     public void callingRemoveUnregistersComponentsForKey() {
         mClientContainer.remove("matching_key");
         verify(mClientComponentsRegister).unregisterComponentsForKey("matching_key");
+    }
+
+    @Test
+    public void taskListenerSetsResultToFalse() {
+        AtomicBoolean result = new AtomicBoolean(true);
+        SplitClientContainerImpl.StreamingConnectionExecutionListener streamingConnectionExecutionListener = new SplitClientContainerImpl.StreamingConnectionExecutionListener(result);
+        streamingConnectionExecutionListener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+
+        assertFalse(result.get());
+    }
+
+    private void scheduleStreamingConnection() {
+        verify(mSplitTaskExecutor).schedule(
+                ArgumentMatchers.argThat((ArgumentMatcher<PushNotificationManagerDeferredStartTask>) Objects::nonNull),
+                eq(15L),
+                any());
     }
 }

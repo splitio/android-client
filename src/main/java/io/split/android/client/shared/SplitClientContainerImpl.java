@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
@@ -18,13 +19,17 @@ import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryConfiguration;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProviderImpl;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
+import io.split.android.client.service.sseclient.sseclient.PushNotificationManagerDeferredStartTask;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
@@ -44,6 +49,9 @@ public class SplitClientContainerImpl implements SplitClientContainer {
     private final ClientComponentsRegister mClientComponentsRegister;
     private final PushNotificationManager mPushNotificationManager;
     private final boolean mStreamingEnabled;
+    private final AtomicBoolean mConnecting = new AtomicBoolean(false);
+    private final SplitTaskExecutor mSplitTaskExecutor;
+    private final SplitTaskExecutionListener mStreamingConnectionExecutionListener;
 
     public SplitClientContainerImpl(@NonNull String defaultMatchingKey,
                                     @NonNull SplitFactoryImpl splitFactory,
@@ -65,7 +73,6 @@ public class SplitClientContainerImpl implements SplitClientContainer {
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mStorageContainer = checkNotNull(storageContainer);
         mConfig = checkNotNull(config);
-
         mSplitClientFactory = new SplitClientFactoryImpl(splitFactory,
                 this,
                 config,
@@ -77,26 +84,33 @@ public class SplitClientContainerImpl implements SplitClientContainer {
                 keyValidator,
                 customerImpressionListener
         );
-
         mClientComponentsRegister = checkNotNull(clientComponentsRegister);
+        mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
+        mStreamingConnectionExecutionListener = new StreamingConnectionExecutionListener(mConnecting);
     }
 
     @VisibleForTesting
-    public SplitClientContainerImpl(String defaultMatchingKey, PushNotificationManager pushNotificationManager,
-                                    boolean streamingEnabled, MySegmentsTaskFactoryProvider mySegmentsTaskFactoryProvider,
-                                    SplitApiFacade splitApiFacade, SplitStorageContainer storageContainer,
-                                    SplitClientConfig config, SplitClientFactory splitClientFactory, ClientComponentsRegister clientComponentsRegister) {
+    public SplitClientContainerImpl(String defaultMatchingKey,
+                                    PushNotificationManager pushNotificationManager,
+                                    boolean streamingEnabled,
+                                    MySegmentsTaskFactoryProvider mySegmentsTaskFactoryProvider,
+                                    SplitApiFacade splitApiFacade,
+                                    SplitStorageContainer storageContainer,
+                                    SplitTaskExecutor splitTaskExecutor,
+                                    SplitClientConfig config,
+                                    SplitClientFactory splitClientFactory,
+                                    ClientComponentsRegister clientComponentsRegister) {
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mPushNotificationManager = checkNotNull(pushNotificationManager);
         mStreamingEnabled = streamingEnabled;
-        mMySegmentsTaskFactoryProvider = mySegmentsTaskFactoryProvider;
+        mMySegmentsTaskFactoryProvider = checkNotNull(mySegmentsTaskFactoryProvider);
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mStorageContainer = checkNotNull(storageContainer);
         mConfig = checkNotNull(config);
-
-        mSplitClientFactory = splitClientFactory;
-
+        mSplitClientFactory = checkNotNull(splitClientFactory);
         mClientComponentsRegister = checkNotNull(clientComponentsRegister);
+        mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
+        mStreamingConnectionExecutionListener = new StreamingConnectionExecutionListener(mConnecting);
     }
 
     @Override
@@ -135,8 +149,9 @@ public class SplitClientContainerImpl implements SplitClientContainer {
         mClientInstances.put(key.matchingKey(), client);
 
         mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager);
+
         if (mStreamingEnabled) {
-            mPushNotificationManager.start();
+            connectToStreaming();
         }
     }
 
@@ -148,5 +163,30 @@ public class SplitClientContainerImpl implements SplitClientContainer {
                         eventsManager
                 )
         );
+    }
+
+    private void connectToStreaming() {
+        if (!mConnecting.get()) {
+            System.out.println("Connecting");
+            mConnecting.set(true);
+            mSplitTaskExecutor.schedule(new PushNotificationManagerDeferredStartTask(mPushNotificationManager),
+                    ServiceConstants.DEFAULT_INITIAL_DELAY,
+                    mStreamingConnectionExecutionListener);
+        }
+    }
+
+    @VisibleForTesting
+    static class StreamingConnectionExecutionListener implements SplitTaskExecutionListener {
+
+        private final AtomicBoolean mConnecting;
+
+        StreamingConnectionExecutionListener(AtomicBoolean connecting) {
+            mConnecting = connecting;
+        }
+
+        @Override
+        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+            mConnecting.set(false);
+        }
     }
 }
