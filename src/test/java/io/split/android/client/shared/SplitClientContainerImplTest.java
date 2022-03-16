@@ -112,6 +112,7 @@ public class SplitClientContainerImplTest {
 
         SplitClient clientMock = mock(SplitClient.class);
         when(mSplitClientFactory.getClient(eq(defaultKey), any(), any(), anyBoolean())).thenReturn(clientMock);
+
         SplitClientContainer container = getSplitClientContainer("default_key", true);
 
         container.getClient(defaultKey);
