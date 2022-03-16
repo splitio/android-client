@@ -12,6 +12,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import androidx.annotation.NonNull;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -68,19 +70,7 @@ public class SplitClientContainerImplTest {
         MockitoAnnotations.openMocks(this);
         when(mSplitApiFacade.getMySegmentsFetcher(any())).thenReturn(mock(HttpFetcher.class));
         when(mStorageContainer.getMySegmentsStorage(any())).thenReturn(mock(MySegmentsStorage.class));
-        mClientContainer = new SplitClientContainerImpl(
-                mDefaultMatchingKey,
-                mPushNotificationManager,
-                true,
-                mMySegmentsTaskFactoryProvider,
-                mSplitApiFacade,
-                mStorageContainer,
-                mSplitTaskExecutor,
-                mConfig,
-                mSplitClientFactory,
-                mClientComponentsRegister,
-                mWorkManagerWrapper
-        );
+        mClientContainer = getSplitClientContainer(mDefaultMatchingKey, true);
     }
 
     @Test
@@ -122,20 +112,7 @@ public class SplitClientContainerImplTest {
 
         SplitClient clientMock = mock(SplitClient.class);
         when(mSplitClientFactory.getClient(eq(defaultKey), any(), any(), anyBoolean())).thenReturn(clientMock);
-
-        SplitClientContainer container = new SplitClientContainerImpl(
-                "default_key",
-                mPushNotificationManager,
-                true,
-                mMySegmentsTaskFactoryProvider,
-                mSplitApiFacade,
-                mStorageContainer,
-                mSplitTaskExecutor,
-                mConfig,
-                mSplitClientFactory,
-                mClientComponentsRegister,
-                mWorkManagerWrapper
-        );
+        SplitClientContainer container = getSplitClientContainer("default_key", true);
 
         container.getClient(defaultKey);
 
@@ -149,19 +126,7 @@ public class SplitClientContainerImplTest {
         SplitClient clientMock = mock(SplitClient.class);
         when(mSplitClientFactory.getClient(eq(nonDefaultKey), any(), any(), anyBoolean())).thenReturn(clientMock);
 
-        SplitClientContainer container = new SplitClientContainerImpl(
-                mDefaultMatchingKey,
-                mPushNotificationManager,
-                true,
-                mMySegmentsTaskFactoryProvider,
-                mSplitApiFacade,
-                mStorageContainer,
-                mSplitTaskExecutor,
-                mConfig,
-                mSplitClientFactory,
-                mClientComponentsRegister,
-                mWorkManagerWrapper
-        );
+        SplitClientContainer container = getSplitClientContainer(mDefaultMatchingKey, true);
 
         container.getClient(nonDefaultKey);
 
@@ -200,19 +165,8 @@ public class SplitClientContainerImplTest {
         SplitClient clientMock = mock(SplitClient.class);
         when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
 
-        SplitClientContainer container = new SplitClientContainerImpl(
-                mDefaultMatchingKey,
-                mPushNotificationManager,
-                false,
-                mMySegmentsTaskFactoryProvider,
-                mSplitApiFacade,
-                mStorageContainer,
-                mSplitTaskExecutor,
-                mConfig,
-                mSplitClientFactory,
-                mClientComponentsRegister,
-                mWorkManagerWrapper
-        );
+        SplitClientContainer container = getSplitClientContainer(mDefaultMatchingKey, false);
+
         container.getClient(key);
 
         verifyNoInteractions(mPushNotificationManager);
@@ -291,6 +245,23 @@ public class SplitClientContainerImplTest {
         mClientContainer.getClient(newKey);
 
         verify(mSplitTaskExecutor).schedule(any(), eq(5L), any());
+    }
+
+    @NonNull
+    private SplitClientContainerImpl getSplitClientContainer(String mDefaultMatchingKey, boolean b) {
+        return new SplitClientContainerImpl(
+                mDefaultMatchingKey,
+                mPushNotificationManager,
+                b,
+                mMySegmentsTaskFactoryProvider,
+                mSplitApiFacade,
+                mStorageContainer,
+                mSplitTaskExecutor,
+                mConfig,
+                mSplitClientFactory,
+                mClientComponentsRegister,
+                mWorkManagerWrapper
+        );
     }
 
     private void scheduleStreamingConnection() {

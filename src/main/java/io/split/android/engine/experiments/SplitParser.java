@@ -38,10 +38,7 @@ import io.split.android.engine.matchers.strings.WhitelistMatcher;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-/**
- * Converts io.codigo.dtos.Experiment to io.codigo.engine.splits.ParsedExperiment.
- */
-public final class SplitParser {
+public class SplitParser {
 
     public static final int CONDITIONS_UPPER_LIMIT = 50;
 
@@ -55,7 +52,8 @@ public final class SplitParser {
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
     }
 
-    public @Nullable ParsedSplit parse(@Nullable Split split) {
+    @Nullable
+    public ParsedSplit parse(@Nullable Split split) {
         try {
             return parseWithoutExceptionHandling(split);
         } catch (Throwable t) {
