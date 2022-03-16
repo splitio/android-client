@@ -10,16 +10,14 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitManager;
 import io.split.android.client.SplitManagerImpl;
 import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesManagerFactory;
 import io.split.android.client.attributes.AttributesManagerFactoryImpl;
 import io.split.android.client.attributes.AttributesMergerImpl;
-import io.split.android.client.events.SplitEvent;
-import io.split.android.client.events.SplitEventsManager;
-import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.EventsManagerCoordinator;
+import io.split.android.client.localhost.shared.LocalhostSplitClientContainerImpl;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
-import io.split.android.client.storage.attributes.AttributesStorageImpl;
+import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.NoOpTelemetryStorage;
@@ -34,14 +32,13 @@ import io.split.android.engine.experiments.SplitParser;
  * passed in the constructor to be 100% on for all users, and
  * any other split to be 100% off for all users. This implementation
  * is useful for using Codigo in localhost environment.
- *
  */
 public final class LocalhostSplitFactory implements SplitFactory {
 
-    private final SplitClient mClient;
     private final SplitManager mManager;
-    private final SplitEventsManager mEventsManager;
     private final LocalhostSynchronizer mSynchronizer;
+    private final SplitClientContainer mClientContainer;
+    private final String mDefaultKey;
     private String mLocalhostFileName = null;
 
     public LocalhostSplitFactory(String key, Context context, SplitClientConfig config) throws IOException {
@@ -56,22 +53,26 @@ public final class LocalhostSplitFactory implements SplitFactory {
             mLocalhostFileName = localhostFileName;
         }
 
-        mEventsManager = new SplitEventsManager(config);
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        mDefaultKey = key;
+        EventsManagerCoordinator eventsManagerCoordinator = new EventsManagerCoordinator();
         FileStorage fileStorage = new FileStorage(context.getCacheDir(), ServiceConstants.LOCALHOST_FOLDER);
-        SplitsStorage splitsStorage = new LocalhostSplitsStorage(mLocalhostFileName, context, fileStorage, mEventsManager);
+        SplitsStorage splitsStorage = new LocalhostSplitsStorage(mLocalhostFileName, context, fileStorage, eventsManagerCoordinator);
         SplitParser splitParser = new SplitParser(new LocalhostMySegmentsStorageContainer());
-        NoOpTelemetryStorage telemetryStorageProducer = new NoOpTelemetryStorage();
         SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
         AttributesManagerFactory attributesManagerFactory = new AttributesManagerFactoryImpl(new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
-        AttributesStorageImpl attributesStorage = new AttributesStorageImpl();
-        AttributesManager attributesManager = attributesManagerFactory.getManager(key, attributesStorage);
-        mClient = new LocalhostSplitClient(this, config, key, splitsStorage, mEventsManager, splitParser, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer);
-        mEventsManager.getExecutorResources().setSplitClient(mClient);
+
         mManager = new SplitManagerImpl(splitsStorage,
                 new SplitValidatorImpl(), splitParser);
+
+        mClientContainer = new LocalhostSplitClientContainerImpl(this,
+                config,
+                splitsStorage,
+                splitParser,
+                attributesManagerFactory,
+                new AttributesMergerImpl(),
+                new NoOpTelemetryStorage(),
+                eventsManagerCoordinator);
+
         mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage);
         mSynchronizer.start();
 
@@ -80,12 +81,12 @@ public final class LocalhostSplitFactory implements SplitFactory {
 
     @Override
     public SplitClient client() {
-        return mClient;
+        return mClientContainer.getClient(new Key(mDefaultKey));
     }
 
     @Override
     public SplitClient client(Key key) {
-        return mClient;
+        return mClientContainer.getClient(key);
     }
 
     @Override
@@ -100,11 +101,19 @@ public final class LocalhostSplitFactory implements SplitFactory {
 
     @Override
     public void flush() {
-        mClient.flush();
+        for (SplitClient client : mClientContainer.getAll()) {
+            client.flush();
+        }
     }
 
     @Override
     public boolean isReady() {
-        return mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
+        for (SplitClient client : mClientContainer.getAll()) {
+            if (client.isReady()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
