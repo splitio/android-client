@@ -5,10 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.SplitClient;
@@ -38,12 +34,10 @@ import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.ValidationMessageLogger;
 
-public class SplitClientContainerImpl implements SplitClientContainer {
+public final class SplitClientContainerImpl extends BaseSplitClientContainer {
 
     private final String mDefaultMatchingKey;
-    private final ConcurrentMap<String, SplitClient> mClientInstances = new ConcurrentHashMap<>();
     private final SplitClientFactory mSplitClientFactory;
-    private final Object mClientCreationLock = new Object();
     private final MySegmentsTaskFactoryProvider mMySegmentsTaskFactoryProvider;
     private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageContainer mStorageContainer;
@@ -125,39 +119,18 @@ public class SplitClientContainerImpl implements SplitClientContainer {
     }
 
     @Override
-    public SplitClient getClient(Key key) {
-        return getOrCreateClientForKey(key);
-    }
-
-    @Override
     public void remove(String key) {
-        mClientInstances.remove(key);
+        super.remove(key);
         mClientComponentsRegister.unregisterComponentsForKey(key);
     }
 
     @Override
-    public Set<SplitClient> getAll() {
-        return new HashSet<>(mClientInstances.values());
-    }
-
-    private SplitClient getOrCreateClientForKey(Key key) {
-        synchronized (mClientCreationLock) {
-            if (mClientInstances.get(key.matchingKey()) != null) {
-                return mClientInstances.get(key.matchingKey());
-            }
-
-            createNewClient(key);
-        }
-
-        return mClientInstances.get(key.matchingKey());
-    }
-
-    private void createNewClient(Key key) {
+    public void createNewClient(Key key) {
         SplitEventsManager eventsManager = new SplitEventsManager(mConfig);
         MySegmentsTaskFactory mySegmentsTaskFactory = getMySegmentsTaskFactory(key, eventsManager);
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));
-        mClientInstances.put(key.matchingKey(), client);
+        trackNewClient(key.matchingKey(), client);
 
         mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager);
 
