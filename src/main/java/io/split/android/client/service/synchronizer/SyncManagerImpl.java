@@ -70,7 +70,6 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
             mPushManagerEventBroadcaster.register(this);
             mSplitUpdateWorker.start();
             mMySegmentsUpdateWorkerRegistry.start();
-            mPushNotificationManager.start();
             mStreamingReconnectTimer.setTask(new SplitTask() {
                 @NonNull
                 @Override

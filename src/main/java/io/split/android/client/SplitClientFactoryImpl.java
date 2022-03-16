@@ -19,9 +19,9 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryConfiguration;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
-import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProviderImpl;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
@@ -56,53 +56,35 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final SplitClientContainer mClientContainer;
     private final SplitClientConfig mConfig;
     private final SyncManager mSyncManager;
-    private final MySegmentsSynchronizerFactory mMySegmentsSynchronizerFactory;
-    private final AttributesSynchronizerFactoryImpl mAttributesSynchronizerFactory;
-    private final MySegmentsTaskFactoryProvider mMySegmentsTaskFactoryProvider;
+
     private final TelemetrySynchronizer mTelemetrySynchronizer;
-    private final SplitApiFacade mSplitApiFacade;
     private final SplitStorageContainer mStorageContainer;
     private final SplitParser mSplitParser;
     private final AttributesManagerFactory mAttributesManagerFactory;
     private final TreatmentManagerFactory mTreatmentManagerFactory;
-    private final EventsManagerRegistry mEventsManagerRegistry;
-    private final MySegmentsSynchronizerRegistry mMySegmentsSynchronizerRegistry;
-    private final AttributesSynchronizerRegistry mAttributesSynchronizerRegistry;
-    private final MySegmentsUpdateWorkerRegistry mMySegmentsUpdateWorkerRegistry;
     private final ImpressionListener mCustomerImpressionListener;
     private final SplitValidatorImpl mSplitValidator;
     private final EventPropertiesProcessorImpl mEventPropertiesProcessor;
-    private final SseAuthenticator mSseAuthenticator;
 
     public SplitClientFactoryImpl(@NonNull SplitFactory splitFactory,
                                   @NonNull SplitClientContainer clientContainer,
                                   @NonNull SplitClientConfig config,
                                   @NonNull SyncManager syncManager,
-                                  @NonNull Synchronizer synchronizer,
                                   @NonNull TelemetrySynchronizer telemetrySynchronizer,
-                                  @NonNull EventsManagerRegistry eventsManagerRegistry,
                                   @NonNull SplitStorageContainer storageContainer,
                                   @NonNull SplitTaskExecutor splitTaskExecutor,
-                                  @NonNull SplitApiFacade splitApiFacade,
                                   @NonNull ValidationMessageLogger validationLogger,
                                   @NonNull KeyValidator keyValidator,
-                                  @NonNull ImpressionListener customerImpressionListener,
-                                  @NonNull SseAuthenticator sseAuthenticator) {
+                                  @NonNull ImpressionListener customerImpressionListener) {
         mSplitFactory = checkNotNull(splitFactory);
         mClientContainer = checkNotNull(clientContainer);
         mConfig = checkNotNull(config);
         mSyncManager = checkNotNull(syncManager);
-        mEventsManagerRegistry = checkNotNull(eventsManagerRegistry);
+
         mStorageContainer = checkNotNull(storageContainer);
-        mSplitApiFacade = checkNotNull(splitApiFacade);
         mTelemetrySynchronizer = checkNotNull(telemetrySynchronizer);
         mCustomerImpressionListener = checkNotNull(customerImpressionListener);
-        mMySegmentsSynchronizerFactory = new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(),
-                splitTaskExecutor,
-                config.segmentsRefreshRate());
-        mAttributesSynchronizerFactory = new AttributesSynchronizerFactoryImpl(splitTaskExecutor,
-                mStorageContainer.getPersistentAttributesStorage());
-        mMySegmentsTaskFactoryProvider = new MySegmentsTaskFactoryProviderImpl(mStorageContainer.getTelemetryStorage());
+
         mAttributesManagerFactory = getAttributesManagerFactory(config.persistentAttributesEnabled(),
                 validationLogger,
                 splitTaskExecutor,
@@ -118,54 +100,19 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mStorageContainer.getTelemetryStorage(),
                 new EvaluatorImpl(mStorageContainer.getSplitsStorage(), mSplitParser)
         );
-        mMySegmentsSynchronizerRegistry = (MySegmentsSynchronizerRegistry) synchronizer;
-        mAttributesSynchronizerRegistry = (AttributesSynchronizerRegistry) synchronizer;
-        mMySegmentsUpdateWorkerRegistry = (MySegmentsUpdateWorkerRegistry) mSyncManager;
+
         mEventPropertiesProcessor = new EventPropertiesProcessorImpl();
-        mSseAuthenticator = checkNotNull(sseAuthenticator);
     }
 
     @Override
-    public SplitClient getClient(@NonNull Key key, boolean isDefaultClient) {
+    public SplitClient getClient(@NonNull Key key,
+                                 @NonNull MySegmentsTaskFactory mySegmentsTaskFactory,
+                                 @NonNull SplitEventsManager eventsManager,
+                                 boolean isDefaultClient) {
         final long initializationStartTime = System.currentTimeMillis();
 
-        MySegmentsStorage mySegmentsStorage = mStorageContainer.getMySegmentsStorage(key.matchingKey());
-
-        SplitEventsManager eventsManager = new SplitEventsManager(mConfig);
-        mEventsManagerRegistry.registerEventsManager(key.matchingKey(), eventsManager);
-
-        MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(
-                mMySegmentsTaskFactoryProvider.getFactory(
-                        new MySegmentsTaskFactoryConfiguration(
-                                mSplitApiFacade.getMySegmentsFetcher(key.matchingKey()),
-                                mySegmentsStorage,
-                                eventsManager
-                        )
-                ),
-                eventsManager
-        );
 
         AttributesStorage attributesStorage = mStorageContainer.getAttributesStorage(key.matchingKey());
-        AttributesSynchronizer attributesSynchronizer = mAttributesSynchronizerFactory.getSynchronizer(
-                new AttributeTaskFactoryImpl(
-                        key.matchingKey(),
-                        attributesStorage
-                ),
-                eventsManager
-        );
-
-        BlockingQueue<MySegmentChangeNotification> mySegmentChangeNotificationQueue = new LinkedBlockingDeque<>();
-
-        MySegmentsUpdateWorker mySegmentUpdateWorker = new MySegmentsUpdateWorker(mySegmentsSynchronizer,
-                mySegmentChangeNotificationQueue);
-        mMySegmentsUpdateWorkerRegistry.registerMySegmentsUpdateWorker(key.matchingKey(), mySegmentUpdateWorker);
-
-        mMySegmentsSynchronizerRegistry.registerMySegmentsSynchronizer(key.matchingKey(),
-                mySegmentsSynchronizer);
-
-        mAttributesSynchronizerRegistry.registerAttributesSynchronizer(key.matchingKey(),
-                attributesSynchronizer);
-
         SplitClientImpl splitClient = new SplitClientImpl(mSplitFactory,
                 mClientContainer,
                 key,
@@ -184,7 +131,6 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                         mAttributesManagerFactory.getManager(key.matchingKey(), attributesStorage)));
 
         eventsManager.getExecutorResources().setSplitClient(splitClient);
-        mSseAuthenticator.registerKey(key.matchingKey());
 
         if (isDefaultClient) {
             registerTelemetryTasksInEventManager(eventsManager,

@@ -81,7 +81,6 @@ public class SyncManagerTest {
         verify(mSynchronizer, never()).startPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicRecording();
         verify(mPushManagerEventBroadcaster, times(1)).register((BroadcastedEventListener) mSyncManager);
-        verify(mPushNotificationManager, times(1)).start();
     }
 
     @Test
