@@ -4,6 +4,7 @@ import android.content.Context;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -149,6 +150,10 @@ public class SplitFactoryImpl implements SplitFactory {
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
 
+        /* TODO */
+        Set<String> keys = new HashSet<>();
+        keys.add(key.matchingKey());
+        /*      */
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
@@ -156,7 +161,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 splitTaskFactory,
                 mEventsManagerCoordinator,
                 factoryHelper.buildWorkManagerWrapper(
-                        context, config, apiToken, key.matchingKey(), databaseName),
+                        context, config, apiToken, keys, databaseName),
                 new RetryBackoffCounterTimerFactory(),
                 mStorageContainer.getTelemetryStorage());
 

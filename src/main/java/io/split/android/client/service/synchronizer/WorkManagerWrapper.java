@@ -38,7 +38,7 @@ public class WorkManagerWrapper {
     final private WorkManager mWorkManager;
     final private String mDatabaseName;
     final private String mApiKey;
-    final private String mKey;
+    final private Set<String> mKeys;
     final private SplitClientConfig mSplitClientConfig;
     final private Constraints mConstraints;
     private WeakReference<SplitTaskExecutionListener> mFetcherExecutionListener;
@@ -46,16 +46,16 @@ public class WorkManagerWrapper {
     // we receive enqueued event
     final private Set<String> mShouldLoadFromLocal;
 
-
     public WorkManagerWrapper(@NonNull WorkManager workManager,
                               @NonNull SplitClientConfig splitClientConfig,
-                              @NonNull String apiKey, @NonNull String databaseName,
-                              @NonNull String key) {
+                              @NonNull String apiKey,
+                              @NonNull String databaseName,
+                              @NonNull Set<String> keys) {
         mWorkManager = checkNotNull(workManager);
         mDatabaseName = checkNotNull(databaseName);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mApiKey = checkNotNull(apiKey);
-        mKey = checkNotNull(key);
+        mKeys = checkNotNull(keys);
         mShouldLoadFromLocal = new HashSet<>();
         mConstraints = buildConstraints();
     }
@@ -181,8 +181,9 @@ public class WorkManagerWrapper {
 
     private Data buildMySegmentsSyncInputData() {
         Data.Builder dataBuilder = new Data.Builder();
+        String[] keysArray = new String[mKeys.size()];
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
-        dataBuilder.putString(ServiceConstants.WORKER_PARAM_KEY, mKey);
+        dataBuilder.putStringArray(ServiceConstants.WORKER_PARAM_KEY, keysArray);
         dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
         return buildInputData(dataBuilder.build());
     }
