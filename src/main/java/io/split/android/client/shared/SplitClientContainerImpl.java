@@ -191,8 +191,7 @@ public class SplitClientContainerImpl implements SplitClientContainer {
     }
 
     private void scheduleMySegmentsWork() {
-        if (!mSchedulingBackgroundSync.get()) {
-            mSchedulingBackgroundSync.set(true);
+        if (!mSchedulingBackgroundSync.getAndSet(true)) {
             mSplitTaskExecutor.schedule(new MySegmentsBackgroundSyncScheduleTask(mWorkManagerWrapper, mClientInstances.keySet()),
                     ServiceConstants.MIN_INITIAL_DELAY,
                     mSchedulingBackgroundSyncExecutionListener);
