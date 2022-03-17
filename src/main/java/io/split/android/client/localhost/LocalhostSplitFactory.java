@@ -2,6 +2,9 @@ package io.split.android.client.localhost;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+
 import java.io.IOException;
 
 import io.split.android.client.SplitClient;
@@ -61,8 +64,7 @@ public class LocalhostSplitFactory implements SplitFactory {
         SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
         AttributesManagerFactory attributesManagerFactory = new AttributesManagerFactoryImpl(new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
 
-        mManager = new SplitManagerImpl(splitsStorage,
-                new SplitValidatorImpl(), splitParser);
+        mManager = new SplitManagerImpl(splitsStorage, new SplitValidatorImpl(), splitParser);
 
         mClientContainer = new LocalhostSplitClientContainerImpl(this,
                 config,
@@ -77,6 +79,19 @@ public class LocalhostSplitFactory implements SplitFactory {
         mSynchronizer.start();
 
         Logger.i("Android SDK initialized!");
+    }
+
+    @VisibleForTesting
+    LocalhostSplitFactory(@NonNull SplitsStorage splitsStorage,
+                          @NonNull SplitParser splitParser,
+                          @NonNull String defaultKey,
+                          @NonNull LocalhostSynchronizer synchronizer,
+                          @NonNull SplitClientContainer clientContainer) {
+
+        mSynchronizer = synchronizer;
+        mClientContainer = clientContainer;
+        mDefaultKey = defaultKey;
+        mManager = new SplitManagerImpl(splitsStorage, new SplitValidatorImpl(), splitParser);
     }
 
     @Override
