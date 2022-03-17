@@ -58,6 +58,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
 
         SplitClient client = new LocalhostSplitClient(
                 mSplitFactory,
+                this,
                 mConfig,
                 key.matchingKey(),
                 mSplitStorage,
