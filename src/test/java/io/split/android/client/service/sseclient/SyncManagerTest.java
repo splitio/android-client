@@ -174,6 +174,7 @@ public class SyncManagerTest {
         MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
         ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
 
+        mSyncManager.start();
         mSyncManager.stop();
 
         verify(mMySegmentUpdateWorker).stop();
