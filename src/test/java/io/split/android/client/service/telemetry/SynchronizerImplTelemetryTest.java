@@ -33,6 +33,7 @@ import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
@@ -77,6 +78,8 @@ public class SynchronizerImplTelemetryTest {
     WorkManagerWrapper mWorkManagerWrapper;
     @Mock
     SplitClientConfig mConfig;
+    @Mock
+    AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
 
     private SynchronizerImpl mSynchronizer;
 
@@ -108,8 +111,8 @@ public class SynchronizerImplTelemetryTest {
                 mEventsManager,
                 mWorkManagerWrapper,
                 mRetryBackoffCounterFactory,
-                mTelemetryRuntimeProducer
-        );
+                mTelemetryRuntimeProducer,
+                mAttributesSynchronizerRegistry);
     }
 
     @Test
