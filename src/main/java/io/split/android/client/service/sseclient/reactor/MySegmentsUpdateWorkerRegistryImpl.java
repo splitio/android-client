@@ -29,8 +29,8 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
     }
 
     @Override
-    public synchronized void start() {
-        if (!mStarted.get()) {
+    public void start() {
+        if (!mStarted.getAndSet(true)) {
             if (mMySegmentUpdateWorkers.isEmpty()) {
                 Logger.d("No MySegmentsUpdateWorkers have been registered");
             }
@@ -38,19 +38,15 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
             for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
                 mySegmentsUpdateWorker.start();
             }
-
-            mStarted.set(true);
         }
     }
 
     @Override
-    public synchronized void stop() {
-        if (mStarted.get()) {
+    public void stop() {
+        if (mStarted.getAndSet(false)) {
             for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
                 mySegmentsUpdateWorker.stop();
             }
-
-            mStarted.set(false);
         }
     }
 }
