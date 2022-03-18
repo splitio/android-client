@@ -155,7 +155,7 @@ public class SdkUpdateStreamingTest {
         pushInitialId();
 
         testSplitsUpdate();
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
@@ -191,7 +191,7 @@ public class SdkUpdateStreamingTest {
         pushInitialId();
 
         testSplitKill();
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
@@ -227,7 +227,7 @@ public class SdkUpdateStreamingTest {
         TestingHelper.pushKeepAlive(mStreamingData);
 
         testMySegmentsUpdate();
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
