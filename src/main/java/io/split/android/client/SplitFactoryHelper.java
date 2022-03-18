@@ -244,7 +244,7 @@ class SplitFactoryHelper {
                         taskExecutor,
                         config.segmentsRefreshRate()),
                 storageContainer,
-                new AttributesSynchronizerFactoryImpl(taskExecutor, storageContainer.getPersistentAttributesStorage()),
+                new AttributesSynchronizerFactoryImpl(taskExecutor, config.persistentAttributesEnabled() ? storageContainer.getPersistentAttributesStorage() : null),
                 (AttributesSynchronizerRegistry) synchronizer,
                 (MySegmentsSynchronizerRegistry) synchronizer,
                 (MySegmentsUpdateWorkerRegistry) syncManager,
