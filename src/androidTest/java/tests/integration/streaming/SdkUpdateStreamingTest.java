@@ -116,7 +116,7 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
         pushInitialId();
 
         TestingHelper.delay(1000);
@@ -151,7 +151,7 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
         pushInitialId();
 
         testSplitsUpdate();
@@ -187,7 +187,7 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
         pushInitialId();
 
         testSplitKill();
@@ -223,7 +223,7 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         testMySegmentsUpdate();
