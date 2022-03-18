@@ -118,9 +118,9 @@ public class ControlTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         mClient.on(SplitEvent.SDK_UPDATE, updateTask);
-        readyLatch.await(5, TimeUnit.SECONDS);
+        readyLatch.await(10, TimeUnit.SECONDS);
 
-        mSseConnectedLatch.await(5, TimeUnit.SECONDS);
+        mSseConnectedLatch.await(10, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         String treatmentReady = mClient.getTreatment(splitName);
@@ -128,7 +128,7 @@ public class ControlTest {
         // Pause streaming
         synchronizerSpy.startPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_PAUSED");
-        synchronizerSpy.startPeriodicFetchLatch.await(5, TimeUnit.SECONDS);
+        synchronizerSpy.startPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
         StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
             if (event instanceof StreamingStatusStreamingEvent) {
                 return event.getEventData().intValue() == 2;
@@ -144,7 +144,7 @@ public class ControlTest {
         // Enable streaming, push a new my segments payload update and check data again
         synchronizerSpy.stopPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_ENABLED");
-        synchronizerSpy.stopPeriodicFetchLatch.await(5, TimeUnit.SECONDS);
+        synchronizerSpy.stopPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
         StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
             if (event instanceof StreamingStatusStreamingEvent) {
                 return event.getEventData().intValue() == 1;
@@ -154,7 +154,7 @@ public class ControlTest {
 
         updateTask.mLatch = new CountDownLatch(1);
         pushMySegmentsUpdatePayload("new_segment");
-        updateTask.mLatch.await(5, TimeUnit.SECONDS);
+        updateTask.mLatch.await(10, TimeUnit.SECONDS);
 
         String treatmentEnabled = mClient.getTreatment(splitName);
 
@@ -208,9 +208,9 @@ public class ControlTest {
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
-        latch.await(5, TimeUnit.SECONDS);
+        latch.await(20, TimeUnit.SECONDS);
 
-        mSseConnectedLatch.await(5, TimeUnit.SECONDS);
+        mSseConnectedLatch.await(20, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         sleep(200);
@@ -225,12 +225,14 @@ public class ControlTest {
     private void pushMySegmentsUpdatePayload(String segmentName) throws IOException, InterruptedException {
         mPushLatch = new CountDownLatch(1);
         pushMySegmentMessage(segmentName);
-        mPushLatch.await(5, TimeUnit.SECONDS);
+        mPushLatch.await(10, TimeUnit.SECONDS);
     }
 
     @After
     public void tearDown() {
-        mFactory.destroy();
+        if (mFactory != null) {
+            mFactory.destroy();
+        }
     }
 
     private HttpResponseMock createResponse(int status, String data) {
