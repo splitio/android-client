@@ -125,8 +125,6 @@ public class SynchronizerTest {
     @Mock
     MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
     @Mock
-    AttributesSynchronizer mAttributesSynchronizer;
-    @Mock
     AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     private final String mUserKey = "user_key";
 
@@ -472,8 +470,8 @@ public class SynchronizerTest {
         mSynchronizer.loadSplitsFromCache();
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
-        verify(mAttributesSynchronizerRegistry).loadAttributesFromCache();
         verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache();
+        verify(mAttributesSynchronizerRegistry).loadAttributesFromCache();
         verify(mEventsManager)
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
     }

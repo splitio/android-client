@@ -85,8 +85,7 @@ public class SynchronizerImplTelemetryTest {
                 mRetryBackoffCounterFactory,
                 mTelemetryRuntimeProducer,
                 mAttributesSynchronizerRegistry,
-                mMySegmentsSynchronizerRegistry
-        );
+                mMySegmentsSynchronizerRegistry);
     }
 
     @Test
