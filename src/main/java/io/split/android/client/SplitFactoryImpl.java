@@ -37,6 +37,7 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -161,7 +162,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 workManagerWrapper,
                 new RetryBackoffCounterTimerFactory(),
                 mStorageContainer.getTelemetryStorage(),
-                new AttributesSynchronizerRegistryImpl());
+                new AttributesSynchronizerRegistryImpl(),
+                new MySegmentsSynchronizerRegistryImpl());
 
         // Only available for integration tests
         if (synchronizerSpy != null) {
