@@ -1,11 +1,11 @@
 package tests.integration.streaming;
 
 import static junit.framework.TestCase.assertEquals;
+import static java.lang.Thread.sleep;
 
 import android.content.Context;
 
 import androidx.core.util.Pair;
-import androidx.room.Room;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -15,7 +15,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -26,31 +25,25 @@ import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import fake.SynchronizerSpyImpl;
 import helper.DatabaseHelper;
-import helper.TestingHelper;
-import io.split.android.client.dtos.Partition;
-import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.service.synchronizer.SynchronizerSpy;
-import io.split.android.client.service.synchronizer.ThreadUtils;
-import io.split.android.client.storage.db.StorageFactory;
-import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
-import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.Json;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
+import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
-
-import static java.lang.Thread.sleep;
+import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 public class ControlTest {
     private Context mContext;
@@ -120,7 +113,7 @@ public class ControlTest {
         mClient.on(SplitEvent.SDK_UPDATE, updateTask);
         readyLatch.await(10, TimeUnit.SECONDS);
 
-        mSseConnectedLatch.await(10, TimeUnit.SECONDS);
+        mSseConnectedLatch.await(20, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         String treatmentReady = mClient.getTreatment(splitName);

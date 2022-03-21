@@ -124,21 +124,21 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
 
     @Override
     public void registerAttributesSynchronizer(String userKey, AttributesSynchronizer attributesSynchronizer) {
-
+        ((AttributesSynchronizerRegistry) mSynchronizer).registerAttributesSynchronizer(userKey, attributesSynchronizer);
     }
 
     @Override
     public void unregisterAttributesSynchronizer(String userKey) {
-
+        ((AttributesSynchronizerRegistry) mSynchronizer).unregisterAttributesSynchronizer(userKey);
     }
 
     @Override
     public void registerMySegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
-
+        ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMySegmentsSynchronizer(userKey, mySegmentsSynchronizer);
     }
 
     @Override
     public void unregisterMySegmentsSynchronizer(String userKey) {
-
+        ((MySegmentsSynchronizerRegistry) mSynchronizer).unregisterMySegmentsSynchronizer(userKey);
     }
 }
