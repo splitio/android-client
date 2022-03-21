@@ -160,9 +160,9 @@ class SplitFactoryHelper {
     }
 
     WorkManagerWrapper buildWorkManagerWrapper(Context context, SplitClientConfig splitClientConfig,
-                                               String apiKey, Set<String> keys, String databaseName) {
+                                               String apiKey, String databaseName) {
         return new WorkManagerWrapper(
-                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName, keys);
+                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName);
 
     }
 

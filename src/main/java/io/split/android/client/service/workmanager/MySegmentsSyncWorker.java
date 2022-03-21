@@ -13,7 +13,6 @@ import java.util.Set;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.ServiceFactory;
-import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.mysegments.MySegmentsBulkSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -35,6 +34,7 @@ public class MySegmentsSyncWorker extends SplitWorker {
             }
 
             mSplitTask = new MySegmentsBulkSyncTask(Collections.unmodifiableSet(getIndividualMySegmentsSyncTasks(keys, shouldRecordTelemetry, getNetworkHelper(), getHttpClient(), getEndPoint(), getDatabase())));
+
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
         }

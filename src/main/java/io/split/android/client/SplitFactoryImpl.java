@@ -36,6 +36,7 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
+import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -150,18 +151,14 @@ public class SplitFactoryImpl implements SplitFactory {
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
 
-        /* TODO */
-        Set<String> keys = new HashSet<>();
-        keys.add(key.matchingKey());
-        /*      */
+        WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
                 mStorageContainer,
                 splitTaskFactory,
                 mEventsManagerCoordinator,
-                factoryHelper.buildWorkManagerWrapper(
-                        context, config, apiToken, keys, databaseName),
+                workManagerWrapper,
                 new RetryBackoffCounterTimerFactory(),
                 mStorageContainer.getTelemetryStorage());
 
@@ -233,7 +230,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 factoryHelper.getClientComponentsRegister(config, splitTaskExecutor,
                         mEventsManagerCoordinator, mSynchronizer, notificationParser,
                         notificationProcessor, sseAuthenticator, mStorageContainer, mSyncManager,
-                        mDefaultClientKey.matchingKey())
+                        mDefaultClientKey.matchingKey()), workManagerWrapper
         );
 
         mDestroyer = new Runnable() {
