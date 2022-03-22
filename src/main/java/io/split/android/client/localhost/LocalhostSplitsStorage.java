@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -34,14 +35,14 @@ public class LocalhostSplitsStorage implements SplitsStorage {
     private final Map<String, Split> mInMemorySplits = Maps.newConcurrentMap();
     private final FileStorage mFileStorage;
     private LocalhostFileParser mParser;
-    private final SplitEventsManager mEventsManager;
+    private final EventsManagerCoordinator mEventsManager;
     private final FileUtils mFileUtils = new FileUtils();
     private String mLastContentLoaded = "";
 
     public LocalhostSplitsStorage(@Nullable String fileName,
                                   @NonNull Context context,
                                   @NonNull FileStorage fileStorage,
-                                  @NonNull SplitEventsManager eventsManager) {
+                                  @NonNull EventsManagerCoordinator eventsManager) {
         this.mLocalhostFileName = fileName;
         this.mContext = checkNotNull(context);
         this.mFileStorage = checkNotNull(fileStorage);
@@ -170,12 +171,8 @@ public class LocalhostSplitsStorage implements SplitsStorage {
                 mInMemorySplits.putAll(values);
             }
             if (!content.equals(mLastContentLoaded)) {
-                if (!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)) {
-                    mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-                }
-                if (!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)) {
-                    mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
-                }
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
             }
             mLastContentLoaded = content;

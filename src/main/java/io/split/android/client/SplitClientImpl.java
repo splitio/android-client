@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,8 +38,8 @@ import io.split.android.grammar.Treatments;
 
 public final class SplitClientImpl implements SplitClient {
 
-    private final SplitFactory mSplitFactory;
-    private final SplitClientContainer mClientContainer;
+    private final WeakReference<SplitFactory> mSplitFactory;
+    private final WeakReference<SplitClientContainer> mClientContainer;
     private final SplitClientConfig mConfig;
     private final String mMatchingKey;
     private final SplitEventsManager mEventsManager;
@@ -103,8 +104,8 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
 
-        mSplitFactory = checkNotNull(container);
-        mClientContainer = checkNotNull(clientContainer);
+        mSplitFactory = new WeakReference<>(checkNotNull(container));
+        mClientContainer = new WeakReference<>(checkNotNull(clientContainer));
         mMatchingKey = checkNotNull(key.matchingKey());
         mConfig = checkNotNull(config);
         mEventsManager = checkNotNull(eventsManager);
@@ -121,13 +122,23 @@ public final class SplitClientImpl implements SplitClient {
     @Override
     public void destroy() {
         mIsClientDestroyed = true;
-        mClientContainer.remove(mMatchingKey);
-        mSplitFactory.destroy();
+        SplitClientContainer splitClientContainer = mClientContainer.get();
+        if (splitClientContainer != null) {
+            splitClientContainer.remove(mMatchingKey);
+        }
+
+        SplitFactory splitFactory = mSplitFactory.get();
+        if (splitFactory != null) {
+            splitFactory.destroy();
+        }
     }
 
     @Override
     public void flush() {
-        mSplitFactory.flush();
+        SplitFactory splitFactory = mSplitFactory.get();
+        if (splitFactory != null) {
+            splitFactory.flush();
+        }
     }
 
     @Override
