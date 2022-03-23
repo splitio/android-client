@@ -204,7 +204,7 @@ public class SplitsTwoDifferentApiKeyTest {
     private void testSplitsUpdate(long changeNumber) throws InterruptedException {
         mSplitsUpdateLatch = new CountDownLatch(1);
         pushMessage(MSG_SPLIT_UPDATE, changeNumber);
-        mSplitsUpdateLatch.await(20, TimeUnit.SECONDS);
+        mSplitsUpdateLatch.await(10, TimeUnit.SECONDS);
         sleep(200);
     }
 

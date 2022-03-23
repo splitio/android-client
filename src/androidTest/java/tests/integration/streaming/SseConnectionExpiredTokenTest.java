@@ -78,11 +78,11 @@ public class SseConnectionExpiredTokenTest {
         readyLatch.await(5, TimeUnit.SECONDS);
 
         // Wait for the first connection when expired token message is sent
-        mSseConnLatchExpiredToken.await(20, TimeUnit.SECONDS);
+        mSseConnLatchExpiredToken.await(10, TimeUnit.SECONDS);
 
         // Push token expired message and clouse connection
         pushTokenExpiredMessage();
-        mSseExpiredTokenMessage.await(20, TimeUnit.SECONDS);
+        mSseExpiredTokenMessage.await(10, TimeUnit.SECONDS);
         mExpiredStreamResponse.close();
 
 

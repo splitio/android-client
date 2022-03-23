@@ -111,9 +111,9 @@ public class ControlTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         mClient.on(SplitEvent.SDK_UPDATE, updateTask);
-        readyLatch.await(10, TimeUnit.SECONDS);
+        readyLatch.await(5, TimeUnit.SECONDS);
 
-        mSseConnectedLatch.await(20, TimeUnit.SECONDS);
+        mSseConnectedLatch.await(10, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         String treatmentReady = mClient.getTreatment(splitName);
@@ -147,14 +147,14 @@ public class ControlTest {
 
         updateTask.mLatch = new CountDownLatch(1);
         pushMySegmentsUpdatePayload("new_segment");
-        updateTask.mLatch.await(10, TimeUnit.SECONDS);
+        updateTask.mLatch.await(5, TimeUnit.SECONDS);
 
         String treatmentEnabled = mClient.getTreatment(splitName);
 
         //Enable streaming, push a new my segments payload update and check data again
         updateTask.mLatch = new CountDownLatch(1);
         pushControl("STREAMING_DISABLED");
-        updateTask.mLatch.await(10, TimeUnit.SECONDS);
+        updateTask.mLatch.await(5, TimeUnit.SECONDS);
         pushMySegmentsUpdatePayload("new_segment");
         sleep(1000);
         StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
