@@ -128,7 +128,6 @@ public class MySegmentsChangeV2Test {
         updateLatch.await(20, TimeUnit.SECONDS);
         MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(userKey);
 
-        // TODO Assert.assertEquals(1, mSynchronizerSpy.mForceMySegmentSyncCalledCount.get());
         Assert.assertTrue(mySegmentEntity.getSegmentList().contains("new_segment_added"));
         Assert.assertFalse(mySegmentEntity.getSegmentList().contains("segment1"));
 
@@ -184,11 +183,7 @@ public class MySegmentsChangeV2Test {
 
         // This malformed payload should trigger unbounded
         testMySegmentsUpdate(TestingData.ESCAPED_BOUNDED_NOTIFICATION_MALFORMED);
-
-        // TODO Assert.assertEquals(3, mSynchronizerSpy.mForceMySegmentSyncCalledCount.get());
-
     }
-
 
     @After
     public void tearDown() {
