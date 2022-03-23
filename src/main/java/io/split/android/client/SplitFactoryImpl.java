@@ -313,7 +313,9 @@ public class SplitFactoryImpl implements SplitFactory {
     @Override
     public void destroy() {
         synchronized (SplitFactoryImpl.class) {
-            new Thread(mDestroyer).start();
+            if (!mIsTerminated) {
+                new Thread(mDestroyer).start();
+            }
         }
     }
 
