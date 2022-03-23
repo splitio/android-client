@@ -66,6 +66,8 @@ import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -121,6 +123,8 @@ public class SynchronizerTest {
     MySegmentsSynchronizer mMySegmentsSynchronizer;
     @Mock
     AttributesSynchronizer mAttributesSynchronizer;
+    @Mock
+    AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     private final String mUserKey = "user_key";
 
     public void setup(SplitClientConfig splitClientConfig) {
@@ -160,7 +164,7 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry);
     }
 
     @Test
@@ -171,14 +175,11 @@ public class SynchronizerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
-        MySegmentsSynchronizer mySegmentsSynchronizer = mock(MySegmentsSynchronizer.class);
-        mSynchronizer.registerMySegmentsSynchronizer("userKey", mySegmentsSynchronizer);
         mSynchronizer.startPeriodicFetching();
         mSynchronizer.startPeriodicRecording();
         verify(mTaskExecutor).schedule(
                 any(SplitsSyncTask.class), anyLong(), anyLong(),
                 any());
-        verify(mySegmentsSynchronizer).scheduleSegmentsSyncTask();
         verify(mTaskExecutor).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
@@ -456,7 +457,7 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(config, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry);
 
         LoadMySegmentsTask loadMySegmentsTask = mock(LoadMySegmentsTask.class);
         when(loadMySegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
@@ -468,6 +469,7 @@ public class SynchronizerTest {
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
         verify(mMySegmentsSynchronizer).loadMySegmentsFromCache();
+        verify(mAttributesSynchronizerRegistry).loadAttributesFromCache();
         verify(mEventsManager)
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
     }
@@ -490,7 +492,7 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(config, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer);
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry);
         mSynchronizer.loadAndSynchronizeSplits();
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
@@ -588,24 +590,12 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void loadAttributesFromCacheDelegatesToRegisteredAttributesSynchronizers() {
+    public void loadAttributesFromCacheDelegatesToAttributesSynchronizerRegistry() {
         setup(SplitClientConfig.builder().persistentAttributesEnabled(true).build());
-        mSynchronizer.registerAttributesSynchronizer("userKey", mAttributesSynchronizer);
 
         mSynchronizer.loadAttributesFromCache();
 
-        verify(mAttributesSynchronizer).loadAttributesFromCache();
-    }
-
-    @Test
-    public void unregisterAttributesSynchronizerExcludesSyncFromDelegation() {
-        setup(SplitClientConfig.builder().persistentAttributesEnabled(true).build());
-        mSynchronizer.registerAttributesSynchronizer("userKey", mAttributesSynchronizer);
-        mSynchronizer.unregisterAttributesSynchronizer("userKey");
-
-        mSynchronizer.loadAttributesFromCache();
-
-        verifyNoInteractions(mAttributesSynchronizer);
+        verify(mAttributesSynchronizerRegistry).loadAttributesFromCache();
     }
 
     @After

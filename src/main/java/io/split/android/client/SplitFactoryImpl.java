@@ -4,7 +4,6 @@ import android.content.Context;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -37,6 +36,7 @@ import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -160,7 +160,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 mEventsManagerCoordinator,
                 workManagerWrapper,
                 new RetryBackoffCounterTimerFactory(),
-                mStorageContainer.getTelemetryStorage());
+                mStorageContainer.getTelemetryStorage(),
+                new AttributesSynchronizerRegistryImpl());
 
         // Only available for integration tests
         if (synchronizerSpy != null) {

@@ -62,9 +62,9 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         mAttributesSynchronizerRegistry = checkNotNull(attributesSynchronizerRegistry);
         mMySegmentsSynchronizerRegistry = checkNotNull(mySegmentsSynchronizerRegistry);
         mMySegmentsUpdateWorkerRegistry = checkNotNull(mySegmentsUpdateWorkerRegistry);
+        mMySegmentsNotificationProcessorRegistry = checkNotNull(mySegmentsNotificationProcessorRegistry);
         mEventsManagerRegistry = checkNotNull(eventsManagerRegistry);
         mSseAuthenticator = checkNotNull(sseAuthenticator);
-        mMySegmentsNotificationProcessorRegistry = checkNotNull(mySegmentsNotificationProcessorRegistry);
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mMySegmentsNotificationProcessorFactory = checkNotNull(mySegmentsNotificationProcessorFactory);
         mMySegmentsV2PayloadDecoder = checkNotNull(mySegmentsV2PayloadDecoder);

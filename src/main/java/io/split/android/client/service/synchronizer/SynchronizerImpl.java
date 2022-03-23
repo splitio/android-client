@@ -31,6 +31,7 @@ import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.storage.SplitStorageContainer;
@@ -64,7 +65,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final ImpressionsCounter mImpressionsCounter;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final ConcurrentMap<String, MySegmentsSynchronizer> mMySegmentsSynchronizers = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, AttributesSynchronizer> mAttributesSynchronizers = new ConcurrentHashMap<>();
+    private final AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -73,7 +74,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull ISplitEventsManager splitEventsManager,
                             @NonNull WorkManagerWrapper workManagerWrapper,
                             @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
-                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                            @NonNull AttributesSynchronizerRegistryImpl attributesSynchronizerRegistry) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
@@ -81,6 +83,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mSplitEventsManager = checkNotNull(splitEventsManager);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
+        mAttributesSynchronizerRegistry = attributesSynchronizerRegistry;
         mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
 
@@ -114,9 +117,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadAttributesFromCache() {
-        for (AttributesSynchronizer attributesSynchronizer : mAttributesSynchronizers.values()) {
-            attributesSynchronizer.loadAttributesFromCache();
-        }
+        mAttributesSynchronizerRegistry.loadAttributesFromCache();
     }
 
     @Override
@@ -285,12 +286,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void registerAttributesSynchronizer(String userKey, AttributesSynchronizer attributesSynchronizer) {
-        mAttributesSynchronizers.put(userKey, attributesSynchronizer);
+        mAttributesSynchronizerRegistry.registerAttributesSynchronizer(userKey, attributesSynchronizer);
     }
 
     @Override
     public void unregisterAttributesSynchronizer(String userKey) {
-        mAttributesSynchronizers.remove(userKey);
+        mAttributesSynchronizerRegistry.unregisterAttributesSynchronizer(userKey);
     }
 
     private void saveImpressionsCount() {
