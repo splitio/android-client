@@ -3,6 +3,7 @@ package io.split.android.client.service.synchronizer.attributes;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.attributes.AttributeTaskFactory;
@@ -15,9 +16,9 @@ public class AttributesSynchronizerFactoryImpl implements AttributesSynchronizer
     private final PersistentAttributesStorage mPersistentAttributeStorage;
 
     public AttributesSynchronizerFactoryImpl(@NonNull SplitTaskExecutor taskExecutor,
-                                             @NonNull PersistentAttributesStorage persistentAttributesStorage) {
+                                             @Nullable PersistentAttributesStorage persistentAttributesStorage) {
         mTaskExecutor = checkNotNull(taskExecutor);
-        mPersistentAttributeStorage = checkNotNull(persistentAttributesStorage);
+        mPersistentAttributeStorage = persistentAttributesStorage;
     }
 
     @Override

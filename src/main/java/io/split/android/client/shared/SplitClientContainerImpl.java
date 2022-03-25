@@ -158,7 +158,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     private void connectToStreaming() {
         if (!mConnecting.getAndSet(true)) {
             mSplitTaskExecutor.schedule(new PushNotificationManagerDeferredStartTask(mPushNotificationManager),
-                    ServiceConstants.DEFAULT_INITIAL_DELAY,
+                    ServiceConstants.MIN_INITIAL_DELAY,
                     mStreamingConnectionExecutionListener);
         }
     }

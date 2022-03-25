@@ -1,12 +1,11 @@
 package tests.integration;
 
+import static java.lang.Thread.sleep;
+
 import android.content.Context;
 
-import androidx.core.util.Pair;
-import androidx.room.Room;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,20 +28,13 @@ import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.api.Key;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
-import io.split.android.client.service.synchronizer.ThreadUtils;
-import io.split.android.client.storage.db.GeneralInfoEntity;
-import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
-
-import static java.lang.Thread.sleep;
 
 public class SplitsTwoDifferentApiKeyTest {
     Context mContext;
@@ -209,11 +201,7 @@ public class SplitsTwoDifferentApiKeyTest {
         return Json.toJson(mSplitChange);
     }
 
-    private Split parseEntity(SplitEntity entity) {
-        return Json.fromJson(entity.getBody(), Split.class);
-    }
-
-    private void testSplitsUpdate(long changeNumber) throws IOException, InterruptedException {
+    private void testSplitsUpdate(long changeNumber) throws InterruptedException {
         mSplitsUpdateLatch = new CountDownLatch(1);
         pushMessage(MSG_SPLIT_UPDATE, changeNumber);
         mSplitsUpdateLatch.await(10, TimeUnit.SECONDS);

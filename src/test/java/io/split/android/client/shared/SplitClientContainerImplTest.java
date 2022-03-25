@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -37,6 +38,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManagerDeferredStartTask;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsBackgroundSyncScheduleTask;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
@@ -112,6 +114,7 @@ public class SplitClientContainerImplTest {
 
         SplitClient clientMock = mock(SplitClient.class);
         when(mSplitClientFactory.getClient(eq(defaultKey), any(), any(), anyBoolean())).thenReturn(clientMock);
+
         SplitClientContainer container = getSplitClientContainer("default_key", true);
 
         container.getClient(defaultKey);
@@ -215,7 +218,7 @@ public class SplitClientContainerImplTest {
 
         mClientContainer.getClient(key);
 
-        verify(mSplitTaskExecutor).schedule(any(), eq(5L), any());
+        verify(mSplitTaskExecutor).schedule(argThat(argument -> argument instanceof MySegmentsBackgroundSyncScheduleTask), eq(5L), any());
     }
 
     @Test
@@ -227,7 +230,7 @@ public class SplitClientContainerImplTest {
 
         mClientContainer.getClient(key);
 
-        verify(mSplitTaskExecutor, times(0)).schedule(any(), eq(5L), any());
+        verify(mSplitTaskExecutor, times(0)).schedule(argThat(argument -> argument instanceof MySegmentsBackgroundSyncScheduleTask), eq(5L), any());
         verify(mWorkManagerWrapper).removeWork();
     }
 
@@ -244,7 +247,7 @@ public class SplitClientContainerImplTest {
         mClientContainer.getClient(key);
         mClientContainer.getClient(newKey);
 
-        verify(mSplitTaskExecutor).schedule(any(), eq(5L), any());
+        verify(mSplitTaskExecutor).schedule(argThat(argument -> argument instanceof MySegmentsBackgroundSyncScheduleTask), eq(5L), any());
     }
 
     @NonNull
@@ -267,7 +270,7 @@ public class SplitClientContainerImplTest {
     private void scheduleStreamingConnection() {
         verify(mSplitTaskExecutor).schedule(
                 ArgumentMatchers.argThat((ArgumentMatcher<PushNotificationManagerDeferredStartTask>) Objects::nonNull),
-                eq(15L),
+                eq(5L),
                 any());
     }
 }

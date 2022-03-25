@@ -95,7 +95,7 @@ public class MySegmentsSyncProcessTest {
 
         latch.await(10, TimeUnit.SECONDS);
 
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
 
         TestingHelper.pushKeepAlive(mStreamingData);
         mMySegmentsSyncLatch.await(10, TimeUnit.SECONDS);
