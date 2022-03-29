@@ -10,6 +10,12 @@ public interface SplitFactory {
     SplitManager manager();
     void destroy();
     void flush();
+
+    /**
+     * Deprecated: Use {@link SplitClient#isReady()}
+     *
+     * @return Whether at least one client instance is ready.
+     */
     @Deprecated
     boolean isReady();
 }
