@@ -2,17 +2,12 @@ package io.split.android.client.service.sseclient.notifications;
 
 import java.math.BigInteger;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.CompressionUtil;
 import io.split.android.client.utils.MurmurHash3;
 import io.split.android.client.utils.StringHelper;
-
-import static java.lang.Math.abs;
 
 public class MySegmentsV2PayloadDecoder {
 
