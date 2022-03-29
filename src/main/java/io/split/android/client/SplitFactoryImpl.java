@@ -306,6 +306,16 @@ public class SplitFactoryImpl implements SplitFactory {
     }
 
     @Override
+    public SplitClient client(String matchingKey) {
+        return mClientContainer.getClient(new Key(matchingKey));
+    }
+
+    @Override
+    public SplitClient client(String matchingKey, String bucketingKey) {
+        return mClientContainer.getClient(new Key(matchingKey, bucketingKey));
+    }
+
+    @Override
     public SplitManager manager() {
         return mManager;
     }
@@ -325,6 +335,7 @@ public class SplitFactoryImpl implements SplitFactory {
     }
 
     @Override
+    @Deprecated
     public boolean isReady() {
         Set<SplitClient> clients = mClientContainer.getAll();
         for (SplitClient client : clients) {
