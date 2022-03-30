@@ -25,6 +25,7 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.notifications.MySegmentsPayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
@@ -175,7 +176,7 @@ public class SplitFactoryImpl implements SplitFactory {
         NotificationParser notificationParser = new NotificationParser();
 
         NotificationProcessor notificationProcessor = new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
-                notificationParser, splitsUpdateNotificationQueue);
+                notificationParser, splitsUpdateNotificationQueue, new MySegmentsPayloadDecoder());
 
         PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
 
