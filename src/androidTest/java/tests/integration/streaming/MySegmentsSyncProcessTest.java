@@ -68,10 +68,10 @@ public class MySegmentsSyncProcessTest {
 
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
-        String dataFolderName = apiKeyAndDb.second;
         mSplitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         mSplitRoomDatabase.clearAllTables();
-        mUserKey = IntegrationHelper.dummyUserKey();
+        mUserKey = new Key("key1");
+        mMySegmentsHitCount = 0;
     }
 
     @Test
@@ -84,18 +84,18 @@ public class MySegmentsSyncProcessTest {
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
         mFactory = IntegrationHelper.buildFactory(
-                mApiKey, IntegrationHelper.dummyUserKey(),
+                mApiKey, mUserKey,
                 config, mContext, httpClientMock, mSplitRoomDatabase);
 
         mClient = mFactory.client();
 
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        TestingHelper.TestEventTask readyTask = new TestingHelper.TestEventTask(latch);
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
 
         latch.await(10, TimeUnit.SECONDS);
 
-        mSseLatch.await(20, TimeUnit.SECONDS);
+        mSseLatch.await(10, TimeUnit.SECONDS);
 
         TestingHelper.pushKeepAlive(mStreamingData);
         mMySegmentsSyncLatch.await(10, TimeUnit.SECONDS);
@@ -117,7 +117,6 @@ public class MySegmentsSyncProcessTest {
         Assert.assertEquals("", mySegmentEntityEmptyPayload.getSegmentList());
 
     }
-
 
     private void testMySegmentsUpdate() throws IOException, InterruptedException {
         mMySegmentsUpdateLatch = new CountDownLatch(1);
@@ -149,7 +148,11 @@ public class MySegmentsSyncProcessTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("auth")) {
+                    return createResponse(200, IntegrationHelper.streamingEnabledV1Token());
+                } else if (uri.getPath().contains("/mySegments/key2")) {
+                    return createResponse(200, IntegrationHelper.emptyMySegments());
+                } else if (uri.getPath().contains("/mySegments/key1") || uri.getPath().contains("/mySegments")) {
                     mMySegmentsHitCount++;
                     Logger.i("** My segments hit: " + mMySegmentsHitCount);
                     mMySegmentsSyncLatch.countDown();
@@ -179,6 +182,7 @@ public class MySegmentsSyncProcessTest {
                     mSseLatch.countDown();
                     return createStreamResponse(200, mStreamingData);
                 } catch (Exception e) {
+                    e.printStackTrace();
                 }
                 return null;
             }
