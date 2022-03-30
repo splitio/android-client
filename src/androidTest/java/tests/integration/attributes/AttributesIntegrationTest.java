@@ -23,6 +23,7 @@ import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
@@ -36,6 +37,7 @@ public class AttributesIntegrationTest {
 
     private Context mContext;
     private SplitRoomDatabase mRoomDb;
+    private SplitFactory mSplitFactory;
 
     @Before
     public void setup() {
@@ -48,7 +50,7 @@ public class AttributesIntegrationTest {
     public void testPersistentAttributes() throws InterruptedException {
         insertSplitsFromFileIntoDB();
         CountDownLatch readyLatch = new CountDownLatch(1);
-        SplitClient client = getSplitClient(readyLatch, true);
+        SplitClient client = getSplitClient(readyLatch, true, null);
         readyLatch.await(5, TimeUnit.SECONDS);
 
         // 1. Evaluate without attrs
@@ -94,7 +96,7 @@ public class AttributesIntegrationTest {
 
         mRoomDb.attributesDao().update(attributesEntity);
         CountDownLatch readyLatch = new CountDownLatch(1);
-        SplitClient client = getSplitClient(readyLatch, true);
+        SplitClient client = getSplitClient(readyLatch, true, null);
         readyLatch.await(5, TimeUnit.SECONDS);
 
         Assert.assertEquals(expectedMap, client.getAllAttributes());
@@ -111,6 +113,60 @@ public class AttributesIntegrationTest {
     }
 
     @Test
+    public void testPersistentAttributesWithMultiClient2() throws InterruptedException {
+       CountDownLatch countDownLatch = new CountDownLatch(1);
+        String matchingKey = IntegrationHelper.dummyApiKey();
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("num_value", 10);
+        Map<String, Object> expectedMap = new HashMap<>();
+        expectedMap.put("num_value", 10);
+
+        Map<String, Object> map2 = new HashMap<>();
+        map2.put("string_value", "yes");
+        Map<String, Object> expectedMap2 = new HashMap<>();
+        expectedMap2.put("string_value", "yes");
+
+        insertSplitsFromFileIntoDB();
+        AttributesEntity attributesEntity = new AttributesEntity(
+                matchingKey,
+                Json.toJson(map),
+                System.currentTimeMillis());
+        AttributesEntity attributesEntity2 = new AttributesEntity(
+                "new_key",
+                Json.toJson(map2),
+                System.currentTimeMillis());
+
+        mRoomDb.attributesDao().update(attributesEntity);
+        mRoomDb.attributesDao().update(attributesEntity2);
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch readyLatch2 = new CountDownLatch(1);
+        SplitClient client = getSplitClient(readyLatch, true, matchingKey);
+        SplitClient client2 = getSplitClient(readyLatch2, true, "new_key");
+        readyLatch.await(5, TimeUnit.SECONDS);
+        readyLatch2.await(5, TimeUnit.SECONDS);
+
+        // 1. Verify client.getAll() fetches corresponding attrs
+        Assert.assertEquals(expectedMap, client.getAllAttributes());
+        Assert.assertEquals(expectedMap2, client2.getAllAttributes());
+
+        // 2. Clear second client's attributes and check DB entry has been cleared
+        client2.clearAttributes();
+        countDownLatch.await(1, TimeUnit.SECONDS); // waiting since DB operations are async
+        Assert.assertNull(mRoomDb.attributesDao().getByUserKey("new_key"));
+
+        // 3. Verify evaluation with first client uses attribute
+        Assert.assertEquals("on_num_10", client.getTreatment("workm"));
+
+        // 4. Perform clear and verify there are no attributes on DB
+        client.clearAttributes();
+
+        countDownLatch.await(1, TimeUnit.SECONDS);
+
+        Assert.assertNull(mRoomDb.attributesDao().getByUserKey(matchingKey));
+    }
+
+    @Test
     public void testNonPersistentAttributes() throws InterruptedException {
         Map<String, Object> map = new HashMap<>();
         map.put("num_value", 10);
@@ -123,7 +179,7 @@ public class AttributesIntegrationTest {
 
         mRoomDb.attributesDao().update(attributesEntity);
         CountDownLatch readyLatch = new CountDownLatch(1);
-        SplitClient client = getSplitClient(readyLatch, false);
+        SplitClient client = getSplitClient(readyLatch, false, null);
         readyLatch.await(5, TimeUnit.SECONDS);
 
         // 1. Verify client does not fetch attrs from DB
@@ -142,7 +198,7 @@ public class AttributesIntegrationTest {
     public void testNonPersistentAttributes2() throws InterruptedException {
         insertSplitsFromFileIntoDB();
         CountDownLatch readyLatch = new CountDownLatch(1);
-        SplitClient client = getSplitClient(readyLatch, false);
+        SplitClient client = getSplitClient(readyLatch, false, null);
         readyLatch.await(5, TimeUnit.SECONDS);
 
         // 1. Set attrs in client and evaluate.
@@ -165,22 +221,25 @@ public class AttributesIntegrationTest {
         Assert.assertEquals("on_num_10", client.getTreatment("workm"));
     }
 
-    private SplitClient getSplitClient(CountDownLatch readyLatch, boolean persistenceEnabled) {
-        SplitClientConfig config = new TestableSplitConfigBuilder()
-                .enableDebug()
-                .featuresRefreshRate(9999)
-                .segmentsRefreshRate(9999)
-                .impressionsRefreshRate(9999)
-                .readTimeout(3000)
-                .isPersistentAttributesStorageEnabled(persistenceEnabled)
-                .streamingEnabled(false)
-                .build();
+    private SplitClient getSplitClient(CountDownLatch readyLatch, boolean persistenceEnabled, String matchingKey) {
+        if (mSplitFactory == null) {
+            SplitClientConfig config = new TestableSplitConfigBuilder()
+                    .enableDebug()
+                    .featuresRefreshRate(9999)
+                    .segmentsRefreshRate(9999)
+                    .impressionsRefreshRate(9999)
+                    .readTimeout(3000)
+                    .isPersistentAttributesStorageEnabled(persistenceEnabled)
+                    .streamingEnabled(false)
+                    .build();
 
-        SplitFactory splitFactory = IntegrationHelper.buildFactory(
-                IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
-                config, mContext, null, mRoomDb);
+            mSplitFactory = IntegrationHelper.buildFactory(
+                    IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
+                    config, mContext, null, mRoomDb);
+        }
 
-        SplitClient client = splitFactory.client();
+        SplitClient client = mSplitFactory.client(
+                new Key((matchingKey == null) ? IntegrationHelper.dummyApiKey() : matchingKey));
         SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(readyLatch);
         client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
 
