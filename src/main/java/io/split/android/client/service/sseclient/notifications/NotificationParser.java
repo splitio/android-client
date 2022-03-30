@@ -86,9 +86,9 @@ public class NotificationParser {
     @Nullable
     public String extractUserKeyHashFromChannel(String channel) {
         if (channel != null) {
-            String[] split = channel.split("_");
-            if (split.length > 1) {
-                return split[2];
+            String[] channelSegments = channel.split("_");
+            if (channelSegments.length > 2) {
+                return channelSegments[2];
             }
         }
 

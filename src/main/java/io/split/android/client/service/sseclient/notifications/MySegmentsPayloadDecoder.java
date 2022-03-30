@@ -22,7 +22,7 @@ public class MySegmentsPayloadDecoder {
 
             return Base64.encodeToString(murmurHashStringBytes, Base64.NO_WRAP);
         } catch (Exception exception) {
-            Logger.e(exception);
+            Logger.e("An error occurred when encoding matching key");
 
             return "";
         }
