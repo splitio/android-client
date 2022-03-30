@@ -39,19 +39,19 @@ import io.split.android.client.utils.Logger;
 import static java.lang.Thread.sleep;
 
 public class MySegmentsSyncProcessTest {
-    Context mContext;
-    BlockingQueue<String> mStreamingData;
-    CountDownLatch mMySegmentsSyncLatch;
-    CountDownLatch mSseLatch;
-    String mApiKey;
-    Key mUserKey;
+    private Context mContext;
+    private BlockingQueue<String> mStreamingData;
+    private CountDownLatch mMySegmentsSyncLatch;
+    private CountDownLatch mSseLatch;
+    private String mApiKey;
+    private Key mUserKey;
 
-    CountDownLatch mMySegmentsUpdateLatch;
-    CountDownLatch mMySegmentsPushLatch;
+    private CountDownLatch mMySegmentsUpdateLatch;
+    private CountDownLatch mMySegmentsPushLatch;
 
-    final static String MSG_SEGMENT_UPDATE = "push_msg-segment_update.txt";
-    final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
-    final static String MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD = "push_msg-segment_update_empty_payload.txt";
+    private  final static String MSG_SEGMENT_UPDATE = "push_msg-segment_update.txt";
+    private final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
+    private final static String MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD = "push_msg-segment_update_empty_payload.txt";
 
     private int mMySegmentsHitCount = 0;
 
@@ -65,6 +65,7 @@ public class MySegmentsSyncProcessTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mStreamingData = new LinkedBlockingDeque<>();
         mMySegmentsSyncLatch = new CountDownLatch(2);
+        mSseLatch = new CountDownLatch(1);
 
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
@@ -77,7 +78,6 @@ public class MySegmentsSyncProcessTest {
     @Test
     public void mySegmentsUpdate() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        mSseLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
@@ -95,7 +95,7 @@ public class MySegmentsSyncProcessTest {
 
         latch.await(10, TimeUnit.SECONDS);
 
-        mSseLatch.await(10, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
 
         TestingHelper.pushKeepAlive(mStreamingData);
         mMySegmentsSyncLatch.await(10, TimeUnit.SECONDS);
@@ -115,21 +115,74 @@ public class MySegmentsSyncProcessTest {
         Assert.assertEquals("segment1,segment2,segment3", mySegmentEntity.getSegmentList());
         Assert.assertEquals("segment1", mySegmentEntityPayload.getSegmentList());
         Assert.assertEquals("", mySegmentEntityEmptyPayload.getSegmentList());
-
     }
 
-    private void testMySegmentsUpdate() throws IOException, InterruptedException {
+    @Test
+    public void multiClientSegmentsUpdateOnyOneClient() throws IOException, InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+        mSseLatch = new CountDownLatch(1);
+
+        HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
+
+        SplitClientConfig config = IntegrationHelper.basicConfig();
+
+        mFactory = IntegrationHelper.buildFactory(
+                mApiKey, mUserKey,
+                config, mContext, httpClientMock, mSplitRoomDatabase);
+
+        mClient = mFactory.client();
+        SplitClient client2 = mFactory.client(new Key("key2"));
+
+        TestingHelper.TestEventTask readyTask = new TestingHelper.TestEventTask(latch);
+        TestingHelper.TestEventTask readyTask2 = new TestingHelper.TestEventTask(latch2);
+
+        mClient.on(SplitEvent.SDK_READY, readyTask);
+        client2.on(SplitEvent.SDK_READY, readyTask2);
+
+        latch.await(10, TimeUnit.SECONDS);
+        latch2.await(10, TimeUnit.SECONDS);
+
+        mSseLatch.await(20, TimeUnit.SECONDS);
+
+        TestingHelper.pushKeepAlive(mStreamingData);
+        mMySegmentsSyncLatch.await(10, TimeUnit.SECONDS);
+
+        testMySegmentsUpdate();
+        sleep(1000);
+        MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
+        MySegmentEntity mySegmentEntity2 = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
+
+        testMySegmentsPush(MSG_SEGMENT_UPDATE_PAYLOAD);
+        sleep(1000);
+        MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
+        MySegmentEntity mySegmentEntityPayload2 = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
+
+        testMySegmentsPush(MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD);
+        sleep(1000);
+        MySegmentEntity mySegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
+        MySegmentEntity mySegmentEntityEmptyPayload2 = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
+
+        Assert.assertEquals("segment1,segment2,segment3", mySegmentEntity.getSegmentList());
+        Assert.assertEquals("segment1", mySegmentEntityPayload.getSegmentList());
+        Assert.assertEquals("", mySegmentEntityEmptyPayload.getSegmentList());
+
+        Assert.assertEquals("", mySegmentEntity2.getSegmentList());
+        Assert.assertEquals("", mySegmentEntityPayload2.getSegmentList());
+        Assert.assertEquals("", mySegmentEntityEmptyPayload2.getSegmentList());
+    }
+
+    private void testMySegmentsUpdate() throws InterruptedException {
         mMySegmentsUpdateLatch = new CountDownLatch(1);
         pushMessage(MSG_SEGMENT_UPDATE);
-        mMySegmentsUpdateLatch.await(5, TimeUnit.SECONDS);
+        mMySegmentsUpdateLatch.await(10, TimeUnit.SECONDS);
     }
 
-    private void testMySegmentsPush(String message) throws IOException, InterruptedException {
+    private void testMySegmentsPush(String message) throws InterruptedException {
         mMySegmentsPushLatch = new CountDownLatch(1);
         pushMessage(message);
-        mMySegmentsPushLatch.await(5, TimeUnit.SECONDS);
+        mMySegmentsPushLatch.await(10, TimeUnit.SECONDS);
     }
-
 
     @After
     public void tearDown() {
@@ -150,9 +203,7 @@ public class MySegmentsSyncProcessTest {
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("auth")) {
                     return createResponse(200, IntegrationHelper.streamingEnabledV1Token());
-                } else if (uri.getPath().contains("/mySegments/key2")) {
-                    return createResponse(200, IntegrationHelper.emptyMySegments());
-                } else if (uri.getPath().contains("/mySegments/key1") || uri.getPath().contains("/mySegments")) {
+                } else if (uri.getPath().contains("/mySegments/key1")) {
                     mMySegmentsHitCount++;
                     Logger.i("** My segments hit: " + mMySegmentsHitCount);
                     mMySegmentsSyncLatch.countDown();
@@ -164,6 +215,8 @@ public class MySegmentsSyncProcessTest {
                     }
                     Logger.d("DUMMY SEGMENTS");
                     return createResponse(200, IntegrationHelper.dummyMySegments());
+                } else if (uri.getPath().contains("/mySegments/key2")) {
+                    return createResponse(200, IntegrationHelper.emptyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     Logger.i("** Split Changes hit");
                     String data = IntegrationHelper.emptySplitChanges(-1, 1000);
