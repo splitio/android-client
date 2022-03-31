@@ -2,48 +2,31 @@ package tests.integration.shared;
 
 import static org.junit.Assert.assertEquals;
 
-import android.content.Context;
-
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import helper.DatabaseHelper;
 import helper.IntegrationHelper;
 import helper.TestingHelper;
-import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
-import io.split.android.client.SplitClientConfig;
-import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.storage.db.SplitRoomDatabase;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 
-public class InterdependentSplitsTest {
+public class InterdependentSplitsTest extends BaseSharedClientsTest {
 
-    private Context mContext;
-    private MockWebServer mWebServer;
-    private SplitRoomDatabase mRoomDb;
-    private SplitFactory mSplitFactory;
+    @After
+    public void tearDown() {
+        mSplitFactory.destroy();
+    }
 
-    @Before
-    public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mRoomDb = DatabaseHelper.getTestDatabase(mContext);
-
-        mWebServer = new MockWebServer();
-
-        String serverUrl = mWebServer.url("/").toString();
-        final Dispatcher dispatcher = new Dispatcher() {
+    @Override
+    protected Dispatcher getDispatcher() {
+        return new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 if (request.getPath().contains("/mySegments/key1")) {
@@ -66,30 +49,6 @@ public class InterdependentSplitsTest {
                 }
             }
         };
-        mWebServer.setDispatcher(dispatcher);
-        mSplitFactory = IntegrationHelper.buildFactory(IntegrationHelper.dummyApiKey(),
-                new Key("key1"),
-                SplitClientConfig.builder()
-                        .serviceEndpoints(ServiceEndpoints.builder()
-                                .apiEndpoint(serverUrl).eventsEndpoint(serverUrl).build())
-                        .ready(30000)
-                        .enableDebug()
-                        .featuresRefreshRate(99999)
-                        .segmentsRefreshRate(99999)
-                        .impressionsRefreshRate(99999)
-                        .trafficType("account")
-                        .streamingEnabled(false)
-                        .build(),
-                mContext,
-                null,
-                mRoomDb);
-
-        mRoomDb.clearAllTables();
-    }
-
-    @After
-    public void tearDown() {
-        mSplitFactory.destroy();
     }
 
     @Test
