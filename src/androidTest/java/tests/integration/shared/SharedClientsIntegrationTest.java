@@ -33,6 +33,10 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 
 public class SharedClientsIntegrationTest {
 
@@ -56,7 +60,13 @@ public class SharedClientsIntegrationTest {
         mWebServer = new ServerMock(mJsonChanges);
 
         String serverUrl = mWebServer.getServerUrl();
-        mSplitFactory = IntegrationHelper.buildFactory(IntegrationHelper.dummyApiKey(),
+        mSplitFactory = getFactory(serverUrl);
+
+        mRoomDb.clearAllTables();
+    }
+
+    private SplitFactory getFactory(String serverUrl) {
+        return IntegrationHelper.buildFactory(IntegrationHelper.dummyApiKey(),
                 new Key("key1"),
                 SplitClientConfig.builder()
                         .serviceEndpoints(ServiceEndpoints.builder()
@@ -72,8 +82,6 @@ public class SharedClientsIntegrationTest {
                 mContext,
                 null,
                 mRoomDb);
-
-        mRoomDb.clearAllTables();
     }
 
     @After
