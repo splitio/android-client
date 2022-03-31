@@ -105,6 +105,16 @@ public class LocalhostSplitFactory implements SplitFactory {
     }
 
     @Override
+    public SplitClient client(String matchingKey) {
+        return mClientContainer.getClient(new Key(matchingKey));
+    }
+
+    @Override
+    public SplitClient client(String matchingKey, String bucketingKey) {
+        return mClientContainer.getClient(new Key(matchingKey, bucketingKey));
+    }
+
+    @Override
     public SplitManager manager() {
         return mManager;
     }
