@@ -69,6 +69,7 @@ public class MySegmentsChangeV2Test {
         mSplitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         mSplitRoomDatabase.clearAllTables();
         mMySegmentsSyncLatch2 = new CountDownLatch(1);
+        mMySegmentsUpdateLatch2 = new CountDownLatch(1);
     }
 
     @Test
@@ -108,7 +109,6 @@ public class MySegmentsChangeV2Test {
 
         // Wait for hitting my segments two times (sdk ready and full sync after streaming connection)
         mMySegmentsSyncLatch.await(5, TimeUnit.SECONDS);
-
 
         // Unbounded fetch notification should trigger my segments
         // refresh on synchronizer

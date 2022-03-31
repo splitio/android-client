@@ -89,14 +89,15 @@ public class AttributesIntegrationTest {
         expectedMap.put("num_value", 10);
 
         insertSplitsFromFileIntoDB();
+        String userKey = IntegrationHelper.dummyUserKey().matchingKey();
         AttributesEntity attributesEntity = new AttributesEntity(
-                IntegrationHelper.dummyUserKey().matchingKey(),
+                userKey,
                 Json.toJson(map),
                 System.currentTimeMillis());
 
         mRoomDb.attributesDao().update(attributesEntity);
         CountDownLatch readyLatch = new CountDownLatch(1);
-        SplitClient client = getSplitClient(readyLatch, true, null);
+        SplitClient client = getSplitClient(readyLatch, true, userKey);
         readyLatch.await(5, TimeUnit.SECONDS);
 
         Assert.assertEquals(expectedMap, client.getAllAttributes());
@@ -109,7 +110,7 @@ public class AttributesIntegrationTest {
 
         countDownLatch.await(1, TimeUnit.SECONDS);
 
-        Assert.assertNull(mRoomDb.attributesDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()));
+        Assert.assertNull(mRoomDb.attributesDao().getByUserKey(userKey));
     }
 
     @Test

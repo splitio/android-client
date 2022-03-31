@@ -118,7 +118,7 @@ public class MySegmentsSyncProcessTest {
     }
 
     @Test
-    public void multiClientSegmentsUpdateOnyOneClient() throws IOException, InterruptedException {
+    public void multiClientSegmentsUpdateOnlyOneClient() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         CountDownLatch latch2 = new CountDownLatch(1);
         mSseLatch = new CountDownLatch(1);
