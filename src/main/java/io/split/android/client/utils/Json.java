@@ -15,20 +15,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.utils.serializer.DoubleSerializer;
+
 public class Json {
 
     private static final Gson mJson = new GsonBuilder()
             .serializeNulls()
-            .registerTypeAdapter(Double.class, new JsonSerializer<Double>() {
-
-                // Send integers as such
-                @Override
-                public JsonElement serialize(Double src, Type typeOfSrc, JsonSerializationContext context) {
-                    if (src == src.longValue())
-                        return new JsonPrimitive(src.longValue());
-                    return new JsonPrimitive(src);
-                }
-            })
+            .registerTypeAdapter(Double.class, new DoubleSerializer())
             .create();
     private static volatile Gson mNonNullJson;
 
@@ -70,7 +63,9 @@ public class Json {
         if (mNonNullJson == null) {
             synchronized (Json.class) {
                 if (mNonNullJson == null) {
-                    mNonNullJson = new GsonBuilder().create();
+                    mNonNullJson = new GsonBuilder()
+                            .registerTypeAdapter(Double.class, new DoubleSerializer())
+                            .create();
                 }
             }
         }
