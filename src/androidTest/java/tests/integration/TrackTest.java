@@ -193,6 +193,8 @@ public class TrackTest {
         Assert.assertEquals(1, trackCount.get(2).intValue());
         Assert.assertEquals(3, trackCount.get(3).intValue());
 
+        Thread.sleep(2000);
+
         Event e1 = findEvent("event1", 0.0);
         Event e2 = findEvent("event2", 2.0);
         Event e3 = findEvent("event3", 3.0);
@@ -255,15 +257,12 @@ public class TrackTest {
         properties.put("id", 158576837);
         client.track("user", "long-number-event", 1, properties);
         mLatchs.get(0).await(20, TimeUnit.SECONDS);
+        Thread.sleep(500);
         Event event = findEvent("long-number-event", 1.0);
 
         assertNotNull(event);
         assertEquals(24584535, event.properties.get("price"));
         assertEquals(158576837, event.properties.get("id"));
-    }
-
-    private void log(String m) {
-        System.out.println("FACTORY_TEST: " + m);
     }
 
     private String emptyChanges() {

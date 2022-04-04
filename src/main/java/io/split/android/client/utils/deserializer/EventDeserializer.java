@@ -67,7 +67,7 @@ public class EventDeserializer implements JsonDeserializer<Event> {
                     mappedProperties.put(key, value.getAsString());
                 }
             } else {
-                mappedProperties.put(key, "null");
+                mappedProperties.put(key, null);
             }
         }
 
