@@ -2,6 +2,10 @@ package io.split.android.client.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -13,7 +17,19 @@ import java.util.Set;
 
 public class Json {
 
-    private static final Gson mJson = new GsonBuilder().serializeNulls().create();
+    private static final Gson mJson = new GsonBuilder()
+            .serializeNulls()
+            .registerTypeAdapter(Double.class, new JsonSerializer<Double>() {
+
+                // Send integers as such
+                @Override
+                public JsonElement serialize(Double src, Type typeOfSrc, JsonSerializationContext context) {
+                    if (src == src.longValue())
+                        return new JsonPrimitive(src.longValue());
+                    return new JsonPrimitive(src);
+                }
+            })
+            .create();
     private static volatile Gson mNonNullJson;
 
     public static String toJson(Object obj) {
