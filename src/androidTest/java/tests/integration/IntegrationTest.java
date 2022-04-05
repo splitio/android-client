@@ -110,7 +110,6 @@ public class IntegrationTest {
         CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
         mLatchTrack = new CountDownLatch(10);
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
-        String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
 
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);

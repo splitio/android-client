@@ -1,5 +1,8 @@
 package tests.localhost;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 
 import org.junit.Assert;
@@ -15,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -24,7 +28,9 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitManager;
+import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.localhost.LocalhostSplitClient;
 import io.split.android.client.localhost.LocalhostSplitFactory;
 import io.split.android.client.SplitResult;
@@ -115,17 +121,17 @@ public class LocalhostTest {
         Assert.assertEquals(9, splits.size());
 
         Assert.assertNotNull(sv0);
-        Assert.assertTrue(existsTreatment("off", sv0.treatments));
+        assertTrue(existsTreatment("off", sv0.treatments));
         Assert.assertEquals("{ \"size\" : 20 }", sv0.configs.get("off"));
 
         Assert.assertNotNull(sv1);
-        Assert.assertTrue(existsTreatment("on", sv1.treatments));
+        assertTrue(existsTreatment("on", sv1.treatments));
         Assert.assertNull(sv1.configs);
 
         Assert.assertNotNull(svx);
-        Assert.assertTrue(existsTreatment("red", svx.treatments));
-        Assert.assertTrue(existsTreatment("on", svx.treatments));
-        Assert.assertTrue(existsTreatment("off", svx.treatments));
+        assertTrue(existsTreatment("red", svx.treatments));
+        assertTrue(existsTreatment("on", svx.treatments));
+        assertTrue(existsTreatment("off", svx.treatments));
         Assert.assertNull(svx.configs.get("on"));
         Assert.assertEquals("{\"desc\" : \"this applies only to OFF and only for only_key. The rest will receive ON\"}", svx.configs.get("off"));
         Assert.assertNull(svx.configs.get("red"));
@@ -187,11 +193,11 @@ public class LocalhostTest {
         Assert.assertEquals(3, splits.size());
 
         Assert.assertNotNull(sva);
-        Assert.assertTrue(existsTreatment("on", sva.treatments));
+        assertTrue(existsTreatment("on", sva.treatments));
         Assert.assertNull(sva.configs);
 
         Assert.assertNotNull(svb);
-        Assert.assertTrue(existsTreatment("off", svb.treatments));
+        assertTrue(existsTreatment("off", svb.treatments));
         Assert.assertNull(svb.configs);
 
         Assert.assertNull(svd);
@@ -257,6 +263,46 @@ public class LocalhostTest {
 
         String t = client.getTreatment("split_0", null);
         Assert.assertEquals("off", t);
+    }
+
+    @Test
+    public void multipleClientsAreReady() throws InterruptedException, IOException {
+
+        SplitFactory factory;
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch readyLatch2 = new CountDownLatch(1);
+
+        AtomicInteger readyCount = new AtomicInteger(0);
+        AtomicInteger readyCount2 = new AtomicInteger(0);
+        factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig);
+
+        SplitClient client = factory.client();
+        SplitClient client2 = factory.client(new Key("second_key"));
+
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                readyCount.addAndGet(1);
+                readyLatch.countDown();
+            }
+        });
+
+        client2.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                readyCount2.addAndGet(1);
+                readyLatch2.countDown();
+            }
+        });
+
+        boolean await = readyLatch.await(5, TimeUnit.SECONDS);
+        boolean await2 = readyLatch2.await(5, TimeUnit.SECONDS);
+
+        assertTrue(await);
+        assertTrue(await2);
+        assertEquals(1, readyCount.get());
+        assertEquals(1, readyCount2.get());
     }
 
     private String getFileContent(String fileName) {
