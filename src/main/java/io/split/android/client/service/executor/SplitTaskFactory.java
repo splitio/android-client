@@ -4,16 +4,11 @@ import java.util.List;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.CleanUpDatabaseTask;
-import io.split.android.client.service.attributes.LoadAttributesTask;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
-import io.split.android.client.service.mysegments.LoadMySegmentsTask;
-import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
-import io.split.android.client.service.mysegments.MySegmentsSyncTask;
-import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitKillTask;
@@ -28,17 +23,9 @@ public interface SplitTaskFactory extends TelemetryTaskFactory {
 
     SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration);
 
-    MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache);
-
-    LoadMySegmentsTask createLoadMySegmentsTask();
-
     LoadSplitsTask createLoadSplitsTask();
 
     SplitKillTask createSplitKillTask(Split split);
-
-    MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments);
-
-    MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, String segmentName);
 
     SplitsUpdateTask createSplitsUpdateTask(long since);
 
@@ -49,7 +36,4 @@ public interface SplitTaskFactory extends TelemetryTaskFactory {
     SaveImpressionsCountTask createSaveImpressionsCountTask(List<ImpressionsCountPerFeature> count);
 
     ImpressionsCountRecorderTask createImpressionsCountRecorderTask();
-
-    LoadAttributesTask createLoadAttributesTask(boolean persistentAttributesEnabled);
-
 }

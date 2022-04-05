@@ -1,5 +1,6 @@
 package io.split.android.client.service.sseclient;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -18,6 +19,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEven
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
+import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
@@ -62,7 +64,10 @@ public class SyncManagerTest {
         MockitoAnnotations.openMocks(this);
         mSyncManager = new SyncManagerImpl(
                 mConfig, mSynchronizer, mPushNotificationManager,
-                mSplitsUpdateWorker, mMySegmentUpdateWorker, mPushManagerEventBroadcaster, mBackoffTimer, mTelemetrySynchronizer);
+                mSplitsUpdateWorker, mPushManagerEventBroadcaster,
+                mBackoffTimer, mTelemetrySynchronizer);
+
+        ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("user_key", mMySegmentUpdateWorker);
         when(mConfig.streamingEnabled()).thenReturn(true);
 
     }
@@ -76,7 +81,6 @@ public class SyncManagerTest {
         verify(mSynchronizer, never()).startPeriodicFetching();
         verify(mSynchronizer, times(1)).startPeriodicRecording();
         verify(mPushManagerEventBroadcaster, times(1)).register((BroadcastedEventListener) mSyncManager);
-        verify(mPushNotificationManager, times(1)).start();
     }
 
     @Test
@@ -152,5 +156,28 @@ public class SyncManagerTest {
         mSyncManager.flush();
 
         verify(mTelemetrySynchronizer).flush();
+    }
+
+    @Test
+    public void startCallsStartOnAllSegmentsWorkers() {
+        MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
+        ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
+
+        mSyncManager.start();
+
+        verify(mMySegmentUpdateWorker).start();
+        verify(anyKeyUpdateWorker).start();
+    }
+
+    @Test
+    public void stopCallsStopOnMyAllSegmentsWorkers() {
+        MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
+        ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
+
+        mSyncManager.start();
+        mSyncManager.stop();
+
+        verify(mMySegmentUpdateWorker).stop();
+        verify(anyKeyUpdateWorker).stop();
     }
 }

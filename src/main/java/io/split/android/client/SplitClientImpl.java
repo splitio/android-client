@@ -6,19 +6,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
-import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
@@ -29,19 +30,16 @@ import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerHelper;
-import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.grammar.Treatments;
 
-/**
- * A basic implementation of SplitClient.
- */
 public final class SplitClientImpl implements SplitClient {
 
-    private final SplitFactory mSplitFactory;
+    private final WeakReference<SplitFactory> mSplitFactory;
+    private final WeakReference<SplitClientContainer> mClientContainer;
     private final SplitClientConfig mConfig;
     private final String mMatchingKey;
     private final SplitEventsManager mEventsManager;
@@ -59,6 +57,7 @@ public final class SplitClientImpl implements SplitClient {
     private boolean mIsClientDestroyed = false;
 
     public SplitClientImpl(SplitFactory container,
+                           SplitClientContainer clientContainer,
                            Key key,
                            SplitParser splitParser,
                            ImpressionListener impressionListener,
@@ -69,8 +68,10 @@ public final class SplitClientImpl implements SplitClient {
                            SyncManager syncManager,
                            AttributesManager attributesManager,
                            TelemetryStorageProducer telemetryStorageProducer,
-                           SplitValidator splitValidator) {
+                           SplitValidator splitValidator,
+                           TreatmentManager treatmentManager) {
         this(container,
+                clientContainer,
                 key,
                 splitParser,
                 impressionListener,
@@ -81,15 +82,13 @@ public final class SplitClientImpl implements SplitClient {
                 syncManager,
                 attributesManager,
                 telemetryStorageProducer,
-                new TreatmentManagerImpl(
-                        key.matchingKey(), key.bucketingKey(), new EvaluatorImpl(splitsStorage, splitParser),
-                        new KeyValidatorImpl(), splitValidator,
-                        impressionListener, config, eventsManager, attributesManager, new AttributesMergerImpl(), telemetryStorageProducer),
+                treatmentManager,
                 splitValidator);
     }
 
     @VisibleForTesting
     public SplitClientImpl(SplitFactory container,
+                           SplitClientContainer clientContainer,
                            Key key,
                            SplitParser splitParser,
                            ImpressionListener impressionListener,
@@ -105,8 +104,9 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
 
+        mSplitFactory = new WeakReference<>(checkNotNull(container));
+        mClientContainer = new WeakReference<>(checkNotNull(clientContainer));
         mMatchingKey = checkNotNull(key.matchingKey());
-        mSplitFactory = checkNotNull(container);
         mConfig = checkNotNull(config);
         mEventsManager = checkNotNull(eventsManager);
         mEventValidator = checkNotNull(eventValidator);
@@ -122,12 +122,25 @@ public final class SplitClientImpl implements SplitClient {
     @Override
     public void destroy() {
         mIsClientDestroyed = true;
-        mSplitFactory.destroy();
+        SplitClientContainer splitClientContainer = mClientContainer.get();
+        if (splitClientContainer != null) {
+            splitClientContainer.remove(mMatchingKey);
+
+            if (splitClientContainer.getAll().isEmpty()) {
+                SplitFactory splitFactory = mSplitFactory.get();
+                if (splitFactory != null) {
+                    splitFactory.destroy();
+                }
+            }
+        }
     }
 
     @Override
     public void flush() {
-        mSplitFactory.flush();
+        SplitFactory splitFactory = mSplitFactory.get();
+        if (splitFactory != null) {
+            splitFactory.flush();
+        }
     }
 
     @Override

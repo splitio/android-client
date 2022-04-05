@@ -16,6 +16,7 @@ import io.split.android.client.TreatmentLabels;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
@@ -34,7 +35,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     private final String CLIENT_DESTROYED_MESSAGE = "Client has already been destroyed - no calls possible";
-    private final String SDK_READY_NOT_FIRED = "No listeners for SDK Readiness detected. Incorrect control treatments could be logged if you call getTreatment while the SDK is not yet ready";
 
     private final Evaluator mEvaluator;
     private final KeyValidator mKeyValidator;
@@ -42,9 +42,9 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final ImpressionListener mImpressionListener;
     private final String mMatchingKey;
     private final String mBucketingKey;
-    private final SplitClientConfig mSplitClientConfig;
+    private final boolean mLabelsEnabled;
     private final ValidationMessageLogger mValidationLogger;
-    private final ISplitEventsManager mEventsManager;
+    private final ListenableEventsManager mEventsManager;
     @NonNull
     private final AttributesManager mAttributesManager;
     @NonNull
@@ -57,8 +57,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 KeyValidator keyValidator,
                                 SplitValidator splitValidator,
                                 ImpressionListener impressionListener,
-                                SplitClientConfig splitClientConfig,
-                                ISplitEventsManager eventsManager,
+                                boolean labelsEnabled,
+                                ListenableEventsManager eventsManager,
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
                                 @NonNull TelemetryStorageProducer telemetryStorageProducer) {
@@ -68,7 +68,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mMatchingKey = matchingKey;
         mBucketingKey = bucketingKey;
         mImpressionListener = impressionListener;
-        mSplitClientConfig = splitClientConfig;
+        mLabelsEnabled = labelsEnabled;
         mEventsManager = eventsManager;
         mValidationLogger = new ValidationMessageLoggerImpl();
         mAttributesManager = checkNotNull(attributesManager);
@@ -196,7 +196,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 mBucketingKey,
                 splitName,
                 evaluationResult.getTreatment(),
-                (mSplitClientConfig.labelsEnabled() ? evaluationResult.getLabel() : null),
+                (mLabelsEnabled ? evaluationResult.getLabel() : null),
                 evaluationResult.getChangeNumber(),
                 attributes
         );
@@ -243,7 +243,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     mBucketingKey,
                     split,
                     result.getTreatment(),
-                    (mSplitClientConfig.labelsEnabled() ? result.getLabel() : null),
+                    (mLabelsEnabled ? result.getLabel() : null),
                     result.getChangeNumber(),
                     attributes);
         }

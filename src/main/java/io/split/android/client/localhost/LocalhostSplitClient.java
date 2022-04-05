@@ -22,6 +22,7 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.Logger;
@@ -40,6 +41,7 @@ import io.split.android.grammar.Treatments;
  */
 public final class LocalhostSplitClient implements SplitClient {
     private final WeakReference<LocalhostSplitFactory> mFactoryRef;
+    private final WeakReference<SplitClientContainer> mClientContainer;
     private final String mKey;
     private final SplitEventsManager mEventsManager;
     private final Evaluator mEvaluator;
@@ -47,6 +49,7 @@ public final class LocalhostSplitClient implements SplitClient {
     private boolean mIsClientDestroyed = false;
 
     public LocalhostSplitClient(@NonNull LocalhostSplitFactory container,
+                                @NonNull SplitClientContainer clientContainer,
                                 @NonNull SplitClientConfig splitClientConfig,
                                 @NonNull String key,
                                 @NonNull SplitsStorage splitsStorage,
@@ -57,13 +60,14 @@ public final class LocalhostSplitClient implements SplitClient {
                                 @NonNull TelemetryStorageProducer telemetryStorageProducer) {
 
         mFactoryRef = new WeakReference<>(checkNotNull(container));
+        mClientContainer = new WeakReference<>(checkNotNull(clientContainer));
         mKey = checkNotNull(key);
         mEventsManager = checkNotNull(eventsManager);
         mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
         mTreatmentManager = new TreatmentManagerImpl(mKey, null,
                 mEvaluator, new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
-                splitClientConfig, eventsManager, attributesManager, attributesMerger, telemetryStorageProducer);
+                splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger, telemetryStorageProducer);
     }
 
     @Override
@@ -136,6 +140,11 @@ public final class LocalhostSplitClient implements SplitClient {
     @Override
     public void destroy() {
         mIsClientDestroyed = true;
+        SplitClientContainer splitClientContainer = mClientContainer.get();
+        if (splitClientContainer != null) {
+            splitClientContainer.remove(mKey);
+        }
+
         SplitFactory factory = mFactoryRef.get();
         if (factory != null) {
             factory.destroy();

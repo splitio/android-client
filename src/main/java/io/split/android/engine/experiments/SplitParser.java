@@ -1,5 +1,8 @@
 package io.split.android.engine.experiments;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.Nullable;
 
 import com.google.common.collect.Lists;
@@ -12,7 +15,8 @@ import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.AttributeMatcher;
@@ -34,36 +38,36 @@ import io.split.android.engine.matchers.strings.RegularExpressionMatcher;
 import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.WhitelistMatcher;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * Converts io.codigo.dtos.Experiment to io.codigo.engine.splits.ParsedExperiment.
- */
-public final class SplitParser {
+public class SplitParser {
 
     public static final int CONDITIONS_UPPER_LIMIT = 50;
 
-    private MySegmentsStorage mMySegmentsStorage;
+    private final MySegmentsStorageContainer mMySegmentsStorageContainer;
 
-    public static SplitParser get(MySegmentsStorage mySegmentsStorage) {
-        return new SplitParser(mySegmentsStorage);
+    public static SplitParser get(MySegmentsStorageContainer mySegmentsStorageContainer) {
+        return new SplitParser(mySegmentsStorageContainer);
     }
 
-    public SplitParser(MySegmentsStorage mySegmentsStorage) {
-        mMySegmentsStorage = checkNotNull(mySegmentsStorage);
+    public SplitParser(MySegmentsStorageContainer mySegmentsStorageContainer) {
+        mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
     }
 
-    public @Nullable ParsedSplit parse(@Nullable Split split) {
+    @Nullable
+    public ParsedSplit parse(@Nullable Split split) {
+        return parse(split, null);
+    }
+
+    @Nullable
+    public ParsedSplit parse(@Nullable Split split, @Nullable String matchingKey) {
         try {
-            return parseWithoutExceptionHandling(split);
+            return parseWithoutExceptionHandling(split, matchingKey);
         } catch (Throwable t) {
             Logger.e(t, "Could not parse split: %s", split);
             return null;
         }
     }
 
-    private ParsedSplit parseWithoutExceptionHandling(Split split) {
+    private ParsedSplit parseWithoutExceptionHandling(Split split, String matchingKey) {
         if (split == null) {
             return null;
         }
@@ -82,28 +86,27 @@ public final class SplitParser {
 
         for (Condition condition : split.conditions) {
             List<Partition> partitions = condition.partitions;
-            CombiningMatcher matcher = toMatcher(condition.matcherGroup);
+            CombiningMatcher matcher = toMatcher(condition.matcherGroup, matchingKey);
             parsedConditionList.add(new ParsedCondition(condition.conditionType, matcher, partitions, condition.label));
         }
 
         return new ParsedSplit(split.name, split.seed, split.killed, split.defaultTreatment, parsedConditionList, split.trafficTypeName, split.changeNumber, split.trafficAllocation, split.trafficAllocationSeed, split.algo, split.configurations);
     }
 
-    private CombiningMatcher toMatcher(MatcherGroup matcherGroup) {
+    private CombiningMatcher toMatcher(MatcherGroup matcherGroup, String matchingKey) {
         List<Matcher> matchers = matcherGroup.matchers;
         checkArgument(!matchers.isEmpty());
 
         List<AttributeMatcher> toCombine = Lists.newArrayList();
 
         for (Matcher matcher : matchers) {
-            toCombine.add(toMatcher(matcher));
+            toCombine.add(toMatcher(matcher, matchingKey));
         }
 
         return new CombiningMatcher(matcherGroup.combiner, toCombine);
     }
 
-
-    private AttributeMatcher toMatcher(Matcher matcher) {
+    private AttributeMatcher toMatcher(Matcher matcher, String matchingKey) {
         io.split.android.engine.matchers.Matcher delegate;
         switch (matcher.matcherType) {
             case ALL_KEYS:
@@ -111,7 +114,7 @@ public final class SplitParser {
                 break;
             case IN_SEGMENT:
                 checkNotNull(matcher.userDefinedSegmentMatcherData);
-                delegate = new MySegmentsMatcher(mMySegmentsStorage.getAll(), matcher.userDefinedSegmentMatcherData.segmentName);
+                delegate = new MySegmentsMatcher((matchingKey != null) ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedSegmentMatcherData.segmentName);
                 break;
             case WHITELIST:
                 checkNotNull(matcher.whitelistMatcherData);

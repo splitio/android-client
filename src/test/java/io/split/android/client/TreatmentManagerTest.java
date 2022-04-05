@@ -1,5 +1,6 @@
 package io.split.android.client;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -25,9 +26,11 @@ import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.KeyValidator;
@@ -47,7 +50,7 @@ public class TreatmentManagerTest {
 
     Evaluator evaluator;
     ImpressionListener impressionListener;
-    ISplitEventsManager eventsManagerStub;
+    ListenableEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
     TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
     TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
@@ -56,12 +59,13 @@ public class TreatmentManagerTest {
     public void loadSplitsFromFile() {
         if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
+            MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            SplitParser splitParser = new SplitParser(mySegmentsStorage);
+            SplitParser splitParser = new SplitParser(mySegmentsStorageContainer);
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);
@@ -69,6 +73,7 @@ public class TreatmentManagerTest {
             when(splitsStorage.get("testo2222")).thenReturn(splitsMap.get("testo2222"));
             when(splitsStorage.get("Test")).thenReturn(splitsMap.get("Test"));
 
+            when(mySegmentsStorageContainer.getStorageForKey(any())).thenReturn(mySegmentsStorage);
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
 
             evaluator = new EvaluatorImpl(splitsStorage, splitParser);
@@ -300,11 +305,11 @@ public class TreatmentManagerTest {
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
                 new KeyValidatorImpl(), new SplitValidatorImpl(),
-                new ImpressionListenerMock(), config, eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class));
+                new ImpressionListenerMock(), config.labelsEnabled(), eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class));
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
-        ISplitEventsManager eventsManager = mock(ISplitEventsManager.class);
+        ListenableEventsManager eventsManager = mock(ListenableEventsManager.class);
         Evaluator evaluator = mock(Evaluator.class);
 
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
@@ -320,7 +325,7 @@ public class TreatmentManagerTest {
                 mock(KeyValidator.class),
                 mock(SplitValidator.class),
                 mock(ImpressionListener.class),
-                SplitClientConfig.builder().build(),
+                SplitClientConfig.builder().build().labelsEnabled(),
                 eventsManager,
                 attributesManager,
                 mock(AttributesMerger.class),

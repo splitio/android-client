@@ -1,5 +1,6 @@
-
 package io.split.android.client.service.synchronizer;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
@@ -11,7 +12,7 @@ import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
@@ -27,6 +28,12 @@ import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
@@ -34,15 +41,12 @@ import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreaming
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-@VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
-public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener {
+public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegistry, AttributesSynchronizerRegistry {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitStorageContainer mSplitsStorageContainer;
     private final SplitClientConfig mSplitClientConfig;
-    private final SplitEventsManager mSplitEventsManager;
+    private final ISplitEventsManager mSplitEventsManager;
     private final SplitTaskFactory mSplitTaskFactory;
     private final WorkManagerWrapper mWorkManagerWrapper;
 
@@ -50,29 +54,29 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
 
     private LoadLocalDataListener mLoadLocalSplitsListener;
-    private LoadLocalDataListener mLoadLocalMySegmentsListener;
-    private LoadLocalDataListener mLoadLocalAttributesListener;
 
     private String mSplitsFetcherTaskId;
-    private String mMySegmentsFetcherTaskId;
     private String mEventsRecorderTaskId;
     private String mImpressionsRecorderTaskId;
     private String mImpressionsRecorderCountTaskId;
     private final RetryBackoffCounterTimer mSplitsSyncRetryTimer;
     private final RetryBackoffCounterTimer mSplitsUpdateRetryTimer;
-    private final RetryBackoffCounterTimer mMySegmentsSyncRetryTimer;
     private final ImpressionsObserver mImpressionsObserver;
     private final ImpressionsCounter mImpressionsCounter;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private final AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
+    private final MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
                             @NonNull SplitStorageContainer splitStorageContainer,
                             @NonNull SplitTaskFactory splitTaskFactory,
-                            @NonNull SplitEventsManager splitEventsManager,
+                            @NonNull ISplitEventsManager splitEventsManager,
                             @NonNull WorkManagerWrapper workManagerWrapper,
                             @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
-                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                            @NonNull AttributesSynchronizerRegistryImpl attributesSynchronizerRegistry,
+                            @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
@@ -80,15 +84,15 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mSplitEventsManager = checkNotNull(splitEventsManager);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
+        mAttributesSynchronizerRegistry = attributesSynchronizerRegistry;
         mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
-
-        mMySegmentsSyncRetryTimer = retryBackoffCounterTimerFactory.create(taskExecutor, 1);
 
         mImpressionsObserver = new ImpressionsObserver(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE);
         mImpressionsCounter = new ImpressionsCounter();
 
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+        mMySegmentsSynchronizerRegistry = checkNotNull(mySegmentsSynchronizerRegistry);
 
         setupListeners();
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
@@ -108,12 +112,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadMySegmentsFromCache() {
-        submitMySegmentsLoadingTask(mLoadLocalMySegmentsListener);
+        mMySegmentsSynchronizerRegistry.loadMySegmentsFromCache();
     }
 
     @Override
     public void loadAttributesFromCache() {
-        submitAttributesLoadingTask(mLoadLocalAttributesListener, mSplitClientConfig.persistentAttributesEnabled());
+        mAttributesSynchronizerRegistry.loadAttributesFromCache();
     }
 
     @Override
@@ -145,14 +149,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeMySegments() {
-        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), null);
-        mMySegmentsSyncRetryTimer.start();
+        mMySegmentsSynchronizerRegistry.synchronizeMySegments();
     }
 
     @Override
+    @VisibleForTesting
     public void forceMySegmentsSync() {
-        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), null);
-        mMySegmentsSyncRetryTimer.start();
+        mMySegmentsSynchronizerRegistry.forceMySegmentsSync();
     }
 
     @Override
@@ -166,7 +169,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     synchronized public void stopPeriodicFetching() {
         mTaskExecutor.stopTask(mSplitsFetcherTaskId);
-        mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
+        mMySegmentsSynchronizerRegistry.stopPeriodicFetching();
     }
 
     @Override
@@ -174,7 +177,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         scheduleEventsRecorderTask();
         scheduleImpressionsRecorderTask();
         scheduleImpressionsCountRecorderTask();
-        Logger.i("Peridic recording tasks scheduled");
+        Logger.i("Periodic recording tasks scheduled");
     }
 
     @Override
@@ -204,12 +207,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 mSplitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-
-        mLoadLocalMySegmentsListener = new LoadLocalDataListener(
-                mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
-
-        mLoadLocalAttributesListener = new LoadLocalDataListener(
-                mSplitEventsManager, SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
     }
 
     public void pause() {
@@ -225,8 +222,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void destroy() {
         mSplitsSyncRetryTimer.stop();
-        mMySegmentsSyncRetryTimer.stop();
         mSplitsUpdateRetryTimer.stop();
+        mMySegmentsSynchronizerRegistry.destroy();
         flush();
     }
 
@@ -270,6 +267,26 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         }
     }
 
+    @Override
+    public void registerMySegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
+        mMySegmentsSynchronizerRegistry.registerMySegmentsSynchronizer(userKey, mySegmentsSynchronizer);
+    }
+
+    @Override
+    public void unregisterMySegmentsSynchronizer(String userKey) {
+        mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(userKey);
+    }
+
+    @Override
+    public void registerAttributesSynchronizer(String userKey, AttributesSynchronizer attributesSynchronizer) {
+        mAttributesSynchronizerRegistry.registerAttributesSynchronizer(userKey, attributesSynchronizer);
+    }
+
+    @Override
+    public void unregisterAttributesSynchronizer(String userKey) {
+        mAttributesSynchronizerRegistry.unregisterAttributesSynchronizer(userKey);
+    }
+
     private void saveImpressionsCount() {
         if (!isOptimizedImpressionsMode()) {
             return;
@@ -301,11 +318,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void scheduleMySegmentsFetcherTask() {
-        mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createMySegmentsSyncTask(false),
-                mSplitClientConfig.segmentsRefreshRate(),
-                mSplitClientConfig.segmentsRefreshRate(),
-                null);
+        mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask();
     }
 
     private void scheduleEventsRecorderTask() {
@@ -338,16 +351,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 listener);
     }
 
-    private void submitMySegmentsLoadingTask(SplitTaskExecutionListener listener) {
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(),
-                listener);
-    }
-
-    private void submitAttributesLoadingTask(SplitTaskExecutionListener listener, boolean persistentAttributesEnabled) {
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadAttributesTask(persistentAttributesEnabled),
-                listener);
-    }
-
     private boolean shouldPushImpression(KeyImpression impression) {
         return impression.previousTime == null ||
                 ImpressionUtils.truncateTimeframe(impression.previousTime) != ImpressionUtils.truncateTimeframe(impression.time);
@@ -362,7 +365,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 break;
             case MY_SEGMENTS_SYNC:
                 Logger.d("Loading my segments updated in background");
-                submitMySegmentsLoadingTask(null);
+                mMySegmentsSynchronizerRegistry.submitMySegmentsLoadingTask();
                 break;
         }
     }

@@ -166,4 +166,7 @@ public class IntegrationHelper {
         return "{\"pushEnabled\": false }";
     }
 
+    public static String streamingEnabledV1Token() {
+        return "{\"connDelay\":0,\"pushEnabled\":true,\"token\":\"eyJhbGciOiJIUzI1NiIsImtpZCI6IjVZOU05US5pSGZUUmciLCJ0eXAiOiJKV1QifQ.eyJ4LWFibHktY2FwYWJpbGl0eSI6IntcIk56TTJNREk1TXpjMF9NVGd5TlRnMU1UZ3dOZz09X01Ua3pOamd3TURFNE1BPT1fbXlTZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk56TTJNREk1TXpjMF9NVGd5TlRnMU1UZ3dOZz09X01qWXhNRE0yTkRjd09RPT1fbXlTZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk56TTJNREk1TXpjMF9NVGd5TlRnMU1UZ3dOZz09X3NwbGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xfcHJpXCI6W1wic3Vic2NyaWJlXCIsXCJjaGFubmVsLW1ldGFkYXRhOnB1Ymxpc2hlcnNcIl0sXCJjb250cm9sX3NlY1wiOltcInN1YnNjcmliZVwiLFwiY2hhbm5lbC1tZXRhZGF0YTpwdWJsaXNoZXJzXCJdfSIsIngtYWJseS1jbGllbnRJZCI6ImNsaWVudElkIiwiZXhwIjoxNjQ4NjU2MjU4LCJpYXQiOjE2NDg2NTI2NTh9.MWwudv3kafKr-gVeqt-ClLAkCngZsDhdWx-dwqM9rxs\"}";
+    }
 }

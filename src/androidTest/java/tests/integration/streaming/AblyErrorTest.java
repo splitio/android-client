@@ -15,7 +15,7 @@ public class AblyErrorTest extends AblyErrorBaseTest {
     public void ablyErrorTest() throws IOException, InterruptedException {
         initializeFactory();
 
-        for (int i=0; i<2; i++) {
+        for (int i=0; i<3; i++) {
             mSseLatch = new CountDownLatch(1);
             pushErrorMessage(40012);
             Logger.d("push i: " + i);

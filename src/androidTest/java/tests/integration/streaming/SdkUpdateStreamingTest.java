@@ -116,7 +116,7 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(10, TimeUnit.SECONDS);
         pushInitialId();
 
         TestingHelper.delay(1000);
@@ -151,11 +151,11 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(10, TimeUnit.SECONDS);
         pushInitialId();
 
         testSplitsUpdate();
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
@@ -187,11 +187,11 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(10, TimeUnit.SECONDS);
         pushInitialId();
 
         testSplitKill();
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
@@ -223,11 +223,11 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(10, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         testMySegmentsUpdate();
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(updatedTask.isOnPostExecutionCalled);

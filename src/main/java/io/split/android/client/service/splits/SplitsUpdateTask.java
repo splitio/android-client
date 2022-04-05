@@ -8,7 +8,7 @@ import androidx.annotation.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -24,13 +24,13 @@ public class SplitsUpdateTask implements SplitTask {
     private final SplitsStorage mSplitsStorage;
     private Long mChangeNumber;
     private final SplitsSyncHelper mSplitsSyncHelper;
-    private final SplitEventsManager mEventsManager;
+    private final ISplitEventsManager mEventsManager;
     private SplitsChangeChecker mChangeChecker;
 
     public SplitsUpdateTask(SplitsSyncHelper splitsSyncHelper,
                             SplitsStorage splitsStorage,
                             long since,
-                            SplitEventsManager eventsManager) {
+                            ISplitEventsManager eventsManager) {
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
         mChangeNumber = since;

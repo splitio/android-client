@@ -9,4 +9,6 @@ public interface AttributeTaskFactory {
     UpdateAttributesInPersistentStorageTask createAttributeUpdateTask(PersistentAttributesStorage persistentAttributesStorage, Map<String, Object> attributes);
 
     ClearAttributesInPersistentStorageTask createAttributeClearTask(PersistentAttributesStorage persistentAttributesStorage);
+
+    LoadAttributesTask createLoadAttributesTask(PersistentAttributesStorage persistentAttributesStorage);
 }
