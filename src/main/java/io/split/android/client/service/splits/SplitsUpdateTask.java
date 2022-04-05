@@ -20,9 +20,8 @@ import io.split.android.client.utils.Logger;
 
 public class SplitsUpdateTask implements SplitTask {
 
-    static final String SINCE_PARAM = "since";
     private final SplitsStorage mSplitsStorage;
-    private Long mChangeNumber;
+    private final Long mChangeNumber;
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final ISplitEventsManager mEventsManager;
     private SplitsChangeChecker mChangeChecker;
@@ -54,10 +53,7 @@ public class SplitsUpdateTask implements SplitTask {
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         }
 
-        Map<String, Object> params = new HashMap<>();
-        params.put(SINCE_PARAM, storedChangeNumber);
-
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(params, false, true);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(storedChangeNumber, false, true);
         if(result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
             SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
             if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {

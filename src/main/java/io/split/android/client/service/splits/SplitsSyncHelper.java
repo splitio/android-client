@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
@@ -21,6 +22,7 @@ import io.split.android.client.utils.Logger;
 
 public class SplitsSyncHelper {
 
+    private static final String SINCE_PARAM = "since";
     private final HttpFetcher<SplitChange> mSplitFetcher;
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
@@ -36,10 +38,12 @@ public class SplitsSyncHelper {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
-    public SplitTaskExecutionInfo sync(Map<String, Object> params,
+    public SplitTaskExecutionInfo sync(long till,
                                        boolean clearBeforeUpdate,
                                        boolean avoidCache) {
         try {
+            Map<String, Object> params = new HashMap<>();
+            params.put(SINCE_PARAM, till);
             SplitChange splitChange = mSplitFetcher.execute(params, getHeaders(avoidCache));
             if (clearBeforeUpdate) {
                 mSplitsStorage.clear();
@@ -59,10 +63,10 @@ public class SplitsSyncHelper {
     }
 
     public boolean cacheHasExpired(long storedChangeNumber, long updateTimestamp, long cacheExpirationInSeconds) {
-        long elepased = now() - updateTimestamp;
+        long elapsed = now() - updateTimestamp;
         return storedChangeNumber > -1
                 && updateTimestamp > 0
-                && (elepased > cacheExpirationInSeconds);
+                && (elapsed > cacheExpirationInSeconds);
     }
 
     private long now() {

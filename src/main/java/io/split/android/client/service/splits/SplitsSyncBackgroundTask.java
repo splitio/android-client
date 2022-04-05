@@ -19,7 +19,6 @@ import static java.lang.Thread.sleep;
 
 public class SplitsSyncBackgroundTask implements SplitTask {
 
-    static final String SINCE_PARAM = "since";
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final SplitsStorage mSplitsStorage;
     private final long mCacheExpirationInSeconds;
@@ -41,8 +40,6 @@ public class SplitsSyncBackgroundTask implements SplitTask {
             cleanBeforeUpdate = true;
             storedChangeNumber = -1;
         }
-        Map<String, Object> params = new HashMap<>();
-        params.put(SINCE_PARAM, storedChangeNumber);
-        return mSplitsSyncHelper.sync(params, cleanBeforeUpdate, false);
+        return mSplitsSyncHelper.sync(storedChangeNumber, cleanBeforeUpdate, false);
     }
 }
