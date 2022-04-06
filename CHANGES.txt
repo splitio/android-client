@@ -1,5 +1,5 @@
 2.10.0 (Apr 6, 2022)
-- Added support for shared clients.
+- Added support for multiple clients: Factories can now create multiple clients with different keys while reusing the common tasks, data and behavior. Read more in our Android SDK docs.
 
 2.9.1 (Feb 24, 2022)
 - Updated splits initialization workflow to reduce latencies.
