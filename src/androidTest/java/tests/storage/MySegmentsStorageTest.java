@@ -20,7 +20,8 @@ import helper.DatabaseHelper;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
-import io.split.android.client.storage.mysegments.MySegmentsStorageImpl;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainerImpl;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
 
@@ -30,13 +31,13 @@ public class MySegmentsStorageTest {
     PersistentMySegmentsStorage mPersistentMySegmentsStorage;
     MySegmentsStorage mMySegmentsStorage;
     final String mUserKey = "userkey-1";
+    private MySegmentsStorageContainer mMySegmentsStorageContainer;
 
     @Before
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
-
 
         MySegmentEntity entity = new MySegmentEntity();
         entity.setUserKey(mUserKey);
@@ -50,8 +51,9 @@ public class MySegmentsStorageTest {
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb, mUserKey);
-        mMySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb);
+        mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
+        mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
     }
 
     @Test
@@ -76,7 +78,7 @@ public class MySegmentsStorageTest {
     public void updateSegments() {
         mMySegmentsStorage.loadLocal();
         mMySegmentsStorage.set(Arrays.asList("a1", "a2", "a3", "a4"));
-        MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
@@ -100,7 +102,7 @@ public class MySegmentsStorageTest {
         mMySegmentsStorage.loadLocal();
         mMySegmentsStorage.set(new ArrayList<>());
 
-        MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
@@ -113,9 +115,9 @@ public class MySegmentsStorageTest {
     @Test
     public void addNullMySegmentsList() {
 
-        mPersistentMySegmentsStorage.set(null);
+        mPersistentMySegmentsStorage.set(mUserKey, null);
         mMySegmentsStorage.loadLocal();
-        MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
@@ -131,7 +133,7 @@ public class MySegmentsStorageTest {
         mMySegmentsStorage.clear();
         mMySegmentsStorage.loadLocal();
 
-        MySegmentsStorageImpl mySegmentsStorage = new MySegmentsStorageImpl(mPersistentMySegmentsStorage);
+        MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());

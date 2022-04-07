@@ -42,11 +42,12 @@ public class WMWorkersSetupTest {
 
     @Test
     public void mySegmentsSyncWorker() throws Exception {
+        String[] keys = {"key1", "key2"};
         ListenableWorker worker =
                 TestListenableWorkerBuilder.from(mContext, MySegmentsSyncWorker.class)
                         .setInputData(buildInputData(
-                                new Data.Builder().putString(
-                                        ServiceConstants.WORKER_PARAM_KEY, "key").build()))
+                                new Data.Builder().putStringArray(
+                                        ServiceConstants.WORKER_PARAM_KEY, keys).build()))
                         .build();
 
         ListenableWorker.Result result = worker.startWork().get();

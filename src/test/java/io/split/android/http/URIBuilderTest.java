@@ -129,4 +129,16 @@ public class URIBuilderTest {
 
         Assert.assertEquals("/api/mySegments/test%2Fuser", uri.getPath());
     }
+
+    @Test
+    public void multipleParamsWithSameNameAreKept() throws URISyntaxException {
+
+        URI root = new URI("https://api.split.io/");
+        URIBuilder uriBuilder = new URIBuilder(root);
+        uriBuilder.addParameter("users", "user1");
+        uriBuilder.addParameter("users", "user2");
+        URI uri = uriBuilder.build();
+
+        Assert.assertEquals("users=user1&users=user2", uri.getQuery());
+    }
 }

@@ -19,13 +19,16 @@ public class AttributesManagerImpl implements AttributesManager {
     private final AttributesStorage mAttributesStorage;
     private final AttributesValidator mAttributesValidator;
     private final ValidationMessageLogger mValidationMessageLogger;
-    @Nullable private final PersistentAttributesStorage mPersistentAttributesStorage;
-    @Nullable private final AttributeTaskFactory mAttributeTaskFactory;
-    @Nullable private final SplitTaskExecutor mSplitTaskExecutor;
+    @Nullable
+    private final PersistentAttributesStorage mPersistentAttributesStorage;
+    @Nullable
+    private final AttributeTaskFactory mAttributeTaskFactory;
+    @Nullable
+    private final SplitTaskExecutor mSplitTaskExecutor;
 
-    public AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
-                                 @NonNull AttributesValidator attributesValidator,
-                                 @NonNull ValidationMessageLogger validationMessageLogger) {
+    AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
+                          @NonNull AttributesValidator attributesValidator,
+                          @NonNull ValidationMessageLogger validationMessageLogger) {
         mAttributesStorage = checkNotNull(attributesStorage);
         mAttributesValidator = checkNotNull(attributesValidator);
         mValidationMessageLogger = checkNotNull(validationMessageLogger);
@@ -34,12 +37,12 @@ public class AttributesManagerImpl implements AttributesManager {
         mSplitTaskExecutor = null;
     }
 
-    public AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
-                                 @NonNull AttributesValidator attributesValidator,
-                                 @NonNull ValidationMessageLogger validationMessageLogger,
-                                 @Nullable PersistentAttributesStorage persistentAttributesStorage,
-                                 @Nullable AttributeTaskFactory attributeTaskFactory,
-                                 @Nullable SplitTaskExecutor splitTaskExecutor) {
+    AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
+                          @NonNull AttributesValidator attributesValidator,
+                          @NonNull ValidationMessageLogger validationMessageLogger,
+                          @Nullable PersistentAttributesStorage persistentAttributesStorage,
+                          @Nullable AttributeTaskFactory attributeTaskFactory,
+                          @Nullable SplitTaskExecutor splitTaskExecutor) {
         mAttributesStorage = checkNotNull(attributesStorage);
         mAttributesValidator = checkNotNull(attributesValidator);
         mValidationMessageLogger = checkNotNull(validationMessageLogger);

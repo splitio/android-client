@@ -1,7 +1,5 @@
 package fake;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -9,8 +7,12 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 
-public class SynchronizerSpyImpl implements SynchronizerSpy {
+public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchronizerRegistry, AttributesSynchronizerRegistry {
 
     Synchronizer mSynchronizer;
     public CountDownLatch startPeriodicFetchLatch = null;
@@ -118,5 +120,25 @@ public class SynchronizerSpyImpl implements SynchronizerSpy {
     @Override
     public void resume() {
         mSynchronizer.resume();
+    }
+
+    @Override
+    public void registerAttributesSynchronizer(String userKey, AttributesSynchronizer attributesSynchronizer) {
+        ((AttributesSynchronizerRegistry) mSynchronizer).registerAttributesSynchronizer(userKey, attributesSynchronizer);
+    }
+
+    @Override
+    public void unregisterAttributesSynchronizer(String userKey) {
+        ((AttributesSynchronizerRegistry) mSynchronizer).unregisterAttributesSynchronizer(userKey);
+    }
+
+    @Override
+    public void registerMySegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
+        ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMySegmentsSynchronizer(userKey, mySegmentsSynchronizer);
+    }
+
+    @Override
+    public void unregisterMySegmentsSynchronizer(String userKey) {
+        ((MySegmentsSynchronizerRegistry) mSynchronizer).unregisterMySegmentsSynchronizer(userKey);
     }
 }

@@ -26,7 +26,7 @@ public class EvaluatorImpl implements Evaluator {
     public EvaluationResult getTreatment(String matchingKey, String bucketingKey, String splitName, Map<String, Object> attributes) {
 
         try {
-            ParsedSplit parsedSplit = mSplitParser.parse(mSplitsStorage.get(splitName));
+            ParsedSplit parsedSplit = mSplitParser.parse(mSplitsStorage.get(splitName), matchingKey);
             if (parsedSplit == null) {
                 return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.DEFINITION_NOT_FOUND);
             }

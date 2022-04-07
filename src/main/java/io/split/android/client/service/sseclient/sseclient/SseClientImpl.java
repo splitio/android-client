@@ -43,7 +43,6 @@ public class SseClientImpl implements SseClient {
     private static final String PUSH_NOTIFICATION_VERSION_PARAM = "v";
     private static final String PUSH_NOTIFICATION_VERSION_VALUE = "1.1";
 
-    @VisibleForTesting(otherwise = PRIVATE)
     public SseClientImpl(@NonNull URI uri,
                          @NonNull HttpClient httpClient,
                          @NonNull EventStreamParser eventStreamParser,
@@ -76,14 +75,6 @@ public class SseClientImpl implements SseClient {
             }
             Logger.d("SSE client disconnected");
         }
-    }
-
-    private void setDisconnectedStatus() {
-        mStatus.set(DISCONNECTED);
-    }
-
-    private void setStatus(int state) {
-        mStatus.set(state);
     }
 
     @Override

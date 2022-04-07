@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import io.split.android.client.api.Key;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -87,8 +88,52 @@ public class StreamingDisabledTest {
         Assert.assertFalse(mIsStreamingConnected);
 
         // More than 1 hits means polling enabled
-        Assert.assertTrue( mySegmentsHitsCountHit > 1);
-        Assert.assertTrue(mSplitsHitsCountHit > 1);
+        Assert.assertEquals(3,  mySegmentsHitsCountHit);
+        Assert.assertEquals(3, mSplitsHitsCountHit);
+
+        splitFactory.destroy();
+    }
+
+    @Test
+    public void disabledStreamingWithMultipleClients() throws IOException, InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+        mMySegmentsHitsCountLatch = new CountDownLatch(6);
+        HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
+
+        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig();
+
+        SplitFactory splitFactory = IntegrationHelper.buildFactory(
+                IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
+                config, mContext, httpClientMock);
+
+        SplitClient client = splitFactory.client();
+        SplitClient client2 = splitFactory.client(new Key("key2"));
+
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTask2 = new SplitEventTaskHelper(latch2);
+
+        client.on(SplitEvent.SDK_READY, readyTask);
+        client2.on(SplitEvent.SDK_READY, readyTask2);
+
+        latch.await(40, TimeUnit.SECONDS);
+        mMySegmentsHitsCountLatch.await(40, TimeUnit.SECONDS);
+        mSplitsHitsCountLatch.await(40, TimeUnit.SECONDS);
+
+        Assert.assertTrue(client.isReady());
+        Assert.assertTrue(client2.isReady());
+        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyTask2.isOnPostExecutionCalled);
+
+        // No streaming auth is made
+        Assert.assertEquals(1, mSseAuthHits);
+
+        // Checking no streaming connection
+        Assert.assertFalse(mIsStreamingConnected);
+
+        // More than 1 hits means polling enabled
+        Assert.assertEquals(6,  mySegmentsHitsCountHit);
+        Assert.assertEquals(3, mSplitsHitsCountHit);
 
         splitFactory.destroy();
     }
@@ -138,6 +183,4 @@ public class StreamingDisabledTest {
             }
         };
     }
-
-
 }

@@ -1,9 +1,13 @@
 package io.split.android.client.service.http;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.Map;
 
 import io.split.android.client.network.HttpClient;
@@ -13,14 +17,12 @@ import io.split.android.client.network.URIBuilder;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.utils.NetworkHelper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationResponse> {
 
     private final HttpClient mClient;
     private final URI mTarget;
     private final NetworkHelper mNetworkHelper;
-    private HttpResponseParser<SseAuthenticationResponse> mResponseParser;
+    private final HttpResponseParser<SseAuthenticationResponse> mResponseParser;
 
     public HttpSseAuthTokenFetcher(@NonNull HttpClient client,
                                    @NonNull URI target,
@@ -37,20 +39,14 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
     public SseAuthenticationResponse execute(@NonNull Map<String, Object> params,
                                              @Nullable Map<String, String> headers) throws HttpFetcherException {
         checkNotNull(params);
-        SseAuthenticationResponse responseData = null;
+        SseAuthenticationResponse responseData;
 
         try {
             if (!mNetworkHelper.isReachable(mTarget)) {
                 throw new IllegalStateException("Source not reachable");
             }
-
-            URIBuilder uriBuilder = new URIBuilder(mTarget);
-            for (Map.Entry<String, Object> param : params.entrySet()) {
-                Object value = param.getValue();
-                uriBuilder.addParameter(param.getKey(), value != null ? value.toString() : "");
-            }
-
-            HttpResponse response = mClient.request(uriBuilder.build(), HttpMethod.GET).execute();
+            URI build = getUri(params, mTarget);
+            HttpResponse response = mClient.request(build, HttpMethod.GET).execute();
 
             if (!response.isSuccess()) {
                 if (response.isClientRelatedError()) {
@@ -62,11 +58,26 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
             responseData = mResponseParser.parse(response.getData());
 
             if (responseData == null) {
-                throw new IllegalStateException("Wrong data received from split changes server");
+                throw new IllegalStateException("Wrong data received from authentication server");
             }
         } catch (Exception e) {
             throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage());
         }
         return responseData;
+    }
+
+    private static URI getUri(Map<String, Object> params, URI target) throws URISyntaxException {
+        URIBuilder uriBuilder = new URIBuilder(target);
+        for (Map.Entry<String, Object> param : params.entrySet()) {
+            if (param.getValue() instanceof Iterable) {
+                for (Object paramValue : ((Iterable<Object>) param.getValue())) {
+                    uriBuilder.addParameter(param.getKey(), paramValue.toString());
+                }
+            } else {
+                uriBuilder.addParameter(param.getKey(), String.valueOf(param.getValue()));
+            }
+        }
+
+        return uriBuilder.build();
     }
 }

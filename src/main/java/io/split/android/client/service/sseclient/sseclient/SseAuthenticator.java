@@ -1,9 +1,12 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.http.HttpFetcher;
@@ -11,22 +14,20 @@ import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.service.sseclient.SseJwtParser;
+import io.split.android.client.utils.ConcurrentSet;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SseAuthenticator {
     private static final String USER_KEY_PARAM = "users";
 
     private final HttpFetcher<SseAuthenticationResponse> mAuthFetcher;
-    private final String mUserKey;
+    private final Set<String> mUserKeys;
     private final SseJwtParser mJwtParser;
 
     public SseAuthenticator(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
-                            @NonNull String userKey,
                             @NonNull SseJwtParser jwtParser) {
         mAuthFetcher = checkNotNull(authFetcher);
-        mUserKey = checkNotNull(userKey);
+        mUserKeys = new ConcurrentSet<>();
         mJwtParser = checkNotNull(jwtParser);
     }
 
@@ -34,7 +35,7 @@ public class SseAuthenticator {
         SseAuthenticationResponse authResponse;
         try {
             Map<String, Object> params = new HashMap<>();
-            params.put(USER_KEY_PARAM, mUserKey);
+            params.put(USER_KEY_PARAM, mUserKeys);
             authResponse = mAuthFetcher.execute(params, null);
 
         } catch (HttpFetcherException httpFetcherException) {
@@ -68,6 +69,14 @@ public class SseAuthenticator {
             Logger.e("Error while parsing Jwt");
         }
         return unexpectedError();
+    }
+
+    public void registerKey(String userKey) {
+        mUserKeys.add(userKey);
+    }
+
+    public void unregisterKey(String userKey) {
+        mUserKeys.remove(userKey);
     }
 
     private void logError(String message) {

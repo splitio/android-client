@@ -26,11 +26,12 @@ public class LoadAttributesTaskTest {
     @Mock
     PersistentAttributesStorage persistentAttributesStorage;
     private LoadAttributesTask loadAttributesTask;
+    private final String matchingKey = "user_key";
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        loadAttributesTask = new LoadAttributesTask(attributesStorage, persistentAttributesStorage);
+        loadAttributesTask = new LoadAttributesTask(matchingKey, attributesStorage, persistentAttributesStorage);
     }
 
     @Test
@@ -38,11 +39,11 @@ public class LoadAttributesTaskTest {
         Map<String, Object> valuesInPersistentStorage = new HashMap<>();
         valuesInPersistentStorage.put("key1", "value1");
         valuesInPersistentStorage.put("key2", 200);
-        when(persistentAttributesStorage.getAll()).thenReturn(valuesInPersistentStorage);
+        when(persistentAttributesStorage.getAll(matchingKey)).thenReturn(valuesInPersistentStorage);
 
         SplitTaskExecutionInfo result = loadAttributesTask.execute();
 
-        verify(persistentAttributesStorage).getAll();
+        verify(persistentAttributesStorage).getAll(matchingKey);
         verify(attributesStorage).set(valuesInPersistentStorage);
         Assert.assertEquals(SplitTaskType.LOAD_LOCAL_ATTRIBUTES, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
@@ -50,7 +51,7 @@ public class LoadAttributesTaskTest {
 
     @Test
     public void executeDoesNotFetchValuesFromPersistentStorageIfItIsNull() {
-        loadAttributesTask = new LoadAttributesTask(attributesStorage, null);
+        loadAttributesTask = new LoadAttributesTask(matchingKey, attributesStorage, null);
 
         SplitTaskExecutionInfo result = loadAttributesTask.execute();
 

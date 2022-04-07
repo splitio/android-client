@@ -20,9 +20,9 @@ public class MySegmentDaoTest extends GenericDaoTest {
         mRoomDb.mySegmentDao().update(generateData("key2",101, 200, timestamp));
         mRoomDb.mySegmentDao().update(generateData("key3",201, 300, timestamp));
 
-        MySegmentEntity msKey1 = mRoomDb.mySegmentDao().getByUserKeys("key1");
-        MySegmentEntity msKey2 = mRoomDb.mySegmentDao().getByUserKeys("key2");
-        MySegmentEntity msKey3 = mRoomDb.mySegmentDao().getByUserKeys("key3");
+        MySegmentEntity msKey1 = mRoomDb.mySegmentDao().getByUserKey("key1");
+        MySegmentEntity msKey2 = mRoomDb.mySegmentDao().getByUserKey("key2");
+        MySegmentEntity msKey3 = mRoomDb.mySegmentDao().getByUserKey("key3");
 
         Assert.assertEquals("key1", msKey1.getUserKey());
         Assert.assertEquals("key2", msKey2.getUserKey());
@@ -39,7 +39,7 @@ public class MySegmentDaoTest extends GenericDaoTest {
         mRoomDb.mySegmentDao().update(generateData("key1", 1, 10, timestamp));
         mRoomDb.mySegmentDao().update(generateData("key1", 500, 505, timestamp));
 
-        MySegmentEntity msKey1 = mRoomDb.mySegmentDao().getByUserKeys("key1");
+        MySegmentEntity msKey1 = mRoomDb.mySegmentDao().getByUserKey("key1");
         Set<String> segments = new HashSet<String>(Arrays.asList(msKey1.getSegmentList().split(",")));
 
         Assert.assertEquals("key1", msKey1.getUserKey());
@@ -54,7 +54,7 @@ public class MySegmentDaoTest extends GenericDaoTest {
         long timestamp = System.currentTimeMillis();
         mRoomDb.mySegmentDao().update(generateData("key1", 1, 10, timestamp));
 
-        MySegmentEntity mySegmentEntity = mRoomDb.mySegmentDao().getByUserKeys("key1");
+        MySegmentEntity mySegmentEntity = mRoomDb.mySegmentDao().getByUserKey("key1");
         Set<String> segments = new HashSet<String>(Arrays.asList(mySegmentEntity.getSegmentList().split(",")));
 
         Assert.assertEquals("key1", mySegmentEntity.getUserKey());

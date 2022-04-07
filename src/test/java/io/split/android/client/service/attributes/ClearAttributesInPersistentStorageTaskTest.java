@@ -14,17 +14,18 @@ public class ClearAttributesInPersistentStorageTaskTest {
     @Mock
     PersistentAttributesStorage attributesStorage;
     private ClearAttributesInPersistentStorageTask clearAttributesInPersistentStorageTask;
+    private String matchingKey = "user_key";
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        clearAttributesInPersistentStorageTask = new ClearAttributesInPersistentStorageTask(attributesStorage);
+        clearAttributesInPersistentStorageTask = new ClearAttributesInPersistentStorageTask(matchingKey, attributesStorage);
     }
 
     @Test
     public void executeCallsSetOnAttributesStorage() {
         clearAttributesInPersistentStorageTask.execute();
 
-        verify(attributesStorage).clear();
+        verify(attributesStorage).clear(matchingKey);
     }
 }

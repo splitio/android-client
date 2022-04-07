@@ -50,7 +50,7 @@ public class MySegmentsOverwriteTask implements SplitTask {
             logError("Unknown error while overwriting my segments: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_OVERWRITE);
         }
-        Logger.d("My Segments have been overwrote");
+        Logger.d("My Segments have been overwritten");
         return SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_OVERWRITE);
     }
 

@@ -3,17 +3,18 @@ package io.split.android.client.network;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.core.util.Pair;
 
 import com.google.common.base.Strings;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
 public class URIBuilder {
     private final URI mRootURI;
-    private final Map<String, String> mParams;
+    private final Set<Pair<String, String>> mParams;
     private String mPath;
     private String mQueryString;
 
@@ -30,7 +31,7 @@ public class URIBuilder {
         } else {
             mPath = path;
         }
-        mParams = new HashMap<>();
+        mParams = new HashSet<>();
     }
 
     public URIBuilder(@NonNull URI rootURI) {
@@ -39,7 +40,7 @@ public class URIBuilder {
 
     public URIBuilder addParameter(@NonNull String param, @NonNull String value) {
         if (param != null && value != null) {
-            mParams.put(param, value);
+            mParams.add(new Pair<>(param, value));
         }
         return this;
     }
@@ -56,8 +57,8 @@ public class URIBuilder {
         String params = null;
         if (mParams.size() > 0) {
             StringBuilder query = new StringBuilder();
-            for (Map.Entry<String, String> param : mParams.entrySet()) {
-                query.append(param.getKey()).append("=").append(param.getValue()).append("&");
+            for (Pair<String, String> param : mParams) {
+                query.append(param.first).append("=").append(param.second).append("&");
             }
             params = query.substring(0, query.length() - 1);
         }

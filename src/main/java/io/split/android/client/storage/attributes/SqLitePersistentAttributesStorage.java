@@ -11,7 +11,6 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
@@ -23,35 +22,33 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
     private static final Type ATTRIBUTES_MAP_TYPE = new TypeToken<Map<String, Object>>() {
     }.getType();
     private final AttributesDao mAttributesDao;
-    private final String mUserKey;
 
     public SqLitePersistentAttributesStorage(@NonNull AttributesDao attributesDao, @NonNull String userKey) {
         mAttributesDao = checkNotNull(attributesDao);
-        mUserKey = userKey;
     }
 
     @Override
-    public void set(@Nullable Map<String, Object> attributes) {
+    public void set(String matchingKey, @Nullable Map<String, Object> attributes) {
         if (attributes == null) {
             return;
         }
 
-        AttributesEntity entity = new AttributesEntity(mUserKey, Json.toJson(attributes), System.currentTimeMillis() / 1000);
+        AttributesEntity entity = new AttributesEntity(matchingKey, Json.toJson(attributes), System.currentTimeMillis() / 1000);
 
         mAttributesDao.update(entity);
     }
 
     @NonNull
     @Override
-    public Map<String, Object> getAll() {
-        AttributesEntity attributesEntity = mAttributesDao.getByUserKey(mUserKey);
+    public Map<String, Object> getAll(String matchingKey) {
+        AttributesEntity attributesEntity = mAttributesDao.getByUserKey(matchingKey);
 
         return getAttributesMapFromEntity(attributesEntity);
     }
 
     @Override
-    public void clear() {
-        mAttributesDao.deleteAll(mUserKey);
+    public void clear(String matchingKey) {
+        mAttributesDao.deleteAll(matchingKey);
     }
 
     private Map<String, Object> getAttributesMapFromEntity(AttributesEntity attributesEntity) {

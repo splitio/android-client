@@ -1,22 +1,21 @@
 package io.split.android.client.service.synchronizer;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
-import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
-import io.split.android.client.service.executor.SplitTaskType;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+public class LoadLocalDataListener implements SplitTaskExecutionListener {
 
-class LoadLocalDataListener implements SplitTaskExecutionListener {
-
-    private final SplitEventsManager mSplitEventsManager;
+    private final ISplitEventsManager mSplitEventsManager;
     private final SplitInternalEvent mEventToFire;
 
-    public LoadLocalDataListener(SplitEventsManager splitEventsManager,
+    public LoadLocalDataListener(ISplitEventsManager splitEventsManager,
                                  SplitInternalEvent eventToFire) {
         mSplitEventsManager = checkNotNull(splitEventsManager);
         mEventToFire = checkNotNull(eventToFire);
