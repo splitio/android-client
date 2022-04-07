@@ -38,17 +38,12 @@ public class SplitsSyncHelper {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
-    public SplitTaskExecutionInfo sync(long till,
+    public SplitTaskExecutionInfo sync(long storedChangeNumber,
                                        boolean clearBeforeUpdate,
                                        boolean avoidCache) {
         try {
-            Map<String, Object> params = new HashMap<>();
-            params.put(SINCE_PARAM, till);
-            SplitChange splitChange = mSplitFetcher.execute(params, getHeaders(avoidCache));
-            if (clearBeforeUpdate) {
-                mSplitsStorage.clear();
-            }
-            mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
+            SplitChange splitChange = fetchSplits(storedChangeNumber, avoidCache);
+            updateStorage(clearBeforeUpdate, splitChange);
         } catch (HttpFetcherException e) {
             logError("Network error while fetching splits" + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
@@ -60,6 +55,20 @@ public class SplitsSyncHelper {
         }
         Logger.d("Features have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
+    }
+
+    private SplitChange fetchSplits(long till, boolean avoidCache) throws HttpFetcherException {
+        Map<String, Object> params = new HashMap<>();
+        params.put(SINCE_PARAM, till);
+
+        return mSplitFetcher.execute(params, getHeaders(avoidCache));
+    }
+
+    private void updateStorage(boolean clearBeforeUpdate, SplitChange splitChange) {
+        if (clearBeforeUpdate) {
+            mSplitsStorage.clear();
+        }
+        mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
     }
 
     public boolean cacheHasExpired(long storedChangeNumber, long updateTimestamp, long cacheExpirationInSeconds) {
