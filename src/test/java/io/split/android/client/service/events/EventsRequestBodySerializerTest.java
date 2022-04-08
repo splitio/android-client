@@ -23,7 +23,7 @@ public class EventsRequestBodySerializerTest {
 
     @Test
     public void serialize() {
-        String expectedJson = "[{\"eventTypeId\":\"test\",\"trafficTypeName\":\"default\",\"key\":\"user_key\",\"value\":0.0,\"timestamp\":1645461035249,\"properties\":{\"test_prop_1\":\"test\",\"test_prop_2\":100.0,\"test_prop_3\":50.05}},{\"eventTypeId\":\"test\",\"trafficTypeName\":\"default\",\"key\":\"user_key\",\"value\":0.0,\"timestamp\":1645461036024,\"properties\":{\"test_prop_1\":\"test\",\"test_prop_2\":100.0,\"test_prop_3\":50.05}}]";
+        String expectedJson = "[{\"eventTypeId\":\"test\",\"trafficTypeName\":\"default\",\"key\":\"user_key\",\"value\":0,\"timestamp\":1645461035249,\"properties\":{\"test_prop_1\":\"test\",\"test_prop_2\":100,\"test_prop_3\":50.05}},{\"eventTypeId\":\"test\",\"trafficTypeName\":\"default\",\"key\":\"user_key\",\"value\":0,\"timestamp\":1645461036024,\"properties\":{\"test_prop_1\":\"test\",\"test_prop_2\":100,\"test_prop_3\":50.05}}]";
         Event event1 = new Event();
         event1.eventTypeId = "test";
         event1.key = "user_key";
