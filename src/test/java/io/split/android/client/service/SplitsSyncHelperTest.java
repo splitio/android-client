@@ -1,14 +1,13 @@
 package io.split.android.client.service;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,7 +19,6 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
-import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.OperationType;
@@ -28,9 +26,9 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -206,14 +204,45 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
-    public void performSplitsFetchUntilSinceEqualsTill() {
-        //TODO
+    public void performSplitsFetchUntilSinceEqualsTill() throws HttpFetcherException {
+        SplitChange firstSplitChange = getSplitChange(-1, 2);
+        SplitChange secondSplitChange = getSplitChange(2, 3);
+        SplitChange thirdSplitChange = getSplitChange(3, 3);
+        Map<String, Object> firstParams = getSinceParams(-1L);
+        Map<String, Object> secondParams = getSinceParams(2L);
+        Map<String, Object> thirdParams = getSinceParams(3L);
+
+        when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 3L);
+
+        when(mSplitsFetcher.execute(eq(firstParams), any())).thenReturn(firstSplitChange);
+        when(mSplitsFetcher.execute(eq(secondParams), any())).thenReturn(secondSplitChange);
+        when(mSplitsFetcher.execute(eq(thirdParams), any())).thenReturn(thirdSplitChange);
+
+        mSplitsSyncHelper.sync(3);
+
+        verify(mSplitsStorage, times(3)).getTill();
+        verify(mSplitsFetcher).execute(eq(firstParams), any());
+        verify(mSplitsFetcher).execute(eq(secondParams), any());
+        verify(mSplitsFetcher).execute(eq(thirdParams), any());
     }
 
-    @After
-    public void tearDown() {
-        reset(mSplitsFetcher);
-        reset(mSplitsStorage);
+    @Test
+    public void performSplitFetchUntilStoredChangeNumberIsGreaterThanRequested() throws HttpFetcherException {
+        SplitChange firstSplitChange = getSplitChange(-1, 2);
+        SplitChange secondSplitChange = getSplitChange(2, 4);
+        Map<String, Object> firstParams = getSinceParams(-1L);
+        Map<String, Object> secondParams = getSinceParams(2L);
+
+        when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
+
+        when(mSplitsFetcher.execute(eq(firstParams), any())).thenReturn(firstSplitChange);
+        when(mSplitsFetcher.execute(eq(secondParams), any())).thenReturn(secondSplitChange);
+
+        mSplitsSyncHelper.sync(3);
+
+        verify(mSplitsStorage, times(3)).getTill();
+        verify(mSplitsFetcher).execute(eq(firstParams), any());
+        verify(mSplitsFetcher).execute(eq(secondParams), any());
     }
 
     private void loadSplitChanges() {
@@ -221,5 +250,21 @@ public class SplitsSyncHelperTest {
             FileHelper fileHelper = new FileHelper();
             mSplitChange = fileHelper.loadSplitChangeFromFile("split_changes_1.json");
         }
+    }
+
+    private Map<String, Object> getSinceParams(long since) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("since", since);
+
+        return params;
+    }
+
+    private SplitChange getSplitChange(int since, int till) {
+        SplitChange splitChange = new SplitChange();
+        splitChange.since = since;
+        splitChange.till = till;
+        splitChange.splits = new ArrayList<>();
+
+        return splitChange;
     }
 }
