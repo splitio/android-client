@@ -38,23 +38,37 @@ public class SplitsSyncHelper {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
-    public SplitTaskExecutionInfo sync(long storedChangeNumber,
-                                       boolean clearBeforeUpdate,
-                                       boolean avoidCache) {
-        try {
-            SplitChange splitChange = fetchSplits(storedChangeNumber, avoidCache);
-            updateStorage(clearBeforeUpdate, splitChange);
-        } catch (HttpFetcherException e) {
-            logError("Network error while fetching splits" + e.getLocalizedMessage());
-            mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
+    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache) {
+        while (true) {
+            long changeNumber = mSplitsStorage.getTill();
+            if (till < changeNumber) {
+                break;
+            }
 
-            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
-        } catch (Exception e) {
-            logError("Unexpected while fetching splits" + e.getLocalizedMessage());
-            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
+            try {
+                SplitChange splitChange = fetchSplits(changeNumber, avoidCache);
+                updateStorage(clearBeforeUpdate, splitChange);
+
+                if (splitChange.till == splitChange.since) {
+                    break;
+                }
+            } catch (HttpFetcherException e) {
+                logError("Network error while fetching splits" + e.getLocalizedMessage());
+                mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
+
+                return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
+            } catch (Exception e) {
+                logError("Unexpected while fetching splits" + e.getLocalizedMessage());
+                return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
+            }
         }
+
         Logger.d("Features have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
+    }
+
+    public SplitTaskExecutionInfo sync(long till) {
+        return sync(till, false, true);
     }
 
     private SplitChange fetchSplits(long till, boolean avoidCache) throws HttpFetcherException {

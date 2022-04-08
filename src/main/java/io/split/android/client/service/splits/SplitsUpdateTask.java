@@ -5,9 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
@@ -53,8 +50,8 @@ public class SplitsUpdateTask implements SplitTask {
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         }
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(storedChangeNumber, false, true);
-        if(result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mChangeNumber);
+        if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
             SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
             if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
                 event = SplitInternalEvent.SPLITS_UPDATED;
