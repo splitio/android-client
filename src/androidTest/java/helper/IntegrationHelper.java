@@ -68,7 +68,6 @@ public class IntegrationHelper {
 
     public static String emptySplitChanges(long since, long till) {
         return emptySplitChanges(till);
-//        return String.format("{\"splits\":[], \"since\": %d, \"till\": %d }", since, till);
     }
 
     public static String emptySplitChanges(long till) {
