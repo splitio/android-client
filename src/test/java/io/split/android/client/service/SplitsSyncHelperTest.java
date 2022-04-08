@@ -50,6 +50,7 @@ public class SplitsSyncHelperTest {
     SplitsSyncHelper mSplitsSyncHelper;
 
     Map<String, Object> mDefaultParams = new HashMap<>();
+    private Map<String, Object> mSecondFetchParams = new HashMap<>();
 
 
     @Before
@@ -57,6 +58,8 @@ public class SplitsSyncHelperTest {
         MockitoAnnotations.openMocks(this);
         mDefaultParams.clear();
         mDefaultParams.put("since", -1L);
+        mSecondFetchParams.clear();
+        mSecondFetchParams.put("since", 1506703262916L);
         mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mTelemetryRuntimeProducer);
         loadSplitChanges();
     }
@@ -66,6 +69,10 @@ public class SplitsSyncHelperTest {
         // On correct execution without having clear param
         // should execute fetcher, update storage and avoid clearing splits cache
         when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mSplitChange);
+        SplitChange secondSplitChange = mSplitChange;
+        secondSplitChange.since = mSplitChange.till;
+        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(secondSplitChange);
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, false, false);
 
@@ -84,6 +91,10 @@ public class SplitsSyncHelperTest {
         Map<String, String> headers = new HashMap<>();
         headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
         when(mSplitsFetcher.execute(mDefaultParams, headers)).thenReturn(mSplitChange);
+        SplitChange secondSplitChange = mSplitChange;
+        secondSplitChange.since = mSplitChange.till;
+        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(secondSplitChange);
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, false, true);
 
@@ -98,6 +109,7 @@ public class SplitsSyncHelperTest {
     public void fetcherSyncException() throws HttpFetcherException {
         when(mSplitsFetcher.execute(mDefaultParams, null))
                 .thenThrow(HttpFetcherException.class);
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false);
 
@@ -112,6 +124,7 @@ public class SplitsSyncHelperTest {
     public void storageException() throws HttpFetcherException {
         when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mSplitChange);
         doThrow(NullPointerException.class).when(mSplitsStorage).update(any(ProcessedSplitChange.class));
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false);
 
@@ -126,6 +139,10 @@ public class SplitsSyncHelperTest {
     @Test
     public void shouldClearStorageAfterFetch() throws HttpFetcherException {
         when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mSplitChange);
+        SplitChange secondSplitChange = mSplitChange;
+        secondSplitChange.since = mSplitChange.till;
+        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(secondSplitChange);
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false);
 
@@ -181,10 +198,16 @@ public class SplitsSyncHelperTest {
     public void errorIsRecordedInTelemetry() throws HttpFetcherException {
         when(mSplitsFetcher.execute(mDefaultParams, null))
                 .thenThrow(new HttpFetcherException("error", "error", 500));
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         mSplitsSyncHelper.sync(-1, true, false);
 
         verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.SPLITS, 500);
+    }
+
+    @Test
+    public void performSplitsFetchUntilSinceEqualsTill() {
+        //TODO
     }
 
     @After
