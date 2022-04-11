@@ -23,6 +23,9 @@ import io.split.android.client.utils.Logger;
 public class SplitsSyncHelper {
 
     private static final String SINCE_PARAM = "since";
+    private static final String TILL_PARAM = "till";
+    private static final int ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10;
+
     private final HttpFetcher<SplitChange> mSplitFetcher;
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
@@ -39,43 +42,84 @@ public class SplitsSyncHelper {
     }
 
     public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache) {
-        boolean shouldClearBeforeUpdate = clearBeforeUpdate;
-        while (true) {
-            long changeNumber = mSplitsStorage.getTill();
-            if (till < changeNumber) {
-                break;
+        try {
+            boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache);
+
+            if (!successfulSync) {
+                attemptSplitSync(till, clearBeforeUpdate, avoidCache, true);
             }
+        } catch (HttpFetcherException e) {
+            logError("Network error while fetching splits" + e.getLocalizedMessage());
+            mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
 
-            try {
-                SplitChange splitChange = fetchSplits(changeNumber, avoidCache);
-                updateStorage(shouldClearBeforeUpdate, splitChange);
-                shouldClearBeforeUpdate = false;
-
-                if (splitChange.till == splitChange.since) {
-                    break;
-                }
-            } catch (HttpFetcherException e) {
-                logError("Network error while fetching splits" + e.getLocalizedMessage());
-                mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
-
-                return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
-            } catch (Exception e) {
-                logError("Unexpected while fetching splits" + e.getLocalizedMessage());
-                return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
-            }
+            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
+        } catch (Exception e) {
+            logError("Unexpected while fetching splits" + e.getLocalizedMessage());
+            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         }
 
         Logger.d("Features have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
+    private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache) throws Exception {
+        return attemptSplitSync(till, clearBeforeUpdate, avoidCache, false);
+    }
+
+    /**
+     * @param till              target changeNumber
+     * @param clearBeforeUpdate whether to clear splits storage before updating it
+     * @param avoidCache        whether to send no-cache header to api
+     * @param withCdnBypass     whether to add additional query param to bypass CDN
+     * @return whether sync finished successfully
+     */
+    private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass) throws Exception {
+        int remainingAttempts = ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES;
+        while (true) {
+            remainingAttempts--;
+
+            long changeNumber = fetchUntil(till, clearBeforeUpdate, avoidCache, withCdnBypass);
+
+            if (till <= changeNumber) {
+                return true;
+            } else if (remainingAttempts <= 0) {
+                return false;
+            }
+
+            Thread.sleep(100); // TODO
+        }
+    }
+
+    private long fetchUntil(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnByPass) throws Exception {
+        boolean shouldClearBeforeUpdate = clearBeforeUpdate;
+
+        while (true) {
+            long changeNumber = mSplitsStorage.getTill();
+            if (till < changeNumber) {
+                return changeNumber;
+            }
+
+            SplitChange splitChange = fetchSplits(changeNumber, avoidCache, withCdnByPass);
+            updateStorage(shouldClearBeforeUpdate, splitChange);
+            shouldClearBeforeUpdate = false;
+
+            if (splitChange.till == splitChange.since) {
+                return splitChange.till;
+            }
+        }
+    }
+
     public SplitTaskExecutionInfo sync(long till) {
         return sync(till, false, true);
     }
 
-    private SplitChange fetchSplits(long till, boolean avoidCache) throws HttpFetcherException {
+    private SplitChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
         Map<String, Object> params = new HashMap<>();
         params.put(SINCE_PARAM, till);
+
+        if (withCdnByPass) {
+            params.put(TILL_PARAM, till);
+        }
 
         return mSplitFetcher.execute(params, getHeaders(avoidCache));
     }
