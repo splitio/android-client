@@ -85,8 +85,6 @@ public class SplitsSyncHelper {
             } else if (remainingAttempts <= 0) {
                 return false;
             }
-
-            Thread.sleep(100); // TODO
         }
     }
 
