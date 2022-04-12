@@ -9,10 +9,17 @@ public class ReconnectBackoffCounter implements BackoffCounter {
     private final AtomicLong mAttemptCount;
     private final int mMaxTimeLimit;
 
+    /**
+     * @param backoffBase the base of the backoff in seconds
+     */
     public ReconnectBackoffCounter(int backoffBase) {
         this(backoffBase, MAX_TIME_LIMIT_IN_SECS);
     }
 
+    /**
+     * @param backoffBase the base of the backoff in seconds
+     * @param maxTimeLimit the maximum time limit in seconds
+     */
     public ReconnectBackoffCounter(int backoffBase, int maxTimeLimit) {
         mBackoffBase = backoffBase;
         mAttemptCount = new AtomicLong(0);
