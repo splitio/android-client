@@ -35,29 +35,61 @@ import io.split.sharedtest.fake.HttpStreamResponseMock;
 public class SplitChangesCdnBypassTest {
 
     private final static String MSG_SPLIT_UPDATE = "push_msg-split_update.txt";
+
     private BlockingQueue<String> mStreamingData;
-    private Context mContext;
     private CountDownLatch mSseLatch;
     private CountDownLatch mBypassLatch;
+    private SplitFactory mSplitFactory;
+    private Context mContext;
 
     @Before
-    public void setup() {
+    public void setup() throws IOException {
         mStreamingData = new LinkedBlockingDeque<>();
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mBypassLatch = new CountDownLatch(1);
-    }
+        mSseLatch = new CountDownLatch(1);
 
-    @Test
-    public void test() throws Exception {
-
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(
                 new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000 - 30));
+        mSplitFactory = IntegrationHelper.buildFactory(
+                IntegrationHelper.dummyApiKey(),
+                IntegrationHelper.dummyUserKey(),
+                IntegrationHelper.basicConfig(),
+                mContext,
+                new HttpClientMock(buildDispatcher()),
+                splitRoomDatabase);
+    }
 
-        SplitClient client;
+    @Test
+    public void tillParameterIsEventuallyAdded() throws Exception {
+        SplitClient client = mSplitFactory.client();
 
-        final HttpResponseMockDispatcher dispatcher = new HttpResponseMockDispatcher() {
+        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch updateLatch = new CountDownLatch(1);
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper updateTask = new SplitEventTaskHelper(updateLatch);
+
+        client.on(SplitEvent.SDK_READY, readyTask);
+        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+        client.on(SplitEvent.SDK_UPDATE, updateTask);
+        latch.await(20, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
+
+        TestingHelper.pushKeepAlive(mStreamingData);
+        TestingHelper.delay(500);
+
+        pushSplitsUpdateMessage();
+        mBypassLatch.await(60, TimeUnit.SECONDS);
+
+        client.destroy();
+    }
+
+    @NonNull
+    private HttpResponseMockDispatcher buildDispatcher() {
+        return new HttpResponseMockDispatcher() {
 
             @Override
             public HttpStreamResponseMock getStreamResponse(URI uri) {
@@ -70,15 +102,16 @@ public class SplitChangesCdnBypassTest {
                 }
                 return null;
             }
+
             @Override
 
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/mySegments")) {
                     return new HttpResponseMock(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, " +
-                                    "{ \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                            "{ \"id\":\"id1\", \"name\":\"segment2\"}]}");
 
                 } else if (uri.getPath().contains("/splitChanges")) {
-                    if (uri.getQuery().contains("till=3") && uri.getQuery().contains("since=3")){
+                    if (uri.getQuery().contains("till=3") && uri.getQuery().contains("since=3")) {
                         return getSplitsMockResponse("3", "4");
                     }
 
@@ -104,32 +137,6 @@ public class SplitChangesCdnBypassTest {
                 }
             }
         };
-
-        SplitFactory splitFactory = IntegrationHelper.buildFactory(
-                IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
-                IntegrationHelper.basicConfig(), mContext, new HttpClientMock(dispatcher), splitRoomDatabase);
-
-        client = splitFactory.client();
-
-        CountDownLatch latch = new CountDownLatch(1);
-        CountDownLatch updateLatch = new CountDownLatch(1);
-        mSseLatch = new CountDownLatch(1);
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
-        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
-        SplitEventTaskHelper updateTask = new SplitEventTaskHelper(updateLatch);
-
-        client.on(SplitEvent.SDK_READY, readyTask);
-        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
-        client.on(SplitEvent.SDK_UPDATE, updateTask);
-        mSseLatch.await(20, TimeUnit.SECONDS);
-        latch.await(20, TimeUnit.SECONDS);
-
-        TestingHelper.pushKeepAlive(mStreamingData);
-        TestingHelper.delay(500);
-
-        pushMessage(MSG_SPLIT_UPDATE);
-        mBypassLatch.await(60, TimeUnit.SECONDS);
-        client.destroy();
     }
 
     @NonNull
@@ -141,8 +148,8 @@ public class SplitChangesCdnBypassTest {
         return new HttpStreamResponseMock(status, streamingResponseData);
     }
 
-    private void pushMessage(String fileName) {
-        String message = new FileHelper().loadFileContent(mContext, fileName);
+    private void pushSplitsUpdateMessage() {
+        String message = new FileHelper().loadFileContent(mContext, MSG_SPLIT_UPDATE);
         message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
         message = message.replace("1000100", "4");
         try {
