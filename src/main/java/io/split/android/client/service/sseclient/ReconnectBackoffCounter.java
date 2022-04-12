@@ -7,17 +7,24 @@ public class ReconnectBackoffCounter implements BackoffCounter {
     private final static int RETRY_EXPONENTIAL_BASE = 2;
     private final int mBackoffBase;
     private final AtomicLong mAttemptCount;
+    private final int mMaxTimeLimit;
 
-    public ReconnectBackoffCounter(int mBackoffBase) {
-        this.mBackoffBase = mBackoffBase;
+    public ReconnectBackoffCounter(int backoffBase) {
+        this(backoffBase, MAX_TIME_LIMIT_IN_SECS);
+    }
+
+    public ReconnectBackoffCounter(int backoffBase, int maxTimeLimit) {
+        mBackoffBase = backoffBase;
         mAttemptCount = new AtomicLong(0);
+        mMaxTimeLimit = maxTimeLimit;
     }
 
     @Override
     public long getNextRetryTime() {
         long retryTime = (long) Math.pow(mBackoffBase
                 * RETRY_EXPONENTIAL_BASE, mAttemptCount.getAndAdd(1));
-        return Math.min(retryTime, MAX_TIME_LIMIT_IN_SECS);
+
+        return Math.min(retryTime, mMaxTimeLimit);
     }
 
     @Override
