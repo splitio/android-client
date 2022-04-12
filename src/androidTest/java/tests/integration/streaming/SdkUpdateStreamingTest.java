@@ -214,23 +214,23 @@ public class SdkUpdateStreamingTest {
 
         mClient = mFactory.client();
 
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
-        SplitEventTaskHelper timeoutTask = new SplitEventTaskHelper(readyLatch);
-        SplitEventTaskHelper updatedTask = new SplitEventTaskHelper(updateLatch);
+        TestingHelper.TestEventTask readyTask = TestingHelper.testTask(readyLatch);
+        TestingHelper.TestEventTask timeoutTask = TestingHelper.testTask(readyLatch);
+        TestingHelper.TestEventTask updatedTask = TestingHelper.testTask(updateLatch);
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         mClient.on(SplitEvent.SDK_READY_TIMED_OUT, timeoutTask);
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
-        readyLatch.await(5, TimeUnit.SECONDS);
+        readyLatch.await(20, TimeUnit.SECONDS);
         mSseLatch.await(10, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         testMySegmentsUpdate();
         updateLatch.await(10, TimeUnit.SECONDS);
 
-        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyTask.onExecutedCalled);
+        Assert.assertTrue(updatedTask.onExecutedCalled);
     }
 
     private void testSplitKill() throws IOException, InterruptedException {
