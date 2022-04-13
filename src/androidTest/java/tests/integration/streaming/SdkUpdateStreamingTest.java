@@ -209,7 +209,7 @@ public class SdkUpdateStreamingTest {
                 new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1000));
 
         mFactory = IntegrationHelper.buildFactory(
-                mApiKey, mUserKey,
+                mApiKey, new Key("key1"),
                 config, mContext, httpClientMock, mSplitRoomDatabase);
 
         mClient = mFactory.client();

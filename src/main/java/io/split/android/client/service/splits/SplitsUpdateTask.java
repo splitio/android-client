@@ -5,9 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
@@ -20,9 +17,8 @@ import io.split.android.client.utils.Logger;
 
 public class SplitsUpdateTask implements SplitTask {
 
-    static final String SINCE_PARAM = "since";
     private final SplitsStorage mSplitsStorage;
-    private Long mChangeNumber;
+    private final Long mChangeNumber;
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final ISplitEventsManager mEventsManager;
     private SplitsChangeChecker mChangeChecker;
@@ -54,11 +50,8 @@ public class SplitsUpdateTask implements SplitTask {
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         }
 
-        Map<String, Object> params = new HashMap<>();
-        params.put(SINCE_PARAM, storedChangeNumber);
-
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(params, false, true);
-        if(result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mChangeNumber);
+        if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
             SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
             if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
                 event = SplitInternalEvent.SPLITS_UPDATED;

@@ -67,7 +67,11 @@ public class IntegrationHelper {
     }
 
     public static String emptySplitChanges(long since, long till) {
-        return String.format("{\"splits\":[], \"since\": %d, \"till\": %d }", since, till);
+        return emptySplitChanges(till);
+    }
+
+    public static String emptySplitChanges(long till) {
+        return String.format("{\"splits\":[], \"since\": %d, \"till\": %d }", till, till);
     }
 
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
