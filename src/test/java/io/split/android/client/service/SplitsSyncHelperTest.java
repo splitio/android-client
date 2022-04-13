@@ -245,6 +245,24 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher).execute(eq(secondParams), any());
     }
 
+    @Test
+    public void syncWithClearBeforeUpdateOnlyClearsStorageOnce() {
+        when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
+
+        mSplitsSyncHelper.sync(3);
+
+        verify(mSplitsStorage).clear();
+    }
+
+    @Test
+    public void syncWithoutClearBeforeUpdateDoesNotClearStorage() {
+        when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
+
+        mSplitsSyncHelper.sync(3, false, false);
+
+        verify(mSplitsStorage, never()).clear();
+    }
+
     private void loadSplitChanges() {
         if (mSplitChange == null) {
             FileHelper fileHelper = new FileHelper();

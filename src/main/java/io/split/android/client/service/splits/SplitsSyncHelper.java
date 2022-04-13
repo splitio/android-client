@@ -39,6 +39,7 @@ public class SplitsSyncHelper {
     }
 
     public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache) {
+        boolean shouldClearBeforeUpdate = clearBeforeUpdate;
         while (true) {
             long changeNumber = mSplitsStorage.getTill();
             if (till < changeNumber) {
@@ -47,7 +48,8 @@ public class SplitsSyncHelper {
 
             try {
                 SplitChange splitChange = fetchSplits(changeNumber, avoidCache);
-                updateStorage(clearBeforeUpdate, splitChange);
+                updateStorage(shouldClearBeforeUpdate, splitChange);
+                shouldClearBeforeUpdate = false;
 
                 if (splitChange.till == splitChange.since) {
                     break;
