@@ -72,6 +72,7 @@ public class SplitChangesCdnBypassTest {
 
         client.on(SplitEvent.SDK_READY, readyTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+
         latch.await(20, TimeUnit.SECONDS);
         mSseLatch.await(20, TimeUnit.SECONDS);
 
