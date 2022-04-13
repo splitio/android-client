@@ -25,8 +25,11 @@ import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.helpers.FileHelper;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -47,9 +50,8 @@ public class SplitsSyncHelperTest {
 
     SplitsSyncHelper mSplitsSyncHelper;
 
-    Map<String, Object> mDefaultParams = new HashMap<>();
-    private Map<String, Object> mSecondFetchParams = new HashMap<>();
-
+    private final Map<String, Object> mDefaultParams = new HashMap<>();
+    private final Map<String, Object> mSecondFetchParams = new HashMap<>();
 
     @Before
     public void setup() {
@@ -78,7 +80,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
         verify(mSplitsStorage, never()).clear();
-        Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+        assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
     @Test
@@ -100,7 +102,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
         verify(mSplitsStorage, never()).clear();
-        Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+        assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
     @Test
@@ -115,7 +117,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsStorage, never()).update(any());
         verify(mSplitsStorage, never()).clear();
         verify(mSplitChangeProcessor, never()).process(mSplitChange);
-        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
     @Test
@@ -131,7 +133,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsStorage, times(1)).clear();
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
 
-        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
     @Test
@@ -149,7 +151,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsStorage, times(1)).clear();
         verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
 
-        Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+        assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 
     @Test
@@ -261,6 +263,41 @@ public class SplitsSyncHelperTest {
         mSplitsSyncHelper.sync(3, false, false);
 
         verify(mSplitsStorage, never()).clear();
+    }
+
+    @Test
+    public void cdnIsBypassedWhenNeeded() throws HttpFetcherException {
+        when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L);
+        when(mSplitsFetcher.execute(anyMap(), any())).thenReturn(
+                getSplitChange(-1, 2),
+                getSplitChange(2, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(4, 4)
+        );
+
+        mSplitsSyncHelper.sync(4);
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Cache-Control", "no-cache");
+        Map<String, Object> firstParams = getSinceParams(-1L);
+        Map<String, Object> secondParams = getSinceParams(2L);
+        Map<String, Object> thirdParams = getSinceParams(3L);
+        Map<String, Object> bypassedParams = getSinceParams(3L);
+        bypassedParams.put("till", 3L);
+
+        verify(mSplitsFetcher).execute(firstParams, headers);
+        verify(mSplitsFetcher).execute(secondParams, headers);
+        verify(mSplitsFetcher, times(10)).execute(thirdParams, headers);
+        verify(mSplitsFetcher, atLeastOnce()).execute(bypassedParams, headers);
     }
 
     private void loadSplitChanges() {
