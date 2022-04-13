@@ -249,7 +249,7 @@ public class SplitsSyncHelperTest {
     public void syncWithClearBeforeUpdateOnlyClearsStorageOnce() {
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
 
-        mSplitsSyncHelper.sync(3);
+        mSplitsSyncHelper.sync(3, true, false);
 
         verify(mSplitsStorage).clear();
     }
