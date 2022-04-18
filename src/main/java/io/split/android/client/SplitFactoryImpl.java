@@ -155,10 +155,11 @@ public class SplitFactoryImpl implements SplitFactory {
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
 
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
+        SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
-                new SplitSingleThreadTaskExecutor(),
+                splitSingleThreadTaskExecutor,
                 mStorageContainer,
                 splitTaskFactory,
                 mEventsManagerCoordinator,
@@ -260,6 +261,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     mManager.destroy();
                     Logger.i("Successful shutdown of manager");
                     splitTaskExecutor.stop();
+                    splitSingleThreadTaskExecutor.stop();
                     Logger.i("Successful shutdown of task executor");
                     mStorageContainer.getAttributesStorageContainer().destroy();
                     Logger.i("Successful shutdown of attributes storage");
