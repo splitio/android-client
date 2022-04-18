@@ -103,7 +103,9 @@ public class SplitsSyncHelper {
 
             if (till <= changeNumber) {
                 return true;
-            } else if (remainingAttempts <= 0) {
+            }
+
+            if (remainingAttempts <= 0) {
                 return false;
             }
 

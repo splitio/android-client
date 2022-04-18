@@ -19,6 +19,7 @@ import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -157,6 +158,7 @@ public class SplitFactoryImpl implements SplitFactory {
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
+                new SplitSingleThreadTaskExecutor(),
                 mStorageContainer,
                 splitTaskFactory,
                 mEventsManagerCoordinator,

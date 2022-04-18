@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.utils.Logger;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
-import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
 
 public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
 

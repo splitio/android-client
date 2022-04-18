@@ -54,7 +54,7 @@ public class SdkUpdateStreamingTest {
 
     CountDownLatch mSseLatch;
     String mApiKey = IntegrationHelper.dummyApiKey();
-    Key mUserKey = IntegrationHelper.dummyUserKey();
+    Key mUserKey = new Key("key1");
 
     final static String MSG_SPLIT_UPDATE = "push_msg-split_update.txt";
     final static String MSG_SPLIT_KILL = "push_msg-split_kill.txt";
@@ -206,7 +206,7 @@ public class SdkUpdateStreamingTest {
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
         mSplitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1000));
+                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 500));
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, new Key("key1"),
@@ -223,11 +223,11 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(20, TimeUnit.SECONDS);
-        mSseLatch.await(10, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         testMySegmentsUpdate();
-        updateLatch.await(10, TimeUnit.SECONDS);
+        updateLatch.await(20, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.onExecutedCalled);
         Assert.assertTrue(updatedTask.onExecutedCalled);
