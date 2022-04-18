@@ -241,6 +241,7 @@ public class SynchronizerTest {
         mSynchronizer.startPeriodicRecording();
         mSynchronizer.pause();
         verify(mTaskExecutor, times(1)).pause();
+        verify(mSingleThreadedTaskExecutor, times(1)).pause();
         verify(mTaskExecutor, times(1)).submit(
                 any(SaveImpressionsCountTask.class), isNull());
     }
@@ -258,6 +259,7 @@ public class SynchronizerTest {
         mSynchronizer.startPeriodicRecording();
         mSynchronizer.pause();
         verify(mTaskExecutor, times(1)).pause();
+        verify(mSingleThreadedTaskExecutor, times(1)).pause();
         verify(mTaskExecutor, never()).submit(
                 any(SaveImpressionsCountTask.class), isNull());
     }
@@ -275,6 +277,7 @@ public class SynchronizerTest {
         mSynchronizer.pause();
         mSynchronizer.resume();
         verify(mTaskExecutor, times(1)).resume();
+        verify(mSingleThreadedTaskExecutor, times(1)).resume();
     }
 
     @Test
@@ -423,6 +426,7 @@ public class SynchronizerTest {
                 any(SplitTaskExecutionListener.class));
     }
 
+    @Test
     public void pushImpressionBytesLimitImpOptimized() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
