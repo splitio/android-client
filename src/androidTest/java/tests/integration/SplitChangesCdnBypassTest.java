@@ -80,7 +80,7 @@ public class SplitChangesCdnBypassTest {
         TestingHelper.delay(500);
 
         pushSplitsUpdateMessage();
-        mBypassLatch.await(60, TimeUnit.SECONDS);
+        mBypassLatch.await(240, TimeUnit.SECONDS);
 
         client.destroy();
     }
