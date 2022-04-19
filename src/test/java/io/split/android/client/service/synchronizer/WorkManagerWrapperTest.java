@@ -231,8 +231,4 @@ public class WorkManagerWrapperTest {
         constraintsBuilder.setRequiresBatteryNotLow(false);
         return constraintsBuilder.build();
     }
-
-    @Test
-    public void scheduleMySegmentsWork() {
-    }
 }
