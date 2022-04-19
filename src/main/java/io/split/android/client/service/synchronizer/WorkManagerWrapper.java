@@ -184,6 +184,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
     private Data buildMySegmentsSyncInputData(Set<String> keys) {
         Data.Builder dataBuilder = new Data.Builder();
         String[] keysArray = new String[keys.size()];
+        keys.toArray(keysArray);
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
         dataBuilder.putStringArray(ServiceConstants.WORKER_PARAM_KEY, keysArray);
         dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
