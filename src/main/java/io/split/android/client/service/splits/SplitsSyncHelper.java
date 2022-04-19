@@ -113,7 +113,8 @@ public class SplitsSyncHelper {
                 long backoffPeriod = TimeUnit.SECONDS.toMillis(mBackoffCounter.getNextRetryTime());
                 Thread.sleep(backoffPeriod);
             } catch (InterruptedException ignored) {
-
+                Thread.currentThread().interrupt();
+                Logger.e("Interrupted while waiting for next retry");
             }
         }
     }

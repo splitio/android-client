@@ -1,5 +1,7 @@
 package tests.integration;
 
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -80,7 +82,8 @@ public class SplitChangesCdnBypassTest {
         TestingHelper.delay(500);
 
         pushSplitsUpdateMessage();
-        mBypassLatch.await(240, TimeUnit.SECONDS);
+        boolean await = mBypassLatch.await(300, TimeUnit.SECONDS);
+        assertTrue(await);
 
         client.destroy();
     }
