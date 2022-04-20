@@ -17,31 +17,30 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
-import fake.HttpResponseMockDispatcher;
 import helper.IntegrationHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.network.HttpClient;
-import io.split.android.client.network.HttpMethod;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 public class EventsRequestTest {
 
     private SplitFactory mSplitFactory;
-    private String mEventsRequestBody;
-    private CountDownLatch mEventsLatch;
+    private final AtomicReference<String> mEventsRequestBody = new AtomicReference<>("");
+    private final CountDownLatch mEventsLatch = new CountDownLatch(1);
 
     @Before
     public void setUp() throws IOException {
         Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        HttpClient httpClient = new HttpClientMock(buildDispatcher());
+        HttpClient httpClient = new HttpClientMock(IntegrationHelper.buildDispatcher(getMockResponses()));
         mSplitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),
                 new Key("key1"),
@@ -49,8 +48,7 @@ public class EventsRequestTest {
                 mContext,
                 httpClient
         );
-        mEventsRequestBody = "";
-        mEventsLatch = new CountDownLatch(1);
+        mEventsRequestBody.set("");
     }
 
     @Test
@@ -58,10 +56,11 @@ public class EventsRequestTest {
         SplitClient client = mSplitFactory.client();
 
         client.track("test_event");
+        Thread.sleep(500);
         client.destroy();
         boolean await = mEventsLatch.await(10, TimeUnit.SECONDS);
 
-        JsonObject expectedResponseJson = jsonFromResponse(mEventsRequestBody);
+        JsonObject expectedResponseJson = jsonFromResponse(mEventsRequestBody.get());
 
         assertTrue(await);
         assertNotNull(expectedResponseJson.get("eventTypeId"));
@@ -81,27 +80,16 @@ public class EventsRequestTest {
         return jsonElement.getAsJsonObject();
     }
 
-    private HttpResponseMockDispatcher buildDispatcher() {
-        return new HttpResponseMockDispatcher() {
-            @Override
-            public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("events")) {
-                    mEventsRequestBody = body;
-                    mEventsLatch.countDown();
-                }
-                return new HttpResponseMock(200, null);
-            }
+    private Map<String, IntegrationHelper.ResponseClosure> getMockResponses() {
+        Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
 
-            @Override
-            public HttpStreamResponseMock getStreamResponse(URI uri) {
-                try {
-                    return new HttpStreamResponseMock(200, null);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        responses.put("events/bulk", (uri, httpMethod, body) -> {
+            mEventsRequestBody.set(body);
+            mEventsLatch.countDown();
 
-                return null;
-            }
-        };
+            return new HttpResponseMock(200, "{}");
+        });
+
+        return responses;
     }
 }

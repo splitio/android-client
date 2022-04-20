@@ -14,7 +14,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +23,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
-import fake.HttpResponseMockDispatcher;
 import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
@@ -32,11 +30,9 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.network.HttpClient;
-import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 public class ImpressionsRequestTest {
 
@@ -51,7 +47,7 @@ public class ImpressionsRequestTest {
 
         SplitRoomDatabase testDatabase = DatabaseHelper.getTestDatabase(mContext);
         setUpDatabaseValues(testDatabase);
-        HttpClient httpClient = new HttpClientMock(buildDispatcher(getMockResponses()));
+        HttpClient httpClient = new HttpClientMock(IntegrationHelper.buildDispatcher(getMockResponses()));
         mSplitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),
                 new Key("key1"),
@@ -104,8 +100,8 @@ public class ImpressionsRequestTest {
                 .getAsJsonObject();
     }
 
-    private Map<String, ResponseClosure> getMockResponses() {
-        Map<String, ResponseClosure> responses = new HashMap<>();
+    private Map<String, IntegrationHelper.ResponseClosure> getMockResponses() {
+        Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put("testImpressions/bulk", (uri, httpMethod, body) -> {
             mImpressionsRequestBody.set(body);
             mLatch.countDown();
@@ -118,36 +114,5 @@ public class ImpressionsRequestTest {
         responses.put("v2/auth", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken()));
 
         return responses;
-    }
-
-    private HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses) {
-        return new HttpResponseMockDispatcher() {
-            @Override
-            public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                String path = uri.getPath().replace("/api/", "");
-                if (responses.containsKey(path)) {
-                    return responses.get(path).onResponse(uri, method, body);
-                } else {
-                    return new HttpResponseMock(200, "{}");
-                }
-            }
-
-            @Override
-            public HttpStreamResponseMock getStreamResponse(URI uri) {
-                try {
-                    return new HttpStreamResponseMock(200, null);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                return null;
-            }
-        };
-    }
-
-    interface ResponseClosure {
-        HttpResponseMock onResponse(URI uri,
-                                    HttpMethod httpMethod,
-                                    String body);
     }
 }
