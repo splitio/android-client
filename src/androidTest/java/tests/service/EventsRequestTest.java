@@ -59,7 +59,7 @@ public class EventsRequestTest {
 
         client.track("test_event");
         client.destroy();
-        boolean await = mEventsLatch.await(5, TimeUnit.SECONDS);
+        boolean await = mEventsLatch.await(10, TimeUnit.SECONDS);
 
         JsonObject expectedResponseJson = jsonFromResponse(mEventsRequestBody);
 
