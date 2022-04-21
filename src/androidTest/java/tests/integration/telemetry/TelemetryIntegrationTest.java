@@ -40,9 +40,7 @@ import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
-import io.split.android.client.telemetry.model.HttpLatencies;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
-import io.split.android.client.telemetry.model.LastSync;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
@@ -158,9 +156,9 @@ public class TelemetryIntegrationTest {
     }
 
     @Test
-    public void recordAuthRejections() {
+    public void recordAuthRejections() throws InterruptedException {
         client.destroy();
-
+        CountDownLatch sseLatch = new CountDownLatch(1);
         final Dispatcher dispatcher = new Dispatcher() {
 
             @Override
@@ -177,6 +175,7 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("metrics")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("auth")) {
+                    sseLatch.countDown();
                     return new MockResponse().setResponseCode(401);
                 } else {
                     return new MockResponse().setResponseCode(404);
@@ -187,6 +186,8 @@ public class TelemetryIntegrationTest {
         mWebServer.setDispatcher(dispatcher);
 
         initializeClient(true);
+        sseLatch.await(10, TimeUnit.SECONDS);
+        Thread.sleep(1000);
         TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
 
         assertEquals(1, telemetryStorage.popAuthRejections());
@@ -218,10 +219,6 @@ public class TelemetryIntegrationTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    private SplitFactory getTelemetrySplitFactory(boolean streamingEnabled) {
-        return getTelemetrySplitFactory(mWebServer, streamingEnabled);
     }
 
     private SplitFactory getTelemetrySplitFactory(MockWebServer webServer, boolean streamingEnabled) {
@@ -316,6 +313,6 @@ public class TelemetryIntegrationTest {
         Class<StorageFactory> clazz = StorageFactory.class;
         Method method = clazz.getDeclaredMethod("clearTelemetryStorage");
         method.setAccessible(true);
-        method.invoke(null, new Object[] {});
+        method.invoke(null, new Object[]{});
     }
 }

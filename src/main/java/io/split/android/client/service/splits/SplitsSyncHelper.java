@@ -3,11 +3,13 @@ package io.split.android.client.service.splits;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
@@ -15,6 +17,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.sseclient.BackoffCounter;
+import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -25,20 +29,36 @@ public class SplitsSyncHelper {
     private static final String SINCE_PARAM = "since";
     private static final String TILL_PARAM = "till";
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10;
+    private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = 60;
 
     private final HttpFetcher<SplitChange> mSplitFetcher;
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private final BackoffCounter mBackoffCounter;
 
     public SplitsSyncHelper(@NonNull HttpFetcher<SplitChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
                             @NonNull SplitChangeProcessor splitChangeProcessor,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+        this(splitFetcher,
+                splitsStorage,
+                splitChangeProcessor,
+                telemetryRuntimeProducer,
+                new ReconnectBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT));
+    }
+
+    @VisibleForTesting
+    public SplitsSyncHelper(@NonNull HttpFetcher<SplitChange> splitFetcher,
+                            @NonNull SplitsStorage splitsStorage,
+                            @NonNull SplitChangeProcessor splitChangeProcessor,
+                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                            @NonNull BackoffCounter backoffCounter) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+        mBackoffCounter = checkNotNull(backoffCounter);
     }
 
     public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache) {
@@ -75,6 +95,7 @@ public class SplitsSyncHelper {
      */
     private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass) throws Exception {
         int remainingAttempts = ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES;
+        mBackoffCounter.resetCounter();
         while (true) {
             remainingAttempts--;
 
@@ -82,8 +103,18 @@ public class SplitsSyncHelper {
 
             if (till <= changeNumber) {
                 return true;
-            } else if (remainingAttempts <= 0) {
+            }
+
+            if (remainingAttempts <= 0) {
                 return false;
+            }
+
+            try {
+                long backoffPeriod = TimeUnit.SECONDS.toMillis(mBackoffCounter.getNextRetryTime());
+                Thread.sleep(backoffPeriod);
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+                Logger.e("Interrupted while waiting for next retry");
             }
         }
     }

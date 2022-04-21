@@ -19,6 +19,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
+import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.OperationType;
@@ -47,8 +48,10 @@ public class SplitsSyncHelperTest {
     SplitChangeProcessor mSplitChangeProcessor;
     @Mock
     private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    @Mock
+    private BackoffCounter mBackoffCounter;
 
-    SplitsSyncHelper mSplitsSyncHelper;
+    private SplitsSyncHelper mSplitsSyncHelper;
 
     private final Map<String, Object> mDefaultParams = new HashMap<>();
     private final Map<String, Object> mSecondFetchParams = new HashMap<>();
@@ -60,7 +63,7 @@ public class SplitsSyncHelperTest {
         mDefaultParams.put("since", -1L);
         mSecondFetchParams.clear();
         mSecondFetchParams.put("since", 1506703262916L);
-        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mTelemetryRuntimeProducer);
+        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mTelemetryRuntimeProducer, mBackoffCounter);
         loadSplitChanges();
     }
 
@@ -297,7 +300,25 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher).execute(firstParams, headers);
         verify(mSplitsFetcher).execute(secondParams, headers);
         verify(mSplitsFetcher, times(10)).execute(thirdParams, headers);
-        verify(mSplitsFetcher, atLeastOnce()).execute(bypassedParams, headers);
+        verify(mSplitsFetcher).execute(bypassedParams, headers);
+    }
+
+    @Test
+    public void backoffIsAppliedWhenRetryingSplits() throws HttpFetcherException {
+        when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 3L, 3L, 4L);
+        when(mSplitsFetcher.execute(anyMap(), any())).thenReturn(
+                getSplitChange(-1, 2),
+                getSplitChange(2, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 3),
+                getSplitChange(3, 4),
+                getSplitChange(4, 4)
+        );
+
+        mSplitsSyncHelper.sync(4);
+
+        verify(mBackoffCounter).resetCounter();
+        verify(mBackoffCounter, times(2)).getNextRetryTime();
     }
 
     private void loadSplitChanges() {

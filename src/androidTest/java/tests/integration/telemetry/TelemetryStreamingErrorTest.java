@@ -22,7 +22,7 @@ public class TelemetryStreamingErrorTest extends AblyErrorBaseTest {
     @Test
     public void errorStreamingEventTest() throws IOException, InterruptedException {
         initializeForTelemetry();
-
+        Thread.sleep(1000);
         TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
         List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
         assertTrue(streamingEvents.stream().anyMatch(event -> event instanceof SseConnectionErrorStreamingEvent));

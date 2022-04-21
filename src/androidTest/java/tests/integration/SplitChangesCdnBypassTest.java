@@ -1,5 +1,7 @@
 package tests.integration;
 
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -67,14 +69,12 @@ public class SplitChangesCdnBypassTest {
         SplitClient client = mSplitFactory.client();
 
         CountDownLatch latch = new CountDownLatch(1);
-        CountDownLatch updateLatch = new CountDownLatch(1);
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
         SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
-        SplitEventTaskHelper updateTask = new SplitEventTaskHelper(updateLatch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
-        client.on(SplitEvent.SDK_UPDATE, updateTask);
+
         latch.await(20, TimeUnit.SECONDS);
         mSseLatch.await(20, TimeUnit.SECONDS);
 
@@ -82,7 +82,8 @@ public class SplitChangesCdnBypassTest {
         TestingHelper.delay(500);
 
         pushSplitsUpdateMessage();
-        mBypassLatch.await(60, TimeUnit.SECONDS);
+        boolean await = mBypassLatch.await(300, TimeUnit.SECONDS);
+        assertTrue(await);
 
         client.destroy();
     }
