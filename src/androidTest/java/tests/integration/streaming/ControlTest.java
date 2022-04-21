@@ -111,9 +111,9 @@ public class ControlTest {
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         mClient.on(SplitEvent.SDK_UPDATE, updateTask);
-        readyLatch.await(5, TimeUnit.SECONDS);
+        readyLatch.await(20, TimeUnit.SECONDS);
 
-        mSseConnectedLatch.await(10, TimeUnit.SECONDS);
+        mSseConnectedLatch.await(20, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         String treatmentReady = mClient.getTreatment(splitName);
@@ -122,12 +122,6 @@ public class ControlTest {
         synchronizerSpy.startPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_PAUSED");
         synchronizerSpy.startPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
-        StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
-            if (event instanceof StreamingStatusStreamingEvent) {
-                return event.getEventData().intValue() == 2;
-            }
-            return false;
-        });
 
         pushMySegmentsUpdatePayload("new_segment");
 
@@ -147,7 +141,7 @@ public class ControlTest {
 
         updateTask.mLatch = new CountDownLatch(1);
         pushMySegmentsUpdatePayload("new_segment");
-        updateTask.mLatch.await(5, TimeUnit.SECONDS);
+        updateTask.mLatch.await(10, TimeUnit.SECONDS);
 
         String treatmentEnabled = mClient.getTreatment(splitName);
 

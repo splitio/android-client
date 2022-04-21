@@ -101,7 +101,7 @@ public class SplitChangesTest {
                         mLatchs.get(currReq - 1).countDown();
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }");
+                            .setBody("{\"splits\":[], \"since\": 9567456937869, \"till\": 9567456937869 }");
 
 
                 } else if (request.getPath().contains("/testImpressions/bulk")) {

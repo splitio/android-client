@@ -266,7 +266,7 @@ public class TrackTest {
     }
 
     private String emptyChanges() {
-        return "{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }";
+        return "{\"splits\":[], \"since\": 9567456937869, \"till\": 9567456937869 }";
     }
 
     private Event findEvent(String type, Double value) {

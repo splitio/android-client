@@ -30,14 +30,10 @@ public class SplitBackgroundSyncTaskTest {
 
     SplitsSyncBackgroundTask mTask;
 
-    Map<String, Object> mDefaultParams = new HashMap<>();
-
     long mChangeNumber = 234567833L;
 
     @Before
     public void setup() {
-        mDefaultParams.clear();
-        mDefaultParams.put("since", -1L);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
         mSplitsSyncHelper = Mockito.mock(SplitsSyncHelper.class);
         loadSplitChanges();
@@ -51,7 +47,7 @@ public class SplitBackgroundSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false, false);
+        verify(mSplitsSyncHelper, times(1)).sync(-1, false, false);
         verify(mSplitsStorage, never()).clear();
     }
 
@@ -65,7 +61,7 @@ public class SplitBackgroundSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, true, false);
+        verify(mSplitsSyncHelper, times(1)).sync(-1, true, false);
     }
 
 

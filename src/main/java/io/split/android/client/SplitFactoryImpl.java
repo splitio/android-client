@@ -19,6 +19,7 @@ import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -154,9 +155,11 @@ public class SplitFactoryImpl implements SplitFactory {
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
 
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
+        SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
+                splitSingleThreadTaskExecutor,
                 mStorageContainer,
                 splitTaskFactory,
                 mEventsManagerCoordinator,
@@ -258,6 +261,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     mManager.destroy();
                     Logger.i("Successful shutdown of manager");
                     splitTaskExecutor.stop();
+                    splitSingleThreadTaskExecutor.stop();
                     Logger.i("Successful shutdown of task executor");
                     mStorageContainer.getAttributesStorageContainer().destroy();
                     Logger.i("Successful shutdown of attributes storage");

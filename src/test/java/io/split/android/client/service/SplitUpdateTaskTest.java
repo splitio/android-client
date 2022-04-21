@@ -25,6 +25,7 @@ import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -41,19 +42,16 @@ public class SplitUpdateTaskTest {
 
     SplitsUpdateTask mTask;
 
-    Map<String, Object> mDefaultParams = new HashMap<>();
-
     long mChangeNumber = 234567833L;
 
     @Before
     public void setup() {
-        mDefaultParams.clear();
-        mDefaultParams.put("since", -1L);
         mSplitsStorage = Mockito.mock(SplitsStorage.class);
         mSplitsSyncHelper = Mockito.mock(SplitsSyncHelper.class);
         mEventsManager = Mockito.mock(SplitEventsManager.class);
         mTask = new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorage, mChangeNumber, mEventsManager);
-        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+        when(mSplitsSyncHelper.sync(anyLong())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
         loadSplitChanges();
     }
 
@@ -63,19 +61,16 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(mDefaultParams, false, true);
+        verify(mSplitsSyncHelper).sync(mChangeNumber);
     }
 
     @Test
     public void storedChangeNumBigger() throws HttpFetcherException {
-        Map<String, Object> params = new HashMap<>();
-        params.put("since", mChangeNumber);
-
         when(mSplitsStorage.getTill()).thenReturn(mChangeNumber + 100L);
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, never()).sync(any(), anyBoolean(), anyBoolean());
+        verify(mSplitsSyncHelper, never()).sync(anyLong(), anyBoolean(), anyBoolean());
     }
 
     @After

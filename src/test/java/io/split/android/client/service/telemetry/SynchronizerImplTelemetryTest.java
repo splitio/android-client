@@ -3,6 +3,7 @@ package io.split.android.client.service.telemetry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -21,6 +23,8 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.events.EventsRecorderTask;
+import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -70,14 +74,18 @@ public class SynchronizerImplTelemetryTest {
         when(mTaskFactory.createSplitsSyncTask(anyBoolean())).thenReturn(mock(SplitsSyncTask.class));
 
         SplitTaskExecutor mTaskExecutor = mock(SplitTaskExecutor.class);
+        SplitTaskExecutor mSingleThreadTaskExecutor = mock(SplitTaskExecutor.class);
         when(mTaskExecutor.schedule(eq(eventsRecorderTask), anyLong(), anyLong(), any())).thenReturn("id");
+        when(mTaskExecutor.schedule(argThat(argument -> argument instanceof SplitsSyncTask), anyLong(), anyLong(), any())).thenReturn("id");
 
         RetryBackoffCounterTimerFactory mRetryBackoffCounterFactory = mock(RetryBackoffCounterTimerFactory.class);
         when(mRetryBackoffCounterFactory.create(mTaskExecutor, 1)).thenReturn(mock(RetryBackoffCounterTimer.class));
+        when(mRetryBackoffCounterFactory.create(mSingleThreadTaskExecutor, 1)).thenReturn(mock(RetryBackoffCounterTimer.class));
 
         mSynchronizer = new SynchronizerImpl(
                 mConfig,
                 mTaskExecutor,
+                mSingleThreadTaskExecutor,
                 mSplitStorageContainer,
                 mTaskFactory,
                 mEventsManager,
