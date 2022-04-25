@@ -1,3 +1,7 @@
+2.10.1 (Apr 25, 2022)
+- Updated the synchronization flow to be more reliable in the event of an edge case generating delay in cache purge propagation, keeping the SDK cache properly synced.
+- Fixed issue that converted certain values in event properties to scientific notation.
+
 2.10.0 (Apr 6, 2022)
 - Added support for multiple clients: Factories can now create multiple clients with different keys while reusing the common tasks, data and behavior. Read more in our Android SDK docs.
 
