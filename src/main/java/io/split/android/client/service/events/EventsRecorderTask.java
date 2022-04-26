@@ -25,17 +25,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class EventsRecorderTask implements SplitTask {
     public final static int FAILING_CHUNK_SIZE = 20;
-    private final PersistentEventsStorage mPersistenEventsStorage;
+    private final PersistentEventsStorage mPersistentEventsStorage;
     private final HttpRecorder<List<Event>> mHttpRecorder;
     private final EventsRecorderTaskConfig mConfig;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public EventsRecorderTask(@NonNull HttpRecorder<List<Event>> httpRecorder,
-                              @NonNull PersistentEventsStorage persistenEventsStorage,
+                              @NonNull PersistentEventsStorage persistentEventsStorage,
                               @NonNull EventsRecorderTaskConfig config,
                               @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mHttpRecorder = checkNotNull(httpRecorder);
-        mPersistenEventsStorage = checkNotNull(persistenEventsStorage);
+        mPersistentEventsStorage = checkNotNull(persistentEventsStorage);
         mConfig = checkNotNull(config);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
@@ -49,7 +49,7 @@ public class EventsRecorderTask implements SplitTask {
         List<Event> events;
         List<Event> failingEvents = new ArrayList<>();
         do {
-            events = mPersistenEventsStorage.pop(mConfig.getEventsPerPush());
+            events = mPersistentEventsStorage.pop(mConfig.getEventsPerPush());
             if (events.size() > 0) {
                 long startTime = System.currentTimeMillis();
                 long latency = 0;
@@ -61,7 +61,7 @@ public class EventsRecorderTask implements SplitTask {
                     latency = now - startTime;
                     mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.EVENTS, now);
 
-                    mPersistenEventsStorage.delete(events);
+                    mPersistentEventsStorage.delete(events);
                     Logger.d("%d split events sent", events.size());
                 } catch (HttpRecorderException e) {
                     status = SplitTaskExecutionStatus.ERROR;
@@ -83,7 +83,7 @@ public class EventsRecorderTask implements SplitTask {
         // Update events by chunks to avoid sqlite errors
         List<List<Event>> failingChunks = Lists.partition(failingEvents, FAILING_CHUNK_SIZE);
         for(List<Event> chunk : failingChunks) {
-            mPersistenEventsStorage.setActive(chunk);
+            mPersistentEventsStorage.setActive(chunk);
         }
 
         if (status == SplitTaskExecutionStatus.ERROR) {

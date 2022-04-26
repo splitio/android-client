@@ -20,7 +20,6 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class SplitsSyncTask implements SplitTask {
 
-    static final String SINCE_PARAM = "since";
     private final String mSplitsFilterQueryString;
 
     private final SplitsStorage mSplitsStorage;
@@ -66,10 +65,8 @@ public class SplitsSyncTask implements SplitTask {
             storedChangeNumber = -1;
         }
 
-        Map<String, Object> params = new HashMap<>();
-        params.put(SINCE_PARAM, storedChangeNumber);
         long startTime = System.currentTimeMillis();
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(params, splitsFilterHasChanged || shouldClearExpiredCache, false);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(storedChangeNumber, splitsFilterHasChanged || shouldClearExpiredCache, false);
         mTelemetryRuntimeProducer.recordSyncLatency(OperationType.SPLITS, System.currentTimeMillis() - startTime);
 
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {

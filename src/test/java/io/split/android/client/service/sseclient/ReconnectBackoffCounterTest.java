@@ -7,26 +7,52 @@ public class ReconnectBackoffCounterTest {
 
     @Test
     public void base1() {
-        long results[] = { 1L, 2L, 8L, 30L, 1L };
+        long[] results = { 1L, 2L, 8L, 30L, 1L };
         testWithBase(1, results);
     }
 
     @Test
     public void base2() {
-        long results[] = { 1L, 4L, 16L, 30L, 1L };
+        long[] results = { 1L, 4L, 16L, 30L, 1L };
         testWithBase(1, results);
     }
 
     @Test
     public void base4() {
-        long results[] = { 1L, 8L, 30L, 30L, 1L };
+        long[] results = { 1L, 8L, 30L, 30L, 1L };
         testWithBase(1, results);
     }
 
     @Test
     public void base8() {
-        long results[] = { 1L, 8L, 30L, 30L, 1L };
+        long[] results = { 1L, 8L, 30L, 30L, 1L };
         testWithBase(1, results);
+    }
+
+    @Test
+    public void maxWaitTimeIsTakenIntoAccount() {
+        int maxTimeLimit = 100;
+        BackoffCounter counter = new ReconnectBackoffCounter(1, maxTimeLimit);
+
+        long lastTime = 0;
+        for (int i = 0; i < 8; i++) {
+            lastTime = counter.getNextRetryTime();
+        }
+
+        Assert.assertEquals(maxTimeLimit, lastTime);
+    }
+
+    @Test
+    public void defaultMaxWaitTimeIsTakenIntoAccount() {
+        int maxTimeLimit = 1800;
+        BackoffCounter counter = new ReconnectBackoffCounter(1, maxTimeLimit);
+
+        long lastTime = 0;
+        for (int i = 0; i < 12; i++) {
+            lastTime = counter.getNextRetryTime();
+        }
+
+        Assert.assertEquals(maxTimeLimit, lastTime);
     }
 
     private void testWithBase(int base, long[] results) {

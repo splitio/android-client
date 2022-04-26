@@ -1,5 +1,8 @@
 package tests.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -10,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +21,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import helper.DatabaseHelper;
 import helper.ImpressionListenerHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -111,11 +117,9 @@ public class TrackTest {
     @Test
     public void test() throws Exception {
         ArrayList<Integer> trackCount = new ArrayList<>();
-        ArrayList<String> treatments = new ArrayList<>();
         CountDownLatch latch = new CountDownLatch(1);
-        String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
-        String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
-        SplitRoomDatabase splitRoomDatabase = SplitRoomDatabase.getDatabase(mContext, dataFolderName);
+        String apiKey = IntegrationHelper.dummyApiKey();
+        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
 
@@ -189,6 +193,8 @@ public class TrackTest {
         Assert.assertEquals(1, trackCount.get(2).intValue());
         Assert.assertEquals(3, trackCount.get(3).intValue());
 
+        Thread.sleep(2000);
+
         Event e1 = findEvent("event1", 0.0);
         Event e2 = findEvent("event2", 2.0);
         Event e3 = findEvent("event3", 3.0);
@@ -196,25 +202,71 @@ public class TrackTest {
         Assert.assertEquals("custom", e1.trafficTypeName);
         Assert.assertEquals(0.0, e1.value, 0.0);
         Assert.assertEquals("event1", e1.eventTypeId);
-        Assert.assertEquals(0, ((Double) e1.properties.get("value")).intValue());
+        Assert.assertEquals(0, (e1.properties.get("value")));
 
         Assert.assertEquals("custom", e2.trafficTypeName);
         Assert.assertEquals(2.0, e2.value, 0.0);
         Assert.assertEquals("event2", e2.eventTypeId);
-        Assert.assertEquals(2, ((Double) e2.properties.get("value")).intValue());
+        Assert.assertEquals(2, (e2.properties.get("value")));
 
         Assert.assertEquals("custom", e3.trafficTypeName);
         Assert.assertEquals(3.0, e3.value, 0.0);
         Assert.assertEquals("event3", e3.eventTypeId);
-        Assert.assertEquals(3, ((Double) e3.properties.get("value")).intValue());
+        Assert.assertEquals(3, (e3.properties.get("value")));
     }
 
-    private void log(String m) {
-        System.out.println("FACTORY_TEST: " + m);
+    @Test
+    public void largeNumberInPropertiesTest() throws InterruptedException, IOException, URISyntaxException, TimeoutException {
+        CountDownLatch latch = new CountDownLatch(1);
+        String apiKey = IntegrationHelper.dummyApiKey();
+        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
+        splitRoomDatabase.clearAllTables();
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
+
+        final String url = mWebServer.url("/").url().toString();
+
+        Key key = new Key("CUSTOMER_ID", null);
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .serviceEndpoints(ServiceEndpoints
+                        .builder()
+                        .apiEndpoint(url)
+                        .eventsEndpoint(url)
+                        .build())
+                .ready(30000)
+                .eventFlushInterval(5)
+                .eventsPerPush(5)
+                .eventsQueueSize(1000)
+                .enableDebug()
+                .trafficType("client")
+                .build();
+
+        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+
+        SplitClient client = splitFactory.client();
+
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+
+        client.on(SplitEvent.SDK_READY, readyTask);
+        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+
+        latch.await(20, TimeUnit.SECONDS);
+
+        HashMap<String, Object> properties = new HashMap<>();
+        properties.put("price", 24584535);
+        properties.put("id", 158576837);
+        client.track("user", "long-number-event", 1, properties);
+        mLatchs.get(0).await(20, TimeUnit.SECONDS);
+        Thread.sleep(500);
+        Event event = findEvent("long-number-event", 1.0);
+
+        assertNotNull(event);
+        assertEquals(24584535, event.properties.get("price"));
+        assertEquals(158576837, event.properties.get("id"));
     }
 
     private String emptyChanges() {
-        return "{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }";
+        return "{\"splits\":[], \"since\": 9567456937869, \"till\": 9567456937869 }";
     }
 
     private Event findEvent(String type, Double value) {

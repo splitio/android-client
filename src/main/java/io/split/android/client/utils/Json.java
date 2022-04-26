@@ -2,6 +2,10 @@ package io.split.android.client.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -11,9 +15,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.utils.serializer.DoubleSerializer;
+
 public class Json {
 
-    private static final Gson mJson = new GsonBuilder().serializeNulls().create();
+    private static final Gson mJson = new GsonBuilder()
+            .serializeNulls()
+            .registerTypeAdapter(Double.class, new DoubleSerializer())
+            .create();
     private static volatile Gson mNonNullJson;
 
     public static String toJson(Object obj) {
@@ -54,7 +63,9 @@ public class Json {
         if (mNonNullJson == null) {
             synchronized (Json.class) {
                 if (mNonNullJson == null) {
-                    mNonNullJson = new GsonBuilder().create();
+                    mNonNullJson = new GsonBuilder()
+                            .registerTypeAdapter(Double.class, new DoubleSerializer())
+                            .create();
                 }
             }
         }

@@ -24,12 +24,14 @@ public class MySegmentsSyncWorker extends SplitWorker {
 
     public MySegmentsSyncWorker(@NonNull Context context,
                                 @NonNull WorkerParameters workerParams) {
+
         super(context, workerParams);
         String[] keys =
                 workerParams.getInputData().getStringArray(ServiceConstants.WORKER_PARAM_KEY);
         boolean shouldRecordTelemetry = workerParams.getInputData().getBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
         try {
             if (keys == null) {
+                Logger.e("Error scheduling segments sync worker: Keys are null");
                 return;
             }
 
