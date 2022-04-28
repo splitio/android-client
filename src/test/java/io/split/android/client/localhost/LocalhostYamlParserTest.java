@@ -136,4 +136,10 @@ public class LocalhostYamlParserTest {
         Assert.assertNull(splits);
     }
 
+    @Test
+    public void testNonStringValueInTreatmentOnlyExcludesFailingSplit() {
+        Map<String, Split> splits = parser.parse(mFileHelper.loadFileContent("splits_incorrect_value.yaml"));
+        Assert.assertEquals(4, splits.size());
+    }
+
 }
