@@ -58,11 +58,7 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
             }
 
             Split split = getOrCreateSplit(splits, splitName);
-
             String treatment = splitMap.get(TREATMENT_FIELD);
-            if (treatment == null) {
-                return;
-            }
 
             addConditionsToSplit(split, treatment, parseKeys(splitMap.get(KEYS_FIELD)));
             addConfigToSplit(split, splitMap, treatment);
