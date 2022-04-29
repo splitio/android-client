@@ -132,12 +132,6 @@ public class ControlTest {
         synchronizerSpy.stopPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_ENABLED");
         synchronizerSpy.stopPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
-        StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
-            if (event instanceof StreamingStatusStreamingEvent) {
-                return event.getEventData().intValue() == 1;
-            }
-            return false;
-        });
 
         updateTask.mLatch = new CountDownLatch(1);
         pushMySegmentsUpdatePayload("new_segment");
@@ -207,6 +201,49 @@ public class ControlTest {
         mSseConnectedLatch.await(20, TimeUnit.SECONDS);
 
         Assert.assertEquals(2, mSseConnectionCount);
+    }
+
+    @Test
+    public void resumeNotification() throws InterruptedException, IOException {
+        SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
+        db.clearAllTables();
+        MySegmentEntity dummySegmentEntity = new MySegmentEntity();
+        dummySegmentEntity.setUserKey(mUserKey.matchingKey());
+        dummySegmentEntity.setSegmentList("dummy");
+
+        CountDownLatch latch = new CountDownLatch(1);
+        TestingHelper.TestEventTask testTask = TestingHelper.testTask(new CountDownLatch(1), "Control test Update task");
+
+        HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
+
+        SplitClientConfig config = IntegrationHelper.basicConfig();
+
+        mFactory = IntegrationHelper.buildFactory(
+                mApiKey, IntegrationHelper.dummyUserKey(),
+                config, mContext, httpClientMock, db);
+
+        mClient = mFactory.client();
+
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+
+        mClient.on(SplitEvent.SDK_READY, readyTask);
+        latch.await(20, TimeUnit.SECONDS);
+
+        mSseConnectedLatch.await(20, TimeUnit.SECONDS);
+        TestingHelper.pushKeepAlive(mStreamingData);
+
+        sleep(200);
+
+        mSseConnectedLatch = new CountDownLatch(4);
+        pushControl("STREAMING_ENABLED");
+        mSseConnectedLatch.await(20, TimeUnit.SECONDS);
+
+        pushControl("STREAMING_PAUSED");
+        mSseConnectedLatch.await(20, TimeUnit.SECONDS);
+        pushControl("STREAMING_RESUMED");
+        mSseConnectedLatch.await(20, TimeUnit.SECONDS);
+
+        Assert.assertEquals(1, mSseConnectionCount);
     }
 
     private void pushMySegmentsUpdatePayload(String segmentName) throws IOException, InterruptedException {

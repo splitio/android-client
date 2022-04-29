@@ -72,6 +72,7 @@ public class NotificationManagerKeeper {
                     break;
 
                 case STREAMING_ENABLED:
+                case STREAMING_RESUMED:
                     mIsStreamingActive.set(true);
                     if (publishersCount() > 0) {
                         mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
