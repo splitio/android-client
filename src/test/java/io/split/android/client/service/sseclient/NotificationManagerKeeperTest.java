@@ -49,9 +49,10 @@ public class NotificationManagerKeeperTest {
     @Mock
     TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
+
     @Before
     public void setup() {
-        MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.initMocks(this);
         mManagerKeeper = new NotificationManagerKeeper(mBroadcasterChannel, mTelemetryRuntimeProducer);
         when(mOccupancyNotification.getMetrics()).thenReturn(mMetrics);
     }
@@ -213,27 +214,6 @@ public class NotificationManagerKeeperTest {
     }
 
     @Test
-    public void streamingResumedBroadcastsEvent() {
-        when(mOccupancyNotification.getChannel()).thenReturn(CONTROL_PRI_CHANNEL);
-        when(mOccupancyNotification.getTimestamp()).thenReturn(20L);
-        when(mMetrics.getPublishers()).thenReturn(1);
-        when(mOccupancyNotification.isControlPriChannel()).thenReturn(true);
-        when(mOccupancyNotification.isControlSecChannel()).thenReturn(false);
-        when(mControlNotification.getTimestamp()).thenReturn(20L);
-
-        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_RESUMED);
-
-        mManagerKeeper.handleOccupancyNotification(mOccupancyNotification);
-
-        mManagerKeeper.handleControlNotification(mControlNotification);
-
-        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
-        verify(mBroadcasterChannel).pushMessage(messageCaptor.capture());
-
-        Assert.assertEquals(EventType.PUSH_SUBSYSTEM_UP, messageCaptor.getValue().getMessage());
-    }
-
-    @Test
     public void pausedStreamingIsRecordedInTelemetry() {
         ArgumentCaptor<StreamingStatusStreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingStatusStreamingEvent.class);
 
@@ -306,20 +286,5 @@ public class NotificationManagerKeeperTest {
 
         verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
         Assert.assertTrue(argumentCaptor.getValue() instanceof OccupancySecStreamingEvent);
-    }
-
-    @Test
-    public void streamingResumedIsRecordedInTelemetry() {
-        ArgumentCaptor<StreamingStatusStreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingStatusStreamingEvent.class);
-
-        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_RESUMED);
-        when(mControlNotification.getTimestamp()).thenReturn(20L);
-
-        mManagerKeeper.handleControlNotification(mControlNotification);
-
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
-        Assert.assertEquals(StreamingStatusStreamingEvent.Status.ENABLED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS.getNumericValue(), argumentCaptor.getValue().getEventType());
-        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
     }
 }
