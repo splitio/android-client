@@ -33,7 +33,7 @@ public class NotificationParserTest {
 
     private final static String OCCUPANCY = "{\"id\":\"x2dE2TEiJL:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz\",\"timestamp\":1584647533288,\"encoding\":\"json\",\"channel\":\"control_pri\",\"data\":\"{\\\"metrics\\\": {\\\"publishers\\\":1}}\"}";
 
-    private final static String CONTROL = "{\"id\":\"x2dE2TEiJL:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz\",\"timestamp\":1584647533288,\"encoding\":\"json\",\"channel\":\"control_pri\",\"data\":\"{\\\"type\\\":\\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_ENABLED\\\"}\"}";
+    private final static String CONTROL = "{\"id\":\"x2dE2TEiJL:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz\",\"timestamp\":1584647533288,\"encoding\":\"json\",\"channel\":\"control_pri\",\"data\":\"{\\\"type\\\":\\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_RESUMED\\\"}\"}";
 
     private final static String ERROR = "{\"id\":\"null\",\"name\":\"error\",\"comment\":\"[no comments]\",\"data\":\"{\\\"message\\\":\\\"Invalid token; capability must be a string\\\",\\\"code\\\":40144,\\\"statusCode\\\":400,\\\"href\\\":\\\"https://help.ably.io/error/40144\\\"}\"}";
 
@@ -100,7 +100,7 @@ public class NotificationParserTest {
         ControlNotification notification = mParser.parseControl(incoming.getJsonData());
 
         Assert.assertEquals(NotificationType.CONTROL, notification.getType());
-        Assert.assertEquals(ControlNotification.ControlType.STREAMING_ENABLED, notification.getControlType());
+        Assert.assertEquals(ControlNotification.ControlType.STREAMING_RESUMED, notification.getControlType());
     }
 
     @Test

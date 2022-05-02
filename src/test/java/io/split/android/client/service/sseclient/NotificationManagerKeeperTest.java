@@ -185,7 +185,7 @@ public class NotificationManagerKeeperTest {
         mManagerKeeper.handleOccupancyNotification(mOccupancyNotification);
 
         when(mControlNotification.getTimestamp()).thenReturn(20L);
-        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_ENABLED);
+        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_RESUMED);
         mManagerKeeper.handleControlNotification(mControlNotification);
 
         ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
@@ -207,7 +207,7 @@ public class NotificationManagerKeeperTest {
         Mockito.reset(mBroadcasterChannel);
 
         when(mControlNotification.getTimestamp()).thenReturn(20L);
-        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_ENABLED);
+        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_RESUMED);
         mManagerKeeper.handleControlNotification(mControlNotification);
 
         verify(mBroadcasterChannel, never()).pushMessage(any());
@@ -232,7 +232,7 @@ public class NotificationManagerKeeperTest {
     public void enabledStreamingIsRecordedInTelemetry() {
         ArgumentCaptor<StreamingStatusStreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingStatusStreamingEvent.class);
 
-        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_ENABLED);
+        when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_RESUMED);
         when(mControlNotification.getTimestamp()).thenReturn(20L);
 
         mManagerKeeper.handleControlNotification(mControlNotification);
