@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import helper.DatabaseHelper;
@@ -47,7 +46,6 @@ public class SharedClientsIntegrationTest {
     private SplitRoomDatabase mRoomDb;
     private SplitFactory mSplitFactory;
     private List<String> mJsonChanges = null;
-    private static final AtomicBoolean mBucketResponse = new AtomicBoolean(false);
 
     @Before
     public void setUp() {
@@ -55,7 +53,7 @@ public class SharedClientsIntegrationTest {
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
-        mBucketResponse.set(false);
+
         if (mJsonChanges == null) {
             loadSplitChanges();
         }
@@ -160,7 +158,6 @@ public class SharedClientsIntegrationTest {
         bucketKeys.put("0E7C9914-7268-452A-B855-DF06542C1FE7", "V100");
 
         insertSplitsIntoDb();
-        mBucketResponse.set(true);
 
         Map<String, AtomicInteger> readyTimes = new HashMap<>();
         Map<String, CountDownLatch> latches = new HashMap<>();
