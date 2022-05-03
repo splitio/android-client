@@ -58,7 +58,7 @@ public class ClientComponentsRegisterImplTest {
     @Mock
     private MySegmentsSynchronizer mMySegmentsSynchronizer;
 
-    private final Key mMatchingKey = new Key("matching_key");
+    private final Key mMatchingKey = new Key("matching_key", "bucketing_key");
 
     private ClientComponentsRegisterImpl register;
 
@@ -118,6 +118,6 @@ public class ClientComponentsRegisterImplTest {
     public void eventsManagerIsRegistered() {
         register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
 
-        verify(mEventsManagerRegistry).registerEventsManager("matching_key", mSplitEventsManager);
+        verify(mEventsManagerRegistry).registerEventsManager("matching_key", "bucketing_key", mSplitEventsManager);
     }
 }
