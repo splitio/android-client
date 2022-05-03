@@ -27,6 +27,7 @@ import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
+import helper.TestingHelper;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
@@ -200,7 +201,7 @@ public class TelemetryIntegrationTest {
         countDownLatch.await(1, TimeUnit.SECONDS);
 
         client.destroy();
-        countDownLatch.await(500, TimeUnit.MILLISECONDS);
+        countDownLatch.await(1, TimeUnit.SECONDS);
         long sessionLength = StorageFactory.getTelemetryStorage(true).getSessionLength();
         assertTrue(sessionLength > 0);
     }
@@ -211,7 +212,7 @@ public class TelemetryIntegrationTest {
 
         client = getTelemetrySplitFactory(mWebServer, streamingEnabled).client();
 
-        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(countDownLatch);
+        TestingHelper.TestEventTask readyFromCacheTask = new TestingHelper.TestEventTask(countDownLatch);
         client.on(SplitEvent.SDK_READY, readyFromCacheTask);
 
         try {
@@ -242,7 +243,7 @@ public class TelemetryIntegrationTest {
 
         return IntegrationHelper.buildFactory(
                 "dummy_api_key",
-                new Key("dummy_user_key"),
+                new Key("key1"),
                 config,
                 mContext,
                 null,

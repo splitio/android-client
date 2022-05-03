@@ -118,6 +118,6 @@ public class ClientComponentsRegisterImplTest {
     public void eventsManagerIsRegistered() {
         register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
 
-        verify(mEventsManagerRegistry).registerEventsManager("matching_key", "bucketing_key", mSplitEventsManager);
+        verify(mEventsManagerRegistry).registerEventsManager(mMatchingKey, mSplitEventsManager);
     }
 }

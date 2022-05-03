@@ -188,8 +188,11 @@ public class SplitClientContainerImplTest {
 
     @Test
     public void callingRemoveUnregistersComponentsForKey() {
-        mClientContainer.remove("matching_key");
-        verify(mClientComponentsRegister).unregisterComponentsForKey("matching_key");
+        mClientContainer.remove(new Key("matching_key"));
+        verify(mClientComponentsRegister).unregisterComponentsForKey(new Key("matching_key"));
+
+        mClientContainer.remove(new Key("matching_key", "bucketing_key"));
+        verify(mClientComponentsRegister).unregisterComponentsForKey(new Key("matching_key", "bucketing_key"));
     }
 
     @Test

@@ -7,5 +7,5 @@ import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 public interface ClientComponentsRegister {
     void registerComponents(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, SplitEventsManager eventsManager);
 
-    void unregisterComponentsForKey(String key);
+    void unregisterComponentsForKey(Key key);
 }

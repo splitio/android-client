@@ -1,8 +1,10 @@
 package io.split.android.client.events;
 
+import io.split.android.client.api.Key;
+
 public interface EventsManagerRegistry {
 
-    void registerEventsManager(String matchingKey, String bucketingKey, ISplitEventsManager splitEventsManager);
+    void registerEventsManager(Key key, ISplitEventsManager splitEventsManager);
 
-    void unregisterEventsManager(String matchingKey, String bucketingKey);
+    void unregisterEventsManager(Key key);
 }

@@ -87,7 +87,7 @@ public class LocalhostSplitClientContainerImplTest {
 
         mClientContainer.getClient(key);
 
-        verify(mEventsManagerCoordinator).registerEventsManager(eq("matching_key"), eq("bucketing_key"), any());
+        verify(mEventsManagerCoordinator).registerEventsManager(eq(key), any());
     }
 
     @NonNull

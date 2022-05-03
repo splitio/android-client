@@ -10,6 +10,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import io.split.android.client.api.Key;
+
 public class EventsManagerCoordinatorTest {
 
     @Mock
@@ -24,7 +26,7 @@ public class EventsManagerCoordinatorTest {
 
     @Test
     public void SPLITS_UPDATEDEventIsPassedDownToChildren() {
-        mEventsManager.registerEventsManager("key", "bucketing", mMockChildEventsManager);
+        mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
 
         mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
 
@@ -35,7 +37,7 @@ public class EventsManagerCoordinatorTest {
 
     @Test
     public void SPLITS_FETCHEDEventIsPassedDownToChildren() {
-        mEventsManager.registerEventsManager("key", "bucketing", mMockChildEventsManager);
+        mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
 
         mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
 
@@ -46,7 +48,7 @@ public class EventsManagerCoordinatorTest {
 
     @Test
     public void SPLITS_LOADED_FROM_STORAGEEventIsPassedDownToChildren() {
-        mEventsManager.registerEventsManager("key", "bucketing", mMockChildEventsManager);
+        mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
 
         mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
 
@@ -57,7 +59,7 @@ public class EventsManagerCoordinatorTest {
 
     @Test
     public void SPLIT_KILLED_NOTIFICATIONEventIsPassedDownToChildren() {
-        mEventsManager.registerEventsManager("key", "bucketing", mMockChildEventsManager);
+        mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
 
         mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION);
 
@@ -69,7 +71,7 @@ public class EventsManagerCoordinatorTest {
     @Test
     public void EventIsPassedDownToChildrenIfRegisteredAfterEmission() {
         ISplitEventsManager newMockChildEventsManager = mock(ISplitEventsManager.class);
-        mEventsManager.registerEventsManager("key", "bucketing", mMockChildEventsManager);
+        mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
 
         mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
 
@@ -77,7 +79,7 @@ public class EventsManagerCoordinatorTest {
 
         verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
 
-        mEventsManager.registerEventsManager("new_key", "bucketing", newMockChildEventsManager);
+        mEventsManager.registerEventsManager(new Key("new_key", "bucketing"), newMockChildEventsManager);
         verify(newMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
     }
 
@@ -88,10 +90,10 @@ public class EventsManagerCoordinatorTest {
         ISplitEventsManager thirdEventsManager = mock(ISplitEventsManager.class);
         ISplitEventsManager fourthEventsManager = mock(ISplitEventsManager.class);
 
-        Thread thread0 = new Thread(() -> mEventsManager.registerEventsManager("first", "bucketing", firstEventsManager));
-        Thread thread1 = new Thread(() -> mEventsManager.registerEventsManager("second", "bucketing", secondEventsManager));
-        Thread thread2 = new Thread(() -> mEventsManager.registerEventsManager("third", "bucketing", thirdEventsManager));
-        Thread thread3 = new Thread(() -> mEventsManager.registerEventsManager("fourth", "bucketing", fourthEventsManager));
+        Thread thread0 = new Thread(() -> mEventsManager.registerEventsManager(new Key("first", "bucketing"), firstEventsManager));
+        Thread thread1 = new Thread(() -> mEventsManager.registerEventsManager(new Key("second", "bucketing"), secondEventsManager));
+        Thread thread2 = new Thread(() -> mEventsManager.registerEventsManager(new Key("third", "bucketing"), thirdEventsManager));
+        Thread thread3 = new Thread(() -> mEventsManager.registerEventsManager(new Key("fourth", "bucketing"), fourthEventsManager));
         Thread thread4 = new Thread(() -> mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED));
         Thread thread5 = new Thread(this::delay);
 

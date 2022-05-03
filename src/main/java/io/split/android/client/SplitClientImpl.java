@@ -41,7 +41,7 @@ public final class SplitClientImpl implements SplitClient {
     private final WeakReference<SplitFactory> mSplitFactory;
     private final WeakReference<SplitClientContainer> mClientContainer;
     private final SplitClientConfig mConfig;
-    private final String mMatchingKey;
+    private final Key mKey;
     private final SplitEventsManager mEventsManager;
     private final EventPropertiesProcessor mEventPropertiesProcessor;
     private final TreatmentManager mTreatmentManager;
@@ -106,7 +106,7 @@ public final class SplitClientImpl implements SplitClient {
 
         mSplitFactory = new WeakReference<>(checkNotNull(container));
         mClientContainer = new WeakReference<>(checkNotNull(clientContainer));
-        mMatchingKey = checkNotNull(key.matchingKey());
+        mKey = checkNotNull(key);
         mConfig = checkNotNull(config);
         mEventsManager = checkNotNull(eventsManager);
         mEventValidator = checkNotNull(eventValidator);
@@ -124,7 +124,7 @@ public final class SplitClientImpl implements SplitClient {
         mIsClientDestroyed = true;
         SplitClientContainer splitClientContainer = mClientContainer.get();
         if (splitClientContainer != null) {
-            splitClientContainer.remove(mMatchingKey);
+            splitClientContainer.remove(mKey);
 
             if (splitClientContainer.getAll().isEmpty()) {
                 SplitFactory splitFactory = mSplitFactory.get();
@@ -219,42 +219,42 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean track(String trafficType, String eventType) {
-        return track(mMatchingKey, trafficType, eventType, TRACK_DEFAULT_VALUE, null);
+        return track(mKey.matchingKey(), trafficType, eventType, TRACK_DEFAULT_VALUE, null);
     }
 
     @Override
     public boolean track(String trafficType, String eventType, double value) {
-        return track(mMatchingKey, trafficType, eventType, value, null);
+        return track(mKey.matchingKey(), trafficType, eventType, value, null);
     }
 
     @Override
     public boolean track(String eventType) {
-        return track(mMatchingKey, mConfig.trafficType(), eventType, TRACK_DEFAULT_VALUE, null);
+        return track(mKey.matchingKey(), mConfig.trafficType(), eventType, TRACK_DEFAULT_VALUE, null);
     }
 
     @Override
     public boolean track(String eventType, double value) {
-        return track(mMatchingKey, mConfig.trafficType(), eventType, value, null);
+        return track(mKey.matchingKey(), mConfig.trafficType(), eventType, value, null);
     }
 
     @Override
     public boolean track(String trafficType, String eventType, Map<String, Object> properties) {
-        return track(mMatchingKey, trafficType, eventType, TRACK_DEFAULT_VALUE, properties);
+        return track(mKey.matchingKey(), trafficType, eventType, TRACK_DEFAULT_VALUE, properties);
     }
 
     @Override
     public boolean track(String trafficType, String eventType, double value, Map<String, Object> properties) {
-        return track(mMatchingKey, trafficType, eventType, value, properties);
+        return track(mKey.matchingKey(), trafficType, eventType, value, properties);
     }
 
     @Override
     public boolean track(String eventType, Map<String, Object> properties) {
-        return track(mMatchingKey, mConfig.trafficType(), eventType, TRACK_DEFAULT_VALUE, properties);
+        return track(mKey.matchingKey(), mConfig.trafficType(), eventType, TRACK_DEFAULT_VALUE, properties);
     }
 
     @Override
     public boolean track(String eventType, double value, Map<String, Object> properties) {
-        return track(mMatchingKey, mConfig.trafficType(), eventType, value, properties);
+        return track(mKey.matchingKey(), mConfig.trafficType(), eventType, value, properties);
     }
 
     @Override
