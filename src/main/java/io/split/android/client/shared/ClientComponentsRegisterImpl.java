@@ -116,7 +116,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     }
 
     private void registerEventsManager(Key key, SplitEventsManager eventsManager) {
-        mEventsManagerRegistry.registerEventsManager(key.matchingKey(), eventsManager);
+        mEventsManagerRegistry.registerEventsManager(key.matchingKey(), key.bucketingKey(), eventsManager);
     }
 
     private void registerKeyInSeeAuthenticator(Key key) {

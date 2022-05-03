@@ -12,9 +12,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import helper.DatabaseHelper;
@@ -40,11 +43,11 @@ import okhttp3.mockwebserver.RecordedRequest;
 
 public class SharedClientsIntegrationTest {
 
-    private Context mContext;
-    private ServerMock mWebServer;
+    private static Context mContext;
     private SplitRoomDatabase mRoomDb;
     private SplitFactory mSplitFactory;
     private List<String> mJsonChanges = null;
+    private static final AtomicBoolean mBucketResponse = new AtomicBoolean(false);
 
     @Before
     public void setUp() {
@@ -52,12 +55,12 @@ public class SharedClientsIntegrationTest {
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
-
+        mBucketResponse.set(false);
         if (mJsonChanges == null) {
             loadSplitChanges();
         }
 
-        mWebServer = new ServerMock(mJsonChanges);
+        ServerMock mWebServer = new ServerMock(mJsonChanges);
 
         String serverUrl = mWebServer.getServerUrl();
         mSplitFactory = getFactory(serverUrl);
@@ -101,6 +104,104 @@ public class SharedClientsIntegrationTest {
         verifyEventExecution(SplitEvent.SDK_READY);
     }
 
+    @Test
+    public void equalMatchingKeyAndDifferentBucketingKey() throws InterruptedException {
+        insertSplitsIntoDb();
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch readyLatch2 = new CountDownLatch(1);
+
+        AtomicInteger readyCount = new AtomicInteger(0);
+        AtomicInteger readyCount2 = new AtomicInteger(0);
+
+        SplitClient client = mSplitFactory.client();
+        SplitClient client2 = mSplitFactory.client(new Key("key1", "bucketing"));
+
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                readyCount.addAndGet(1);
+                readyLatch.countDown();
+            }
+        });
+
+        client2.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                readyCount2.addAndGet(1);
+                readyLatch2.countDown();
+            }
+        });
+
+        boolean await = readyLatch.await(5, TimeUnit.SECONDS);
+        boolean await2 = readyLatch2.await(5, TimeUnit.SECONDS);
+
+        assertTrue(await);
+        assertTrue(await2);
+        assertEquals(1, readyCount.get());
+        assertEquals(1, readyCount2.get());
+    }
+
+    @Test
+    public void bucketTest() throws InterruptedException {
+        String splitName = "bucket_test";
+        String userKey = "key1";
+        Map<String, String> bucketKeys = new HashMap<>();
+
+        bucketKeys.put("2643632B-D2D7-4DDF-89EA-A2563CFE317F", "V1");
+        bucketKeys.put("62FAA071-E87B-4FA7-A059-CD10C8BD78C6", "V10");
+        bucketKeys.put("596DBDCF-0FF3-4F07-A5F4-A2386EAD540B", "V20");
+        bucketKeys.put("A4232DB6-B609-49C5-84A3-55BB80F70122", "V30");
+        bucketKeys.put("E4457B93-7D9C-4E1A-B363-492FAC589077", "V40");
+        bucketKeys.put("206AEA7F-0392-4159-8A64-1DAE8B20BA6D", "V50");
+        bucketKeys.put("393899EB-AD1D-4943-8136-2481DE7A0875", "V60");
+        bucketKeys.put("7B7AD9AC-21C7-46C0-B49B-A19BBE726409", "V70");
+        bucketKeys.put("9975F10D-044A-48C8-8443-2816B92852DC", "V80");
+        bucketKeys.put("DC8B43D2-5D06-48D3-B1FD-FEDF1A6DC2F1", "V90");
+        bucketKeys.put("0E7C9914-7268-452A-B855-DF06542C1FE7", "V100");
+
+        insertSplitsIntoDb();
+        mBucketResponse.set(true);
+
+        Map<String, AtomicInteger> readyTimes = new HashMap<>();
+        Map<String, CountDownLatch> latches = new HashMap<>();
+        Map<String, SplitClient> clients = new HashMap<>();
+
+        for (Map.Entry<String, String> entry : bucketKeys.entrySet()) {
+            latches.put(entry.getKey(), new CountDownLatch(1));
+            readyTimes.put(entry.getKey(), new AtomicInteger(0));
+            clients.put(entry.getKey(), mSplitFactory.client(new Key(userKey, entry.getKey())));
+            clients.get(entry.getKey()).on(SplitEvent.SDK_READY, new SplitEventTask() {
+                @Override
+                public void onPostExecution(SplitClient client) {
+                    readyTimes.get(entry.getKey()).addAndGet(1);
+                    latches.get(entry.getKey()).countDown();
+                }
+            });
+        }
+
+        Map<String, Boolean> awaitResults = new HashMap<>();
+        for (Map.Entry<String, CountDownLatch> entry : latches.entrySet()) {
+            awaitResults.put(entry.getKey(), entry.getValue().await(5, TimeUnit.SECONDS));
+        }
+
+        Map<String, String> results = new HashMap<>();
+        for (Map.Entry<String, SplitClient> entry : clients.entrySet()) {
+            results.put(entry.getKey(), entry.getValue().getTreatment(splitName));
+        }
+
+        for (Map.Entry<String, Boolean> entry : awaitResults.entrySet()) {
+            assertTrue(entry.getValue());
+        }
+
+        for (Map.Entry<String, AtomicInteger> entry : readyTimes.entrySet()) {
+            assertEquals(1, entry.getValue().get());
+        }
+
+        for (Map.Entry<String, String> entry : bucketKeys.entrySet()) {
+            assertEquals(entry.getValue(), results.get(entry.getKey()));
+        }
+    }
+
     private void verifyEventExecution(SplitEvent event) throws InterruptedException {
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch readyLatch2 = new CountDownLatch(1);
@@ -139,10 +240,7 @@ public class SharedClientsIntegrationTest {
     private void loadSplitChanges() {
         FileHelper fileHelper = new FileHelper();
         mJsonChanges = new ArrayList<>();
-        for (int i = 0; i < 1; i++) {
-            String changes = fileHelper.loadFileContent(mContext, "split_changes_" + (i + 1) + ".json");
-            mJsonChanges.add(changes);
-        }
+        mJsonChanges.add(fileHelper.loadFileContent(mContext, "bucket_split_test.json"));
     }
 
     private void insertSplitsIntoDb() {
@@ -162,7 +260,6 @@ public class SharedClientsIntegrationTest {
 
         private final MockWebServer mWebServer = new MockWebServer();
         private final List<String> mJsonChanges;
-        private int mCurSplitReqId = 1;
         CountDownLatch mLatchTrack = null;
 
         ServerMock(List<String> jsonChanges) {
@@ -185,10 +282,9 @@ public class SharedClientsIntegrationTest {
                                 .setResponseCode(200)
                                 .setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment2\"}]}");
                     } else if (request.getPath().contains("/splitChanges")) {
-                        int r = mCurSplitReqId;
-                        mCurSplitReqId++;
                         return new MockResponse().setResponseCode(200)
-                                .setBody(splitsPerRequest(r));
+                                .setBody(splitsPerRequest());
+
                     } else if (request.getPath().contains("/events/bulk")) {
                         if (mLatchTrack != null) {
                             mLatchTrack.countDown();
@@ -206,12 +302,8 @@ public class SharedClientsIntegrationTest {
             return mWebServer.url("/").toString();
         }
 
-        private String splitsPerRequest(int reqId) {
-            int req = mJsonChanges.size() - 1;
-            if (reqId < req) {
-                req = reqId;
-            }
-            return mJsonChanges.get(req);
+        private String splitsPerRequest() {
+            return mJsonChanges.get(0);
         }
     }
 }

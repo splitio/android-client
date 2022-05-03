@@ -70,8 +70,8 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
         );
 
         eventsManager.getExecutorResources().setSplitClient(client);
-        trackNewClient(key.matchingKey(), client);
+        trackNewClient(key.matchingKey(), key.bucketingKey(), client);
 
-        mEventsManagerCoordinator.registerEventsManager(key.matchingKey(), eventsManager);
+        mEventsManagerCoordinator.registerEventsManager(key.matchingKey(), key.bucketingKey(), eventsManager);
     }
 }

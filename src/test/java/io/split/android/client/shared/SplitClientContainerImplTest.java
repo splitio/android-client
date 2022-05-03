@@ -2,6 +2,7 @@ package io.split.android.client.shared;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -248,6 +249,21 @@ public class SplitClientContainerImplTest {
         mClientContainer.getClient(newKey);
 
         verify(mSplitTaskExecutor).schedule(argThat(argument -> argument instanceof MySegmentsBackgroundSyncScheduleTask), eq(5L), any());
+    }
+
+    @Test
+    public void differentBucketingKeyDeliversNewClient() {
+        Key key = new Key("default_key");
+        Key keyWithBucketing = new Key("default_key", "bucketing_key");
+        SplitClient clientMock = mock(SplitClient.class);
+        SplitClient clientMock2 = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
+        when(mSplitClientFactory.getClient(eq(keyWithBucketing), any(), any(), anyBoolean())).thenReturn(clientMock2);
+
+        SplitClient client = mClientContainer.getClient(key);
+        SplitClient client2 = mClientContainer.getClient(keyWithBucketing);
+
+        assertNotEquals(client, client2);
     }
 
     @NonNull

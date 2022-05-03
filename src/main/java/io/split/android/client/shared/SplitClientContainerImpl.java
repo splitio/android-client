@@ -130,7 +130,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         MySegmentsTaskFactory mySegmentsTaskFactory = getMySegmentsTaskFactory(key, eventsManager);
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));
-        trackNewClient(key.matchingKey(), client);
+        trackNewClient(key.matchingKey(), key.bucketingKey(), client);
 
         mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager);
 
