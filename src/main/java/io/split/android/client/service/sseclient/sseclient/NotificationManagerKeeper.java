@@ -18,7 +18,6 @@ import io.split.android.client.service.sseclient.notifications.ControlNotificati
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.telemetry.model.streaming.OccupancyPriStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.OccupancySecStreamingEvent;
-import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
@@ -71,7 +70,7 @@ public class NotificationManagerKeeper {
                     mTelemetryRuntimeProducer.recordStreamingEvents(new StreamingStatusStreamingEvent(StreamingStatusStreamingEvent.Status.DISABLED, System.currentTimeMillis()));
                     break;
 
-                case STREAMING_ENABLED:
+                case STREAMING_RESUMED:
                     mIsStreamingActive.set(true);
                     if (publishersCount() > 0) {
                         mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
