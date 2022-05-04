@@ -14,14 +14,16 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
+import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
+import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 
 @Database(
         entities = {
                 MySegmentEntity.class, SplitEntity.class, EventEntity.class,
                 ImpressionEntity.class, GeneralInfoEntity.class, ImpressionsCountEntity.class,
-                AttributesEntity.class
+                AttributesEntity.class, UniqueKeyEntity.class
         },
-        version = 3
+        version = 4
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 
@@ -39,6 +41,8 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
 
     public abstract AttributesDao attributesDao();
 
+    public abstract UniqueKeysDao uniqueKeysDao();
+
     private volatile SplitQueryDao mSplitQueryDao;
 
     private static volatile Map<String, SplitRoomDatabase> mInstances = new ConcurrentHashMap<>();
@@ -53,7 +57,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
             if (instance == null) {
                 instance = Room.databaseBuilder(context.getApplicationContext(),
                         SplitRoomDatabase.class, databaseName)
-                        .fallbackToDestructiveMigrationFrom(1, 2)
+                        .fallbackToDestructiveMigrationFrom(1, 2, 3)
                         .build();
                 mInstances.put(databaseName, instance);
             }
