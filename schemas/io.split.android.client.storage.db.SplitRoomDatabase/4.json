@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "ff4803926b6d2b76f1e14facc02c4054",
+    "identityHash": "80e321e373fff9c186f01951aa7e1d0c",
     "entities": [
       {
         "tableName": "my_segments",
@@ -260,8 +260,14 @@
       },
       {
         "tableName": "unique_keys",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`user_key` TEXT NOT NULL, `feature_list` TEXT, `created_at` INTEGER NOT NULL, `status` INTEGER NOT NULL, PRIMARY KEY(`user_key`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `user_key` TEXT NOT NULL, `feature_list` TEXT, `created_at` INTEGER NOT NULL, `status` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
           {
             "fieldPath": "userKey",
             "columnName": "user_key",
@@ -289,7 +295,7 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "user_key"
+            "id"
           ],
           "autoGenerate": false
         },
@@ -300,7 +306,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ff4803926b6d2b76f1e14facc02c4054')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '80e321e373fff9c186f01951aa7e1d0c')"
     ]
   }
 }

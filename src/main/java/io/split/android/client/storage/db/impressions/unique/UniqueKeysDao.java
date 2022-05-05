@@ -16,7 +16,7 @@ public interface UniqueKeysDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(List<UniqueKeyEntity> uniqueKeyEntityList);
 
-    @Query("SELECT user_key, feature_list, created_at, status FROM unique_keys " +
+    @Query("SELECT id, user_key, feature_list, created_at, status FROM unique_keys " +
             "WHERE created_at >= :fromTimestamp " +
             "AND status = :status ORDER BY created_at LIMIT :maxRows")
     List<UniqueKeyEntity> getBy(long fromTimestamp, int status, int maxRows);
@@ -35,6 +35,9 @@ public interface UniqueKeysDao {
             "AND EXISTS(SELECT 1 FROM unique_keys AS imp WHERE imp.user_key = unique_keys.user_key LIMIT :maxRows)")
     int deleteByStatus(int status, long maxTimestamp, int maxRows);
 
-    @Query("SELECT user_key, feature_list, created_at, status FROM unique_keys")
+    @Query("SELECT id, user_key, feature_list, created_at, status FROM unique_keys")
     List<UniqueKeyEntity> getAll();
+
+    @Query("DELETE FROM unique_keys WHERE id IN (:ids)")
+    void deleteById(List<Long> ids);
 }

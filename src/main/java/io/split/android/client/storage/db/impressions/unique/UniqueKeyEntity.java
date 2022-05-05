@@ -11,6 +11,10 @@ import io.split.android.client.dtos.Identifiable;
 public class UniqueKeyEntity implements Identifiable {
 
     @PrimaryKey
+    @ColumnInfo(name = "id")
+    @NonNull
+    private long id;
+
     @ColumnInfo(name = "user_key")
     @NonNull
     private String userKey;
@@ -70,6 +74,10 @@ public class UniqueKeyEntity implements Identifiable {
 
     @Override
     public long getId() {
-        return userKey.hashCode();
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = userKey.hashCode();
     }
 }

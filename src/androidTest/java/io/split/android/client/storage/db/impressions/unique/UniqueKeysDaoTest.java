@@ -178,4 +178,14 @@ public class UniqueKeysDaoTest extends GenericDaoTest {
         List<UniqueKeyEntity> allEntities = mRoomDb.uniqueKeysDao().getAll();
         assertEquals(1, allEntities.size());
     }
+
+    @Test
+    public void deleteByPrimaryKey() {
+        UniqueKeyEntity key1Entity = new UniqueKeyEntity("key_1", "split1", 152010000, 1);
+        UniqueKeyEntity key2Entity = new UniqueKeyEntity("key_2", "split1", 152010000, 0);
+        UniqueKeyEntity key3Entity = new UniqueKeyEntity("key_3", "split1", 152010000, 1);
+        mRoomDb.uniqueKeysDao().insert(Arrays.asList(key1Entity, key2Entity, key3Entity));
+
+        mRoomDb.uniqueKeysDao().deleteById(Arrays.asList((long) "key_1".hashCode(), (long) "key_2".hashCode()));
+    }
 }

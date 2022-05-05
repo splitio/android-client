@@ -57,7 +57,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
             if (instance == null) {
                 instance = Room.databaseBuilder(context.getApplicationContext(),
                         SplitRoomDatabase.class, databaseName)
-                        .fallbackToDestructiveMigrationFrom(1, 2, 3)
+                        .fallbackToDestructiveMigration()
                         .build();
                 mInstances.put(databaseName, instance);
             }
