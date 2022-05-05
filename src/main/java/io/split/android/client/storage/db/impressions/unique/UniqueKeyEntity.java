@@ -33,6 +33,7 @@ public class UniqueKeyEntity implements Identifiable {
     }
 
     public UniqueKeyEntity(@NonNull String userKey, String featureList, long createdAt, int status) {
+        this.id = userKey.hashCode();
         this.userKey = userKey;
         this.featureList = featureList;
         this.createdAt = createdAt;
@@ -78,6 +79,6 @@ public class UniqueKeyEntity implements Identifiable {
     }
 
     public void setId(int id) {
-        this.id = userKey.hashCode();
+        this.id = id;
     }
 }

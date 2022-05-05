@@ -22,8 +22,8 @@ public interface UniqueKeysDao {
     List<UniqueKeyEntity> getBy(long fromTimestamp, int status, int maxRows);
 
     @Query("UPDATE unique_keys SET status = :status " +
-            " WHERE user_key IN (:userKeys)")
-    void updateStatus(List<String> userKeys, int status);
+            " WHERE id IN (:ids)")
+    void updateStatus(List<Long> ids, int status);
 
     @Query("DELETE FROM unique_keys WHERE user_key IN (:userKeys)")
     void delete(List<String> userKeys);
