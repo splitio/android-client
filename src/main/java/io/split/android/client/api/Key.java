@@ -47,7 +47,7 @@ public final class Key {
 
         Key other = (Key) o;
         return _matchingKey.equals(other._matchingKey) &&
-                _bucketingKey.equals(other._bucketingKey);
+                (_bucketingKey == null ? other._bucketingKey == null : _bucketingKey.equals(other._bucketingKey));
     }
 
     @Override
@@ -59,7 +59,9 @@ public final class Key {
         result ^= _matchingKey.hashCode();
 
         result *= 1000003;
-        result ^= _bucketingKey.hashCode();
+        if (_bucketingKey != null) {
+            result ^= _bucketingKey.hashCode();
+        }
 
         return result;
     }

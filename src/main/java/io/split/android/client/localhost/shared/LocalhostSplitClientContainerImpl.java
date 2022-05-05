@@ -60,7 +60,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
                 mSplitFactory,
                 this,
                 mConfig,
-                key.matchingKey(),
+                key,
                 mSplitStorage,
                 eventsManager,
                 mSplitParser,
@@ -70,8 +70,8 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
         );
 
         eventsManager.getExecutorResources().setSplitClient(client);
-        trackNewClient(key.matchingKey(), client);
+        trackNewClient(key, client);
 
-        mEventsManagerCoordinator.registerEventsManager(key.matchingKey(), eventsManager);
+        mEventsManagerCoordinator.registerEventsManager(key, eventsManager);
     }
 }

@@ -81,12 +81,12 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     }
 
     @Override
-    public void unregisterComponentsForKey(String key) {
-        mSseAuthenticator.unregisterKey(key);
-        mAttributesSynchronizerRegistry.unregisterAttributesSynchronizer(key);
-        mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(key);
-        mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(key);
-        mMySegmentsNotificationProcessorRegistry.unregisterMySegmentsProcessor(key);
+    public void unregisterComponentsForKey(Key key) {
+        mSseAuthenticator.unregisterKey(key.matchingKey());
+        mAttributesSynchronizerRegistry.unregisterAttributesSynchronizer(key.matchingKey());
+        mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(key.matchingKey());
+        mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(key.matchingKey());
+        mMySegmentsNotificationProcessorRegistry.unregisterMySegmentsProcessor(key.matchingKey());
     }
 
     private void registerMySegmentsSynchronization(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, SplitEventsManager eventsManager, LinkedBlockingDeque<MySegmentChangeNotification> notificationsQueue) {
@@ -116,7 +116,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     }
 
     private void registerEventsManager(Key key, SplitEventsManager eventsManager) {
-        mEventsManagerRegistry.registerEventsManager(key.matchingKey(), eventsManager);
+        mEventsManagerRegistry.registerEventsManager(key, eventsManager);
     }
 
     private void registerKeyInSeeAuthenticator(Key key) {
