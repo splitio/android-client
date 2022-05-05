@@ -114,8 +114,7 @@ public class UniqueKeysDaoTest extends GenericDaoTest {
 
     @Test
     public void updateStatus() {
-        List<String> userKeys = Arrays.asList("user_key", "user_key_1", "user_key_2");
-        for (String s : userKeys) {
+        for (String s : Arrays.asList("user_key", "user_key_1", "user_key_2")) {
             mRoomDb.uniqueKeysDao().insert(
                     new UniqueKeyEntity(s, "split1", 152050000, 0)
             );
@@ -167,11 +166,11 @@ public class UniqueKeysDaoTest extends GenericDaoTest {
     @Test
     public void deleteByStatus() {
         mRoomDb.uniqueKeysDao().insert(
-                Arrays.asList(
-                        new UniqueKeyEntity("key_1", "split1", 152010000, 1),
-                        new UniqueKeyEntity("key_2", "split1", 152010000, 0),
-                        new UniqueKeyEntity("key_3", "split1", 152010000, 1)
-                )
+            Arrays.asList(
+                    new UniqueKeyEntity("key_1", "split1", 152010000, 1),
+                    new UniqueKeyEntity("key_2", "split1", 152010000, 0),
+                    new UniqueKeyEntity("key_3", "split1", 152010000, 1)
+            )
         );
 
         mRoomDb.uniqueKeysDao().deleteByStatus(1, 152050000, 100);
