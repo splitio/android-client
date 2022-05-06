@@ -26,7 +26,7 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
         try {
             List<Object> loadedSplits = parser.parse(content);
             if (loadedSplits == null) {
-                Logger.e("Split file could not be parser because it is not in the correct format.");
+                Logger.e("Split file could not be parsed because it is not in the correct format.");
                 return null;
             }
 
@@ -35,7 +35,7 @@ public class LocalhostYamlFileParser implements LocalhostFileParser {
                 try {
                     addLoadedSplitToParsedSplits(splits, (Map<String, Object>) loadedSplit);
                 } catch (Exception exception) {
-                    Logger.e("An error has occurred while parsing a split" + (loadedSplit != null ? ("; source: '" + loadedSplit + "'") : ""));
+                    Logger.e("An error has occurred while parsing a split" + (loadedSplit != null ? (", source: '" + loadedSplit + "'") : ""));
                 }
             }
         } catch (Exception e) {
