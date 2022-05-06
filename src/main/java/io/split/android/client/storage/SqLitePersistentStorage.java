@@ -1,10 +1,11 @@
 package io.split.android.client.storage;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import com.google.common.collect.Lists;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,14 +13,8 @@ import java.util.List;
 import io.split.android.client.dtos.Identifiable;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.storage.db.ImpressionDao;
-import io.split.android.client.storage.db.ImpressionEntity;
-import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
-import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class SqLitePersistentStorage<E extends Identifiable, M extends Identifiable> {
 

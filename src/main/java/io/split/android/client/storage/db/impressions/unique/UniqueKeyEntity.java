@@ -3,14 +3,15 @@ package io.split.android.client.storage.db.impressions.unique;
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 import io.split.android.client.dtos.Identifiable;
 
-@Entity(tableName = "unique_keys")
+@Entity(tableName = "unique_keys", indices = {@Index(value = {"user_key"}, unique = true)})
 public class UniqueKeyEntity implements Identifiable {
 
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     @NonNull
     private long id;
@@ -33,7 +34,6 @@ public class UniqueKeyEntity implements Identifiable {
     }
 
     public UniqueKeyEntity(@NonNull String userKey, String featureList, long createdAt, int status) {
-        this.id = userKey.hashCode();
         this.userKey = userKey;
         this.featureList = featureList;
         this.createdAt = createdAt;

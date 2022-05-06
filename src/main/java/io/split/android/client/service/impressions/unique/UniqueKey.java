@@ -7,7 +7,11 @@ import com.google.gson.annotations.SerializedName;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UniqueKey {
+import io.split.android.client.dtos.Identifiable;
+
+public class UniqueKey implements Identifiable {
+
+    private transient long storageId;
 
     @SerializedName("k")
     private final String mKey;
@@ -32,6 +36,15 @@ public class UniqueKey {
     @NonNull
     public Set<String> getFeatures() {
         return mFeatures;
+    }
+
+    @Override
+    public long getId() {
+        return storageId;
+    }
+
+    public void setStorageId(long storageId) {
+        this.storageId = storageId;
     }
 
     @Override
