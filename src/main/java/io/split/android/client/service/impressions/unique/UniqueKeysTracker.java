@@ -1,10 +1,11 @@
 package io.split.android.client.service.impressions.unique;
 
+import java.util.Map;
+import java.util.Set;
+
 public interface UniqueKeysTracker {
 
     boolean track(String key, String featureName);
 
-    void start();
-
-    void stop();
+    Map<String, Set<String>> popAll();
 }
