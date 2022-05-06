@@ -12,6 +12,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
 import io.split.android.client.service.impressions.ImpressionsCount;
+import io.split.android.client.service.impressions.unique.MTK;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.Stats;
@@ -25,6 +26,7 @@ public class SplitApiFacade {
     private final HttpRecorder<List<Event>> mEventsRecorder;
     private final HttpRecorder<List<KeyImpression>> mImpressionsRecorder;
     private final HttpRecorder<ImpressionsCount> mImpressionsCountRecorder;
+    private final HttpRecorder<MTK> mUniqueKeysRecorder;
     private final HttpRecorder<Config> mTelemetryConfigRecorder;
     private final HttpRecorder<Stats> mTelemetryStatsRecorder;
 
@@ -34,6 +36,7 @@ public class SplitApiFacade {
                           @NonNull HttpRecorder<List<Event>> eventsRecorder,
                           @NonNull HttpRecorder<List<KeyImpression>> impressionsRecorder,
                           @NonNull HttpRecorder<ImpressionsCount> impressionsCountRecorder,
+                          @NonNull HttpRecorder<MTK> uniqueKeysRecorder,
                           @NonNull HttpRecorder<Config> telemetryConfigRecorder,
                           @NonNull HttpRecorder<Stats> telemetryStatsRecorder) {
         mSplitFetcher = checkNotNull(splitFetcher);
@@ -42,6 +45,7 @@ public class SplitApiFacade {
         mEventsRecorder = checkNotNull(eventsRecorder);
         mImpressionsRecorder = checkNotNull(impressionsRecorder);
         mImpressionsCountRecorder = checkNotNull(impressionsCountRecorder);
+        mUniqueKeysRecorder = checkNotNull(uniqueKeysRecorder);
         mTelemetryConfigRecorder = checkNotNull(telemetryConfigRecorder);
         mTelemetryStatsRecorder = checkNotNull(telemetryStatsRecorder);
     }
@@ -68,6 +72,10 @@ public class SplitApiFacade {
 
     public HttpRecorder<ImpressionsCount> getImpressionsCountRecorder() {
         return mImpressionsCountRecorder;
+    }
+
+    public HttpRecorder<MTK> getUniqueKeysRecorder() {
+        return mUniqueKeysRecorder;
     }
 
     public HttpRecorder<Config> getTelemetryConfigRecorder() {
