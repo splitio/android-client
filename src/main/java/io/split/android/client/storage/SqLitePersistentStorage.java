@@ -1,5 +1,7 @@
 package io.split.android.client.storage;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import com.google.common.collect.Lists;
@@ -13,8 +15,6 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.logger.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public abstract class SqLitePersistentStorage<E extends Identifiable, M extends Identifiable> {
 

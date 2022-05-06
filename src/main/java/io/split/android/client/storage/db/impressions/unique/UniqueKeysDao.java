@@ -11,10 +11,10 @@ import java.util.List;
 public interface UniqueKeysDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(UniqueKeyEntity uniqueKeyEntity);
+    long insert(UniqueKeyEntity uniqueKeyEntity);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(List<UniqueKeyEntity> uniqueKeyEntityList);
+    List<Long> insert(List<UniqueKeyEntity> uniqueKeyEntityList);
 
     @Query("SELECT id, user_key, feature_list, created_at, status FROM unique_keys " +
             "WHERE created_at >= :fromTimestamp " +
