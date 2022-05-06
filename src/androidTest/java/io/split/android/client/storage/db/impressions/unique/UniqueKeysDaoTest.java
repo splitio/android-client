@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -114,13 +115,14 @@ public class UniqueKeysDaoTest extends GenericDaoTest {
 
     @Test
     public void updateStatus() {
+        List<Long> ids = new ArrayList<>();
         for (String s : Arrays.asList("user_key", "user_key_1", "user_key_2")) {
-            mRoomDb.uniqueKeysDao().insert(
+            ids.add(mRoomDb.uniqueKeysDao().insert(
                     new UniqueKeyEntity(s, "split1", 152050000, 0)
-            );
+            ));
         }
 
-        mRoomDb.uniqueKeysDao().updateStatus(Arrays.asList((long) "user_key".hashCode(), (long) "user_key_1".hashCode()), 1);
+        mRoomDb.uniqueKeysDao().updateStatus(Arrays.asList(ids.get(0), ids.get(1)), 1);
         List<UniqueKeyEntity> allEntities = mRoomDb.uniqueKeysDao().getAll();
         assertEquals(1, allEntities.get(0).getStatus());
         assertEquals(1, allEntities.get(1).getStatus());

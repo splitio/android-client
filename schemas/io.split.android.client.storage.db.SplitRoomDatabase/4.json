@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "80e321e373fff9c186f01951aa7e1d0c",
+    "identityHash": "a996d1e0f5e8da089a69b3bfe5fa8a1f",
     "entities": [
       {
         "tableName": "my_segments",
@@ -260,7 +260,7 @@
       },
       {
         "tableName": "unique_keys",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `user_key` TEXT NOT NULL, `feature_list` TEXT, `created_at` INTEGER NOT NULL, `status` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `user_key` TEXT NOT NULL, `feature_list` TEXT, `created_at` INTEGER NOT NULL, `status` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -297,7 +297,7 @@
           "columnNames": [
             "id"
           ],
-          "autoGenerate": false
+          "autoGenerate": true
         },
         "indices": [],
         "foreignKeys": []
@@ -306,7 +306,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '80e321e373fff9c186f01951aa7e1d0c')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a996d1e0f5e8da089a69b3bfe5fa8a1f')"
     ]
   }
 }
