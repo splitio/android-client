@@ -99,7 +99,7 @@ public class SqlitePersistentUniqueStorageTest {
         UniqueKeyEntity uniqueKeyEntity = mStorage.entityForModel(model);
 
         assertEquals("key", uniqueKeyEntity.getUserKey());
-        assertEquals("key".hashCode(), uniqueKeyEntity.getId());
+        assertEquals(0, uniqueKeyEntity.getId());
         assertEquals("[\"split_1\",\"split_2\"]", uniqueKeyEntity.getFeatureList());
         assertEquals(0, uniqueKeyEntity.getStatus());
         assertTrue(uniqueKeyEntity.getCreatedAt() > 0);
