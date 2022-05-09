@@ -339,6 +339,12 @@ public class SynchronizerTest {
     }
 
     @Test
+    public void pushImpressionDelegatesToImpressionManager() {
+//        mSynchronizer.pushImpression(createImpression()); TODO
+//        verify(mImpressionManager).pushImpression(); TODO
+    }
+
+    @Test
     public void pushImpression() throws InterruptedException {
 
         SplitClientConfig config = SplitClientConfig.builder()
