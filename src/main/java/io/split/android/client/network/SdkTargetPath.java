@@ -15,29 +15,30 @@ public class SdkTargetPath {
     public static final String SSE_AUTHENTICATION = "/auth";
     public static final String TELEMETRY_CONFIG = "/metrics/config";
     public static final String TELEMETRY_STATS = "/metrics/usage";
+    public static final String UNIQUE_KEYS = "/keys/cs";
 
-    public static final URI splitChanges(String baseUrl, String queryString) throws URISyntaxException {
+    public static URI splitChanges(String baseUrl, String queryString) throws URISyntaxException {
         return buildUrl(baseUrl, SPLIT_CHANGES, queryString);
     }
 
-    public static final URI mySegments(String baseUrl, String key) throws URISyntaxException {
+    public static URI mySegments(String baseUrl, String key) throws URISyntaxException {
         String encodedKey = key != null ? UrlEscapers.urlPathSegmentEscaper().escape(key) : null;
         return buildUrl(baseUrl, MY_SEGMENTS + "/" + encodedKey);
     }
 
-    public static final URI events(String baseUrl) throws URISyntaxException {
+    public static URI events(String baseUrl) throws URISyntaxException {
         return buildUrl(baseUrl, EVENTS);
     }
 
-    public static final URI impressions(String baseUrl) throws URISyntaxException {
+    public static URI impressions(String baseUrl) throws URISyntaxException {
         return buildUrl(baseUrl, IMPRESSIONS);
     }
 
-    public static final URI impressionsCount(String baseUrl) throws URISyntaxException {
+    public static URI impressionsCount(String baseUrl) throws URISyntaxException {
         return buildUrl(baseUrl, IMPRESSIONS_COUNT);
     }
 
-    public static final URI sseAuthentication(String baseUrl) throws URISyntaxException {
+    public static URI sseAuthentication(String baseUrl) throws URISyntaxException {
         return buildUrl(baseUrl, SSE_AUTHENTICATION);
     }
 
@@ -47,6 +48,10 @@ public class SdkTargetPath {
 
     public static URI telemetryStats(String baseUrl) throws URISyntaxException {
         return buildUrl(baseUrl, TELEMETRY_STATS);
+    }
+
+    public static URI uniqueKeys(String baseUrl) throws URISyntaxException {
+        return buildUrl(baseUrl, UNIQUE_KEYS);
     }
 
     private static URI buildUrl(String baseUrl, String path) throws URISyntaxException {

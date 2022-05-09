@@ -158,6 +158,8 @@ class SplitFactoryHelper {
                         splitClientConfig.eventsEndpoint()),
                 ServiceFactory.getImpressionsCountRecorder(networkHelper, httpClient,
                         splitClientConfig.eventsEndpoint()),
+                ServiceFactory.getUniqueKeysRecorder(networkHelper, httpClient,
+                        splitClientConfig.telemetryEndpoint()),
                 ServiceFactory.getTelemetryConfigRecorder(networkHelper, httpClient,
                         splitClientConfig.telemetryEndpoint()),
                 ServiceFactory.getTelemetryStatsRecorder(networkHelper, httpClient,
