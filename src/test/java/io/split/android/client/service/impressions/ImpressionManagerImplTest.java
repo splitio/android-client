@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +30,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.fake.SplitTaskExecutorStub;
 
@@ -208,6 +210,21 @@ public class ImpressionManagerImplTest {
         verify(mTaskExecutor, times(0)).submit(any(SaveImpressionsCountTask.class), eq(null));
         verify(mTaskExecutor).stopTask("id_1");
         verify(mTaskExecutor).stopTask(null);
+    }
+
+    @Test
+    public void pushImpressionRecordsInTelemetry() {
+
+        mImpressionsManager.pushImpression(new Impression("key",
+                "key",
+                "split",
+                "treatment",
+                10000,
+                "rule",
+                25L,
+                Collections.emptyMap()));
+
+        verify(mTelemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
     }
 
     private Impression createImpression() {

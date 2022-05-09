@@ -69,7 +69,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @NonNull AttributesSynchronizerRegistryImpl attributesSynchronizerRegistry,
-                            @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry) {
+                            @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry,
+                            @NonNull ImpressionManager impressionManager) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsTaskExecutor = splitSingleThreadTaskExecutor;
@@ -84,21 +85,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mMySegmentsSynchronizerRegistry = checkNotNull(mySegmentsSynchronizerRegistry);
+        mImpressionManager = checkNotNull(impressionManager);
 
         setupListeners();
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
 
-        mImpressionManager = new ImpressionManagerImpl(taskExecutor,
-                splitTaskFactory,
-                telemetryRuntimeProducer,
-                mSplitsStorageContainer.getImpressionsStorage(),
-                new ImpressionManagerImpl.ImpressionManagerConfig(
-                        mSplitClientConfig.impressionsRefreshRate(),
-                        mSplitClientConfig.impressionsCounterRefreshRate(),
-                        mSplitClientConfig.impressionsMode(),
-                        mSplitClientConfig.impressionsQueueSize(),
-                        mSplitClientConfig.impressionsChunkSize()
-                ));
 
         if (mSplitClientConfig.synchronizeInBackground()) {
             mWorkManagerWrapper.setFetcherExecutionListener(this);
