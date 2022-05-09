@@ -1,3 +1,8 @@
+2.10.2 (May 9, 2022)
+- Added support for resumed streaming event.
+- SplitClient instances are tracked by key.
+- Improved logging and error handling when encountering incorrect format in splits file for localhost mode.
+
 2.10.1 (Apr 25, 2022)
 - Updated the synchronization flow to be more reliable in the event of an edge case generating delay in cache purge propagation, keeping the SDK cache properly synced.
 - Fixed issue that converted certain values in event properties to scientific notation.
