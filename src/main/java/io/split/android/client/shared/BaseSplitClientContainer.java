@@ -14,7 +14,7 @@ import io.split.android.client.api.Key;
 
 public abstract class BaseSplitClientContainer implements SplitClientContainer {
 
-    private final ConcurrentMap<String, SplitClient> mClientInstances = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Key, SplitClient> mClientInstances = new ConcurrentHashMap<>();
     private final Object mClientCreationLock = new Object();
 
     @Override
@@ -23,7 +23,7 @@ public abstract class BaseSplitClientContainer implements SplitClientContainer {
     }
 
     @Override
-    public void remove(String key) {
+    public void remove(Key key) {
         mClientInstances.remove(key);
     }
 
@@ -34,23 +34,29 @@ public abstract class BaseSplitClientContainer implements SplitClientContainer {
 
     private SplitClient getOrCreateClientForKey(Key key) {
         synchronized (mClientCreationLock) {
-            if (mClientInstances.get(key.matchingKey()) != null) {
-                return mClientInstances.get(key.matchingKey());
+            if (mClientInstances.get(key) != null) {
+                return mClientInstances.get(key);
             }
 
             createNewClient(key);
         }
 
-        return mClientInstances.get(key.matchingKey());
+        return mClientInstances.get(key);
     }
 
     @NonNull
     protected Set<String> getKeySet() {
-        return mClientInstances.keySet();
+        Set<Key> keys = mClientInstances.keySet();
+        Set<String> matchingKeys = new HashSet<>();
+        for (Key key : keys) {
+            matchingKeys.add(key.matchingKey());
+        }
+
+        return matchingKeys;
     }
 
-    protected void trackNewClient(String matchingKey, SplitClient client) {
-        mClientInstances.put(matchingKey, client);
+    protected void trackNewClient(Key key, SplitClient client) {
+        mClientInstances.put(key, client);
     }
 
     @ForOverride

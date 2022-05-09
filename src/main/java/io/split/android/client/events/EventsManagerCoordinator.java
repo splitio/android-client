@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import io.split.android.client.api.Key;
 import io.split.android.client.utils.Logger;
 
 /**
@@ -12,7 +13,7 @@ import io.split.android.client.utils.Logger;
  */
 public class EventsManagerCoordinator extends BaseEventsManager implements ISplitEventsManager, EventsManagerRegistry {
 
-    private final ConcurrentMap<String, ISplitEventsManager> mChildren = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Key, ISplitEventsManager> mChildren = new ConcurrentHashMap<>();
     private final Object mEventLock = new Object();
 
     @Override
@@ -50,16 +51,16 @@ public class EventsManagerCoordinator extends BaseEventsManager implements ISpli
     }
 
     @Override
-    public void registerEventsManager(String matchingKey, ISplitEventsManager splitEventsManager) {
-        mChildren.put(matchingKey, splitEventsManager);
+    public void registerEventsManager(Key key, ISplitEventsManager splitEventsManager) {
+        mChildren.put(key, splitEventsManager);
 
         // Inform the newly registered events manager of any events that occurred prior to registration
         propagateTriggeredEvents(splitEventsManager);
     }
 
     @Override
-    public void unregisterEventsManager(String matchingKey) {
-        mChildren.remove(matchingKey);
+    public void unregisterEventsManager(Key key) {
+        mChildren.remove(key);
     }
 
     private void propagateTriggeredEvents(ISplitEventsManager splitEventsManager) {

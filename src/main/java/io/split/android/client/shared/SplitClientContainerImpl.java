@@ -119,7 +119,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     }
 
     @Override
-    public void remove(String key) {
+    public void remove(Key key) {
         super.remove(key);
         mClientComponentsRegister.unregisterComponentsForKey(key);
     }
@@ -130,7 +130,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         MySegmentsTaskFactory mySegmentsTaskFactory = getMySegmentsTaskFactory(key, eventsManager);
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));
-        trackNewClient(key.matchingKey(), client);
+        trackNewClient(key, client);
 
         mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager);
 

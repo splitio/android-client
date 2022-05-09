@@ -16,6 +16,7 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitResult;
+import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.SplitEvent;
@@ -42,7 +43,7 @@ import io.split.android.grammar.Treatments;
 public final class LocalhostSplitClient implements SplitClient {
     private final WeakReference<LocalhostSplitFactory> mFactoryRef;
     private final WeakReference<SplitClientContainer> mClientContainer;
-    private final String mKey;
+    private final Key mKey;
     private final SplitEventsManager mEventsManager;
     private final Evaluator mEvaluator;
     private final TreatmentManager mTreatmentManager;
@@ -51,7 +52,7 @@ public final class LocalhostSplitClient implements SplitClient {
     public LocalhostSplitClient(@NonNull LocalhostSplitFactory container,
                                 @NonNull SplitClientContainer clientContainer,
                                 @NonNull SplitClientConfig splitClientConfig,
-                                @NonNull String key,
+                                @NonNull Key key,
                                 @NonNull SplitsStorage splitsStorage,
                                 @NonNull SplitEventsManager eventsManager,
                                 @NonNull SplitParser splitParser,
@@ -64,7 +65,7 @@ public final class LocalhostSplitClient implements SplitClient {
         mKey = checkNotNull(key);
         mEventsManager = checkNotNull(eventsManager);
         mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
-        mTreatmentManager = new TreatmentManagerImpl(mKey, null,
+        mTreatmentManager = new TreatmentManagerImpl(mKey.matchingKey(), mKey.bucketingKey(),
                 mEvaluator, new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
                 splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger, telemetryStorageProducer);

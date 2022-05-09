@@ -1,5 +1,6 @@
 package tests.integration.streaming;
 
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertEquals;
 import static java.lang.Thread.sleep;
 
@@ -130,14 +131,14 @@ public class ControlTest {
         String treatmentPaused = mClient.getTreatment(splitName);
         // Enable streaming, push a new my segments payload update and check data again
         synchronizerSpy.stopPeriodicFetchLatch = new CountDownLatch(1);
-        pushControl("STREAMING_ENABLED");
+        pushControl("STREAMING_RESUMED");
         synchronizerSpy.stopPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
-        StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
+        assertTrue(StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
             if (event instanceof StreamingStatusStreamingEvent) {
                 return event.getEventData().intValue() == 1;
             }
             return false;
-        });
+        }));
 
         updateTask.mLatch = new CountDownLatch(1);
         pushMySegmentsUpdatePayload("new_segment");
@@ -151,12 +152,6 @@ public class ControlTest {
         updateTask.mLatch.await(5, TimeUnit.SECONDS);
         pushMySegmentsUpdatePayload("new_segment");
         sleep(1000);
-        StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
-            if (event instanceof StreamingStatusStreamingEvent) {
-                return event.getEventData().intValue() == 0;
-            }
-            return false;
-        });
 
         TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
         assertEquals(1, telemetryStorage.popTokenRefreshes());
