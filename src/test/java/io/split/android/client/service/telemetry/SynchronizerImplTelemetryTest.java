@@ -29,6 +29,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -56,6 +57,8 @@ public class SynchronizerImplTelemetryTest {
     AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     @Mock
     MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
+    @Mock
+    ImpressionManager mImpressionManager;
 
     private SynchronizerImpl mSynchronizer;
 
@@ -93,7 +96,8 @@ public class SynchronizerImplTelemetryTest {
                 mRetryBackoffCounterFactory,
                 mTelemetryRuntimeProducer,
                 mAttributesSynchronizerRegistry,
-                mMySegmentsSynchronizerRegistry);
+                mMySegmentsSynchronizerRegistry,
+                mImpressionManager);
     }
 
     @Test
@@ -102,20 +106,5 @@ public class SynchronizerImplTelemetryTest {
         mSynchronizer.pushEvent(new Event());
 
         verify(mTelemetryRuntimeProducer).recordEventStats(EventsDataRecordsEnum.EVENTS_QUEUED, 1);
-    }
-
-    @Test
-    public void pushImpressionRecordsInTelemetry() {
-
-        mSynchronizer.pushImpression(new Impression("key",
-                "key",
-                "split",
-                "treatment",
-                10000,
-                "rule",
-                25L,
-                Collections.emptyMap()));
-
-        verify(mTelemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
     }
 }
