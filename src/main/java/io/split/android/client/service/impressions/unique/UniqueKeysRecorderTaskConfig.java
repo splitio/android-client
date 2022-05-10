@@ -3,12 +3,10 @@ package io.split.android.client.service.impressions.unique;
 public class UniqueKeysRecorderTaskConfig {
 
     private final int mElementsPerPush;
-    private final int mMaxSizeInBytes;
-    private final int mEstimatedSizeInBytes;
+    private final long mEstimatedSizeInBytes;
 
-    public UniqueKeysRecorderTaskConfig(int elementsPerPush, int maxSizeInBytes, int estimatedSizeInByes) {
+    public UniqueKeysRecorderTaskConfig(int elementsPerPush, long estimatedSizeInByes) {
         mElementsPerPush = elementsPerPush;
-        mMaxSizeInBytes = maxSizeInBytes;
         mEstimatedSizeInBytes = estimatedSizeInByes;
     }
 
@@ -16,11 +14,7 @@ public class UniqueKeysRecorderTaskConfig {
         return mElementsPerPush;
     }
 
-    public int getMaxSizeInBytes() {
-        return mMaxSizeInBytes;
-    }
-
-    public int getEstimatedSizeInBytes() {
+    public long getEstimatedSizeInBytes() {
         return mEstimatedSizeInBytes;
     }
 }

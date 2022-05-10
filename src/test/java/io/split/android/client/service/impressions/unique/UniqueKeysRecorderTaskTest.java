@@ -43,7 +43,7 @@ public class UniqueKeysRecorderTaskTest {
         mRecorderTask = new UniqueKeysRecorderTask(
                 mRecorder,
                 mStorage,
-                new UniqueKeysRecorderTaskConfig(10, 2048, 128000)
+                new UniqueKeysRecorderTaskConfig(10, 128000)
         );
     }
 
