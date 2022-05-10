@@ -17,7 +17,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.InBytesSizable;
 import io.split.android.client.storage.StoragePusher;
 
-class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHelper<T> {
+public class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHelper<T> {
 
     private final StoragePusher<T> mStorage;
     private final SplitTaskExecutor mSplitTaskExecutor;
