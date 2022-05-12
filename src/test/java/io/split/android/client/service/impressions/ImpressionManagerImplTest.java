@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -28,6 +29,9 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask;
+import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
+import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
@@ -49,6 +53,9 @@ public class ImpressionManagerImplTest {
     @Mock
     private PersistentImpressionsStorage mImpressionsStorage;
 
+    @Mock
+    private UniqueKeysTracker mUniqueKeysTracker;
+
     private ImpressionManagerImpl.ImpressionManagerConfig mConfig;
 
     @Before
@@ -59,16 +66,19 @@ public class ImpressionManagerImplTest {
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createImpressionsCountRecorderTask()).thenReturn(mock(ImpressionsCountRecorderTask.class));
         when(mTaskFactory.createSaveImpressionsCountTask(any())).thenReturn(mock(SaveImpressionsCountTask.class));
+        when(mTaskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(mock(SaveUniqueImpressionsTask.class));
+        when(mTaskFactory.createUniqueImpressionsRecorderTask()).thenReturn(mock(UniqueKeysRecorderTask.class));
 
         mConfig = new ImpressionManagerImpl.ImpressionManagerConfig(
                 1800,
                 1800,
                 ImpressionsMode.OPTIMIZED,
                 3,
-                2048
+                2048,
+                500
         );
         mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
-                mImpressionsStorage, mConfig);
+                mImpressionsStorage, mUniqueKeysTracker, mConfig);
     }
 
     @Test
@@ -168,6 +178,27 @@ public class ImpressionManagerImplTest {
     }
 
     @Test
+    public void flushWithNoneMode() {
+        mImpressionsManager = getNoneModeManager();
+
+        mImpressionsManager.flush();
+
+        verify(mTaskExecutor).executeSerially(argThat(new ArgumentMatcher<List<SplitTaskBatchItem>>() {
+            @Override
+            public boolean matches(List<SplitTaskBatchItem> argument) {
+                return argument.size() == 2 && argument.get(0).getTask() instanceof SaveImpressionsCountTask && argument.get(1).getTask() instanceof ImpressionsCountRecorderTask;
+            }
+        }));
+
+        verify(mTaskExecutor).executeSerially(argThat(new ArgumentMatcher<List<SplitTaskBatchItem>>() {
+            @Override
+            public boolean matches(List<SplitTaskBatchItem> argument) {
+                return argument.size() == 2 && argument.get(0).getTask() instanceof SaveUniqueImpressionsTask && argument.get(1).getTask() instanceof UniqueKeysRecorderTask;
+            }
+        }));
+    }
+
+    @Test
     public void startPeriodicRecording() {
         mImpressionsManager.startPeriodicRecording();
 
@@ -183,6 +214,16 @@ public class ImpressionManagerImplTest {
 
         verify(mTaskExecutor).schedule(any(ImpressionsRecorderTask.class), eq(0L), eq(1800L), any(RecorderSyncHelper.class));
         verify(mTaskExecutor, times(0)).schedule(any(ImpressionsCountRecorderTask.class), eq(0L), eq(1800L), eq(null));
+    }
+
+    @Test
+    public void startPeriodicRecordingNoneMode() {
+        mImpressionsManager = getNoneModeManager();
+
+        mImpressionsManager.startPeriodicRecording();
+
+        verify(mTaskExecutor).schedule(any(UniqueKeysRecorderTask.class), eq(0L), eq(500), eq(null));
+        verify(mTaskExecutor).schedule(any(ImpressionsCountRecorderTask.class), eq(0L), eq(1800L), eq(null));
     }
 
     @Test
@@ -209,6 +250,22 @@ public class ImpressionManagerImplTest {
 
         verify(mTaskExecutor, times(0)).submit(any(SaveImpressionsCountTask.class), eq(null));
         verify(mTaskExecutor).stopTask("id_1");
+        verify(mTaskExecutor, times(2)).stopTask(null);
+    }
+
+    @Test
+    public void stopPeriodicRecordingNoneMode() {
+        mImpressionsManager = getNoneModeManager();
+
+        when(mTaskExecutor.schedule(any(ImpressionsCountRecorderTask.class), eq(0L), eq(1800L), eq(null))).thenReturn("id_2");
+        when(mTaskExecutor.schedule(any(UniqueKeysRecorderTask.class), eq(0L), eq(500L), eq(null))).thenReturn("id_3");
+
+        mImpressionsManager.startPeriodicRecording();
+        mImpressionsManager.stopPeriodicRecording();
+
+        verify(mTaskExecutor, times(0)).submit(any(ImpressionsRecorderTask.class), eq(null));
+        verify(mTaskExecutor).stopTask("id_2");
+        verify(mTaskExecutor).stopTask("id_3");
         verify(mTaskExecutor).stopTask(null);
     }
 
@@ -240,12 +297,28 @@ public class ImpressionManagerImplTest {
     @NonNull
     private ImpressionManagerImpl getDebugModeManager() {
         return new ImpressionManagerImpl(mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
-                mImpressionsStorage, new ImpressionManagerImpl.ImpressionManagerConfig(
-                1800,
-                1800,
-                ImpressionsMode.DEBUG,
-                3,
-                2048
-        ));
+                mImpressionsStorage, mUniqueKeysTracker,
+                new ImpressionManagerImpl.ImpressionManagerConfig(
+                        1800,
+                        1800,
+                        ImpressionsMode.DEBUG,
+                        3,
+                        2048,
+                        500
+                ));
+    }
+
+    @NonNull
+    private ImpressionManagerImpl getNoneModeManager() {
+        return new ImpressionManagerImpl(mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
+                mImpressionsStorage, mUniqueKeysTracker,
+                new ImpressionManagerImpl.ImpressionManagerConfig(
+                        1800,
+                        1800,
+                        ImpressionsMode.NONE,
+                        3,
+                        2048,
+                        500
+                ));
     }
 }

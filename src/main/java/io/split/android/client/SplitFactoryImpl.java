@@ -25,6 +25,7 @@ import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.impressions.ImpressionManagerImpl;
+import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.notifications.MySegmentsPayloadDecoder;
@@ -173,12 +174,14 @@ public class SplitFactoryImpl implements SplitFactory {
                         splitTaskFactory,
                         mStorageContainer.getTelemetryStorage(),
                         mStorageContainer.getImpressionsStorage(),
+                        new UniqueKeysTrackerImpl(),
                         new ImpressionManagerImpl.ImpressionManagerConfig(
                                 config.impressionsRefreshRate(),
                                 config.impressionsCounterRefreshRate(),
                                 config.impressionsMode(),
                                 config.impressionsQueueSize(),
-                                config.impressionsChunkSize()
+                                config.impressionsChunkSize(),
+                                config.mtkRefreshRate()
                         )));
 
         // Only available for integration tests
