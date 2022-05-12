@@ -222,7 +222,7 @@ public class ImpressionManagerImplTest {
 
         mImpressionsManager.startPeriodicRecording();
 
-        verify(mTaskExecutor).schedule(any(UniqueKeysRecorderTask.class), eq(0L), eq(500), eq(null));
+        verify(mTaskExecutor).schedule(any(UniqueKeysRecorderTask.class), eq(0L), eq(500L), eq(null));
         verify(mTaskExecutor).schedule(any(ImpressionsCountRecorderTask.class), eq(0L), eq(1800L), eq(null));
     }
 
