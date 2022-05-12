@@ -69,6 +69,10 @@ public class ImpressionManagerImpl implements ImpressionManager {
 
         if (isNoneImpressionsMode()) {
             mUniqueKeysTracker.track(impression.key(), impression.split());
+
+            if (mUniqueKeysTracker.size() >= ServiceConstants.MAX_UNIQUE_KEYS_IN_MEMORY) {
+                saveUniqueKeys();
+            }
         }
 
         if (!shouldTrackImpressionsCount() || (!isNoneImpressionsMode() && shouldPushImpression(keyImpression))) {

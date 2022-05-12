@@ -154,6 +154,17 @@ public class ImpressionManagerImplTest {
     }
 
     @Test
+    public void pushImpressionWithNoneModeSavesKeysWhenCacheSizeIsExceeded() {
+        when(mUniqueKeysTracker.size()).thenReturn(30000);
+
+        mImpressionsManager = getNoneModeManager();
+
+        mImpressionsManager.pushImpression(createUniqueImpression());
+
+        verify(mTaskExecutor).submit(any(SaveUniqueImpressionsTask.class), eq(null));
+    }
+
+    @Test
     public void flushWithOptimizedMode() {
 
         ArgumentCaptor<List<SplitTaskBatchItem>> listArgumentCaptor = ArgumentCaptor.forClass(List.class);
