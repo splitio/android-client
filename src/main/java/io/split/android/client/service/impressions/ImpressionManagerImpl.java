@@ -103,6 +103,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
     @Override
     public void stopPeriodicRecording() {
         saveImpressionsCount();
+        saveUniqueKeys();
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
         mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
         mTaskExecutor.stopTask(mUniqueKeysRecorderTaskId);
@@ -179,6 +180,14 @@ public class ImpressionManagerImpl implements ImpressionManager {
         }
         mTaskExecutor.submit(
                 mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null);
+    }
+
+    private void saveUniqueKeys() {
+        if (!isNoneImpressionsMode()) {
+            return;
+        }
+        mTaskExecutor.submit(
+                mSplitTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()), null);
     }
 
     public static class ImpressionManagerConfig {

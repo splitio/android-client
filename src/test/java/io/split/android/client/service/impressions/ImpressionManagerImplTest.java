@@ -264,6 +264,8 @@ public class ImpressionManagerImplTest {
         mImpressionsManager.stopPeriodicRecording();
 
         verify(mTaskExecutor, times(0)).submit(any(ImpressionsRecorderTask.class), eq(null));
+        verify(mTaskExecutor).submit(any(SaveImpressionsCountTask.class), eq(null));
+        verify(mTaskExecutor).submit(any(SaveUniqueImpressionsTask.class), eq(null));
         verify(mTaskExecutor).stopTask("id_2");
         verify(mTaskExecutor).stopTask("id_3");
         verify(mTaskExecutor).stopTask(null);
