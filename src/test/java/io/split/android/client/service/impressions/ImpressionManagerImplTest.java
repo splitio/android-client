@@ -34,6 +34,7 @@ import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
+import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
@@ -57,6 +58,12 @@ public class ImpressionManagerImplTest {
 
     @Mock
     private UniqueKeysTracker mUniqueKeysTracker;
+
+    @Mock
+    private RecorderSyncHelper<KeyImpression> mRecorderSyncHelper;
+
+    @Mock
+    private RetryBackoffCounterTimer mUniqueKeysCounterTimer;
 
     private ImpressionManagerImpl.ImpressionManagerConfig mConfig;
 
@@ -192,7 +199,19 @@ public class ImpressionManagerImplTest {
 
     @Test
     public void flushWithNoneMode() {
-        mImpressionsManager = getNoneModeManager();
+        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
+                mTaskFactory,
+                mTelemetryRuntimeProducer,
+                mUniqueKeysTracker,
+                new ImpressionManagerImpl.ImpressionManagerConfig(
+                        1800,
+                        1800,
+                        ImpressionsMode.NONE,
+                        3,
+                        2048,
+                        500
+                ),
+                mRecorderSyncHelper, mUniqueKeysCounterTimer);
 
         mImpressionsManager.flush();
 
@@ -204,13 +223,15 @@ public class ImpressionManagerImplTest {
             }
         }), eq(null));
 
-        verify(mTaskExecutor).submit(argThat(new ArgumentMatcher<SplitTaskSerialWrapper>() {
+        verify(mUniqueKeysCounterTimer).setTask(argThat(new ArgumentMatcher<SplitTaskSerialWrapper>() {
             @Override
             public boolean matches(SplitTaskSerialWrapper argument) {
                 List<SplitTask> taskList = argument.getTaskList();
                 return taskList.size() == 2 && taskList.get(0) instanceof SaveUniqueImpressionsTask && taskList.get(1) instanceof UniqueKeysRecorderTask;
             }
-        }), eq(null));
+        }));
+
+        verify(mUniqueKeysCounterTimer).start();
     }
 
     @Test
@@ -270,7 +291,19 @@ public class ImpressionManagerImplTest {
 
     @Test
     public void stopPeriodicRecordingNoneMode() {
-        mImpressionsManager = getNoneModeManager();
+        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
+                mTaskFactory,
+                mTelemetryRuntimeProducer,
+                mUniqueKeysTracker,
+                new ImpressionManagerImpl.ImpressionManagerConfig(
+                        1800,
+                        1800,
+                        ImpressionsMode.NONE,
+                        3,
+                        2048,
+                        500
+                ),
+                mRecorderSyncHelper, mUniqueKeysCounterTimer);
 
         when(mTaskExecutor.schedule(any(ImpressionsCountRecorderTask.class), eq(0L), eq(1800L), eq(null))).thenReturn("id_2");
         when(mTaskExecutor.schedule(any(UniqueKeysRecorderTask.class), eq(0L), eq(500L), eq(null))).thenReturn("id_3");
@@ -284,6 +317,7 @@ public class ImpressionManagerImplTest {
         verify(mTaskExecutor).stopTask("id_2");
         verify(mTaskExecutor).stopTask("id_3");
         verify(mTaskExecutor).stopTask(null);
+        verify(mUniqueKeysCounterTimer).stop();
     }
 
     @Test
