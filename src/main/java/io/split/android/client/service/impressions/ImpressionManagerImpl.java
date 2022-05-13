@@ -4,17 +4,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
-import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
@@ -162,20 +158,18 @@ public class ImpressionManagerImpl implements ImpressionManager {
         if (!shouldTrackImpressionsCount()) {
             return;
         }
-        List<SplitTaskBatchItem> enqueued = new ArrayList<>();
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null));
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createImpressionsCountRecorderTask(), null));
-        mTaskExecutor.executeSerially(enqueued);
+        mTaskExecutor.submit(new SplitTaskSerialWrapper(
+                mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
+                mSplitTaskFactory.createImpressionsCountRecorderTask()), null);
     }
 
     private void flushUniqueKeys() {
         if (!isNoneImpressionsMode()) {
             return;
         }
-        List<SplitTaskBatchItem> enqueued = new ArrayList<>();
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()), null));
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createUniqueImpressionsRecorderTask(), null));
-        mTaskExecutor.executeSerially(enqueued);
+        mTaskExecutor.submit(new SplitTaskSerialWrapper(
+                mSplitTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()),
+                mSplitTaskFactory.createUniqueImpressionsRecorderTask()), null);
     }
 
     private void saveImpressionsCount() {

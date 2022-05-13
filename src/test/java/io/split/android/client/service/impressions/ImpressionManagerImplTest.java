@@ -26,9 +26,11 @@ import java.util.UUID;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
@@ -167,15 +169,15 @@ public class ImpressionManagerImplTest {
     @Test
     public void flushWithOptimizedMode() {
 
-        ArgumentCaptor<List<SplitTaskBatchItem>> listArgumentCaptor = ArgumentCaptor.forClass(List.class);
-
         mImpressionsManager.flush();
 
         verify(mTaskExecutor).submit(argThat(argument -> argument instanceof ImpressionsRecorderTask), any(RecorderSyncHelper.class));
-        verify(mTaskExecutor).executeSerially(listArgumentCaptor.capture());
-
-        assertTrue(listArgumentCaptor.getValue().get(0).getTask() instanceof SaveImpressionsCountTask);
-        assertTrue(listArgumentCaptor.getValue().get(1).getTask() instanceof ImpressionsCountRecorderTask);
+        verify(mTaskExecutor).submit(argThat(new ArgumentMatcher<SplitTaskSerialWrapper>() {
+            @Override
+            public boolean matches(SplitTaskSerialWrapper argument) {
+                return argument.getTaskList().get(0) instanceof SaveImpressionsCountTask && argument.getTaskList().get(1) instanceof ImpressionsCountRecorderTask;
+            }
+        }), eq(null));
     }
 
     @Test
@@ -194,19 +196,21 @@ public class ImpressionManagerImplTest {
 
         mImpressionsManager.flush();
 
-        verify(mTaskExecutor).executeSerially(argThat(new ArgumentMatcher<List<SplitTaskBatchItem>>() {
+        verify(mTaskExecutor).submit(argThat(new ArgumentMatcher<SplitTaskSerialWrapper>() {
             @Override
-            public boolean matches(List<SplitTaskBatchItem> argument) {
-                return argument.size() == 2 && argument.get(0).getTask() instanceof SaveImpressionsCountTask && argument.get(1).getTask() instanceof ImpressionsCountRecorderTask;
+            public boolean matches(SplitTaskSerialWrapper argument) {
+                List<SplitTask> taskList = argument.getTaskList();
+                return taskList.size() == 2 && taskList.get(0) instanceof SaveImpressionsCountTask && taskList.get(1) instanceof ImpressionsCountRecorderTask;
             }
-        }));
+        }), eq(null));
 
-        verify(mTaskExecutor).executeSerially(argThat(new ArgumentMatcher<List<SplitTaskBatchItem>>() {
+        verify(mTaskExecutor).submit(argThat(new ArgumentMatcher<SplitTaskSerialWrapper>() {
             @Override
-            public boolean matches(List<SplitTaskBatchItem> argument) {
-                return argument.size() == 2 && argument.get(0).getTask() instanceof SaveUniqueImpressionsTask && argument.get(1).getTask() instanceof UniqueKeysRecorderTask;
+            public boolean matches(SplitTaskSerialWrapper argument) {
+                List<SplitTask> taskList = argument.getTaskList();
+                return taskList.size() == 2 && taskList.get(0) instanceof SaveUniqueImpressionsTask && taskList.get(1) instanceof UniqueKeysRecorderTask;
             }
-        }));
+        }), eq(null));
     }
 
     @Test
