@@ -1,11 +1,11 @@
 package io.split.android.client.service.impressions;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
@@ -18,8 +18,6 @@ import io.split.android.client.storage.impressions.PersistentImpressionsCountSto
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ImpressionsCountRecorderTask implements SplitTask {
     private final PersistentImpressionsCountStorage mPersistentStorage;

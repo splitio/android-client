@@ -13,8 +13,10 @@ import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.storage.impressions.PersistentImpressionsUniqueStorage;
 import io.split.android.client.storage.impressions.SqLitePersistentImpressionsCountStorage;
 import io.split.android.client.storage.impressions.SqLitePersistentImpressionsStorage;
+import io.split.android.client.storage.impressions.SqlitePersistentUniqueStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainerImpl;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
@@ -72,6 +74,10 @@ public class StorageFactory {
 
     public static PersistentAttributesStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase, String matchingKey) {
         return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), matchingKey);
+    }
+
+    public static PersistentImpressionsUniqueStorage getPersistentImpressionsUniqueStorage(SplitRoomDatabase splitRoomDatabase) {
+        return new SqlitePersistentUniqueStorage(splitRoomDatabase, ServiceConstants.TEN_DAYS_EXPIRATION_PERIOD);
     }
 
     public static TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry) {
