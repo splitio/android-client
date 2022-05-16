@@ -45,4 +45,5 @@ public class ServiceConstants {
     public static final String SHOULD_RECORD_TELEMETRY = "shouldRecordTelemetry";
 
     public static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = 60;
+    public static final long TEN_DAYS_EXPIRATION_PERIOD = 3600 * 24 * 10;
 }

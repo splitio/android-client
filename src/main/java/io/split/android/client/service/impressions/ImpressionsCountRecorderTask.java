@@ -1,5 +1,7 @@
 package io.split.android.client.service.impressions;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
@@ -16,8 +18,6 @@ import io.split.android.client.storage.impressions.PersistentImpressionsCountSto
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class ImpressionsCountRecorderTask implements SplitTask {
     private final PersistentImpressionsCountStorage mPersistentStorage;
