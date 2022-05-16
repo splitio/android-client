@@ -57,6 +57,7 @@ import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
+import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
@@ -128,6 +129,8 @@ public class SynchronizerTest {
     MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
     @Mock
     AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
+    @Mock
+    UniqueKeysTracker mUniqueKeysTracker;
     ImpressionManager mImpressionManager;
 
     private final String mUserKey = "user_key";
@@ -169,14 +172,17 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsSync)
                 .thenReturn(mRetryTimerSplitsUpdate);
 
-        mImpressionManager = new ImpressionManagerImpl(
+        mImpressionManager =
+                new ImpressionManagerImpl(
                 mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer, mImpressionsStorage,
+                mUniqueKeysTracker,
                 new ImpressionManagerImpl.ImpressionManagerConfig(
                         splitClientConfig.impressionsRefreshRate(),
                         splitClientConfig.impressionsCounterRefreshRate(),
                         splitClientConfig.impressionsMode(),
                         splitClientConfig.impressionsQueueSize(),
-                        splitClientConfig.impressionsChunkSize()
+                        splitClientConfig.impressionsChunkSize(),
+                        splitClientConfig.mtkRefreshRate()
                 )
         );
 

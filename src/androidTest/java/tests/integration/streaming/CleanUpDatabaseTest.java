@@ -36,8 +36,12 @@ import io.split.android.client.storage.db.EventDao;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionDao;
 import io.split.android.client.storage.db.ImpressionEntity;
+import io.split.android.client.storage.db.ImpressionsCountDao;
+import io.split.android.client.storage.db.ImpressionsCountEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
+import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
+import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
 import io.split.android.client.utils.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 
@@ -53,6 +57,8 @@ public class CleanUpDatabaseTest {
 
     EventDao mEventDao;
     ImpressionDao mImpressionDao;
+    ImpressionsCountDao mImpressionsCountDao;
+    UniqueKeysDao mUniqueKeysDao;
 
     SplitFactory mFactory;
     SplitClient mClient;
@@ -72,6 +78,8 @@ public class CleanUpDatabaseTest {
         mSplitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         mEventDao = mSplitRoomDatabase.eventDao();
         mImpressionDao = mSplitRoomDatabase.impressionDao();
+        mImpressionsCountDao = mSplitRoomDatabase.impressionsCountDao();
+        mUniqueKeysDao = mSplitRoomDatabase.uniqueKeysDao();
         mSplitRoomDatabase.clearAllTables();
         mUserKey = IntegrationHelper.dummyUserKey();
     }
@@ -88,12 +96,26 @@ public class CleanUpDatabaseTest {
         mImpressionDao.insert(createImpressionEntity(now() + 10, StorageRecordStatus.ACTIVE, "active"));
         mImpressionDao.insert(createImpressionEntity(expiratedTime(), StorageRecordStatus.ACTIVE, "expirated"));
 
+        mImpressionsCountDao.insert(createImpressionCountEntity(now() - 1, StorageRecordStatus.DELETED, "deleted"));
+        mImpressionsCountDao.insert(createImpressionCountEntity(now() + 10, StorageRecordStatus.ACTIVE, "active"));
+        mImpressionsCountDao.insert(createImpressionCountEntity(expiratedTime(), StorageRecordStatus.ACTIVE, "expirated"));
+
+        mUniqueKeysDao.insert(createUniqueKeyEntity(now() - 1, StorageRecordStatus.DELETED, "deleted"));
+        mUniqueKeysDao.insert(createUniqueKeyEntity(now() + 10, StorageRecordStatus.ACTIVE, "active"));
+        mUniqueKeysDao.insert(createUniqueKeyEntity(expiratedTime(), StorageRecordStatus.ACTIVE, "expirated"));
+
         // Load records to check if inserted correctly on assert stage
         List<EventEntity> insertedEvents = mEventDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
         insertedEvents.addAll(mEventDao.getBy(0, StorageRecordStatus.DELETED, 10));
 
         List<ImpressionEntity> insertedImpressions = mImpressionDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
         insertedImpressions.addAll(mImpressionDao.getBy(0, StorageRecordStatus.DELETED, 10));
+
+        List<ImpressionsCountEntity> insertedCounts = mImpressionsCountDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
+        insertedCounts.addAll(mImpressionsCountDao.getBy(0, StorageRecordStatus.DELETED, 10));
+
+        List<UniqueKeyEntity> insertedKeys = mUniqueKeysDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
+        insertedKeys.addAll(mUniqueKeysDao.getBy(0, StorageRecordStatus.DELETED, 10));
 
         CountDownLatch latch = new CountDownLatch(1);
 
@@ -130,10 +152,20 @@ public class CleanUpDatabaseTest {
         List<ImpressionEntity> remainingImpressions = mImpressionDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
         remainingImpressions.addAll(mImpressionDao.getBy(0, StorageRecordStatus.DELETED, 10));
 
+        List<ImpressionsCountEntity> remainingCounts = mImpressionsCountDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
+        remainingCounts.addAll(mImpressionsCountDao.getBy(0, StorageRecordStatus.DELETED, 10));
+
+        List<UniqueKeyEntity> remainingKeys = mUniqueKeysDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
+        remainingKeys.addAll(mUniqueKeysDao.getBy(0, StorageRecordStatus.DELETED, 10));
+
         Assert.assertEquals(3, insertedEvents.size());
         Assert.assertEquals(3, insertedImpressions.size());
+        Assert.assertEquals(3, insertedCounts.size());
+        Assert.assertEquals(3, insertedKeys.size());
         Assert.assertEquals(1, remainingEvents.size());
         Assert.assertEquals(1, remainingImpressions.size());
+        Assert.assertEquals(1, remainingCounts.size());
+        Assert.assertEquals(1, remainingKeys.size());
 
     }
 
@@ -151,6 +183,24 @@ public class CleanUpDatabaseTest {
         entity.setTestName(name);
         entity.setCreatedAt(createdAt);
         entity.setStatus(status);
+        return entity;
+    }
+
+    private ImpressionsCountEntity createImpressionCountEntity(long createdAt, int status, String name) {
+        ImpressionsCountEntity entity = new ImpressionsCountEntity();
+        entity.setCreatedAt(createdAt);
+        entity.setStatus(status);
+        entity.setBody("{" + name + "}");
+        return entity;
+    }
+
+    private UniqueKeyEntity createUniqueKeyEntity(long createdAt, int status, String name) {
+        UniqueKeyEntity entity = new UniqueKeyEntity();
+        entity.setStatus(status);
+        entity.setUserKey("userKey_" + name);
+        entity.setCreatedAt(createdAt);
+        entity.setFeatureList("[\"split1\",\"split2\"]");
+
         return entity;
     }
 

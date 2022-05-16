@@ -8,4 +8,6 @@ public interface UniqueKeysTracker {
     boolean track(String key, String featureName);
 
     Map<String, Set<String>> popAll();
+
+    int size();
 }

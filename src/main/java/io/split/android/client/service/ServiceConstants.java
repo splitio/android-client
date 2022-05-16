@@ -44,4 +44,5 @@ public class ServiceConstants {
     public static final int TELEMETRY_STATS_INITIAL_DELAY = 5;
     public static final String SHOULD_RECORD_TELEMETRY = "shouldRecordTelemetry";
     public static final long TEN_DAYS_EXPIRATION_PERIOD = 3600 * 24 * 10;
+    public static final int MAX_UNIQUE_KEYS_IN_MEMORY = 30000;
 }
