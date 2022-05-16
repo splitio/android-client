@@ -92,6 +92,7 @@ public class SplitClientConfig {
     private final static long _impressionsChunkOudatedTime = IMPRESSIONS_CHUNK_OUTDATED_TIME;
     private final int _impCountersRefreshRate;
     private final int _mtkPerPush;
+    private final int _mtkRefreshRate;
 
     private final int _metricsRefreshRate;
     private final int _connectionTimeout;
@@ -185,7 +186,8 @@ public class SplitClientConfig {
                               String telemetryEndpoint,
                               long telemetryRefreshRate,
                               boolean shouldRecordTelemetry,
-                              int mtkPerPush) {
+                              int mtkPerPush,
+                              int mtkRefreshRate) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _telemetryEndpoint = telemetryEndpoint;
@@ -195,6 +197,7 @@ public class SplitClientConfig {
         _impressionsQueueSize = impressionsQueueSize;
         _impressionsPerPush = impressionsPerPush;
         _impCountersRefreshRate = impCountersRefreshRate;
+        _mtkRefreshRate = mtkRefreshRate;
         _metricsRefreshRate = metricsRefreshRate;
         _connectionTimeout = connectionTimeout;
         _readTimeout = readTimeout;
@@ -493,6 +496,10 @@ public class SplitClientConfig {
         return _impCountersRefreshRate;
     }
 
+    public int uniqueKeysRefreshRate() {
+        return _mtkRefreshRate;
+    }
+
     public boolean persistentAttributesEnabled() {
         return _isPersistentAttributesEnabled;
     }
@@ -508,6 +515,10 @@ public class SplitClientConfig {
 
     public int mtkPerPush() {
         return _mtkPerPush;
+    }
+
+    public int mtkRefreshRate() {
+        return _mtkRefreshRate;
     }
 
     private void enableTelemetry() {
@@ -573,7 +584,9 @@ public class SplitClientConfig {
 
         private long _telemetryRefreshRate = DEFAULT_TELEMETRY_REFRESH_RATE;
 
-        private int _mtkPerPush = DEFAULT_MTK_PER_PUSH;
+        private final int _mtkPerPush = DEFAULT_MTK_PER_PUSH;
+
+        private final int _mtkRefreshRate = 15 * 60;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -1025,6 +1038,9 @@ public class SplitClientConfig {
          * @default: OPTIMIZED
          */
         public Builder impressionsMode(ImpressionsMode mode) {
+            if (mode.equals(ImpressionsMode.NONE)) {
+                mode = ImpressionsMode.OPTIMIZED;
+            }
             _impressionsMode = mode;
             return this;
         }
@@ -1191,7 +1207,8 @@ public class SplitClientConfig {
                     _serviceEndpoints.getTelemetryEndpoint(),
                     _telemetryRefreshRate,
                     new TelemetryHelperImpl().shouldRecordTelemetry(),
-                    _mtkPerPush);
+                    _mtkPerPush,
+                    _mtkRefreshRate);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

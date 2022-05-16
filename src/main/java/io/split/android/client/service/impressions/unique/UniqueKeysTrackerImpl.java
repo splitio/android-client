@@ -41,4 +41,9 @@ public class UniqueKeysTrackerImpl implements UniqueKeysTracker {
             return result;
         }
     }
+
+    @Override
+    public int size() {
+        return mCache.size();
+    }
 }

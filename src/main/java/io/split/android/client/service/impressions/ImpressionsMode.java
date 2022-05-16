@@ -2,7 +2,8 @@ package io.split.android.client.service.impressions;
 
 public enum ImpressionsMode {
     OPTIMIZED,
-    DEBUG;
+    DEBUG,
+    NONE;
 
     public static ImpressionsMode fromString(String value) {
         if (value != null) {

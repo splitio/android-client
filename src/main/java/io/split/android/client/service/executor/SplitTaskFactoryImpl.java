@@ -126,7 +126,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public CleanUpDatabaseTask createCleanUpDatabaseTask(long maxTimestamp) {
         return new CleanUpDatabaseTask(mSplitsStorageContainer.getEventsStorage(),
-                mSplitsStorageContainer.getImpressionsStorage(), maxTimestamp);
+                mSplitsStorageContainer.getImpressionsStorage(),
+                mSplitsStorageContainer.getImpressionsCountStorage(),
+                mSplitsStorageContainer.getPersistentImpressionsUniqueStorage(),
+                maxTimestamp);
     }
 
     @Override
