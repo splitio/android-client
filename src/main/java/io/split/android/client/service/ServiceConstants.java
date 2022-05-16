@@ -43,4 +43,5 @@ public class ServiceConstants {
     public static final int TELEMETRY_CONFIG_MAX_RETRY_ATTEMPTS = 3;
     public static final int TELEMETRY_STATS_INITIAL_DELAY = 5;
     public static final String SHOULD_RECORD_TELEMETRY = "shouldRecordTelemetry";
+    public static final long TEN_DAYS_EXPIRATION_PERIOD = 3600 * 24 * 10;
 }

@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.FilterGrouper;
 import io.split.android.client.SplitClientConfig;
@@ -22,6 +24,9 @@ import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
+import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask;
+import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
+import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTaskConfig;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -48,13 +53,13 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
                                 @NonNull SplitApiFacade splitApiFacade,
                                 @NonNull SplitStorageContainer splitStorageContainer,
-                                @Nullable String splistFilterQueryString,
+                                @Nullable String splitsFilterQueryString,
                                 ISplitEventsManager eventsManager) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
-        mSplitsFilterQueryString = splistFilterQueryString;
+        mSplitsFilterQueryString = splitsFilterQueryString;
         mEventsManager = eventsManager;
         mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                 mSplitsStorageContainer.getSplitsStorage(),
@@ -117,6 +122,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         return new FilterSplitsInCacheTask(mSplitsStorageContainer.getPersistentSplitsStorage(),
                 filters, mSplitsFilterQueryString);
     }
+
     @Override
     public CleanUpDatabaseTask createCleanUpDatabaseTask(long maxTimestamp) {
         return new CleanUpDatabaseTask(mSplitsStorageContainer.getEventsStorage(),
@@ -125,7 +131,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public SaveImpressionsCountTask createSaveImpressionsCountTask(List<ImpressionsCountPerFeature> counts) {
-        return new SaveImpressionsCountTask(mSplitsStorageContainer.getImpressionsCountStorage() ,counts);
+        return new SaveImpressionsCountTask(mSplitsStorageContainer.getImpressionsCountStorage(), counts);
     }
 
     @Override
@@ -134,6 +140,21 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 mSplitApiFacade.getImpressionsCountRecorder(),
                 mSplitsStorageContainer.getImpressionsCountStorage(),
                 mSplitsStorageContainer.getTelemetryStorage());
+    }
+
+    @Override
+    public SaveUniqueImpressionsTask createSaveUniqueImpressionsTask(Map<String, Set<String>> uniqueImpressions) {
+        return new SaveUniqueImpressionsTask(mSplitsStorageContainer.getPersistentImpressionsUniqueStorage(), uniqueImpressions);
+    }
+
+    @Override
+    public UniqueKeysRecorderTask createUniqueImpressionsRecorderTask() {
+        return new UniqueKeysRecorderTask(
+                mSplitApiFacade.getUniqueKeysRecorder(), mSplitsStorageContainer.getPersistentImpressionsUniqueStorage(),
+                new UniqueKeysRecorderTaskConfig(
+                        mSplitClientConfig.mtkPerPush(),
+                        ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES)
+        );
     }
 
     @Override
