@@ -3,6 +3,7 @@ package io.split.android.client.service.impressions;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,11 +13,14 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
-import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
+import io.split.android.client.service.sseclient.FixedIntervalBackoffCounter;
+import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
+import io.split.android.client.storage.InBytesSizable;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -34,6 +38,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
     private final ImpressionManagerConfig mImpressionManagerConfig;
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
     private final UniqueKeysTracker mUniqueKeysTracker;
+    private final RetryBackoffCounterTimer mUniqueKeysTimer;
 
     public ImpressionManagerImpl(@NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull ImpressionsTaskFactory splitTaskFactory,
@@ -41,6 +46,32 @@ public class ImpressionManagerImpl implements ImpressionManager {
                                  @NonNull PersistentImpressionsStorage persistentImpressionsStorage,
                                  @NonNull UniqueKeysTracker uniqueKeysTracker,
                                  @NonNull ImpressionManagerConfig impressionManagerConfig) {
+        this(
+                taskExecutor,
+                splitTaskFactory,
+                telemetryRuntimeProducer,
+                uniqueKeysTracker,
+                impressionManagerConfig,
+                new RecorderSyncHelperImpl<>(
+                        SplitTaskType.IMPRESSIONS_RECORDER,
+                        persistentImpressionsStorage,
+                        impressionManagerConfig.impressionsQueueSize,
+                        impressionManagerConfig.impressionsChunkSize,
+                        taskExecutor),
+                new RetryBackoffCounterTimer(taskExecutor,
+                        new FixedIntervalBackoffCounter(ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS),
+                        ServiceConstants.UNIQUE_KEYS_MAX_RETRY_ATTEMPTS));
+    }
+
+
+    @VisibleForTesting
+    public ImpressionManagerImpl(@NonNull SplitTaskExecutor taskExecutor,
+                                 @NonNull ImpressionsTaskFactory splitTaskFactory,
+                                 @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                 @NonNull UniqueKeysTracker uniqueKeysTracker,
+                                 @NonNull ImpressionManagerConfig impressionManagerConfig,
+                                 @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+                                 @NonNull RetryBackoffCounterTimer uniqueKeysTimer) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
@@ -50,13 +81,9 @@ public class ImpressionManagerImpl implements ImpressionManager {
         mImpressionsCounter = new ImpressionsCounter();
         mUniqueKeysTracker = checkNotNull(uniqueKeysTracker);
 
-        mImpressionsSyncHelper = new RecorderSyncHelperImpl<>(
-                SplitTaskType.IMPRESSIONS_RECORDER,
-                persistentImpressionsStorage,
-                impressionManagerConfig.impressionsQueueSize,
-                impressionManagerConfig.impressionsChunkSize,
-                mTaskExecutor
-        );
+        mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
+
+        mUniqueKeysTimer = checkNotNull(uniqueKeysTimer);
     }
 
     @Override
@@ -106,6 +133,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
 
     @Override
     public void stopPeriodicRecording() {
+        mUniqueKeysTimer.stop();
         saveImpressionsCount();
         saveUniqueKeys();
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
@@ -172,10 +200,10 @@ public class ImpressionManagerImpl implements ImpressionManager {
         if (!isNoneImpressionsMode()) {
             return;
         }
-        List<SplitTaskBatchItem> enqueued = new ArrayList<>();
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()), null));
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createUniqueImpressionsRecorderTask(), null));
-        mTaskExecutor.executeSerially(enqueued);
+        mUniqueKeysTimer.setTask(new SplitTaskSerialWrapper(
+                mSplitTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()),
+                mSplitTaskFactory.createUniqueImpressionsRecorderTask()));
+        mUniqueKeysTimer.start();
     }
 
     private void saveImpressionsCount() {

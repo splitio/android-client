@@ -47,4 +47,5 @@ public class ServiceConstants {
     public static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = 60;
     public static final long TEN_DAYS_EXPIRATION_PERIOD = 3600 * 24 * 10;
     public static final int MAX_UNIQUE_KEYS_IN_MEMORY = 30000;
+    public static final int UNIQUE_KEYS_MAX_RETRY_ATTEMPTS = 3;
 }
