@@ -5,9 +5,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -186,9 +190,10 @@ public class ImpressionManagerImpl implements ImpressionManager {
         if (!shouldTrackImpressionsCount()) {
             return;
         }
-        mTaskExecutor.submit(new SplitTaskSerialWrapper(
-                mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
-                mSplitTaskFactory.createImpressionsCountRecorderTask()), null);
+        List<SplitTaskBatchItem> enqueued = new ArrayList<>();
+        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null));
+        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createImpressionsCountRecorderTask(), null));
+        mTaskExecutor.executeSerially(enqueued);
     }
 
     private void flushUniqueKeys() {
