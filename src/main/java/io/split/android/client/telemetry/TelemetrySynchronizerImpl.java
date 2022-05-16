@@ -7,12 +7,9 @@ import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.FixedIntervalBackoffCounter;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
-import io.split.android.client.telemetry.model.OperationType;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class TelemetrySynchronizerImpl implements TelemetrySynchronizer {
 
