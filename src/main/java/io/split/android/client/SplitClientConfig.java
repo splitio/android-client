@@ -93,6 +93,7 @@ public class SplitClientConfig {
     private final static long _impressionsChunkOudatedTime = IMPRESSIONS_CHUNK_OUTDATED_TIME;
     private final int _impCountersRefreshRate;
     private final int _mtkPerPush;
+    private final int _mtkRefreshRate;
 
     private final int _metricsRefreshRate;
     private final int _connectionTimeout;
@@ -190,7 +191,8 @@ public class SplitClientConfig {
                               boolean shouldRecordTelemetry,
                               boolean syncEnabled,
                               int logLevel,
-                              int mtkPerPush) {
+                              int mtkPerPush,
+                              int mtkRefreshRate) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _telemetryEndpoint = telemetryEndpoint;
@@ -200,6 +202,7 @@ public class SplitClientConfig {
         _impressionsQueueSize = impressionsQueueSize;
         _impressionsPerPush = impressionsPerPush;
         _impCountersRefreshRate = impCountersRefreshRate;
+        _mtkRefreshRate = mtkRefreshRate;
         _metricsRefreshRate = metricsRefreshRate;
         _connectionTimeout = connectionTimeout;
         _readTimeout = readTimeout;
@@ -507,6 +510,10 @@ public class SplitClientConfig {
         return _impCountersRefreshRate;
     }
 
+    public int uniqueKeysRefreshRate() {
+        return _mtkRefreshRate;
+    }
+
     public boolean persistentAttributesEnabled() {
         return _isPersistentAttributesEnabled;
     }
@@ -529,6 +536,10 @@ public class SplitClientConfig {
 
     public int mtkPerPush() {
         return _mtkPerPush;
+    }
+
+    public int mtkRefreshRate() {
+        return _mtkRefreshRate;
     }
 
     private void enableTelemetry() { _shouldRecordTelemetry = true; }
@@ -1065,6 +1076,9 @@ public class SplitClientConfig {
          * @default: OPTIMIZED
          */
         public Builder impressionsMode(ImpressionsMode mode) {
+            if (mode.equals(ImpressionsMode.NONE)) {
+                mode = ImpressionsMode.OPTIMIZED;
+            }
             _impressionsMode = mode;
             return this;
         }
@@ -1233,7 +1247,8 @@ public class SplitClientConfig {
                     new TelemetryHelperImpl().shouldRecordTelemetry(),
                     _syncEnabled,
                     _logLevel,
-                    _mtkPerPush);
+                    _mtkPerPush,
+                    _mtkRefreshRate);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
