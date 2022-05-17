@@ -1,6 +1,7 @@
 package tests.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -25,10 +26,10 @@ import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
 import helper.TestingHelper;
 import io.split.android.client.SplitClient;
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.network.HttpClient;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
@@ -40,11 +41,13 @@ public class UniqueKeysIntegrationTest {
     private final CountDownLatch mMtkLatch = new CountDownLatch(1);
     private final AtomicInteger mMtkEndpointHitCount = new AtomicInteger(0);
     private SplitRoomDatabase mDatabase;
+    private Context mContext;
+    private HttpClientMock mHttpClient;
 
     @Before
     public void setUp() throws IOException {
-        Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        HttpClient httpClient = new HttpClientMock(IntegrationHelper.buildDispatcher(getMockResponses()));
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mHttpClient = new HttpClientMock(IntegrationHelper.buildDispatcher(getMockResponses()));
         mDatabase = DatabaseHelper.getTestDatabase(mContext);
         mSplitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),
@@ -57,7 +60,7 @@ public class UniqueKeysIntegrationTest {
                         .trafficType("account")
                         .build(),
                 mContext,
-                httpClient,
+                mHttpClient,
                 mDatabase
         );
 
@@ -88,12 +91,14 @@ public class UniqueKeysIntegrationTest {
         client2.getTreatment("android_test_2");
 
         mMtkEndpointHitCount.set(2);
-        client.destroy();
-        client2.destroy();
+        client.flush();
         boolean await = mMtkLatch.await(10, TimeUnit.SECONDS);
 
         assertTrue(await);
         assertEquals("{\"keys\":[{\"fs\":[\"android_test_2\",\"android_test_3\"],\"k\":\"key1\"},{\"fs\":[\"android_test_2\"],\"k\":\"key2\"}]}", mUniqueKeysBody.get());
+
+        client.destroy();
+        client2.destroy();
     }
 
     @Test
@@ -114,6 +119,90 @@ public class UniqueKeysIntegrationTest {
 
         assertTrue(await);
         assertEquals(3, mMtkEndpointHitCount.get());
+
+        client.destroy();
+    }
+
+    @Test
+    public void verifyDatabaseIsEmptyAfterRequest() throws InterruptedException {
+        SplitClient client = mSplitFactory.client();
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        TestingHelper.TestEventTask task = new TestingHelper.TestEventTask(readyLatch);
+        client.on(SplitEvent.SDK_READY, task);
+        readyLatch.await(5, TimeUnit.SECONDS);
+
+        for (int i = 0; i < 2; i++) {
+            client.getTreatment("android_test_2");
+            client.getTreatment("android_test_3");
+        }
+
+        mMtkEndpointHitCount.set(2);
+        client.flush();
+        boolean await = mMtkLatch.await(10, TimeUnit.SECONDS);
+
+        assertTrue(await);
+        assertEquals("{\"keys\":[{\"fs\":[\"android_test_2\",\"android_test_3\"],\"k\":\"key1\"}]}", mUniqueKeysBody.get());
+        Thread.sleep(500);
+        assertEquals(0, mDatabase.uniqueKeysDao().getAll().size());
+
+        client.destroy();
+    }
+
+    @Test
+    public void verifyNoHitsInMtkEndpoints() throws InterruptedException {
+        SplitClient client = mSplitFactory.client();
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        TestingHelper.TestEventTask task = new TestingHelper.TestEventTask(readyLatch);
+        client.on(SplitEvent.SDK_READY, task);
+        readyLatch.await(5, TimeUnit.SECONDS);
+        boolean await = mMtkLatch.await(3, TimeUnit.SECONDS);
+
+        assertFalse(await);
+        assertEquals("", mUniqueKeysBody.get());
+        assertEquals(0, mMtkEndpointHitCount.get());
+
+        client.destroy();
+    }
+
+    @Test
+    public void verifyFeatureDisabled() throws InterruptedException {
+        mSplitFactory = IntegrationHelper.buildFactory(
+                IntegrationHelper.dummyApiKey(),
+                new Key("key1"),
+                new SplitClientConfig.Builder()
+                        .impressionsMode(ImpressionsMode.NONE)
+                        .ready(30000)
+                        .streamingEnabled(true)
+                        .enableDebug()
+                        .trafficType("account")
+                        .build(),
+                mContext,
+                mHttpClient,
+                mDatabase
+        );
+
+        SplitClient client = mSplitFactory.client();
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        TestingHelper.TestEventTask task = new TestingHelper.TestEventTask(readyLatch);
+        client.on(SplitEvent.SDK_READY, task);
+        readyLatch.await(5, TimeUnit.SECONDS);
+
+        client.getTreatment("android_test_2");
+        client.getTreatment("android_test_3");
+        Thread.sleep(500);
+
+        assertEquals(0, mDatabase.uniqueKeysDao().getAll().size());
+
+        boolean await = mMtkLatch.await(3, TimeUnit.SECONDS);
+
+        assertFalse(await);
+        assertEquals("", mUniqueKeysBody.get());
+        assertEquals(0, mMtkEndpointHitCount.get());
+
+        client.destroy();
     }
 
     private Map<String, IntegrationHelper.ResponseClosure> getMockResponses() {
