@@ -203,7 +203,12 @@ public class IntegrationHelper {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                String path = uri.getPath().replace("/api/", "");
+                String path = uri.getPath()
+                        .replace("sdk.split.io/api", "")
+                        .replace("telemetry.split.io/api", "")
+                        .replace("/api/", "");
+
+                Logger.d("path is %s", path);
                 if (responses.containsKey(path)) {
                     return responses.get(path).onResponse(uri, method, body);
                 } else {
