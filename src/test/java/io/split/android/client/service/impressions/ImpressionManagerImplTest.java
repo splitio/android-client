@@ -315,7 +315,6 @@ public class ImpressionManagerImplTest {
         verify(mTaskExecutor).stopTask("id_2");
         verify(mTaskExecutor).stopTask("id_3");
         verify(mTaskExecutor).stopTask(null);
-        verify(mUniqueKeysCounterTimer).stop();
     }
 
     @Test
