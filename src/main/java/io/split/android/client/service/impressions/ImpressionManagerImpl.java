@@ -54,8 +54,8 @@ public class ImpressionManagerImpl implements ImpressionManager {
                 new RecorderSyncHelperImpl<>(
                         SplitTaskType.IMPRESSIONS_RECORDER,
                         persistentImpressionsStorage,
-                        impressionManagerConfig.impressionsQueueSize,
-                        impressionManagerConfig.impressionsChunkSize,
+                        impressionManagerConfig.getImpressionsQueueSize(),
+                        impressionManagerConfig.getImpressionsChunkSize(),
                         taskExecutor),
                 new RetryBackoffCounterTimer(taskExecutor,
                         new FixedIntervalBackoffCounter(ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS),
@@ -140,18 +140,18 @@ public class ImpressionManagerImpl implements ImpressionManager {
     }
 
     private boolean isOptimizedImpressionsMode() {
-        return mImpressionManagerConfig.impressionsMode.isOptimized();
+        return mImpressionManagerConfig.getImpressionsMode().isOptimized();
     }
 
     private boolean isNoneImpressionsMode() {
-        return mImpressionManagerConfig.impressionsMode.isNone();
+        return mImpressionManagerConfig.getImpressionsMode().isNone();
     }
 
     private void scheduleImpressionsRecorderTask() {
         mImpressionsRecorderTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createImpressionsRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionManagerConfig.impressionsRefreshRate,
+                mImpressionManagerConfig.getImpressionsRefreshRate(),
                 mImpressionsSyncHelper);
     }
 
@@ -163,7 +163,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
         mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createImpressionsCountRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionManagerConfig.impressionsCounterRefreshRate,
+                mImpressionManagerConfig.getImpressionsCounterRefreshRate(),
                 null);
     }
 
@@ -175,7 +175,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
         mUniqueKeysRecorderTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createUniqueImpressionsRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionManagerConfig.uniqueKeysRefreshRate,
+                mImpressionManagerConfig.getUniqueKeysRefreshRate(),
                 null);
     }
 

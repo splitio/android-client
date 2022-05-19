@@ -4,12 +4,12 @@ import androidx.annotation.VisibleForTesting;
 
 public class ImpressionManagerConfig {
 
-    final long impressionsRefreshRate;
-    final long impressionsCounterRefreshRate;
-    final Mode impressionsMode;
-    final int impressionsQueueSize;
-    final long impressionsChunkSize;
-    final long uniqueKeysRefreshRate;
+    private final long mImpressionsRefreshRate;
+    private final long mImpressionsCounterRefreshRate;
+    private final Mode mImpressionsMode;
+    private final int mImpressionsQueueSize;
+    private final long mImpressionsChunkSize;
+    private final long mUniqueKeysRefreshRate;
 
     public ImpressionManagerConfig(long impressionsRefreshRate,
                                    long impressionsCounterRefreshRate,
@@ -32,12 +32,36 @@ public class ImpressionManagerConfig {
                                    int impressionsQueueSize,
                                    long impressionsChunkSize,
                                    long uniqueKeysRefreshRate) {
-        this.impressionsRefreshRate = impressionsRefreshRate;
-        this.impressionsCounterRefreshRate = impressionsCounterRefreshRate;
-        this.impressionsMode = impressionsMode;
-        this.impressionsQueueSize = impressionsQueueSize;
-        this.impressionsChunkSize = impressionsChunkSize;
-        this.uniqueKeysRefreshRate = uniqueKeysRefreshRate;
+        mImpressionsRefreshRate = impressionsRefreshRate;
+        mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
+        mImpressionsMode = impressionsMode;
+        mImpressionsQueueSize = impressionsQueueSize;
+        mImpressionsChunkSize = impressionsChunkSize;
+        mUniqueKeysRefreshRate = uniqueKeysRefreshRate;
+    }
+
+    public long getImpressionsRefreshRate() {
+        return mImpressionsRefreshRate;
+    }
+
+    public long getImpressionsCounterRefreshRate() {
+        return mImpressionsCounterRefreshRate;
+    }
+
+    public Mode getImpressionsMode() {
+        return mImpressionsMode;
+    }
+
+    public int getImpressionsQueueSize() {
+        return mImpressionsQueueSize;
+    }
+
+    public long getImpressionsChunkSize() {
+        return mImpressionsChunkSize;
+    }
+
+    public long getUniqueKeysRefreshRate() {
+        return mUniqueKeysRefreshRate;
     }
 
     public enum Mode {
