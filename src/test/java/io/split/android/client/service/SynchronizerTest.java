@@ -41,7 +41,6 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.events.EventsRecorderTask;
-import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -52,6 +51,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.impressions.ImpressionManager;
+import io.split.android.client.service.impressions.ImpressionManagerConfig;
 import io.split.android.client.service.impressions.ImpressionManagerImpl;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsMode;
@@ -136,6 +136,10 @@ public class SynchronizerTest {
     private final String mUserKey = "user_key";
 
     public void setup(SplitClientConfig splitClientConfig) {
+        setup(splitClientConfig, ImpressionManagerConfig.Mode.fromImpressionMode(splitClientConfig.impressionsMode()));
+    }
+
+    public void setup(SplitClientConfig splitClientConfig, ImpressionManagerConfig.Mode impressionsMode) {
         MockitoAnnotations.openMocks(this);
 
         mTaskExecutor = spy(new SplitTaskExecutorStub());
@@ -176,10 +180,10 @@ public class SynchronizerTest {
                 new ImpressionManagerImpl(
                 mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer, mImpressionsStorage,
                 mUniqueKeysTracker,
-                new ImpressionManagerImpl.ImpressionManagerConfig(
+                new ImpressionManagerConfig(
                         splitClientConfig.impressionsRefreshRate(),
                         splitClientConfig.impressionsCounterRefreshRate(),
-                        splitClientConfig.impressionsMode(),
+                        impressionsMode,
                         splitClientConfig.impressionsQueueSize(),
                         splitClientConfig.impressionsChunkSize(),
                         splitClientConfig.mtkRefreshRate()
@@ -257,7 +261,7 @@ public class SynchronizerTest {
                 .sychronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
-        setup(config);
+        setup(config, ImpressionManagerConfig.Mode.OPTIMIZED);
         mSynchronizer.startPeriodicFetching();
         mSynchronizer.startPeriodicRecording();
         mSynchronizer.pause();
