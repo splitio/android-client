@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -81,22 +80,25 @@ public class UniqueKeysRecorderTask implements SplitTask {
     }
 
     @NonNull
-    private MTK buildMTK(List<UniqueKey> keys) {
-        List<UniqueKey> newKeys = new ArrayList<>();
-        Map<String, Set<String>> dedupMap = new HashMap<>();
+    private static MTK buildMTK(List<UniqueKey> keys) {
+        Map<String, UniqueKey> map = new HashMap<>();
         for (UniqueKey key : keys) {
-            if (!dedupMap.containsKey(key.getKey())) {
-                dedupMap.put(key.getKey(), new HashSet<>());
+            String userKey = key.getKey();
+            if (!map.containsKey(userKey)) {
+                map.put(userKey, new UniqueKey(userKey, new HashSet<>()));
             }
 
-            dedupMap.get(key.getKey()).addAll(key.getFeatures());
+            UniqueKey uniqueKey = map.get(userKey);
+            if (uniqueKey != null) {
+                Set<String> originalFeatures = uniqueKey.getFeatures();
+                Set<String> newFeatures = key.getFeatures();
+                newFeatures.addAll(originalFeatures);
+
+                map.put(userKey, new UniqueKey(userKey, newFeatures));
+            }
         }
 
-        for (Map.Entry<String, Set<String>> entry : dedupMap.entrySet()) {
-            newKeys.add(new UniqueKey(entry.getKey(), entry.getValue()));
-        }
-
-        return new MTK(newKeys);
+        return new MTK(new ArrayList<>(map.values()));
     }
 
     private long sumImpressionsBytes(List<UniqueKey> keys) {

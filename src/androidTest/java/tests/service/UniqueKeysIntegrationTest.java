@@ -118,7 +118,7 @@ public class UniqueKeysIntegrationTest {
         boolean await = mMtkLatch.await(10, TimeUnit.SECONDS);
 
         assertTrue(await);
-        assertEquals("{\"keys\":[{\"fs\":[\"f1\",\"f2\",\"f3\",\"f4\"],\"k\":\"key1\"},{\"fs\":[\"f1\"],\"k\":\"key2\"}]}", mUniqueKeysBody.get());
+        assertEquals("{\"keys\":[{\"fs\":[\"f2\",\"f3\",\"f4\",\"f1\"],\"k\":\"key1\"},{\"fs\":[\"f1\"],\"k\":\"key2\"}]}", mUniqueKeysBody.get());
 
         client.destroy();
     }

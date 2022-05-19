@@ -75,7 +75,7 @@ public class UniqueKeysRecorderTaskTest {
     }
 
     @Test
-    public void sameKeysAreMerged() throws HttpRecorderException {
+    public void featuresForSameKeyAreMerged() throws HttpRecorderException {
         List<UniqueKey> keys = new ArrayList<>();
         Set<String> set1 = new HashSet<>();
         set1.add("f1");
@@ -110,7 +110,7 @@ public class UniqueKeysRecorderTaskTest {
         List<UniqueKey> uniqueKeys = argumentCaptor.getValue().getKeys();
 
         assertEquals(1, uniqueKeys.size());
-        assertTrue(uniqueKeys.get(0).getFeatures().containsAll(expectedSet));
+        assertEquals(uniqueKeys.get(0).getFeatures(), expectedSet);
         assertEquals("key1", uniqueKeys.get(0).getKey());
 
         assertEquals(SplitTaskExecutionStatus.SUCCESS, executionInfo.getStatus());
