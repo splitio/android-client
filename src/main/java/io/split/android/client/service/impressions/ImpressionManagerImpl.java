@@ -133,7 +133,6 @@ public class ImpressionManagerImpl implements ImpressionManager {
 
     @Override
     public void stopPeriodicRecording() {
-        mUniqueKeysTimer.stop();
         saveImpressionsCount();
         saveUniqueKeys();
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
