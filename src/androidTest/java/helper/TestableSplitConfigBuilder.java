@@ -55,6 +55,7 @@ public class TestableSplitConfigBuilder {
     private SyncConfig mSyncConfig = SyncConfig.builder().build();
     private int mOfflineRefreshRate = 10;
     private int mMtkPerPush = 30000;
+    private int mMtkRefreshRate = 1800;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -240,6 +241,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder mtkRefreshRate(int mtkRefreshRate) {
+        this.mMtkRefreshRate = mtkRefreshRate;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -290,7 +296,8 @@ public class TestableSplitConfigBuilder {
                     mServiceEndpoints.getTelemetryEndpoint(),
                     mTelemetryRefreshRate,
                     mShouldRecordTelemetry,
-                    mMtkPerPush);
+                    mMtkPerPush,
+                    mMtkRefreshRate);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "
