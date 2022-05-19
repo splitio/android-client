@@ -65,7 +65,7 @@ public class ImpressionManagerImplTest {
     @Mock
     private RetryBackoffCounterTimer mUniqueKeysCounterTimer;
 
-    private ImpressionManagerImpl.ImpressionManagerConfig mConfig;
+    private ImpressionManagerConfig mConfig;
 
     @Before
     public void setUp() {
@@ -78,10 +78,10 @@ public class ImpressionManagerImplTest {
         when(mTaskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(mock(SaveUniqueImpressionsTask.class));
         when(mTaskFactory.createUniqueImpressionsRecorderTask()).thenReturn(mock(UniqueKeysRecorderTask.class));
 
-        mConfig = new ImpressionManagerImpl.ImpressionManagerConfig(
+        mConfig = new ImpressionManagerConfig(
                 1800,
                 1800,
-                ImpressionsMode.OPTIMIZED,
+                ImpressionManagerConfig.Mode.OPTIMIZED,
                 3,
                 2048,
                 500
@@ -202,10 +202,10 @@ public class ImpressionManagerImplTest {
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
                 mUniqueKeysTracker,
-                new ImpressionManagerImpl.ImpressionManagerConfig(
+                new ImpressionManagerConfig(
                         1800,
                         1800,
-                        ImpressionsMode.NONE,
+                        ImpressionManagerConfig.Mode.NONE,
                         3,
                         2048,
                         500
@@ -293,10 +293,10 @@ public class ImpressionManagerImplTest {
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
                 mUniqueKeysTracker,
-                new ImpressionManagerImpl.ImpressionManagerConfig(
+                new ImpressionManagerConfig(
                         1800,
                         1800,
-                        ImpressionsMode.NONE,
+                        ImpressionManagerConfig.Mode.NONE,
                         3,
                         2048,
                         500
@@ -346,10 +346,10 @@ public class ImpressionManagerImplTest {
     private ImpressionManagerImpl getDebugModeManager() {
         return new ImpressionManagerImpl(mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
                 mImpressionsStorage, mUniqueKeysTracker,
-                new ImpressionManagerImpl.ImpressionManagerConfig(
+                new ImpressionManagerConfig(
                         1800,
                         1800,
-                        ImpressionsMode.DEBUG,
+                        ImpressionManagerConfig.Mode.DEBUG,
                         3,
                         2048,
                         500
@@ -360,10 +360,10 @@ public class ImpressionManagerImplTest {
     private ImpressionManagerImpl getNoneModeManager() {
         return new ImpressionManagerImpl(mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
                 mImpressionsStorage, mUniqueKeysTracker,
-                new ImpressionManagerImpl.ImpressionManagerConfig(
+                new ImpressionManagerConfig(
                         1800,
                         1800,
-                        ImpressionsMode.NONE,
+                        ImpressionManagerConfig.Mode.NONE,
                         3,
                         2048,
                         500

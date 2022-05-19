@@ -27,7 +27,7 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.impressions.ImpressionsMode;
+import io.split.android.client.service.impressions.ImpressionManagerConfig;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
@@ -85,7 +85,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         scheduleWork(SplitTaskType.IMPRESSIONS_RECORDER.toString(),
                 ImpressionsRecorderWorker.class, buildImpressionsRecorderInputData());
 
-        if (ImpressionsMode.NONE.equals(mSplitClientConfig.impressionsMode())) {
+        if (isNoneImpressionsMode()) {
             scheduleWork(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK.toString(),
                     UniqueKeysRecorderWorker.class, buildUniqueKeysRecorderInputData());
         }
@@ -242,5 +242,9 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         constraintsBuilder.setRequiresBatteryNotLow(
                 mSplitClientConfig.backgroundSyncWhenBatteryNotLow());
         return constraintsBuilder.build();
+    }
+
+    private boolean isNoneImpressionsMode() {
+        return ImpressionManagerConfig.Mode.fromImpressionMode(mSplitClientConfig.impressionsMode()).isNone();
     }
 }
