@@ -53,7 +53,6 @@ public class UniqueKeysIntegrationTest {
                 IntegrationHelper.dummyApiKey(),
                 new Key("key1"),
                 new TestableSplitConfigBuilder()
-                        .impressionsMode(ImpressionsMode.NONE)
                         .ready(30000)
                         .streamingEnabled(true)
                         .enableDebug()
@@ -172,7 +171,6 @@ public class UniqueKeysIntegrationTest {
                 IntegrationHelper.dummyApiKey(),
                 new Key("key1"),
                 new SplitClientConfig.Builder()
-                        .impressionsMode(ImpressionsMode.NONE)
                         .ready(30000)
                         .streamingEnabled(true)
                         .enableDebug()

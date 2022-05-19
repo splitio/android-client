@@ -20,7 +20,6 @@ import io.split.android.client.service.sseclient.FixedIntervalBackoffCounter;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
-import io.split.android.client.storage.InBytesSizable;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -55,8 +54,8 @@ public class ImpressionManagerImpl implements ImpressionManager {
                 new RecorderSyncHelperImpl<>(
                         SplitTaskType.IMPRESSIONS_RECORDER,
                         persistentImpressionsStorage,
-                        impressionManagerConfig.impressionsQueueSize,
-                        impressionManagerConfig.impressionsChunkSize,
+                        impressionManagerConfig.getImpressionsQueueSize(),
+                        impressionManagerConfig.getImpressionsChunkSize(),
                         taskExecutor),
                 new RetryBackoffCounterTimer(taskExecutor,
                         new FixedIntervalBackoffCounter(ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS),
@@ -141,18 +140,18 @@ public class ImpressionManagerImpl implements ImpressionManager {
     }
 
     private boolean isOptimizedImpressionsMode() {
-        return ImpressionsMode.OPTIMIZED.equals(mImpressionManagerConfig.impressionsMode);
+        return mImpressionManagerConfig.getImpressionsMode().isOptimized();
     }
 
     private boolean isNoneImpressionsMode() {
-        return ImpressionsMode.NONE.equals(mImpressionManagerConfig.impressionsMode);
+        return mImpressionManagerConfig.getImpressionsMode().isNone();
     }
 
     private void scheduleImpressionsRecorderTask() {
         mImpressionsRecorderTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createImpressionsRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionManagerConfig.impressionsRefreshRate,
+                mImpressionManagerConfig.getImpressionsRefreshRate(),
                 mImpressionsSyncHelper);
     }
 
@@ -164,7 +163,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
         mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createImpressionsCountRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionManagerConfig.impressionsCounterRefreshRate,
+                mImpressionManagerConfig.getImpressionsCounterRefreshRate(),
                 null);
     }
 
@@ -176,7 +175,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
         mUniqueKeysRecorderTaskId = mTaskExecutor.schedule(
                 mSplitTaskFactory.createUniqueImpressionsRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionManagerConfig.uniqueKeysRefreshRate,
+                mImpressionManagerConfig.getUniqueKeysRefreshRate(),
                 null);
     }
 
@@ -219,30 +218,6 @@ public class ImpressionManagerImpl implements ImpressionManager {
         }
         mTaskExecutor.submit(
                 mSplitTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()), null);
-    }
-
-    public static class ImpressionManagerConfig {
-
-        private final long impressionsRefreshRate;
-        private final long impressionsCounterRefreshRate;
-        private final ImpressionsMode impressionsMode;
-        private final int impressionsQueueSize;
-        private final long impressionsChunkSize;
-        private final long uniqueKeysRefreshRate;
-
-        public ImpressionManagerConfig(long impressionsRefreshRate,
-                                       long impressionsCounterRefreshRate,
-                                       ImpressionsMode impressionsMode,
-                                       int impressionsQueueSize,
-                                       long impressionsChunkSize,
-                                       long uniqueKeysRefreshRate) {
-            this.impressionsRefreshRate = impressionsRefreshRate;
-            this.impressionsCounterRefreshRate = impressionsCounterRefreshRate;
-            this.impressionsMode = impressionsMode;
-            this.impressionsQueueSize = impressionsQueueSize;
-            this.impressionsChunkSize = impressionsChunkSize;
-            this.uniqueKeysRefreshRate = uniqueKeysRefreshRate;
-        }
     }
 
     private boolean shouldTrackImpressionsCount() {
