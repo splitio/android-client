@@ -1038,9 +1038,6 @@ public class SplitClientConfig {
          * @default: OPTIMIZED
          */
         public Builder impressionsMode(ImpressionsMode mode) {
-            if (mode.equals(ImpressionsMode.NONE)) {
-                mode = ImpressionsMode.OPTIMIZED;
-            }
             _impressionsMode = mode;
             return this;
         }
