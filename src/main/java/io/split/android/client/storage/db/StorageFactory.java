@@ -50,19 +50,19 @@ public class StorageFactory {
         return new SqLitePersistentSplitsStorage(splitRoomDatabase);
     }
 
-    public static PersistentImpressionsStorage getPersistenImpressionsStorage(
+    public static PersistentImpressionsStorage getPersistentImpressionsStorage(
             SplitRoomDatabase splitRoomDatabase) {
         return new SqLitePersistentImpressionsStorage(splitRoomDatabase,
                 ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
     }
 
-    public static PersistentEventsStorage getPersistenEventsStorage(
+    public static PersistentEventsStorage getPersistentEventsStorage(
             SplitRoomDatabase splitRoomDatabase) {
         return new SqLitePersistentEventsStorage(splitRoomDatabase,
                 ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
     }
 
-    public static PersistentImpressionsCountStorage getPersistenImpressionsCountStorage(
+    public static PersistentImpressionsCountStorage getPersistentImpressionsCountStorage(
             SplitRoomDatabase splitRoomDatabase) {
         return new SqLitePersistentImpressionsCountStorage(splitRoomDatabase,
                 ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);

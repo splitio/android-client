@@ -28,7 +28,7 @@ public class EventsRecorderWorker extends SplitWorker {
 
             mSplitTask = new EventsRecorderTask(ServiceFactory.getEventsRecorder(
                     getNetworkHelper(), getHttpClient(), getEndPoint()),
-                    StorageFactory.getPersistenEventsStorage(getDatabase()),
+                    StorageFactory.getPersistentEventsStorage(getDatabase()),
                     new EventsRecorderTaskConfig(eventsPerPush),
                     StorageFactory.getTelemetryStorage(shouldRecordTelemetry));
         } catch (URISyntaxException e) {

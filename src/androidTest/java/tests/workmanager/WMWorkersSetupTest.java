@@ -13,11 +13,11 @@ import org.junit.Test;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.SplitsSyncWorker;
+import io.split.android.client.service.workmanager.UniqueKeysRecorderWorker;
 
 public class WMWorkersSetupTest {
 
@@ -37,7 +37,7 @@ public class WMWorkersSetupTest {
                         .build();
 
         ListenableWorker.Result result = worker.startWork().get();
-        Assert.assertEquals(result, dummySuccess("ERROR", SplitTaskType.SPLITS_SYNC));
+        Assert.assertEquals(result, dummySuccess());
     }
 
     @Test
@@ -51,7 +51,7 @@ public class WMWorkersSetupTest {
                         .build();
 
         ListenableWorker.Result result = worker.startWork().get();
-        Assert.assertEquals(result, dummySuccess("ERROR", SplitTaskType.MY_SEGMENTS_SYNC));
+        Assert.assertEquals(result, dummySuccess());
     }
 
     @Test
@@ -64,7 +64,7 @@ public class WMWorkersSetupTest {
                         .build();
 
         ListenableWorker.Result result = worker.startWork().get();
-        Assert.assertEquals(result, dummySuccess("SUCCESS", SplitTaskType.EVENTS_RECORDER));
+        Assert.assertEquals(result, dummySuccess());
     }
 
     @Test
@@ -78,7 +78,22 @@ public class WMWorkersSetupTest {
                         .build();
 
         ListenableWorker.Result result = worker.startWork().get();
-        Assert.assertEquals(result, dummySuccess("SUCCESS", SplitTaskType.IMPRESSIONS_RECORDER));
+        Assert.assertEquals(result, dummySuccess());
+    }
+
+    @Test
+    public void uniqueKeysRecorderWorker() throws Exception {
+        ListenableWorker worker =
+                TestListenableWorkerBuilder.from(mContext, UniqueKeysRecorderWorker.class)
+                        .setInputData(buildInputData(
+                                new Data.Builder()
+                                        .putInt(ServiceConstants.WORKER_PARAM_UNIQUE_KEYS_PER_PUSH, 10)
+                                        .putLong(ServiceConstants.WORKER_PARAM_UNIQUE_KEYS_ESTIMATED_SIZE_IN_BYTES, 1000L)
+                                        .build()))
+                        .build();
+
+        ListenableWorker.Result result = worker.startWork().get();
+        Assert.assertEquals(result, dummySuccess());
     }
 
     private Data buildInputData(Data customData) {
@@ -93,13 +108,7 @@ public class WMWorkersSetupTest {
         return dataBuilder.build();
     }
 
-    private ListenableWorker.Result dummySuccess(String result, SplitTaskType taskType) {
-        Data data = new Data.Builder()
-                .putString(ServiceConstants.TASK_INFO_FIELD_STATUS, result)
-                .putString(ServiceConstants.TASK_INFO_FIELD_TYPE, taskType.toString())
-                .putInt(ServiceConstants.TASK_INFO_FIELD_RECORDS_NON_SENT, 0)
-                .putLong(ServiceConstants.TASK_INFO_FIELD_BYTES_NON_SET, 0)
-                .build();
+    private ListenableWorker.Result dummySuccess() {
         return ListenableWorker.Result.success();
     }
 }
