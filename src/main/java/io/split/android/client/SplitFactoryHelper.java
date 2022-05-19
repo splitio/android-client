@@ -9,7 +9,6 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.api.Key;
@@ -47,7 +46,6 @@ import io.split.android.client.service.synchronizer.attributes.AttributesSynchro
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
-import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -119,9 +117,9 @@ class SplitFactoryHelper {
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase),
-                StorageFactory.getPersistenEventsStorage(splitRoomDatabase),
-                StorageFactory.getPersistenImpressionsStorage(splitRoomDatabase),
-                StorageFactory.getPersistenImpressionsCountStorage(splitRoomDatabase),
+                StorageFactory.getPersistentEventsStorage(splitRoomDatabase),
+                StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase),
+                StorageFactory.getPersistentImpressionsCountStorage(splitRoomDatabase),
                 StorageFactory.getPersistentImpressionsUniqueStorage(splitRoomDatabase),
                 StorageFactory.getAttributesStorage(),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, key.matchingKey()),
