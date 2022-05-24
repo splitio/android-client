@@ -1,6 +1,7 @@
 package io.split.android.client.service.impressions.unique;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.when;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -59,11 +62,56 @@ public class UniqueKeysRecorderTaskTest {
 
         SplitTaskExecutionInfo executionInfo = mRecorderTask.execute();
 
-        verify(mRecorder).execute(argThat(argument -> argument.getKeys().equals(keys)));
-        verify(mRecorder).execute(argThat(argument -> argument.getKeys().equals(keys1)));
+        verify(mRecorder).execute(argThat(argument -> argument.getKeys().size() == keys.size() && argument.getKeys().containsAll(keys)));
+        verify(mRecorder).execute(argThat(argument -> argument.getKeys().size() == keys1.size() && argument.getKeys().containsAll(keys1)));
         verify(mStorage, times(3)).pop(10);
         verify(mStorage, times(2)).delete(any());
         verify(mStorage, never()).setActive(any());
+
+        assertEquals(SplitTaskExecutionStatus.SUCCESS, executionInfo.getStatus());
+        assertEquals(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK, executionInfo.getTaskType());
+        Assert.assertNull(executionInfo.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS));
+        Assert.assertNull(executionInfo.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES));
+    }
+
+    @Test
+    public void featuresForSameKeyAreMerged() throws HttpRecorderException {
+        List<UniqueKey> keys = new ArrayList<>();
+        Set<String> set1 = new HashSet<>();
+        set1.add("f1");
+        set1.add("f2");
+        set1.add("f3");
+
+        Set<String> set2 = new HashSet<>();
+        set2.add("f2");
+        set2.add("f3");
+        set2.add("f4");
+        set2.add("f5");
+        keys.add(new UniqueKey("key1", set1));
+        keys.add(new UniqueKey("key1", set2));
+
+        Set<String> expectedSet = new HashSet<>();
+        expectedSet.add("f1");
+        expectedSet.add("f2");
+        expectedSet.add("f3");
+        expectedSet.add("f4");
+        expectedSet.add("f5");
+
+        when(mStorage.pop(10))
+                .thenReturn(keys);
+
+        SplitTaskExecutionInfo executionInfo = mRecorderTask.execute();
+
+        ArgumentCaptor<MTK> argumentCaptor = ArgumentCaptor.forClass(MTK.class);
+
+        verify(mRecorder).execute(argumentCaptor.capture());
+        verify(mStorage, never()).setActive(any());
+
+        List<UniqueKey> uniqueKeys = argumentCaptor.getValue().getKeys();
+
+        assertEquals(1, uniqueKeys.size());
+        assertEquals(uniqueKeys.get(0).getFeatures(), expectedSet);
+        assertEquals("key1", uniqueKeys.get(0).getKey());
 
         assertEquals(SplitTaskExecutionStatus.SUCCESS, executionInfo.getStatus());
         assertEquals(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK, executionInfo.getTaskType());

@@ -6,8 +6,10 @@ import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -45,7 +47,7 @@ public class UniqueKeysRecorderTask implements SplitTask {
             if (keys.size() > 0) {
                 try {
                     Logger.d("Posting %d Split MTKs", keys.size());
-                    mHttpRecorder.execute(new MTK(keys));
+                    mHttpRecorder.execute(buildMTK(keys));
 
                     mStorage.delete(keys);
                     Logger.d("%d split MTKs sent", keys.size());
@@ -75,6 +77,28 @@ public class UniqueKeysRecorderTask implements SplitTask {
         }
 
         return SplitTaskExecutionInfo.success(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK);
+    }
+
+    @NonNull
+    private static MTK buildMTK(List<UniqueKey> keys) {
+        Map<String, UniqueKey> map = new HashMap<>();
+        for (UniqueKey key : keys) {
+            String userKey = key.getKey();
+            if (!map.containsKey(userKey)) {
+                map.put(userKey, new UniqueKey(userKey, new HashSet<>()));
+            }
+
+            UniqueKey uniqueKey = map.get(userKey);
+            if (uniqueKey != null) {
+                Set<String> originalFeatures = uniqueKey.getFeatures();
+                Set<String> newFeatures = key.getFeatures();
+                newFeatures.addAll(originalFeatures);
+
+                map.put(userKey, new UniqueKey(userKey, newFeatures));
+            }
+        }
+
+        return new MTK(new ArrayList<>(map.values()));
     }
 
     private long sumImpressionsBytes(List<UniqueKey> keys) {

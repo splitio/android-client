@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "54b3c1dbd45024b9a8ab6df1b6bfd898",
+    "identityHash": "a996d1e0f5e8da089a69b3bfe5fa8a1f",
     "entities": [
       {
         "tableName": "my_segments",
@@ -299,23 +299,14 @@
           ],
           "autoGenerate": true
         },
-        "indices": [
-          {
-            "name": "index_unique_keys_user_key",
-            "unique": true,
-            "columnNames": [
-              "user_key"
-            ],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_unique_keys_user_key` ON `${TABLE_NAME}` (`user_key`)"
-          }
-        ],
+        "indices": [],
         "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '54b3c1dbd45024b9a8ab6df1b6bfd898')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a996d1e0f5e8da089a69b3bfe5fa8a1f')"
     ]
   }
 }
