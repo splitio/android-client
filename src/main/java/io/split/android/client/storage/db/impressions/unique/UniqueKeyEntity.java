@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey;
 
 import io.split.android.client.dtos.Identifiable;
 
-@Entity(tableName = "unique_keys", indices = {@Index(value = {"user_key"}, unique = true)})
+@Entity(tableName = "unique_keys")
 public class UniqueKeyEntity implements Identifiable {
 
     @PrimaryKey(autoGenerate = true)

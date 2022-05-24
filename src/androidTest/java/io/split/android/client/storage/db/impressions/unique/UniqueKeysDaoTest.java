@@ -42,11 +42,15 @@ public class UniqueKeysDaoTest extends GenericDaoTest {
 
         List<UniqueKeyEntity> all = mRoomDb.uniqueKeysDao().getAll();
 
-        assertEquals(1, all.size());
+        assertEquals(2, all.size());
         UniqueKeyEntity firstEntity = all.get(0);
-        assertEquals(firstEntity.getFeatureList(), featureJson2);
+        assertEquals(firstEntity.getFeatureList(), featureJson1);
         assertEquals(firstEntity.getStatus(), 0);
         assertEquals(firstEntity.getUserKey(), "user_key");
+        UniqueKeyEntity secondEntity = all.get(1);
+        assertEquals(secondEntity.getFeatureList(), featureJson2);
+        assertEquals(secondEntity.getStatus(), 0);
+        assertEquals(secondEntity.getUserKey(), "user_key");
     }
 
     @Test

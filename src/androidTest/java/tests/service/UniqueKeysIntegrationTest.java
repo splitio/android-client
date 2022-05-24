@@ -30,8 +30,8 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.utils.Logger;
 
 public class UniqueKeysIntegrationTest {
@@ -98,6 +98,29 @@ public class UniqueKeysIntegrationTest {
 
         client.destroy();
         client2.destroy();
+    }
+
+    @Test
+    public void verifyKeyFeaturesAreMerged() throws InterruptedException {
+        SplitClient client = mSplitFactory.client();
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        TestingHelper.TestEventTask task = new TestingHelper.TestEventTask(readyLatch);
+        client.on(SplitEvent.SDK_READY, task);
+        readyLatch.await(5, TimeUnit.SECONDS);
+
+        mDatabase.uniqueKeysDao().insert(new UniqueKeyEntity("key1", "[\"f1\",\"f2\"]", System.currentTimeMillis(), 0));
+        mDatabase.uniqueKeysDao().insert(new UniqueKeyEntity("key1", "[\"f2\",\"f3\",\"f4\"]", System.currentTimeMillis(), 0));
+        mDatabase.uniqueKeysDao().insert(new UniqueKeyEntity("key2", "[\"f1\"]", System.currentTimeMillis(), 0));
+
+        mMtkEndpointHitCount.set(2);
+        client.flush();
+        boolean await = mMtkLatch.await(10, TimeUnit.SECONDS);
+
+        assertTrue(await);
+        assertEquals("{\"keys\":[{\"fs\":[\"f2\",\"f3\",\"f4\",\"f1\"],\"k\":\"key1\"},{\"fs\":[\"f1\"],\"k\":\"key2\"}]}", mUniqueKeysBody.get());
+
+        client.destroy();
     }
 
     @Test
