@@ -130,6 +130,7 @@ public class SplitClientConfig {
     private final int _offlineRefreshRate;
     private boolean _shouldRecordTelemetry;
     private final long _telemetryRefreshRate;
+    private boolean _singleSyncModeEnabled = false;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -182,7 +183,8 @@ public class SplitClientConfig {
                               int offlineRefreshRate,
                               String telemetryEndpoint,
                               long telemetryRefreshRate,
-                              boolean shouldRecordTelemetry) {
+                              boolean shouldRecordTelemetry,
+                              boolean singleSyncModeEnabled) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _telemetryEndpoint = telemetryEndpoint;
@@ -228,6 +230,7 @@ public class SplitClientConfig {
         _isPersistentAttributesEnabled = isPersistentAttributesEnabled;
         _offlineRefreshRate = offlineRefreshRate;
         _telemetryRefreshRate = telemetryRefreshRate;
+        _singleSyncModeEnabled = singleSyncModeEnabled;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
@@ -502,9 +505,14 @@ public class SplitClientConfig {
         return _telemetryRefreshRate;
     }
 
-    private void enableTelemetry() {
-        this._shouldRecordTelemetry = true;
-    }
+    /**
+     * Sync all retrieved data only once on init (Default: false)
+     * No streaming neither polling service is enabled.
+     * To get last definitions, the SDK have to be recreated
+     **/
+    public boolean singleSyncModeEnabled() { return _singleSyncModeEnabled; }
+
+    private void enableTelemetry() { _shouldRecordTelemetry = true; }
 
     public static final class Builder {
 
@@ -564,6 +572,8 @@ public class SplitClientConfig {
         private int _offlineRefreshRate = OFFLINE_REFRESH_RATE_DEFAULT;
 
         private long _telemetryRefreshRate = DEFAULT_TELEMETRY_REFRESH_RATE;
+
+        private boolean _singleSyncModeEnabled = false;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -1180,7 +1190,8 @@ public class SplitClientConfig {
                     _offlineRefreshRate,
                     _serviceEndpoints.getTelemetryEndpoint(),
                     _telemetryRefreshRate,
-                    new TelemetryHelperImpl().shouldRecordTelemetry());
+                    new TelemetryHelperImpl().shouldRecordTelemetry(),
+                    _singleSyncModeEnabled);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
