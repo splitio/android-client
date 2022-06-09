@@ -31,6 +31,6 @@ public class SplitsSyncBackgroundTask implements SplitTask {
             cleanBeforeUpdate = true;
             storedChangeNumber = -1;
         }
-        return mSplitsSyncHelper.sync(storedChangeNumber, cleanBeforeUpdate, false);
+        return mSplitsSyncHelper.sync(storedChangeNumber, cleanBeforeUpdate, false, false);
     }
 }
