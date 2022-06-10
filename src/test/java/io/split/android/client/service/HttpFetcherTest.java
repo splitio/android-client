@@ -36,6 +36,7 @@ import io.split.android.client.service.http.HttpResponseParser;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.utils.NetworkHelper;
+import io.split.android.client.utils.NetworkHelperImpl;
 
 public class HttpFetcherTest {
 
@@ -56,7 +57,7 @@ public class HttpFetcherTest {
         mUrl = new URI(TEST_URL);
         mSplitChangesUrl = new URI(SPLIT_CHANGES_TEST_URL);
         mMySegmentsUrl = new URIBuilder(new URI(MY_SEGMENTS_TEST_URL), "thekey").build();
-        mNetworkHelperMock = mock(NetworkHelper.class);
+        mNetworkHelperMock = mock(NetworkHelperImpl.class);
         mClientMock = mock(HttpClient.class);
     }
 

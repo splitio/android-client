@@ -30,6 +30,7 @@ import io.split.android.client.service.http.HttpRequestBodySerializer;
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.NetworkHelper;
+import io.split.android.client.utils.NetworkHelperImpl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -55,7 +56,7 @@ public class HttpRecorderTest {
         mUrl = new URI(TEST_URL);
         mEventsUrl = new URI(EVENTS_TEST_URL);
         mImpressionsUrl = new URI(IMPRESSIONS_TEST_URL);
-        mNetworkHelperMock = mock(NetworkHelper.class);
+        mNetworkHelperMock = mock(NetworkHelperImpl.class);
         mClientMock = mock(HttpClient.class);
     }
 
