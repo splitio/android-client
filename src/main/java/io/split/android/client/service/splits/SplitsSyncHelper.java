@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
@@ -22,6 +23,7 @@ import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
 
 public class SplitsSyncHelper {
@@ -29,7 +31,7 @@ public class SplitsSyncHelper {
     private static final String SINCE_PARAM = "since";
     private static final String TILL_PARAM = "till";
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10;
-    private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = 60;
+    private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_WAIT;
 
     private final HttpFetcher<SplitChange> mSplitFetcher;
     private final SplitsStorage mSplitsStorage;

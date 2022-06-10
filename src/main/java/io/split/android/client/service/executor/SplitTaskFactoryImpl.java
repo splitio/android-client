@@ -10,6 +10,7 @@ import java.util.List;
 import io.split.android.client.FilterGrouper;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
+import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.service.CleanUpDatabaseTask;
@@ -29,6 +30,8 @@ import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
+import io.split.android.client.service.sseclient.BackoffCounter;
+import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
@@ -49,17 +52,28 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 @NonNull SplitApiFacade splitApiFacade,
                                 @NonNull SplitStorageContainer splitStorageContainer,
                                 @Nullable String splistFilterQueryString,
-                                ISplitEventsManager eventsManager) {
+                                ISplitEventsManager eventsManager,
+                                @Nullable TestingConfig testingConfig) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
         mSplitsFilterQueryString = splistFilterQueryString;
         mEventsManager = eventsManager;
-        mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
-                mSplitsStorageContainer.getSplitsStorage(),
-                new SplitChangeProcessor(),
-                mSplitsStorageContainer.getTelemetryStorage());
+
+        if (testingConfig != null) {
+            mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
+                    mSplitsStorageContainer.getSplitsStorage(),
+                    new SplitChangeProcessor(),
+                    mSplitsStorageContainer.getTelemetryStorage(),
+                    new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()));
+        } else {
+            mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
+                    mSplitsStorageContainer.getSplitsStorage(),
+                    new SplitChangeProcessor(),
+                    mSplitsStorageContainer.getTelemetryStorage());
+        }
+
         mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
                 mSplitApiFacade.getTelemetryStatsRecorder(),
                 mSplitsStorageContainer.getTelemetryStorage(),

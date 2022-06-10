@@ -3,9 +3,11 @@ package io.split.android.client.shared;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.LinkedBlockingDeque;
 
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerRegistry;
 import io.split.android.client.events.SplitEventsManager;
@@ -41,58 +43,67 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     private final MySegmentsNotificationProcessorRegistry mMySegmentsNotificationProcessorRegistry;
     private final EventsManagerRegistry mEventsManagerRegistry;
     private final SseAuthenticator mSseAuthenticator;
-    private final String mDefaultMatchingKey;
     private final MySegmentsV2PayloadDecoder mMySegmentsV2PayloadDecoder;
+    private final SplitClientConfig mSplitConfig;
 
-    public ClientComponentsRegisterImpl(@NonNull MySegmentsSynchronizerFactory mySegmentsSynchronizerFactory,
+    public ClientComponentsRegisterImpl(@NonNull SplitClientConfig splitConfig,
+                                        @NonNull MySegmentsSynchronizerFactory mySegmentsSynchronizerFactory,
                                         @NonNull SplitStorageContainer storageContainer,
                                         @NonNull AttributesSynchronizerFactory attributesSynchronizerFactory,
                                         @NonNull AttributesSynchronizerRegistry attributesSynchronizerRegistry,
                                         @NonNull MySegmentsSynchronizerRegistry mySegmentsSynchronizerRegistry,
-                                        @NonNull MySegmentsUpdateWorkerRegistry mySegmentsUpdateWorkerRegistry,
+                                        @Nullable MySegmentsUpdateWorkerRegistry mySegmentsUpdateWorkerRegistry,
                                         @NonNull EventsManagerRegistry eventsManagerRegistry,
-                                        @NonNull SseAuthenticator sseAuthenticator,
-                                        @NonNull MySegmentsNotificationProcessorRegistry mySegmentsNotificationProcessorRegistry,
-                                        @NonNull String defaultMatchingKey,
-                                        @NonNull MySegmentsNotificationProcessorFactory mySegmentsNotificationProcessorFactory,
-                                        @NonNull MySegmentsV2PayloadDecoder mySegmentsV2PayloadDecoder) {
+                                        @Nullable SseAuthenticator sseAuthenticator,
+                                        @Nullable MySegmentsNotificationProcessorRegistry mySegmentsNotificationProcessorRegistry,
+                                        @Nullable MySegmentsNotificationProcessorFactory mySegmentsNotificationProcessorFactory,
+                                        @Nullable MySegmentsV2PayloadDecoder mySegmentsV2PayloadDecoder) {
+        mSplitConfig = splitConfig;
         mMySegmentsSynchronizerFactory = checkNotNull(mySegmentsSynchronizerFactory);
         mStorageContainer = checkNotNull(storageContainer);
         mAttributesSynchronizerFactory = checkNotNull(attributesSynchronizerFactory);
         mAttributesSynchronizerRegistry = checkNotNull(attributesSynchronizerRegistry);
-        mMySegmentsSynchronizerRegistry = checkNotNull(mySegmentsSynchronizerRegistry);
-        mMySegmentsUpdateWorkerRegistry = checkNotNull(mySegmentsUpdateWorkerRegistry);
-        mMySegmentsNotificationProcessorRegistry = checkNotNull(mySegmentsNotificationProcessorRegistry);
         mEventsManagerRegistry = checkNotNull(eventsManagerRegistry);
-        mSseAuthenticator = checkNotNull(sseAuthenticator);
-        mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
-        mMySegmentsNotificationProcessorFactory = checkNotNull(mySegmentsNotificationProcessorFactory);
-        mMySegmentsV2PayloadDecoder = checkNotNull(mySegmentsV2PayloadDecoder);
+        mMySegmentsSynchronizerRegistry = checkNotNull(mySegmentsSynchronizerRegistry);
+
+        // Can be null is singleSyncMode enabled
+        mMySegmentsNotificationProcessorRegistry = mySegmentsNotificationProcessorRegistry;
+        mMySegmentsUpdateWorkerRegistry = mySegmentsUpdateWorkerRegistry;
+        mSseAuthenticator = sseAuthenticator;
+        mMySegmentsNotificationProcessorFactory = mySegmentsNotificationProcessorFactory;
+        mMySegmentsV2PayloadDecoder = mySegmentsV2PayloadDecoder;
     }
 
     @Override
     public void registerComponents(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, SplitEventsManager eventsManager) {
-        registerKeyInSeeAuthenticator(key);
-        LinkedBlockingDeque<MySegmentChangeNotification> mySegmentsNotificationQueue = new LinkedBlockingDeque<>();
-        registerMySegmentsNotificationProcessor(key, mySegmentsTaskFactory, mySegmentsNotificationQueue);
         registerEventsManager(key, eventsManager);
-        registerMySegmentsSynchronization(key, mySegmentsTaskFactory, eventsManager, mySegmentsNotificationQueue);
+        MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager);
+        registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
         registerAttributesSynchronizer(key, eventsManager);
+        if (!isSingleSyncModeEnabled()) {
+            registerKeyInSeeAuthenticator(key);
+            LinkedBlockingDeque<MySegmentChangeNotification> mySegmentsNotificationQueue = new LinkedBlockingDeque<>();
+            registerMySegmentsNotificationProcessor(key, mySegmentsTaskFactory, mySegmentsNotificationQueue);
+            registerMySegmentsUpdateWorker(key, mySegmentsSynchronizer, mySegmentsNotificationQueue);
+        }
     }
 
     @Override
     public void unregisterComponentsForKey(Key key) {
-        mSseAuthenticator.unregisterKey(key.matchingKey());
         mAttributesSynchronizerRegistry.unregisterAttributesSynchronizer(key.matchingKey());
         mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(key.matchingKey());
-        mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(key.matchingKey());
-        mMySegmentsNotificationProcessorRegistry.unregisterMySegmentsProcessor(key.matchingKey());
+
+        if (!isSingleSyncModeEnabled()) {
+            mSseAuthenticator.unregisterKey(key.matchingKey());
+            mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(key.matchingKey());
+            mMySegmentsNotificationProcessorRegistry.unregisterMySegmentsProcessor(key.matchingKey());
+        }
     }
 
-    private void registerMySegmentsSynchronization(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, SplitEventsManager eventsManager, LinkedBlockingDeque<MySegmentChangeNotification> notificationsQueue) {
-        MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager);
-        registerMySegmentsUpdateWorker(key, mySegmentsSynchronizer, notificationsQueue);
-        registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
+    private void registerMySegmentsSynchronization(Key key,
+                                                   MySegmentsSynchronizer mySegmentsSynchronizer,
+                                                   SplitEventsManager eventsManager) {
+
     }
 
     private void registerAttributesSynchronizer(Key key, SplitEventsManager eventsManager) {
@@ -136,5 +147,9 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
                         mMySegmentsV2PayloadDecoder.hashKey(key.matchingKey())
                 )
         );
+    }
+
+    private boolean isSingleSyncModeEnabled() {
+        return mSplitConfig.singleSyncModeEnabled();
     }
 }
