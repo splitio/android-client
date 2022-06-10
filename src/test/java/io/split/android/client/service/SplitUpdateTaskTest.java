@@ -50,7 +50,7 @@ public class SplitUpdateTaskTest {
         mSplitsSyncHelper = Mockito.mock(SplitsSyncHelper.class);
         mEventsManager = Mockito.mock(SplitEventsManager.class);
         mTask = new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorage, mChangeNumber, mEventsManager);
-        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
         when(mSplitsSyncHelper.sync(anyLong())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
         loadSplitChanges();
     }
@@ -70,7 +70,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, never()).sync(anyLong(), anyBoolean(), anyBoolean());
+        verify(mSplitsSyncHelper, never()).sync(anyLong(), anyBoolean(), anyBoolean(), anyBoolean());
     }
 
     @After

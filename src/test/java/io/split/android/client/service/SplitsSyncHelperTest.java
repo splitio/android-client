@@ -35,6 +35,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class SplitsSyncHelperTest {
@@ -77,7 +78,7 @@ public class SplitsSyncHelperTest {
         when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(secondSplitChange);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, false, false);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, false, false, false);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
@@ -99,7 +100,7 @@ public class SplitsSyncHelperTest {
         when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(secondSplitChange);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, false, true);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, false, true, false);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, headers);
         verify(mSplitsStorage, times(1)).update(any());
@@ -114,7 +115,7 @@ public class SplitsSyncHelperTest {
                 .thenThrow(HttpFetcherException.class);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false, false);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, never()).update(any());
@@ -129,7 +130,7 @@ public class SplitsSyncHelperTest {
         doThrow(NullPointerException.class).when(mSplitsStorage).update(any(ProcessedSplitChange.class));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false, false);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
@@ -147,7 +148,7 @@ public class SplitsSyncHelperTest {
         when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(secondSplitChange);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false, false);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
@@ -203,7 +204,7 @@ public class SplitsSyncHelperTest {
                 .thenThrow(new HttpFetcherException("error", "error", 500));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        mSplitsSyncHelper.sync(-1, true, false);
+        mSplitsSyncHelper.sync(-1, true, false, false);
 
         verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.SPLITS, 500);
     }
@@ -254,7 +255,7 @@ public class SplitsSyncHelperTest {
     public void syncWithClearBeforeUpdateOnlyClearsStorageOnce() {
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
 
-        mSplitsSyncHelper.sync(3, true, false);
+        mSplitsSyncHelper.sync(3, true, false, false);
 
         verify(mSplitsStorage).clear();
     }
@@ -263,7 +264,7 @@ public class SplitsSyncHelperTest {
     public void syncWithoutClearBeforeUpdateDoesNotClearStorage() {
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
 
-        mSplitsSyncHelper.sync(3, false, false);
+        mSplitsSyncHelper.sync(3, false, false, false);
 
         verify(mSplitsStorage, never()).clear();
     }
@@ -319,6 +320,16 @@ public class SplitsSyncHelperTest {
 
         verify(mBackoffCounter).resetCounter();
         verify(mBackoffCounter, times(2)).getNextRetryTime();
+    }
+
+    @Test
+    public void replaceTillWhenFilterHasChanged() throws HttpFetcherException {
+        mSplitsSyncHelper.sync(14829471, true, false, true);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("since", -1L);
+        verify(mSplitsFetcher).execute(eq(params), eq(null));
+        verifyNoMoreInteractions(mSplitsFetcher);
     }
 
     private void loadSplitChanges() {

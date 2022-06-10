@@ -56,7 +56,7 @@ public class SplitSyncTaskTest {
         mSplitsSyncHelper = mock(SplitsSyncHelper.class);
         mEventsManager = mock(SplitEventsManager.class);
 
-        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLIT_KILL));
+        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLIT_KILL));
 
         loadSplitChanges();
     }
@@ -75,7 +75,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(-1, false, false);
+        verify(mSplitsSyncHelper, times(1)).sync(-1, false, false, false);
     }
 
     @Test
@@ -107,7 +107,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(100L, true, false);
+        verify(mSplitsSyncHelper, times(1)).sync(100L, true, false, false);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(-1, true, false);
+        verify(mSplitsSyncHelper, times(1)).sync(-1, true, false, true);
         verify(mSplitsStorage, times(1)).updateSplitsFilterQueryString(otherQs);
     }
 
@@ -146,7 +146,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(100L, false, false);
+        verify(mSplitsSyncHelper, times(1)).sync(100L, false, false, false);
         verify(mSplitsStorage, never()).updateSplitsFilterQueryString(anyString());
     }
 
@@ -161,7 +161,7 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
         mTask.execute();
 
@@ -179,7 +179,7 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
         mTask.execute();
 
@@ -193,7 +193,7 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
         mTask.execute();
 
