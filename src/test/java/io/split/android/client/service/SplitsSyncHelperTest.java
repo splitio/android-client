@@ -35,6 +35,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 public class SplitsSyncHelperTest {
@@ -319,6 +320,16 @@ public class SplitsSyncHelperTest {
 
         verify(mBackoffCounter).resetCounter();
         verify(mBackoffCounter, times(2)).getNextRetryTime();
+    }
+
+    @Test
+    public void replaceTillWhenFilterHasChanged() throws HttpFetcherException {
+        mSplitsSyncHelper.sync(14829471, true, false, true);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("since", -1L);
+        verify(mSplitsFetcher).execute(eq(params), eq(null));
+        verifyNoMoreInteractions(mSplitsFetcher);
     }
 
     private void loadSplitChanges() {

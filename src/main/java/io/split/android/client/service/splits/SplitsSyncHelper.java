@@ -61,12 +61,12 @@ public class SplitsSyncHelper {
         mBackoffCounter = checkNotNull(backoffCounter);
     }
 
-    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean filterHasCHanged) {
+    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean filterHasChanged) {
         try {
-            boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache, filterHasCHanged);
+            boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache, false, filterHasChanged);
 
             if (!successfulSync) {
-                attemptSplitSync(till, clearBeforeUpdate, avoidCache, true);
+                attemptSplitSync(till, clearBeforeUpdate, avoidCache, true, filterHasChanged);
             }
         } catch (HttpFetcherException e) {
             logError("Network error while fetching splits" + e.getLocalizedMessage());
@@ -80,10 +80,6 @@ public class SplitsSyncHelper {
 
         Logger.d("Features have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
-    }
-
-    private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean filterHasChanged) throws Exception {
-        return attemptSplitSync(till, clearBeforeUpdate, avoidCache, false, filterHasChanged);
     }
 
     /**
