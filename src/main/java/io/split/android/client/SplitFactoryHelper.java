@@ -268,6 +268,11 @@ class SplitFactoryHelper {
                                                         @NonNull HttpClient defaultHttpClient,
                                                         @NonNull SplitApiFacade splitApiFacade,
                                                         @NonNull SplitStorageContainer storageContainer) {
+
+        // Avoid creating unnecessary components if single sync enabled
+        if (config.singleSyncModeEnabled()) {
+            return new StreamingComponents();
+        }
         BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue = new LinkedBlockingDeque<>();
         NotificationParser notificationParser = new NotificationParser();
 
@@ -296,6 +301,7 @@ class SplitFactoryHelper {
                 splitsUpdateNotificationQueue,
                 notificationParser,
                 notificationProcessor,
-                sseAuthenticator);
+                sseAuthenticator,
+                pushManagerEventBroadcaster);
     }
 }

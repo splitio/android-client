@@ -161,6 +161,12 @@ public class IntegrationHelper {
                 .build();
     }
 
+    public static TestingConfig  testingConfig(int cdnBackoffTime) {
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setCdnBackoffTime(cdnBackoffTime);
+        return testingConfig;
+    }
+
     public static SplitClientConfig lowRefreshRateConfig() {
         return lowRefreshRateConfig(true);
     }

@@ -40,7 +40,7 @@ import io.split.android.client.utils.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 import tests.integration.shared.TestingHelper;
 
-public class MySegmentsChangeV2Test {
+public class MySegmentsChangeV2MultiClientTest {
     private Context mContext;
     private BlockingQueue<String> mStreamingData;
     private CountDownLatch mMySegmentsUpdateLatch;
@@ -71,18 +71,20 @@ public class MySegmentsChangeV2Test {
     }
 
     @Test
-    public void mySegmentsUpdate() throws IOException, InterruptedException {
-
+    public void mySegmentsUpdateMultiClient() throws IOException, InterruptedException {
         SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
         String userKey = "key1";
+        String userKey2 = "key2";
         CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch readyLatch2 = new CountDownLatch(1);
         mSseLatch = new CountDownLatch(1);
         mMySegmentsSyncLatch = new CountDownLatch(2);
         mMySegmentsUpdateLatch = new CountDownLatch(1);
-        CountDownLatch updateLatch = new CountDownLatch(4);
-        TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
 
-        HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher(1));
+        TestingHelper.TestEventTask updateTask = new TestingHelper.TestEventTask();
+        TestingHelper.TestEventTask updateTask2 = new TestingHelper.TestEventTask();
+
+        HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher(2));
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
@@ -91,40 +93,66 @@ public class MySegmentsChangeV2Test {
                 config, mContext, httpClientMock, db, mSynchronizerSpy);
 
         mClient = mFactory.client();
+        SplitClient client2 = mFactory.client(new Key(userKey2));
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
+        SplitEventTaskHelper readyTask2 = new SplitEventTaskHelper(readyLatch2);
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         mClient.on(SplitEvent.SDK_UPDATE, updateTask);
+        client2.on(SplitEvent.SDK_READY, readyTask2);
+        client2.on(SplitEvent.SDK_UPDATE, updateTask2);
 
         // Wait for SDK ready to fire
         readyLatch.await(10, TimeUnit.SECONDS);
+        readyLatch2.await(10, TimeUnit.SECONDS);
 
         // Wait for streaming connection
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(15, TimeUnit.SECONDS);
+
         // Keep alive on streaming channel confirms connection
         // so full sync is fired
         TestingHelper.pushKeepAlive(mStreamingData);
+
         // Wait for hitting my segments two times (sdk ready and full sync after streaming connection)
-        mMySegmentsSyncLatch.await(5, TimeUnit.SECONDS);
+        mMySegmentsSyncLatch.await(10, TimeUnit.SECONDS);
+        mMySegmentsSyncLatch2.await(10, TimeUnit.SECONDS);
 
         // Unbounded fetch notification should trigger my segments
         // refresh on synchronizer
         // Set count to 0 to start counting hits
         mSynchronizerSpy.mForceMySegmentSyncCalledCount.set(0);
+
+        CountDownLatch l1 = new CountDownLatch(1);
+        CountDownLatch l2 = new CountDownLatch(2);
+        updateTask.setLatch(l1);
+        updateTask2.setLatch(l2);
         testMySegmentsUpdate(TestingData.UNBOUNDED_NOTIFICATION);
+        l1.await(5, TimeUnit.SECONDS);
+        l2.await(5, TimeUnit.SECONDS);
+
         // Should not trigger any fetch to my segments because
         // this payload doesn't have "key1" enabled
         pushMessage(TestingData.ESCAPED_BOUNDED_NOTIFICATION_GZIP);
+
         // Pushed key list message. Key 1 should add a segment
+        l1 = new CountDownLatch(1);
+        updateTask.setLatch(l1);
         pushMessage(TestingData.ESCAPED_KEY_LIST_NOTIFICATION_GZIP);
+        l1.await(5, TimeUnit.SECONDS);
 
+        l1 = new CountDownLatch(1);
+        updateTask.setLatch(l1);
         pushMessage(TestingData.SEGMENT_REMOVAL_NOTIFICATION);
-        updateLatch.await(20, TimeUnit.SECONDS);
-        MySegmentEntity mySegmentEntity = getByKey(userKey, db);
+        l1.await(5, TimeUnit.SECONDS);
 
+        MySegmentEntity mySegmentEntity = getByKey(userKey, db);
+        MySegmentEntity mySegmentEntity2 = getByKey(userKey2, db);
         Assert.assertTrue(mySegmentEntity.getSegmentList().contains("new_segment_added"));
         Assert.assertFalse(mySegmentEntity.getSegmentList().contains("segment1"));
+
+        Assert.assertEquals("new_segment_added", mySegmentEntity2.getSegmentList());
+
         mFactory.destroy();
     }
 

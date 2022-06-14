@@ -61,10 +61,10 @@ android {
     sourceSets {
         String sharedTestDir = 'src/sharedTest/java'
         test {
-            java.srcDir sharedTestDir
+            java.srcDirs += sharedTestDir
         }
         androidTest {
-            java.srcDir sharedTestDir
+            java.srcDirs += sharedTestDir
         }
     }
 

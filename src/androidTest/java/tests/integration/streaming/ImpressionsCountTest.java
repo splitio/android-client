@@ -179,7 +179,6 @@ public class ImpressionsCountTest {
 
         mImpressionsLatch.await(10, TimeUnit.SECONDS);
 
-        Assert.assertTrue(client.isReady());
         Assert.assertEquals(70, mImpressions.size());
         Assert.assertEquals(0, mCounts.size());
 

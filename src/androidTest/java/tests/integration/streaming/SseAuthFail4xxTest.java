@@ -1,5 +1,7 @@
 package tests.integration.streaming;
 
+import static android.os.SystemClock.sleep;
+
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -76,11 +78,10 @@ public class SseAuthFail4xxTest {
         mMySegmentsHitsCountLatch.await(40, TimeUnit.SECONDS);
         mSplitsHitsCountLatch.await(40, TimeUnit.SECONDS);
 
-
-        Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(mIsStreamingAuth);
+        Assert.assertTrue(client.isReady());
+        Assert.assertTrue(splitFactory.isReady());
 
         // Checking no streaming connection
         Assert.assertFalse(mIsStreamingConnected);
@@ -101,7 +102,7 @@ public class SseAuthFail4xxTest {
     }
 
     private HttpResponseMockDispatcher createBasicResponseDispatcher() {
-        return new HttpResponseMockDispatcher(){
+        return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/mySegments")) {

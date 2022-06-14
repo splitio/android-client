@@ -10,7 +10,7 @@ import io.split.android.client.service.sseclient.notifications.SplitsChangeNotif
 public class StreamingComponents {
     PushNotificationManager pushNotificationManager;
     BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue;
-    PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
+    PushManagerEventBroadcaster pushManagerEventBroadcaster;
     NotificationParser notificationParser;
     NotificationProcessor notificationProcessor;
     SseAuthenticator sseAuthenticator;
@@ -22,12 +22,14 @@ public class StreamingComponents {
                                BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue,
                                NotificationParser notificationParser,
                                NotificationProcessor notificationProcessor,
-                               SseAuthenticator sseAuthenticator) {
+                               SseAuthenticator sseAuthenticator,
+                               PushManagerEventBroadcaster pushManagerEventBroadcaster) {
         this.pushNotificationManager = pushNotificationManager;
         this.splitsUpdateNotificationQueue = splitsUpdateNotificationQueue;
         this.notificationParser = notificationParser;
         this.notificationProcessor = notificationProcessor;
         this.sseAuthenticator = sseAuthenticator;
+        this.pushManagerEventBroadcaster = pushManagerEventBroadcaster;
     }
 
     public PushNotificationManager getPushNotificationManager() {
