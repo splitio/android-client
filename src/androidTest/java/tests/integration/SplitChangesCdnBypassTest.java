@@ -24,9 +24,12 @@ import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
+import helper.TestableSplitConfigBuilder;
 import helper.TestingHelper;
 import io.split.android.client.SplitClient;
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.TestingConfig;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
@@ -55,13 +58,21 @@ public class SplitChangesCdnBypassTest {
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(
                 new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000 - 30));
+        SplitClientConfig config = new TestableSplitConfigBuilder().ready(30000)
+                .streamingEnabled(true)
+                .enableDebug()
+                .trafficType("account")
+                .build();
+
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setCdnBackoffTime(1);
         mSplitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),
                 IntegrationHelper.dummyUserKey(),
-                IntegrationHelper.basicConfig(),
+                config,
                 mContext,
                 new HttpClientMock(buildDispatcher()),
-                splitRoomDatabase);
+                splitRoomDatabase, null, null, testingConfig);
     }
 
     @Test
@@ -77,12 +88,11 @@ public class SplitChangesCdnBypassTest {
 
         latch.await(20, TimeUnit.SECONDS);
         mSseLatch.await(20, TimeUnit.SECONDS);
-
         TestingHelper.pushKeepAlive(mStreamingData);
         TestingHelper.delay(500);
 
         pushSplitsUpdateMessage();
-        boolean await = mBypassLatch.await(300, TimeUnit.SECONDS);
+        boolean await = mBypassLatch.await(200, TimeUnit.SECONDS);
         assertTrue(await);
 
         client.destroy();
@@ -112,6 +122,7 @@ public class SplitChangesCdnBypassTest {
                             "{ \"id\":\"id1\", \"name\":\"segment2\"}]}");
 
                 } else if (uri.getPath().contains("/splitChanges")) {
+                    System.out.println("URL HIT: " + uri.getPath());
                     if (uri.getQuery().contains("till=3") && uri.getQuery().contains("since=3")) {
                         return getSplitsMockResponse("3", "4");
                     }

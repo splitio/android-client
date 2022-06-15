@@ -17,6 +17,7 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.NetworkHelper;
+import io.split.android.client.utils.NetworkHelperImpl;
 
 public abstract class SplitWorker extends Worker {
 
@@ -45,7 +46,7 @@ public abstract class SplitWorker extends Worker {
         headersBuilder.addJsonTypeHeaders();
         mHttpClient = new HttpClientImpl.Builder().build();
         mHttpClient.addHeaders(headersBuilder.build());
-        mNetworkHelper = new NetworkHelper();
+        mNetworkHelper = new NetworkHelperImpl();
     }
 
     @NonNull

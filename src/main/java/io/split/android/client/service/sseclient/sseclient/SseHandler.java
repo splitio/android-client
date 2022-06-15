@@ -109,6 +109,19 @@ public class SseHandler {
         );
     }
 
+    public boolean isRetryableError(Map<String, String> values) {
+        String messageData = values.get(EventStreamParser.DATA_FIELD);
+        if (messageData == null) {
+            return true;
+        }
+        try {
+            return mNotificationParser.parseError(messageData).isRetryable();
+        } catch (JsonSyntaxException e){
+            Logger.e("Could no parse ably error: " + messageData);
+        }
+        return true;
+    }
+
     private void handleControlNotification(IncomingNotification incomingNotification) {
         try {
             ControlNotification notification = mNotificationParser.parseControl(incomingNotification.getJsonData());

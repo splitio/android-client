@@ -31,4 +31,8 @@ public class SplitEventTaskHelper extends SplitEventTask {
     public void onPostExecutionView(SplitClient client) {
 
     }
+
+    public void setLatch(CountDownLatch latch) {
+        mlatch = latch;
+    }
 }

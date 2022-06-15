@@ -3,14 +3,15 @@ package io.split.android.client;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.work.WorkManager;
 
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
@@ -24,7 +25,9 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.notifications.MySegmentsPayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
@@ -39,6 +42,7 @@ import io.split.android.client.service.sseclient.sseclient.SseClient;
 import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
+import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -47,7 +51,6 @@ import io.split.android.client.service.synchronizer.attributes.AttributesSynchro
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
-import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -57,6 +60,7 @@ import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.NetworkHelper;
+import io.split.android.client.utils.NetworkHelperImpl;
 import io.split.android.client.utils.Utils;
 
 class SplitFactoryHelper {
@@ -137,8 +141,8 @@ class SplitFactoryHelper {
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
                                   HttpClient httpClient,
-                                  String splitsFilterQueryString) throws URISyntaxException {
-        NetworkHelper networkHelper = new NetworkHelper();
+                                  String splitsFilterQueryString,
+                                  NetworkHelper networkHelper) throws URISyntaxException {
 
         return new SplitApiFacade(
                 ServiceFactory.getSplitsFetcher(networkHelper, httpClient,
@@ -235,11 +239,11 @@ class SplitFactoryHelper {
                                                                     NotificationProcessor notificationProcessor,
                                                                     SseAuthenticator sseAuthenticator,
                                                                     SplitStorageContainer storageContainer,
-                                                                    SyncManager syncManager,
-                                                                    String defaultMatchingKey) {
+                                                                    SyncManager syncManager) {
         MySegmentsV2PayloadDecoder mySegmentsV2PayloadDecoder = new MySegmentsV2PayloadDecoder();
 
         return new ClientComponentsRegisterImpl(
+                config,
                 new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(),
                         taskExecutor,
                         config.segmentsRefreshRate()),
@@ -251,11 +255,53 @@ class SplitFactoryHelper {
                 eventsManagerCoordinator,
                 sseAuthenticator,
                 notificationProcessor,
-                defaultMatchingKey,
                 new MySegmentsNotificationProcessorFactoryImpl(notificationParser,
                         taskExecutor,
                         mySegmentsV2PayloadDecoder,
                         new CompressionUtilProvider()),
                 mySegmentsV2PayloadDecoder);
+    }
+
+    public StreamingComponents buildStreamingComponents(@NonNull SplitTaskExecutor splitTaskExecutor,
+                                                        @NonNull SplitTaskFactory splitTaskFactory,
+                                                        @NonNull SplitClientConfig config,
+                                                        @NonNull HttpClient defaultHttpClient,
+                                                        @NonNull SplitApiFacade splitApiFacade,
+                                                        @NonNull SplitStorageContainer storageContainer) {
+
+        // Avoid creating unnecessary components if single sync enabled
+        if (config.singleSyncModeEnabled()) {
+            return new StreamingComponents();
+        }
+        BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue = new LinkedBlockingDeque<>();
+        NotificationParser notificationParser = new NotificationParser();
+
+        NotificationProcessor notificationProcessor = new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
+                notificationParser, splitsUpdateNotificationQueue, new MySegmentsPayloadDecoder());
+
+        PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
+
+        SseClient sseClient = getSseClient(config.streamingServiceUrl(),
+                notificationParser,
+                notificationProcessor,
+                storageContainer.getTelemetryStorage(),
+                pushManagerEventBroadcaster,
+                defaultHttpClient);
+
+        SseAuthenticator sseAuthenticator = new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(),
+                new SseJwtParser());
+
+        PushNotificationManager pushNotificationManager = getPushNotificationManager(splitTaskExecutor,
+                sseAuthenticator,
+                pushManagerEventBroadcaster,
+                sseClient,
+                storageContainer.getTelemetryStorage());
+
+        return new StreamingComponents(pushNotificationManager,
+                splitsUpdateNotificationQueue,
+                notificationParser,
+                notificationProcessor,
+                sseAuthenticator,
+                pushManagerEventBroadcaster);
     }
 }

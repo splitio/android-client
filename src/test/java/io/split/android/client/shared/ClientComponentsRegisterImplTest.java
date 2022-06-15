@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerRegistry;
 import io.split.android.client.events.SplitEventsManager;
@@ -71,6 +72,7 @@ public class ClientComponentsRegisterImplTest {
                 .thenReturn(mMySegmentsSynchronizer);
 
         register = new ClientComponentsRegisterImpl(
+                new SplitClientConfig.Builder().build(),
                 mMySegmentsSynchronizerFactory,
                 mStorageContainer,
                 mAttributesSynchronizerFactory,
@@ -80,7 +82,6 @@ public class ClientComponentsRegisterImplTest {
                 mEventsManagerRegistry,
                 mSseAuthenticator,
                 mMySegmentsNotificationProcessorRegistry,
-                mDefaultMatchingKey,
                 mMySegmentsNotificationProcessorFactory,
                 mMySegmentsV2PayloadDecoder
         );
