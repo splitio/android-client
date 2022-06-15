@@ -63,12 +63,12 @@ public class SplitsSyncHelper {
         mBackoffCounter = checkNotNull(backoffCounter);
     }
 
-    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache) {
+    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber) {
         try {
-            boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache);
+            boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache, false, resetChangeNumber);
 
             if (!successfulSync) {
-                attemptSplitSync(till, clearBeforeUpdate, avoidCache, true);
+                attemptSplitSync(till, clearBeforeUpdate, avoidCache, true, resetChangeNumber);
             }
         } catch (HttpFetcherException e) {
             logError("Network error while fetching splits" + e.getLocalizedMessage());
@@ -84,10 +84,6 @@ public class SplitsSyncHelper {
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
-    private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache) throws Exception {
-        return attemptSplitSync(till, clearBeforeUpdate, avoidCache, false);
-    }
-
     /**
      * @param till              target changeNumber
      * @param clearBeforeUpdate whether to clear splits storage before updating it
@@ -95,13 +91,14 @@ public class SplitsSyncHelper {
      * @param withCdnBypass     whether to add additional query param to bypass CDN
      * @return whether sync finished successfully
      */
-    private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass) throws Exception {
+    private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass, boolean resetChangeNumber) throws Exception {
         int remainingAttempts = ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES;
         mBackoffCounter.resetCounter();
         while (true) {
             remainingAttempts--;
 
-            long changeNumber = fetchUntil(till, clearBeforeUpdate, avoidCache, withCdnBypass);
+            long changeNumber = fetchUntil(till, clearBeforeUpdate, avoidCache, withCdnBypass, resetChangeNumber);
+            resetChangeNumber = false;
 
             if (till <= changeNumber) {
                 return true;
@@ -121,11 +118,12 @@ public class SplitsSyncHelper {
         }
     }
 
-    private long fetchUntil(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnByPass) throws Exception {
+    private long fetchUntil(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnByPass, boolean resetChangeNumber) throws Exception {
         boolean shouldClearBeforeUpdate = clearBeforeUpdate;
 
         while (true) {
-            long changeNumber = mSplitsStorage.getTill();
+            long changeNumber = (resetChangeNumber) ? -1 : mSplitsStorage.getTill();
+            resetChangeNumber = false;
             if (till < changeNumber) {
                 return changeNumber;
             }
@@ -141,7 +139,7 @@ public class SplitsSyncHelper {
     }
 
     public SplitTaskExecutionInfo sync(long till) {
-        return sync(till, false, true);
+        return sync(till, false, true, false);
     }
 
     private SplitChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
