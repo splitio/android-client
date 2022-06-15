@@ -185,6 +185,7 @@ public class SingleSyncTest {
         client.destroy();
     }
 
+    /// TODO: Uncomment when impressions mode NONE available
 //    @Test
 //    public void singleSyncEnabledImpressionsNone() throws Exception {
 //        SplitFactory factory = buildFactory(ImpressionsMode.OPTIMIZED);
