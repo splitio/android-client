@@ -32,6 +32,7 @@ import io.split.android.client.service.sseclient.notifications.MySegmentsV2Paylo
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactory;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactoryImpl;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
@@ -49,10 +50,13 @@ import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerFactoryImpl;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactory;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
@@ -178,12 +182,19 @@ class SplitFactoryHelper {
                                  BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue,
                                  PushManagerEventBroadcaster pushManagerEventBroadcaster) {
 
+        SplitUpdatesWorker updateWorker = null;
+        BackoffCounterTimer backoffCounterTimer = null;
+        if (!config.singleSyncModeEnabled()) {
+            updateWorker = new SplitUpdatesWorker(synchronizer, splitsUpdateNotificationQueue);
+            backoffCounterTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
+        }
+
         return new SyncManagerImpl(config,
                 synchronizer,
                 pushNotificationManager,
-                new SplitUpdatesWorker(synchronizer, splitsUpdateNotificationQueue),
+                updateWorker,
                 pushManagerEventBroadcaster,
-                new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1)),
+                backoffCounterTimer,
                 telemetrySynchronizer);
     }
 
@@ -242,23 +253,35 @@ class SplitFactoryHelper {
                                                                     SyncManager syncManager) {
         MySegmentsV2PayloadDecoder mySegmentsV2PayloadDecoder = new MySegmentsV2PayloadDecoder();
 
+        PersistentAttributesStorage attributesStorage = null;
+        if (config.persistentAttributesEnabled()) {
+            attributesStorage = storageContainer.getPersistentAttributesStorage();
+        }
+        MySegmentsSynchronizerFactory mySegmentsSynchronizerFactory = new MySegmentsSynchronizerFactoryImpl(
+                new RetryBackoffCounterTimerFactory(),
+                taskExecutor,
+                config.segmentsRefreshRate());
+
+        MySegmentsNotificationProcessorFactory mySegmentsNotificationProcessorFactory = null;
+        if (!config.singleSyncModeEnabled()) {
+            mySegmentsNotificationProcessorFactory = new MySegmentsNotificationProcessorFactoryImpl(notificationParser,
+                    taskExecutor,
+                    mySegmentsV2PayloadDecoder,
+                    new CompressionUtilProvider());
+        }
+
         return new ClientComponentsRegisterImpl(
                 config,
-                new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(),
-                        taskExecutor,
-                        config.segmentsRefreshRate()),
+                mySegmentsSynchronizerFactory,
                 storageContainer,
-                new AttributesSynchronizerFactoryImpl(taskExecutor, config.persistentAttributesEnabled() ? storageContainer.getPersistentAttributesStorage() : null),
+                new AttributesSynchronizerFactoryImpl(taskExecutor, attributesStorage),
                 (AttributesSynchronizerRegistry) synchronizer,
                 (MySegmentsSynchronizerRegistry) synchronizer,
                 (MySegmentsUpdateWorkerRegistry) syncManager,
                 eventsManagerCoordinator,
                 sseAuthenticator,
                 notificationProcessor,
-                new MySegmentsNotificationProcessorFactoryImpl(notificationParser,
-                        taskExecutor,
-                        mySegmentsV2PayloadDecoder,
-                        new CompressionUtilProvider()),
+                mySegmentsNotificationProcessorFactory,
                 mySegmentsV2PayloadDecoder);
     }
 

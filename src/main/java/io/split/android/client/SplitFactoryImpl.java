@@ -6,8 +6,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -16,6 +14,7 @@ import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.SyncImpressionListener;
 import io.split.android.client.lifecycle.SplitLifecycleManager;
+import io.split.android.client.lifecycle.SplitLifecycleManagerImpl;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
@@ -24,15 +23,6 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
-import io.split.android.client.service.sseclient.SseJwtParser;
-import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
-import io.split.android.client.service.sseclient.notifications.MySegmentsPayloadDecoder;
-import io.split.android.client.service.sseclient.notifications.NotificationParser;
-import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
-import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
-import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
-import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
-import io.split.android.client.service.sseclient.sseclient.SseClient;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -79,13 +69,13 @@ public class SplitFactoryImpl implements SplitFactory {
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
         this(apiToken, key, config, context,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
                              Context context, HttpClient httpClient, SplitRoomDatabase testDatabase,
                              SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper,
-                             TestingConfig testingConfig)
+                             TestingConfig testingConfig, SplitLifecycleManager testLifecycleManager)
             throws URISyntaxException {
 
         mDefaultClientKey = key;
@@ -193,7 +183,13 @@ public class SplitFactoryImpl implements SplitFactory {
                 streamingComponents.getSplitsUpdateNotificationQueue(),
                 streamingComponents.getPushManagerEventBroadcaster()
         );
-        mLifecycleManager = new SplitLifecycleManager();
+
+        if (testLifecycleManager == null) {
+            mLifecycleManager = new SplitLifecycleManagerImpl();
+        } else {
+            mLifecycleManager = testLifecycleManager;
+        }
+
         mLifecycleManager.register(mSyncManager);
 
         final ImpressionListener splitImpressionListener
