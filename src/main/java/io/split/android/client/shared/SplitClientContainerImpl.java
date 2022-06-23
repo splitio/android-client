@@ -170,6 +170,9 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     }
 
     private void scheduleMySegmentsWork() {
+        if (!mConfig.syncEnabled()) {
+            return;
+        }
         if (!mSchedulingBackgroundSync.getAndSet(true)) {
             mSplitTaskExecutor.schedule(new MySegmentsBackgroundSyncScheduleTask(mWorkManagerWrapper, getKeySet()),
                     ServiceConstants.MIN_INITIAL_DELAY,
