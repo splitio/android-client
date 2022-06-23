@@ -80,7 +80,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager);
         registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
         registerAttributesSynchronizer(key, eventsManager);
-        if (!isSingleSyncModeEnabled()) {
+        if (isSyncEnabled()) {
             registerKeyInSeeAuthenticator(key);
             LinkedBlockingDeque<MySegmentChangeNotification> mySegmentsNotificationQueue = new LinkedBlockingDeque<>();
             registerMySegmentsNotificationProcessor(key, mySegmentsTaskFactory, mySegmentsNotificationQueue);
@@ -93,7 +93,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         mAttributesSynchronizerRegistry.unregisterAttributesSynchronizer(key.matchingKey());
         mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(key.matchingKey());
 
-        if (!isSingleSyncModeEnabled()) {
+        if (isSyncEnabled()) {
             mSseAuthenticator.unregisterKey(key.matchingKey());
             mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(key.matchingKey());
             mMySegmentsNotificationProcessorRegistry.unregisterMySegmentsProcessor(key.matchingKey());
@@ -149,7 +149,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         );
     }
 
-    private boolean isSingleSyncModeEnabled() {
-        return mSplitConfig.singleSyncModeEnabled();
+    private boolean isSyncEnabled() {
+        return mSplitConfig.syncEnabled();
     }
 }

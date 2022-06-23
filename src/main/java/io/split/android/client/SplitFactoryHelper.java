@@ -3,7 +3,6 @@ package io.split.android.client;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.work.WorkManager;
 
 import java.io.File;
@@ -55,7 +54,6 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.storage.SplitStorageContainer;
-import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
@@ -64,7 +62,6 @@ import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.NetworkHelper;
-import io.split.android.client.utils.NetworkHelperImpl;
 import io.split.android.client.utils.Utils;
 
 class SplitFactoryHelper {
@@ -184,7 +181,7 @@ class SplitFactoryHelper {
 
         SplitUpdatesWorker updateWorker = null;
         BackoffCounterTimer backoffCounterTimer = null;
-        if (!config.singleSyncModeEnabled()) {
+        if (config.syncEnabled()) {
             updateWorker = new SplitUpdatesWorker(synchronizer, splitsUpdateNotificationQueue);
             backoffCounterTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
         }
@@ -263,7 +260,7 @@ class SplitFactoryHelper {
                 config.segmentsRefreshRate());
 
         MySegmentsNotificationProcessorFactory mySegmentsNotificationProcessorFactory = null;
-        if (!config.singleSyncModeEnabled()) {
+        if (config.syncEnabled()) {
             mySegmentsNotificationProcessorFactory = new MySegmentsNotificationProcessorFactoryImpl(notificationParser,
                     taskExecutor,
                     mySegmentsV2PayloadDecoder,
@@ -293,7 +290,7 @@ class SplitFactoryHelper {
                                                         @NonNull SplitStorageContainer storageContainer) {
 
         // Avoid creating unnecessary components if single sync enabled
-        if (config.singleSyncModeEnabled()) {
+        if (!config.syncEnabled()) {
             return new StreamingComponents();
         }
         BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue = new LinkedBlockingDeque<>();
