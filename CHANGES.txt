@@ -1,4 +1,4 @@
-2.11.0 (Jun 15, 2022)
+2.11.0 (Jun 23, 2022)
 - Added Single Sync mode. It allows sync features on client init only. Neither streaming nor polling is enabled and related components aren't created.
 
 2.10.3 (Jun 10, 2022)
