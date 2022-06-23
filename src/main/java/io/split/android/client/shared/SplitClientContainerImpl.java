@@ -91,7 +91,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
 
         // Avoid creating unnecessary components
-        if (!config.singleSyncModeEnabled()) {
+        if (config.syncEnabled()) {
             mStreamingConnectionExecutionListener = new StreamingConnectionExecutionListener(mConnecting);
         }
     }
@@ -138,7 +138,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         trackNewClient(key, client);
         mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager);
 
-        if (mStreamingEnabled && !mConfig.singleSyncModeEnabled()) {
+        if (mConfig.syncEnabled() && mStreamingEnabled) {
             connectToStreaming();
         }
         if (mConfig.synchronizeInBackground()) {
@@ -159,7 +159,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     }
 
     private void connectToStreaming() {
-        if (mConfig.singleSyncModeEnabled()) {
+        if (!mConfig.syncEnabled()) {
             return;
         }
         if (!mConnecting.getAndSet(true)) {
@@ -170,6 +170,9 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     }
 
     private void scheduleMySegmentsWork() {
+        if (!mConfig.syncEnabled()) {
+            return;
+        }
         if (!mSchedulingBackgroundSync.getAndSet(true)) {
             mSplitTaskExecutor.schedule(new MySegmentsBackgroundSyncScheduleTask(mWorkManagerWrapper, getKeySet()),
                     ServiceConstants.MIN_INITIAL_DELAY,

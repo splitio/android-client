@@ -54,7 +54,7 @@ public class TestableSplitConfigBuilder {
     private ImpressionsMode mImpressionsMode = ImpressionsMode.OPTIMIZED;
     private SyncConfig mSyncConfig = SyncConfig.builder().build();
     private int mOfflineRefreshRate = 10;
-    private boolean mSingleSyncModeEnabled = false;
+    private boolean mSyncEnabled = true;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -235,8 +235,8 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
-    public TestableSplitConfigBuilder singleSyncModeEnabled(boolean singleSyncModeEnabled) {
-        this.mSingleSyncModeEnabled = singleSyncModeEnabled;
+    public TestableSplitConfigBuilder syncEnabled(boolean syncEnabled) {
+        this.mSyncEnabled = syncEnabled;
         return this;
     }
 
@@ -290,7 +290,7 @@ public class TestableSplitConfigBuilder {
                     mServiceEndpoints.getTelemetryEndpoint(),
                     mTelemetryRefreshRate,
                     mShouldRecordTelemetry,
-                    mSingleSyncModeEnabled);
+                    mSyncEnabled);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

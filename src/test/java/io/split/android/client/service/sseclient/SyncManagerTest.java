@@ -62,6 +62,7 @@ public class SyncManagerTest {
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
+        when(mConfig.syncEnabled()).thenReturn(true);
         mSyncManager = new SyncManagerImpl(
                 mConfig, mSynchronizer, mPushNotificationManager,
                 mSplitsUpdateWorker, mPushManagerEventBroadcaster,
@@ -69,6 +70,7 @@ public class SyncManagerTest {
 
         ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("user_key", mMySegmentUpdateWorker);
         when(mConfig.streamingEnabled()).thenReturn(true);
+
 
     }
 

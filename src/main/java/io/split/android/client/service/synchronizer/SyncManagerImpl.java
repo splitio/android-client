@@ -53,7 +53,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mIsPaused = new AtomicBoolean(false);
         isPollingEnabled = new AtomicBoolean(false);
 
-        if (!isSingleSyncModeEnabled()) {
+        if (isSyncEnabled()) {
             mPushNotificationManager = pushNotificationManager;
             mSplitUpdateWorker = splitUpdateWorker;
             mPushManagerEventBroadcaster = pushManagerEventBroadcaster;
@@ -71,7 +71,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mSynchronizer.startPeriodicRecording();
         mTelemetrySynchronizer.synchronizeStats();
 
-        if (isSingleSyncModeEnabled()) {
+        if (!isSyncEnabled()) {
             return;
         }
 
@@ -100,7 +100,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mIsPaused.set(true);
         mSynchronizer.pause();
         mTelemetrySynchronizer.flush();
-        if (!isSingleSyncModeEnabled()) {
+        if (isSyncEnabled()) {
             if (mSplitClientConfig.streamingEnabled()) {
                 mPushNotificationManager.pause();
             }
@@ -115,7 +115,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mIsPaused.set(false);
         mSynchronizer.resume();
 
-        if (!isSingleSyncModeEnabled()) {
+        if (isSyncEnabled()) {
             if (mSplitClientConfig.streamingEnabled()) {
                 mPushNotificationManager.resume();
             }
@@ -146,7 +146,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mSynchronizer.stopPeriodicRecording();
         mSynchronizer.destroy();
         mTelemetrySynchronizer.destroy();
-        if (!isSingleSyncModeEnabled()) {
+        if (isSyncEnabled()) {
             mPushNotificationManager.stop();
             mSplitUpdateWorker.stop();
             mMySegmentsUpdateWorkerRegistry.stop();
@@ -156,7 +156,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void onEvent(PushStatusEvent message) {
-        if (isSingleSyncModeEnabled()) {
+        if (!isSyncEnabled()) {
             return;
         }
 
@@ -223,13 +223,13 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(matchingKey);
     }
 
-    private boolean isSingleSyncModeEnabled() {
-        return mSplitClientConfig.singleSyncModeEnabled();
+    private boolean isSyncEnabled() {
+        return mSplitClientConfig.syncEnabled();
     }
 
     private void enablePolling() {
 
-        if (isSingleSyncModeEnabled()) {
+        if (!isSyncEnabled()) {
             return;
         }
 

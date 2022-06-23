@@ -130,7 +130,7 @@ public class SplitClientConfig {
     private final int _offlineRefreshRate;
     private boolean _shouldRecordTelemetry;
     private final long _telemetryRefreshRate;
-    private boolean _singleSyncModeEnabled = false;
+    private boolean _syncEnabled = true;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -184,7 +184,7 @@ public class SplitClientConfig {
                               String telemetryEndpoint,
                               long telemetryRefreshRate,
                               boolean shouldRecordTelemetry,
-                              boolean singleSyncModeEnabled) {
+                              boolean syncEnabled) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _telemetryEndpoint = telemetryEndpoint;
@@ -230,7 +230,7 @@ public class SplitClientConfig {
         _isPersistentAttributesEnabled = isPersistentAttributesEnabled;
         _offlineRefreshRate = offlineRefreshRate;
         _telemetryRefreshRate = telemetryRefreshRate;
-        _singleSyncModeEnabled = singleSyncModeEnabled;
+        _syncEnabled = syncEnabled;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
@@ -510,7 +510,7 @@ public class SplitClientConfig {
      * No streaming neither polling service is enabled.
      * To get last definitions, the SDK have to be recreated
      **/
-    public boolean singleSyncModeEnabled() { return _singleSyncModeEnabled; }
+    public boolean syncEnabled() { return _syncEnabled; }
 
     private void enableTelemetry() { _shouldRecordTelemetry = true; }
 
@@ -573,7 +573,7 @@ public class SplitClientConfig {
 
         private long _telemetryRefreshRate = DEFAULT_TELEMETRY_REFRESH_RATE;
 
-        private boolean _singleSyncModeEnabled = false;
+        private boolean _syncEnabled = true;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -1191,7 +1191,7 @@ public class SplitClientConfig {
                     _serviceEndpoints.getTelemetryEndpoint(),
                     _telemetryRefreshRate,
                     new TelemetryHelperImpl().shouldRecordTelemetry(),
-                    _singleSyncModeEnabled);
+                    _syncEnabled);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

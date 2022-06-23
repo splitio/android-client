@@ -33,16 +33,12 @@ import helper.TestableSplitConfigBuilder;
 import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.SplitClientFactory;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
-import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.impressions.ImpressionsMode;
-import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Logger;
@@ -87,7 +83,7 @@ public class SingleSyncTest {
 
         SplitClientConfig config = new TestableSplitConfigBuilder().ready(30000)
                 .streamingEnabled(true)
-                .singleSyncModeEnabled(true)
+                .syncEnabled(false)
                 .enableDebug()
                 .trafficType("account")
                 .impressionsMode(impressionsMode)
