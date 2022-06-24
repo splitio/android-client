@@ -1,5 +1,5 @@
-2.11.0 (Jun 23, 2022)
-- Added Single Sync mode. It allows sync features on client init only. Neither streaming nor polling is enabled and related components aren't created.
+2.11.0 (Jun 24, 2022)
+- Added a new config option to control the tasks that listen or poll for updates on feature flags and segments, via the new config syncEnabled . Running online Split will always pull the most recent updates upon initialization, this only affects updates fetching on a running instance. Useful when a consistent session experience is a must or to save resources when updates are not being used.
 
 2.10.3 (Jun 10, 2022)
 - Fixed issue that prevented split list from being updated after modifying sync config.
