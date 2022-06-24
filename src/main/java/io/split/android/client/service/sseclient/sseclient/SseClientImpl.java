@@ -110,7 +110,7 @@ public class SseClientImpl implements SseClient {
                                     connectionListener.onConnectionSuccess();
                                 } else {
                                     Logger.d("Streaming error after connection");
-                                    isErrorRetryable = true;
+                                    isErrorRetryable = mSseHandler.isRetryableError(values);
                                     break;
                                 }
                             }

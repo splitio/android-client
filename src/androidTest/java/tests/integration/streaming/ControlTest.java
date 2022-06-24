@@ -133,6 +133,7 @@ public class ControlTest {
         synchronizerSpy.stopPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_RESUMED");
         synchronizerSpy.stopPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
+        sleep(200);
         assertTrue(StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
             if (event instanceof StreamingStatusStreamingEvent) {
                 return event.getEventData().intValue() == 1;
@@ -154,7 +155,7 @@ public class ControlTest {
         sleep(1000);
 
         TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        assertEquals(1, telemetryStorage.popTokenRefreshes());
+        assertEquals(0, telemetryStorage.popTokenRefreshes());
 
         String treatmentDisabled = mClient.getTreatment(splitName);
 

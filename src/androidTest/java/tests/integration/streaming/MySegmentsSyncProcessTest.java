@@ -21,8 +21,7 @@ import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import helper.DatabaseHelper;
-import helper.TestingHelper;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import tests.integration.shared.TestingHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
@@ -35,6 +34,7 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
+import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 import static java.lang.Thread.sleep;
 
@@ -91,7 +91,12 @@ public class MySegmentsSyncProcessTest {
 
         TestingHelper.TestEventTask readyTask = new TestingHelper.TestEventTask(latch);
 
+
+        CountDownLatch updLatch = new CountDownLatch(1);
+        TestingHelper.TestEventTask updTask = new TestingHelper.TestEventTask(updLatch);
+
         mClient.on(SplitEvent.SDK_READY, readyTask);
+        mClient.on(SplitEvent.SDK_UPDATE, updTask);
 
         latch.await(10, TimeUnit.SECONDS);
 
@@ -100,12 +105,19 @@ public class MySegmentsSyncProcessTest {
         TestingHelper.pushKeepAlive(mStreamingData);
         mMySegmentsSyncLatch.await(10, TimeUnit.SECONDS);
 
+        updLatch = new CountDownLatch(1);
+        updTask.setLatch(updLatch);
         testMySegmentsUpdate();
-        sleep(500);
+//        sleep(500);
+        updLatch.await(5, TimeUnit.SECONDS);
         MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
+
+        updLatch = new CountDownLatch(1);
+        updTask.setLatch(updLatch);
         testMySegmentsPush(MSG_SEGMENT_UPDATE_PAYLOAD);
-        sleep(500);
+        updLatch.await(5, TimeUnit.SECONDS);
+//        sleep(500);
         MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
         testMySegmentsPush(MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD);
@@ -137,8 +149,12 @@ public class MySegmentsSyncProcessTest {
         TestingHelper.TestEventTask readyTask = new TestingHelper.TestEventTask(latch);
         TestingHelper.TestEventTask readyTask2 = new TestingHelper.TestEventTask(latch2);
 
+        TestingHelper.TestEventTask updTask = new TestingHelper.TestEventTask();
+
         mClient.on(SplitEvent.SDK_READY, readyTask);
         client2.on(SplitEvent.SDK_READY, readyTask2);
+
+        mClient.on(SplitEvent.SDK_UPDATE, updTask);
 
         latch.await(10, TimeUnit.SECONDS);
         latch2.await(10, TimeUnit.SECONDS);
@@ -148,13 +164,19 @@ public class MySegmentsSyncProcessTest {
         TestingHelper.pushKeepAlive(mStreamingData);
         mMySegmentsSyncLatch.await(10, TimeUnit.SECONDS);
 
+        CountDownLatch updLatch = new CountDownLatch(1);
+        updTask.setLatch(updLatch);
         testMySegmentsUpdate();
-        sleep(1000);
+        updLatch.await(5, TimeUnit.SECONDS);
+//        sleep(1000);
         MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity mySegmentEntity2 = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 
+        updLatch = new CountDownLatch(1);
+        updTask.setLatch(updLatch);
         testMySegmentsPush(MSG_SEGMENT_UPDATE_PAYLOAD);
-        sleep(1000);
+        updLatch.await(5, TimeUnit.SECONDS);
+//        sleep(1000);
         MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity mySegmentEntityPayload2 = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 

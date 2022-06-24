@@ -23,14 +23,17 @@ import fake.HttpResponseMockDispatcher;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryImpl;
+import io.split.android.client.TestingConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.TestImpressions;
+import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.NetworkHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 public class IntegrationHelper {
@@ -95,17 +98,42 @@ public class IntegrationHelper {
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
                                             Context context, HttpClient httpClient, SplitRoomDatabase database,
                                             SynchronizerSpy synchronizerSpy) {
+        return buildFactory(apiToken, key, config, context, httpClient, database, synchronizerSpy, null);
+    }
+
+    public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
+                                            Context context, HttpClient httpClient, SplitRoomDatabase database,
+                                            SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper) {
+        return buildFactory(apiToken, key, config, context, httpClient, database, synchronizerSpy, networkHelper, null);
+    }
+
+    public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
+                                            Context context, HttpClient httpClient, SplitRoomDatabase database,
+                                            SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper, TestingConfig testingConfig) {
+        return buildFactory(apiToken, key, config, context, httpClient, database,
+                synchronizerSpy, networkHelper, testingConfig, null);
+    }
+
+    public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
+                                            Context context, HttpClient httpClient, SplitRoomDatabase database,
+                                            SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper,
+                                            TestingConfig testingConfig, SplitLifecycleManager lifecycleManager) {
         Constructor[] c = SplitFactoryImpl.class.getDeclaredConstructors();
         Constructor constructor = c[1];
         constructor.setAccessible(true);
         SplitFactory factory = null;
         try {
             factory = (SplitFactory) constructor.newInstance(
-                    apiToken, key, config, context, httpClient, database, synchronizerSpy);
+                    apiToken, key, config, context, httpClient, database, synchronizerSpy, selectNetworkHelper(networkHelper),
+                    testingConfig, lifecycleManager);
         } catch (Exception e) {
             Logger.e("Error creating factory: " + e.getLocalizedMessage());
         }
         return factory;
+    }
+
+    private static NetworkHelper selectNetworkHelper(NetworkHelper networkHelper) {
+        return networkHelper != null ? networkHelper : new NetworkHelperStub();
     }
 
     public static String dummyMySegments() {
@@ -140,6 +168,12 @@ public class IntegrationHelper {
                 .enableDebug()
                 .trafficType("account")
                 .build();
+    }
+
+    public static TestingConfig  testingConfig(int cdnBackoffTime) {
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setCdnBackoffTime(cdnBackoffTime);
+        return testingConfig;
     }
 
     public static SplitClientConfig lowRefreshRateConfig() {

@@ -3,6 +3,7 @@ package io.split.android.client.service.synchronizer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -27,36 +28,38 @@ import io.split.android.client.utils.Logger;
 public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, MySegmentsUpdateWorkerRegistry {
 
     private final SplitClientConfig mSplitClientConfig;
-    private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private final Synchronizer mSynchronizer;
-    private final PushNotificationManager mPushNotificationManager;
-    private final SplitUpdatesWorker mSplitUpdateWorker;
-    private final BackoffCounterTimer mStreamingReconnectTimer;
     private final AtomicBoolean mIsPaused;
     private final TelemetrySynchronizer mTelemetrySynchronizer;
-    private final MySegmentsUpdateWorkerRegistry mMySegmentsUpdateWorkerRegistry;
 
-    private final AtomicBoolean isPollingEnabled;
+    private AtomicBoolean isPollingEnabled;
+    private PushManagerEventBroadcaster mPushManagerEventBroadcaster;
+    private MySegmentsUpdateWorkerRegistry mMySegmentsUpdateWorkerRegistry;
+    private PushNotificationManager mPushNotificationManager;
+    private SplitUpdatesWorker mSplitUpdateWorker;
+    private BackoffCounterTimer mStreamingReconnectTimer;
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull Synchronizer synchronizer,
-                           @NonNull PushNotificationManager pushNotificationManager,
-                           @NonNull SplitUpdatesWorker splitUpdateWorker,
-                           @NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
-                           @NonNull BackoffCounterTimer streamingReconnectTimer,
+                           @Nullable PushNotificationManager pushNotificationManager,
+                           @Nullable SplitUpdatesWorker splitUpdateWorker,
+                           @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                           @Nullable BackoffCounterTimer streamingReconnectTimer,
                            @NonNull TelemetrySynchronizer telemetrySynchronizer) {
 
         mSynchronizer = checkNotNull(synchronizer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
-        mPushNotificationManager = checkNotNull(pushNotificationManager);
-        mSplitUpdateWorker = checkNotNull(splitUpdateWorker);
-        mPushManagerEventBroadcaster = checkNotNull(pushManagerEventBroadcaster);
-        mStreamingReconnectTimer = checkNotNull(streamingReconnectTimer);
         mTelemetrySynchronizer = checkNotNull(telemetrySynchronizer);
-        mMySegmentsUpdateWorkerRegistry = new MySegmentsUpdateWorkerRegistryImpl();
-
-        isPollingEnabled = new AtomicBoolean(false);
         mIsPaused = new AtomicBoolean(false);
+        isPollingEnabled = new AtomicBoolean(false);
+
+        if (isSyncEnabled()) {
+            mPushNotificationManager = pushNotificationManager;
+            mSplitUpdateWorker = splitUpdateWorker;
+            mPushManagerEventBroadcaster = pushManagerEventBroadcaster;
+            mStreamingReconnectTimer = streamingReconnectTimer;
+            mMySegmentsUpdateWorkerRegistry = new MySegmentsUpdateWorkerRegistryImpl();
+        }
     }
 
     @Override
@@ -65,6 +68,13 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
         mSynchronizer.synchronizeMySegments();
+        mSynchronizer.startPeriodicRecording();
+        mTelemetrySynchronizer.synchronizeStats();
+
+        if (!isSyncEnabled()) {
+            return;
+        }
+
         isPollingEnabled.set(!mSplitClientConfig.streamingEnabled());
         if (mSplitClientConfig.streamingEnabled()) {
             mPushManagerEventBroadcaster.register(this);
@@ -83,8 +93,6 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         } else {
             mSynchronizer.startPeriodicFetching();
         }
-        mSynchronizer.startPeriodicRecording();
-        mTelemetrySynchronizer.synchronizeStats();
     }
 
     @Override
@@ -92,11 +100,13 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mIsPaused.set(true);
         mSynchronizer.pause();
         mTelemetrySynchronizer.flush();
-        if(mSplitClientConfig.streamingEnabled()) {
-            mPushNotificationManager.pause();
-        }
-        if(isPollingEnabled.get()) {
-            mSynchronizer.stopPeriodicFetching();
+        if (isSyncEnabled()) {
+            if (mSplitClientConfig.streamingEnabled()) {
+                mPushNotificationManager.pause();
+            }
+            if (isPollingEnabled.get()) {
+                mSynchronizer.stopPeriodicFetching();
+            }
         }
     }
 
@@ -104,11 +114,14 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     public void resume() {
         mIsPaused.set(false);
         mSynchronizer.resume();
-        if(mSplitClientConfig.streamingEnabled()) {
-            mPushNotificationManager.resume();
-        }
-        if(isPollingEnabled.get()) {
-            mSynchronizer.startPeriodicFetching();
+
+        if (isSyncEnabled()) {
+            if (mSplitClientConfig.streamingEnabled()) {
+                mPushNotificationManager.resume();
+            }
+            if (isPollingEnabled.get()) {
+                mSynchronizer.startPeriodicFetching();
+            }
         }
     }
 
@@ -130,17 +143,23 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void stop() {
-        mSynchronizer.stopPeriodicFetching();
         mSynchronizer.stopPeriodicRecording();
         mSynchronizer.destroy();
         mTelemetrySynchronizer.destroy();
-        mPushNotificationManager.stop();
-        mSplitUpdateWorker.stop();
-        mMySegmentsUpdateWorkerRegistry.stop();
+        if (isSyncEnabled()) {
+            mPushNotificationManager.stop();
+            mSplitUpdateWorker.stop();
+            mMySegmentsUpdateWorkerRegistry.stop();
+            mSynchronizer.stopPeriodicFetching();
+        }
     }
 
     @Override
     public void onEvent(PushStatusEvent message) {
+        if (!isSyncEnabled()) {
+            return;
+        }
+
         switch (message.getMessage()) {
             case PUSH_SUBSYSTEM_UP:
                 Logger.d("Push Subsystem Up event message received.");
@@ -204,7 +223,16 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(matchingKey);
     }
 
+    private boolean isSyncEnabled() {
+        return mSplitClientConfig.syncEnabled();
+    }
+
     private void enablePolling() {
+
+        if (!isSyncEnabled()) {
+            return;
+        }
+
         if (!isPollingEnabled.get()) {
             isPollingEnabled.set(true);
             mSynchronizer.startPeriodicFetching();

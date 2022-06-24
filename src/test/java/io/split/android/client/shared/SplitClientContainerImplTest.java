@@ -173,7 +173,20 @@ public class SplitClientContainerImplTest {
 
         container.getClient(key);
 
-        verifyNoInteractions(mPushNotificationManager);
+        verifyNoInteractions(mSplitTaskExecutor);
+    }
+
+    @Test
+    public void pushNotificationManagerIsNotStartedWhenAddingNewKeyAndSyncIsDisabled() {
+
+        Key key = new Key("new_key");
+        SplitClient clientMock = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
+        SplitClientContainer container = getSplitClientContainer(mDefaultMatchingKey, true);
+        when(mConfig.syncEnabled()).thenReturn(false);
+        container.getClient(key);
+
+        verifyNoInteractions(mSplitTaskExecutor);
     }
 
     @Test
@@ -270,11 +283,13 @@ public class SplitClientContainerImplTest {
     }
 
     @NonNull
-    private SplitClientContainerImpl getSplitClientContainer(String mDefaultMatchingKey, boolean b) {
+    private SplitClientContainerImpl getSplitClientContainer(String mDefaultMatchingKey, boolean streamingEnabled) {
+
+        when(mConfig.syncEnabled()).thenReturn(true);
         return new SplitClientContainerImpl(
                 mDefaultMatchingKey,
                 mPushNotificationManager,
-                b,
+                streamingEnabled,
                 mMySegmentsTaskFactoryProvider,
                 mSplitApiFacade,
                 mStorageContainer,

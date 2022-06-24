@@ -93,10 +93,10 @@ public abstract class AblyErrorBaseTest {
     protected void pushErrorMessage(int code) throws IOException, InterruptedException {
         mSseLatch = new CountDownLatch(1);
         pushMessage("push_msg-ably_error_" + code + ".txt");
-        //mStreamingResponse.close();
         mStreamingData.put("\0");
         mSseLatch.await(5, TimeUnit.SECONDS);
         TestingHelper.delay(500);
+//        mStreamingResponse.close();
     }
 
     @After
@@ -118,17 +118,15 @@ public abstract class AblyErrorBaseTest {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/mySegments")) {
-                    Logger.i("** My segments hit");
                     mMySegmentsSyncLatch.countDown();
 
                     return createResponse(200, IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
-                    Logger.i("** Split changes hit");
                     mSplitsSyncLatch.countDown();
-                    String data = IntegrationHelper.emptySplitChanges(-1, 1000);
+                    String data = IntegrationHelper.emptySplitChanges(1000, 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
-                    Logger.i("** SSE Auth hit");
+                    System.out.println("AUTH HIT");
                     return createResponse(200, IntegrationHelper.streamingEnabledToken());
                 } else {
                     return new HttpResponseMock(200);

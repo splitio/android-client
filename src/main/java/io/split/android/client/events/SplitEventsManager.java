@@ -115,7 +115,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     }
 
     public boolean eventAlreadyTriggered(SplitEvent event) {
-        return mExecutionTimes.get(event) == 0;
+        return isTriggered(event);
     }
 
     private boolean wasTriggered(SplitInternalEvent event) {
