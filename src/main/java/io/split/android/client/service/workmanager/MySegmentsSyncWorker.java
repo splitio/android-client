@@ -17,7 +17,7 @@ import io.split.android.client.service.mysegments.MySegmentsBulkSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.NetworkHelper;
 
 public class MySegmentsSyncWorker extends SplitWorker {

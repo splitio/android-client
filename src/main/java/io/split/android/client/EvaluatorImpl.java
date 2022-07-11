@@ -5,7 +5,7 @@ import java.util.Map;
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitParser;

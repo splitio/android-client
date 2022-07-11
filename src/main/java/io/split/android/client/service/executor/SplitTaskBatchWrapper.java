@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 class SplitTaskBatchWrapper implements Runnable {
     private final List<SplitTaskBatchItem> mTaskQueue;

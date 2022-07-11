@@ -13,7 +13,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.synchronizer.SplitsChangeChecker;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitsUpdateTask implements SplitTask {
 

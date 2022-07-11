@@ -24,7 +24,7 @@ import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.NoOpTelemetryStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.AttributesValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;

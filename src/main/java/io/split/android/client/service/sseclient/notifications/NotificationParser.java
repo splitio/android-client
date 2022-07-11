@@ -10,7 +10,7 @@ import com.google.gson.JsonSyntaxException;
 import java.util.Map;
 
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class NotificationParser {
     private final static String EVENT_TYPE_ERROR = "error";

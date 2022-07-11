@@ -14,10 +14,9 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncBackgroundTask;
 import io.split.android.client.service.splits.SplitsSyncHelper;
-import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitsSyncWorker extends SplitWorker {
     public SplitsSyncWorker(@NonNull Context context,

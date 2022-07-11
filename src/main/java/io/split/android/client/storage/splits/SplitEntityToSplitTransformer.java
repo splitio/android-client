@@ -13,7 +13,7 @@ import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitEntityToSplitTransformer implements SplitListTransformer<SplitEntity, Split> {
 

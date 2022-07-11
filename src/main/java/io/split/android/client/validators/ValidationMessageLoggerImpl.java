@@ -3,7 +3,7 @@ package io.split.android.client.validators;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 /**
  * Default implementation of ValidationMessageLogger interface

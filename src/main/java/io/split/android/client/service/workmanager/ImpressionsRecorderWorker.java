@@ -12,7 +12,7 @@ import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsRecorderTaskConfig;
 import io.split.android.client.storage.db.StorageFactory;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class ImpressionsRecorderWorker extends SplitWorker {
     public ImpressionsRecorderWorker(@NonNull Context context,

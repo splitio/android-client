@@ -1,6 +1,6 @@
 package io.split.android.engine;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 
 import java.util.Collection;

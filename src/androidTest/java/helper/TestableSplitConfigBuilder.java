@@ -8,7 +8,8 @@ import io.split.android.client.SyncConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.service.impressions.ImpressionsMode;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.Authenticator;
 
 public class TestableSplitConfigBuilder {
@@ -55,6 +56,7 @@ public class TestableSplitConfigBuilder {
     private SyncConfig mSyncConfig = SyncConfig.builder().build();
     private int mOfflineRefreshRate = 10;
     private boolean mSyncEnabled = true;
+    private int mLogLevel = SplitLogLevel.NONE;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -290,7 +292,8 @@ public class TestableSplitConfigBuilder {
                     mServiceEndpoints.getTelemetryEndpoint(),
                     mTelemetryRefreshRate,
                     mShouldRecordTelemetry,
-                    mSyncEnabled);
+                    mSyncEnabled,
+                    mLogLevel);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

@@ -12,7 +12,7 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.NetworkHelper;
 
 public class HttpFetcherImpl<T> implements HttpFetcher<T> {

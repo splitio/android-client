@@ -3,7 +3,7 @@ package io.split.android.client;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.ValidationConfig;
 
 

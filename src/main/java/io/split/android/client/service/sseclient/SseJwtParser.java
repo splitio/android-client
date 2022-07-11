@@ -12,7 +12,7 @@ import java.util.Map;
 
 import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SseJwtParser {
 

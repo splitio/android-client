@@ -4,7 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.lang.ref.WeakReference;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 class TaskWrapper implements Runnable {
     private final SplitTask mTask;

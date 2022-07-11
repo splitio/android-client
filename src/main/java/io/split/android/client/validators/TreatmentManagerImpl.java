@@ -10,19 +10,17 @@ import java.util.Map;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
-import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitResult;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
-import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.grammar.Treatments;
 
 public class TreatmentManagerImpl implements TreatmentManager {

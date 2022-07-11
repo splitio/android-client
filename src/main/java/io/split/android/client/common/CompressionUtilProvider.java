@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.utils.CompressionUtil;
 import io.split.android.client.utils.Gzip;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.Zlib;
 
 public class CompressionUtilProvider {

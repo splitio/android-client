@@ -15,7 +15,7 @@ import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.utils.ConcurrentSet;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SseAuthenticator {
     private static final String USER_KEY_PARAM = "users";

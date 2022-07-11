@@ -4,7 +4,7 @@ import android.util.Base64;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.MurmurHash3;
 import io.split.android.client.utils.StringHelper;
 
