@@ -20,7 +20,7 @@ import io.split.android.client.telemetry.model.streaming.OccupancyPriStreamingEv
 import io.split.android.client.telemetry.model.streaming.OccupancySecStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class NotificationManagerKeeper {
 

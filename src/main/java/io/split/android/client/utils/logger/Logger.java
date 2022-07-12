@@ -1,4 +1,4 @@
-package io.split.android.client.utils;
+package io.split.android.client.utils.logger;
 
 import android.util.Log;
 
@@ -9,8 +9,9 @@ import android.util.Log;
 public class Logger {
 
     private static final String TAG = "SplitSDK";
-    private boolean _debugLevel = false;
+    private int mLevel = SplitLogLevel.NONE;
     private static Logger instance;
+    private LogPrinter mLogPrinter = new LogPrinterImpl();
 
     private Logger(){}
 
@@ -25,38 +26,44 @@ public class Logger {
         return instance;
     }
 
-    public synchronized void debugLevel(boolean enabled) {
-        _debugLevel = enabled;
+    public void setLevel(int logLevel) {
+        mLevel = logLevel;
+    }
+
+    public void setPrinter(LogPrinter printer) {
+        mLogPrinter = printer;
     }
 
     private void log(int priority, String msg, Throwable tr){
+
+        if (priority < Log.VERBOSE ||
+                mLevel < priority) {
+            return;
+        }
+
         switch (priority) {
             case Log.VERBOSE:
-                if(_debugLevel) {
-                    Log.v(TAG, msg, tr);
-                }
+                mLogPrinter.v(TAG, msg, tr);
                 break;
 
             case Log.DEBUG:
-                if(_debugLevel) {
-                    Log.d(TAG, msg, tr);
-                }
+                mLogPrinter.d(TAG, msg, tr);
                 break;
 
             case Log.INFO:
-                Log.i(TAG, msg, tr);
+                mLogPrinter.i(TAG, msg, tr);
                 break;
 
             case Log.WARN:
-                Log.w(TAG, msg, tr);
+                mLogPrinter.w(TAG, msg, tr);
                 break;
 
             case Log.ERROR:
-                Log.e(TAG, msg, tr);
+                mLogPrinter.e(TAG, msg, tr);
                 break;
 
             case Log.ASSERT:
-                Log.wtf(TAG, msg, tr);
+                mLogPrinter.wtf(TAG, msg, tr);
                 break;
 
         }

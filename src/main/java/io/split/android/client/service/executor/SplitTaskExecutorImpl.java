@@ -1,20 +1,9 @@
 package io.split.android.client.service.executor;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.lang.ref.WeakReference;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-import io.split.android.client.utils.Logger;
-import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
 
 import static com.google.common.base.Preconditions.checkArgument;

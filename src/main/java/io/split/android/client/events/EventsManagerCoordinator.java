@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 /**
  * Special case event manager which handles events that should be shared among all client instances.

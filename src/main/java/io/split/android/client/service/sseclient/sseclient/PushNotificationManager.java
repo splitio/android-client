@@ -27,7 +27,7 @@ import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class PushNotificationManager {
 

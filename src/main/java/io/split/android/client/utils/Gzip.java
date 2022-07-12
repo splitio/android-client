@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.utils.logger.Logger;
 
 public class Gzip implements CompressionUtil {
 

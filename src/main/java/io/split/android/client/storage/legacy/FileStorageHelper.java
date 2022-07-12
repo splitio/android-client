@@ -15,7 +15,7 @@ import java.util.UUID;
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.MemoryUtils;
 import io.split.android.client.utils.MemoryUtilsImpl;
 

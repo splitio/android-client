@@ -13,7 +13,7 @@ import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.Stats;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStatsProvider;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class TelemetryStatsRecorderTask implements SplitTask {
 

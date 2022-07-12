@@ -8,7 +8,7 @@ import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.synchronizer.Synchronizer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitUpdatesWorker extends UpdateWorker {
 

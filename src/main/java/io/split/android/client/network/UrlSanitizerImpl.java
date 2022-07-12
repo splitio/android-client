@@ -3,7 +3,7 @@ package io.split.android.client.network;
 import java.net.URI;
 import java.net.URL;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import okhttp3.HttpUrl;
 
 public class UrlSanitizerImpl implements UrlSanitizer {

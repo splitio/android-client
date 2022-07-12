@@ -3,15 +3,11 @@ package io.split.android.client.storage.db;
 import android.database.Cursor;
 
 import androidx.annotation.NonNull;
-import androidx.room.Query;
-import androidx.room.RoomSQLiteQuery;
-import androidx.room.util.CursorUtil;
-import androidx.room.util.DBUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitQueryDaoImpl implements SplitQueryDao {
 

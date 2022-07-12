@@ -25,12 +25,9 @@ import helper.ImpressionListenerHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
-import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.SplitFactoryBuilder;
-import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
@@ -39,10 +36,6 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.RecordedRequest;
 
 public class SplitChangesServerErrorTest {
 

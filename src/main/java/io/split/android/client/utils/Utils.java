@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.split.android.client.network.URIBuilder;
+import io.split.android.client.utils.logger.Logger;
 
 
 public class Utils {

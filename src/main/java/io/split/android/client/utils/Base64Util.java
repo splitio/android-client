@@ -4,7 +4,7 @@ import android.util.Base64;
 
 import androidx.annotation.Nullable;
 
-import java.nio.charset.Charset;
+import io.split.android.client.utils.logger.Logger;
 
 public class Base64Util {
     @Nullable

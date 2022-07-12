@@ -15,7 +15,7 @@ import java.util.Map;
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SqLitePersistentAttributesStorage implements PersistentAttributesStorage {
 

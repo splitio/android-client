@@ -8,7 +8,7 @@ import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 /**
  * This class will be in charge of update my segments when a new notification arrived.

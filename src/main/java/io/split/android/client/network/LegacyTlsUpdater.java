@@ -11,7 +11,7 @@ import java.security.NoSuchAlgorithmException;
 
 import javax.net.ssl.SSLContext;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class LegacyTlsUpdater {
     private static final String TLS_VERSION = "TLSv1.2";

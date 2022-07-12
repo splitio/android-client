@@ -1,7 +1,5 @@
 package tests.integration.streaming;
 
-import static android.os.SystemClock.sleep;
-
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -28,7 +26,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SseAuthFail4xxTest {
     Context mContext;

@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 
 public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
