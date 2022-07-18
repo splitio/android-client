@@ -1,7 +1,5 @@
 package io.split.android.client.utils.logger;
 
-import android.util.Log;
-
 public interface LogPrinter {
 
     void v(String tag, String msg, Throwable tr);
