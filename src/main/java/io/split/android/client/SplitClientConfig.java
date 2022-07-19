@@ -239,6 +239,12 @@ public class SplitClientConfig {
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
         _shouldRecordTelemetry = shouldRecordTelemetry;
+
+        if (_debugEnabled && _logLevel == SplitLogLevel.NONE) {
+            _logLevel = SplitLogLevel.DEBUG;
+        }
+
+        Logger.instance().setLevel(_logLevel);
     }
 
     private static boolean isTestMode() {
@@ -778,7 +784,7 @@ public class SplitClientConfig {
 
         /**
          * Enables debug logging
-         * @deprecated  This function is deprecated. Use LogLevel instead.
+         * @deprecated  This function is deprecated. Use {@link #logLevel(int)} instead.
          * @return this builder
          */
         @Deprecated
@@ -790,12 +796,10 @@ public class SplitClientConfig {
         /**
          * Level of logging.
          * The values are the same than standard Android logging plus NONE, to
-         * not logging at all. Any not supported value will be considered NONE.
-         * SplitLogLevel or Log (Android) values can be used
-         * @default NONE
+         * disable logging. Any not supported value will be considered NONE.
+         * {@link SplitLogLevel} or {@link android.util.Log} values can be used
          * @return this builder
          */
-        @Deprecated
         public Builder logLevel(int level) {
             _logLevel = level;
             return this;

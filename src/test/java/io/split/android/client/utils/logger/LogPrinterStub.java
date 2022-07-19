@@ -1,14 +1,13 @@
-package fake;
+package io.split.android.client.utils.logger;
 
 import android.util.Log;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import io.split.android.client.utils.logger.LogPrinter;
-
 public class LogPrinterStub implements LogPrinter {
-    private Set calls = new HashSet<Integer>();
+    private final Set<Integer> calls = new HashSet<>();
+
     @Override
     public void v(String tag, String msg, Throwable tr) {
         calls.add(Log.VERBOSE);

@@ -26,8 +26,6 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
 
-import static androidx.core.util.Preconditions.checkNotNull;
-
 public class HttpClientImpl implements HttpClient {
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
     private static final long STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
