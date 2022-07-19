@@ -240,6 +240,10 @@ public class SplitClientConfig {
 
         _shouldRecordTelemetry = shouldRecordTelemetry;
 
+        if (_debugEnabled && _logLevel == SplitLogLevel.NONE) {
+            _logLevel = SplitLogLevel.DEBUG;
+        }
+
         Logger.instance().setLevel(_logLevel);
     }
 
