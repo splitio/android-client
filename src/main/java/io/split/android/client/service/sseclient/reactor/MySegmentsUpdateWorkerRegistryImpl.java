@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorkerRegistry {
 

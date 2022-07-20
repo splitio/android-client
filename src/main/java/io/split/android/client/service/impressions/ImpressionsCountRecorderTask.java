@@ -3,9 +3,7 @@ package io.split.android.client.service.impressions;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
@@ -17,7 +15,7 @@ import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.events.SplitEventTask;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class TestingHelper {
 

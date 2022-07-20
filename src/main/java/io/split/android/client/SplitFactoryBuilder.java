@@ -11,7 +11,7 @@ import java.util.concurrent.TimeoutException;
 import io.split.android.client.api.Key;
 import io.split.android.client.localhost.LocalhostSplitFactory;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.grammar.Treatments;
 
 /**

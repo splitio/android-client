@@ -18,7 +18,8 @@ import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.telemetry.TelemetryHelperImpl;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.Authenticator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -131,6 +132,7 @@ public class SplitClientConfig {
     private boolean _shouldRecordTelemetry;
     private final long _telemetryRefreshRate;
     private boolean _syncEnabled = true;
+    private int _logLevel = SplitLogLevel.NONE;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -184,7 +186,8 @@ public class SplitClientConfig {
                               String telemetryEndpoint,
                               long telemetryRefreshRate,
                               boolean shouldRecordTelemetry,
-                              boolean syncEnabled) {
+                              boolean syncEnabled,
+                              int logLevel) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _telemetryEndpoint = telemetryEndpoint;
@@ -231,14 +234,17 @@ public class SplitClientConfig {
         _offlineRefreshRate = offlineRefreshRate;
         _telemetryRefreshRate = telemetryRefreshRate;
         _syncEnabled = syncEnabled;
+        _logLevel = logLevel;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
-        if (_debugEnabled) {
-            Logger.instance().debugLevel(true);
+        _shouldRecordTelemetry = shouldRecordTelemetry;
+
+        if (_debugEnabled && _logLevel == SplitLogLevel.NONE) {
+            _logLevel = SplitLogLevel.DEBUG;
         }
 
-        _shouldRecordTelemetry = shouldRecordTelemetry;
+        Logger.instance().setLevel(_logLevel);
     }
 
     private static boolean isTestMode() {
@@ -354,6 +360,10 @@ public class SplitClientConfig {
 
     public String hostname() {
         return _hostname;
+    }
+
+    public int logLevel() {
+        return _logLevel;
     }
 
     /**
@@ -575,6 +585,8 @@ public class SplitClientConfig {
 
         private boolean _syncEnabled = true;
 
+        private int _logLevel = SplitLogLevel.NONE;
+
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
         }
@@ -770,8 +782,26 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Enables debug logging
+         * @deprecated  This function is deprecated. Use {@link #logLevel(int)} instead.
+         * @return this builder
+         */
+        @Deprecated
         public Builder enableDebug() {
             _debugEnabled = true;
+            return this;
+        }
+
+        /**
+         * Level of logging.
+         * The values are the same than standard Android logging plus NONE, to
+         * disable logging. Any not supported value will be considered NONE.
+         * {@link SplitLogLevel} or {@link android.util.Log} values can be used
+         * @return this builder
+         */
+        public Builder logLevel(int level) {
+            _logLevel = level;
             return this;
         }
 
@@ -784,7 +814,6 @@ public class SplitClientConfig {
             _labelsEnabled = false;
             return this;
         }
-
 
         /**
          * The SDK kicks off background threads to download data necessary
@@ -1191,7 +1220,8 @@ public class SplitClientConfig {
                     _serviceEndpoints.getTelemetryEndpoint(),
                     _telemetryRefreshRate,
                     new TelemetryHelperImpl().shouldRecordTelemetry(),
-                    _syncEnabled);
+                    _syncEnabled,
+                    _logLevel);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

@@ -19,7 +19,7 @@ import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

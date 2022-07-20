@@ -9,7 +9,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 
 import io.split.android.client.utils.ConcurrentSet;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutorImpl;
 

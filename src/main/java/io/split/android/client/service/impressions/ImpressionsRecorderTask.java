@@ -19,7 +19,7 @@ import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class ImpressionsRecorderTask implements SplitTask {
     public final static int FAILING_CHUNK_SIZE = 20;

@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.utils.logger.Logger;
 
 public class FileUtils {
 

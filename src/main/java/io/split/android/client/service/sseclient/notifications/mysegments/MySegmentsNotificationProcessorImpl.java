@@ -16,7 +16,7 @@ import io.split.android.client.service.sseclient.notifications.MySegmentChangeNo
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificationProcessor {
 

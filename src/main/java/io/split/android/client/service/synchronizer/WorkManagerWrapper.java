@@ -32,7 +32,7 @@ import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.SplitsSyncWorker;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {

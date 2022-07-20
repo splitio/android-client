@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.YamlParser;
 
 public class LocalhostYamlFileParser implements LocalhostFileParser {

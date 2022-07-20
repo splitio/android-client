@@ -32,7 +32,7 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 

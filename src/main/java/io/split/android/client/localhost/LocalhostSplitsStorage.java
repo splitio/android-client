@@ -8,25 +8,20 @@ import androidx.annotation.Nullable;
 import com.google.common.collect.Maps;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.EventsManagerCoordinator;
-import io.split.android.client.events.SplitEvent;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.FileUtils;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class LocalhostSplitsStorage implements SplitsStorage {
 

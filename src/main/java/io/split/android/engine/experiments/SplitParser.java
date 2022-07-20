@@ -17,7 +17,7 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.AttributeMatcher;
 import io.split.android.engine.matchers.BetweenMatcher;

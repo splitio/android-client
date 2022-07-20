@@ -3,20 +3,12 @@ package io.split.android.client.localhost;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.Map;
 
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.events.SplitEventsManager;
-import io.split.android.client.storage.legacy.FileStorage;
-import io.split.android.client.utils.Logger;
 import io.split.android.helpers.FileHelper;
-import io.split.android.helpers.ResourcesFileStorage;
 
 @SuppressWarnings("ConstantConditions")
 public class LocalhostYamlParserTest {

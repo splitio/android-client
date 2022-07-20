@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.StringHelper;
 
 public class FilterBuilder {

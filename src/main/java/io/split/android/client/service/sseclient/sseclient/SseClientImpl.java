@@ -1,7 +1,6 @@
 package io.split.android.client.service.sseclient.sseclient;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,11 +17,10 @@ import io.split.android.client.network.HttpStreamResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.SseJwtToken;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.StringHelper;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static java.lang.reflect.Modifier.PRIVATE;
 
 public class SseClientImpl implements SseClient {
 

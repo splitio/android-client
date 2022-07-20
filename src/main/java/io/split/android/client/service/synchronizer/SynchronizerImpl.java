@@ -16,7 +16,6 @@ import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -40,7 +39,7 @@ import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegistry, AttributesSynchronizerRegistry {
 

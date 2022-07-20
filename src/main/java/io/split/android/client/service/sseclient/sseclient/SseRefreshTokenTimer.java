@@ -1,7 +1,6 @@
 package io.split.android.client.service.sseclient.sseclient;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -11,10 +10,9 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
-import static java.lang.reflect.Modifier.PRIVATE;
 
 public class SseRefreshTokenTimer implements SplitTaskExecutionListener {
     private final static int RECONNECT_TIME_BEFORE_TOKEN_EXP_IN_SECONDS = 600;

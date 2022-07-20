@@ -20,7 +20,7 @@ import io.split.android.client.service.sseclient.notifications.StreamingError;
 import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.SseConnectionErrorStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
