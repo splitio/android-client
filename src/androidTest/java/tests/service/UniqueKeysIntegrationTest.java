@@ -32,7 +32,7 @@ import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class UniqueKeysIntegrationTest {
 

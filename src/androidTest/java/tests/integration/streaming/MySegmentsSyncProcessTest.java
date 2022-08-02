@@ -1,5 +1,7 @@
 package tests.integration.streaming;
 
+import static java.lang.Thread.sleep;
+
 import android.content.Context;
 
 import androidx.core.util.Pair;
@@ -21,7 +23,6 @@ import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import helper.DatabaseHelper;
-import tests.integration.shared.TestingHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import io.split.android.client.SplitClient;
@@ -34,8 +35,7 @@ import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.logger.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
-
-import static java.lang.Thread.sleep;
+import tests.integration.shared.TestingHelper;
 
 public class MySegmentsSyncProcessTest {
     private Context mContext;

@@ -11,7 +11,7 @@ import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTaskConfig;
 import io.split.android.client.storage.db.StorageFactory;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class UniqueKeysRecorderWorker extends SplitWorker {
 

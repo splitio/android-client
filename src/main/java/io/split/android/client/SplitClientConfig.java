@@ -609,6 +609,8 @@ public class SplitClientConfig {
 
         private int _mtkPerPush = DEFAULT_MTK_PER_PUSH;
 
+        private final int _mtkRefreshRate = 15 * 60;
+
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
         }

@@ -43,6 +43,7 @@ import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
+import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 import static java.lang.Thread.sleep;
 

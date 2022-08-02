@@ -12,6 +12,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -29,7 +30,6 @@ import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
-import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -45,6 +45,7 @@ import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
+import tests.integration.shared.TestingHelper;
 
 public class ControlTest {
     private Context mContext;
@@ -68,7 +69,6 @@ public class ControlTest {
     private HttpStreamResponseMock mStreamingResponse;
     private int  mSseConnectionCount;
 
-    SplitRoomDatabase db;
     String mSplitChange;
 
     @Before
@@ -90,7 +90,7 @@ public class ControlTest {
     public void controlNotification() throws IOException, InterruptedException {
 
         SynchronizerSpyImpl synchronizerSpy = new SynchronizerSpyImpl();
-        db = DatabaseHelper.getTestDatabase(mContext);
+        SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
         db.clearAllTables();
 
         CountDownLatch readyLatch = new CountDownLatch(1);

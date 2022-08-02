@@ -1,4 +1,4 @@
-package io.split.android.client.storage.db.impressions.unique;
+package tests.database;
 
 import static org.junit.Assert.assertEquals;
 
@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.utils.Json;
 import tests.database.GenericDaoTest;
 

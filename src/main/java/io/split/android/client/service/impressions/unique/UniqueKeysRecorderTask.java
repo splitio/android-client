@@ -18,7 +18,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.impressions.PersistentImpressionsUniqueStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class UniqueKeysRecorderTask implements SplitTask {
 
