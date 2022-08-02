@@ -9,6 +9,7 @@ import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -24,7 +25,6 @@ import fake.HttpResponseMock;
 import helper.DatabaseHelper;
 import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
-import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -33,6 +33,7 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.utils.logger.Logger;
+import tests.integration.shared.TestingHelper;
 
 public class UniqueKeysIntegrationTest {
 
@@ -68,6 +69,7 @@ public class UniqueKeysIntegrationTest {
         mUniqueKeysBody.set("");
     }
 
+    @Ignore("Ignored until MTK is enabled")
     @Test
     public void verifyRequestBody() throws InterruptedException {
         SplitClient client = mSplitFactory.client();
@@ -100,6 +102,7 @@ public class UniqueKeysIntegrationTest {
         client2.destroy();
     }
 
+    @Ignore("Ignored until MTK is enabled")
     @Test
     public void verifyKeyFeaturesAreMerged() throws InterruptedException {
         SplitClient client = mSplitFactory.client();
@@ -123,6 +126,7 @@ public class UniqueKeysIntegrationTest {
         client.destroy();
     }
 
+    @Ignore("Ignored until MTK is enabled")
     @Test
     public void retryIsPerformed() throws InterruptedException {
         SplitClient client = mSplitFactory.client();
@@ -145,6 +149,7 @@ public class UniqueKeysIntegrationTest {
         client.destroy();
     }
 
+    @Ignore("Ignored until MTK is enabled")
     @Test
     public void verifyDatabaseIsEmptyAfterRequest() throws InterruptedException {
         SplitClient client = mSplitFactory.client();
