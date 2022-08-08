@@ -34,4 +34,3 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST }}
         run: cd project; ./gradlew build --no-daemon sonarqube
-

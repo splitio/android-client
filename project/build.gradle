@@ -19,6 +19,7 @@ plugins {
 sonarqube {
     properties {
         property 'sonar.projectKey', 'splitio_android-client'
+        property 'sonar.projectName', 'android-client'
     }
 }
 allprojects {
