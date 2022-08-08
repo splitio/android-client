@@ -140,7 +140,6 @@ public class MySegmentsServerErrorTest {
         CountDownLatch latch = new CountDownLatch(1);
         CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
-        String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
 
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
@@ -157,8 +156,9 @@ public class MySegmentsServerErrorTest {
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .serviceEndpoints(ServiceEndpoints.builder().apiEndpoint(url).eventsEndpoint(url).build())
                 .ready(30000)
-                .featuresRefreshRate(5)
-                .segmentsRefreshRate(5)
+                .featuresRefreshRate(2)
+                .segmentsRefreshRate(2)
+                .streamingEnabled(false)
                 .enableDebug()
                 .trafficType("client")
                 .impressionListener(impListener)
@@ -253,7 +253,7 @@ public class MySegmentsServerErrorTest {
     }
 
     private String emptyChanges() {
-        return "{\"splits\":[], \"since\": 9567456937865, \"till\": 9567456937869 }";
+        return "{\"splits\":[], \"since\": 9567456937869, \"till\": 9567456937869 }";
     }
 
 }

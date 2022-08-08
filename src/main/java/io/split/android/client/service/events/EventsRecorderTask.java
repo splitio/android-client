@@ -17,22 +17,27 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.events.PersistentEventsStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class EventsRecorderTask implements SplitTask {
     public final static int FAILING_CHUNK_SIZE = 20;
-    private final PersistentEventsStorage mPersistenEventsStorage;
+    private final PersistentEventsStorage mPersistentEventsStorage;
     private final HttpRecorder<List<Event>> mHttpRecorder;
     private final EventsRecorderTaskConfig mConfig;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public EventsRecorderTask(@NonNull HttpRecorder<List<Event>> httpRecorder,
-                              @NonNull PersistentEventsStorage persistenEventsStorage,
-                              @NonNull EventsRecorderTaskConfig config) {
+                              @NonNull PersistentEventsStorage persistentEventsStorage,
+                              @NonNull EventsRecorderTaskConfig config,
+                              @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mHttpRecorder = checkNotNull(httpRecorder);
-        mPersistenEventsStorage = checkNotNull(persistenEventsStorage);
+        mPersistentEventsStorage = checkNotNull(persistentEventsStorage);
         mConfig = checkNotNull(config);
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
@@ -44,12 +49,19 @@ public class EventsRecorderTask implements SplitTask {
         List<Event> events;
         List<Event> failingEvents = new ArrayList<>();
         do {
-            events = mPersistenEventsStorage.pop(mConfig.getEventsPerPush());
+            events = mPersistentEventsStorage.pop(mConfig.getEventsPerPush());
             if (events.size() > 0) {
+                long startTime = System.currentTimeMillis();
+                long latency = 0;
                 try {
                     Logger.d("Posting %d Split events", events.size());
                     mHttpRecorder.execute(events);
-                    mPersistenEventsStorage.delete(events);
+
+                    long now = System.currentTimeMillis();
+                    latency = now - startTime;
+                    mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.EVENTS, now);
+
+                    mPersistentEventsStorage.delete(events);
                     Logger.d("%d split events sent", events.size());
                 } catch (HttpRecorderException e) {
                     status = SplitTaskExecutionStatus.ERROR;
@@ -60,6 +72,10 @@ public class EventsRecorderTask implements SplitTask {
                             e.getLocalizedMessage());
                     e.printStackTrace();
                     failingEvents.addAll(events);
+
+                    mTelemetryRuntimeProducer.recordSyncError(OperationType.EVENTS, e.getHttpStatus());
+                } finally {
+                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.EVENTS, latency);
                 }
             }
         } while (events.size() == mConfig.getEventsPerPush());
@@ -67,13 +83,14 @@ public class EventsRecorderTask implements SplitTask {
         // Update events by chunks to avoid sqlite errors
         List<List<Event>> failingChunks = Lists.partition(failingEvents, FAILING_CHUNK_SIZE);
         for(List<Event> chunk : failingChunks) {
-            mPersistenEventsStorage.setActive(chunk);
+            mPersistentEventsStorage.setActive(chunk);
         }
 
         if (status == SplitTaskExecutionStatus.ERROR) {
             Map<String, Object> data = new HashMap<>();
             data.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, nonSentRecords);
             data.put(SplitTaskExecutionInfo.NON_SENT_BYTES, nonSentBytes);
+
             return SplitTaskExecutionInfo.error(
                     SplitTaskType.EVENTS_RECORDER, data);
         }

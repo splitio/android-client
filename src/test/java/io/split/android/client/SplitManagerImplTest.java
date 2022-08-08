@@ -5,6 +5,7 @@ import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
@@ -18,7 +19,9 @@ import io.split.android.helpers.SplitHelper;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,26 +33,32 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class SplitManagerImplTest {
 
+    @Mock
     SplitsStorage mSplitsStorage;
+    @Mock
     MySegmentsStorage mMySegmentsStorage;
+    @Mock
+    MySegmentsStorageContainer mMySegmentsStorageContainer;
+    @Mock
     SplitManager mSplitManager;
 
     @Before
     public void setup() {
-        mSplitsStorage = Mockito.mock(SplitsStorage.class);
-        mMySegmentsStorage = Mockito.mock(MySegmentsStorage.class);
+        MockitoAnnotations.openMocks(this);
         SplitValidator validator = new SplitValidatorImpl();
-        SplitParser parser = new SplitParser(mMySegmentsStorage);
+        when(mMySegmentsStorageContainer.getStorageForKey("")).thenReturn(mMySegmentsStorage);
+        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
         mSplitManager = new SplitManagerImpl(mSplitsStorage, validator, parser);
     }
 
     @Test
     public void splitCallWithNonExistentSplit() {
         String nonExistent = "nonExistent";
-        Mockito.when(mSplitsStorage.get(nonExistent)).thenReturn(null);
+        when(mSplitsStorage.get(nonExistent)).thenReturn(null);
         assertThat(mSplitManager.split("nonExistent"), is(nullValue()));
     }
 
@@ -64,7 +73,7 @@ public class SplitManagerImplTest {
         Split response = SplitHelper.createSplit("existent", 123,
                 true, "off", Lists.newArrayList(getTestCondition()),
                 "traffic", 456L, 1, configs);
-        Mockito.when(mSplitsStorage.get(existent)).thenReturn(response);
+        when(mSplitsStorage.get(existent)).thenReturn(response);
 
         SplitManager splitManager = mSplitManager;
         SplitView theOne = splitManager.split(existent);
@@ -85,7 +94,7 @@ public class SplitManagerImplTest {
     @Test
     public void splitsCallWithNoSplit() {
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
-        Mockito.when(splitFetcher.fetchAll()).thenReturn(Lists.newArrayList());
+        when(splitFetcher.fetchAll()).thenReturn(Lists.newArrayList());
         SplitManager splitManager = mSplitManager;
         assertThat(splitManager.splits(), is(empty()));
     }
@@ -97,7 +106,7 @@ public class SplitManagerImplTest {
         Split split = SplitHelper.createSplit("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition()), "traffic", 456L, 1, null);
         splitsMap.put(split.name, split);
 
-        Mockito.when(mSplitsStorage.getAll()).thenReturn(splitsMap);
+        when(mSplitsStorage.getAll()).thenReturn(splitsMap);
         SplitManager splitManager = mSplitManager;
         List<SplitView> splits = splitManager.splits();
         assertThat(splits.size(), is(equalTo(1)));
@@ -112,7 +121,7 @@ public class SplitManagerImplTest {
 
     @Test
     public void splitNamesCallWithNoSplit() {
-        Mockito.when(mSplitsStorage.getAll()).thenReturn(new HashMap<>());
+        when(mSplitsStorage.getAll()).thenReturn(new HashMap<>());
         SplitManager splitManager = mSplitManager;
         assertThat(splitManager.splitNames(), is(empty()));
     }
@@ -126,7 +135,7 @@ public class SplitManagerImplTest {
                 "traffic", 456L, 1, null);
         splitsMap.put(split.name, split);
 
-        Mockito.when(mSplitsStorage.getAll()).thenReturn(splitsMap);
+        when(mSplitsStorage.getAll()).thenReturn(splitsMap);
         SplitManager splitManager = mSplitManager;
         List<String> splitNames = splitManager.splitNames();
         assertThat(splitNames.size(), is(equalTo(1)));

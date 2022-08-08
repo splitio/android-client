@@ -17,7 +17,9 @@ import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.telemetry.TelemetryHelperImpl;
+import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.Authenticator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -74,6 +76,7 @@ public class SplitClientConfig {
 
     private String _endpoint;
     private String _eventsEndpoint;
+    private String _telemetryEndpoint;
     private static String _hostname;
     private static String _ip;
 
@@ -126,6 +129,10 @@ public class SplitClientConfig {
     private ImpressionsMode _impressionsMode;
     private final boolean _isPersistentAttributesEnabled;
     private final int _offlineRefreshRate;
+    private boolean _shouldRecordTelemetry;
+    private final long _telemetryRefreshRate;
+    private boolean _syncEnabled = true;
+    private int _logLevel = SplitLogLevel.NONE;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -175,9 +182,15 @@ public class SplitClientConfig {
                               ImpressionsMode impressionsMode,
                               int impCountersRefreshRate,
                               boolean isPersistentAttributesEnabled,
-                              int offlineRefreshRate) {
+                              int offlineRefreshRate,
+                              String telemetryEndpoint,
+                              long telemetryRefreshRate,
+                              boolean shouldRecordTelemetry,
+                              boolean syncEnabled,
+                              int logLevel) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
+        _telemetryEndpoint = telemetryEndpoint;
         _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
         _segmentsRefreshRate = segmentsRefreshRate;
         _impressionsRefreshRate = impressionsRefreshRate;
@@ -219,12 +232,19 @@ public class SplitClientConfig {
         _impressionsMode = impressionsMode;
         _isPersistentAttributesEnabled = isPersistentAttributesEnabled;
         _offlineRefreshRate = offlineRefreshRate;
+        _telemetryRefreshRate = telemetryRefreshRate;
+        _syncEnabled = syncEnabled;
+        _logLevel = logLevel;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
-        if (_debugEnabled) {
-            Logger.instance().debugLevel(true);
+        _shouldRecordTelemetry = shouldRecordTelemetry;
+
+        if (_debugEnabled && _logLevel == SplitLogLevel.NONE) {
+            _logLevel = SplitLogLevel.DEBUG;
         }
+
+        Logger.instance().setLevel(_logLevel);
     }
 
     private static boolean isTestMode() {
@@ -264,6 +284,10 @@ public class SplitClientConfig {
 
     public String eventsEndpoint() {
         return _eventsEndpoint;
+    }
+
+    public String telemetryEndpoint() {
+        return _telemetryEndpoint;
     }
 
     public int featuresRefreshRate() {
@@ -338,6 +362,10 @@ public class SplitClientConfig {
         return _hostname;
     }
 
+    public int logLevel() {
+        return _logLevel;
+    }
+
     /**
      * Maximum attempts count while sending impressions.
      * to the server. Internal setting.
@@ -403,7 +431,6 @@ public class SplitClientConfig {
      * Default data folder to use when some
      * problem arises while creating it
      * based on api key
-     *
      * @return Default data folder
      */
     String defaultDataFolder() {
@@ -480,6 +507,23 @@ public class SplitClientConfig {
     }
     public int offlineRefreshRate() { return  _offlineRefreshRate; }
 
+    public boolean shouldRecordTelemetry() {
+        return _shouldRecordTelemetry;
+    }
+
+    public long telemetryRefreshRate() {
+        return _telemetryRefreshRate;
+    }
+
+    /**
+     * Sync all retrieved data only once on init (Default: false)
+     * No streaming neither polling service is enabled.
+     * To get last definitions, the SDK have to be recreated
+     **/
+    public boolean syncEnabled() { return _syncEnabled; }
+
+    private void enableTelemetry() { _shouldRecordTelemetry = true; }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;
@@ -502,6 +546,7 @@ public class SplitClientConfig {
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
         private boolean _isPersistentAttributesEnabled = false;
         static final int OFFLINE_REFRESH_RATE_DEFAULT = -1;
+        static final int DEFAULT_TELEMETRY_REFRESH_RATE = 3600;
 
         //.track configuration
         private int _eventsQueueSize = DEFAULT_EVENTS_QUEUE_SIZE;
@@ -535,6 +580,12 @@ public class SplitClientConfig {
         private ImpressionsMode _impressionsMode = ImpressionsMode.OPTIMIZED;
 
         private int _offlineRefreshRate = OFFLINE_REFRESH_RATE_DEFAULT;
+
+        private long _telemetryRefreshRate = DEFAULT_TELEMETRY_REFRESH_RATE;
+
+        private boolean _syncEnabled = true;
+
+        private int _logLevel = SplitLogLevel.NONE;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -698,9 +749,11 @@ public class SplitClientConfig {
          * <p/>
          * This is an ADVANCED parameter
          *
+         * @deprecated This parameter is now ignored.
          * @param seconds MUST be > 0.
          * @return this builder
          */
+        @Deprecated
         public Builder metricsRefreshRate(int seconds) {
             _metricsRefreshRate = seconds;
             return this;
@@ -729,8 +782,26 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Enables debug logging
+         * @deprecated  This function is deprecated. Use {@link #logLevel(int)} instead.
+         * @return this builder
+         */
+        @Deprecated
         public Builder enableDebug() {
             _debugEnabled = true;
+            return this;
+        }
+
+        /**
+         * Level of logging.
+         * The values are the same than standard Android logging plus NONE, to
+         * disable logging. Any not supported value will be considered NONE.
+         * {@link SplitLogLevel} or {@link android.util.Log} values can be used
+         * @return this builder
+         */
+        public Builder logLevel(int level) {
+            _logLevel = level;
             return this;
         }
 
@@ -743,7 +814,6 @@ public class SplitClientConfig {
             _labelsEnabled = false;
             return this;
         }
-
 
         /**
          * The SDK kicks off background threads to download data necessary
@@ -1028,6 +1098,20 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Rate in seconds for telemetry to be sent. Minimum value is 60 seconds.
+         *
+         * This is an ADVANCED parameter
+         *
+         * @param telemetryRefreshRate Rate in seconds for telemetry refresh.
+         * @return This builder
+         * @default 3600 seconds
+         */
+        public Builder telemetryRefreshRate(long telemetryRefreshRate) {
+            _telemetryRefreshRate = telemetryRefreshRate;
+            return this;
+        }
+
         public SplitClientConfig build() {
 
 
@@ -1083,6 +1167,12 @@ public class SplitClientConfig {
                 _backgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
             }
 
+            if (_telemetryRefreshRate < 60) {
+                Logger.w("Telemetry refresh rate is lower than allowed. " +
+                        "Setting to default value.");
+                _telemetryRefreshRate = DEFAULT_TELEMETRY_REFRESH_RATE;
+            }
+
             HttpProxy proxy = parseProxyHost(_proxyHost);
 
             return new SplitClientConfig(
@@ -1126,7 +1216,12 @@ public class SplitClientConfig {
                     _impressionsMode,
                     _impCountersRefreshRate,
                     _isPersistentAttributesEnabled,
-                    _offlineRefreshRate);
+                    _offlineRefreshRate,
+                    _serviceEndpoints.getTelemetryEndpoint(),
+                    _telemetryRefreshRate,
+                    new TelemetryHelperImpl().shouldRecordTelemetry(),
+                    _syncEnabled,
+                    _logLevel);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {

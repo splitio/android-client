@@ -1,3 +1,34 @@
+2.12.0 (Jul 20, 2022)
+- Added logLevel configuration. This allows for more granularity when choosing what will be logged.
+- Deprecated enableDebug configuration.
+
+2.11.0 (Jun 24, 2022)
+- Added a new config option to control the tasks that listen or poll for updates on feature flags and segments, via the new config syncEnabled . Running online Split will always pull the most recent updates upon initialization, this only affects updates fetching on a running instance. Useful when a consistent session experience is a must or to save resources when updates are not being used.
+
+2.10.3 (Jun 10, 2022)
+- Fixed issue that prevented split list from being updated after modifying sync config.
+
+2.10.2 (May 9, 2022)
+- Added support for resumed streaming event.
+- SplitClient instances are tracked by key.
+- Improved logging and error handling when encountering incorrect format in splits file for localhost mode.
+
+2.10.1 (Apr 25, 2022)
+- Updated the synchronization flow to be more reliable in the event of an edge case generating delay in cache purge propagation, keeping the SDK cache properly synced.
+- Fixed issue that converted certain values in event properties to scientific notation.
+
+2.10.0 (Apr 6, 2022)
+- Added support for multiple clients: Factories can now create multiple clients with different keys while reusing the common tasks, data and behavior. Read more in our Android SDK docs.
+
+2.9.1 (Feb 24, 2022)
+- Updated splits initialization workflow to reduce latencies.
+- Removed sizeInBytes property in Events.
+
+2.9.0 (Jan 24, 2022)
+- Updated SDK telemetry storage, metrics and updater to be more effective and send less often.
+- Updated deprecated dependencies (Guava & Gson).
+- Added exception handling for SplitClient and SplitManager methods.
+
 2.8.1: (Nov 24, 2021)
 - Added support for a user key containing white spaces.
 
@@ -11,7 +42,7 @@
 2.7.3: (Oct 4, 2021)
 - Updated streaming logic to implement the newest versions of our Streaming services, including:
     - Integration with the V2 of the Auth service, connecting to the new channels and applying the received connection delay.
-    - Implemented handling of thew notification types for MySegmentsV2 (keyList, bounded and unbounded) 
+    - Implemented handling of the notification types for MySegmentsV2 (keyList, bounded and unbounded)
     - New control notification for environment scoped streaming reset.
 - Improved initialization performance by removing hashing in initial database name generation.
 

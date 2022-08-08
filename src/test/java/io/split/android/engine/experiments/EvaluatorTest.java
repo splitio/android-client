@@ -1,5 +1,9 @@
 package io.split.android.engine.experiments;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,16 +21,13 @@ import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class EvaluatorTest {
 
-    private SplitFetcher splitFetcher;
     private Evaluator evaluator;
 
     @Before
@@ -34,11 +35,12 @@ public class EvaluatorTest {
         if(evaluator == null) {
             FileHelper fileHelper = new FileHelper();
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
+            MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
-            Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
+            Set<String> mySegments = new HashSet<>(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            SplitParser splitParser = new SplitParser(mySegmentsStorage);
+            SplitParser splitParser = new SplitParser(mySegmentsStorageContainer);
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);
@@ -46,7 +48,7 @@ public class EvaluatorTest {
             when(splitsStorage.get("a_new_split_2")).thenReturn(splitsMap.get("a_new_split_2"));
             when(splitsStorage.get("Test")).thenReturn(splitsMap.get("Test"));
 
-
+            when(mySegmentsStorageContainer.getStorageForKey(any())).thenReturn(mySegmentsStorage);
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
 
             evaluator = new EvaluatorImpl(splitsStorage, splitParser);
@@ -136,6 +138,4 @@ public class EvaluatorTest {
         }
         return splitsMap;
     }
-
-
 }

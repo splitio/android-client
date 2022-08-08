@@ -9,13 +9,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import fake.SyncManagerStub;
-import io.split.android.client.lifecycle.SplitLifecycleManager;
+import io.split.android.client.lifecycle.SplitLifecycleManagerImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.ThreadUtils;
 
 public class LifecyleOnBGTest {
 
-    SplitLifecycleManager mSplitLifecycleManager;
+    SplitLifecycleManagerImpl mSplitLifecycleManager;
     SyncManagerStub mSyncManagerStub;
 
     @Before
@@ -24,7 +24,7 @@ public class LifecyleOnBGTest {
         mSyncManagerStub = (SyncManagerStub) syncManager;
         mSyncManagerStub.pauseCalled = false;
         mSyncManagerStub.resumeCalled = false;
-        mSplitLifecycleManager = new SplitLifecycleManager();
+        mSplitLifecycleManager = new SplitLifecycleManagerImpl();
         mSplitLifecycleManager.register(syncManager);
     }
 

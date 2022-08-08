@@ -3,13 +3,11 @@ package io.split.android.client;
 import java.util.Map;
 
 import io.split.android.client.dtos.ConditionType;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
-import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.splitter.Splitter;
 import io.split.android.grammar.Treatments;
@@ -28,12 +26,12 @@ public class EvaluatorImpl implements Evaluator {
     public EvaluationResult getTreatment(String matchingKey, String bucketingKey, String splitName, Map<String, Object> attributes) {
 
         try {
-            ParsedSplit parsedSplit = mSplitParser.parse(mSplitsStorage.get(splitName));
+            ParsedSplit parsedSplit = mSplitParser.parse(mSplitsStorage.get(splitName), matchingKey);
             if (parsedSplit == null) {
                 return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.DEFINITION_NOT_FOUND);
             }
-            return getTreatment(matchingKey, bucketingKey, parsedSplit, attributes);
 
+            return getTreatment(matchingKey, bucketingKey, parsedSplit, attributes);
         } catch (ChangeNumberExceptionWrapper ex) {
             Logger.e(ex, "Catch Change Number Exception");
         } catch (Exception e) {

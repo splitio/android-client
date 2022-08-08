@@ -26,7 +26,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class StreamingDisabledInConfigTest {
     Context mContext;
@@ -116,7 +116,13 @@ public class StreamingDisabledInConfigTest {
                     Logger.i("** Split Changes hit");
                     mSplitsHitsCountLatch.countDown();
                     mSplitsHitsCountHit++;
-                    String data = IntegrationHelper.emptySplitChanges(-1, 1000);
+                    long since = -1;
+                    if (mSplitsHitsCountHit > 2) {
+                        since = 1000;
+                    } else if (mSplitsHitsCountHit > 1) {
+                        since = 500;
+                    }
+                    String data = IntegrationHelper.emptySplitChanges(since, 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");

@@ -1,14 +1,14 @@
 package io.split.android.client.service.sseclient.reactor;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.synchronizer.Synchronizer;
-import io.split.android.client.utils.Logger;
-
-import static androidx.core.util.Preconditions.checkNotNull;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitUpdatesWorker extends UpdateWorker {
 
@@ -32,7 +32,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
             SplitsChangeNotification notification = mNotificationsQueue.take();
             mSynchronizer.synchronizeSplits(notification.getChangeNumber());
             Logger.d("A new notification to update splits has been received. " +
-                    "Enqueing polling task.");
+                    "Enqueuing polling task.");
         } catch (InterruptedException e) {
             Logger.d("Splits update worker has been interrupted");
             throw (e);

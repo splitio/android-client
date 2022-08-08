@@ -13,6 +13,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.dtos.SerializableEvent;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
@@ -29,6 +30,7 @@ import io.split.android.client.service.http.HttpRequestBodySerializer;
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.NetworkHelper;
+import io.split.android.client.utils.NetworkHelperImpl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -54,7 +56,7 @@ public class HttpRecorderTest {
         mUrl = new URI(TEST_URL);
         mEventsUrl = new URI(EVENTS_TEST_URL);
         mImpressionsUrl = new URI(IMPRESSIONS_TEST_URL);
-        mNetworkHelperMock = mock(NetworkHelper.class);
+        mNetworkHelperMock = mock(NetworkHelperImpl.class);
         mClientMock = mock(HttpClient.class);
     }
 
@@ -80,7 +82,8 @@ public class HttpRecorderTest {
     public void testSuccessfulEventsSend() throws HttpException {
         boolean exceptionWasThrown = false;
         List<Event> events = createEvents();
-        String jsonEvents = Json.toJson(events);
+        List<SerializableEvent> serializableEvents = createSerializedEventsObjects(events);
+        String jsonEvents = Json.toJson(serializableEvents);
         when(mNetworkHelperMock.isReachable(mEventsUrl)).thenReturn(true);
         HttpRequest request = mock(HttpRequest.class);
 
@@ -102,13 +105,13 @@ public class HttpRecorderTest {
     }
 
     @Test
-    public void failedResponse() throws URISyntaxException, HttpException {
+    public void failedResponse() throws HttpException {
 
         when(mNetworkHelperMock.isReachable(mEventsUrl)).thenReturn(true);
         HttpRequest request = mock(HttpRequest.class);
 
         List<Event> events = createEvents();
-        String jsonEvents = Json.toJson(events);
+        String jsonEvents = Json.toJson(createSerializedEventsObjects(events));
 
         HttpResponse response = new HttpResponseImpl(500, "");
         when(request.execute()).thenReturn(response);
@@ -214,5 +217,23 @@ public class HttpRecorderTest {
             events.add(event);
         }
         return events;
+    }
+
+    private List<SerializableEvent> createSerializedEventsObjects(List<Event> events) {
+        List<SerializableEvent> serializableEvents = new ArrayList<>();
+
+        for (Event event : events) {
+            SerializableEvent serializableEvent = new SerializableEvent();
+            serializableEvent.eventTypeId = event.eventTypeId;
+            serializableEvent.trafficTypeName = event.trafficTypeName;
+            serializableEvent.key = event.key;
+            serializableEvent.value = event.value;
+            serializableEvent.timestamp = event.timestamp;
+            serializableEvent.properties = event.properties;
+
+            serializableEvents.add(serializableEvent);
+        }
+
+        return serializableEvents;
     }
 }

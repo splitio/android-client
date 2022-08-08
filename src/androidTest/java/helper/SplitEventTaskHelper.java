@@ -4,7 +4,7 @@ import java.util.concurrent.CountDownLatch;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.events.SplitEventTask;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitEventTaskHelper extends SplitEventTask {
 
@@ -30,5 +30,9 @@ public class SplitEventTaskHelper extends SplitEventTask {
     @Override
     public void onPostExecutionView(SplitClient client) {
 
+    }
+
+    public void setLatch(CountDownLatch latch) {
+        mlatch = latch;
     }
 }

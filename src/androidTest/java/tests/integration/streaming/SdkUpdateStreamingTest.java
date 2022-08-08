@@ -3,7 +3,6 @@ package tests.integration.streaming;
 import android.content.Context;
 
 import androidx.core.util.Pair;
-import androidx.room.Room;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -43,7 +42,7 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 import static java.lang.Thread.sleep;
@@ -54,7 +53,7 @@ public class SdkUpdateStreamingTest {
 
     CountDownLatch mSseLatch;
     String mApiKey = IntegrationHelper.dummyApiKey();
-    Key mUserKey = IntegrationHelper.dummyUserKey();
+    Key mUserKey = new Key("key1");
 
     final static String MSG_SPLIT_UPDATE = "push_msg-split_update.txt";
     final static String MSG_SPLIT_KILL = "push_msg-split_kill.txt";
@@ -116,7 +115,7 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(10, TimeUnit.SECONDS);
         pushInitialId();
 
         TestingHelper.delay(1000);
@@ -151,11 +150,11 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(10, TimeUnit.SECONDS);
         pushInitialId();
 
         testSplitsUpdate();
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
@@ -187,11 +186,11 @@ public class SdkUpdateStreamingTest {
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        mSseLatch.await(10, TimeUnit.SECONDS);
         pushInitialId();
 
         testSplitKill();
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
@@ -206,31 +205,31 @@ public class SdkUpdateStreamingTest {
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
         mSplitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1000));
+                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 500));
 
         mFactory = IntegrationHelper.buildFactory(
-                mApiKey, mUserKey,
+                mApiKey, new Key("key1"),
                 config, mContext, httpClientMock, mSplitRoomDatabase);
 
         mClient = mFactory.client();
 
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
-        SplitEventTaskHelper timeoutTask = new SplitEventTaskHelper(readyLatch);
-        SplitEventTaskHelper updatedTask = new SplitEventTaskHelper(updateLatch);
+        TestingHelper.TestEventTask readyTask = TestingHelper.testTask(readyLatch);
+        TestingHelper.TestEventTask timeoutTask = TestingHelper.testTask(readyLatch);
+        TestingHelper.TestEventTask updatedTask = TestingHelper.testTask(updateLatch);
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         mClient.on(SplitEvent.SDK_READY_TIMED_OUT, timeoutTask);
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
-        readyLatch.await(5, TimeUnit.SECONDS);
-        mSseLatch.await(5, TimeUnit.SECONDS);
+        readyLatch.await(20, TimeUnit.SECONDS);
+        mSseLatch.await(20, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
         testMySegmentsUpdate();
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(20, TimeUnit.SECONDS);
 
-        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertTrue(updatedTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyTask.onExecutedCalled);
+        Assert.assertTrue(updatedTask.onExecutedCalled);
     }
 
     private void testSplitKill() throws IOException, InterruptedException {

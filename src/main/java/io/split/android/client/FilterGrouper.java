@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.utils.Logger;
-
 public class FilterGrouper {
     public List<SplitFilter> group(List<SplitFilter> filters) {
         Map<SplitFilter.Type, List<String>> groupedValues = new HashMap<>();

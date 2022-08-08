@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.utils.Json;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -70,6 +71,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         if(splitChange == null) {
             return;
         }
+
         List<Split> activeSplits = splitChange.getActiveSplits();
         List<Split> archivedSplits = splitChange.getArchivedSplits();
         if(activeSplits != null) {

@@ -4,7 +4,7 @@ import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
@@ -26,8 +26,8 @@ public class SplitManagerImpl implements SplitManager {
 
     private final SplitsStorage _splitsStorage;
     private boolean _isManagerDestroyed = false;
-    private SplitValidator _splitValidator;
-    private ValidationMessageLogger _validationMessageLogger;
+    private final SplitValidator _splitValidator;
+    private final ValidationMessageLogger _validationMessageLogger;
     private final SplitParser _splitParser;
 
     public SplitManagerImpl(SplitsStorage splitsStorage,
@@ -44,21 +44,26 @@ public class SplitManagerImpl implements SplitManager {
     public List<SplitView> splits() {
         List<SplitView> result = new ArrayList<>();
 
-        if (_isManagerDestroyed) {
-            Logger.e("Manager has already been destroyed - no calls possible");
-            return result;
-        }
+        try {
+            if (_isManagerDestroyed) {
+                Logger.e("Manager has already been destroyed - no calls possible");
+                return result;
+            }
 
-        Map<String, Split> splitMap = _splitsStorage.getAll();
-        if (splitMap != null && splitMap.size() > 0) {
-            Collection<Split> splits = _splitsStorage.getAll().values();
-            for (Split split : splits) {
-                ParsedSplit parsedSplit = _splitParser.parse(split);
-                if (parsedSplit != null) {
-                    result.add(toSplitView(parsedSplit));
+            Map<String, Split> splitMap = _splitsStorage.getAll();
+            if (splitMap != null && splitMap.size() > 0) {
+                Collection<Split> splits = _splitsStorage.getAll().values();
+                for (Split split : splits) {
+                    ParsedSplit parsedSplit = _splitParser.parse(split);
+                    if (parsedSplit != null) {
+                        result.add(toSplitView(parsedSplit));
+                    }
                 }
             }
+        } catch (Exception exception) {
+            Logger.e("Error getting splits: " + exception.getLocalizedMessage());
         }
+
         return result;
     }
 
@@ -68,48 +73,61 @@ public class SplitManagerImpl implements SplitManager {
         final String validationTag = "split";
         String splitName = featureName;
 
-        if (_isManagerDestroyed) {
-            Logger.e("Manager has already been destroyed - no calls possible");
-            return null;
-        }
-
-        ValidationErrorInfo errorInfo = _splitValidator.validateName(featureName);
-        if (errorInfo != null) {
-            _validationMessageLogger.log(errorInfo, validationTag);
-            if (errorInfo.isError()) {
+        try {
+            if (_isManagerDestroyed) {
+                Logger.e("Manager has already been destroyed - no calls possible");
                 return null;
             }
-            splitName = featureName.trim();
-        }
 
-        ParsedSplit parsedSplit = null;
-        Split split = _splitsStorage.get(splitName);
-        if (split != null) {
-            parsedSplit = _splitParser.parse(split);
-        }
-        if (parsedSplit == null) {
-            _validationMessageLogger.w(_splitValidator.splitNotFoundMessage(splitName), validationTag);
+            ValidationErrorInfo errorInfo = _splitValidator.validateName(featureName);
+            if (errorInfo != null) {
+                _validationMessageLogger.log(errorInfo, validationTag);
+                if (errorInfo.isError()) {
+                    return null;
+                }
+                splitName = featureName.trim();
+            }
+
+            ParsedSplit parsedSplit = null;
+            Split split = _splitsStorage.get(splitName);
+            if (split != null) {
+                parsedSplit = _splitParser.parse(split);
+            }
+            if (parsedSplit == null) {
+                _validationMessageLogger.w(_splitValidator.splitNotFoundMessage(splitName), validationTag);
+                return null;
+            }
+            return toSplitView(parsedSplit);
+        } catch (Exception exception) {
+            Logger.e("Error getting split: " + exception.getLocalizedMessage());
+
             return null;
         }
-        return toSplitView(parsedSplit);
     }
 
     @Override
     public List<String> splitNames() {
         List<String> result = new ArrayList<>();
 
-        if (_isManagerDestroyed) {
-            Logger.e("Manager has already been destroyed - no calls possible");
+        try {
+            if (_isManagerDestroyed) {
+                Logger.e("Manager has already been destroyed - no calls possible");
+                return result;
+            }
+
+            Map<String, Split> splitMap = _splitsStorage.getAll();
+            if (splitMap != null && splitMap.size() > 0) {
+                for (Split split : splitMap.values()) {
+                    result.add(split.name);
+                }
+            }
+
+            return result;
+        } catch (Exception exception) {
+            Logger.e("Error getting split names: " + exception.getLocalizedMessage());
+
             return result;
         }
-
-        Map<String, Split> splitMap = _splitsStorage.getAll();
-        if (splitMap != null && splitMap.size() > 0) {
-            for (Split split : splitMap.values()) {
-                result.add(split.name);
-            }
-        }
-        return result;
     }
 
     @Override

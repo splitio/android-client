@@ -5,32 +5,34 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitResult;
+import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
-import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
-import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
+import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.engine.experiments.SplitParser;
-
-import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import io.split.android.grammar.Treatments;
 
 /**
  * An implementation of SplitClient that considers all partitions
@@ -40,59 +42,110 @@ import java.util.Map;
  */
 public final class LocalhostSplitClient implements SplitClient {
     private final WeakReference<LocalhostSplitFactory> mFactoryRef;
-    private final String mKey;
+    private final WeakReference<SplitClientContainer> mClientContainer;
+    private final Key mKey;
     private final SplitEventsManager mEventsManager;
     private final Evaluator mEvaluator;
     private final TreatmentManager mTreatmentManager;
     private boolean mIsClientDestroyed = false;
 
     public LocalhostSplitClient(@NonNull LocalhostSplitFactory container,
+                                @NonNull SplitClientContainer clientContainer,
                                 @NonNull SplitClientConfig splitClientConfig,
-                                @NonNull String key,
+                                @NonNull Key key,
                                 @NonNull SplitsStorage splitsStorage,
                                 @NonNull SplitEventsManager eventsManager,
                                 @NonNull SplitParser splitParser,
                                 @NonNull AttributesManager attributesManager,
-                                @NonNull AttributesMerger attributesMerger) {
+                                @NonNull AttributesMerger attributesMerger,
+                                @NonNull TelemetryStorageProducer telemetryStorageProducer) {
 
         mFactoryRef = new WeakReference<>(checkNotNull(container));
+        mClientContainer = new WeakReference<>(checkNotNull(clientContainer));
         mKey = checkNotNull(key);
         mEventsManager = checkNotNull(eventsManager);
         mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
-        mTreatmentManager = new TreatmentManagerImpl(mKey, null,
+        mTreatmentManager = new TreatmentManagerImpl(mKey.matchingKey(), mKey.bucketingKey(),
                 mEvaluator, new KeyValidatorImpl(),
-                new SplitValidatorImpl(), new LocalhostMetrics(), getImpressionsListener(splitClientConfig),
-                splitClientConfig, eventsManager, attributesManager, attributesMerger);
+                new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
+                splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger, telemetryStorageProducer);
     }
 
     @Override
     public String getTreatment(String split) {
-        return mTreatmentManager.getTreatment(split, null, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatment(split, null, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return Treatments.CONTROL;
+        }
     }
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatment(split, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatment(split, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return Treatments.CONTROL;
+        }
     }
 
     @Override
     public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentWithConfig(split, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatmentWithConfig(split, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return new SplitResult(Treatments.CONTROL);
+        }
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatments(splits, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatments(splits, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            Map<String, String> result = new HashMap<>();
+
+            for (String split : splits) {
+                result.put(split, Treatments.CONTROL);
+            }
+
+            return result;
+        }
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed);
+        try {
+            return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            Map<String, SplitResult> result = new HashMap<>();
+
+            for (String split : splits) {
+                result.put(split, new SplitResult(Treatments.CONTROL));
+            }
+
+            return result;
+        }
     }
 
     @Override
     public void destroy() {
         mIsClientDestroyed = true;
+        SplitClientContainer splitClientContainer = mClientContainer.get();
+        if (splitClientContainer != null) {
+            splitClientContainer.remove(mKey);
+        }
+
         SplitFactory factory = mFactoryRef.get();
         if (factory != null) {
             factory.destroy();

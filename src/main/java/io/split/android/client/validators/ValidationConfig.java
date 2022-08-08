@@ -2,7 +2,7 @@ package io.split.android.client.validators;
 
 /**
  * Default config for validations component
- * This configuration should be overwrote in factory or client instantiation
+ * This configuration should be overwritten in factory or client instantiation
  * with Split Config values
  */
 public class ValidationConfig {

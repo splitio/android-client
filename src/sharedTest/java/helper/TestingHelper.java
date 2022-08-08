@@ -1,16 +1,12 @@
 package helper;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.events.SplitEventTask;
-import io.split.android.client.events.SplitEventTaskMethodNotImplementedException;
-import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 import static java.lang.Thread.sleep;
 
@@ -67,6 +63,10 @@ public class TestingHelper {
         }
 
         public void onPostExecutionView(SplitClient client) {
+        }
+
+        public void setLatch(CountDownLatch latch) {
+            mLatch = latch;
         }
     }
 

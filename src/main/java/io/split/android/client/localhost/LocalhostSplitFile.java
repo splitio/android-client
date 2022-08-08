@@ -1,9 +1,8 @@
 package io.split.android.client.localhost;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;

@@ -1,0 +1,12 @@
+- split_1:
+    treatment: 'on'
+- split_2:
+    treatment: 1000
+- split_3:
+    treatment: '100'
+- split_4:
+    treatment: true
+- split_5:
+    treatment: 'false'
+- split_6:
+    treatment: '100.55'

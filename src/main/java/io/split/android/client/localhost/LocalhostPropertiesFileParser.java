@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 public class LocalhostPropertiesFileParser implements LocalhostFileParser {
 

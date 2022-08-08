@@ -1,5 +1,12 @@
 package io.split.android.client;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.common.base.Strings;
 
 import org.junit.Assert;
@@ -19,52 +26,46 @@ import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
-import io.split.android.engine.experiments.SplitFetcher;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.engine.metrics.Metrics;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProvider;
 import io.split.android.fake.ImpressionListenerMock;
-import io.split.android.fake.MetricsMock;
-import io.split.android.fake.RefreshableMySegmentsFetcherProviderStub;
 import io.split.android.fake.SplitEventsManagerStub;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @SuppressWarnings("ConstantConditions")
 public class TreatmentManagerTest {
 
-    SplitFetcher splitFetcher;
     Evaluator evaluator;
     ImpressionListener impressionListener;
-    Metrics metrics;
-    ISplitEventsManager eventsManagerStub;
+    ListenableEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
+    TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
     TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
 
     @Before
     public void loadSplitsFromFile() {
         if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
+            MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            SplitParser splitParser = new SplitParser(mySegmentsStorage);
+            SplitParser splitParser = new SplitParser(mySegmentsStorageContainer);
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);
@@ -72,12 +73,12 @@ public class TreatmentManagerTest {
             when(splitsStorage.get("testo2222")).thenReturn(splitsMap.get("testo2222"));
             when(splitsStorage.get("Test")).thenReturn(splitsMap.get("Test"));
 
+            when(mySegmentsStorageContainer.getStorageForKey(any())).thenReturn(mySegmentsStorage);
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
 
             evaluator = new EvaluatorImpl(splitsStorage, splitParser);
         }
         impressionListener = new ImpressionListenerMock();
-        metrics = new MetricsMock();
         eventsManagerStub = new SplitEventsManagerStub();
     }
 
@@ -300,27 +301,22 @@ public class TreatmentManagerTest {
 
     private TreatmentManager createTreatmentManager(String matchingKey, String bucketingKey) {
 
-        FileHelper fileHelper = new FileHelper();
-        List<String> mySegments = Arrays.asList("s1", "s2", "test_copy");
-        RefreshableMySegmentsFetcherProvider mySegmentsProvider = new RefreshableMySegmentsFetcherProviderStub(mySegments);
-        List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-
         SplitClientConfig config = SplitClientConfig.builder().build();
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
-                new KeyValidatorImpl(), new SplitValidatorImpl(), new MetricsMock(),
-                new ImpressionListenerMock(), config, eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class));
+                new KeyValidatorImpl(), new SplitValidatorImpl(),
+                new ImpressionListenerMock(), config.labelsEnabled(), eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class));
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
-        ISplitEventsManager eventsManager = mock(ISplitEventsManager.class);
+        ListenableEventsManager eventsManager = mock(ListenableEventsManager.class);
         Evaluator evaluator = mock(Evaluator.class);
 
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(true);
-        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split", new HashMap<>())).thenReturn(new EvaluationResult("test", "test"));
-        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_1", new HashMap<>())).thenReturn(new EvaluationResult("test", "test"));
-        Mockito.when(evaluator.getTreatment("matching_key", "bucketing_key", "test_split_2", new HashMap<>())).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split"), anyMap())).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split_1"), anyMap())).thenReturn(new EvaluationResult("test", "test"));
+        Mockito.when(evaluator.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split_2"), anyMap())).thenReturn(new EvaluationResult("test", "test"));
 
         return new TreatmentManagerImpl(
                 "matching_key",
@@ -328,12 +324,12 @@ public class TreatmentManagerTest {
                 evaluator,
                 mock(KeyValidator.class),
                 mock(SplitValidator.class),
-                mock(Metrics.class),
                 mock(ImpressionListener.class),
-                SplitClientConfig.builder().build(),
+                SplitClientConfig.builder().build().labelsEnabled(),
                 eventsManager,
                 attributesManager,
-                mock(AttributesMerger.class)
+                mock(AttributesMerger.class),
+                telemetryStorageProducer
         );
     }
 

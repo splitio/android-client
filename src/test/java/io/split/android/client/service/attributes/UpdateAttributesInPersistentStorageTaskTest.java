@@ -18,19 +18,20 @@ public class UpdateAttributesInPersistentStorageTaskTest {
     PersistentAttributesStorage attributesStorage;
     private UpdateAttributesInPersistentStorageTask updateAttributesInPersistentStorageTask;
     private final Map<String, Object> testValues = new HashMap<>();
+    private final String matchingKey = "user_key";
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         testValues.put("key1", "value1");
         testValues.put("key2", 100);
-        updateAttributesInPersistentStorageTask = new UpdateAttributesInPersistentStorageTask(attributesStorage, testValues);
+        updateAttributesInPersistentStorageTask = new UpdateAttributesInPersistentStorageTask(matchingKey, attributesStorage, testValues);
     }
 
     @Test
     public void executeCallsSetOnAttributesStorage() {
         updateAttributesInPersistentStorageTask.execute();
 
-        verify(attributesStorage).set(testValues);
+        verify(attributesStorage).set(matchingKey, testValues);
     }
 }

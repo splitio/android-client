@@ -13,7 +13,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.synchronizer.MySegmentsChangeChecker;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -50,7 +50,7 @@ public class MySegmentsOverwriteTask implements SplitTask {
             logError("Unknown error while overwriting my segments: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_OVERWRITE);
         }
-        Logger.d("My Segments have been overwrote");
+        Logger.d("My Segments have been overwritten");
         return SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_OVERWRITE);
     }
 

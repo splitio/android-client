@@ -1,9 +1,10 @@
 package tests.integration.streaming;
 
+import static java.lang.Thread.sleep;
+
 import android.content.Context;
 
 import androidx.core.util.Pair;
-import androidx.room.Room;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -27,28 +28,27 @@ import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import helper.TestingData;
-import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
-import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.utils.logger.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
-
-import static java.lang.Thread.sleep;
+import tests.integration.shared.TestingHelper;
 
 public class MySegmentsChangeV2Test {
-    Context mContext;
-    BlockingQueue<String> mStreamingData;
-    CountDownLatch mMySegmentsUpdateLatch;
-    CountDownLatch mMySegmentsSyncLatch;
-    CountDownLatch mSseLatch;
-    String mApiKey;
+    private Context mContext;
+    private BlockingQueue<String> mStreamingData;
+    private CountDownLatch mMySegmentsUpdateLatch;
+    private CountDownLatch mMySegmentsUpdateLatch2;
+    private CountDownLatch mMySegmentsSyncLatch;
+    private CountDownLatch mMySegmentsSyncLatch2;
+    private CountDownLatch mSseLatch;
+    private String mApiKey;
 
     final static String MSG_SEGMENT_UPDATE_TEMPLATE = "push_msg-segment_updV2.txt";
 
@@ -58,23 +58,22 @@ public class MySegmentsChangeV2Test {
     SplitClient mClient;
     SynchronizerSpyImpl mSynchronizerSpy;
 
-    SplitRoomDatabase mSplitRoomDatabase;
-
     @Before
     public void setup() {
+        mStreamingData = new LinkedBlockingDeque<>();
         mSynchronizerSpy = new SynchronizerSpyImpl();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mStreamingData = new LinkedBlockingDeque<>();
 
         Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
         mApiKey = apiKeyAndDb.first;
-        String dataFolderName = apiKeyAndDb.second;
-        mSplitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
-        mSplitRoomDatabase.clearAllTables();
+        mMySegmentsSyncLatch2 = new CountDownLatch(1);
+        mMySegmentsUpdateLatch2 = new CountDownLatch(1);
     }
 
     @Test
     public void mySegmentsUpdate() throws IOException, InterruptedException {
+
+        SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
         String userKey = "key1";
         CountDownLatch readyLatch = new CountDownLatch(1);
         mSseLatch = new CountDownLatch(1);
@@ -83,13 +82,13 @@ public class MySegmentsChangeV2Test {
         CountDownLatch updateLatch = new CountDownLatch(4);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
 
-        HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
+        HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher(1));
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, new Key(userKey),
-                config, mContext, httpClientMock, mSplitRoomDatabase, mSynchronizerSpy);
+                config, mContext, httpClientMock, db, mSynchronizerSpy);
 
         mClient = mFactory.client();
 
@@ -103,94 +102,31 @@ public class MySegmentsChangeV2Test {
 
         // Wait for streaming connection
         mSseLatch.await(5, TimeUnit.SECONDS);
-
         // Keep alive on streaming channel confirms connection
         // so full sync is fired
         TestingHelper.pushKeepAlive(mStreamingData);
-
         // Wait for hitting my segments two times (sdk ready and full sync after streaming connection)
         mMySegmentsSyncLatch.await(5, TimeUnit.SECONDS);
-
 
         // Unbounded fetch notification should trigger my segments
         // refresh on synchronizer
         // Set count to 0 to start counting hits
         mSynchronizerSpy.mForceMySegmentSyncCalledCount.set(0);
         testMySegmentsUpdate(TestingData.UNBOUNDED_NOTIFICATION);
-
         // Should not trigger any fetch to my segments because
         // this payload doesn't have "key1" enabled
         pushMessage(TestingData.ESCAPED_BOUNDED_NOTIFICATION_GZIP);
-
         // Pushed key list message. Key 1 should add a segment
         pushMessage(TestingData.ESCAPED_KEY_LIST_NOTIFICATION_GZIP);
 
         pushMessage(TestingData.SEGMENT_REMOVAL_NOTIFICATION);
-
         updateLatch.await(20, TimeUnit.SECONDS);
-        MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKeys(userKey);
+        MySegmentEntity mySegmentEntity = getByKey(userKey, db);
 
-        Assert.assertEquals(1, mSynchronizerSpy.mForceMySegmentSyncCalledCount.get());
         Assert.assertTrue(mySegmentEntity.getSegmentList().contains("new_segment_added"));
         Assert.assertFalse(mySegmentEntity.getSegmentList().contains("segment1"));
-
+        mFactory.destroy();
     }
-
-    @Test
-    public void mySegmentsUpdateBounded() throws IOException, InterruptedException {
-        String userKey = "603516ce-1243-400b-b919-0dce5d8aecfd";
-        CountDownLatch readyLatch = new CountDownLatch(1);
-        mSseLatch = new CountDownLatch(1);
-        mMySegmentsSyncLatch = new CountDownLatch(2);
-        mMySegmentsUpdateLatch = new CountDownLatch(1);
-        CountDownLatch updateLatch = new CountDownLatch(4);
-        TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
-
-        HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
-
-        SplitClientConfig config = IntegrationHelper.basicConfig();
-
-        mFactory = IntegrationHelper.buildFactory(
-                mApiKey, new Key(userKey),
-                config, mContext, httpClientMock, mSplitRoomDatabase, mSynchronizerSpy);
-
-        mClient = mFactory.client();
-
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
-
-        mClient.on(SplitEvent.SDK_READY, readyTask);
-        mClient.on(SplitEvent.SDK_UPDATE, updateTask);
-
-        // Wait for SDK ready to fire
-        readyLatch.await(10, TimeUnit.SECONDS);
-
-        // Wait for streaming connection
-        mSseLatch.await(5, TimeUnit.SECONDS);
-
-        // Keep alive on streaming channel confirms connection
-        // so full sync is fired
-        TestingHelper.pushKeepAlive(mStreamingData);
-
-        // Wait for hitting my segments two times (sdk ready and full sync after streaming connection)
-        mMySegmentsSyncLatch.await(5, TimeUnit.SECONDS);
-
-
-        // Unbounded fetch notification should trigger my segments
-        // refresh on synchronizer
-        // Set count to 0 to start counting hits
-        mSynchronizerSpy.mForceMySegmentSyncCalledCount.set(0);
-        testMySegmentsUpdate(TestingData.ESCAPED_BOUNDED_NOTIFICATION_GZIP);
-
-        // ZLIB payload
-        testMySegmentsUpdate(TestingData.ESCAPED_BOUNDED_NOTIFICATION_ZLIB);
-
-        // This malformed payload should trigger unbounded
-        testMySegmentsUpdate(TestingData.ESCAPED_BOUNDED_NOTIFICATION_MALFORMED);
-
-        Assert.assertEquals(3, mSynchronizerSpy.mForceMySegmentSyncCalledCount.get());
-
-    }
-
 
     @After
     public void tearDown() {
@@ -205,11 +141,15 @@ public class MySegmentsChangeV2Test {
         return new HttpStreamResponseMock(status, streamingResponseData);
     }
 
-    private HttpResponseMockDispatcher createBasicResponseDispatcher() {
+    private HttpResponseMockDispatcher createBasicResponseDispatcher(int number) {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("/mySegments/key2")) {
+                    mMySegmentsSyncLatch2.countDown();
+                    mMySegmentsUpdateLatch2.countDown();
+                    return createResponse(200, IntegrationHelper.emptyMySegments());
+                } else if (uri.getPath().contains("/mySegments")) {
                     mMySegmentsHitCount++;
                     Logger.i("** My segments hit: " + mMySegmentsHitCount);
                     mMySegmentsSyncLatch.countDown();
@@ -234,7 +174,8 @@ public class MySegmentsChangeV2Test {
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
                     mSseLatch.countDown();
-                    return createStreamResponse(200, mStreamingData);
+                    BlockingQueue<String> queue = mStreamingData;
+                    return createStreamResponse(200, queue);
                 } catch (Exception e) {
                 }
                 return null;
@@ -247,18 +188,19 @@ public class MySegmentsChangeV2Test {
         return fileHelper.loadFileContent(mContext, fileName);
     }
 
-    private void testMySegmentsUpdate(String msg) throws IOException, InterruptedException {
+    private void testMySegmentsUpdate(String msg) throws InterruptedException {
         mMySegmentsUpdateLatch = new CountDownLatch(1);
         pushMessage(msg);
         mMySegmentsUpdateLatch.await(5, TimeUnit.SECONDS);
     }
 
     private void pushMessage(String msg) {
+        BlockingQueue<String> queue = mStreamingData;
         String message = loadMockedData(MSG_SEGMENT_UPDATE_TEMPLATE);
         message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
         message = message.replace(TestingHelper.MSG_DATA_FIELD, msg);
         try {
-            mStreamingData.put(message + "" + "\n");
+            queue.put(message + "" + "\n");
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException e) {
         }
@@ -267,13 +209,28 @@ public class MySegmentsChangeV2Test {
     private String updatedMySegments(int count) {
 
         StringBuilder b = new StringBuilder();
-        for (int i=0; i<count; i++) {
+        for (int i = 0; i < count; i++) {
             b.append("{ \"id\":\"id" + i + "\", \"name\":\"segment" + i + "\"},");
         }
         b.deleteCharAt(b.length() - 1); // Removing last ","
 
         return "{\"mySegments\":[" + b.toString() + "]}";
 
+    }
+
+    private MySegmentEntity getByKey(String userKey, SplitRoomDatabase db) {
+        int count = 0;
+        MySegmentEntity mySegmentEntity = null;
+        while (mySegmentEntity == null && count < 10) {
+            mySegmentEntity = db.mySegmentDao().getByUserKey(userKey);
+            count++;
+            System.out.println("Load count: " + count);
+            try {
+                sleep(200);
+            } catch (Exception e){
+            }
+        }
+        return mySegmentEntity;
     }
 
 }

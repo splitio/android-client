@@ -4,6 +4,8 @@ import java.nio.charset.Charset;
 import java.util.Iterator;
 import java.util.List;
 
+import io.split.android.client.utils.logger.Logger;
+
 
 public class StringHelper {
     public static Charset defaultCharset() {

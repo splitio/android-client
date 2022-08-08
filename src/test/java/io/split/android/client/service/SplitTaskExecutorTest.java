@@ -6,11 +6,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -22,9 +22,14 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 import static java.lang.Thread.sleep;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class SplitTaskExecutorTest {
 
@@ -32,6 +37,7 @@ public class SplitTaskExecutorTest {
 
     @Before
     public void setup() {
+        MockitoAnnotations.openMocks(this);
         mTaskExecutor = new SplitTaskExecutorImpl();
     }
 
@@ -254,9 +260,16 @@ public class SplitTaskExecutorTest {
 
     class TestTask implements SplitTask {
         CountDownLatch latch;
+        SplitTaskType type;
 
         TestTask(CountDownLatch latch) {
             this.latch = latch;
+            this.type = SplitTaskType.IMPRESSIONS_RECORDER;
+        }
+
+        TestTask(CountDownLatch latch, SplitTaskType taskType) {
+            this.latch = latch;
+            this.type = taskType;
         }
 
         public boolean shouldThrowException = false;
@@ -271,7 +284,7 @@ public class SplitTaskExecutorTest {
             if (shouldThrowException) {
                 throw new IllegalStateException();
             }
-            return SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
+            return SplitTaskExecutionInfo.success(type);
         }
     }
 
@@ -309,7 +322,7 @@ public class SplitTaskExecutorTest {
     static class SerialListener implements SplitTaskExecutionListener {
         CompletionTracker _tracker;
         private int mTaskNumber = -1;
-        private CountDownLatch mLatch;
+        private final CountDownLatch mLatch;
 
         public SerialListener(int taskNumber, CompletionTracker tracker, CountDownLatch latch) {
             mTaskNumber = taskNumber;

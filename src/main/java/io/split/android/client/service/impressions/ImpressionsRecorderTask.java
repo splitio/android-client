@@ -1,8 +1,8 @@
 package io.split.android.client.service.impressions;
 
-import androidx.annotation.NonNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.collect.Lists;
+import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,22 +17,25 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
-import io.split.android.client.utils.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.utils.logger.Logger;
 
 public class ImpressionsRecorderTask implements SplitTask {
     public final static int FAILING_CHUNK_SIZE = 20;
     private final PersistentImpressionsStorage mPersistenImpressionsStorage;
     private final HttpRecorder<List<KeyImpression>> mHttpRecorder;
     private final ImpressionsRecorderTaskConfig mConfig;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public ImpressionsRecorderTask(@NonNull HttpRecorder<List<KeyImpression>> httpRecorder,
                                    @NonNull PersistentImpressionsStorage persistenEventsStorage,
-                                   @NonNull ImpressionsRecorderTaskConfig config) {
+                                   @NonNull ImpressionsRecorderTaskConfig config,
+                                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mHttpRecorder = checkNotNull(httpRecorder);
         mPersistenImpressionsStorage = checkNotNull(persistenEventsStorage);
         mConfig = checkNotNull(config);
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
@@ -46,9 +49,16 @@ public class ImpressionsRecorderTask implements SplitTask {
         do {
             impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
             if (impressions.size() > 0) {
+                long startTime = System.currentTimeMillis();
+                long latency = 0;
                 try {
                     Logger.d("Posting %d Split impressions", impressions.size());
                     mHttpRecorder.execute(impressions);
+
+                    long now = System.currentTimeMillis();
+                    latency = now - startTime;
+                    mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.IMPRESSIONS, now);
+
                     mPersistenImpressionsStorage.delete(impressions);
                     Logger.d("%d split impressions sent", impressions.size());
                 } catch (HttpRecorderException e) {
@@ -59,11 +69,15 @@ public class ImpressionsRecorderTask implements SplitTask {
                             "Saving to send them in a new iteration" +
                             e.getLocalizedMessage());
                     failingImpressions.addAll(impressions);
+
+                    mTelemetryRuntimeProducer.recordSyncError(OperationType.IMPRESSIONS, e.getHttpStatus());
+                } finally {
+                    mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS, latency);
                 }
             }
         } while (impressions.size() == mConfig.getImpressionsPerPush());
 
-        if(failingImpressions.size() > 0) {
+        if (failingImpressions.size() > 0) {
             mPersistenImpressionsStorage.setActive(failingImpressions);
         }
 
@@ -71,6 +85,7 @@ public class ImpressionsRecorderTask implements SplitTask {
             Map<String, Object> data = new HashMap<>();
             data.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, nonSentRecords);
             data.put(SplitTaskExecutionInfo.NON_SENT_BYTES, nonSentBytes);
+
             return SplitTaskExecutionInfo.error(
                     SplitTaskType.IMPRESSIONS_RECORDER, data);
         }

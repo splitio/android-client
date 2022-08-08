@@ -6,6 +6,7 @@ public class ServiceConstants {
     public static final long MAX_EVENTS_SIZE_BYTES = 5 * 1024 * 1024L;
     public static final long NO_INITIAL_DELAY = 0;
     public static final long DEFAULT_INITIAL_DELAY = 15L;
+    public static final long MIN_INITIAL_DELAY = 5L;
     public static final int DEFAULT_RECORDS_PER_PUSH = 100;
     public static final long DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS = 864000; // 10 days
 
@@ -37,4 +38,11 @@ public class ServiceConstants {
     public static final String PROPERTIES_EXTENSION = "properties";
     public static final String YML_EXTENSION = "yml";
     public static final String YAML_EXTENSION = "yaml";
+
+    public static final int TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS = 1;
+    public static final int TELEMETRY_CONFIG_MAX_RETRY_ATTEMPTS = 3;
+    public static final int TELEMETRY_STATS_INITIAL_DELAY = 5;
+    public static final String SHOULD_RECORD_TELEMETRY = "shouldRecordTelemetry";
+
+    public static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = 60;
 }

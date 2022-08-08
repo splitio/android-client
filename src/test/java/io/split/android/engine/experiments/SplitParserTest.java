@@ -1,10 +1,18 @@
 package io.split.android.engine.experiments;
 
+import static org.hamcrest.Matchers.any;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
+
 import com.google.common.collect.Lists;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,6 +28,7 @@ import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.matchers.AttributeMatcher;
 import io.split.android.engine.matchers.BetweenMatcher;
@@ -33,14 +42,8 @@ import io.split.android.engine.matchers.collections.PartOfSetMatcher;
 import io.split.android.engine.matchers.strings.ContainsAnyOfMatcher;
 import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
-import io.split.android.engine.segments.RefreshableMySegmentsFetcherProviderImpl;
-import io.split.android.engine.segments.StaticMySegmentsFectherProvider;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.SplitHelper;
-
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
 
 /**
  * Tests for ExperimentParser
@@ -48,16 +51,20 @@ import static org.junit.Assert.assertThat;
  */
 public class SplitParserTest {
 
+    @Mock
     MySegmentsStorage mMySegmentsStorage;
+    @Mock
+    MySegmentsStorageContainer mMySegmentsStorageContainer;
+
     @Before
     public void setup() {
-        mMySegmentsStorage = Mockito.mock(MySegmentsStorage.class);
+        MockitoAnnotations.openMocks(this);
+        when(mMySegmentsStorageContainer.getStorageForKey("")).thenReturn(mMySegmentsStorage);
     }
 
     @Test
     public void less_than_or_equal_to() {
-        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key");
-        SplitParser parser = SplitParser.get(mMySegmentsStorage);
+        SplitParser parser = SplitParser.get(mMySegmentsStorageContainer);
 
         Matcher ageLessThan10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.LESS_THAN_OR_EQUAL_TO, DataType.NUMBER, 10L, false);
 
@@ -87,9 +94,7 @@ public class SplitParserTest {
     @Test
     public void equal_to() {
 
-        RefreshableMySegmentsFetcherProviderImpl provider = StaticMySegmentsFectherProvider.get("key");
-
-        SplitParser parser = SplitParser.get(mMySegmentsStorage);
+        SplitParser parser = SplitParser.get(mMySegmentsStorageContainer);
 
         Matcher ageLessThan10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.EQUAL_TO, DataType.NUMBER, 10L, true);
 
@@ -116,7 +121,7 @@ public class SplitParserTest {
     @Test
     public void equal_to_negative_number() {
 
-        SplitParser parser = new SplitParser(mMySegmentsStorage);
+        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
 
         Matcher equalToNegative10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.EQUAL_TO, DataType.NUMBER, -10L, false);
 
@@ -143,7 +148,7 @@ public class SplitParserTest {
     @Test
     public void between() {
 
-        SplitParser parser = new SplitParser(mMySegmentsStorage);
+        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
 
         Matcher ageBetween10And11 = ConditionsTestUtil.betweenMatcher("user",
                 "age",
@@ -308,7 +313,7 @@ public class SplitParserTest {
 
     public void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
 
-        SplitParser parser = new SplitParser(mMySegmentsStorage);
+        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
 
         List<Partition> partitions = Lists.newArrayList(ConditionsTestUtil.partition("on", 100));
 

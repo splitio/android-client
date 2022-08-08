@@ -2,43 +2,46 @@ package io.split.android.client;
 
 import android.content.Context;
 
-import androidx.annotation.NonNull;
-
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.attributes.AttributesManagerImpl;
-import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.SyncImpressionListener;
 import io.split.android.client.lifecycle.SplitLifecycleManager;
-import io.split.android.client.metrics.CachedMetrics;
-import io.split.android.client.metrics.FireAndForgetMetrics;
-import io.split.android.client.metrics.HttpMetrics;
+import io.split.android.client.lifecycle.SplitLifecycleManagerImpl;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
-import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
+import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
+import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
+import io.split.android.client.service.synchronizer.WorkManagerWrapper;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
+import io.split.android.client.shared.ClientComponentsRegister;
+import io.split.android.client.shared.SplitClientContainer;
+import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.telemetry.TelemetrySynchronizer;
+import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.NetworkHelper;
+import io.split.android.client.utils.NetworkHelperImpl;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
-import io.split.android.client.validators.AttributesValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
@@ -50,28 +53,33 @@ import io.split.android.engine.experiments.SplitParser;
 
 public class SplitFactoryImpl implements SplitFactory {
 
-    private final SplitClient _client;
-    private final SplitManager _manager;
-    private final Runnable destroyer;
-    private boolean isTerminated = false;
-    private final String _apiKey;
+    private final Key mDefaultClientKey;
+    private final SplitManager mManager;
+    private final Runnable mDestroyer;
+    private boolean mIsTerminated = false;
+    private final String mApiKey;
 
-    private final FactoryMonitor _factoryMonitor = FactoryMonitorImpl.getSharedInstance();
-    private final SplitLifecycleManager _lifecyleManager;
-    private final SyncManager _syncManager;
-    private final SplitRoomDatabase _splitDatabase;
+    private final FactoryMonitor mFactoryMonitor = FactoryMonitorImpl.getSharedInstance();
+    private final SplitLifecycleManager mLifecycleManager;
+    private final SyncManager mSyncManager;
+
+    private final SplitStorageContainer mStorageContainer;
+    private final SplitClientContainer mClientContainer;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
         this(apiToken, key, config, context,
-                null, null, null);
+                null, null, null, null, null, null);
     }
 
     private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
                              Context context, HttpClient httpClient, SplitRoomDatabase testDatabase,
-                             SynchronizerSpy synchronizerSpy)
+                             SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper,
+                             TestingConfig testingConfig, SplitLifecycleManager testLifecycleManager)
             throws URISyntaxException {
 
+        mDefaultClientKey = key;
+        final long initializationStartTime = System.currentTimeMillis();
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
         setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
@@ -90,7 +98,6 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             defaultHttpClient = httpClient;
         }
-
         ValidationErrorInfo errorInfo = keyValidator.validate(key.matchingKey(), key.bucketingKey());
         String validationTag = "factory instantiation";
         if (errorInfo != null) {
@@ -102,19 +109,20 @@ public class SplitFactoryImpl implements SplitFactory {
             validationLogger.log(errorInfo, validationTag);
         }
 
-        int factoryCount = _factoryMonitor.count(apiToken);
+        int factoryCount = mFactoryMonitor.count(apiToken);
         if (factoryCount > 0) {
             validationLogger.w("You already have " + factoryCount + (factoryCount == 1 ? " factory" : " factories") + "with this API Key. We recommend keeping only " +
                     "one instance of the factory at all times (Singleton pattern) and reusing it throughout your application.", validationTag);
-        } else if (_factoryMonitor.count() > 0) {
+        } else if (mFactoryMonitor.count() > 0) {
             validationLogger.w("You already have an instance of the Split factory. Make sure you definitely want this additional instance. We recommend " +
                     "keeping only one instance of the factory at all times (Singleton pattern) and reusing it throughout your application.", validationTag);
         }
-        _factoryMonitor.add(apiToken);
-        _apiKey = apiToken;
+        mFactoryMonitor.add(apiToken);
+        mApiKey = apiToken;
 
         // Check if test database available
         String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
+        SplitRoomDatabase _splitDatabase;
         if (testDatabase == null) {
             _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         } else {
@@ -124,52 +132,68 @@ public class SplitFactoryImpl implements SplitFactory {
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
+        mStorageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key, config.shouldRecordTelemetry());
 
-        URI eventsRootTarget = URI.create(config.eventsEndpoint());
-
-        HttpMetrics httpMetrics = HttpMetrics.create(defaultHttpClient, eventsRootTarget);
-        final FireAndForgetMetrics uncachedFireAndForget = FireAndForgetMetrics.instance(httpMetrics, 2, 1000);
-
-        SplitEventsManager _eventsManager = new SplitEventsManager(config);
-
-        SplitTaskExecutor _splitTaskExecutor = new SplitTaskExecutorImpl();
-
-        SplitStorageContainer storageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key);
-
-        SplitParser splitParser = new SplitParser(storageContainer.getMySegmentsStorage());
-
-        // TODO: Setup metrics in task executor
-        CachedMetrics cachedMetrics = new CachedMetrics(httpMetrics, TimeUnit.SECONDS.toMillis(config.metricsRefreshRate()));
-        final FireAndForgetMetrics cachedFireAndForgetMetrics = FireAndForgetMetrics.instance(cachedMetrics, 2, 1000);
-
+        SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
 
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
+
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
-                config, key, defaultHttpClient, cachedFireAndForgetMetrics, splitsFilterQueryString);
+                config, defaultHttpClient, splitsFilterQueryString,
+                networkHelper == null ? new NetworkHelperImpl() : networkHelper);
+
+        EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
-                config, splitApiFacade, storageContainer, splitsFilterQueryString, _eventsManager);
+                config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator,
+                testingConfig);
 
-        cleanUpDabase(_splitTaskExecutor, splitTaskFactory);
-
-        Synchronizer synchronizer = new SynchronizerImpl(
-                config, _splitTaskExecutor, storageContainer, splitTaskFactory,
-                _eventsManager, factoryHelper.buildWorkManagerWrapper(
-                context, config, apiToken, key.matchingKey(), databaseName), new RetryBackoffCounterTimerFactory());
-
+        cleanUpDabase(splitTaskExecutor, splitTaskFactory);
+        WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
+        SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
+        Synchronizer mSynchronizer = new SynchronizerImpl(
+                config,
+                splitTaskExecutor,
+                splitSingleThreadTaskExecutor,
+                mStorageContainer,
+                splitTaskFactory,
+                mEventsManagerCoordinator,
+                workManagerWrapper,
+                new RetryBackoffCounterTimerFactory(),
+                mStorageContainer.getTelemetryStorage(),
+                new AttributesSynchronizerRegistryImpl(),
+                new MySegmentsSynchronizerRegistryImpl());
         // Only available for integration tests
         if (synchronizerSpy != null) {
-            synchronizerSpy.setSynchronizer(synchronizer);
-            synchronizer = synchronizerSpy;
+            synchronizerSpy.setSynchronizer(mSynchronizer);
+            mSynchronizer = synchronizerSpy;
+        }
+        StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
+                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer);
+
+        TelemetrySynchronizer telemetrySynchronizer = factoryHelper.getTelemetrySynchronizer(splitTaskExecutor,
+                splitTaskFactory, config.telemetryRefreshRate(), config.shouldRecordTelemetry());
+
+        mSyncManager = factoryHelper.buildSyncManager(
+                config,
+                splitTaskExecutor,
+                mSynchronizer,
+                telemetrySynchronizer,
+                streamingComponents.getPushNotificationManager(),
+                streamingComponents.getSplitsUpdateNotificationQueue(),
+                streamingComponents.getPushManagerEventBroadcaster()
+        );
+
+        if (testLifecycleManager == null) {
+            mLifecycleManager = new SplitLifecycleManagerImpl();
+        } else {
+            mLifecycleManager = testLifecycleManager;
         }
 
-        _syncManager = factoryHelper.buildSyncManager(key.matchingKey(), config, _splitTaskExecutor,
-                splitTaskFactory, splitApiFacade, defaultHttpClient, synchronizer);
-
-        _syncManager.start();
+        mLifecycleManager.register(mSyncManager);
 
         final ImpressionListener splitImpressionListener
-                = new SyncImpressionListener(_syncManager);
+                = new SyncImpressionListener(mSyncManager);
         final ImpressionListener customerImpressionListener;
 
         if (config.impressionListener() != null) {
@@ -180,42 +204,48 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             customerImpressionListener = splitImpressionListener;
         }
-
-        _lifecyleManager = new SplitLifecycleManager();
-        _lifecyleManager.register(_syncManager);
-
-        destroyer = new Runnable() {
+        ClientComponentsRegister componentsRegister = factoryHelper.getClientComponentsRegister(config, splitTaskExecutor,
+                mEventsManagerCoordinator, mSynchronizer, streamingComponents.getNotificationParser(),
+                streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
+                mStorageContainer, mSyncManager);
+        mClientContainer = new SplitClientContainerImpl(
+                mDefaultClientKey.matchingKey(), this, config, mSyncManager,
+                telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,
+                validationLogger, keyValidator, customerImpressionListener,
+                streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper
+        );
+        mDestroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");
                 try {
-                    _syncManager.stop();
+                    mStorageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
+                    telemetrySynchronizer.flush();
+                    telemetrySynchronizer.destroy();
+                    Logger.i("Successful shutdown of telemetry");
+                    mSyncManager.stop();
                     Logger.i("Flushing impressions and events");
-                    _lifecyleManager.destroy();
+                    mLifecycleManager.destroy();
                     Logger.i("Successful shutdown of lifecycle manager");
-                    _factoryMonitor.remove(_apiKey);
+                    mFactoryMonitor.remove(mApiKey);
                     Logger.i("Successful shutdown of segment fetchers");
-                    uncachedFireAndForget.close();
-                    Logger.i("Successful shutdown of metrics 1");
-                    cachedFireAndForgetMetrics.close();
-                    Logger.i("Successful shutdown of metrics 2");
                     customerImpressionListener.close();
                     Logger.i("Successful shutdown of ImpressionListener");
                     defaultHttpClient.close();
                     Logger.i("Successful shutdown of httpclient");
-                    _manager.destroy();
+                    mManager.destroy();
                     Logger.i("Successful shutdown of manager");
-                    _splitTaskExecutor.stop();
+                    splitTaskExecutor.stop();
+                    splitSingleThreadTaskExecutor.stop();
                     Logger.i("Successful shutdown of task executor");
-                    storageContainer.getAttributesStorage().destroy();
+                    mStorageContainer.getAttributesStorageContainer().destroy();
                     Logger.i("Successful shutdown of attributes storage");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
-                    isTerminated = true;
+                    mIsTerminated = true;
                 }
             }
         };
-
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run() {
@@ -224,51 +254,73 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
-        _client = new SplitClientImpl(this,
-                key,
-                splitParser,
-                customerImpressionListener,
-                cachedFireAndForgetMetrics,
-                config,
-                _eventsManager,
-                storageContainer.getSplitsStorage(),
-                new EventPropertiesProcessorImpl(),
-                _syncManager,
-                getAttributesManager(config.persistentAttributesEnabled(), validationLogger, _splitTaskExecutor, storageContainer));
+        // Initialize default client
+        client();
+        SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer());
+        mManager = new SplitManagerImpl(
+                mStorageContainer.getSplitsStorage(),
+                new SplitValidatorImpl(), mSplitParser);
 
-        _manager = new SplitManagerImpl(
-                storageContainer.getSplitsStorage(),
-                new SplitValidatorImpl(), splitParser);
-
-        _eventsManager.getExecutorResources().setSplitClient(_client);
+        mSyncManager.start();
+        if (config.shouldRecordTelemetry()) {
+            int activeFactoriesCount = mFactoryMonitor.count(mApiKey);
+            mStorageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
+            mStorageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
+        }
 
         Logger.i("Android SDK initialized!");
     }
 
+    @Override
     public SplitClient client() {
-        return _client;
+        return client(mDefaultClientKey);
     }
 
+    @Override
+    public SplitClient client(Key key) {
+        return mClientContainer.getClient(key);
+    }
+
+    @Override
+    public SplitClient client(String matchingKey) {
+        return mClientContainer.getClient(new Key(matchingKey));
+    }
+
+    @Override
+    public SplitClient client(String matchingKey, String bucketingKey) {
+        return mClientContainer.getClient(new Key(matchingKey, bucketingKey));
+    }
+
+    @Override
     public SplitManager manager() {
-        return _manager;
+        return mManager;
     }
 
+    @Override
     public void destroy() {
         synchronized (SplitFactoryImpl.class) {
-            if (!isTerminated) {
-                new Thread(destroyer).start();
+            if (!mIsTerminated) {
+                new Thread(mDestroyer).start();
             }
         }
     }
 
     @Override
     public void flush() {
-        _syncManager.flush();
+        mSyncManager.flush();
     }
 
     @Override
+    @Deprecated
     public boolean isReady() {
-        return _client.isReady();
+        Set<SplitClient> clients = mClientContainer.getAll();
+        for (SplitClient client : clients) {
+            if (client.isReady()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void setupValidations(SplitClientConfig splitClientConfig) {
@@ -280,21 +332,5 @@ public class SplitFactoryImpl implements SplitFactory {
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,
                                SplitTaskFactory splitTaskFactory) {
         splitTaskExecutor.submit(splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000), null);
-    }
-
-    @NonNull
-    private AttributesManagerImpl getAttributesManager(boolean persistentAttributesEnabled, ValidationMessageLogger validationLogger, SplitTaskExecutor _splitTaskExecutor, SplitStorageContainer storageContainer) {
-        if (persistentAttributesEnabled) {
-            return new AttributesManagerImpl(storageContainer.getAttributesStorage(),
-                    new AttributesValidatorImpl(),
-                    validationLogger,
-                    storageContainer.getPersistentAttributesStorage(),
-                    new AttributeTaskFactoryImpl(),
-                    _splitTaskExecutor);
-        }
-
-        return new AttributesManagerImpl(storageContainer.getAttributesStorage(),
-                new AttributesValidatorImpl(),
-                validationLogger);
     }
 }

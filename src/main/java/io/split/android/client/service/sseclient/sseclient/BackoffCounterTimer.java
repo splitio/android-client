@@ -6,20 +6,20 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
-import io.split.android.client.utils.Logger;
+import io.split.android.client.service.sseclient.BackoffCounter;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
 public class BackoffCounterTimer implements SplitTaskExecutionListener {
 
     private SplitTaskExecutor mTaskExecutor;
-    private ReconnectBackoffCounter mBackoffCounter;
+    private BackoffCounter mBackoffCounter;
     private SplitTask mTask;
     String mTaskId;
 
     public BackoffCounterTimer(@NonNull SplitTaskExecutor taskExecutor,
-                               @NonNull ReconnectBackoffCounter streamingBackoffCounter) {
+                               @NonNull BackoffCounter streamingBackoffCounter) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mBackoffCounter = checkNotNull(streamingBackoffCounter);
     }

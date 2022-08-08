@@ -1,22 +1,16 @@
 package io.split.android.client.service.sseclient.notifications;
 
+import static io.split.android.client.service.sseclient.notifications.NotificationType.OCCUPANCY;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
-import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Map;
 
-import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.Logger;
-import io.split.android.client.utils.StringHelper;
-
-import static io.split.android.client.service.sseclient.notifications.NotificationType.ERROR;
-import static io.split.android.client.service.sseclient.notifications.NotificationType.OCCUPANCY;
+import io.split.android.client.utils.logger.Logger;
 
 public class NotificationParser {
     private final static String EVENT_TYPE_ERROR = "error";
@@ -87,5 +81,17 @@ public class NotificationParser {
 
     public boolean isError(Map<String, String> values) {
         return values != null && EVENT_TYPE_ERROR.equals(values.get(EVENT_TYPE_FIELD));
+    }
+
+    @Nullable
+    public String extractUserKeyHashFromChannel(String channel) {
+        if (channel != null) {
+            String[] channelSegments = channel.split("_");
+            if (channelSegments.length > 2) {
+                return channelSegments[2];
+            }
+        }
+
+        return null;
     }
 }
