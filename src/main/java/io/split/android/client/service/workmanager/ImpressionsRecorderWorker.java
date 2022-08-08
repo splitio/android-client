@@ -33,7 +33,7 @@ public class ImpressionsRecorderWorker extends SplitWorker {
 
             mSplitTask = new ImpressionsRecorderTask(ServiceFactory.getImpressionsRecorder(
                     getNetworkHelper(), getHttpClient(), getEndPoint()),
-                    StorageFactory.getPersistenImpressionsStorage(getDatabase()),
+                    StorageFactory.getPersistentImpressionsStorage(getDatabase()),
                     config,
                     StorageFactory.getTelemetryStorage(config.shouldRecordTelemetry()));
         } catch (URISyntaxException e) {

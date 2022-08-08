@@ -20,6 +20,8 @@ import io.split.android.client.service.http.HttpSseAuthTokenFetcher;
 import io.split.android.client.service.impressions.ImpressionsCount;
 import io.split.android.client.service.impressions.ImpressionsCountRequestBodySerializer;
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
+import io.split.android.client.service.impressions.unique.MTK;
+import io.split.android.client.service.impressions.unique.MTKRequestBodySerializer;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
@@ -38,7 +40,7 @@ public class ServiceFactory {
             String endPoint,
             String splitFilterQueryString) throws URISyntaxException {
 
-        return new HttpFetcherImpl<SplitChange>(httpClient,
+        return new HttpFetcherImpl<>(httpClient,
                 SdkTargetPath.splitChanges(endPoint, splitFilterQueryString),
                 networkHelper, new SplitChangeResponseParser());
     }
@@ -49,7 +51,7 @@ public class ServiceFactory {
             String endPoint,
             String key) throws URISyntaxException {
 
-        return new HttpFetcherImpl<List<MySegment>>(httpClient,
+        return new HttpFetcherImpl<>(httpClient,
                 SdkTargetPath.mySegments(endPoint, key),
                 networkHelper, new MySegmentsResponseParser());
     }
@@ -58,6 +60,7 @@ public class ServiceFactory {
             NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint) throws URISyntaxException {
+
         return new HttpRecorderImpl<>(
                 httpClient, SdkTargetPath.events(endPoint), networkHelper,
                 new EventsRequestBodySerializer());
@@ -67,6 +70,7 @@ public class ServiceFactory {
             NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint) throws URISyntaxException {
+
         return new HttpRecorderImpl<>(
                 httpClient, SdkTargetPath.impressions(endPoint), networkHelper,
                 new ImpressionsRequestBodySerializer());
@@ -76,9 +80,20 @@ public class ServiceFactory {
             NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint) throws URISyntaxException {
+
         return new HttpRecorderImpl<>(
                 httpClient, SdkTargetPath.impressionsCount(endPoint), networkHelper,
                 new ImpressionsCountRequestBodySerializer());
+    }
+
+    public static HttpRecorder<MTK> getUniqueKeysRecorder(
+            NetworkHelper networkHelper,
+            HttpClient httpClient,
+            String endpoint) throws URISyntaxException {
+
+        return new HttpRecorderImpl<>(
+                httpClient, SdkTargetPath.uniqueKeys(endpoint), networkHelper,
+                new MTKRequestBodySerializer());
     }
 
     public static HttpSseAuthTokenFetcher getSseAuthenticationFetcher(
@@ -95,6 +110,7 @@ public class ServiceFactory {
             NetworkHelper networkHelper,
             HttpClient httpClient,
             String endpoint) throws URISyntaxException {
+
         return new HttpRecorderImpl<>(
                 httpClient, SdkTargetPath.telemetryConfig(endpoint), networkHelper,
                 new TelemetryConfigBodySerializer());
@@ -104,6 +120,7 @@ public class ServiceFactory {
             NetworkHelper networkHelper,
             HttpClient httpClient,
             String endpoint) throws URISyntaxException {
+
         return new HttpRecorderImpl<>(
                 httpClient, SdkTargetPath.telemetryStats(endpoint), networkHelper,
                 new TelemetryStatsBodySerializer()

@@ -24,6 +24,9 @@ import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
+import io.split.android.client.service.impressions.ImpressionManagerConfig;
+import io.split.android.client.service.impressions.ImpressionManagerImpl;
+import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -162,7 +165,20 @@ public class SplitFactoryImpl implements SplitFactory {
                 new RetryBackoffCounterTimerFactory(),
                 mStorageContainer.getTelemetryStorage(),
                 new AttributesSynchronizerRegistryImpl(),
-                new MySegmentsSynchronizerRegistryImpl());
+                new MySegmentsSynchronizerRegistryImpl(),
+                new ImpressionManagerImpl(splitTaskExecutor,
+                        splitTaskFactory,
+                        mStorageContainer.getTelemetryStorage(),
+                        mStorageContainer.getImpressionsStorage(),
+                        new UniqueKeysTrackerImpl(),
+                        new ImpressionManagerConfig(
+                                config.impressionsRefreshRate(),
+                                config.impressionsCounterRefreshRate(),
+                                config.impressionsMode(),
+                                config.impressionsQueueSize(),
+                                config.impressionsChunkSize(),
+                                config.mtkRefreshRate()
+                        )));
         // Only available for integration tests
         if (synchronizerSpy != null) {
             synchronizerSpy.setSynchronizer(mSynchronizer);

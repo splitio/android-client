@@ -43,4 +43,11 @@ public class SdkTargetPathTest {
 
         assertEquals("/metrics/usage", uri.getRawPath());
     }
+
+    @Test
+    public void uniqueKeysPathIsCorrect() throws URISyntaxException {
+        URI uri = SdkTargetPath.uniqueKeys("https://split.io");
+
+        assertEquals("/keys/cs", uri.getRawPath());
+    }
 }
