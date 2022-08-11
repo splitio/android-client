@@ -169,7 +169,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
             mValidationLogger.e(errorInfo, validationTag);
             return new SplitResult(Treatments.CONTROL);
         }
-
         String splitName = split;
         errorInfo = mSplitValidator.validateName(split);
         if (errorInfo != null) {
@@ -181,7 +180,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
             splitName = split.trim();
         }
 
-        EvaluationResult evaluationResult = evaluateIfReady(splitName, mAttributesMerger.merge(mAttributesManager.getAllAttributes(), attributes), validationTag);
+        final Map<String, Object> mergedAttributes = mAttributesMerger.merge(mAttributesManager.getAllAttributes(), attributes);
+        EvaluationResult evaluationResult = evaluateIfReady(splitName, mergedAttributes, validationTag);
         SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
 
         if (evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
@@ -196,7 +196,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 evaluationResult.getTreatment(),
                 (mLabelsEnabled ? evaluationResult.getLabel() : null),
                 evaluationResult.getChangeNumber(),
-                attributes
+                mergedAttributes
         );
 
         return splitResult;
@@ -217,7 +217,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return results;
         }
 
-        Map<String, Object> mergedAttributes = mAttributesMerger.merge(mAttributesManager.getAllAttributes(), attributes);
+        final Map<String, Object> mergedAttributes = mAttributesMerger.merge(mAttributesManager.getAllAttributes(), attributes);
         for (String split : splits) {
             errorInfo = mSplitValidator.validateName(split);
             if (errorInfo != null) {
@@ -243,7 +243,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     result.getTreatment(),
                     (mLabelsEnabled ? result.getLabel() : null),
                     result.getChangeNumber(),
-                    attributes);
+                    mergedAttributes);
         }
 
         return results;
