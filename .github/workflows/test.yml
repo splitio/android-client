@@ -10,15 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Test with Gradle
         run: cd project; ./gradlew test
-
-      - name: checkout
-        uses: actions/checkout@v3
-
-      - name: Run Instrumented Tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          script: cd project; ./gradlew connectedCheck
