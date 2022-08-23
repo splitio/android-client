@@ -14,15 +14,11 @@ jobs:
       - name: Test with Gradle
         run: cd project; ./gradlew test
 
-jobs:
-  itest:
-    runs-on: macos-latest
-    steps:
       - name: checkout
         uses: actions/checkout@v3
 
-      - name: run tests
+      - name: Run Instrumented Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
-          script: ./gradlew connectedCheck
+          script: cd project; ./gradlew connectedCheck
