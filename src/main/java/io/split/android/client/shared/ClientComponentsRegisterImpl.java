@@ -92,18 +92,13 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     public void unregisterComponentsForKey(Key key) {
         mAttributesSynchronizerRegistry.unregisterAttributesSynchronizer(key.matchingKey());
         mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(key.matchingKey());
+        mEventsManagerRegistry.unregisterEventsManager(key);
 
         if (isSyncEnabled()) {
             mSseAuthenticator.unregisterKey(key.matchingKey());
             mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(key.matchingKey());
             mMySegmentsNotificationProcessorRegistry.unregisterMySegmentsProcessor(key.matchingKey());
         }
-    }
-
-    private void registerMySegmentsSynchronization(Key key,
-                                                   MySegmentsSynchronizer mySegmentsSynchronizer,
-                                                   SplitEventsManager eventsManager) {
-
     }
 
     private void registerAttributesSynchronizer(Key key, SplitEventsManager eventsManager) {
