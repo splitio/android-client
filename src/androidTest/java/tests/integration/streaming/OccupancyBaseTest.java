@@ -26,6 +26,8 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
+import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.logger.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 
@@ -43,6 +45,7 @@ public abstract class OccupancyBaseTest {
     private String mOccupancyMsgMock;
     protected int mMySegmentsHitCount;
     protected int mSplitsHitCount;
+    protected TelemetryStorage mTelemetryStorage;
 
     @Before
     public void setup() {
@@ -119,10 +122,11 @@ public abstract class OccupancyBaseTest {
         CountDownLatch latch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
-
+        mTelemetryStorage = StorageFactory.getTelemetryStorage(true);
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                config, mContext, httpClientMock, null, null, null,
+                null, null, mTelemetryStorage);
 
         SplitClient client = splitFactory.client();
 

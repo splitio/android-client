@@ -58,6 +58,7 @@ public class TelemetryIntegrationTest {
     private SplitClient client;
     private AtomicInteger configEndpointHits;
     private AtomicInteger statsEndpointHits;
+    private TelemetryStorage mTelemetryStorage;
 
     @Before
     public void setUp() {
@@ -65,7 +66,6 @@ public class TelemetryIntegrationTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         testDatabase = DatabaseHelper.getTestDatabase(mContext);
         testDatabase.clearAllTables();
-
         configEndpointHits = new AtomicInteger(0);
         statsEndpointHits = new AtomicInteger(0);
         initializeClient(false);
@@ -77,19 +77,17 @@ public class TelemetryIntegrationTest {
             mWebServer.shutdown();
         }
         client.destroy();
-        clearStorage();
     }
 
     @Test
     public void telemetryInitTest() {
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
 //        assertEquals(1, telemetryStorage.getNonReadyUsage());
-        assertEquals(1, telemetryStorage.getActiveFactories());
-        assertEquals(0, telemetryStorage.getRedundantFactories());
-        assertTrue(telemetryStorage.getTimeUntilReadyFromCache() > 0);
-        assertTrue(telemetryStorage.getTimeUntilReady() > 0);
-        assertTrue(telemetryStorage.getTimeUntilReady() >= telemetryStorage.getTimeUntilReadyFromCache());
+        assertEquals(1, mTelemetryStorage.getActiveFactories());
+        assertEquals(0, mTelemetryStorage.getRedundantFactories());
+        assertTrue(mTelemetryStorage.getTimeUntilReadyFromCache() > 0);
+        assertTrue(mTelemetryStorage.getTimeUntilReady() > 0);
+        assertTrue(mTelemetryStorage.getTimeUntilReady() >= mTelemetryStorage.getTimeUntilReadyFromCache());
     }
 
     @Test
@@ -101,8 +99,7 @@ public class TelemetryIntegrationTest {
         client.getTreatmentsWithConfig(Arrays.asList("test_split", "test_split_2"), null);
         client.track("test_traffic_type", "test_split");
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        MethodLatencies methodLatencies = telemetryStorage.popLatencies();
+        MethodLatencies methodLatencies = mTelemetryStorage.popLatencies();
         assertFalse(methodLatencies.getTreatment().stream().allMatch(aLong -> aLong == 0L));
         assertFalse(methodLatencies.getTreatments().stream().allMatch(aLong -> aLong == 0L));
         assertFalse(methodLatencies.getTreatmentWithConfig().stream().allMatch(aLong -> aLong == 0L));
@@ -119,17 +116,15 @@ public class TelemetryIntegrationTest {
 
         client.getTreatment("test_feature");
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        assertEquals(1, telemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_QUEUED));
-        assertEquals(2, telemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_DEDUPED));
+        assertEquals(1, mTelemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_QUEUED));
+        assertEquals(2, mTelemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_DEDUPED));
     }
 
     @Test
     public void recordEventsStats() {
         client.track("event", "traffic_type");
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        assertEquals(1, telemetryStorage.getEventsStats(EventsDataRecordsEnum.EVENTS_QUEUED));
+        assertEquals(1, mTelemetryStorage.getEventsStats(EventsDataRecordsEnum.EVENTS_QUEUED));
     }
 
     @Test
@@ -189,9 +184,7 @@ public class TelemetryIntegrationTest {
         initializeClient(true);
         sseLatch.await(10, TimeUnit.SECONDS);
         Thread.sleep(1000);
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-
-        assertEquals(1, telemetryStorage.popAuthRejections());
+        assertEquals(1, mTelemetryStorage.popAuthRejections());
     }
 
     @Test
@@ -202,7 +195,7 @@ public class TelemetryIntegrationTest {
 
         client.destroy();
         countDownLatch.await(1, TimeUnit.SECONDS);
-        long sessionLength = StorageFactory.getTelemetryStorage(true).getSessionLength();
+        long sessionLength = mTelemetryStorage.getSessionLength();
         assertTrue(sessionLength > 0);
     }
 
@@ -240,6 +233,7 @@ public class TelemetryIntegrationTest {
                 .streamingEnabled(streamingEnabled)
                 .shouldRecordTelemetry(true)
                 .build();
+        mTelemetryStorage = StorageFactory.getTelemetryStorage(true);
 
         return IntegrationHelper.buildFactory(
                 "dummy_api_key",
@@ -247,7 +241,8 @@ public class TelemetryIntegrationTest {
                 config,
                 mContext,
                 null,
-                testDatabase);
+                testDatabase, null, null, null, null,
+                mTelemetryStorage);
     }
 
     private void insertSplitsFromFileIntoDB() {
@@ -308,12 +303,5 @@ public class TelemetryIntegrationTest {
         };
 
         mWebServer.setDispatcher(dispatcher);
-    }
-
-    private void clearStorage() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Class<StorageFactory> clazz = StorageFactory.class;
-        Method method = clazz.getDeclaredMethod("clearTelemetryStorage");
-        method.setAccessible(true);
-        method.invoke(null, new Object[]{});
     }
 }

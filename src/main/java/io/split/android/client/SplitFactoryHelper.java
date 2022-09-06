@@ -61,6 +61,7 @@ import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
 
@@ -119,7 +120,8 @@ class SplitFactoryHelper {
         return headersBuilder.build();
     }
 
-    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key, boolean shouldRecordTelemetry) {
+    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key,
+                                                boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage /* Testing */) {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase),
@@ -130,7 +132,7 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistentImpressionsUniqueStorage(splitRoomDatabase),
                 StorageFactory.getAttributesStorage(),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, key.matchingKey()),
-                StorageFactory.getTelemetryStorage(shouldRecordTelemetry));
+                getTelemetryStorage(shouldRecordTelemetry, telemetryStorage));
     }
 
     String buildSplitsFilterQueryString(SplitClientConfig config) {
@@ -326,5 +328,12 @@ class SplitFactoryHelper {
                 notificationProcessor,
                 sseAuthenticator,
                 pushManagerEventBroadcaster);
+    }
+
+    private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {
+        if (telemetryStorage != null) {
+            return telemetryStorage;
+        }
+        return StorageFactory.getTelemetryStorage(shouldRecordTelemetry);
     }
 }

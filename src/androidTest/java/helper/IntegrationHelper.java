@@ -32,6 +32,7 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
@@ -116,8 +117,17 @@ public class IntegrationHelper {
 
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
                                             Context context, HttpClient httpClient, SplitRoomDatabase database,
+                                            SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper, TestingConfig testingConfig,
+                                            SplitLifecycleManager lifecycleManager) {
+        return buildFactory(apiToken, key, config, context, httpClient, database,
+                synchronizerSpy, networkHelper, testingConfig, lifecycleManager, null);
+    }
+
+    public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
+                                            Context context, HttpClient httpClient, SplitRoomDatabase database,
                                             SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper,
-                                            TestingConfig testingConfig, SplitLifecycleManager lifecycleManager) {
+                                            TestingConfig testingConfig, SplitLifecycleManager lifecycleManager,
+                                            TelemetryStorage telemetryStorage) {
         Constructor[] c = SplitFactoryImpl.class.getDeclaredConstructors();
         Constructor constructor = c[1];
         constructor.setAccessible(true);
@@ -125,7 +135,7 @@ public class IntegrationHelper {
         try {
             factory = (SplitFactory) constructor.newInstance(
                     apiToken, key, config, context, httpClient, database, synchronizerSpy, selectNetworkHelper(networkHelper),
-                    testingConfig, lifecycleManager);
+                    testingConfig, lifecycleManager, telemetryStorage);
         } catch (Exception e) {
             Logger.e("Error creating factory: " + e.getLocalizedMessage());
         }

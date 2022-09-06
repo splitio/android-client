@@ -40,6 +40,7 @@ import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.NetworkHelperImpl;
@@ -72,13 +73,15 @@ public class SplitFactoryImpl implements SplitFactory {
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
         this(apiToken, key, config, context,
-                null, null, null, null, null, null);
+                null, null, null, null,
+                null, null, null);
     }
 
     private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
                              Context context, HttpClient httpClient, SplitRoomDatabase testDatabase,
                              SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper,
-                             TestingConfig testingConfig, SplitLifecycleManager testLifecycleManager)
+                             TestingConfig testingConfig, SplitLifecycleManager testLifecycleManager,
+                             TelemetryStorage telemetryStorage)
             throws URISyntaxException {
 
         mDefaultClientKey = key;
@@ -131,11 +134,12 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             _splitDatabase = testDatabase;
             Logger.d("Using test database");
+            System.out.println("USING TEST DB: " + testDatabase);
         }
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
-        mStorageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key, config.shouldRecordTelemetry());
+        mStorageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key, config.shouldRecordTelemetry(), telemetryStorage);
 
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
 
