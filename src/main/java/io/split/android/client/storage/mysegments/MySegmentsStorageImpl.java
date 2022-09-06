@@ -10,10 +10,6 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import android.util.Log;
-
-import io.split.android.client.utils.logger.Logger;
-
 class MySegmentsStorageImpl implements MySegmentsStorage {
 
     private final String mMatchingKey;
