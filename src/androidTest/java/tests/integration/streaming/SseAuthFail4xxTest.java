@@ -1,4 +1,4 @@
-package tests.integration.streaming.failing;
+package tests.integration.streaming;
 
 import android.content.Context;
 
@@ -28,9 +28,10 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.logger.Logger;
 
-public class StreamingDisabledInConfigTest {
+public class SseAuthFail4xxTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
+    CountDownLatch mSseAuthLatch;
     CountDownLatch mMySegmentsHitsCountLatch;
     CountDownLatch mSplitsHitsCountLatch;
 
@@ -38,28 +39,27 @@ public class StreamingDisabledInConfigTest {
     boolean mIsStreamingConnected;
     int mySegmentsHitsCountHit;
     int mSplitsHitsCountHit;
-    int mSseAuthHits;
 
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mStreamingData = new LinkedBlockingDeque<>();
+        mSseAuthLatch = new CountDownLatch(1);
         mSplitsHitsCountLatch = new CountDownLatch(3);
         mMySegmentsHitsCountLatch = new CountDownLatch(3);
         mIsStreamingAuth = false;
         mIsStreamingConnected = false;
         mySegmentsHitsCountHit = 0;
         mSplitsHitsCountHit = 0;
-        mSseAuthHits = 0;
     }
 
     @Test
-    public void streamingDisabled() throws IOException, InterruptedException {
+    public void disableWhen4xx() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(false);
+        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig();
 
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
@@ -72,24 +72,20 @@ public class StreamingDisabledInConfigTest {
         client.on(SplitEvent.SDK_READY, readyTask);
 
         latch.await(40, TimeUnit.SECONDS);
+        mSseAuthLatch.await(40, TimeUnit.SECONDS);
         mMySegmentsHitsCountLatch.await(40, TimeUnit.SECONDS);
         mSplitsHitsCountLatch.await(40, TimeUnit.SECONDS);
 
-
+        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
+        Assert.assertTrue(mIsStreamingAuth);
         Assert.assertTrue(client.isReady());
         Assert.assertTrue(splitFactory.isReady());
-        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-
-        Assert.assertEquals(0, mSseAuthHits);
-
-        // No streaming auth is made
-        Assert.assertFalse(mIsStreamingAuth);
 
         // Checking no streaming connection
         Assert.assertFalse(mIsStreamingConnected);
 
         // More than 1 hits means polling enabled
-        Assert.assertTrue( mySegmentsHitsCountHit > 1);
+        Assert.assertTrue(mySegmentsHitsCountHit > 1);
         Assert.assertTrue(mSplitsHitsCountHit > 1);
 
         splitFactory.destroy();
@@ -104,7 +100,7 @@ public class StreamingDisabledInConfigTest {
     }
 
     private HttpResponseMockDispatcher createBasicResponseDispatcher() {
-        return new HttpResponseMockDispatcher(){
+        return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/mySegments")) {
@@ -116,18 +112,13 @@ public class StreamingDisabledInConfigTest {
                     Logger.i("** Split Changes hit");
                     mSplitsHitsCountLatch.countDown();
                     mSplitsHitsCountHit++;
-                    long since = -1;
-                    if (mSplitsHitsCountHit > 2) {
-                        since = 1000;
-                    } else if (mSplitsHitsCountHit > 1) {
-                        since = 500;
-                    }
-                    String data = IntegrationHelper.emptySplitChanges(since, 1000);
+                    String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
-                    mSseAuthHits++;
-                    return createResponse(200, IntegrationHelper.streamingDisabledToken());
+                    mIsStreamingAuth = true;
+                    mSseAuthLatch.countDown();
+                    return createResponse(401, null);
                 } else {
                     return new HttpResponseMock(200);
                 }
@@ -145,6 +136,4 @@ public class StreamingDisabledInConfigTest {
             }
         };
     }
-
-
 }

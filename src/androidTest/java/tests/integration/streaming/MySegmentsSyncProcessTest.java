@@ -1,4 +1,4 @@
-package tests.integration.streaming.failing;
+package tests.integration.streaming;
 
 import static java.lang.Thread.sleep;
 
