@@ -1,10 +1,11 @@
-package tests.integration.streaming;
+package tests.integration.streaming.failing;
 
 import static java.lang.Thread.sleep;
 
 import android.content.Context;
 
-import androidx.core.util.Pair;
+import androidx.annotation.NonNull;
+import androidx.room.InvalidationTracker;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -14,6 +15,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -34,6 +36,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
+import io.split.android.client.storage.db.MySegmentDao;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.logger.Logger;
@@ -57,22 +60,31 @@ public class MySegmentsChangeV2MultiClientTest {
     SplitFactory mFactory;
     SplitClient mClient;
     SynchronizerSpyImpl mSynchronizerSpy;
+    SplitRoomDatabase mDb;
 
     @Before
     public void setup() {
         mStreamingData = new LinkedBlockingDeque<>();
         mSynchronizerSpy = new SynchronizerSpyImpl();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-
-        Pair<String, String> apiKeyAndDb = IntegrationHelper.dummyApiKeyAndDb();
-        mApiKey = apiKeyAndDb.first;
+        mApiKey = IntegrationHelper.dummyApiKeyAndDb().first;
         mMySegmentsSyncLatch2 = new CountDownLatch(1);
         mMySegmentsUpdateLatch2 = new CountDownLatch(1);
+        mDb = DatabaseHelper.getTestDatabase(mContext);
     }
 
     @Test
     public void mySegmentsUpdateMultiClient() throws IOException, InterruptedException {
-        SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
+        MySegmentDao mySegmentsDao = mDb.mySegmentDao();
+        String[] tables = { "my_segments"};
+        mDb.getInvalidationTracker().addObserver(new InvalidationTracker.Observer(tables) {
+            @Override
+            public void onInvalidated(@NonNull Set<String> tables) {
+                if (tables.contains("my_segments")) {
+                    System.out.println("MY SEGMENTS UPDATED!!!!!!!!!!");
+                }
+            }
+        });
         String userKey = "key1";
         String userKey2 = "key2";
         CountDownLatch readyLatch = new CountDownLatch(1);
@@ -90,7 +102,7 @@ public class MySegmentsChangeV2MultiClientTest {
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, new Key(userKey),
-                config, mContext, httpClientMock, db, mSynchronizerSpy);
+                config, mContext, httpClientMock, mDb, mSynchronizerSpy);
 
         mClient = mFactory.client();
         SplitClient client2 = mFactory.client(new Key(userKey2));
@@ -124,7 +136,7 @@ public class MySegmentsChangeV2MultiClientTest {
         mSynchronizerSpy.mForceMySegmentSyncCalledCount.set(0);
 
         CountDownLatch l1 = new CountDownLatch(1);
-        CountDownLatch l2 = new CountDownLatch(2);
+        CountDownLatch l2 = new CountDownLatch(1);
         updateTask.setLatch(l1);
         updateTask2.setLatch(l2);
         testMySegmentsUpdate(TestingData.UNBOUNDED_NOTIFICATION);
@@ -141,24 +153,26 @@ public class MySegmentsChangeV2MultiClientTest {
         pushMessage(TestingData.ESCAPED_KEY_LIST_NOTIFICATION_GZIP);
         l1.await(5, TimeUnit.SECONDS);
 
+        MySegmentEntity e = mySegmentsDao.getByUserKey(userKey);
+        MySegmentEntity e1 = mySegmentsDao.getByUserKey(userKey2);
+
         l1 = new CountDownLatch(1);
         updateTask.setLatch(l1);
         pushMessage(TestingData.SEGMENT_REMOVAL_NOTIFICATION);
         l1.await(5, TimeUnit.SECONDS);
 
-        MySegmentEntity mySegmentEntity = getByKey(userKey, db);
-        MySegmentEntity mySegmentEntity2 = getByKey(userKey2, db);
+        MySegmentEntity mySegmentEntity = getByKey(userKey, mDb);
+        MySegmentEntity mySegmentEntity2 = getByKey(userKey2, mDb);
         Assert.assertTrue(mySegmentEntity.getSegmentList().contains("new_segment_added"));
         Assert.assertFalse(mySegmentEntity.getSegmentList().contains("segment1"));
 
         Assert.assertEquals("new_segment_added", mySegmentEntity2.getSegmentList());
 
-        mFactory.destroy();
     }
 
     @After
     public void tearDown() {
-        mFactory.destroy();
+        mClient.destroy();
     }
 
     private HttpResponseMock createResponse(int status, String data) {

@@ -78,7 +78,6 @@ public class SplitFetchSpecificSplitTest {
                     return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
                 } else if (request.getPath().contains("/splitChanges")) {
                     Logger.d("Req: " + mCurSplitReqId + " -> qs =" + mReceivedQueryString);
-                    System.out.println("Req: " + mCurSplitReqId + " -> qs =" + mReceivedQueryString);
                     if (mCurSplitReqId == 1) {
                         mCurSplitReqId++;
                         mReceivedQueryString = request.getRequestUrl().query();

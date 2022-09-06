@@ -1,4 +1,4 @@
-package tests.integration.streaming;
+package tests.integration.streaming.failing;
 
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertEquals;
@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -40,6 +41,7 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
@@ -59,9 +61,6 @@ public class ControlTest {
     private final static String CONTROL_TIMESTAMP_PLACEHOLDER = "$TIMESTAMP$";
     private final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload_generic.txt";
     private final static String MSG_CONTROL = "push_msg-control.txt";
-
-    private SplitFactory mFactory;
-    private SplitClient mClient;
 
     private CountDownLatch mRequestClosedLatch;
     private CountDownLatch mPushLatch;
@@ -89,9 +88,11 @@ public class ControlTest {
     @Test
     public void controlNotification() throws IOException, InterruptedException {
 
+        // Moved assert to follow AAA Pattern
         SynchronizerSpyImpl synchronizerSpy = new SynchronizerSpyImpl();
         SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
         db.clearAllTables();
+
 
         CountDownLatch readyLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(new CountDownLatch(1), "CONTROL notif update task");
@@ -100,12 +101,13 @@ public class ControlTest {
 
         SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(true, true);
 
-        mFactory = IntegrationHelper.buildFactory(
+        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
+        SplitFactory mFactory = IntegrationHelper.buildFactory(
                 mApiKey, mUserKey,
-                config, mContext, httpClientMock, db, synchronizerSpy);
+                config, mContext, httpClientMock, db, synchronizerSpy, null, null, null, telemetryStorage);
 
-        mClient = mFactory.client();
-
+//        mClient = mFactory.client();
+        SplitClient mClient = mFactory.client();
         String splitName = "workm";
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
@@ -133,13 +135,6 @@ public class ControlTest {
         synchronizerSpy.stopPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_RESUMED");
         synchronizerSpy.stopPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
-        sleep(200);
-        assertTrue(StorageFactory.getTelemetryStorage(true).popStreamingEvents().stream().anyMatch(event -> {
-            if (event instanceof StreamingStatusStreamingEvent) {
-                return event.getEventData().intValue() == 1;
-            }
-            return false;
-        }));
 
         updateTask.mLatch = new CountDownLatch(1);
         pushMySegmentsUpdatePayload("new_segment");
@@ -154,16 +149,22 @@ public class ControlTest {
         pushMySegmentsUpdatePayload("new_segment");
         sleep(1000);
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        assertEquals(0, telemetryStorage.popTokenRefreshes());
-
         String treatmentDisabled = mClient.getTreatment(splitName);
 
+        assertTrue(telemetryStorage.popStreamingEvents().stream().anyMatch(event -> {
+            if (event instanceof StreamingStatusStreamingEvent) {
+                return event.getEventData().intValue() == 1;
+            }
+            return false;
+        }));
+        assertEquals(0, telemetryStorage.popTokenRefreshes());
         Assert.assertEquals("on", treatmentReady);
         Assert.assertEquals("on", treatmentPaused);
         Assert.assertEquals("free", treatmentEnabled);
         Assert.assertEquals("on", treatmentDisabled);
         Assert.assertTrue(mStreamingResponse.isClosed());
+
+        mClient.destroy();
     }
 
     @Test
@@ -182,11 +183,11 @@ public class ControlTest {
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
 
-        mFactory = IntegrationHelper.buildFactory(
+        SplitFactory mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
                 config, mContext, httpClientMock, db);
 
-        mClient = mFactory.client();
+        SplitClient mClient = mFactory.client();
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
 
@@ -203,6 +204,8 @@ public class ControlTest {
         mSseConnectedLatch.await(20, TimeUnit.SECONDS);
 
         Assert.assertEquals(2, mSseConnectionCount);
+
+        mClient.destroy();
     }
 
     private void pushMySegmentsUpdatePayload(String segmentName) throws IOException, InterruptedException {
@@ -213,9 +216,9 @@ public class ControlTest {
 
     @After
     public void tearDown() {
-        if (mFactory != null) {
-            mFactory.destroy();
-        }
+//        if (mFactory != null) {
+//            mFactory.destroy();
+//        }
     }
 
     private HttpResponseMock createResponse(int status, String data) {

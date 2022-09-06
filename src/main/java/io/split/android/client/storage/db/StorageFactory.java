@@ -3,6 +3,7 @@ package io.split.android.client.storage.db;
 import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 
 import androidx.annotation.RestrictTo;
+import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.attributes.AttributesStorageContainer;
@@ -31,10 +32,6 @@ import io.split.android.client.telemetry.storage.TelemetryStorage;
 
 @RestrictTo(LIBRARY)
 public class StorageFactory {
-
-    private static volatile TelemetryStorage telemetryStorageInstance;
-    private static volatile MySegmentsStorageContainer mySegmentsStorageContainerInstance;
-    private static volatile AttributesStorageContainer attributesStorageContainerInstance;
 
     public static SplitsStorage getSplitsStorage(SplitRoomDatabase splitRoomDatabase) {
         PersistentSplitsStorage persistentSplitsStorage
@@ -80,48 +77,20 @@ public class StorageFactory {
         return new SqlitePersistentUniqueStorage(splitRoomDatabase, ServiceConstants.TEN_DAYS_EXPIRATION_PERIOD);
     }
 
+    // Forces telemetry storage recreation to avoid flaky tests
+    @VisibleForTesting
     public static TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry) {
-        if (telemetryStorageInstance == null) {
-            synchronized (StorageFactory.class) {
-                if (telemetryStorageInstance == null) {
-                    if (shouldRecordTelemetry) {
-                        telemetryStorageInstance = new InMemoryTelemetryStorage(new BinarySearchLatencyTracker());
-                    } else {
-                        telemetryStorageInstance = new NoOpTelemetryStorage();
-                    }
-                }
-            }
+        if (shouldRecordTelemetry) {
+            return new InMemoryTelemetryStorage(new BinarySearchLatencyTracker());
         }
-
-        return telemetryStorageInstance;
+        return new NoOpTelemetryStorage();
     }
 
     private static MySegmentsStorageContainer getMySegmentsStorageContainer(SplitRoomDatabase splitRoomDatabase) {
-        if (mySegmentsStorageContainerInstance == null) {
-            synchronized (StorageFactory.class) {
-                if (mySegmentsStorageContainerInstance == null) {
-                    mySegmentsStorageContainerInstance = new MySegmentsStorageContainerImpl(new SqLitePersistentMySegmentsStorage(splitRoomDatabase));
-                }
-            }
-        }
-
-        return mySegmentsStorageContainerInstance;
+        return new MySegmentsStorageContainerImpl(new SqLitePersistentMySegmentsStorage(splitRoomDatabase));
     }
 
     private static AttributesStorageContainer getAttributesStorageContainerInstance() {
-        if (attributesStorageContainerInstance == null) {
-            synchronized (StorageFactory.class) {
-                if (attributesStorageContainerInstance == null) {
-                    attributesStorageContainerInstance = new AttributesStorageContainerImpl();
-                }
-            }
-        }
-
-        return attributesStorageContainerInstance;
-    }
-
-    @SuppressWarnings("unused")
-    private static void clearTelemetryStorage() {
-        telemetryStorageInstance = null;
+        return new AttributesStorageContainerImpl();
     }
 }
