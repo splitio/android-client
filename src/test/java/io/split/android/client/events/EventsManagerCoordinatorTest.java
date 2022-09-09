@@ -83,44 +83,6 @@ public class EventsManagerCoordinatorTest {
         verify(newMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
     }
 
-    @Test
-    public void EventIsNotDuplicated() {
-        ISplitEventsManager firstEventsManager = mock(ISplitEventsManager.class);
-        ISplitEventsManager secondEventsManager = mock(ISplitEventsManager.class);
-        ISplitEventsManager thirdEventsManager = mock(ISplitEventsManager.class);
-        ISplitEventsManager fourthEventsManager = mock(ISplitEventsManager.class);
-
-        Thread thread0 = new Thread(() -> mEventsManager.registerEventsManager(new Key("first", "bucketing"), firstEventsManager));
-        Thread thread1 = new Thread(() -> mEventsManager.registerEventsManager(new Key("second", "bucketing"), secondEventsManager));
-        Thread thread2 = new Thread(() -> mEventsManager.registerEventsManager(new Key("third", "bucketing"), thirdEventsManager));
-        Thread thread3 = new Thread(() -> mEventsManager.registerEventsManager(new Key("fourth", "bucketing"), fourthEventsManager));
-        Thread thread4 = new Thread(() -> mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED));
-        Thread thread5 = new Thread(this::delay);
-
-        thread0.start();
-        thread1.start();
-        thread2.start();
-        thread3.start();
-        thread4.start();
-        thread5.start();
-
-        try {
-            thread0.join();
-            thread1.join();
-            thread2.join();
-            thread3.join();
-            thread4.join();
-            thread5.join();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        verify(firstEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
-        verify(secondEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
-        verify(thirdEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
-        verify(fourthEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
-    }
-
     private void delay() {
         boolean shouldStop = false;
         long maxExecutionTime = System.currentTimeMillis() + 1000;

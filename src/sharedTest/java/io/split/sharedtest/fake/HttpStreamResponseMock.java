@@ -88,4 +88,3 @@ public class HttpStreamResponseMock extends BaseHttpResponseImpl implements Http
         return mIsClosed.get();
     }
 }
-

@@ -1,8 +1,5 @@
 package fake;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpStreamRequest;
 import io.split.android.client.network.HttpStreamResponse;

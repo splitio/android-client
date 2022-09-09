@@ -27,12 +27,14 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.impressions.ImpressionManagerConfig;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.SplitsSyncWorker;
 import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.service.workmanager.UniqueKeysRecorderWorker;
 
 @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
@@ -82,6 +84,11 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
 
         scheduleWork(SplitTaskType.IMPRESSIONS_RECORDER.toString(),
                 ImpressionsRecorderWorker.class, buildImpressionsRecorderInputData());
+
+        if (isNoneImpressionsMode()) {
+            scheduleWork(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK.toString(),
+                    UniqueKeysRecorderWorker.class, buildUniqueKeysRecorderInputData());
+        }
     }
 
     @Override
@@ -215,6 +222,18 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         return buildInputData(dataBuilder.build());
     }
 
+    private Data buildUniqueKeysRecorderInputData() {
+        Data.Builder dataBuilder = new Data.Builder();
+        dataBuilder.putString(
+                ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.telemetryEndpoint());
+        dataBuilder.putInt(
+                ServiceConstants.WORKER_PARAM_UNIQUE_KEYS_PER_PUSH, mSplitClientConfig.mtkPerPush());
+        dataBuilder.putLong(
+                ServiceConstants.WORKER_PARAM_UNIQUE_KEYS_ESTIMATED_SIZE_IN_BYTES, ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES);
+
+        return buildInputData(dataBuilder.build());
+    }
+
     private Constraints buildConstraints() {
         Constraints.Builder constraintsBuilder = new Constraints.Builder();
         constraintsBuilder.setRequiredNetworkType(
@@ -223,5 +242,9 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         constraintsBuilder.setRequiresBatteryNotLow(
                 mSplitClientConfig.backgroundSyncWhenBatteryNotLow());
         return constraintsBuilder.build();
+    }
+
+    private boolean isNoneImpressionsMode() {
+        return ImpressionManagerConfig.Mode.fromImpressionMode(mSplitClientConfig.impressionsMode()).isNone();
     }
 }

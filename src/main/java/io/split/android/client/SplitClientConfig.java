@@ -64,6 +64,7 @@ public class SplitClientConfig {
     private static final int IMPRESSIONS_CHUNK_OUTDATED_TIME = 3600 * 1000; // One day millis
     private final static int EVENTS_MAX_SENT_ATTEMPS = 3;
     private final static int MAX_QUEUE_SIZE_IN_BYTES = 5242880; // 5mb
+    private final static int DEFAULT_MTK_PER_PUSH = 30000;
 
     // Validation settings
     private static final int MAXIMUM_KEY_LENGTH = 250;
@@ -91,6 +92,8 @@ public class SplitClientConfig {
     private final static int _impressionsMaxSentAttempts = IMPRESSIONS_MAX_SENT_ATTEMPTS;
     private final static long _impressionsChunkOudatedTime = IMPRESSIONS_CHUNK_OUTDATED_TIME;
     private final int _impCountersRefreshRate;
+    private final int _mtkPerPush;
+    private final int _mtkRefreshRate;
 
     private final int _metricsRefreshRate;
     private final int _connectionTimeout;
@@ -187,7 +190,9 @@ public class SplitClientConfig {
                               long telemetryRefreshRate,
                               boolean shouldRecordTelemetry,
                               boolean syncEnabled,
-                              int logLevel) {
+                              int logLevel,
+                              int mtkPerPush,
+                              int mtkRefreshRate) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _telemetryEndpoint = telemetryEndpoint;
@@ -197,6 +202,7 @@ public class SplitClientConfig {
         _impressionsQueueSize = impressionsQueueSize;
         _impressionsPerPush = impressionsPerPush;
         _impCountersRefreshRate = impCountersRefreshRate;
+        _mtkRefreshRate = mtkRefreshRate;
         _metricsRefreshRate = metricsRefreshRate;
         _connectionTimeout = connectionTimeout;
         _readTimeout = readTimeout;
@@ -243,6 +249,8 @@ public class SplitClientConfig {
         if (_debugEnabled && _logLevel == SplitLogLevel.NONE) {
             _logLevel = SplitLogLevel.DEBUG;
         }
+
+        _mtkPerPush = mtkPerPush;
 
         Logger.instance().setLevel(_logLevel);
     }
@@ -502,6 +510,10 @@ public class SplitClientConfig {
         return _impCountersRefreshRate;
     }
 
+    public int uniqueKeysRefreshRate() {
+        return _mtkRefreshRate;
+    }
+
     public boolean persistentAttributesEnabled() {
         return _isPersistentAttributesEnabled;
     }
@@ -521,6 +533,14 @@ public class SplitClientConfig {
      * To get last definitions, the SDK have to be recreated
      **/
     public boolean syncEnabled() { return _syncEnabled; }
+
+    public int mtkPerPush() {
+        return _mtkPerPush;
+    }
+
+    public int mtkRefreshRate() {
+        return _mtkRefreshRate;
+    }
 
     private void enableTelemetry() { _shouldRecordTelemetry = true; }
 
@@ -586,6 +606,10 @@ public class SplitClientConfig {
         private boolean _syncEnabled = true;
 
         private int _logLevel = SplitLogLevel.NONE;
+
+        private int _mtkPerPush = DEFAULT_MTK_PER_PUSH;
+
+        private final int _mtkRefreshRate = 15 * 60;
 
         public Builder() {
             _serviceEndpoints = ServiceEndpoints.builder().build();
@@ -1221,7 +1245,9 @@ public class SplitClientConfig {
                     _telemetryRefreshRate,
                     new TelemetryHelperImpl().shouldRecordTelemetry(),
                     _syncEnabled,
-                    _logLevel);
+                    _logLevel,
+                    _mtkPerPush,
+                    _mtkRefreshRate);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
