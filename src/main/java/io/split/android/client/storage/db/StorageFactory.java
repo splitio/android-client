@@ -81,7 +81,7 @@ public class StorageFactory {
     @VisibleForTesting
     public static TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry) {
         if (shouldRecordTelemetry) {
-            return new InMemoryTelemetryStorage(new BinarySearchLatencyTracker());
+            return new InMemoryTelemetryStorage();
         }
         return new NoOpTelemetryStorage();
     }

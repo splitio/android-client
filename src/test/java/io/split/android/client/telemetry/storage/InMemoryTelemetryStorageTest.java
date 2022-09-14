@@ -32,13 +32,12 @@ import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEv
 
 public class InMemoryTelemetryStorageTest {
 
-    @Mock ILatencyTracker latencyTracker;
     private InMemoryTelemetryStorage telemetryStorage;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetryStorage = new InMemoryTelemetryStorage(latencyTracker);
+        telemetryStorage = new InMemoryTelemetryStorage();
     }
 
     @Test
