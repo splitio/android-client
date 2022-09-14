@@ -408,20 +408,19 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
 
     private List<Long> popLatencies(OperationType operationType) {
         long[] latencies = httpLatencies.get(operationType).getLatencies();
-        ArrayList<Long> longs = new ArrayList<>();
         httpLatencies.get(operationType).clear();
-
-        for (long lat : latencies) {
-            longs.add(lat);
-        }
-
-        return longs;
+        return getLatenciesList(latencies);
     }
 
     private List<Long> popLatencies(Method method) {
         long[] latencies = methodLatencies.get(method).getLatencies();
-        ArrayList<Long> longs = new ArrayList<>();
         methodLatencies.get(method).clear();
+
+        return getLatenciesList(latencies);
+    }
+
+    private static List<Long> getLatenciesList(long[] latencies) {
+        ArrayList<Long> longs = new ArrayList<>();
 
         for (long lat : latencies) {
             longs.add(lat);
