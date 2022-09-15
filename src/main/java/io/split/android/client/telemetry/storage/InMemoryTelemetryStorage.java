@@ -26,12 +26,11 @@ import io.split.android.client.telemetry.util.AtomicLongArray;
 
 public class InMemoryTelemetryStorage implements TelemetryStorage {
 
-    private static final int MAX_LATENCY_BUCKET_COUNT = 23;
     private static final int MAX_STREAMING_EVENTS = 20;
     private static final int MAX_TAGS = 10;
 
     private final Map<Method, AtomicLong> methodExceptionsCounter = Maps.newConcurrentMap();
-    private final ConcurrentMap<Method, AtomicLongArray> methodLatencies = Maps.newConcurrentMap();
+    private final ConcurrentMap<Method, ILatencyTracker> methodLatencies = Maps.newConcurrentMap();
 
     private final Map<FactoryCounter, AtomicLong> factoryCounters = Maps.newConcurrentMap();
 
@@ -45,7 +44,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     private final Object httpErrorsLock = new Object();
     private final Map<OperationType, Map<Long, Long>> httpErrors = Maps.newConcurrentMap();
 
-    private final Map<OperationType, AtomicLongArray> httpLatencies = Maps.newConcurrentMap();
+    private final Map<OperationType, ILatencyTracker> httpLatencies = Maps.newConcurrentMap();
 
     private final Map<PushCounterEvent, AtomicLong> pushCounters = Maps.newConcurrentMap();
 
@@ -53,13 +52,12 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     private List<StreamingEvent> streamingEvents = new ArrayList<>();
 
     private final Object tagsLock = new Object();
+    private final Object httpLatenciesLock = new Object();
+    private final Object methodLatenciesLock = new Object();
+
     private final Set<String> tags = new HashSet<>();
 
-    private final ILatencyTracker latencyTracker;
-
-    public InMemoryTelemetryStorage(ILatencyTracker latencyTracker) {
-        this.latencyTracker = latencyTracker;
-
+    public InMemoryTelemetryStorage() {
         initializeProperties();
     }
 
@@ -78,22 +76,27 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
 
     @Override
     public MethodLatencies popLatencies() {
-        MethodLatencies latencies = new MethodLatencies();
+        synchronized (methodLatenciesLock) {
+            MethodLatencies latencies = new MethodLatencies();
 
-        latencies.setTreatment(methodLatencies.get(Method.TREATMENT).fetchAndClearAll());
-        latencies.setTreatments(methodLatencies.get(Method.TREATMENTS).fetchAndClearAll());
-        latencies.setTreatmentWithConfig(methodLatencies.get(Method.TREATMENT_WITH_CONFIG).fetchAndClearAll());
-        latencies.setTreatmentsWithConfig(methodLatencies.get(Method.TREATMENTS_WITH_CONFIG).fetchAndClearAll());
-        latencies.setTrack(methodLatencies.get(Method.TRACK).fetchAndClearAll());
+            latencies.setTreatment(popLatencies(Method.TREATMENT));
+            latencies.setTreatments(popLatencies(Method.TREATMENTS));
+            latencies.setTreatmentWithConfig(popLatencies(Method.TREATMENT_WITH_CONFIG));
+            latencies.setTreatmentsWithConfig(popLatencies(Method.TREATMENTS_WITH_CONFIG));
+            latencies.setTrack(popLatencies(Method.TRACK));
 
-        return latencies;
+            return latencies;
+        }
     }
 
     @Override
     public void recordLatency(Method method, long latency) {
-        long bucketForLatencyMillis = latencyTracker.getBucketForLatencyMillis(latency);
-
-        methodLatencies.get(method).increment((int) bucketForLatencyMillis);
+        ILatencyTracker latencyTracker = methodLatencies.get(method);
+        if (latencyTracker != null) {
+            synchronized (methodLatencies) {
+                latencyTracker.addLatencyMillis(latency);
+            }
+        }
     }
 
     @Override
@@ -195,17 +198,19 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
 
     @Override
     public HttpLatencies popHttpLatencies() {
-        HttpLatencies latencies = new HttpLatencies();
+        synchronized (httpLatenciesLock) {
+            HttpLatencies latencies = new HttpLatencies();
 
-        latencies.setTelemetry(httpLatencies.get(OperationType.TELEMETRY).fetchAndClearAll());
-        latencies.setEvents(httpLatencies.get(OperationType.EVENTS).fetchAndClearAll());
-        latencies.setSplits(httpLatencies.get(OperationType.SPLITS).fetchAndClearAll());
-        latencies.setMySegments(httpLatencies.get(OperationType.MY_SEGMENT).fetchAndClearAll());
-        latencies.setToken(httpLatencies.get(OperationType.TOKEN).fetchAndClearAll());
-        latencies.setImpressions(httpLatencies.get(OperationType.IMPRESSIONS).fetchAndClearAll());
-        latencies.setImpressionsCount(httpLatencies.get(OperationType.IMPRESSIONS_COUNT).fetchAndClearAll());
+            latencies.setTelemetry(popLatencies(OperationType.TELEMETRY));
+            latencies.setEvents(popLatencies(OperationType.EVENTS));
+            latencies.setSplits(popLatencies(OperationType.SPLITS));
+            latencies.setMySegments(popLatencies(OperationType.MY_SEGMENT));
+            latencies.setToken(popLatencies(OperationType.TOKEN));
+            latencies.setImpressions(popLatencies(OperationType.IMPRESSIONS));
+            latencies.setImpressionsCount(popLatencies(OperationType.IMPRESSIONS_COUNT));
 
-        return latencies;
+            return latencies;
+        }
     }
 
     @Override
@@ -289,7 +294,10 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
 
     @Override
     public void recordSyncLatency(OperationType resource, long latency) {
-        httpLatencies.get(resource).increment((int) latencyTracker.getBucketForLatencyMillis(latency));
+        ILatencyTracker latencyTracker = httpLatencies.get(resource);
+        if (latencyTracker != null) {
+            latencyTracker.addLatencyMillis(latency);
+        }
     }
 
     @Override
@@ -329,11 +337,11 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     }
 
     private void initializeHttpLatenciesCounter() {
-        methodLatencies.put(Method.TREATMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        methodLatencies.put(Method.TREATMENTS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        methodLatencies.put(Method.TREATMENT_WITH_CONFIG, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        methodLatencies.put(Method.TREATMENTS_WITH_CONFIG, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        methodLatencies.put(Method.TRACK, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        methodLatencies.put(Method.TREATMENT, new BinarySearchLatencyTracker());
+        methodLatencies.put(Method.TREATMENTS, new BinarySearchLatencyTracker());
+        methodLatencies.put(Method.TREATMENT_WITH_CONFIG, new BinarySearchLatencyTracker());
+        methodLatencies.put(Method.TREATMENTS_WITH_CONFIG, new BinarySearchLatencyTracker());
+        methodLatencies.put(Method.TRACK, new BinarySearchLatencyTracker());
     }
 
     private void initializeMethodExceptionsCounter() {
@@ -384,17 +392,40 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     }
 
     private void initializeHttpLatencies() {
-        httpLatencies.put(OperationType.EVENTS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(OperationType.IMPRESSIONS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(OperationType.TELEMETRY, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(OperationType.IMPRESSIONS_COUNT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(OperationType.MY_SEGMENT, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(OperationType.SPLITS, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
-        httpLatencies.put(OperationType.TOKEN, new AtomicLongArray(MAX_LATENCY_BUCKET_COUNT));
+        httpLatencies.put(OperationType.EVENTS, new BinarySearchLatencyTracker());
+        httpLatencies.put(OperationType.IMPRESSIONS, new BinarySearchLatencyTracker());
+        httpLatencies.put(OperationType.TELEMETRY, new BinarySearchLatencyTracker());
+        httpLatencies.put(OperationType.IMPRESSIONS_COUNT, new BinarySearchLatencyTracker());
+        httpLatencies.put(OperationType.MY_SEGMENT, new BinarySearchLatencyTracker());
+        httpLatencies.put(OperationType.SPLITS, new BinarySearchLatencyTracker());
+        httpLatencies.put(OperationType.TOKEN, new BinarySearchLatencyTracker());
     }
 
     private void initializePushCounters() {
         pushCounters.put(PushCounterEvent.AUTH_REJECTIONS, new AtomicLong());
         pushCounters.put(PushCounterEvent.TOKEN_REFRESHES, new AtomicLong());
+    }
+
+    private List<Long> popLatencies(OperationType operationType) {
+        long[] latencies = httpLatencies.get(operationType).getLatencies();
+        httpLatencies.get(operationType).clear();
+        return getLatenciesList(latencies);
+    }
+
+    private List<Long> popLatencies(Method method) {
+        long[] latencies = methodLatencies.get(method).getLatencies();
+        methodLatencies.get(method).clear();
+
+        return getLatenciesList(latencies);
+    }
+
+    private static List<Long> getLatenciesList(long[] latencies) {
+        ArrayList<Long> longs = new ArrayList<>();
+
+        for (long lat : latencies) {
+            longs.add(lat);
+        }
+
+        return longs;
     }
 }
