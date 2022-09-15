@@ -81,6 +81,7 @@ public class InMemoryTelemetryStorageTest {
     @Test
     public void popLatenciesReturnsCorrectlyBuiltObject() {
         telemetryStorage.recordLatency(Method.TRACK, 200);
+        telemetryStorage.recordLatency(Method.TRACK, 2000);
         telemetryStorage.recordLatency(Method.TREATMENT, 10022);
         telemetryStorage.recordLatency(Method.TREATMENT, 300);
         telemetryStorage.recordLatency(Method.TREATMENTS, 200);
@@ -94,6 +95,12 @@ public class InMemoryTelemetryStorageTest {
         assertFalse(methodLatencies.getTreatments().stream().allMatch(l -> l == 0));
         assertFalse(methodLatencies.getTreatmentsWithConfig().stream().allMatch(l -> l == 0));
         assertFalse(methodLatencies.getTreatmentWithConfig().stream().allMatch(l -> l == 0));
+
+        assertEquals(1, (long) methodLatencies.getTreatment().get(15));
+        assertEquals(1, (long) methodLatencies.getTreatments().get(14));
+        assertEquals(1, (long) methodLatencies.getTreatmentWithConfig().get(19));
+        assertEquals(1, (long) methodLatencies.getTreatmentsWithConfig().get(6));
+        assertEquals(1, (long) methodLatencies.getTrack().get(14));
     }
 
     @Test
@@ -329,6 +336,8 @@ public class InMemoryTelemetryStorageTest {
     public void popHttpLatenciesBuildsObjectCorrectly() {
         telemetryStorage.recordSyncLatency(OperationType.TELEMETRY, 200);
         telemetryStorage.recordSyncLatency(OperationType.SPLITS, 10022);
+        telemetryStorage.recordSyncLatency(OperationType.SPLITS, 200);
+        telemetryStorage.recordSyncLatency(OperationType.SPLITS, 10);
         telemetryStorage.recordSyncLatency(OperationType.EVENTS, 300);
         telemetryStorage.recordSyncLatency(OperationType.IMPRESSIONS, 200);
         telemetryStorage.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, 10);
@@ -344,6 +353,16 @@ public class InMemoryTelemetryStorageTest {
         assertFalse(httpLatencies.getSplits().stream().allMatch(l -> l == 0));
         assertFalse(httpLatencies.getToken().stream().allMatch(l -> l == 0));
         assertFalse(httpLatencies.getMySegments().stream().allMatch(l -> l == 0));
+
+        assertEquals(1, (long) httpLatencies.getSplits().get(6));
+        assertEquals(1, (long) httpLatencies.getSplits().get(14));
+        assertEquals(1, (long) httpLatencies.getSplits().get(22));
+        assertEquals(1, (long) httpLatencies.getMySegments().get(19));
+        assertEquals(1, (long) httpLatencies.getImpressions().get(14));
+        assertEquals(1, (long) httpLatencies.getImpressionsCount().get(6));
+        assertEquals(1, (long) httpLatencies.getEvents().get(15));
+        assertEquals(1, (long) httpLatencies.getTelemetry().get(14));
+        assertEquals(1, (long) httpLatencies.getToken().get(19));
     }
 
     @Test
