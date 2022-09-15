@@ -90,5 +90,4 @@ public class BinarySearchLatencyTrackerTest {
         assertThat(tracker.getLatency(7), is(equalTo(2L)));
 
     }
-
 }

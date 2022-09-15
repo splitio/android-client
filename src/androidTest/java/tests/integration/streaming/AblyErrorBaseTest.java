@@ -29,6 +29,8 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.logger.Logger;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
 
@@ -43,6 +45,7 @@ public abstract class AblyErrorBaseTest {
     protected CountDownLatch mSseLatch;
 
     protected int mSseHitCount = 0;
+    protected TelemetryStorage mTelemetryStorage;
 
     SplitFactory mFactory;
     SplitClient mClient;
@@ -73,10 +76,11 @@ public abstract class AblyErrorBaseTest {
 
         SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
-
+        mTelemetryStorage = StorageFactory.getTelemetryStorage(true);
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock, db);
+                config, mContext, httpClientMock, db, null, null, null,
+                null, mTelemetryStorage);
 
         mClient = mFactory.client();
 

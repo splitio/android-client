@@ -40,8 +40,7 @@ public class TelemetryOccupancyTest extends OccupancyBaseTest {
         pushOccupancy(PRIMARY_CHANNEL, 1);
         sleep(2000);
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
+        List<StreamingEvent> streamingEvents = mTelemetryStorage.popStreamingEvents();
         assertTrue(streamingEvents.stream().anyMatch(event -> event instanceof OccupancyPriStreamingEvent));
     }
 
@@ -52,8 +51,7 @@ public class TelemetryOccupancyTest extends OccupancyBaseTest {
         pushOccupancy(SECONDARY_CHANNEL, 1);
         sleep(2000);
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
+        List<StreamingEvent> streamingEvents = mTelemetryStorage.popStreamingEvents();
         assertTrue(streamingEvents.stream().anyMatch(event -> event instanceof OccupancySecStreamingEvent));
     }
 
@@ -61,8 +59,8 @@ public class TelemetryOccupancyTest extends OccupancyBaseTest {
     public void telemetryTokenRefreshStreamingEvent() throws InterruptedException, IOException {
         getSplitFactory(mTelemetryEnabledConfig);
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
+
+        List<StreamingEvent> streamingEvents = mTelemetryStorage.popStreamingEvents();
         assertTrue(streamingEvents.stream().anyMatch(event -> event instanceof TokenRefreshStreamingEvent));
     }
 }

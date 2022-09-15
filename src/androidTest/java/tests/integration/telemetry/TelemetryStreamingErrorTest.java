@@ -24,7 +24,7 @@ public class TelemetryStreamingErrorTest extends AblyErrorBaseTest {
         initializeForTelemetry();
         Thread.sleep(1000);
         TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
+        List<StreamingEvent> streamingEvents = mTelemetryStorage.popStreamingEvents();
         assertTrue(streamingEvents.stream().anyMatch(event -> event instanceof SseConnectionErrorStreamingEvent));
     }
 
@@ -32,8 +32,8 @@ public class TelemetryStreamingErrorTest extends AblyErrorBaseTest {
     public void syncModeChangeStreamingEventTest() throws IOException, InterruptedException {
         initializeForTelemetry();
 
-        TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
-        List<StreamingEvent> streamingEvents = telemetryStorage.popStreamingEvents();
+
+        List<StreamingEvent> streamingEvents = mTelemetryStorage.popStreamingEvents();
         assertTrue(streamingEvents.stream().anyMatch(event -> {
             if (event instanceof SyncModeUpdateStreamingEvent) {
                 return event.getEventData().intValue() == 1;

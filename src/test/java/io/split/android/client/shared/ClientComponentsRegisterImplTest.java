@@ -66,7 +66,6 @@ public class ClientComponentsRegisterImplTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        String mDefaultMatchingKey = "matching_key";
 
         when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager))
                 .thenReturn(mMySegmentsSynchronizer);
@@ -120,5 +119,16 @@ public class ClientComponentsRegisterImplTest {
         register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
 
         verify(mEventsManagerRegistry).registerEventsManager(mMatchingKey, mSplitEventsManager);
+    }
+
+    @Test
+    public void componentsAreCorrectlyUnregistered() {
+        register.unregisterComponentsForKey(mMatchingKey);
+
+        verify(mAttributesSynchronizerRegistry).unregisterAttributesSynchronizer("matching_key");
+        verify(mMySegmentsSynchronizerRegistry).unregisterMySegmentsSynchronizer("matching_key");
+        verify(mMySegmentsUpdateWorkerRegistry).unregisterMySegmentsUpdateWorker("matching_key");
+        verify(mMySegmentsNotificationProcessorRegistry).unregisterMySegmentsProcessor("matching_key");
+        verify(mEventsManagerRegistry).unregisterEventsManager(mMatchingKey);
     }
 }

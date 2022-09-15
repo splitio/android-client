@@ -1,6 +1,9 @@
+2.12.2 (Sep 15, 2022)
+- Fixed issue in telemetry for latencies.
+
 2.12.1 (Sep 9, 2022)
-- Fixed issue in lifecycle manager component
-- Fixed issue in storages when using different API keys 
+- Fixed issue in lifecycle manager component.
+- Fixed issue in storages when using different API keys.
 
 2.12.0 (Jul 20, 2022)
 - Added logLevel configuration. This allows for more granularity when choosing what will be logged.

@@ -15,7 +15,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitLifecycleManagerImpl implements LifecycleObserver, SplitLifecycleManager {
 
-    private List<WeakReference<SplitLifecycleAware>> mComponents;
+    private final List<WeakReference<SplitLifecycleAware>> mComponents;
 
     public SplitLifecycleManagerImpl() {
         mComponents = new ArrayList<>();
@@ -43,13 +43,15 @@ public class SplitLifecycleManagerImpl implements LifecycleObserver, SplitLifecy
     }
 
     private void changeRunningStatus(boolean run) {
-        for(WeakReference<SplitLifecycleAware> reference : mComponents) {
-            SplitLifecycleAware component = reference.get();
-            if(component != null) {
-                if(run) {
-                    component.resume();
-                } else {
-                    component.pause();
+        for (WeakReference<SplitLifecycleAware> reference : mComponents) {
+            if (reference != null) {
+                SplitLifecycleAware component = reference.get();
+                if (component != null) {
+                    if (run) {
+                        component.resume();
+                    } else {
+                        component.pause();
+                    }
                 }
             }
         }
