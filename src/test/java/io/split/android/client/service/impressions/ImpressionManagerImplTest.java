@@ -324,14 +324,7 @@ public class ImpressionManagerImplTest {
     @Test
     public void pushImpressionRecordsInTelemetry() {
 
-        mImpressionsManager.pushImpression(new Impression("key",
-                "key",
-                "split",
-                "treatment",
-                10000,
-                "rule",
-                25L,
-                Collections.emptyMap()));
+        pushDummyImpression(mImpressionsManager);
 
         verify(mTelemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
     }
@@ -339,29 +332,9 @@ public class ImpressionManagerImplTest {
     @Test
     public void countIsNotIncrementedWhenPreviousTimeDoesNotExist() {
 
-        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
-                mTaskFactory,
-                mTelemetryRuntimeProducer,
-                mImpressionsCounter,
-                mUniqueKeysTracker,
-                new ImpressionManagerConfig(
-                        1800,
-                        1800,
-                        ImpressionManagerConfig.Mode.OPTIMIZED,
-                        3,
-                        2048,
-                        500
-                ),
-                mRecorderSyncHelper, mUniqueKeysCounterTimer);
+        mImpressionsManager = getOptimizedModeManager();
 
-        mImpressionsManager.pushImpression(new Impression("key",
-                "key",
-                "split",
-                "treatment",
-                10000,
-                "rule",
-                25L,
-                Collections.emptyMap()));
+        pushDummyImpression(mImpressionsManager);
 
         verifyNoInteractions(mImpressionsCounter);
     }
@@ -369,31 +342,11 @@ public class ImpressionManagerImplTest {
     @Test
     public void countIsIncrementedWhenPreviousTimeExists() {
 
-        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
-                mTaskFactory,
-                mTelemetryRuntimeProducer,
-                mImpressionsCounter,
-                mUniqueKeysTracker,
-                new ImpressionManagerConfig(
-                        1800,
-                        1800,
-                        ImpressionManagerConfig.Mode.OPTIMIZED,
-                        3,
-                        2048,
-                        500
-                ),
-                mRecorderSyncHelper, mUniqueKeysCounterTimer);
+        mImpressionsManager = getOptimizedModeManager();
 
         int impressionsToPush = 3;
         for (int i = 0; i < impressionsToPush; i++) {
-            mImpressionsManager.pushImpression(new Impression("key",
-                    "key",
-                    "split",
-                    "treatment",
-                    10000,
-                    "rule",
-                    25L,
-                    Collections.emptyMap()));
+            pushDummyImpression(mImpressionsManager);
         }
 
         verify(mImpressionsCounter, times(impressionsToPush - 1)).inc("split", 10000, 1);
@@ -435,5 +388,34 @@ public class ImpressionManagerImplTest {
                         2048,
                         500
                 ));
+    }
+
+    @NonNull
+    private ImpressionManagerImpl getOptimizedModeManager() {
+        return new ImpressionManagerImpl(mTaskExecutor,
+                mTaskFactory,
+                mTelemetryRuntimeProducer,
+                mImpressionsCounter,
+                mUniqueKeysTracker,
+                new ImpressionManagerConfig(
+                        1800,
+                        1800,
+                        ImpressionManagerConfig.Mode.OPTIMIZED,
+                        3,
+                        2048,
+                        500
+                ),
+                mRecorderSyncHelper, mUniqueKeysCounterTimer);
+    }
+
+    private static void pushDummyImpression(ImpressionManager impressionsManager) {
+        impressionsManager.pushImpression(new Impression("key",
+                "key",
+                "split",
+                "treatment",
+                10000,
+                "rule",
+                25L,
+                Collections.emptyMap()));
     }
 }

@@ -91,7 +91,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
     public void pushImpression(Impression impression) {
         Long previousTime = mImpressionsObserver.testAndSet(impression);
         impression = impression.withPreviousTime(previousTime);
-        if (shouldTrackImpressionsCount() && (previousTime != null && previousTime != 0)) {
+        if (shouldTrackImpressionsCount() && previousTimeIsValid(previousTime)) {
             mImpressionsCounter.inc(impression.split(), impression.time(), 1);
         }
 
@@ -225,5 +225,9 @@ public class ImpressionManagerImpl implements ImpressionManager {
 
     private boolean shouldTrackImpressionsCount() {
         return isOptimizedImpressionsMode() || isNoneImpressionsMode();
+    }
+
+    private static boolean previousTimeIsValid(Long previousTime) {
+        return previousTime != null && previousTime != 0;
     }
 }
