@@ -17,7 +17,6 @@ public class ImpressionsObserverTest {
 
     // We allow the cache implementation to have a 0.01% drift in size when elements change, given that it's internal
     // structure/references might vary, and the ObjectSizeCalculator is not 100% accurate
-    private static final double SIZE_DELTA = 0.01;
     private final Random mRandom = new Random();
 
     private List<Impression> generateImpressions(long count) {

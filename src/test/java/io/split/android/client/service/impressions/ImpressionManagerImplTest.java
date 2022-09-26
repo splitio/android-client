@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import androidx.annotation.NonNull;
@@ -64,6 +65,9 @@ public class ImpressionManagerImplTest {
 
     @Mock
     private RetryBackoffCounterTimer mUniqueKeysCounterTimer;
+
+    @Mock
+    private ImpressionsCounter mImpressionsCounter;
 
     @Before
     public void setUp() {
@@ -199,6 +203,7 @@ public class ImpressionManagerImplTest {
         mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
+                mImpressionsCounter,
                 mUniqueKeysTracker,
                 new ImpressionManagerConfig(
                         1800,
@@ -290,6 +295,7 @@ public class ImpressionManagerImplTest {
         mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
+                mImpressionsCounter,
                 mUniqueKeysTracker,
                 new ImpressionManagerConfig(
                         1800,
@@ -328,6 +334,69 @@ public class ImpressionManagerImplTest {
                 Collections.emptyMap()));
 
         verify(mTelemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
+    }
+
+    @Test
+    public void countIsNotIncrementedWhenPreviousTimeDoesNotExist() {
+
+        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
+                mTaskFactory,
+                mTelemetryRuntimeProducer,
+                mImpressionsCounter,
+                mUniqueKeysTracker,
+                new ImpressionManagerConfig(
+                        1800,
+                        1800,
+                        ImpressionManagerConfig.Mode.OPTIMIZED,
+                        3,
+                        2048,
+                        500
+                ),
+                mRecorderSyncHelper, mUniqueKeysCounterTimer);
+
+        mImpressionsManager.pushImpression(new Impression("key",
+                "key",
+                "split",
+                "treatment",
+                10000,
+                "rule",
+                25L,
+                Collections.emptyMap()));
+
+        verifyNoInteractions(mImpressionsCounter);
+    }
+
+    @Test
+    public void countIsIncrementedWhenPreviousTimeExists() {
+
+        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
+                mTaskFactory,
+                mTelemetryRuntimeProducer,
+                mImpressionsCounter,
+                mUniqueKeysTracker,
+                new ImpressionManagerConfig(
+                        1800,
+                        1800,
+                        ImpressionManagerConfig.Mode.OPTIMIZED,
+                        3,
+                        2048,
+                        500
+                ),
+                mRecorderSyncHelper, mUniqueKeysCounterTimer);
+
+        int impressionsToPush = 3;
+        for (int i = 0; i < impressionsToPush; i++) {
+            mImpressionsManager.pushImpression(new Impression("key",
+                    "key",
+                    "split",
+                    "treatment",
+                    10000,
+                    "rule",
+                    25L,
+                    Collections.emptyMap()));
+        }
+
+        verify(mImpressionsCounter, times(impressionsToPush - 1)).inc("split", 10000, 1);
     }
 
     private Impression createImpression() {
