@@ -63,7 +63,6 @@ public class ImpressionManagerImpl implements ImpressionManager {
                         ServiceConstants.UNIQUE_KEYS_MAX_RETRY_ATTEMPTS));
     }
 
-
     @VisibleForTesting
     public ImpressionManagerImpl(@NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull ImpressionsTaskFactory splitTaskFactory,
