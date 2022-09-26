@@ -1,5 +1,7 @@
 package io.split.android.client.service;
 
+import static org.junit.Assert.assertNull;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +50,7 @@ public class ImpressionsObserverTest {
         for (Impression i : generateImpressions(5)) {
             observer.testAndSet(i);
         }
-        Assert.assertNull(observer.testAndSet(imp));
+        assertNull(observer.testAndSet(imp));
         Assert.assertEquals(observer.testAndSet(imp).longValue(), imp.time());
     }
 
@@ -63,14 +65,33 @@ public class ImpressionsObserverTest {
         Thread t5 = new Thread(() -> caller(observer, 1000, imps));
 
         // start the 5 threads an wait for them to finish.
-        t1.setDaemon(true); t2.setDaemon(true); t3.setDaemon(true); t4.setDaemon(true); t5.setDaemon(true);
-        t1.start(); t2.start(); t3.start(); t4.start(); t5.start();
-        t1.join(); t2.join(); t3.join(); t4.join(); t5.join();
+        t1.setDaemon(true);
+        t2.setDaemon(true);
+        t3.setDaemon(true);
+        t4.setDaemon(true);
+        t5.setDaemon(true);
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+        t5.start();
+        t1.join();
+        t2.join();
+        t3.join();
+        t4.join();
+        t5.join();
 
         Assert.assertEquals(imps.size(), 5000);
         for (Impression i : imps) {
             Assert.assertTrue(i.previousTime() == null || i.previousTime() <= i.time());
         }
+    }
+
+    @Test
+    public void testAndSetWithNullImpressionReturnsNullPreviousTime() {
+        ImpressionsObserver observer = new ImpressionsObserver(1);
+
+        assertNull(observer.testAndSet(null));
     }
 
     private void caller(ImpressionsObserver o, int count, ConcurrentLinkedQueue<Impression> imps) {

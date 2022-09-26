@@ -65,8 +65,6 @@ public class ImpressionManagerImplTest {
     @Mock
     private RetryBackoffCounterTimer mUniqueKeysCounterTimer;
 
-    private ImpressionManagerConfig mConfig;
-
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -78,7 +76,7 @@ public class ImpressionManagerImplTest {
         when(mTaskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(mock(SaveUniqueImpressionsTask.class));
         when(mTaskFactory.createUniqueImpressionsRecorderTask()).thenReturn(mock(UniqueKeysRecorderTask.class));
 
-        mConfig = new ImpressionManagerConfig(
+        ImpressionManagerConfig mConfig = new ImpressionManagerConfig(
                 1800,
                 1800,
                 ImpressionManagerConfig.Mode.OPTIMIZED,
