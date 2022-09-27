@@ -52,7 +52,7 @@ public class WorkManagerWrapperTest {
                                 .telemetryServiceEndpoint("https://test.split.io/telemetry")
                                 .build()
                 )
-                .sychronizeInBackgroundPeriod(5263)
+                .synchronizeInBackgroundPeriod(5263)
                 .eventsPerPush(526)
                 .impressionsPerPush(256)
                 .backgroundSyncWhenWifiOnly(true)

@@ -70,6 +70,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         mWorkManager.cancelUniqueWork(SplitTaskType.MY_SEGMENTS_SYNC.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.EVENTS_RECORDER.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.IMPRESSIONS_RECORDER.toString());
+        mWorkManager.cancelUniqueWork(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK.toString());
         if (mFetcherExecutionListener != null) {
             mFetcherExecutionListener.clear();
         }
@@ -125,7 +126,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
 
                                 for (WorkInfo workInfo : workInfoList) {
                                     Logger.d("Work manager task: " + workInfo.getTags() +
-                                            ", state: " + workInfo.getState().toString());
+                                            ", state: " + workInfo.getState());
                                     updateTaskStatus(workInfo);
                                 }
                             }
@@ -159,14 +160,14 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         }
         boolean shouldLoadLocal = mShouldLoadFromLocal.contains(taskType.toString());
         if (!shouldLoadLocal) {
-            Logger.d("Avoiding update for " + taskType.toString());
+            Logger.d("Avoiding update for " + taskType);
             mShouldLoadFromLocal.add(taskType.toString());
             return;
         }
 
         SplitTaskExecutionListener listener = mFetcherExecutionListener.get();
         if (listener != null) {
-            Logger.d("Updating for " + taskType.toString());
+            Logger.d("Updating for " + taskType);
             listener.taskExecuted(SplitTaskExecutionInfo.success(taskType));
         }
     }
