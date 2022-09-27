@@ -129,9 +129,9 @@ public class ImpressionsCountTest {
         Assert.assertTrue(client.isReady());
         Assert.assertEquals(3, mImpressions.size());
         Assert.assertEquals(3, mCounts.size());
-        Assert.assertEquals(10, c1.count);
-        Assert.assertEquals(20, c2.count);
-        Assert.assertEquals(40, c3.count);
+        Assert.assertEquals(9, c1.count);
+        Assert.assertEquals(19, c2.count);
+        Assert.assertEquals(39, c3.count);
 
         splitFactory.destroy();
     }
