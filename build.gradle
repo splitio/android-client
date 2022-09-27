@@ -9,18 +9,16 @@ buildscript {
     }
 }
 
-plugins {
-    id 'com.android.library'
-    id 'maven-publish'
-    id 'signing'
-}
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 ext {
     splitVersion = '2.12.2'
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     targetCompatibility = '1.8'
     sourceCompatibility = '1.8'
 
@@ -77,6 +75,11 @@ android {
             buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
         }
     }
+}
+
+repositories {
+    google()
+    mavenCentral()
 }
 
 dependencies {
