@@ -18,7 +18,7 @@ ext {
 }
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 30
     targetCompatibility = '1.8'
     sourceCompatibility = '1.8'
 
@@ -90,7 +90,7 @@ dependencies {
     def annotationVersion = '1.2.0'
     def gsonVersion = '2.8.9'
     def guavaVersion = '31.0.1-android'
-    def snakeYamlVersion = '1.32'
+    def snakeYamlVersion = '1.29'
     def jetBrainsAnnotationsVersion = '22.0.0'
     def okHttpVersion = '3.12.0'
     def playServicesVersion = '17.6.0'
