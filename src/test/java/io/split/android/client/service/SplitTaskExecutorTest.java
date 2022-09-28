@@ -26,6 +26,9 @@ import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -55,7 +58,6 @@ public class SplitTaskExecutorTest {
 
         Assert.assertTrue(task.taskHasBeenCalled);
         Assert.assertTrue(listener.taskExecutedCalled);
-
     }
 
     @Test
@@ -97,7 +99,7 @@ public class SplitTaskExecutorTest {
         latch.await(5, TimeUnit.SECONDS);
         boolean executedOnResume = task.taskHasBeenCalled;
 
-        Assert.assertFalse(executedOnPause);
+        assertFalse(executedOnPause);
         Assert.assertTrue(executedOnResume);
     }
 
@@ -117,7 +119,7 @@ public class SplitTaskExecutorTest {
         boolean executedOnStop = taskOnStop.taskHasBeenCalled;
 
         Assert.assertTrue(executedBeforeStop);
-        Assert.assertFalse(executedOnStop);
+        assertFalse(executedOnStop);
     }
 
     @Test
@@ -169,7 +171,7 @@ public class SplitTaskExecutorTest {
         latch.await(5, TimeUnit.SECONDS);
         boolean executedOnResume = task.taskHasBeenCalled;
 
-        Assert.assertFalse(executedOnPause);
+        assertFalse(executedOnPause);
         Assert.assertTrue(executedOnResume);
     }
 
@@ -207,7 +209,6 @@ public class SplitTaskExecutorTest {
         mTaskExecutor.resume();
         latch1.await(5, TimeUnit.SECONDS);
 
-        int countAfterResume = task.callCount;
         int count1AfterResume = task1.callCount;
 
         Assert.assertEquals(3, countBeforePause);
@@ -237,7 +238,7 @@ public class SplitTaskExecutorTest {
         boolean executedOnStop = taskOnStop.taskHasBeenCalled;
 
         Assert.assertTrue(executedBeforeStop);
-        Assert.assertFalse(executedOnStop);
+        assertFalse(executedOnStop);
     }
 
     @Test
@@ -254,17 +255,83 @@ public class SplitTaskExecutorTest {
         Assert.assertEquals(4, task.callCount);
     }
 
-    @After
-    public void tearDown() {
+    @Test
+    public void stopScheduledTask() {
+        CountDownLatch latch = new CountDownLatch(1);
+        TestTask task = new TestTask(latch);
+
+        String taskId = mTaskExecutor.schedule(task, 10L, 10L, mock(SplitTaskExecutionListener.class));
+        mTaskExecutor.stopTask(taskId);
+
+        assertFalse(task.taskHasBeenCalled);
     }
 
-    class TestTask implements SplitTask {
+    @Test
+    public void stopStartedTask() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(4);
+        CountDownLatch timerLatch = new CountDownLatch(1);
+        CountDownLatch listenerLatch = new CountDownLatch(1);
+        TestTask task = new TestTask(latch);
+
+        TestListener testListener = new TestListener(listenerLatch);
+        String taskId = mTaskExecutor.schedule(task, 0L, 1L, testListener);
+        timerLatch.await(1L, TimeUnit.SECONDS);
+        mTaskExecutor.stopTask(taskId);
+
+        assertTrue(task.taskHasBeenCalled);
+        assertTrue(testListener.taskExecutedCalled);
+        assertEquals(2, task.callCount);
+    }
+
+    @Test
+    public void scheduleDelayedTask() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch listenerLatch = new CountDownLatch(1);
+        TestTask task = new TestTask(latch);
+        TestListener testListener = new TestListener(listenerLatch);
+
+        mTaskExecutor.schedule(task, 0L, testListener);
+
+        listenerLatch.await(2L, TimeUnit.SECONDS);
+        assertTrue(task.taskHasBeenCalled);
+        assertTrue(testListener.taskExecutedCalled);
+        assertEquals(1, task.callCount);
+    }
+
+    @Test
+    public void schedulingAfterShutdown() throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(4);
+        CountDownLatch timerLatch = new CountDownLatch(2);
+        CountDownLatch listenerLatch = new CountDownLatch(1);
+        TestTask task = new TestTask(latch);
+
+        TestListener testListener = new TestListener(listenerLatch);
+        mTaskExecutor.schedule(task, 0L, 1L, testListener);
+        timerLatch.await(1500L, TimeUnit.MILLISECONDS);
+        mTaskExecutor.stop();
+        timerLatch.await(4L, TimeUnit.SECONDS);
+
+        TestTask newTask = new TestTask(new CountDownLatch(1));
+        mTaskExecutor.schedule(newTask, 0L, 1L, mock(SplitTaskExecutionListener.class));
+
+        assertTrue(task.taskHasBeenCalled);
+        assertTrue(testListener.taskExecutedCalled);
+        assertEquals(2, task.callCount);
+        assertFalse(newTask.taskHasBeenCalled);
+    }
+
+    @After
+    public void tearDown() {
+        mTaskExecutor.stop();
+    }
+
+    static class TestTask implements SplitTask {
         CountDownLatch latch;
         SplitTaskType type;
 
         TestTask(CountDownLatch latch) {
             this.latch = latch;
-            this.type = SplitTaskType.IMPRESSIONS_RECORDER;
+            this.type = SplitTaskType.GENERIC_TASK;
         }
 
         TestTask(CountDownLatch latch, SplitTaskType taskType) {
@@ -276,6 +343,7 @@ public class SplitTaskExecutorTest {
         public int callCount = 0;
         public boolean taskHasBeenCalled = false;
 
+        @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
             callCount++;
