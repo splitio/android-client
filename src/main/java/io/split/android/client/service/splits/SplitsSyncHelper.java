@@ -62,7 +62,15 @@ public class SplitsSyncHelper {
         mBackoffCounter = checkNotNull(backoffCounter);
     }
 
-    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber) {
+    public SplitTaskExecutionInfo sync(long till) {
+        return sync(till, false, true, false);
+    }
+
+    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean resetChangeNumber) {
+        return sync(till, clearBeforeUpdate, false, resetChangeNumber);
+    }
+
+    private SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber) {
         try {
             boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache, false, resetChangeNumber);
 
@@ -135,10 +143,6 @@ public class SplitsSyncHelper {
                 return splitChange.till;
             }
         }
-    }
-
-    public SplitTaskExecutionInfo sync(long till) {
-        return sync(till, false, true, false);
     }
 
     private SplitChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {

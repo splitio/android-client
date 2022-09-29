@@ -1,5 +1,7 @@
 package io.split.android.client.service;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import java.util.List;
@@ -16,8 +18,6 @@ import io.split.android.client.service.impressions.unique.MTK;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.Stats;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitApiFacade {
     private final HttpFetcher<SplitChange> mSplitFetcher;

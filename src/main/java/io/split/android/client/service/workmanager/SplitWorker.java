@@ -18,6 +18,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.NetworkHelperImpl;
+import io.split.android.client.utils.logger.Logger;
 
 public abstract class SplitWorker extends Worker {
 
@@ -53,6 +54,7 @@ public abstract class SplitWorker extends Worker {
     @Override
     public Result doWork() {
         checkNotNull(mSplitTask);
+        Logger.d("Executing background task... "+ mSplitTask);
         mSplitTask.execute();
         return Result.success();
     }

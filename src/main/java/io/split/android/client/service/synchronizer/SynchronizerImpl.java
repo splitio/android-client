@@ -90,7 +90,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         setupListeners();
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
 
-
         if (mSplitClientConfig.synchronizeInBackground()) {
             mWorkManagerWrapper.setFetcherExecutionListener(this);
             mWorkManagerWrapper.scheduleWork();
