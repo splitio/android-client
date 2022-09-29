@@ -54,7 +54,6 @@ public abstract class SplitWorker extends Worker {
     @Override
     public Result doWork() {
         checkNotNull(mSplitTask);
-        Logger.d("Executing background task... "+ mSplitTask);
         mSplitTask.execute();
         return Result.success();
     }

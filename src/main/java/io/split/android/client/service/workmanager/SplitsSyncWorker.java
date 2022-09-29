@@ -3,6 +3,7 @@ package io.split.android.client.service.workmanager;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.WorkerThread;
 import androidx.work.WorkerParameters;
 
 import java.net.URISyntaxException;
@@ -22,6 +23,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class SplitsSyncWorker extends SplitWorker {
 
+    @WorkerThread
     public SplitsSyncWorker(@NonNull Context context,
                             @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
