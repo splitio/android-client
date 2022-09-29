@@ -11,8 +11,6 @@ import java.util.List;
 
 import io.split.android.client.service.synchronizer.ThreadUtils;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 public class SplitLifecycleManagerImpl implements LifecycleObserver, SplitLifecycleManager {
 
     private final List<WeakReference<SplitLifecycleAware>> mComponents;

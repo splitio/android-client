@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -181,42 +182,42 @@ public class SingleSyncTest {
         client.destroy();
     }
 
-    /// TODO: Uncomment when impressions mode NONE available
-//    @Test
-//    public void singleSyncEnabledImpressionsNone() throws Exception {
-//        SplitFactory factory = buildFactory(ImpressionsMode.OPTIMIZED);
-//        SplitClient client = factory.client();
-//
-//        CountDownLatch readyLatch = new CountDownLatch(1);
-//        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
-//        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(readyLatch);
-//
-//        client.on(SplitEvent.SDK_READY, readyTask);
-//        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
-//
-//        readyLatch.await(5, TimeUnit.SECONDS);
-//
-//        generateData(factory, client);
-//
-//        mKeyLatch = new CountDownLatch(1);
-//        mEveLatch = new CountDownLatch(1);
-//        mImpCountLatch = new CountDownLatch(1);
-//
-//        simulateBgFg(); // Make the SDK to store impressions count
-//
-//        mKeyLatch.await(5, TimeUnit.SECONDS);
-//        mEveLatch.await(5, TimeUnit.SECONDS);
-//        mImpCountLatch.await(5, TimeUnit.SECONDS);
-//
-//        Assert.assertEquals(1, mSplitsHitCount);
-//        Assert.assertEquals(4, mMySegmentsHitCount); // One for key
-//        Assert.assertEquals(0, mSseAuthHitCount);
-//        Assert.assertTrue(mEventsHitCount > 3);
-//        Assert.assertTrue(mUniqueKeysHitCount > 3);
-//        Assert.assertTrue(mImpressionsCountHitCount > 0);
-//
-//        client.destroy();
-//    }
+    @Ignore("Ignored until impressions mode NONE is available")
+    @Test
+    public void singleSyncEnabledImpressionsNone() throws Exception {
+        SplitFactory factory = buildFactory(ImpressionsMode.OPTIMIZED);
+        SplitClient client = factory.client();
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
+        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(readyLatch);
+
+        client.on(SplitEvent.SDK_READY, readyTask);
+        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+
+        readyLatch.await(5, TimeUnit.SECONDS);
+
+        generateData(factory, client);
+
+        mKeyLatch = new CountDownLatch(1);
+        mEveLatch = new CountDownLatch(1);
+        mImpCountLatch = new CountDownLatch(1);
+
+        simulateBgFg(); // Make the SDK to store impressions count
+
+        mKeyLatch.await(5, TimeUnit.SECONDS);
+        mEveLatch.await(5, TimeUnit.SECONDS);
+        mImpCountLatch.await(5, TimeUnit.SECONDS);
+
+        Assert.assertEquals(1, mSplitsHitCount);
+        Assert.assertEquals(4, mMySegmentsHitCount); // One for key
+        Assert.assertEquals(0, mSseAuthHitCount);
+        Assert.assertTrue(mEventsHitCount > 3);
+        Assert.assertTrue(mUniqueKeysHitCount > 3);
+        Assert.assertTrue(mImpressionsCountHitCount > 0);
+
+        client.destroy();
+    }
 
     void simulateBgFg() {
         mLifecycleManager.simulateOnPause();

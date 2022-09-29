@@ -949,9 +949,9 @@ public class SplitClientConfig {
         }
 
         /**
-         * Period in minutes to execute background synchronization
-         * Default values is 15 minutes and is the minimum allowed.
-         * Is a lower value is especified default value will be used.
+         * Period in minutes to execute background synchronization.
+         * Default value is 15 minutes and is the minimum allowed.
+         * If a lower value is specified, the default value will be used.
          *
          * @return this builder
          */
