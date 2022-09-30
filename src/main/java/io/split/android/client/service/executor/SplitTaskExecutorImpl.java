@@ -17,6 +17,7 @@ public class SplitTaskExecutorImpl extends SplitBaseTaskExecutor {
         ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
         threadFactoryBuilder.setDaemon(true);
         threadFactoryBuilder.setNameFormat(THREAD_NAME_FORMAT);
+
         return new PausableScheduledThreadPoolExecutorImpl(MIN_THREAD_POOL_SIZE_WHEN_IDLE, threadFactoryBuilder.build());
     }
 }

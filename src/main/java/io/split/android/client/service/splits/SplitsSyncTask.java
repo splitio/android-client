@@ -3,10 +3,7 @@ package io.split.android.client.service.splits;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
-
-import java.util.HashMap;
-import java.util.Map;
+import androidx.annotation.Nullable;
 
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -26,24 +23,44 @@ public class SplitsSyncTask implements SplitTask {
     private final boolean mCheckCacheExpiration;
     private final long mCacheExpirationInSeconds;
     private final SplitsSyncHelper mSplitsSyncHelper;
-    private final ISplitEventsManager mEventsManager;
-    private SplitsChangeChecker mChangeChecker;
+    @Nullable
+    private final ISplitEventsManager mEventsManager; // Should only be null on background sync
+    private final SplitsChangeChecker mChangeChecker;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
-    public SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
-                          @NonNull SplitsStorage splitsStorage,
-                          boolean checkCacheExpiration,
-                          long cacheExpirationInSeconds,
-                          String splitsFilterQueryString,
-                          @NonNull ISplitEventsManager eventsManager,
-                          @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+    public static SplitsSyncTask build(@NonNull SplitsSyncHelper splitsSyncHelper,
+                                       @NonNull SplitsStorage splitsStorage,
+                                       boolean checkCacheExpiration,
+                                       long cacheExpirationInSeconds,
+                                       String splitsFilterQueryString,
+                                       @NonNull ISplitEventsManager eventsManager,
+                                       @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, checkCacheExpiration, cacheExpirationInSeconds, splitsFilterQueryString, telemetryRuntimeProducer, eventsManager);
+    }
+
+    public static SplitTask buildForBackground(@NonNull SplitsSyncHelper splitsSyncHelper,
+                                                    @NonNull SplitsStorage splitsStorage,
+                                                    boolean checkCacheExpiration,
+                                                    long cacheExpirationInSeconds,
+                                                    String splitsFilterQueryString,
+                                                    @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, checkCacheExpiration, cacheExpirationInSeconds, splitsFilterQueryString, telemetryRuntimeProducer, null);
+    }
+
+    private SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
+                           @NonNull SplitsStorage splitsStorage,
+                           boolean checkCacheExpiration,
+                           long cacheExpirationInSeconds,
+                           String splitsFilterQueryString,
+                           @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                           @Nullable ISplitEventsManager eventsManager) {
 
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
         mCacheExpirationInSeconds = cacheExpirationInSeconds;
         mCheckCacheExpiration = checkCacheExpiration;
         mSplitsFilterQueryString = splitsFilterQueryString;
-        mEventsManager = checkNotNull(eventsManager);
+        mEventsManager = eventsManager;
         mChangeChecker = new SplitsChangeChecker();
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
@@ -53,14 +70,13 @@ public class SplitsSyncTask implements SplitTask {
     public SplitTaskExecutionInfo execute() {
         long storedChangeNumber = mSplitsStorage.getTill();
         long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
-        String storedSplitsFilterQueryString = mSplitsStorage.getSplitsFilterQueryString();
 
         boolean shouldClearExpiredCache = mCheckCacheExpiration &&
                 mSplitsSyncHelper.cacheHasExpired(storedChangeNumber, updateTimestamp, mCacheExpirationInSeconds);
 
-        boolean splitsFilterHasChanged = splitsFilterHasChanged(storedSplitsFilterQueryString);
+        boolean splitsFilterHasChanged = splitsFilterHasChanged(mSplitsStorage.getSplitsFilterQueryString());
 
-        if(splitsFilterHasChanged) {
+        if (splitsFilterHasChanged) {
             mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryString);
             storedChangeNumber = -1;
         }
@@ -68,20 +84,26 @@ public class SplitsSyncTask implements SplitTask {
         long startTime = System.currentTimeMillis();
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(storedChangeNumber,
                 splitsFilterHasChanged || shouldClearExpiredCache,
-                false,
                 splitsFilterHasChanged);
         mTelemetryRuntimeProducer.recordSyncLatency(OperationType.SPLITS, System.currentTimeMillis() - startTime);
 
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
             mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.SPLITS, System.currentTimeMillis());
+            notifyInternalEvent(storedChangeNumber);
+        }
+
+        return result;
+    }
+
+    private void notifyInternalEvent(long storedChangeNumber) {
+        if (mEventsManager != null) {
             SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
             if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
                 event = SplitInternalEvent.SPLITS_UPDATED;
             }
+
             mEventsManager.notifyInternalEvent(event);
         }
-
-        return result;
     }
 
     private boolean splitsFilterHasChanged(String storedSplitsFilterQueryString) {
@@ -90,10 +112,5 @@ public class SplitsSyncTask implements SplitTask {
 
     private String sanitizeString(String string) {
         return string != null ? string : "";
-    }
-
-    @VisibleForTesting
-    public void setChangeChecker(SplitsChangeChecker changeChecker) {
-        mChangeChecker = changeChecker;
     }
 }

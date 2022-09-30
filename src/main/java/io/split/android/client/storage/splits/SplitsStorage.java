@@ -1,6 +1,7 @@
 package io.split.android.client.storage.splits;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,7 @@ public interface SplitsStorage {
 
     Split get(@NonNull String name);
 
-    Map<String, Split> getMany(@NonNull List<String> splits);
+    Map<String, Split> getMany(@Nullable List<String> splits);
 
     Map<String, Split> getAll();
 
@@ -20,7 +21,7 @@ public interface SplitsStorage {
 
     void updateWithoutChecks(Split split);
 
-    boolean isValidTrafficType(@NonNull String name);
+    boolean isValidTrafficType(@Nullable String name);
 
     long getTill();
 
