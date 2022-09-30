@@ -14,7 +14,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 ext {
-    splitVersion = '2.12.2'
+    splitVersion = '2.12.3-rc1'
 }
 
 android {
