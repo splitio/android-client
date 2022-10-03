@@ -14,7 +14,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 ext {
-    splitVersion = '2.12.3-rc1'
+    splitVersion = '2.13.0-rc1'
 }
 
 android {
@@ -90,7 +90,7 @@ dependencies {
     def annotationVersion = '1.2.0'
     def gsonVersion = '2.8.9'
     def guavaVersion = '31.0.1-android'
-    def snakeYamlVersion = '1.29'
+    def snakeYamlVersion = '1.32'
     def jetBrainsAnnotationsVersion = '22.0.0'
     def okHttpVersion = '3.12.0'
     def playServicesVersion = '17.6.0'
