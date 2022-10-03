@@ -22,7 +22,6 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionManager;
-import io.split.android.client.service.impressions.ImpressionManagerImpl;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;

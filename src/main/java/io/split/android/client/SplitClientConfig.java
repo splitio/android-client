@@ -659,7 +659,6 @@ public class SplitClientConfig {
             return this;
         }
 
-
         /**
          * The SDK will poll the endpoint for changes to features at this period.
          * <p>
@@ -1071,8 +1070,9 @@ public class SplitClientConfig {
         /**
          * Setup the impressions mode.
          * @param mode Values:<br>
-         *             DEBUG: All impressions are sent and
+         *             DEBUG: All impressions are sent
          *             OPTIMIZED: Impressions are sent using an optimization algorithm
+         *             NONE:
          *
          * @return: This builder
          * @default: OPTIMIZED
@@ -1087,9 +1087,10 @@ public class SplitClientConfig {
          * @param mode Values:<br>
          *             DEBUG: All impressions are sent and
          *             OPTIMIZED: Impressions are sent using an optimization algorithm
+         *             NONE:
          *
          * <p>
-         *  NOTE: If the string is invalid (Neither DEBUG nor OPTIMIZED) default value will be used
+         *  NOTE: If the string is invalid (Neither DEBUG, OPTIMIZED nor NONE) default value will be used
          *  </p>
          *
          * @return: This builder

@@ -72,6 +72,8 @@ public class ImpressionManagerConfig {
         public static Mode fromImpressionMode(ImpressionsMode mode) {
             if (mode == ImpressionsMode.DEBUG) {
                 return Mode.DEBUG;
+            } else if (mode == ImpressionsMode.NONE) {
+                return Mode.NONE;
             } else {
                 return Mode.OPTIMIZED;
             }
