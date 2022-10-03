@@ -2,7 +2,6 @@ package tests.integration;
 
 
 import static android.os.SystemClock.sleep;
-import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
@@ -11,7 +10,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,7 +29,6 @@ import helper.IntegrationHelper;
 import helper.NetworkHelperStub;
 import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
-import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -182,10 +179,9 @@ public class SingleSyncTest {
         client.destroy();
     }
 
-    @Ignore("Ignored until impressions mode NONE is available")
     @Test
     public void singleSyncEnabledImpressionsNone() throws Exception {
-        SplitFactory factory = buildFactory(ImpressionsMode.OPTIMIZED);
+        SplitFactory factory = buildFactory(ImpressionsMode.NONE);
         SplitClient client = factory.client();
 
         CountDownLatch readyLatch = new CountDownLatch(1);
