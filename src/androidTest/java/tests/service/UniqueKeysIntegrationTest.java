@@ -30,6 +30,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.utils.logger.Logger;
@@ -55,6 +56,7 @@ public class UniqueKeysIntegrationTest {
                 new Key("key1"),
                 new TestableSplitConfigBuilder()
                         .ready(30000)
+                        .impressionsMode(ImpressionsMode.NONE)
                         .streamingEnabled(true)
                         .enableDebug()
                         .trafficType("account")
@@ -69,7 +71,6 @@ public class UniqueKeysIntegrationTest {
         mUniqueKeysBody.set("");
     }
 
-    @Ignore("Ignored until MTK is enabled")
     @Test
     public void verifyRequestBody() throws InterruptedException {
         SplitClient client = mSplitFactory.client();
@@ -102,7 +103,6 @@ public class UniqueKeysIntegrationTest {
         client2.destroy();
     }
 
-    @Ignore("Ignored until MTK is enabled")
     @Test
     public void verifyKeyFeaturesAreMerged() throws InterruptedException {
         SplitClient client = mSplitFactory.client();
@@ -126,7 +126,6 @@ public class UniqueKeysIntegrationTest {
         client.destroy();
     }
 
-    @Ignore("Ignored until MTK is enabled")
     @Test
     public void retryIsPerformed() throws InterruptedException {
         SplitClient client = mSplitFactory.client();
@@ -149,7 +148,6 @@ public class UniqueKeysIntegrationTest {
         client.destroy();
     }
 
-    @Ignore("Ignored until MTK is enabled")
     @Test
     public void verifyDatabaseIsEmptyAfterRequest() throws InterruptedException {
         SplitClient client = mSplitFactory.client();
