@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import androidx.annotation.NonNull;
@@ -65,7 +66,8 @@ public class ImpressionManagerImplTest {
     @Mock
     private RetryBackoffCounterTimer mUniqueKeysCounterTimer;
 
-    private ImpressionManagerConfig mConfig;
+    @Mock
+    private ImpressionsCounter mImpressionsCounter;
 
     @Before
     public void setUp() {
@@ -78,7 +80,7 @@ public class ImpressionManagerImplTest {
         when(mTaskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(mock(SaveUniqueImpressionsTask.class));
         when(mTaskFactory.createUniqueImpressionsRecorderTask()).thenReturn(mock(UniqueKeysRecorderTask.class));
 
-        mConfig = new ImpressionManagerConfig(
+        ImpressionManagerConfig mConfig = new ImpressionManagerConfig(
                 1800,
                 1800,
                 ImpressionManagerConfig.Mode.OPTIMIZED,
@@ -201,6 +203,7 @@ public class ImpressionManagerImplTest {
         mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
+                mImpressionsCounter,
                 mUniqueKeysTracker,
                 new ImpressionManagerConfig(
                         1800,
@@ -292,6 +295,7 @@ public class ImpressionManagerImplTest {
         mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
+                mImpressionsCounter,
                 mUniqueKeysTracker,
                 new ImpressionManagerConfig(
                         1800,
@@ -320,16 +324,32 @@ public class ImpressionManagerImplTest {
     @Test
     public void pushImpressionRecordsInTelemetry() {
 
-        mImpressionsManager.pushImpression(new Impression("key",
-                "key",
-                "split",
-                "treatment",
-                10000,
-                "rule",
-                25L,
-                Collections.emptyMap()));
+        pushDummyImpression(mImpressionsManager);
 
         verify(mTelemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
+    }
+
+    @Test
+    public void countIsNotIncrementedWhenPreviousTimeDoesNotExist() {
+
+        mImpressionsManager = getOptimizedModeManager();
+
+        pushDummyImpression(mImpressionsManager);
+
+        verifyNoInteractions(mImpressionsCounter);
+    }
+
+    @Test
+    public void countIsIncrementedWhenPreviousTimeExists() {
+
+        mImpressionsManager = getOptimizedModeManager();
+
+        int impressionsToPush = 3;
+        for (int i = 0; i < impressionsToPush; i++) {
+            pushDummyImpression(mImpressionsManager);
+        }
+
+        verify(mImpressionsCounter, times(impressionsToPush - 1)).inc("split", 10000, 1);
     }
 
     private Impression createImpression() {
@@ -368,5 +388,34 @@ public class ImpressionManagerImplTest {
                         2048,
                         500
                 ));
+    }
+
+    @NonNull
+    private ImpressionManagerImpl getOptimizedModeManager() {
+        return new ImpressionManagerImpl(mTaskExecutor,
+                mTaskFactory,
+                mTelemetryRuntimeProducer,
+                mImpressionsCounter,
+                mUniqueKeysTracker,
+                new ImpressionManagerConfig(
+                        1800,
+                        1800,
+                        ImpressionManagerConfig.Mode.OPTIMIZED,
+                        3,
+                        2048,
+                        500
+                ),
+                mRecorderSyncHelper, mUniqueKeysCounterTimer);
+    }
+
+    private static void pushDummyImpression(ImpressionManager impressionsManager) {
+        impressionsManager.pushImpression(new Impression("key",
+                "key",
+                "split",
+                "treatment",
+                10000,
+                "rule",
+                25L,
+                Collections.emptyMap()));
     }
 }

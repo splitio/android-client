@@ -659,7 +659,6 @@ public class SplitClientConfig {
             return this;
         }
 
-
         /**
          * The SDK will poll the endpoint for changes to features at this period.
          * <p>
@@ -949,9 +948,9 @@ public class SplitClientConfig {
         }
 
         /**
-         * Period in minutes to execute background synchronization
-         * Default values is 15 minutes and is the minimum allowed.
-         * Is a lower value is especified default value will be used.
+         * Period in minutes to execute background synchronization.
+         * Default value is 15 minutes and is the minimum allowed.
+         * If a lower value is specified, the default value will be used.
          *
          * @return this builder
          */
@@ -1071,8 +1070,9 @@ public class SplitClientConfig {
         /**
          * Setup the impressions mode.
          * @param mode Values:<br>
-         *             DEBUG: All impressions are sent and
+         *             DEBUG: All impressions are sent
          *             OPTIMIZED: Impressions are sent using an optimization algorithm
+         *             NONE: Only unique keys evaluated for a particular feature flag are sent
          *
          * @return: This builder
          * @default: OPTIMIZED
@@ -1087,9 +1087,10 @@ public class SplitClientConfig {
          * @param mode Values:<br>
          *             DEBUG: All impressions are sent and
          *             OPTIMIZED: Impressions are sent using an optimization algorithm
+         *             NONE: Only unique keys evaluated for a particular feature flag are sent
          *
          * <p>
-         *  NOTE: If the string is invalid (Neither DEBUG nor OPTIMIZED) default value will be used
+         *  NOTE: If the string is invalid (Neither DEBUG, OPTIMIZED nor NONE) default value will be used
          *  </p>
          *
          * @return: This builder

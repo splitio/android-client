@@ -9,14 +9,12 @@ buildscript {
     }
 }
 
-plugins {
-    id 'com.android.library'
-    id 'maven-publish'
-    id 'signing'
-}
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 ext {
-    splitVersion = '2.12.2'
+    splitVersion = '2.13.0'
 }
 
 android {
@@ -79,6 +77,11 @@ android {
     }
 }
 
+repositories {
+    google()
+    mavenCentral()
+}
+
 dependencies {
 
     def roomVersion = '2.3.0'
@@ -87,7 +90,7 @@ dependencies {
     def annotationVersion = '1.2.0'
     def gsonVersion = '2.8.9'
     def guavaVersion = '31.0.1-android'
-    def snakeYamlVersion = '1.29'
+    def snakeYamlVersion = '1.32'
     def jetBrainsAnnotationsVersion = '22.0.0'
     def okHttpVersion = '3.12.0'
     def playServicesVersion = '17.6.0'

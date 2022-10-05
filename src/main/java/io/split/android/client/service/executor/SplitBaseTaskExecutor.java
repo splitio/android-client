@@ -80,11 +80,11 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
 
     @Override
     public void stopTask(String taskId) {
-        if(taskId == null ) {
+        if (taskId == null) {
             return;
         }
         ScheduledFuture taskFuture = mScheduledTasks.get(taskId);
-        if(taskFuture != null) {
+        if (taskFuture != null) {
             taskFuture.cancel(false);
         }
         mScheduledTasks.remove(taskId);
@@ -92,8 +92,10 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
 
     @Override
     public void executeSerially(List<SplitTaskBatchItem> taskQueue) {
-        SplitTaskBatchWrapper queue = new SplitTaskBatchWrapper(taskQueue);
-        mScheduler.submit(queue);
+        if (!mScheduler.isShutdown()) {
+            SplitTaskBatchWrapper queue = new SplitTaskBatchWrapper(taskQueue);
+            mScheduler.submit(queue);
+        }
     }
 
     public void pause() {

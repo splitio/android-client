@@ -1,6 +1,10 @@
 package io.split.android.client.storage.splits;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import java.util.HashMap;
 import java.util.List;
@@ -8,26 +12,24 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.utils.Json;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitsStorageImpl implements SplitsStorage {
 
-    private PersistentSplitsStorage mPersistentStorage;
-    private Map<String, Split> mInMemorySplits;
+    private final PersistentSplitsStorage mPersistentStorage;
+    private final Map<String, Split> mInMemorySplits;
     private long mChangeNumber;
     private long mUpdateTimestamp;
     private String mSplitsFilterQueryString;
-    private Map<String, Integer> mTrafficTypes;
+    private final Map<String, Integer> mTrafficTypes;
 
     public SplitsStorageImpl(@NonNull PersistentSplitsStorage persistentStorage) {
         mPersistentStorage = checkNotNull(persistentStorage);
-        mInMemorySplits = new ConcurrentHashMap<String, Split>();
-        mTrafficTypes = new ConcurrentHashMap<String, Integer>();
+        mInMemorySplits = new ConcurrentHashMap<>();
+        mTrafficTypes = new ConcurrentHashMap<>();
     }
 
     @Override
+    @WorkerThread
     public void loadLocal() {
         SplitsSnapshot snapshot = mPersistentStorage.getSnapshot();
         List<Split> splits = snapshot.getSplits();
@@ -45,16 +47,16 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
-    public Map<String, Split> getMany(@NonNull List<String> splitNames) {
+    public Map<String, Split> getMany(@Nullable List<String> splitNames) {
         Map<String, Split> splits = new HashMap<>();
-        if(splitNames == null || splitNames.isEmpty()) {
+        if (splitNames == null || splitNames.isEmpty()) {
             splits.putAll(mInMemorySplits);
             return splits;
         }
 
-        for(String name : splitNames) {
+        for (String name : splitNames) {
             Split split = mInMemorySplits.get(name);
-            if(split != null) {
+            if (split != null) {
                 splits.put(name, split);
             }
         }
@@ -67,14 +69,15 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
+    @WorkerThread
     public void update(ProcessedSplitChange splitChange) {
-        if(splitChange == null) {
+        if (splitChange == null) {
             return;
         }
 
         List<Split> activeSplits = splitChange.getActiveSplits();
         List<Split> archivedSplits = splitChange.getArchivedSplits();
-        if(activeSplits != null) {
+        if (activeSplits != null) {
             for (Split split : activeSplits) {
                 Split loadedSplit = mInMemorySplits.get(split.name);
                 if (loadedSplit != null && loadedSplit.trafficTypeName != null) {
@@ -85,9 +88,9 @@ public class SplitsStorageImpl implements SplitsStorage {
             }
         }
 
-        if(archivedSplits != null) {
+        if (archivedSplits != null) {
             for (Split split : archivedSplits) {
-                if(mInMemorySplits.remove(split.name) != null) {
+                if (mInMemorySplits.remove(split.name) != null) {
                     decreaseTrafficTypeCount(split.trafficTypeName);
                 }
             }
@@ -99,6 +102,7 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
+    @WorkerThread
     public void updateWithoutChecks(Split split) {
         mInMemorySplits.put(split.name, split);
         mPersistentStorage.update(split);
@@ -119,11 +123,13 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
+    @WorkerThread
     public void updateSplitsFilterQueryString(String queryString) {
         mPersistentStorage.updateFilterQueryString(queryString);
     }
 
     @Override
+    @WorkerThread
     public void clear() {
         mInMemorySplits.clear();
         mChangeNumber = -1;
@@ -131,14 +137,14 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
-    public boolean isValidTrafficType(String name) {
+    public boolean isValidTrafficType(@Nullable String name) {
         if (name == null) {
             return false;
         }
         return (mTrafficTypes.get(name.toLowerCase()) != null);
     }
 
-    private void increaseTrafficTypeCount(@NonNull String name) {
+    private void increaseTrafficTypeCount(@Nullable String name) {
         if (name == null) {
             return;
         }
@@ -148,7 +154,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         mTrafficTypes.put(lowercaseName, ++count);
     }
 
-    private void decreaseTrafficTypeCount(@NonNull String name) {
+    private void decreaseTrafficTypeCount(@Nullable String name) {
         if (name == null) {
             return;
         }

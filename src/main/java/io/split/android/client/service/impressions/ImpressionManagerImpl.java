@@ -49,6 +49,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
                 taskExecutor,
                 splitTaskFactory,
                 telemetryRuntimeProducer,
+                new ImpressionsCounter(),
                 uniqueKeysTracker,
                 impressionManagerConfig,
                 new RecorderSyncHelperImpl<>(
@@ -62,11 +63,11 @@ public class ImpressionManagerImpl implements ImpressionManager {
                         ServiceConstants.UNIQUE_KEYS_MAX_RETRY_ATTEMPTS));
     }
 
-
     @VisibleForTesting
     public ImpressionManagerImpl(@NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull ImpressionsTaskFactory splitTaskFactory,
                                  @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                 @NonNull ImpressionsCounter impressionsCounter,
                                  @NonNull UniqueKeysTracker uniqueKeysTracker,
                                  @NonNull ImpressionManagerConfig impressionManagerConfig,
                                  @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
@@ -77,7 +78,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
         mImpressionManagerConfig = checkNotNull(impressionManagerConfig);
 
         mImpressionsObserver = new ImpressionsObserver(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE);
-        mImpressionsCounter = new ImpressionsCounter();
+        mImpressionsCounter = checkNotNull(impressionsCounter);
         mUniqueKeysTracker = checkNotNull(uniqueKeysTracker);
 
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
@@ -87,9 +88,9 @@ public class ImpressionManagerImpl implements ImpressionManager {
 
     @Override
     public void pushImpression(Impression impression) {
-        impression = impression.withPreviousTime(mImpressionsObserver.testAndSet(impression));
-        KeyImpression keyImpression = KeyImpression.fromImpression(impression);
-        if (shouldTrackImpressionsCount()) {
+        Long previousTime = mImpressionsObserver.testAndSet(impression);
+        impression = impression.withPreviousTime(previousTime);
+        if (shouldTrackImpressionsCount() && previousTimeIsValid(previousTime)) {
             mImpressionsCounter.inc(impression.split(), impression.time(), 1);
         }
 
@@ -101,6 +102,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
             }
         }
 
+        KeyImpression keyImpression = KeyImpression.fromImpression(impression);
         if (!shouldTrackImpressionsCount() || (!isNoneImpressionsMode() && shouldPushImpression(keyImpression))) {
             if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression)) {
                 mTaskExecutor.submit(
@@ -222,5 +224,9 @@ public class ImpressionManagerImpl implements ImpressionManager {
 
     private boolean shouldTrackImpressionsCount() {
         return isOptimizedImpressionsMode() || isNoneImpressionsMode();
+    }
+
+    private static boolean previousTimeIsValid(Long previousTime) {
+        return previousTime != null && previousTime != 0;
     }
 }
