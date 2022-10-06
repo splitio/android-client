@@ -1,12 +1,25 @@
 package io.split.android.http;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
 import com.google.gson.reflect.TypeToken;
 
-import org.junit.Assert;
-
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.URISyntaxException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.MySegment;
@@ -14,17 +27,15 @@ import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
-
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.List;
-import java.util.Map;
-
+import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
+import io.split.android.client.network.HttpProxy;
 import io.split.android.client.network.HttpRequest;
 import io.split.android.client.network.HttpResponse;
+import io.split.android.client.network.HttpStreamRequest;
 import io.split.android.client.utils.Json;
 import io.split.android.helpers.FileHelper;
+import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -35,6 +46,7 @@ public class HttpClientTest {
 
     private MockWebServer mWebServer;
     String mTrackRequestBody = null;
+    private HttpClient client;
 
     @Before
     public void setup() throws IOException {
@@ -45,7 +57,6 @@ public class HttpClientTest {
     @Test
     public void severalRequest() throws Exception {
         RecordedRequest recReq;
-        HttpClient client = new HttpClientImpl.Builder().build();
 
         // Test dummy request and response
         HttpUrl url = mWebServer.url("/test1/");
@@ -116,7 +127,7 @@ public class HttpClientTest {
 
         // Assert dummy request and response
         Assert.assertEquals(200, dummyResp.getHttpStatus());
-        Assert.assertTrue(dummyResp.isSuccess());
+        assertTrue(dummyResp.isSuccess());
         Assert.assertEquals("this is split test", dummyResp.getData());
 
         // Assert my segments
@@ -131,29 +142,29 @@ public class HttpClientTest {
         // Assert split changes
         SplitChange splitChange = Json.fromJson(splitChangeResp.getData(), SplitChange.class);
         Assert.assertEquals(200, splitChangeResp.getHttpStatus());
-        Assert.assertTrue(splitChangeResp.isSuccess());
+        assertTrue(splitChangeResp.isSuccess());
         Assert.assertEquals(-1, splitChange.since);
         Assert.assertEquals(1506703262916L, splitChange.till);
         Assert.assertEquals(30, splitChange.splits.size());
 
         // Assert empty response
         Assert.assertEquals(200, emptyResp.getHttpStatus());
-        Assert.assertTrue(emptyResp.isSuccess());
+        assertTrue(emptyResp.isSuccess());
         Assert.assertNull(emptyResp.getData());
 
         // Assert post non empty response
         Assert.assertEquals(201, postDataResp.getHttpStatus());
-        Assert.assertTrue(postDataResp.isSuccess());
+        assertTrue(postDataResp.isSuccess());
         Assert.assertEquals("{\"resp\": 1 }", postDataResp.getData());
 
         // Assert empty response
         Assert.assertEquals(201, postNoDataResp.getHttpStatus());
-        Assert.assertTrue(postNoDataResp.isSuccess());
+        assertTrue(postNoDataResp.isSuccess());
         Assert.assertNull(postNoDataResp.getData());
 
         // Assert tracks
         Assert.assertEquals(200, postTracksResp.getHttpStatus());
-        Assert.assertTrue(postTracksResp.isSuccess());
+        assertTrue(postTracksResp.isSuccess());
         Assert.assertNull(postTracksResp.getData());
         Assert.assertEquals(10, trackEventsSent.size());
         Assert.assertEquals("open_web", trackEventsSent.get(0).eventTypeId);
@@ -163,7 +174,7 @@ public class HttpClientTest {
 
         // Assert impressions
         Assert.assertEquals(200, postImpResp.getHttpStatus());
-        Assert.assertTrue(postImpResp.isSuccess());
+        assertTrue(postImpResp.isSuccess());
         Assert.assertNull(postImpResp.getData());
         Assert.assertEquals(2, impSent.size());
         Assert.assertEquals("ANDROID_sameTreatmentWithBucketingKey", impSent.get(0).testName);
@@ -182,9 +193,70 @@ public class HttpClientTest {
         Assert.assertNull(badResp.getData());
     }
 
+    @Test
+    public void addHeaders() throws InterruptedException, URISyntaxException, HttpException {
+        client.addHeaders(Collections.singletonMap("my_header", "my_header_value"));
+
+        HttpUrl url = mWebServer.url("/test1/");
+        HttpRequest dummyReq = client.request(url.uri(), HttpMethod.GET);
+        dummyReq.execute();
+        RecordedRequest recReq = mWebServer.takeRequest();
+
+        Headers headers = recReq.getHeaders();
+
+        assertTrue(headers.names().contains("my_header"));
+        assertEquals("my_header_value", headers.get("my_header"));
+    }
+
+    @Test
+    public void addStreamingHeaders() throws InterruptedException, URISyntaxException, HttpException {
+        client.addStreamingHeaders(Collections.singletonMap("my_header", "my_header_value"));
+
+        HttpUrl url = mWebServer.url("/test1/");
+        HttpStreamRequest dummyReq = client.streamRequest(url.uri());
+        dummyReq.execute();
+        RecordedRequest recReq = mWebServer.takeRequest();
+
+        Headers headers = recReq.getHeaders();
+
+        assertTrue(headers.names().contains("my_header"));
+        assertEquals("my_header_value", headers.get("my_header"));
+    }
+
+    @Test
+    public void requestWithNewHeaders() throws HttpException, InterruptedException {
+        client.addHeaders(Collections.singletonMap("my_header", "my_header_value"));
+
+        HttpUrl url = mWebServer.url("/test1/");
+        HttpRequest dummyReq = client.request(url.uri(), HttpMethod.GET, "{}", Collections.singletonMap("new_header", "new_header_value"));
+        dummyReq.execute();
+        RecordedRequest recReq = mWebServer.takeRequest();
+
+        Headers headers = recReq.getHeaders();
+
+        assertTrue(headers.names().contains("my_header"));
+        assertEquals("my_header_value", headers.get("my_header"));
+
+        assertTrue(headers.names().contains("new_header"));
+        assertEquals("new_header_value", headers.get("new_header"));
+    }
+
+    @Test
+    public void addInvalidHeaderValue() {
+        assertThrows(IllegalArgumentException.class, () -> client.addHeaders(Collections.singletonMap(null, "my_header_value")));
+        assertThrows(IllegalArgumentException.class, () -> client.addHeaders(Collections.singletonMap("my_hader", null)));
+    }
+
+    @Test
+    public void addInvalidStreamingHeaderValue() {
+        assertThrows(IllegalArgumentException.class, () -> client.addStreamingHeaders(Collections.singletonMap(null, "my_header_value")));
+        assertThrows(IllegalArgumentException.class, () -> client.addStreamingHeaders(Collections.singletonMap("my_hader", null)));
+    }
+
     @After
     public void tearDown() throws IOException {
         mWebServer.shutdown();
+        client.close();
     }
 
     private void setupServer() throws IOException {
@@ -233,6 +305,9 @@ public class HttpClientTest {
         };
         mWebServer.setDispatcher(dispatcher);
         mWebServer.start();
+
+        client = new HttpClientImpl.Builder().build();
+
     }
 
     private void log(String m) {
@@ -260,7 +335,4 @@ public class HttpClientTest {
 
         return Json.fromJson(json, mapType);
     }
-
-
 }
-
