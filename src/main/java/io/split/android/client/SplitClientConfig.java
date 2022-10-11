@@ -885,7 +885,11 @@ public class SplitClientConfig {
          * @return this builder
          */
         public Builder proxyHost(String proxyHost) {
-            _proxyHost = proxyHost;
+            if (proxyHost != null && proxyHost.endsWith("/")) {
+                _proxyHost = proxyHost.substring(0, proxyHost.length() - 1);
+            } else {
+                _proxyHost = proxyHost;
+            }
             return this;
         }
 
