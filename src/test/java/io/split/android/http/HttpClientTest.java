@@ -1,9 +1,11 @@
 package io.split.android.http;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+
+import android.content.Context;
 
 import com.google.gson.reflect.TypeToken;
 
@@ -14,8 +16,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +45,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 public class HttpClientTest {
 
     private MockWebServer mWebServer;
-    String mTrackRequestBody = null;
+    private MockWebServer mProxyServer;
     private HttpClient client;
 
     @Before
@@ -53,46 +53,44 @@ public class HttpClientTest {
         setupServer();
     }
 
-    @SuppressWarnings("UnusedAssignment")
     @Test
     public void severalRequest() throws Exception {
-        RecordedRequest recReq;
 
         // Test dummy request and response
         HttpUrl url = mWebServer.url("/test1/");
         HttpRequest dummyReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse dummyResp = dummyReq.execute();
-        recReq = mWebServer.takeRequest();
+        mWebServer.takeRequest();
 
         // Test my segments
         url = mWebServer.url("/test2/");
         HttpRequest mySegmentsReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse mySegmentsResp = mySegmentsReq.execute();
-        recReq = mWebServer.takeRequest();
+        mWebServer.takeRequest();
 
         // Test split changes
         url = mWebServer.url("/test3/");
         HttpRequest splitChangeReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse splitChangeResp = splitChangeReq.execute();
-        recReq = mWebServer.takeRequest();
+        mWebServer.takeRequest();
 
         // Test empty response
         url = mWebServer.url("/test4/");
         HttpRequest emptyReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse emptyResp = emptyReq.execute();
-        recReq = mWebServer.takeRequest();
+        mWebServer.takeRequest();
 
         // Test post with response data
         url = mWebServer.url("/post_resp/");
         HttpRequest postDataReq = client.request(url.uri(), HttpMethod.POST, "{}");
         HttpResponse postDataResp = postDataReq.execute();
-        recReq = mWebServer.takeRequest();
+        mWebServer.takeRequest();
 
         // Test post no response data
         url = mWebServer.url("/post_no_resp/");
         HttpRequest postNoDataReq = client.request(url.uri(), HttpMethod.POST, "{}");
         HttpResponse postNoDataResp = postNoDataReq.execute();
-        recReq = mWebServer.takeRequest();
+        mWebServer.takeRequest();
 
         // Test post tracks
         String postTracksData = new FileHelper().loadFileContent("tracks_1.json");
@@ -102,7 +100,6 @@ public class HttpClientTest {
         RecordedRequest postTrackRecReq = mWebServer.takeRequest();
         String receivedPostTrackData = postTrackRecReq.getBody().readUtf8();
         List<Event> trackEventsSent = parseTrackEvents(receivedPostTrackData);
-
 
         // Test post impressions
         String postImpData = new FileHelper().loadFileContent("impressions_1.json");
@@ -117,13 +114,13 @@ public class HttpClientTest {
         url = mWebServer.url("/limit_wrong/");
         HttpRequest limitNoSuccessReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse limitNoSuccessResp = limitNoSuccessReq.execute();
-        recReq = mWebServer.takeRequest();
+        mWebServer.takeRequest();
 
         // Test bad request
         url = mWebServer.url("/bad/");
         HttpRequest badReq = client.request(url.uri(), HttpMethod.GET);
         HttpResponse badResp = badReq.execute();
-        recReq = mWebServer.takeRequest();
+        mWebServer.takeRequest();
 
         // Assert dummy request and response
         Assert.assertEquals(200, dummyResp.getHttpStatus());
@@ -253,6 +250,32 @@ public class HttpClientTest {
         assertThrows(IllegalArgumentException.class, () -> client.addStreamingHeaders(Collections.singletonMap("my_hader", null)));
     }
 
+    @Test
+    public void testRequestWithProxy() throws HttpException, InterruptedException, IOException {
+        mProxyServer = new MockWebServer();
+        mProxyServer.setDispatcher(new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                System.out.println("Received request in proxy: ["+ request.toString() +"]");
+                return new MockResponse().setResponseCode(200);
+            }
+        });
+        mProxyServer.start();
+
+        HttpClient client = new HttpClientImpl.Builder()
+                .setContext(mock(Context.class))
+                .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
+                .build();
+
+        HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.GET);
+        HttpResponse execute = request.execute();
+        RecordedRequest recordedRequest = mProxyServer.takeRequest();
+
+        assertTrue(execute.isSuccess());
+        assertEquals("GET", recordedRequest.getMethod());
+        mProxyServer.shutdown();
+    }
+
     @After
     public void tearDown() throws IOException {
         mWebServer.shutdown();
@@ -268,6 +291,8 @@ public class HttpClientTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+
+                System.out.println("Sending request to: ["+ request.toString() +"]");
 
                 switch (request.getPath()) {
                     case "/test1/":
@@ -307,11 +332,6 @@ public class HttpClientTest {
         mWebServer.start();
 
         client = new HttpClientImpl.Builder().build();
-
-    }
-
-    private void log(String m) {
-        System.out.println("FACTORY_TEST: " + m);
     }
 
     private List<MySegment> parseMySegments(String json) {
