@@ -1072,7 +1072,7 @@ public class SplitClientConfig {
          * @param mode Values:<br>
          *             DEBUG: All impressions are sent
          *             OPTIMIZED: Impressions are sent using an optimization algorithm
-         *             NONE:
+         *             NONE: Only unique keys evaluated for a particular feature flag are sent
          *
          * @return: This builder
          * @default: OPTIMIZED
@@ -1087,7 +1087,7 @@ public class SplitClientConfig {
          * @param mode Values:<br>
          *             DEBUG: All impressions are sent and
          *             OPTIMIZED: Impressions are sent using an optimization algorithm
-         *             NONE:
+         *             NONE: Only unique keys evaluated for a particular feature flag are sent
          *
          * <p>
          *  NOTE: If the string is invalid (Neither DEBUG, OPTIMIZED nor NONE) default value will be used
