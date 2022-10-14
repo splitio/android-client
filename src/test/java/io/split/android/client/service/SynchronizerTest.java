@@ -542,9 +542,10 @@ public class SynchronizerTest {
 
         verify(mRetryTimerSplitsUpdate).stop();
         verify(mRetryTimerSplitsSync).stop();
-        verify(mTaskExecutor).submit(
+        verify(mTaskExecutor).schedule(
                 any(ImpressionsRecorderTask.class),
-                any(RecorderSyncHelper.class));
+                eq(0L),
+                any(RetryBackoffCounterTimer.class));
         verify(mTaskExecutor).submit(
                 any(EventsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
