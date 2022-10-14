@@ -6,12 +6,14 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:4.0.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
     }
 }
 
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
+apply plugin: 'kotlin-android'
 
 ext {
     splitVersion = '2.13.0'
@@ -60,6 +62,7 @@ android {
     sourceSets {
         String sharedTestDir = 'src/sharedTest/java'
         test {
+            java.srcDirs += 'src/test/kotlin'
             java.srcDirs += sharedTestDir
         }
         androidTest {
@@ -99,6 +102,7 @@ dependencies {
     def mockitoVersion = '3.12.4'
     def hamcrestVersion = '1.3'
     def apacheCommonsVersion = '3.12.0'
+    def kotlinVer = '1.5.31'
     def mockWebServerVersion = '3.12.13'
 
     def androidTestVersion = '1.4.0'
@@ -128,6 +132,8 @@ dependencies {
     testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
     testImplementation "org.apache.commons:commons-lang3:$apacheCommonsVersion"
     testImplementation "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
 
     androidTestImplementation "androidx.test:core:$androidTestVersion"
     androidTestImplementation "androidx.test:runner:$androidTestVersion"
@@ -135,9 +141,17 @@ dependencies {
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
     androidTestImplementation "androidx.room:room-testing:$roomVersion"
     androidTestImplementation "androidx.work:work-testing:$workVersion"
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
 }
 
 afterEvaluate {
+    android.sourceSets.all { sourceSet ->
+        if (!sourceSet.name.startsWith("test")) {
+            sourceSet.kotlin.setSrcDirs([])
+        }
+    }
+
     publishing {
         publications {
             project.components.all { print("PRJ NAME: " + name) }
