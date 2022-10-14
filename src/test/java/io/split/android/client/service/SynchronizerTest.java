@@ -114,6 +114,9 @@ public class SynchronizerTest {
     RetryBackoffCounterTimer mRetryTimerMySegmentsSync;
 
     @Mock
+    RetryBackoffCounterTimer mRetryTimerEventsRecorder;
+
+    @Mock
     WorkManager mWorkManager;
     @Mock
     SplitTaskFactory mTaskFactory;
@@ -175,6 +178,8 @@ public class SynchronizerTest {
         when(mRetryBackoffFactory.create(any(), anyInt()))
                 .thenReturn(mRetryTimerSplitsSync)
                 .thenReturn(mRetryTimerSplitsUpdate);
+        when(mRetryBackoffFactory.createWithFixedInterval(any(), eq(1), eq(3)))
+                .thenReturn(mRetryTimerEventsRecorder);
 
         mImpressionManager =
                 new ImpressionManagerImpl(
@@ -546,9 +551,8 @@ public class SynchronizerTest {
                 any(ImpressionsRecorderTask.class),
                 eq(0L),
                 any(RetryBackoffCounterTimer.class));
-        verify(mTaskExecutor).submit(
-                any(EventsRecorderTask.class),
-                any(SplitTaskExecutionListener.class));
+        verify(mRetryTimerEventsRecorder).setTask(any(EventsRecorderTask.class));
+        verify(mRetryTimerEventsRecorder).start();
     }
 
     @Test
