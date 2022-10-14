@@ -61,7 +61,7 @@ public class MySegmentUpdatedTest {
     boolean isFirstChangesReq;
 
     @Before
-    public void setup() {
+    public void setup() throws IOException {
         isFirstChangesReq = true;
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mCurReqId = 0;
@@ -82,7 +82,7 @@ public class MySegmentUpdatedTest {
         mWebServer.shutdown();
     }
 
-    private void setupServer() {
+    private void setupServer() throws IOException {
         mWebServer = new MockWebServer();
 
         final Dispatcher dispatcher = new Dispatcher() {
@@ -132,6 +132,7 @@ public class MySegmentUpdatedTest {
             }
         };
         mWebServer.setDispatcher(dispatcher);
+        mWebServer.start();
     }
 
     @Test
