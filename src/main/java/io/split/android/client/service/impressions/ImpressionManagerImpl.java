@@ -5,18 +5,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
-import io.split.android.client.service.sseclient.FixedIntervalBackoffCounter;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
@@ -37,7 +32,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
     private final ImpressionManagerConfig mImpressionManagerConfig;
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
     private final UniqueKeysTracker mUniqueKeysTracker;
-    private final RetryBackoffCounterTimer mUniqueKeysTimer;
+    private final ImpressionManagerRetryTimerProvider mRetryTimerProvider;
 
     public ImpressionManagerImpl(@NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull ImpressionsTaskFactory splitTaskFactory,
@@ -58,9 +53,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
                         impressionManagerConfig.getImpressionsQueueSize(),
                         impressionManagerConfig.getImpressionsChunkSize(),
                         taskExecutor),
-                new RetryBackoffCounterTimer(taskExecutor,
-                        new FixedIntervalBackoffCounter(ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS),
-                        ServiceConstants.UNIQUE_KEYS_MAX_RETRY_ATTEMPTS));
+                new ImpressionManagerRetryTimerProviderImpl(taskExecutor));
     }
 
     @VisibleForTesting
@@ -71,7 +64,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
                                  @NonNull UniqueKeysTracker uniqueKeysTracker,
                                  @NonNull ImpressionManagerConfig impressionManagerConfig,
                                  @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
-                                 @NonNull RetryBackoffCounterTimer uniqueKeysTimer) {
+                                 @NonNull ImpressionManagerRetryTimerProvider retryTimerProvider) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
@@ -83,7 +76,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
 
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
 
-        mUniqueKeysTimer = checkNotNull(uniqueKeysTimer);
+        mRetryTimerProvider = checkNotNull(retryTimerProvider);
     }
 
     @Override
@@ -118,9 +111,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
 
     @Override
     public void flush() {
-        mTaskExecutor.submit(
-                mSplitTaskFactory.createImpressionsRecorderTask(),
-                mImpressionsSyncHelper);
+        flushImpressions();
         flushImpressionsCount();
         flushUniqueKeys();
     }
@@ -186,24 +177,36 @@ public class ImpressionManagerImpl implements ImpressionManager {
                 ImpressionUtils.truncateTimeframe(impression.previousTime) != ImpressionUtils.truncateTimeframe(impression.time);
     }
 
+    private void flushImpressions() {
+        RetryBackoffCounterTimer retryTimer = mRetryTimerProvider.getImpressionsTimer();
+        retryTimer.setTask(
+                mSplitTaskFactory.createImpressionsRecorderTask(),
+                mImpressionsSyncHelper);
+        retryTimer.start();
+    }
+
     private void flushImpressionsCount() {
         if (!shouldTrackImpressionsCount()) {
             return;
         }
-        List<SplitTaskBatchItem> enqueued = new ArrayList<>();
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null));
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createImpressionsCountRecorderTask(), null));
-        mTaskExecutor.executeSerially(enqueued);
+
+        RetryBackoffCounterTimer retryTimer = mRetryTimerProvider.getImpressionsCountTimer();
+        retryTimer.setTask(new SplitTaskSerialWrapper(
+                mSplitTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
+                mSplitTaskFactory.createImpressionsCountRecorderTask()));
+        retryTimer.start();
     }
 
     private void flushUniqueKeys() {
         if (!isNoneImpressionsMode()) {
             return;
         }
-        mUniqueKeysTimer.setTask(new SplitTaskSerialWrapper(
+
+        RetryBackoffCounterTimer retryTimer = mRetryTimerProvider.getUniqueKeysTimer();
+        retryTimer.setTask(new SplitTaskSerialWrapper(
                 mSplitTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()),
                 mSplitTaskFactory.createUniqueImpressionsRecorderTask()));
-        mUniqueKeysTimer.start();
+        retryTimer.start();
     }
 
     private void saveImpressionsCount() {
