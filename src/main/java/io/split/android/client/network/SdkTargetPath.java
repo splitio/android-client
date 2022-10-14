@@ -59,10 +59,19 @@ public class SdkTargetPath {
     }
 
     private static URI buildUrl(String baseUrl, String path, String queryString) throws URISyntaxException {
+        if (baseUrl != null && baseUrl.endsWith("/")) {
+            baseUrl = removeLastChar(baseUrl);
+        }
         String urlString = baseUrl + path;
         if (!Strings.isNullOrEmpty(queryString)) {
             urlString = urlString + "?" + queryString;
         }
         return new URI(urlString);
+    }
+
+    private static String removeLastChar(String sourceString) {
+        return sourceString == null || sourceString.length() == 0
+                ? sourceString
+                : (sourceString.substring(0, sourceString.length() - 1));
     }
 }

@@ -95,15 +95,15 @@ dependencies {
     def guavaVersion = '31.0.1-android'
     def snakeYamlVersion = '1.32'
     def jetBrainsAnnotationsVersion = '22.0.0'
-    def okHttpVersion = '3.12.0'
+    def okHttpVersion = '3.12.13'
     def playServicesVersion = '17.6.0'
 
     def jUnitVersion = '4.13.2'
     def mockitoVersion = '3.12.4'
     def hamcrestVersion = '1.3'
     def apacheCommonsVersion = '3.12.0'
-    def mockWebServerVersion = '3.12.0'
     def kotlinVer = '1.5.31'
+    def mockWebServerVersion = '3.12.13'
 
     def androidTestVersion = '1.4.0'
 
