@@ -2,6 +2,8 @@ package tests.database;
 
 import android.util.Log;
 
+import androidx.test.filters.LargeTest;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -139,11 +141,13 @@ public class ImpressionDaoTest extends GenericDaoTest {
         performance(100);
     }
 
+    @LargeTest
     @Test
     public void performance1000() {
         performance(1000);
     }
 
+    @LargeTest
     @Test
     public void performance10000() {
         performance(10000);
