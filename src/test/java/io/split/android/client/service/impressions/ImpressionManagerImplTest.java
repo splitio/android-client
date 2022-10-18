@@ -1,7 +1,6 @@
 package io.split.android.client.service.impressions;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,7 +27,6 @@ import java.util.UUID;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskSerialWrapper;
@@ -64,10 +62,13 @@ public class ImpressionManagerImplTest {
     private RecorderSyncHelper<KeyImpression> mRecorderSyncHelper;
 
     @Mock
-    private RetryBackoffCounterTimer mUniqueKeysCounterTimer;
+    private RetryBackoffCounterTimer mGenericCounterTimer;
 
     @Mock
     private ImpressionsCounter mImpressionsCounter;
+
+    @Mock
+    private ImpressionManagerRetryTimerProvider mImpressionManagerRetryTimerProvider;
 
     @Before
     public void setUp() {
@@ -86,8 +87,8 @@ public class ImpressionManagerImplTest {
                 ImpressionManagerConfig.Mode.OPTIMIZED,
                 3,
                 2048,
-                500
-        );
+                500);
+
         mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
                 mImpressionsStorage, mUniqueKeysTracker, mConfig);
     }
@@ -177,29 +178,68 @@ public class ImpressionManagerImplTest {
 
     @Test
     public void flushWithOptimizedMode() {
-        ArgumentCaptor<List<SplitTaskBatchItem>> listArgumentCaptor = ArgumentCaptor.forClass(List.class);
-
+        RetryBackoffCounterTimer impressionsTimer = mock(RetryBackoffCounterTimer.class);
+        RetryBackoffCounterTimer impressionsCountTimer = mock(RetryBackoffCounterTimer.class);
+        RetryBackoffCounterTimer uniqueKeysTimer = mock(RetryBackoffCounterTimer.class);
+        when(mImpressionManagerRetryTimerProvider.getImpressionsTimer()).thenReturn(impressionsTimer);
+        when(mImpressionManagerRetryTimerProvider.getImpressionsCountTimer()).thenReturn(impressionsCountTimer);
+        when(mImpressionManagerRetryTimerProvider.getUniqueKeysTimer()).thenReturn(uniqueKeysTimer);
+        mImpressionsManager = getOptimizedModeManager();
         mImpressionsManager.flush();
 
-        verify(mTaskExecutor).submit(argThat(argument -> argument instanceof ImpressionsRecorderTask), any(RecorderSyncHelper.class));
-        verify(mTaskExecutor).executeSerially(listArgumentCaptor.capture());
+        verify(impressionsCountTimer).setTask(argThat(new ArgumentMatcher<SplitTaskSerialWrapper>() {
+            @Override
+            public boolean matches(SplitTaskSerialWrapper argument) {
+                List<SplitTask> taskList = argument.getTaskList();
+                return taskList.size() == 2 && taskList.get(0) instanceof SaveImpressionsCountTask && taskList.get(1) instanceof ImpressionsCountRecorderTask;
+            }
+        }));
 
-        assertTrue(listArgumentCaptor.getValue().get(0).getTask() instanceof SaveImpressionsCountTask);
-        assertTrue(listArgumentCaptor.getValue().get(1).getTask() instanceof ImpressionsCountRecorderTask);
+        verifyNoInteractions(uniqueKeysTimer);
+        verify(impressionsCountTimer).start();
     }
 
     @Test
     public void flushWithDebugMode() {
-        mImpressionsManager = getDebugModeManager();
+        RetryBackoffCounterTimer impressionsTimer = mock(RetryBackoffCounterTimer.class);
+        RetryBackoffCounterTimer impressionsCountTimer = mock(RetryBackoffCounterTimer.class);
+        RetryBackoffCounterTimer uniqueKeysTimer = mock(RetryBackoffCounterTimer.class);
+        when(mImpressionManagerRetryTimerProvider.getImpressionsTimer()).thenReturn(impressionsTimer);
+        when(mImpressionManagerRetryTimerProvider.getImpressionsCountTimer()).thenReturn(impressionsCountTimer);
+        when(mImpressionManagerRetryTimerProvider.getUniqueKeysTimer()).thenReturn(uniqueKeysTimer);
+        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
+                mTaskFactory,
+                mTelemetryRuntimeProducer,
+                mImpressionsCounter,
+                mUniqueKeysTracker,
+                new ImpressionManagerConfig(
+                        1800,
+                        1800,
+                        ImpressionManagerConfig.Mode.DEBUG,
+                        3,
+                        2048,
+                        500
+                ),
+                mRecorderSyncHelper, mImpressionManagerRetryTimerProvider);
 
         mImpressionsManager.flush();
 
-        verify(mTaskExecutor).submit(argThat(argument -> argument instanceof ImpressionsRecorderTask), any(RecorderSyncHelper.class));
-        verify(mTaskExecutor, times(0)).executeSerially(any());
+        verify(impressionsTimer).setTask(any(ImpressionsRecorderTask.class), any(RecorderSyncHelper.class));
+
+        verify(impressionsTimer).start();
+        verifyNoInteractions(impressionsCountTimer);
+        verifyNoInteractions(uniqueKeysTimer);
     }
 
     @Test
     public void flushWithNoneMode() {
+        RetryBackoffCounterTimer impressionsTimer = mock(RetryBackoffCounterTimer.class);
+        RetryBackoffCounterTimer impressionsCountTimer = mock(RetryBackoffCounterTimer.class);
+        RetryBackoffCounterTimer uniqueKeysTimer = mock(RetryBackoffCounterTimer.class);
+        when(mImpressionManagerRetryTimerProvider.getImpressionsTimer()).thenReturn(impressionsTimer);
+        when(mImpressionManagerRetryTimerProvider.getImpressionsCountTimer()).thenReturn(impressionsCountTimer);
+        when(mImpressionManagerRetryTimerProvider.getUniqueKeysTimer()).thenReturn(uniqueKeysTimer);
+
         mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
@@ -213,18 +253,19 @@ public class ImpressionManagerImplTest {
                         2048,
                         500
                 ),
-                mRecorderSyncHelper, mUniqueKeysCounterTimer);
+                mRecorderSyncHelper, mImpressionManagerRetryTimerProvider);
 
         mImpressionsManager.flush();
 
-        verify(mTaskExecutor).executeSerially(argThat(new ArgumentMatcher<List<SplitTaskBatchItem>>() {
+        verify(impressionsCountTimer).setTask(argThat(new ArgumentMatcher<SplitTaskSerialWrapper>() {
             @Override
-            public boolean matches(List<SplitTaskBatchItem> argument) {
-                return argument.size() == 2 && argument.get(0).getTask() instanceof SaveImpressionsCountTask && argument.get(1).getTask() instanceof ImpressionsCountRecorderTask;
+            public boolean matches(SplitTaskSerialWrapper argument) {
+                List<SplitTask> taskList = argument.getTaskList();
+                return taskList.size() == 2 && taskList.get(0) instanceof SaveImpressionsCountTask && taskList.get(1) instanceof ImpressionsCountRecorderTask;
             }
         }));
 
-        verify(mUniqueKeysCounterTimer).setTask(argThat(new ArgumentMatcher<SplitTaskSerialWrapper>() {
+        verify(uniqueKeysTimer).setTask(argThat(new ArgumentMatcher<SplitTaskSerialWrapper>() {
             @Override
             public boolean matches(SplitTaskSerialWrapper argument) {
                 List<SplitTask> taskList = argument.getTaskList();
@@ -232,7 +273,9 @@ public class ImpressionManagerImplTest {
             }
         }));
 
-        verify(mUniqueKeysCounterTimer).start();
+        verify(impressionsTimer).start();
+        verify(impressionsCountTimer).start();
+        verify(uniqueKeysTimer).start();
     }
 
     @Test
@@ -292,6 +335,8 @@ public class ImpressionManagerImplTest {
 
     @Test
     public void stopPeriodicRecordingNoneMode() {
+        when(mImpressionManagerRetryTimerProvider.getUniqueKeysTimer()).thenReturn(mGenericCounterTimer);
+
         mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
@@ -305,7 +350,7 @@ public class ImpressionManagerImplTest {
                         2048,
                         500
                 ),
-                mRecorderSyncHelper, mUniqueKeysCounterTimer);
+                mRecorderSyncHelper, mImpressionManagerRetryTimerProvider);
 
         when(mTaskExecutor.schedule(any(ImpressionsCountRecorderTask.class), eq(0L), eq(1800L), eq(null))).thenReturn("id_2");
         when(mTaskExecutor.schedule(any(UniqueKeysRecorderTask.class), eq(0L), eq(500L), eq(null))).thenReturn("id_3");
@@ -369,7 +414,7 @@ public class ImpressionManagerImplTest {
                 new ImpressionManagerConfig(
                         1800,
                         1800,
-                        ImpressionManagerConfig.Mode.DEBUG,
+                        ImpressionsMode.DEBUG,
                         3,
                         2048,
                         500
@@ -392,6 +437,8 @@ public class ImpressionManagerImplTest {
 
     @NonNull
     private ImpressionManagerImpl getOptimizedModeManager() {
+        when(mImpressionManagerRetryTimerProvider.getUniqueKeysTimer()).thenReturn(mGenericCounterTimer);
+
         return new ImpressionManagerImpl(mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
@@ -405,7 +452,7 @@ public class ImpressionManagerImplTest {
                         2048,
                         500
                 ),
-                mRecorderSyncHelper, mUniqueKeysCounterTimer);
+                mRecorderSyncHelper, mImpressionManagerRetryTimerProvider);
     }
 
     private static void pushDummyImpression(ImpressionManager impressionsManager) {

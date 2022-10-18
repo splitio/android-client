@@ -54,6 +54,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private String mEventsRecorderTaskId;
     private final RetryBackoffCounterTimer mSplitsSyncRetryTimer;
     private final RetryBackoffCounterTimer mSplitsUpdateRetryTimer;
+    private final RetryBackoffCounterTimer mEventsRecorderUpdateRetryTimer;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     private final MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
@@ -81,6 +82,10 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mAttributesSynchronizerRegistry = attributesSynchronizerRegistry;
         mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(mSplitsTaskExecutor, 1);
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(mSplitsTaskExecutor, 1);
+        mEventsRecorderUpdateRetryTimer = retryBackoffCounterTimerFactory.createWithFixedInterval(
+                mSplitsTaskExecutor,
+                ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS,
+                ServiceConstants.UNIQUE_KEYS_MAX_RETRY_ATTEMPTS);
 
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mMySegmentsSynchronizerRegistry = checkNotNull(mySegmentsSynchronizerRegistry);
@@ -210,8 +215,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     public void flush() {
-        mTaskExecutor.submit(mSplitTaskFactory.createEventsRecorderTask(),
-                mEventsSyncHelper);
+        mEventsRecorderUpdateRetryTimer.setTask(mSplitTaskFactory.createEventsRecorderTask());
+        mEventsRecorderUpdateRetryTimer.start();
         mImpressionManager.flush();
     }
 
