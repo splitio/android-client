@@ -64,10 +64,12 @@ import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
+import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
@@ -542,15 +544,20 @@ public class SynchronizerTest {
                 .sychronizeInBackground(false)
                 .build();
         setup(config);
+        ImpressionManager impressionManager = mock(ImpressionManager.class);
+        when(mRetryBackoffFactory.create(any(), anyInt()))
+                .thenReturn(mRetryTimerSplitsSync)
+                .thenReturn(mRetryTimerSplitsUpdate);
+        mSynchronizer = new SynchronizerImpl(config, mTaskExecutor, mSingleThreadedTaskExecutor,
+                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper,
+                mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry,
+                mMySegmentsSynchronizerRegistry, impressionManager);
 
         mSynchronizer.destroy();
 
         verify(mRetryTimerSplitsUpdate).stop();
         verify(mRetryTimerSplitsSync).stop();
-        verify(mTaskExecutor).schedule(
-                any(ImpressionsRecorderTask.class),
-                eq(0L),
-                any(RetryBackoffCounterTimer.class));
+        verify(impressionManager).flush();
         verify(mRetryTimerEventsRecorder).setTask(any(EventsRecorderTask.class));
         verify(mRetryTimerEventsRecorder).start();
     }
@@ -617,6 +624,59 @@ public class SynchronizerTest {
 
         verify(mAttributesSynchronizerRegistry).loadAttributesFromCache();
     }
+
+    @Test
+    public void attributesSynchronizerRegistration() {
+        setup(SplitClientConfig.builder().persistentAttributesEnabled(true).build());
+
+        AttributesSynchronizer attributesSynchronizer = mock(AttributesSynchronizer.class);
+        mSynchronizer.registerAttributesSynchronizer("my_key", attributesSynchronizer);
+
+        verify(mAttributesSynchronizerRegistry).registerAttributesSynchronizer("my_key", attributesSynchronizer);
+    }
+
+    @Test
+    public void attributesSynchronizerUnregistration() {
+        setup(SplitClientConfig.builder().persistentAttributesEnabled(true).build());
+
+        mSynchronizer.unregisterAttributesSynchronizer("my_key");
+
+        verify(mAttributesSynchronizerRegistry).unregisterAttributesSynchronizer("my_key");
+    }
+
+    @Test
+    public void beingNotifiedOfSplitsSyncTaskTriggersSplitsLoad() {
+        setup(SplitClientConfig.builder().persistentAttributesEnabled(false).build());
+
+        LoadSplitsTask task = mock(LoadSplitsTask.class);
+        when(mTaskFactory.createLoadSplitsTask()).thenReturn(task);
+
+        mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        verify(mTaskExecutor).submit(task,null);
+    }
+
+    @Test
+    public void beginNotifiedOfMySegmentsSyncTriggersMySegmentsLoad() {
+        setup(SplitClientConfig.builder().persistentAttributesEnabled(false).build());
+
+        mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC));
+
+        verify(mMySegmentsSynchronizerRegistry).submitMySegmentsLoadingTask();
+    }
+
+    @Test
+    public void synchronizeSplitsWithSince() {
+        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        SplitsUpdateTask task = mock(SplitsUpdateTask.class);
+        when(mTaskFactory.createSplitsUpdateTask(1000)).thenReturn(task);
+
+        mSynchronizer.synchronizeSplits(1000);
+
+        verify(mRetryTimerSplitsUpdate).setTask(task, null);
+        verify(mRetryTimerSplitsUpdate).start();
+    }
+
 
     @After
     public void tearDown() {
