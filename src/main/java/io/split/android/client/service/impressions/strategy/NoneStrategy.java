@@ -16,7 +16,7 @@ import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 
 /**
- * {@link ProcessStrategy} that corresponds to NONE {@link ImpressionsMode}
+ * {@link ProcessStrategy} that corresponds to NONE Impressions mode.
  */
 class NoneStrategy implements ProcessStrategy {
 
