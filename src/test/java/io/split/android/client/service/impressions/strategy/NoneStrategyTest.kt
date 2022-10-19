@@ -4,7 +4,6 @@ import io.split.android.client.impressions.Impression
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.service.impressions.ImpressionsCounter
-import io.split.android.client.service.impressions.ImpressionsObserver
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker
@@ -18,9 +17,6 @@ import org.mockito.MockitoAnnotations
 import java.util.*
 
 class NoneStrategyTest {
-
-    @Mock
-    private lateinit var impressionsObserver: ImpressionsObserver
 
     @Mock
     private lateinit var taskExecutor: SplitTaskExecutor
@@ -40,7 +36,6 @@ class NoneStrategyTest {
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         strategy = NoneStrategy(
-            impressionsObserver,
             taskExecutor,
             taskFactory,
             impressionsCounter,
@@ -50,7 +45,7 @@ class NoneStrategyTest {
 
     @Test
     fun `keys are flushed when cache size is exceeded`() {
-        `when`(uniqueKeysTracker.size()).thenReturn(30000)
+        `when`(uniqueKeysTracker.isFull).thenReturn(true)
         val uniqueImpressionsTask = mock(SaveUniqueImpressionsTask::class.java)
         `when`(taskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(uniqueImpressionsTask)
 
@@ -71,22 +66,11 @@ class NoneStrategyTest {
     }
 
     @Test
-    fun `count is not incremented when previous time does not exist`() {
-        strategy.apply(createUniqueImpression())
-
-        verifyNoInteractions(impressionsCounter)
-    }
-
-    @Test
-    fun `count is incremented when previous time exists`() {
-        `when`(impressionsObserver.testAndSet(any()))
-            .thenReturn(null)
-            .thenReturn(100L)
-
+    fun `count is incremented`() {
         strategy.apply(createUniqueImpression(split = "split"))
         strategy.apply(createUniqueImpression(split = "split"))
 
-        verify(impressionsCounter, times(1)).inc(
+        verify(impressionsCounter, times(2)).inc(
             "split",
             100,
             1

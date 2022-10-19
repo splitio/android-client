@@ -9,5 +9,5 @@ public interface UniqueKeysTracker {
 
     Map<String, Set<String>> popAll();
 
-    int size();
+    boolean isFull();
 }

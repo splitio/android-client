@@ -165,18 +165,6 @@ public class ImpressionManagerImplTest {
                 any(SplitTaskExecutionListener.class));
     }
 
-    // TODO remove
-    @Test
-    public void pushImpressionWithNoneModeSavesKeysWhenCacheSizeIsExceeded() {
-        when(mUniqueKeysTracker.size()).thenReturn(30000);
-
-        mImpressionsManager = getNoneModeManager();
-
-        mImpressionsManager.pushImpression(createUniqueImpression());
-
-        verify(mTaskExecutor).submit(any(SaveUniqueImpressionsTask.class), eq(null));
-    }
-
     @Test
     public void flushWithOptimizedMode() {
         RetryBackoffCounterTimer impressionsTimer = mock(RetryBackoffCounterTimer.class);

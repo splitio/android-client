@@ -4,14 +4,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.List;
-
 import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionsCounter;
-import io.split.android.client.service.impressions.ImpressionsMode;
-import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 
@@ -20,19 +15,16 @@ import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
  */
 class NoneStrategy implements ProcessStrategy {
 
-    private final ImpressionsObserver mImpressionsObserver;
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mTaskFactory;
 
     private final ImpressionsCounter mImpressionsCounter;
     private final UniqueKeysTracker mUniqueKeysTracker;
 
-    public NoneStrategy(@NonNull ImpressionsObserver impressionsObserver,
-                        @NonNull SplitTaskExecutor taskExecutor,
+    public NoneStrategy(@NonNull SplitTaskExecutor taskExecutor,
                         @NonNull ImpressionsTaskFactory taskFactory,
                         @NonNull ImpressionsCounter impressionsCounter,
                         @NonNull UniqueKeysTracker uniqueKeysTracker) {
-        mImpressionsObserver = checkNotNull(impressionsObserver);
         mTaskExecutor = checkNotNull(taskExecutor);
         mTaskFactory = checkNotNull(taskFactory);
 
@@ -42,21 +34,12 @@ class NoneStrategy implements ProcessStrategy {
 
     @Override
     public void apply(@NonNull Impression impression) {
-        Long previousTime = mImpressionsObserver.testAndSet(impression);
-        impression = impression.withPreviousTime(previousTime);
-        if (previousTimeIsValid(previousTime)) {
-            mImpressionsCounter.inc(impression.split(), impression.time(), 1);
-        }
-
+        mImpressionsCounter.inc(impression.split(), impression.time(), 1);
         mUniqueKeysTracker.track(impression.key(), impression.split());
 
-        if (mUniqueKeysTracker.size() >= ServiceConstants.MAX_UNIQUE_KEYS_IN_MEMORY) {
+        if (mUniqueKeysTracker.isFull()) {
             saveUniqueKeys();
         }
-    }
-
-    private static boolean previousTimeIsValid(Long previousTime) {
-        return previousTime != null && previousTime != 0;
     }
 
     private void saveUniqueKeys() {
