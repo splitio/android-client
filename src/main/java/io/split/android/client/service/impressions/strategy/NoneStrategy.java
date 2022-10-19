@@ -41,9 +41,7 @@ class NoneStrategy implements ProcessStrategy {
     }
 
     @Override
-    public void apply(@NonNull List<Impression> impressions) {
-        Impression impression = impressions.get(0); //TODO
-
+    public void apply(@NonNull Impression impression) {
         Long previousTime = mImpressionsObserver.testAndSet(impression);
         impression = impression.withPreviousTime(previousTime);
         if (previousTimeIsValid(previousTime)) {

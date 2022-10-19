@@ -54,7 +54,7 @@ class NoneStrategyTest {
         val uniqueImpressionsTask = mock(SaveUniqueImpressionsTask::class.java)
         `when`(taskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(uniqueImpressionsTask)
 
-        strategy.apply(listOf(createUniqueImpression()))
+        strategy.apply(createUniqueImpression())
 
         verify(taskExecutor).submit(
             eq(uniqueImpressionsTask),
@@ -65,14 +65,14 @@ class NoneStrategyTest {
     @Test
     fun `impression is tracked by unique keys tracker`() {
         with(createUniqueImpression()) {
-            strategy.apply(listOf(this))
+            strategy.apply(this)
             verify(uniqueKeysTracker).track(key(), split())
         }
     }
 
     @Test
     fun `count is not incremented when previous time does not exist`() {
-        strategy.apply(listOf(createUniqueImpression()))
+        strategy.apply(createUniqueImpression())
 
         verifyNoInteractions(impressionsCounter)
     }
@@ -83,8 +83,8 @@ class NoneStrategyTest {
             .thenReturn(null)
             .thenReturn(100L)
 
-        strategy.apply(listOf(createUniqueImpression(split = "split")))
-        strategy.apply(listOf(createUniqueImpression(split = "split")))
+        strategy.apply(createUniqueImpression(split = "split"))
+        strategy.apply(createUniqueImpression(split = "split"))
 
         verify(impressionsCounter, times(1)).inc(
             "split",
