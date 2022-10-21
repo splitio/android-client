@@ -168,7 +168,7 @@ public class ImpressionManagerImplTest {
 
     @Test
     public void pushImpressionWithNoneModeSavesKeysWhenCacheSizeIsExceeded() {
-        when(mUniqueKeysTracker.size()).thenReturn(30000);
+        when(mUniqueKeysTracker.isFull()).thenReturn(true);
 
         mImpressionsManager = getNoneModeManager();
 
@@ -386,6 +386,7 @@ public class ImpressionManagerImplTest {
         verify(mTelemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
     }
 
+    // TODO remove
     @Test
     public void countIsNotIncrementedWhenPreviousTimeDoesNotExist() {
 
@@ -396,6 +397,7 @@ public class ImpressionManagerImplTest {
         verifyNoInteractions(mTaskExecutor);
     }
 
+    //TODO remove
     @Test
     public void countIsIncrementedWhenPreviousTimeExists() {
 
