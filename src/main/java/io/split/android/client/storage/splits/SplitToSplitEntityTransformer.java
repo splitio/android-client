@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
@@ -69,7 +70,12 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
         List<SplitDeferredTaskItem<List<SplitEntity>>> taskList = new ArrayList<>(partitions.size());
 
         for (List<Split> partition : partitions) {
-            taskList.add(new SplitDeferredTaskItem<>(() -> getSplitEntities(partition)));
+            taskList.add(new SplitDeferredTaskItem<>(new Callable<List<SplitEntity>>() {
+                @Override
+                public List<SplitEntity> call() throws Exception {
+                    return SplitToSplitEntityTransformer.this.getSplitEntities(partition);
+                }
+            }));
         }
 
         return taskList;

@@ -29,10 +29,11 @@ import okhttp3.Route;
 public class HttpClientImpl implements HttpClient {
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
     private static final long STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
-    private OkHttpClient mOkHttpClient;
-    private OkHttpClient mOkHttpClientStreaming;
-    private Map<String, String> mCommonHeaders;
-    private Map<String, String> mStreamingHeaders;
+
+    private final OkHttpClient mOkHttpClient;
+    private final OkHttpClient mOkHttpClientStreaming;
+    private final Map<String, String> mCommonHeaders;
+    private final Map<String, String> mStreamingHeaders;
 
     private HttpClientImpl(OkHttpClient okHttpClient, OkHttpClient okHttpClientStreaming) {
         mCommonHeaders = new HashMap<>();
@@ -43,13 +44,12 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpRequest request(URI uri, HttpMethod requestMethod, String body, Map<String, String> headers) {
-        Map<String, String> newHeaders = new HashMap<>();
-        newHeaders.putAll(mCommonHeaders);
-        if(headers != null) {
+        Map<String, String> newHeaders = new HashMap<>(mCommonHeaders);
+        if (headers != null) {
             newHeaders.putAll(headers);
         }
-        return new HttpRequestImpl(mOkHttpClient, uri, requestMethod, body, newHeaders);
 
+        return new HttpRequestImpl(mOkHttpClient, uri, requestMethod, body, newHeaders);
     }
 
     public HttpRequest request(URI uri, HttpMethod requestMethod) {
@@ -167,7 +167,6 @@ public class HttpClientImpl implements HttpClient {
                                                 DevelopmentSslConfig developmentSslConfig,
                                                 Context context) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
-
             if (proxy != null) {
                 builder.proxy(proxy);
             }
@@ -176,11 +175,11 @@ public class HttpClientImpl implements HttpClient {
                 builder.proxyAuthenticator(proxyAuthenticator);
             }
 
-            if (readTimeout != null && readTimeout.longValue() > 0) {
+            if (readTimeout != null && readTimeout > 0) {
                 builder.readTimeout(readTimeout, TimeUnit.MILLISECONDS);
             }
 
-            if (connectionTimeout != null && connectionTimeout.longValue() > 0) {
+            if (connectionTimeout != null && connectionTimeout > 0) {
                 builder.connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS);
             }
 
@@ -198,7 +197,7 @@ public class HttpClientImpl implements HttpClient {
             if (proxy == null) {
                 return null;
             }
-            return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxy.getHost(), proxy.getPort()));
+            return new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(proxy.getHost(), proxy.getPort()));
         }
 
         private Authenticator createBasicAuthenticator(String username, String password) {
