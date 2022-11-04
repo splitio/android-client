@@ -527,11 +527,6 @@ public class SplitClientConfig {
         return _telemetryRefreshRate;
     }
 
-    /**
-     * Sync all retrieved data only once on init (Default: false)
-     * No streaming neither polling service is enabled.
-     * To get last definitions, the SDK have to be recreated
-     **/
     public boolean syncEnabled() { return _syncEnabled; }
 
     public int mtkPerPush() {
@@ -1138,6 +1133,16 @@ public class SplitClientConfig {
          */
         public Builder telemetryRefreshRate(long telemetryRefreshRate) {
             _telemetryRefreshRate = telemetryRefreshRate;
+            return this;
+        }
+
+        /**
+         * Sync data (default: true)
+         *
+         * @param syncEnabled if false, not streaming nor polling services are enabled, in which case the SDK has to be recreated to get latest definitions.
+         */
+        public Builder syncEnabled(boolean syncEnabled) {
+            this._syncEnabled = syncEnabled;
             return this;
         }
 
