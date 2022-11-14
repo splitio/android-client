@@ -38,6 +38,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
         for (Split split : splits) {
             mInMemorySplits.put(split.name, split);
+            increaseTrafficTypeCount(split.trafficTypeName);
         }
     }
 

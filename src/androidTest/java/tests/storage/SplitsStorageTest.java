@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -30,6 +31,7 @@ public class SplitsStorageTest {
 
     final static Long INITIAL_CHANGE_NUMBER = 9999L;
     final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d}";
+    final String JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d, \"trafficTypeName\":\"%s\"}";
     SplitRoomDatabase mRoomDb;
     Context mContext;
     SplitsStorage mSplitsStorage;
@@ -319,6 +321,28 @@ public class SplitsStorageTest {
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
     }
 
+    @Test
+    public void trafficTypesAreLoadedInMemoryWhenLoadingLocalSplits() {
+        mRoomDb.clearAllTables();
+
+        SplitEntity entity = new SplitEntity();
+        String splitName = "split_test";
+        entity.setName(splitName);
+        entity.setBody(String.format(JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, splitName, INITIAL_CHANGE_NUMBER, "test_type"));
+
+        SplitEntity entity2 = new SplitEntity();
+        String splitName2 = "split_test_2";
+        entity2.setName(splitName2);
+        entity2.setBody(String.format(JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, splitName2, INITIAL_CHANGE_NUMBER, "test_type_2"));
+        mRoomDb.splitDao().insert(Arrays.asList(entity, entity2));
+
+        mSplitsStorage.loadLocal();
+
+        Assert.assertTrue(mSplitsStorage.isValidTrafficType("test_type"));
+        Assert.assertTrue(mSplitsStorage.isValidTrafficType("test_type_2"));
+        Assert.assertFalse(mSplitsStorage.isValidTrafficType("invalid_type"));
+    }
+
     private Split newSplit(String name, Status status, String trafficType) {
         Split split = new Split();
         split.name = name;
@@ -331,4 +355,3 @@ public class SplitsStorageTest {
         return split;
     }
 }
-
