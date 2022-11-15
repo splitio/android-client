@@ -214,11 +214,9 @@ public class SdkUpdateStreamingTest {
         mClient = mFactory.client();
 
         TestingHelper.TestEventTask readyTask = TestingHelper.testTask(readyLatch);
-        TestingHelper.TestEventTask timeoutTask = TestingHelper.testTask(readyLatch);
         TestingHelper.TestEventTask updatedTask = TestingHelper.testTask(updateLatch);
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
-        mClient.on(SplitEvent.SDK_READY_TIMED_OUT, timeoutTask);
         mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
 
         readyLatch.await(20, TimeUnit.SECONDS);
@@ -228,6 +226,7 @@ public class SdkUpdateStreamingTest {
         testMySegmentsUpdate();
         updateLatch.await(20, TimeUnit.SECONDS);
 
+        sleep(500);
         Assert.assertTrue(readyTask.onExecutedCalled);
         Assert.assertTrue(updatedTask.onExecutedCalled);
     }

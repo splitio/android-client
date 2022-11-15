@@ -41,6 +41,7 @@ public class TelemetryOccupancyTest extends OccupancyBaseTest {
         sleep(2000);
 
         List<StreamingEvent> streamingEvents = mTelemetryStorage.popStreamingEvents();
+        sleep(500);
         assertTrue(streamingEvents.stream().anyMatch(event -> event instanceof OccupancyPriStreamingEvent));
     }
 
