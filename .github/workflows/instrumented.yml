@@ -3,21 +3,14 @@ name: instrumented tests
 on: [ push ]
 
 jobs:
-  build:
-    runs-on: macos-latest
-
+  test:
+    runs-on: macos-10.15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: checkout
+        uses: actions/checkout@v3
 
-      - name: Setup Java
-        uses: actions/setup-java@v2
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
         with:
-          java-version: '11'
-          distribution: 'adopt'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
-
-      - name: Run instrumented tests
-        run: ./gradlew pixel2DebugAndroidTest
+          api-level: 30
+          script: ./gradlew pixel2DebugAndroidTest
