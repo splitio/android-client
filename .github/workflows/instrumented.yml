@@ -1,0 +1,23 @@
+name: instrumented tests
+
+on: [ push ]
+
+jobs:
+  build:
+    runs-on: macos-10.15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Run instrumented tests
+        run: ./gradlew -Pandroid.experimental.androidTest.numManagedDeviceShards=2 pixel2DebugAndroidTest
