@@ -145,8 +145,8 @@ public class ImpressionDaoTest extends GenericDaoTest {
         performance(1000);
     }
 
-    @Ignore
     @Test
+    @Ignore("Too resource intensive for CI")
     public void performance10000() {
         performance(10000);
     }

@@ -3,6 +3,7 @@ package tests.database;
 import android.util.Log;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -73,6 +74,7 @@ public class SplitDaoTest extends GenericDaoTest {
     }
 
     @Test
+    @Ignore("Too resource intensive for CI")
     public void performance10000() {
         performance(10000);
     }
