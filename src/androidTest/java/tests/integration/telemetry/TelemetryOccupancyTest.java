@@ -58,7 +58,8 @@ public class TelemetryOccupancyTest extends OccupancyBaseTest {
     @Test
     public void telemetryTokenRefreshStreamingEvent() throws InterruptedException, IOException {
         getSplitFactory(mTelemetryEnabledConfig);
-        Thread.sleep(500);
+
+        sleep(1000);
         List<StreamingEvent> streamingEvents = mTelemetryStorage.popStreamingEvents();
         assertTrue(streamingEvents.stream().anyMatch(event -> event instanceof TokenRefreshStreamingEvent));
     }

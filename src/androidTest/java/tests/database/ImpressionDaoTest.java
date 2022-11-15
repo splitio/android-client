@@ -3,6 +3,7 @@ package tests.database;
 import android.util.Log;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -144,6 +145,7 @@ public class ImpressionDaoTest extends GenericDaoTest {
         performance(1000);
     }
 
+    @Ignore
     @Test
     public void performance10000() {
         performance(10000);

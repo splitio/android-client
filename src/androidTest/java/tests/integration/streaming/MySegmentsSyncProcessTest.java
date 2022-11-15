@@ -180,7 +180,7 @@ public class MySegmentsSyncProcessTest {
         MySegmentEntity mySegmentEntityPayload2 = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 
         testMySegmentsPush(MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD);
-        sleep(1000);
+        sleep(2000);
         MySegmentEntity mySegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity mySegmentEntityEmptyPayload2 = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 

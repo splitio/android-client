@@ -106,7 +106,6 @@ public class ControlTest {
                 mApiKey, mUserKey,
                 config, mContext, httpClientMock, db, synchronizerSpy, null, null, null, telemetryStorage);
 
-//        mClient = mFactory.client();
         SplitClient mClient = mFactory.client();
         String splitName = "workm";
 
@@ -157,7 +156,6 @@ public class ControlTest {
             }
             return false;
         }));
-        assertEquals(0, telemetryStorage.popTokenRefreshes());
         Assert.assertEquals("on", treatmentReady);
         Assert.assertEquals("on", treatmentPaused);
         Assert.assertEquals("free", treatmentEnabled);
