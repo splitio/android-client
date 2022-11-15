@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         api-level: [ 29 ]
-        shard: [ 0, 1, 2, 3 ]
+        shard: [ 0, 1, 2, 3, 4, 5 ]
 
     steps:
       - name: checkout
@@ -53,4 +53,4 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           profile: Galaxy Nexus
-          script: ./gradlew connectedCheck --continue -Pandroid.testInstrumentationRunnerArguments.numShards=4 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}
+          script: ./gradlew connectedCheck --continue -Pandroid.testInstrumentationRunnerArguments.numShards=6 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}
