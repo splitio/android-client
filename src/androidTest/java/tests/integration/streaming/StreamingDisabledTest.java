@@ -88,6 +88,7 @@ public class StreamingDisabledTest {
         Assert.assertFalse(mIsStreamingConnected);
 
         // More than 1 hits means polling enabled
+        Thread.sleep(500);
         Assert.assertEquals(3,  mySegmentsHitsCountHit);
         Assert.assertEquals(3, mSplitsHitsCountHit);
 

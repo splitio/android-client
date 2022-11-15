@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
+        classpath 'com.android.tools.build:gradle:7.2.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
     }
 }
@@ -33,10 +33,10 @@ android {
 
         minSdkVersion 15
         targetSdkVersion 30
-        versionCode 0
-        versionName splitVersion
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments clearPackageData: 'true'
+
         consumerProguardFiles 'split-proguard-rules.pro'
 
         javaCompileOptions {
@@ -50,13 +50,18 @@ android {
         javadocDeps
     }
 
-    lintOptions {
-        disable 'InvalidPackage'
-        abortOnError false
-    }
 
     testOptions {
         unitTests.returnDefaultValues = true
+
+        execution 'ANDROIDX_TEST_ORCHESTRATOR'
+            devices {
+                pixel2(com.android.build.api.dsl.ManagedVirtualDevice) {
+                    device = "Pixel 2"
+                    apiLevel = 30
+                    systemImageSource = "google-atd"
+                }
+            }
     }
 
     sourceSets {
@@ -78,6 +83,11 @@ android {
             buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
         }
     }
+    lint {
+        abortOnError false
+        disable 'InvalidPackage'
+    }
+    namespace 'io.split.android.android_client'
 }
 
 repositories {
@@ -106,6 +116,7 @@ dependencies {
     def mockWebServerVersion = '3.12.13'
 
     def androidTestVersion = '1.4.0'
+    def orchestratorVersion = '1.4.2'
 
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
@@ -138,6 +149,7 @@ dependencies {
     androidTestImplementation "androidx.test:core:$androidTestVersion"
     androidTestImplementation "androidx.test:runner:$androidTestVersion"
     androidTestImplementation "androidx.test:rules:$androidTestVersion"
+    androidTestUtil "androidx.test:orchestrator:$orchestratorVersion"
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
     androidTestImplementation "androidx.room:room-testing:$roomVersion"
     androidTestImplementation "androidx.work:work-testing:$workVersion"
