@@ -78,7 +78,7 @@ class NoneStrategyTest {
     }
 }
 
-private fun createUniqueImpression(split: String = UUID.randomUUID().toString()): Impression =
+fun createUniqueImpression(split: String = UUID.randomUUID().toString()): Impression =
     Impression(
         "key",
         "bkey",
