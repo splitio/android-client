@@ -10,8 +10,8 @@ jobs:
       # Allow tests to continue on other devices if they fail on one device.
       fail-fast: false
       matrix:
-        api-level: [ 29, 29 ]
-        shard: [ 0, 1 ]
+        api-level: [ 29 ]
+        shard: [ 0, 1, 2, 3 ]
 
     steps:
       - name: checkout
@@ -54,4 +54,4 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           profile: Galaxy Nexus
-          script: ./gradlew connectedCheck --continue -Pandroid.testInstrumentationRunnerArguments.numShards=2 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}
+          script: ./gradlew connectedCheck --continue -Pandroid.testInstrumentationRunnerArguments.numShards=4 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}
