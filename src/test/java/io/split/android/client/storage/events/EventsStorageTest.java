@@ -3,6 +3,7 @@ package io.split.android.client.storage.events;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -60,7 +61,7 @@ public class EventsStorageTest {
 
         storage.enablePersistence(false);
         pushEvents(storage);
-        verify(mPersistentStorage, times(10)).push(any());
+        verifyNoMoreInteractions(mPersistentStorage);
     }
 
     @Test
