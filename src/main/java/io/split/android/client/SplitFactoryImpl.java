@@ -37,7 +37,7 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;

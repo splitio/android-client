@@ -40,7 +40,7 @@ import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 import io.split.android.client.service.telemetry.TelemetryTaskFactoryImpl;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.common.SplitStorageContainer;
 
 public class SplitTaskFactoryImpl implements SplitTaskFactory {
 

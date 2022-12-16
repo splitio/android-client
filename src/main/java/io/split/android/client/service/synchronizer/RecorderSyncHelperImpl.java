@@ -3,19 +3,17 @@ package io.split.android.client.service.synchronizer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.storage.InBytesSizable;
-import io.split.android.client.storage.StoragePusher;
+import io.split.android.client.storage.common.InBytesSizable;
+import io.split.android.client.storage.common.StoragePusher;
 
 public class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHelper<T> {
 

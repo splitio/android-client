@@ -74,7 +74,7 @@ import io.split.android.client.service.synchronizer.attributes.AttributesSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;

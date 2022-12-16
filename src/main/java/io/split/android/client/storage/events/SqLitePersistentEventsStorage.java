@@ -9,10 +9,9 @@ import java.util.List;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.db.EventDao;
 import io.split.android.client.storage.db.EventEntity;
-import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
-import io.split.android.client.storage.SqLitePersistentStorage;
+import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.utils.Json;
 
 import static com.google.common.base.Preconditions.checkNotNull;
