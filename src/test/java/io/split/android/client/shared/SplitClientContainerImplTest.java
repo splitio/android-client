@@ -41,7 +41,7 @@ import io.split.android.client.service.sseclient.sseclient.PushNotificationManag
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManagerDeferredStartTask;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsBackgroundSyncScheduleTask;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
 public class SplitClientContainerImplTest {

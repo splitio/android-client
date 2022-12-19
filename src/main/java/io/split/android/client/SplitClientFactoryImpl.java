@@ -16,7 +16,7 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.shared.SplitClientContainer;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;

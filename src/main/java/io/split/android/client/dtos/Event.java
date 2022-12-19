@@ -3,7 +3,7 @@ package io.split.android.client.dtos;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 
-import io.split.android.client.storage.InBytesSizable;
+import io.split.android.client.storage.common.InBytesSizable;
 import io.split.android.client.utils.deserializer.EventDeserializer;
 
 @JsonAdapter(EventDeserializer.class)

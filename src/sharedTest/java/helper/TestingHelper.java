@@ -7,6 +7,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClient;
+import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.utils.logger.Logger;
@@ -96,6 +97,18 @@ public class TestingHelper {
             impressions.add(newImpression("feature_" + i, "key_" + i));
         }
         return impressions;
+    }
+
+    public static List<Event> createEvents(int from, int to, int status) {
+        List<Event> events = new ArrayList<>();
+        for (int i = from; i <= to; i++) {
+            Event event = new Event();
+            event.eventTypeId = "event_" + i;
+            event.trafficTypeName = "custom";
+            event.key = "key1";
+            events.add(event);
+        }
+        return events;
     }
 
     public static KeyImpression newImpression(String feature, String key) {

@@ -1,4 +1,4 @@
-package io.split.android.client.storage.impressions;
+package io.split.android.client.storage.events;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -13,10 +13,10 @@ import org.mockito.MockitoAnnotations;
 import helper.TestingHelper;
 import io.split.android.client.storage.db.StorageRecordStatus;
 
-public class ImpressionsStorageTest {
+public class EventsStorageTest {
 
     @Mock
-    private PersistentImpressionsStorage mPersistentStorage;
+    private PersistentEventsStorage mPersistentStorage;
 
     @Before
     public void setUp() {
@@ -25,15 +25,15 @@ public class ImpressionsStorageTest {
 
     @Test
     public void testStartDisabledPersistence() {
-        ImpressionsStorage storage = new ImpressionsStorage(mPersistentStorage, false);
-        pushImpressions(storage);
+        EventsStorage storage = new EventsStorage(mPersistentStorage, false);
+        pushEvents(storage);
         verify(mPersistentStorage, times(0)).push(any());
     }
 
     @Test
     public void testStartEnabledPersistence() {
-        ImpressionsStorage storage = new ImpressionsStorage(mPersistentStorage, true);
-        pushImpressions(storage);
+        EventsStorage storage = new EventsStorage(mPersistentStorage, true);
+        pushEvents(storage);
         verify(mPersistentStorage, times(10)).push(any());
     }
 
@@ -42,12 +42,12 @@ public class ImpressionsStorageTest {
 
         // When enabling persistence data should be persisted and
         // in memory cache cleared
-        ImpressionsStorage storage = new ImpressionsStorage(mPersistentStorage, false);
-        pushImpressions(storage);
+        EventsStorage storage = new EventsStorage(mPersistentStorage, false);
+        pushEvents(storage);
         verify(mPersistentStorage, times(0)).push(any());
 
         storage.enablePersistence(true);
-        pushImpressions(storage);
+        pushEvents(storage);
         verify(mPersistentStorage, times(10)).push(any());
     }
 
@@ -55,20 +55,20 @@ public class ImpressionsStorageTest {
     public void testDisablePersistence() {
 
         // When disabling persistence data should not be persisted
-        ImpressionsStorage storage = new ImpressionsStorage(mPersistentStorage, true);
-        pushImpressions(storage);
+        EventsStorage storage = new EventsStorage(mPersistentStorage, true);
+        pushEvents(storage);
         verify(mPersistentStorage, times(10)).push(any());
 
         storage.enablePersistence(false);
-        pushImpressions(storage);
+        pushEvents(storage);
         verifyNoMoreInteractions(mPersistentStorage);
     }
 
     @Test
     public void clearInMemory() {
         // When disabling persistence data should not be persisted
-        ImpressionsStorage storage = new ImpressionsStorage(mPersistentStorage, false);
-        pushImpressions(storage);
+        EventsStorage storage = new EventsStorage(mPersistentStorage, false);
+        pushEvents(storage);
         storage.clearInMemory();
         storage.enablePersistence(true);
 
@@ -76,8 +76,8 @@ public class ImpressionsStorageTest {
     }
 
 
-    private void pushImpressions(ImpressionsStorage storage) {
-        TestingHelper.createImpressions(0, 9, StorageRecordStatus.ACTIVE)
+    private void pushEvents(EventsStorage storage) {
+        TestingHelper.createEvents(0, 9, StorageRecordStatus.ACTIVE)
                 .stream().forEach((imp) -> {
                     storage.push(imp);
                 });
