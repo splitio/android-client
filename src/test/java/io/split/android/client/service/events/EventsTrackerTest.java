@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -78,7 +80,25 @@ public class EventsTrackerTest {
             verify(mSyncManager, never()).pushEvent(any());
             verify(mTelemetryStorageProducer, never()).recordLatency(Method.TRACK, 0L);
         }
+    }
 
+    @Test
+    public void trackRecordsLatencyInEvaluationProducer() {
+        ProcessedEventProperties processedEventProperties = mock(ProcessedEventProperties.class);
+        when(processedEventProperties.isValid()).thenReturn(true);
+        mEventsTracker.track("any", "tt", "ev", 1, null);
 
+        verify(mTelemetryStorageProducer).recordLatency(eq(Method.TRACK), anyLong());
+    }
+
+    @Test
+    public void trackRecordsExceptionInCaseThereIsOne() {
+        when(mEventPropertiesProcessor.process(any())).thenAnswer(invocation -> {
+            throw new Exception("test exception");
+        });
+
+        mEventsTracker.track("event", "tt", "ev", 0, null);
+
+        verify(mTelemetryStorageProducer).recordException(Method.TRACK);
     }
 }
