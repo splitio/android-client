@@ -177,6 +177,17 @@ public class ImpressionManagerImplTest {
     }
 
     @Test
+    public void pushImpressionWhenTrackingDisabled() {
+
+        mImpressionsManager = getDebugModeManager();
+        mImpressionsManager.enableTracking(false);
+
+        mImpressionsManager.pushImpression(createImpression());
+
+        verifyNoInteractions(mTelemetryRuntimeProducer);
+    }
+
+    @Test
     public void flushWithOptimizedMode() {
         RetryBackoffCounterTimer impressionsTimer = mock(RetryBackoffCounterTimer.class);
         RetryBackoffCounterTimer impressionsCountTimer = mock(RetryBackoffCounterTimer.class);
@@ -381,7 +392,7 @@ public class ImpressionManagerImplTest {
 
         pushDummyImpression(mImpressionsManager);
 
-        verifyNoInteractions(mImpressionsCounter);
+        verifyNoInteractions(mTaskExecutor);
     }
 
     @Test

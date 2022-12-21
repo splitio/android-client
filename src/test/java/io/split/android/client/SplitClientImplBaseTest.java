@@ -36,13 +36,11 @@ public abstract class SplitClientImplBaseTest {
     @Mock
     protected SplitsStorage splitsStorage;
     @Mock
-    protected EventPropertiesProcessor eventPropertiesProcessor;
+    protected EventsTracker eventsTracker;
     @Mock
     protected SyncManager syncManager;
     @Mock
     protected TelemetryStorageProducer telemetryStorageProducer;
-    @Mock
-    protected EventValidator eventValidator;
     @Mock
     protected TreatmentManager treatmentManager;
     @Mock
@@ -64,8 +62,7 @@ public abstract class SplitClientImplBaseTest {
                 impressionListener,
                 splitClientConfig,
                 new SplitEventsManager(splitClientConfig),
-                eventPropertiesProcessor,
-                eventValidator,
+                eventsTracker,
                 syncManager,
                 attributesManager,
                 telemetryStorageProducer,

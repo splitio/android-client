@@ -2,6 +2,7 @@ package io.split.android.client;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -24,9 +25,7 @@ public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
     public void trackRecordsLatencyInEvaluationProducer() {
         ProcessedEventProperties processedEventProperties = mock(ProcessedEventProperties.class);
         when(processedEventProperties.isValid()).thenReturn(true);
-        when(eventPropertiesProcessor.process(null)).thenReturn(processedEventProperties);
-        when(eventValidator.validate(any(), eq(false))).thenReturn(null);
-
+        when(eventsTracker.track(any(), any(), any(), anyDouble(), any())).thenReturn(true);
         splitClient.track("any");
 
         verify(telemetryStorageProducer).recordLatency(eq(Method.TRACK), anyLong());
@@ -34,7 +33,7 @@ public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
 
     @Test
     public void trackRecordsExceptionInCaseThereIsOne() {
-        when(eventValidator.validate(any(), anyBoolean())).thenAnswer(invocation -> {
+        when(eventsTracker.track(any(), any(), any(), anyDouble(), any())).thenAnswer(invocation -> {
             throw new Exception("test exception");
         });
 
