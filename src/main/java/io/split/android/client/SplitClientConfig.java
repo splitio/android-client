@@ -1167,6 +1167,7 @@ public class SplitClientConfig {
          */
         public Builder userConsent(UserConsent value) {
             _userConsent = value;
+            Logger.v("User consent has been set to " + value.toString());
             return this;
         }
 
