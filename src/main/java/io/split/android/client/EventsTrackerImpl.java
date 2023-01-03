@@ -1,5 +1,9 @@
 package io.split.android.client;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import androidx.annotation.NonNull;
+
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,20 +28,21 @@ public class EventsTrackerImpl implements EventsTracker {
     private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final EventPropertiesProcessor mEventPropertiesProcessor;
     private final SyncManager mSyncManager;
-    private AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
+    private final AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
 
-    public EventsTrackerImpl(SplitEventsManager eventsManager,
-                             EventValidator eventValidator,
-                             ValidationMessageLogger validationLogger,
-                             TelemetryStorageProducer telemetryStorageProducer,
-                             EventPropertiesProcessor eventPropertiesProcessor,
-                             SyncManager syncManager) {
-        mEventsManager = eventsManager;
-        mEventValidator = eventValidator;
-        mValidationLogger = validationLogger;
-        mTelemetryStorageProducer = telemetryStorageProducer;
-        mEventPropertiesProcessor = eventPropertiesProcessor;
-        mSyncManager = syncManager;
+    public EventsTrackerImpl(@NonNull SplitEventsManager eventsManager,
+                             @NonNull EventValidator eventValidator,
+                             @NonNull ValidationMessageLogger validationLogger,
+                             @NonNull TelemetryStorageProducer telemetryStorageProducer,
+                             @NonNull EventPropertiesProcessor eventPropertiesProcessor,
+                             @NonNull SyncManager syncManager) {
+
+        mEventsManager = checkNotNull(eventsManager);
+        mEventValidator = checkNotNull(eventValidator);
+        mValidationLogger = checkNotNull(validationLogger);
+        mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
+        mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
+        mSyncManager = checkNotNull(syncManager);
     }
 
     public void enableTracking(boolean enable) {
