@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -28,11 +29,12 @@ import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 
 public class SplitsStorageTest {
 
-    final static Long INITIAL_CHANGE_NUMBER = 9999L;
-    final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d}";
-    SplitRoomDatabase mRoomDb;
-    Context mContext;
-    SplitsStorage mSplitsStorage;
+    private static final Long INITIAL_CHANGE_NUMBER = 9999L;
+    private static final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d}";
+    private static final String JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d, \"trafficTypeName\":\"%s\"}";
+    private SplitRoomDatabase mRoomDb;
+    private Context mContext;
+    private SplitsStorage mSplitsStorage;
 
     @Before
     public void setUp() {
@@ -319,6 +321,33 @@ public class SplitsStorageTest {
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
     }
 
+    @Test
+    public void trafficTypesAreLoadedInMemoryWhenLoadingLocalSplits() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type"), newSplitEntity("split_test_2", "test_type_2")));
+
+        mSplitsStorage.loadLocal();
+
+        Assert.assertTrue(mSplitsStorage.isValidTrafficType("test_type"));
+        Assert.assertTrue(mSplitsStorage.isValidTrafficType("test_type_2"));
+        Assert.assertFalse(mSplitsStorage.isValidTrafficType("invalid_type"));
+    }
+
+    @Test
+    public void loadedFromStorageTrafficTypesAreCorrectlyUpdated() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type"), newSplitEntity("split_test_2", "test_type_2")));
+
+        mSplitsStorage.loadLocal();
+
+        Split updatedSplit = newSplit("split_test", Status.ACTIVE, "new_type");
+        mSplitsStorage.update(new ProcessedSplitChange(Collections.singletonList(updatedSplit), Collections.emptyList(), 1L, 0L));
+
+        Assert.assertFalse(mSplitsStorage.isValidTrafficType("test_type"));
+        Assert.assertTrue(mSplitsStorage.isValidTrafficType("new_type"));
+        Assert.assertTrue(mSplitsStorage.isValidTrafficType("test_type_2"));
+    }
+
     private Split newSplit(String name, Status status, String trafficType) {
         Split split = new Split();
         split.name = name;
@@ -330,5 +359,12 @@ public class SplitsStorageTest {
         }
         return split;
     }
-}
 
+    private static SplitEntity newSplitEntity(String name, String trafficType) {
+        SplitEntity entity = new SplitEntity();
+        entity.setName(name);
+        entity.setBody(String.format(JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType));
+
+        return entity;
+    }
+}
