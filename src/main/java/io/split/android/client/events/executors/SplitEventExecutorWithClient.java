@@ -12,20 +12,20 @@ import io.split.android.client.events.SplitEventTaskMethodNotImplementedExceptio
  * Created by sarrubia on 4/3/18.
  */
 
-public class SplitEventExecutorWithClient extends SplitEventExecutorAbstract{
+public class SplitEventExecutorWithClient extends SplitEventExecutorAbstract {
 
-    private SplitClient _sclient;
+    private final SplitClient mSplitClient;
 
     public SplitEventExecutorWithClient(SplitEventTask task, SplitClient client) {
 
         super(task);
         checkNotNull(task);
-        _sclient = checkNotNull(client);
+        mSplitClient = checkNotNull(client);
     }
 
     public void execute(){
 
-        _asyncTansk = new AsyncTask<SplitClient, Void, SplitClient>() {
+        mAsyncTask = new AsyncTask<SplitClient, Void, SplitClient>() {
 
             @Override
             protected SplitClient doInBackground(SplitClient... splitClients) {
@@ -36,8 +36,8 @@ public class SplitEventExecutorWithClient extends SplitEventExecutorAbstract{
 
                     //BACKGROUND POST EXECUTION
                     try {
-                        _task.onPostExecution(client);
-                    } catch (SplitEventTaskMethodNotImplementedException e) {
+                        mTask.onPostExecution(client);
+                    } catch (Exception e) {
                         //Method not implemented by user
                     }
 
@@ -53,13 +53,13 @@ public class SplitEventExecutorWithClient extends SplitEventExecutorAbstract{
 
                 //UI POST EXECUTION
                 try {
-                    _task.onPostExecutionView(sclient);
-                } catch (SplitEventTaskMethodNotImplementedException e) {
+                    mTask.onPostExecutionView(sclient);
+                } catch (Exception e) {
                     //Method not implemented by user
                 }
             }
         };
 
-        _asyncTansk.execute(_sclient);
+        mAsyncTask.execute(mSplitClient);
     }
 }

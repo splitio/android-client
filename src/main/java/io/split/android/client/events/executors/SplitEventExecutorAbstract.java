@@ -11,12 +11,12 @@ import io.split.android.client.events.SplitEventTask;
 
 public abstract class SplitEventExecutorAbstract {
 
-    protected AsyncTask<SplitClient, Void, SplitClient> _asyncTansk;
+    protected AsyncTask<SplitClient, Void, SplitClient> mAsyncTask;
 
-    protected SplitEventTask _task;
+    protected SplitEventTask mTask;
 
     protected SplitEventExecutorAbstract(SplitEventTask task){
-        _task = task;
+        mTask = task;
     }
 
     public abstract void execute();
