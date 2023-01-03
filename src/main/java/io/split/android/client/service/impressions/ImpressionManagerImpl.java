@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
@@ -18,6 +20,7 @@ import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.utils.logger.Logger;
 
 public class ImpressionManagerImpl implements ImpressionManager {
 
@@ -33,6 +36,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
     private final UniqueKeysTracker mUniqueKeysTracker;
     private final ImpressionManagerRetryTimerProvider mRetryTimerProvider;
+    private AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
 
     public ImpressionManagerImpl(@NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull ImpressionsTaskFactory splitTaskFactory,
@@ -80,7 +84,18 @@ public class ImpressionManagerImpl implements ImpressionManager {
     }
 
     @Override
+    public void enableTracking(boolean enable) {
+        isTrackingEnabled.set(enable);
+    }
+
+    @Override
     public void pushImpression(Impression impression) {
+
+        if (!isTrackingEnabled.get()) {
+            Logger.v("Impression not tracked because tracking is disabled");
+            return;
+        }
+
         Long previousTime = mImpressionsObserver.testAndSet(impression);
         impression = impression.withPreviousTime(previousTime);
         if (shouldTrackImpressionsCount() && previousTimeIsValid(previousTime)) {

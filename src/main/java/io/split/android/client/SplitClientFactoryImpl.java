@@ -22,11 +22,15 @@ import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryInitProducer;
 import io.split.android.client.validators.AttributesValidatorImpl;
+import io.split.android.client.validators.EventValidator;
+import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
+import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManagerFactory;
 import io.split.android.client.validators.TreatmentManagerFactoryImpl;
 import io.split.android.client.validators.ValidationMessageLogger;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
 
 public class SplitClientFactoryImpl implements SplitClientFactory {
@@ -43,7 +47,6 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final TreatmentManagerFactory mTreatmentManagerFactory;
     private final ImpressionListener mCustomerImpressionListener;
     private final SplitValidatorImpl mSplitValidator;
-    private final EventPropertiesProcessorImpl mEventPropertiesProcessor;
 
     public SplitClientFactoryImpl(@NonNull SplitFactory splitFactory,
                                   @NonNull SplitClientContainer clientContainer,
@@ -79,8 +82,6 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mStorageContainer.getTelemetryStorage(),
                 new EvaluatorImpl(mStorageContainer.getSplitsStorage(), mSplitParser)
         );
-
-        mEventPropertiesProcessor = new EventPropertiesProcessorImpl();
     }
 
     @Override
@@ -92,6 +93,8 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
 
 
         AttributesStorage attributesStorage = mStorageContainer.getAttributesStorage(key.matchingKey());
+        EventsTracker eventsTracker = buildEventsTracker(eventsManager);
+
         SplitClientImpl splitClient = new SplitClientImpl(mSplitFactory,
                 mClientContainer,
                 key,
@@ -100,7 +103,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mConfig,
                 eventsManager,
                 mStorageContainer.getSplitsStorage(),
-                mEventPropertiesProcessor,
+                eventsTracker,
                 mSyncManager,
                 mAttributesManagerFactory.getManager(key.matchingKey(), attributesStorage),
                 mStorageContainer.getTelemetryStorage(),
@@ -118,8 +121,14 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                     initializationStartTime,
                     mConfig.shouldRecordTelemetry());
         }
-
         return splitClient;
+    }
+
+    private EventsTracker buildEventsTracker(SplitEventsManager eventsManager) {
+        EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mStorageContainer.getSplitsStorage());
+        return new EventsTrackerImpl(eventsManager,
+                eventsValidator, new ValidationMessageLoggerImpl(), mStorageContainer.getTelemetryStorage(),
+                new EventPropertiesProcessorImpl(), mSyncManager);
     }
 
     private AttributesManagerFactory getAttributesManagerFactory(boolean persistentAttributesEnabled,

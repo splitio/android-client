@@ -13,7 +13,6 @@ import java.util.Map;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
-import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -24,13 +23,11 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.logger.Logger;
-import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerHelper;
-import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
@@ -43,14 +40,13 @@ public final class SplitClientImpl implements SplitClient {
     private final SplitClientConfig mConfig;
     private final Key mKey;
     private final SplitEventsManager mEventsManager;
-    private final EventPropertiesProcessor mEventPropertiesProcessor;
     private final TreatmentManager mTreatmentManager;
-    private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
     private final SyncManager mSyncManager;
     private final AttributesManager mAttributesManager;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final SplitValidator mSplitValidator;
+    private final EventsTracker mEventsTracker;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -64,7 +60,7 @@ public final class SplitClientImpl implements SplitClient {
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
                            SplitsStorage splitsStorage,
-                           EventPropertiesProcessor eventPropertiesProcessor,
+                           EventsTracker eventsTracker,
                            SyncManager syncManager,
                            AttributesManager attributesManager,
                            TelemetryStorageProducer telemetryStorageProducer,
@@ -77,8 +73,7 @@ public final class SplitClientImpl implements SplitClient {
                 impressionListener,
                 config,
                 eventsManager,
-                eventPropertiesProcessor,
-                new EventValidatorImpl(new KeyValidatorImpl(), splitsStorage),
+                eventsTracker,
                 syncManager,
                 attributesManager,
                 telemetryStorageProducer,
@@ -94,8 +89,7 @@ public final class SplitClientImpl implements SplitClient {
                            ImpressionListener impressionListener,
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
-                           EventPropertiesProcessor eventPropertiesProcessor,
-                           EventValidator eventValidator,
+                           EventsTracker eventsTracker,
                            SyncManager syncManager,
                            AttributesManager attributesManager,
                            TelemetryStorageProducer telemetryStorageProducer,
@@ -109,11 +103,10 @@ public final class SplitClientImpl implements SplitClient {
         mKey = checkNotNull(key);
         mConfig = checkNotNull(config);
         mEventsManager = checkNotNull(eventsManager);
-        mEventValidator = checkNotNull(eventValidator);
+        mEventsTracker = checkNotNull(eventsTracker);
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTelemetryStorageProducer = telemetryStorageProducer;
         mTreatmentManager = treatmentManager;
-        mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
         mSyncManager = checkNotNull(syncManager);
         mAttributesManager = checkNotNull(attributesManager);
         mSplitValidator = checkNotNull(splitValidator);
@@ -257,6 +250,14 @@ public final class SplitClientImpl implements SplitClient {
         return track(mKey.matchingKey(), mConfig.trafficType(), eventType, value, properties);
     }
 
+    private boolean track(String key, String trafficType, String eventType, double value, Map<String, Object> properties) {
+        if (mIsClientDestroyed) {
+            mValidationLogger.e("Client has already been destroyed - no calls possible", "track");
+            return false;
+        }
+        return mEventsTracker.track(key, trafficType, eventType, value, properties);
+    }
+
     @Override
     public boolean setAttribute(String attributeName, Object value) {
         try {
@@ -320,59 +321,6 @@ public final class SplitClientImpl implements SplitClient {
             return mAttributesManager.clearAttributes();
         } catch (Exception exception) {
             Logger.e("Error clearing attributes: " + exception.getLocalizedMessage());
-
-            return false;
-        }
-    }
-
-    // Estimated event size without properties
-    private final static int ESTIMATED_EVENT_SIZE_WITHOUT_PROPS = 1024;
-
-    private boolean track(String key, String trafficType, String eventType, double value, Map<String, Object> properties) {
-        try {
-            final String validationTag = "track";
-            final boolean isSdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
-            if (mIsClientDestroyed) {
-                mValidationLogger.e("Client has already been destroyed - no calls possible", validationTag);
-                return false;
-            }
-
-            Event event = new Event();
-            event.eventTypeId = eventType;
-            event.trafficTypeName = trafficType;
-            event.key = key;
-            event.value = value;
-            event.timestamp = System.currentTimeMillis();
-            event.properties = properties;
-
-            ValidationErrorInfo errorInfo = mEventValidator.validate(event, isSdkReady);
-            if (errorInfo != null) {
-
-                if (errorInfo.isError()) {
-                    mValidationLogger.e(errorInfo, validationTag);
-                    return false;
-                }
-                mValidationLogger.w(errorInfo, validationTag);
-                event.trafficTypeName = event.trafficTypeName.toLowerCase();
-            }
-
-            ProcessedEventProperties processedProperties =
-                    mEventPropertiesProcessor.process(event.properties);
-            if (!processedProperties.isValid()) {
-                return false;
-            }
-
-            long startTime = System.currentTimeMillis();
-
-            event.properties = processedProperties.getProperties();
-            event.setSizeInBytes(ESTIMATED_EVENT_SIZE_WITHOUT_PROPS + processedProperties.getSizeInBytes());
-            mSyncManager.pushEvent(event);
-
-            mTelemetryStorageProducer.recordLatency(Method.TRACK, System.currentTimeMillis() - startTime);
-
-            return true;
-        } catch (Exception exception) {
-            mTelemetryStorageProducer.recordException(Method.TRACK);
 
             return false;
         }
