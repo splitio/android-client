@@ -244,6 +244,7 @@ public class SplitClientConfig {
         _telemetryRefreshRate = telemetryRefreshRate;
         _syncEnabled = syncEnabled;
         _logLevel = logLevel;
+        _userConsent = userConsent;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
