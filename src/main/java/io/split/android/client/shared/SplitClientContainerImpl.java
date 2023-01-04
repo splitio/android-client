@@ -131,7 +131,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
 
     @Override
     public void createNewClient(Key key) {
-        SplitEventsManager eventsManager = new SplitEventsManager(mConfig);
+        SplitEventsManager eventsManager = new SplitEventsManager(mConfig, mSplitTaskExecutor);
         MySegmentsTaskFactory mySegmentsTaskFactory = getMySegmentsTaskFactory(key, eventsManager);
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));

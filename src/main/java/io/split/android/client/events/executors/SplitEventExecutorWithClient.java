@@ -1,65 +1,30 @@
 package io.split.android.client.events.executors;
 
-import android.os.AsyncTask;
-
 import static com.google.common.base.Preconditions.checkNotNull;
+
+import androidx.annotation.NonNull;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.events.SplitEventTask;
-import io.split.android.client.events.SplitEventTaskMethodNotImplementedException;
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutor;
 
-/**
- * Created by sarrubia on 4/3/18.
- */
+public class SplitEventExecutorWithClient implements SplitEventExecutorAbstract {
 
-public class SplitEventExecutorWithClient extends SplitEventExecutorAbstract {
+    private final SplitTaskExecutor mSplitTaskExecutor;
+    private final SplitTask mBackgroundSplitTask;
+    private final SplitTask mMainThreadSplitTask;
 
-    private final SplitClient mSplitClient;
-
-    public SplitEventExecutorWithClient(SplitEventTask task, SplitClient client) {
-
-        super(task);
-        checkNotNull(task);
-        mSplitClient = checkNotNull(client);
+    public SplitEventExecutorWithClient(@NonNull SplitTaskExecutor taskExecutor,
+                                        @NonNull SplitEventTask task,
+                                        @NonNull SplitClient client) {
+        mSplitTaskExecutor = checkNotNull(taskExecutor);
+        mBackgroundSplitTask = new BackgroundSplitTask(task, client);
+        mMainThreadSplitTask = new MainThreadSplitTask(task, client);
     }
 
-    public void execute(){
-
-        mAsyncTask = new AsyncTask<SplitClient, Void, SplitClient>() {
-
-            @Override
-            protected SplitClient doInBackground(SplitClient... splitClients) {
-
-                if (splitClients.length > 0) {
-
-                    SplitClient client = checkNotNull(splitClients[0]);
-
-                    //BACKGROUND POST EXECUTION
-                    try {
-                        mTask.onPostExecution(client);
-                    } catch (Exception e) {
-                        //Method not implemented by user
-                    }
-
-                    return client;
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(SplitClient sclient){
-
-                checkNotNull(sclient);
-
-                //UI POST EXECUTION
-                try {
-                    mTask.onPostExecutionView(sclient);
-                } catch (Exception e) {
-                    //Method not implemented by user
-                }
-            }
-        };
-
-        mAsyncTask.execute(mSplitClient);
+    public void execute() {
+        mSplitTaskExecutor.submit(mBackgroundSplitTask, null);
+        mSplitTaskExecutor.submitOnMainThread(mMainThreadSplitTask);
     }
 }

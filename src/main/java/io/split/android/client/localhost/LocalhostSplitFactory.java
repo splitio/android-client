@@ -73,7 +73,8 @@ public class LocalhostSplitFactory implements SplitFactory {
                 attributesManagerFactory,
                 new AttributesMergerImpl(),
                 new NoOpTelemetryStorage(),
-                eventsManagerCoordinator);
+                eventsManagerCoordinator,
+                taskExecutor);
 
         mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage);
         mSynchronizer.start();

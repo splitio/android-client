@@ -27,4 +27,6 @@ public interface SplitTaskExecutor {
     void stopTask(String taskId);
 
     void stop();
+
+    void submitOnMainThread(SplitTask splitTask);
 }
