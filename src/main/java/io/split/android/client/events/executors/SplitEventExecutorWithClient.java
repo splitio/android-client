@@ -19,8 +19,8 @@ public class SplitEventExecutorWithClient implements SplitEventExecutorAbstract 
                                         @NonNull SplitEventTask task,
                                         @NonNull SplitClient client) {
         mSplitTaskExecutor = checkNotNull(taskExecutor);
-        mBackgroundSplitTask = new BackgroundSplitTask(task, client);
-        mMainThreadSplitTask = new MainThreadSplitTask(task, client);
+        mBackgroundSplitTask = new ClientEventSplitTask(task, client, false);
+        mMainThreadSplitTask = new ClientEventSplitTask(task, client, true);
     }
 
     public void execute() {

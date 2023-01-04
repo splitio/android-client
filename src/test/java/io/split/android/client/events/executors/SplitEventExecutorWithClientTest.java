@@ -5,7 +5,6 @@ import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -13,8 +12,6 @@ import java.util.Objects;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.events.SplitEventTask;
-import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 
 public class SplitEventExecutorWithClientTest {
@@ -39,7 +36,7 @@ public class SplitEventExecutorWithClientTest {
     public void executeSubmitsBothTasksToTaskExecutor() {
         mSplitEventExecutorWithClient.execute();
 
-        verify(mSplitTaskExecutor).submit(argThat(BackgroundSplitTask.class::isInstance), argThat(Objects::isNull));
-        verify(mSplitTaskExecutor).submitOnMainThread(argThat(MainThreadSplitTask.class::isInstance));
+        verify(mSplitTaskExecutor).submit(argThat(ClientEventSplitTask.class::isInstance), argThat(Objects::isNull));
+        verify(mSplitTaskExecutor).submitOnMainThread(argThat(ClientEventSplitTask.class::isInstance));
     }
 }

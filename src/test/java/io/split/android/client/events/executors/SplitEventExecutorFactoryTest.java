@@ -35,7 +35,7 @@ public class SplitEventExecutorFactoryTest {
 
         executor.execute();
 
-        verify(mSplitTaskExecutor).submit(argThat(BackgroundSplitTask.class::isInstance), argThat(Objects::isNull));
-        verify(mSplitTaskExecutor).submitOnMainThread(argThat(MainThreadSplitTask.class::isInstance));
+        verify(mSplitTaskExecutor).submit(argThat(ClientEventSplitTask.class::isInstance), argThat(Objects::isNull));
+        verify(mSplitTaskExecutor).submitOnMainThread(argThat(ClientEventSplitTask.class::isInstance));
     }
 }
