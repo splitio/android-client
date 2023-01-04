@@ -31,7 +31,7 @@ public class SplitEventExecutorFactoryTest {
     @Test
     public void factoryReturnsWorkingExecutor() {
 
-        SplitEventExecutorAbstract executor = SplitEventExecutorFactory.factory(mSplitTaskExecutor, SplitEvent.SDK_READY, mSplitEventTask, mSplitEventExecutorResources);
+        SplitEventExecutor executor = SplitEventExecutorFactory.factory(mSplitTaskExecutor, SplitEvent.SDK_READY, mSplitEventTask, mSplitEventExecutorResources);
 
         executor.execute();
 
