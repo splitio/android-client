@@ -10,10 +10,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.events.executors.SplitEventExecutorAbstract;
+import io.split.android.client.events.executors.SplitEventExecutor;
 import io.split.android.client.events.executors.SplitEventExecutorFactory;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
+import io.split.android.client.service.executor.SplitClientEventTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.utils.logger.Logger;
 
@@ -27,9 +28,9 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
     private final SplitTaskExecutor mSplitTaskExecutor;
 
-    public SplitEventsManager(SplitClientConfig config, SplitTaskExecutor taskExecutor) {
+    public SplitEventsManager(SplitClientConfig config, SplitTaskExecutor splitTaskExecutor) {
         super();
-        mSplitTaskExecutor = taskExecutor;
+        mSplitTaskExecutor = splitTaskExecutor;
         mSubscriptions = new ConcurrentHashMap<>();
         mExecutionTimes = new ConcurrentHashMap<>();
         mResources = new SplitEventExecutorResourcesImpl();
@@ -205,7 +206,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
     private void executeTask(SplitEvent event, SplitEventTask task) {
         if (task != null) {
-            SplitEventExecutorAbstract executor = SplitEventExecutorFactory.factory(mSplitTaskExecutor, event, task, mResources);
+            SplitEventExecutor executor = SplitEventExecutorFactory.factory(mSplitTaskExecutor, event, task, mResources);
 
             if (executor != null) {
                 executor.execute();

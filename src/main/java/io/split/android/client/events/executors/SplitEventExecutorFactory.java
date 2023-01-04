@@ -11,9 +11,9 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 
 public class SplitEventExecutorFactory {
 
-    public static SplitEventExecutorAbstract factory(SplitTaskExecutor taskExecutor, SplitEvent event, SplitEventTask task, SplitEventExecutorResources resources) {
+    public static SplitEventExecutor factory(SplitTaskExecutor taskExecutor, SplitEvent event, SplitEventTask task, SplitEventExecutorResources resources) {
 
-        SplitEventExecutorAbstract executor;
+        SplitEventExecutor executor;
 
         switch (event) {
             case SDK_READY:

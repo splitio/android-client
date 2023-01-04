@@ -18,6 +18,8 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitClientEventTaskExecutor;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -52,6 +54,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     private SplitTaskExecutionListener mStreamingConnectionExecutionListener;
     private final SplitTaskExecutionListener mSchedulingBackgroundSyncExecutionListener;
     private final MySegmentsWorkManagerWrapper mWorkManagerWrapper;
+    private final SplitTaskExecutor mSplitClientEventTaskExecutor;
 
     public SplitClientContainerImpl(@NonNull String defaultMatchingKey,
                                     @NonNull SplitFactoryImpl splitFactory,
@@ -89,6 +92,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mSchedulingBackgroundSyncExecutionListener = new WorkManagerSchedulingListener(mSchedulingBackgroundSync);
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
+        mSplitClientEventTaskExecutor = new SplitClientEventTaskExecutor();
 
         // Avoid creating unnecessary components
         if (config.syncEnabled()) {
@@ -121,6 +125,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         mStreamingConnectionExecutionListener = new StreamingConnectionExecutionListener(mConnecting);
         mSchedulingBackgroundSyncExecutionListener = new WorkManagerSchedulingListener(mConnecting);
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
+        mSplitClientEventTaskExecutor = new SplitClientEventTaskExecutor();
     }
 
     @Override
@@ -131,7 +136,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
 
     @Override
     public void createNewClient(Key key) {
-        SplitEventsManager eventsManager = new SplitEventsManager(mConfig, mSplitTaskExecutor);
+        SplitEventsManager eventsManager = new SplitEventsManager(mConfig, mSplitClientEventTaskExecutor);
         MySegmentsTaskFactory mySegmentsTaskFactory = getMySegmentsTaskFactory(key, eventsManager);
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));

@@ -9,7 +9,7 @@ import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 
-public class SplitEventExecutorWithClient implements SplitEventExecutorAbstract {
+public class SplitEventExecutorWithClient implements SplitEventExecutor {
 
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final SplitTask mBackgroundSplitTask;
