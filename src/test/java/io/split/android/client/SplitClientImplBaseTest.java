@@ -18,6 +18,7 @@ import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.engine.experiments.SplitParser;
+import io.split.android.fake.SplitTaskExecutorStub;
 
 public abstract class SplitClientImplBaseTest {
 
@@ -63,7 +64,7 @@ public abstract class SplitClientImplBaseTest {
                 new SplitParser(mySegmentsStorageContainer),
                 impressionListener,
                 splitClientConfig,
-                new SplitEventsManager(splitClientConfig),
+                new SplitEventsManager(splitClientConfig, new SplitTaskExecutorStub()),
                 eventPropertiesProcessor,
                 eventValidator,
                 syncManager,

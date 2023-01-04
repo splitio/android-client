@@ -17,6 +17,7 @@ import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
+import io.split.android.fake.SplitTaskExecutorStub;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -41,7 +42,7 @@ public class EventsManagerTest {
     public void eventOnReady() {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
 
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
@@ -77,7 +78,7 @@ public class EventsManagerTest {
     @Test
     public void eventOnReadyTimedOut() {
         SplitClientConfig cfg = SplitClientConfig.builder().ready(1000).build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
 
         boolean shouldStop = false;
         long maxExecutionTime = System.currentTimeMillis() + 10000;
@@ -109,7 +110,7 @@ public class EventsManagerTest {
     @Test
     public void eventOnReadyAndOnReadyTimedOut() {
         SplitClientConfig cfg = SplitClientConfig.builder().ready(1000).build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
 
         boolean shouldStop = false;
         long maxExecutionTime = System.currentTimeMillis() + 10000;
@@ -198,7 +199,7 @@ public class EventsManagerTest {
     public void eventOnReadyFromCache(List<SplitInternalEvent> eventList) {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
 
         for(SplitInternalEvent event : eventList) {
             eventManager.notifyInternalEvent(event);

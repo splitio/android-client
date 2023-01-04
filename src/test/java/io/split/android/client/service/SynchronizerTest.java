@@ -767,5 +767,10 @@ public class SynchronizerTest {
         public String schedule(@NonNull SplitTask task, long initialDelayInSecs, @Nullable SplitTaskExecutionListener executionListener) {
             return null;
         }
+
+        @Override
+        public void submitOnMainThread(SplitTask splitTask) {
+
+        }
     }
 }

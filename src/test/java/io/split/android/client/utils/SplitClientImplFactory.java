@@ -25,6 +25,7 @@ import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerFactory;
 import io.split.android.client.validators.TreatmentManagerFactoryImpl;
 import io.split.android.engine.experiments.SplitParser;
+import io.split.android.fake.SplitTaskExecutorStub;
 
 /**
  * Created by fernandomartin on 2/17/18.
@@ -34,7 +35,7 @@ public class SplitClientImplFactory {
 
     public static SplitClientImpl get(Key key, SplitsStorage splitsStorage) {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventsManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventsManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
         SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class));
         TelemetryStorage telemetryStorage = mock(TelemetryStorage.class);
         TreatmentManagerFactory treatmentManagerFactory = new TreatmentManagerFactoryImpl(
@@ -74,7 +75,7 @@ public class SplitClientImplFactory {
                 splitParser,
                 impressionListener,
                 cfg,
-                new SplitEventsManager(cfg),
+                new SplitEventsManager(cfg, new SplitTaskExecutorStub()),
                 splitsStorage,
                 mock(EventPropertiesProcessor.class),
                 mock(SyncManager.class),
