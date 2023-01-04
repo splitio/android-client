@@ -12,9 +12,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.storage.common.PersistentStorage;
 import io.split.android.client.storage.common.Storage;
+import io.split.android.client.storage.common.StoragePusher;
 import io.split.android.client.utils.logger.Logger;
 
-public class ImpressionsStorage implements Storage<KeyImpression> {
+public class ImpressionsStorage implements Storage<KeyImpression>, StoragePusher<KeyImpression> {
     final private PersistentStorage<KeyImpression> mPersistentStorage;
     final private AbstractQueue<KeyImpression> mImpressions = new ConcurrentLinkedQueue<>();
     final private AtomicBoolean mIsPersistenceEnabled = new AtomicBoolean(true);

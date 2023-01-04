@@ -5,7 +5,9 @@ import androidx.annotation.NonNull;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.AttributesStorageContainer;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
+import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.storage.impressions.ImpressionsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsUniqueStorage;
@@ -23,7 +25,9 @@ public class SplitStorageContainer {
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
     private final PersistentSplitsStorage mPersistentSplitsStorage;
     private final PersistentEventsStorage mPersistentEventsStorage;
+    private final EventsStorage mEventsStorage;
     private final PersistentImpressionsStorage mPersistentImpressionsStorage;
+    private final ImpressionsStorage mImpressionsStorage;
     private final PersistentImpressionsCountStorage mPersistentImpressionsCountStorage;
     private final AttributesStorageContainer mAttributesStorageContainer;
     private final PersistentAttributesStorage mPersistentAttributesStorage;
@@ -33,7 +37,9 @@ public class SplitStorageContainer {
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
                                  @NonNull PersistentSplitsStorage persistentSplitsStorage,
+                                 @NonNull EventsStorage eventsStorage,
                                  @NonNull PersistentEventsStorage persistentEventsStorage,
+                                 @NonNull ImpressionsStorage impressionsStorage,
                                  @NonNull PersistentImpressionsStorage persistentImpressionsStorage,
                                  @NonNull PersistentImpressionsCountStorage persistentImpressionsCountStorage,
                                  @NonNull PersistentImpressionsUniqueStorage persistentImpressionsUniqueStorage,
@@ -44,7 +50,9 @@ public class SplitStorageContainer {
         mSplitStorage = checkNotNull(splitStorage);
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
         mPersistentSplitsStorage = checkNotNull(persistentSplitsStorage);
+        mEventsStorage = checkNotNull(eventsStorage);
         mPersistentEventsStorage = checkNotNull(persistentEventsStorage);
+        mImpressionsStorage = checkNotNull(impressionsStorage);
         mPersistentImpressionsStorage = checkNotNull(persistentImpressionsStorage);
         mPersistentImpressionsCountStorage = checkNotNull(persistentImpressionsCountStorage);
         mAttributesStorageContainer = checkNotNull(attributesStorageContainer);
@@ -69,11 +77,19 @@ public class SplitStorageContainer {
         return mPersistentSplitsStorage;
     }
 
-    public PersistentEventsStorage getEventsStorage() {
+    public EventsStorage getEventsStorage() {
+        return mEventsStorage;
+    }
+
+    public PersistentEventsStorage getPersistentEventsStorage() {
         return mPersistentEventsStorage;
     }
 
-    public PersistentImpressionsStorage getImpressionsStorage() {
+    public ImpressionsStorage getImpressionsStorage() {
+        return mImpressionsStorage;
+    }
+
+    public PersistentImpressionsStorage getPersistentImpressionsStorage() {
         return mPersistentImpressionsStorage;
     }
 

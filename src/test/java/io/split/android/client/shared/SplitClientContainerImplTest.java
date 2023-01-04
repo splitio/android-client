@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.EventsTracker;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientFactory;
@@ -64,6 +65,9 @@ public class SplitClientContainerImplTest {
     private SplitTaskExecutor mSplitTaskExecutor;
     @Mock
     private MySegmentsWorkManagerWrapper mWorkManagerWrapper;
+
+    @Mock
+    private EventsTracker mEventsTracker;
 
     private final String mDefaultMatchingKey = "matching_key";
     private SplitClientContainer mClientContainer;
@@ -297,7 +301,8 @@ public class SplitClientContainerImplTest {
                 mConfig,
                 mSplitClientFactory,
                 mClientComponentsRegister,
-                mWorkManagerWrapper
+                mWorkManagerWrapper,
+                mEventsTracker
         );
     }
 
