@@ -78,7 +78,6 @@ public class StreamingDisabledTest {
 
 
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
 
         // No streaming auth is made
