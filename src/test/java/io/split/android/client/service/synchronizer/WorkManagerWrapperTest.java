@@ -19,18 +19,15 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
-import io.split.android.client.service.workmanager.SplitWorker;
 import io.split.android.client.service.workmanager.SplitsSyncWorker;
 
 public class WorkManagerWrapperTest {
@@ -52,7 +49,7 @@ public class WorkManagerWrapperTest {
                                 .telemetryServiceEndpoint("https://test.split.io/telemetry")
                                 .build()
                 )
-                .sychronizeInBackgroundPeriod(5263)
+                .synchronizeInBackgroundPeriod(5263)
                 .eventsPerPush(526)
                 .impressionsPerPush(256)
                 .backgroundSyncWhenWifiOnly(true)
@@ -202,7 +199,6 @@ public class WorkManagerWrapperTest {
 
     private void assertWorkSpecMatches(WorkSpec workSpec, WorkSpec expectedWorkSpec) {
         assertEquals(workSpec.backoffPolicy, expectedWorkSpec.backoffPolicy);
-        assertEquals(workSpec.runInForeground, expectedWorkSpec.runInForeground);
         assertEquals(workSpec.backoffDelayDuration, expectedWorkSpec.backoffDelayDuration);
         assertEquals(workSpec.constraints, expectedWorkSpec.constraints);
         assertEquals(workSpec.initialDelay, expectedWorkSpec.initialDelay);

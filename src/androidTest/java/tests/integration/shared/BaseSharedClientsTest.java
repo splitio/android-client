@@ -15,6 +15,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockWebServer;
 
@@ -56,7 +57,7 @@ abstract class BaseSharedClientsTest {
                 .serviceEndpoints(ServiceEndpoints.builder()
                         .apiEndpoint(serverUrl).eventsEndpoint(serverUrl).build())
                 .ready(30000)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .featuresRefreshRate(99999)
                 .segmentsRefreshRate(99999)
                 .impressionsRefreshRate(99999)

@@ -3,6 +3,7 @@ package io.split.android.client.storage.db.impressions.unique;
 import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
@@ -33,6 +34,7 @@ public class UniqueKeyEntity implements Identifiable {
 
     }
 
+    @Ignore
     public UniqueKeyEntity(@NonNull String userKey, String featureList, long createdAt, int status) {
         this.userKey = userKey;
         this.featureList = featureList;
