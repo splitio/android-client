@@ -5,7 +5,6 @@ import android.content.Context;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -23,10 +22,10 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
-import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.impressions.ImpressionManagerConfig;
 import io.split.android.client.service.impressions.ImpressionManagerImpl;
 import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
+import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -41,9 +40,9 @@ import io.split.android.client.storage.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.NetworkHelperImpl;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
@@ -328,19 +327,6 @@ public class SplitFactoryImpl implements SplitFactory {
     @Override
     public void flush() {
         mSyncManager.flush();
-    }
-
-    @Override
-    @Deprecated
-    public boolean isReady() {
-        Set<SplitClient> clients = mClientContainer.getAll();
-        for (SplitClient client : clients) {
-            if (client.isReady()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void setupValidations(SplitClientConfig splitClientConfig) {
