@@ -235,7 +235,7 @@ public class SplitFactoryImpl implements SplitFactory {
         mUserConsentManager = new UserConsentManagerImpl(config,
                 mStorageContainer.getImpressionsStorage(),
                 mStorageContainer.getEventsStorage(),
-                mSyncManager, eventsTracker, impressionManager);
+                mSyncManager, eventsTracker, impressionManager, splitTaskExecutor);
         ClientComponentsRegister componentsRegister = factoryHelper.getClientComponentsRegister(config, splitTaskExecutor,
                 mEventsManagerCoordinator, mSynchronizer, streamingComponents.getNotificationParser(),
                 streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
@@ -350,6 +350,11 @@ public class SplitFactoryImpl implements SplitFactory {
             return;
         }
         mUserConsentManager.set(newMode);
+    }
+
+    @Override
+    public UserConsent getUserConsent() {
+        return mUserConsentManager.getStatus();
     }
 
     @Override

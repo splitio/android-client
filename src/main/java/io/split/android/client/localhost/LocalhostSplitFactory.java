@@ -21,6 +21,7 @@ import io.split.android.client.localhost.shared.LocalhostSplitClientContainerImp
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.shared.SplitClientContainer;
+import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.NoOpTelemetryStorage;
@@ -133,6 +134,11 @@ public class LocalhostSplitFactory implements SplitFactory {
 
     @Override
     public void setUserConsent(boolean enabled) {
+    }
+
+    @Override
+    public UserConsent getUserConsent() {
+        return UserConsent.GRANTED;
     }
 
     @Override

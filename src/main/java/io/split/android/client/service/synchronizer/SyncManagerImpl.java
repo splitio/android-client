@@ -233,7 +233,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     public void setupUserConsent(UserConsent status) {
         if (status == UserConsent.GRANTED) {
             Logger.v("User consent status is granted now. Starting recorders");
-            mSynchronizer.startPeriodicFetching();
+            mSynchronizer.startPeriodicRecording();
         } else {
             Logger.v("User consent status is " +  status + " now. Stopping recorders");
             mSynchronizer.stopPeriodicRecording();

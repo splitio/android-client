@@ -1,6 +1,7 @@
 package io.split.android.client;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.shared.UserConsent;
 
 public interface SplitFactory {
     SplitClient client();
@@ -18,6 +19,8 @@ public interface SplitFactory {
     void flush();
 
     void setUserConsent(boolean enabled);
+
+    UserConsent getUserConsent();
 
     /**
      * Deprecated: Use {@link SplitClient#isReady()}
