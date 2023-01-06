@@ -2,7 +2,6 @@ package io.split.android.client;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
 
 import org.junit.Test;
 
