@@ -107,7 +107,7 @@ class SplitFactoryHelper {
         headersBuilder.addJsonTypeHeaders();
         headersBuilder.setHostIp(splitClientConfig.ip());
         headersBuilder.setHostname(splitClientConfig.hostname());
-        headersBuilder.setClientVersion(SplitClientConfig.splitSdkVersion);
+        headersBuilder.setClientVersion(SplitClientConfig.mSplitSdkVersion);
         headersBuilder.setApiToken(apiToken);
         return headersBuilder.build();
     }
@@ -116,7 +116,7 @@ class SplitFactoryHelper {
         SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
         headersBuilder.addStreamingTypeHeaders();
         headersBuilder.setAblyApiToken(apiToken);
-        headersBuilder.setClientVersion(SplitClientConfig.splitSdkVersion);
+        headersBuilder.setClientVersion(SplitClientConfig.mSplitSdkVersion);
         return headersBuilder.build();
     }
 
