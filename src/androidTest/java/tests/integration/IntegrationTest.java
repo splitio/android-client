@@ -47,6 +47,7 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import io.split.android.grammar.Treatments;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -130,7 +131,7 @@ public class IntegrationTest {
                 .segmentsRefreshRate(30)
                 .impressionsRefreshRate(30)
                 .eventFlushInterval(200)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .trafficType("account")
                 .eventsPerPush(10)
                 .eventsQueueSize(100)
@@ -264,7 +265,7 @@ public class IntegrationTest {
                 .featuresRefreshRate(30)
                 .segmentsRefreshRate(30)
                 .impressionsRefreshRate(30)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .trafficType("account")
                 .eventsPerPush(10)
                 .eventsQueueSize(100)

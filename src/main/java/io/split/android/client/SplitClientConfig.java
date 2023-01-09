@@ -29,12 +29,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class SplitClientConfig {
 
-    // TODO: Refactor this huge class
-
     private static final int MIN_FEATURES_REFRESH_RATE = 30;
     private static final int MIN_MYSEGMENTS_REFRESH_RATE = 30;
     private static final int MIN_IMPRESSIONS_REFRESH_RATE = 30;
-    private static final int MIN_METRICS_REFRESH_RATE = 30;
     private static final int MIN_IMPRESSIONS_QUEUE_SIZE = 0;
     private static final int MIN_IMPRESSIONS_CHUNK_SIZE = 0;
     private static final int MIN_CONNECTION_TIMEOUT = 0;
@@ -47,23 +44,13 @@ public class SplitClientConfig {
     private static final int DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 15000;
     private static final int DEFAULT_READ_TIMEOUT_SECS = 15000;
-    private static final int DEFAULT_NUM_THREAD_FOR_SEGMENT_FETCH = 2;
     private static final int DEFAULT_READY = -1;
-    private static final int DEFAULT_METRICS_REFRESH_RATE_SECS = 1800;
-    private static final int DEFAULT_WAIT_BEFORE_SHUTDOW_SECS = 5000;
     private static final int DEFAULT_IMPRESSIONS_CHUNK_SIZE = 2 * 1024;
     private static final int DEFAULT_EVENTS_QUEUE_SIZE = 10000;
     private static final int DEFAULT_EVENTS_FLUSH_INTERVAL = 1800;
     private static final int DEFAULT_EVENTS_PER_PUSH = 2000;
     private static final int DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES = 15;
 
-    private static final int DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS = 1;
-    private static final int DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS = 1;
-
-    private static final int IMPRESSIONS_MAX_SENT_ATTEMPTS = 3;
-    private static final int IMPRESSIONS_CHUNK_OUTDATED_TIME = 3600 * 1000; // One day millis
-    private final static int EVENTS_MAX_SENT_ATTEMPS = 3;
-    private final static int MAX_QUEUE_SIZE_IN_BYTES = 5242880; // 5mb
     private final static int DEFAULT_MTK_PER_PUSH = 30000;
 
     // Validation settings
@@ -75,42 +62,35 @@ public class SplitClientConfig {
 
     private static final long SPLITS_CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS; // 10 días
 
-    private String _endpoint;
-    private String _eventsEndpoint;
-    private String _telemetryEndpoint;
-    private static String _hostname;
-    private static String _ip;
-
-    private HttpProxy _proxy = null;
-    private Authenticator _proxyAuthenticator = null;
+    private final String _endpoint;
+    private final String _eventsEndpoint;
+    private final String _telemetryEndpoint;
+    private final String _hostname;
+    private final String _ip;
+    private final HttpProxy _proxy;
+    private final Authenticator _proxyAuthenticator;
 
     private final int _featuresRefreshRate;
     private final int _segmentsRefreshRate;
     private final int _impressionsRefreshRate;
     private final int _impressionsQueueSize;
     private final int _impressionsPerPush;
-    private final static int _impressionsMaxSentAttempts = IMPRESSIONS_MAX_SENT_ATTEMPTS;
-    private final static long _impressionsChunkOudatedTime = IMPRESSIONS_CHUNK_OUTDATED_TIME;
     private final int _impCountersRefreshRate;
     private final int _mtkPerPush;
     private final int _mtkRefreshRate;
 
-    private final int _metricsRefreshRate;
     private final int _connectionTimeout;
     private final int _readTimeout;
-    private final int _numThreadsForSegmentFetch;
-    private final boolean _debugEnabled;
     private final boolean _labelsEnabled;
     private final int _ready;
     private final ImpressionListener _impressionListener;
-    private final int _waitBeforeShutdown;
-    private long _impressionsChunkSize;
+    private final long _impressionsChunkSize;
 
     // Background sync
-    private boolean _synchronizeInBackground;
-    private long _backgroundSyncPeriod;
-    private boolean _backgroundSyncWhenBatteryNotLow;
-    private boolean _backgroundSyncWhenWifiOnly;
+    private final boolean _synchronizeInBackground;
+    private final long _backgroundSyncPeriod;
+    private final boolean _backgroundSyncWhenBatteryNotLow;
+    private final boolean _backgroundSyncWhenWifiOnly;
 
     //.Track configuration
     private final int _eventsQueueSize;
@@ -119,17 +99,15 @@ public class SplitClientConfig {
     private final String _trafficType;
 
     // Push notification settings
-    private boolean _streamingEnabled;
-    private int _authRetryBackoffBase;
-    private int _streamingReconnectBackoffBase;
-    private String _authServiceUrl;
-    private String _streamingServiceUrl;
-    private DevelopmentSslConfig _developmentSslConfig;
+    private final boolean _streamingEnabled;
+    private final String _authServiceUrl;
+    private final String _streamingServiceUrl;
+    private final DevelopmentSslConfig _developmentSslConfig;
 
-    private SyncConfig _syncConfig;
+    private final SyncConfig _syncConfig;
 
-    private boolean _legacyStorageMigrationEnabled;
-    private ImpressionsMode _impressionsMode;
+    private final boolean _legacyStorageMigrationEnabled;
+    private final ImpressionsMode _impressionsMode;
     private final boolean _isPersistentAttributesEnabled;
     private final int _offlineRefreshRate;
     private boolean _shouldRecordTelemetry;
@@ -144,24 +122,19 @@ public class SplitClientConfig {
         return new Builder();
     }
 
-
     private SplitClientConfig(String endpoint,
                               String eventsEndpoint,
-                              int pollForFeatureChangesEveryNSeconds,
+                              int featureRefreshRate,
                               int segmentsRefreshRate,
                               int impressionsRefreshRate,
                               int impressionsQueueSize,
                               long impressionsChunkSize,
                               int impressionsPerPush,
-                              int metricsRefreshRate,
                               int connectionTimeout,
                               int readTimeout,
-                              int numThreadsForSegmentFetch,
                               int ready,
-                              boolean debugEnabled,
                               boolean labelsEnabled,
                               ImpressionListener impressionListener,
-                              int waitBeforeShutdown,
                               String hostname,
                               String ip,
                               HttpProxy proxy,
@@ -175,8 +148,6 @@ public class SplitClientConfig {
                               boolean backgroundSyncWhenBatteryNotLow,
                               boolean backgroundSyncWhenWifiOnly,
                               boolean streamingEnabled,
-                              int authRetryBackoffBase,
-                              int streamingReconnectBackoffBase,
                               String authServiceUrl,
                               String streamingServiceUrl,
                               DevelopmentSslConfig developmentSslConfig,
@@ -196,22 +167,18 @@ public class SplitClientConfig {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _telemetryEndpoint = telemetryEndpoint;
-        _featuresRefreshRate = pollForFeatureChangesEveryNSeconds;
+        _featuresRefreshRate = featureRefreshRate;
         _segmentsRefreshRate = segmentsRefreshRate;
         _impressionsRefreshRate = impressionsRefreshRate;
         _impressionsQueueSize = impressionsQueueSize;
         _impressionsPerPush = impressionsPerPush;
         _impCountersRefreshRate = impCountersRefreshRate;
         _mtkRefreshRate = mtkRefreshRate;
-        _metricsRefreshRate = metricsRefreshRate;
         _connectionTimeout = connectionTimeout;
         _readTimeout = readTimeout;
-        _numThreadsForSegmentFetch = numThreadsForSegmentFetch;
         _ready = ready;
-        _debugEnabled = debugEnabled;
         _labelsEnabled = labelsEnabled;
         _impressionListener = impressionListener;
-        _waitBeforeShutdown = waitBeforeShutdown;
         _impressionsChunkSize = impressionsChunkSize;
         _hostname = hostname;
         _ip = ip;
@@ -228,8 +195,6 @@ public class SplitClientConfig {
         _backgroundSyncWhenBatteryNotLow = backgroundSyncWhenBatteryNotLow;
         _backgroundSyncWhenWifiOnly = backgroundSyncWhenWifiOnly;
         _streamingEnabled = streamingEnabled;
-        _authRetryBackoffBase = authRetryBackoffBase;
-        _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
         _authServiceUrl = authServiceUrl;
         _streamingServiceUrl = streamingServiceUrl;
         _developmentSslConfig = developmentSslConfig;
@@ -246,24 +211,9 @@ public class SplitClientConfig {
 
         _shouldRecordTelemetry = shouldRecordTelemetry;
 
-        if (_debugEnabled && _logLevel == SplitLogLevel.NONE) {
-            _logLevel = SplitLogLevel.DEBUG;
-        }
-
         _mtkPerPush = mtkPerPush;
 
         Logger.instance().setLevel(_logLevel);
-    }
-
-    private static boolean isTestMode() {
-        boolean result;
-        try {
-            Class.forName("io.split.android.client.SplitClientConfigTest");
-            result = true;
-        } catch (final Exception e) {
-            result = false;
-        }
-        return result;
     }
 
     public String trafficType() {
@@ -306,10 +256,6 @@ public class SplitClientConfig {
         return _segmentsRefreshRate;
     }
 
-    public int numThreadsForSegmentFetch() {
-        return _numThreadsForSegmentFetch;
-    }
-
     public int impressionsRefreshRate() {
         return _impressionsRefreshRate;
     }
@@ -326,20 +272,12 @@ public class SplitClientConfig {
         return _impressionsPerPush;
     }
 
-    public int metricsRefreshRate() {
-        return _metricsRefreshRate;
-    }
-
     public int connectionTimeout() {
         return _connectionTimeout;
     }
 
     public int readTimeout() {
         return _readTimeout;
-    }
-
-    public boolean debugEnabled() {
-        return _debugEnabled;
     }
 
     public boolean labelsEnabled() {
@@ -352,10 +290,6 @@ public class SplitClientConfig {
 
     public ImpressionListener impressionListener() {
         return _impressionListener;
-    }
-
-    public int waitBeforeShutdown() {
-        return _waitBeforeShutdown;
     }
 
     public HttpProxy proxy() {
@@ -375,48 +309,6 @@ public class SplitClientConfig {
     }
 
     /**
-     * Maximum attempts count while sending impressions.
-     * to the server. Internal setting.
-     *
-     * @return Maximum attempts limit.
-     */
-
-    int impressionsMaxSentAttempts() {
-        return _impressionsMaxSentAttempts;
-    }
-
-    /**
-     * Elapsed time in millis to consider that a chunk of impression
-     * is outdated. Internal property
-     *
-     * @return Time in millis.
-     */
-    long impressionsChunkOutdatedTime() {
-        return _impressionsChunkOudatedTime;
-    }
-
-    /**
-     * Maximum attempts count while sending tracks
-     * to the server. Internal setting.
-     *
-     * @return Maximum attempts limit.
-     */
-
-    int eventsMaxSentAttempts() {
-        return EVENTS_MAX_SENT_ATTEMPS;
-    }
-
-    /**
-     * Maximum events queue size in bytes
-     *
-     * @return Maximum events queue size in bytes.
-     */
-    int maxQueueSizeInBytes() {
-        return MAX_QUEUE_SIZE_IN_BYTES;
-    }
-
-
-    /**
      * Regex to validate Track event name
      *
      * @return Regex pattern string
@@ -424,7 +316,6 @@ public class SplitClientConfig {
     String trackEventNamePattern() {
         return TRACK_EVENT_NAME_PATTERN;
     }
-
 
     /**
      * Maximum key char length for matching and bucketing
@@ -470,14 +361,6 @@ public class SplitClientConfig {
         return _streamingEnabled;
     }
 
-    public int authRetryBackoffBase() {
-        return _authRetryBackoffBase;
-    }
-
-    public int streamingReconnectBackoffBase() {
-        return _streamingReconnectBackoffBase;
-    }
-
     public String authServiceUrl() {
         return _authServiceUrl;
     }
@@ -510,13 +393,10 @@ public class SplitClientConfig {
         return _impCountersRefreshRate;
     }
 
-    public int uniqueKeysRefreshRate() {
-        return _mtkRefreshRate;
-    }
-
     public boolean persistentAttributesEnabled() {
         return _isPersistentAttributesEnabled;
     }
+
     public int offlineRefreshRate() { return  _offlineRefreshRate; }
 
     public boolean shouldRecordTelemetry() {
@@ -551,13 +431,9 @@ public class SplitClientConfig {
         private int _impCountersRefreshRate = DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS;
         private int _connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
         private int _readTimeout = DEFAULT_READ_TIMEOUT_SECS;
-        private int _numThreadsForSegmentFetch = DEFAULT_NUM_THREAD_FOR_SEGMENT_FETCH;
-        private boolean _debugEnabled = false;
         private int _ready = DEFAULT_READY; // -1 means no blocking
-        private int _metricsRefreshRate = DEFAULT_METRICS_REFRESH_RATE_SECS;
         private boolean _labelsEnabled = true;
         private ImpressionListener _impressionListener;
-        private int _waitBeforeShutdown = DEFAULT_WAIT_BEFORE_SHUTDOW_SECS;
         private long _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE; //2KB default size
         private boolean _isPersistentAttributesEnabled = false;
         static final int OFFLINE_REFRESH_RATE_DEFAULT = -1;
@@ -582,9 +458,6 @@ public class SplitClientConfig {
 
         // Push notification settings
         private boolean _streamingEnabled = true;
-        private int _authRetryBackoffBase = DEFAULT_AUTH_RETRY_BACKOFF_BASE_SECS;
-        private int _streamingReconnectBackoffBase
-                = DEFAULT_STREAMING_RECONNECT_BACKOFF_BASE_SECS;
 
         private DevelopmentSslConfig _developmentSslConfig;
 
@@ -602,7 +475,7 @@ public class SplitClientConfig {
 
         private int _logLevel = SplitLogLevel.NONE;
 
-        private int _mtkPerPush = DEFAULT_MTK_PER_PUSH;
+        private final int _mtkPerPush = DEFAULT_MTK_PER_PUSH;
 
         private final int _mtkRefreshRate = 15 * 60;
 
@@ -762,28 +635,11 @@ public class SplitClientConfig {
         }
 
         /**
-         * The diagnostic metrics collected by the SDK are pushed back to split endpoint
-         * at this period.
-         * <p/>
-         * This is an ADVANCED parameter
-         *
-         * @deprecated This parameter is now ignored.
-         * @param seconds MUST be > 0.
-         * @return this builder
-         */
-        @Deprecated
-        public Builder metricsRefreshRate(int seconds) {
-            _metricsRefreshRate = seconds;
-            return this;
-        }
-
-        /**
          * Http client connection timeout. Default value is 15000ms.
          *
          * @param ms MUST be greater than 0.
          * @return this builder
          */
-
         public Builder connectionTimeout(int ms) {
             _connectionTimeout = ms;
             return this;
@@ -797,17 +653,6 @@ public class SplitClientConfig {
          */
         public Builder readTimeout(int ms) {
             _readTimeout = ms;
-            return this;
-        }
-
-        /**
-         * Enables debug logging
-         * @deprecated  This function is deprecated. Use {@link #logLevel(int)} instead.
-         * @return this builder
-         */
-        @Deprecated
-        public Builder enableDebug() {
-            _debugEnabled = true;
             return this;
         }
 
@@ -857,18 +702,6 @@ public class SplitClientConfig {
          */
         public Builder ready(int milliseconds) {
             _ready = milliseconds;
-            return this;
-        }
-
-        /**
-         * How long to wait for impressions background thread before shutting down
-         * the underlying connections.
-         *
-         * @param waitTime tine in milliseconds
-         * @return this builder
-         */
-        public Builder waitBeforeShutdown(int waitTime) {
-            _waitBeforeShutdown = waitTime;
             return this;
         }
 
@@ -941,7 +774,7 @@ public class SplitClientConfig {
          *
          * @return this builder
          */
-        public Builder sychronizeInBackground(boolean synchronizeInBackground) {
+        public Builder synchronizeInBackground(boolean synchronizeInBackground) {
             _synchronizeInBackground = synchronizeInBackground;
             return this;
         }
@@ -953,7 +786,7 @@ public class SplitClientConfig {
          *
          * @return this builder
          */
-        public Builder sychronizeInBackgroundPeriod(long backgroundSyncPeriod) {
+        public Builder synchronizeInBackgroundPeriod(long backgroundSyncPeriod) {
             _backgroundSyncPeriod = backgroundSyncPeriod;
             return this;
         }
@@ -992,31 +825,6 @@ public class SplitClientConfig {
             _streamingEnabled = streamingEnabled;
             return this;
         }
-
-        /**
-         * How many seconds to wait before re attempting to authenticate for push notifications.
-         * Minimum: 1 seconds
-         *
-         * @param authRetryBackoffBase
-         * @return this builder
-         * @default: 1 second
-         */
-        public Builder authRetryBackoffBase(int authRetryBackoffBase) {
-            _authRetryBackoffBase = authRetryBackoffBase;
-            return this;
-        }
-
-        /**
-         * How many seconds to wait before re attempting to connect to streaming.
-         *
-         * @return: This builder
-         * @default: 1 Second
-         */
-        public Builder streamingReconnectBackoffBase(int streamingReconnectBackoffBase) {
-            _streamingReconnectBackoffBase = streamingReconnectBackoffBase;
-            return this;
-        }
-
 
         /**
          * Alternative service endpoints URL. Should only be adjusted for playing well in test environments.
@@ -1150,49 +958,45 @@ public class SplitClientConfig {
 
 
             if (_featuresRefreshRate < MIN_FEATURES_REFRESH_RATE) {
-                throw new IllegalArgumentException("featuresRefreshRate must be >= 30: " + _featuresRefreshRate);
+                Logger.w("Features refresh rate is lower than allowed. " +
+                        "Setting to default value.");
+                _featuresRefreshRate = DEFAULT_FEATURES_REFRESH_RATE_SECS;
             }
 
             if (_segmentsRefreshRate < MIN_MYSEGMENTS_REFRESH_RATE) {
-                throw new IllegalArgumentException("segmentsRefreshRate must be >= 30: " + _segmentsRefreshRate);
+                Logger.w("Segments refresh rate is lower than allowed. " +
+                        "Setting to default value.");
+                _segmentsRefreshRate = DEFAULT_SEGMENTS_REFRESH_RATE_SECS;
             }
 
             if (_impressionsRefreshRate < MIN_IMPRESSIONS_REFRESH_RATE) {
-                throw new IllegalArgumentException("impressionsRefreshRate must be >= 30: " + _impressionsRefreshRate);
-            }
-
-            if (_metricsRefreshRate < MIN_METRICS_REFRESH_RATE) {
-                throw new IllegalArgumentException("metricsRefreshRate must be >= 30: " + _metricsRefreshRate);
+                Logger.w("Impressions refresh rate is lower than allowed. " +
+                        "Setting to default value.");
+                _impressionsRefreshRate = DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS;
             }
 
             if (_impressionsQueueSize <= MIN_IMPRESSIONS_QUEUE_SIZE) {
-                throw new IllegalArgumentException("impressionsQueueSize must be > 0: " + _impressionsQueueSize);
+                Logger.w("Impressions queue size is lower than allowed. " +
+                        "Setting to default value.");
+                _impressionsQueueSize = DEFAULT_IMPRESSIONS_QUEUE_SIZE;
             }
 
             if (_impressionsChunkSize <= MIN_IMPRESSIONS_CHUNK_SIZE) {
-                throw new IllegalArgumentException("impressionsChunkSize must be > 0: " + _impressionsChunkSize);
+                Logger.w("Impressions chunk size is lower than allowed. " +
+                        "Setting to default value.");
+                _impressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE;
             }
 
             if (_connectionTimeout <= MIN_CONNECTION_TIMEOUT) {
-                throw new IllegalArgumentException("connectionTimeOutInMs must be > 0: " + _connectionTimeout);
+                Logger.w("Connection timeout is lower than allowed. " +
+                        "Setting to default value.");
+                _connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
             }
 
             if (_readTimeout <= MIN_READ_TIMEOUT) {
-                throw new IllegalArgumentException("readTimeout must be > 0: " + _readTimeout);
-            }
-
-            if (_numThreadsForSegmentFetch <= 0) {
-                throw new IllegalArgumentException("Number of threads for fetching segments MUST be greater than zero");
-            }
-
-            if (_authRetryBackoffBase < 1) {
-                throw new IllegalArgumentException("Re attempting time to authenticate " +
-                        "for push notifications MUST be greater than zero");
-            }
-
-            if (_authRetryBackoffBase < 1) {
-                throw new IllegalArgumentException("Re attempting time to connect to " +
-                        "streaming notifications MUST be greater than zero");
+                Logger.w("Read timeout is lower than allowed. " +
+                        "Setting to default value.");
+                _readTimeout = DEFAULT_READ_TIMEOUT_SECS;
             }
 
             if (_backgroundSyncPeriod < DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES) {
@@ -1218,15 +1022,11 @@ public class SplitClientConfig {
                     _impressionsQueueSize,
                     _impressionsChunkSize,
                     _impressionsPerPush,
-                    _metricsRefreshRate,
                     _connectionTimeout,
                     _readTimeout,
-                    _numThreadsForSegmentFetch,
                     _ready,
-                    _debugEnabled,
                     _labelsEnabled,
                     _impressionListener,
-                    _waitBeforeShutdown,
                     _hostname,
                     _ip,
                     proxy,
@@ -1240,8 +1040,6 @@ public class SplitClientConfig {
                     _backgroundSyncWhenBatteryNotLow,
                     _backgroundSyncWhenWifiOnly,
                     _streamingEnabled,
-                    _authRetryBackoffBase,
-                    _streamingReconnectBackoffBase,
                     _serviceEndpoints.getAuthServiceEndpoint(),
                     _serviceEndpoints.getStreamingServiceEndpoint(),
                     _developmentSslConfig,
@@ -1258,10 +1056,6 @@ public class SplitClientConfig {
                     _logLevel,
                     _mtkPerPush,
                     _mtkRefreshRate);
-        }
-
-        public void set_impressionsChunkSize(long _impressionsChunkSize) {
-            this._impressionsChunkSize = _impressionsChunkSize;
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {
