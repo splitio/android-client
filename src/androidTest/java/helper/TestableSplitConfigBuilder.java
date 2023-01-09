@@ -99,6 +99,7 @@ public class TestableSplitConfigBuilder {
     }
 
     public TestableSplitConfigBuilder enableDebug() {
+        this.mLogLevel = SplitLogLevel.DEBUG;
         return this;
     }
 

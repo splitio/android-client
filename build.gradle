@@ -20,7 +20,7 @@ ext {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     targetCompatibility = '1.8'
     sourceCompatibility = '1.8'
 
@@ -35,6 +35,7 @@ android {
         targetSdkVersion 30
         versionCode 0
         versionName splitVersion
+        multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'split-proguard-rules.pro'
@@ -88,15 +89,16 @@ repositories {
 dependencies {
 
     def roomVersion = '2.3.0'
-    def workVersion = '2.6.0'
+    def workVersion = '2.7.1'
     def lifecycleVersion = '2.3.1'
     def annotationVersion = '1.2.0'
-    def gsonVersion = '2.8.9'
-    def guavaVersion = '31.0.1-android'
+    def gsonVersion = '2.10'
+    def guavaVersion = '31.1-android'
     def snakeYamlVersion = '1.32'
     def jetBrainsAnnotationsVersion = '22.0.0'
     def okHttpVersion = '3.12.13'
     def playServicesVersion = '17.6.0'
+    def multidexVersion = '1.0.3'
 
     def jUnitVersion = '4.13.2'
     def mockitoVersion = '3.12.4'
@@ -125,6 +127,7 @@ dependencies {
     implementation "org.jetbrains:annotations:$jetBrainsAnnotationsVersion"
     implementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
     implementation "com.google.android.gms:play-services-base:$playServicesVersion"
+    implementation "com.android.support:multidex:$multidexVersion"
 
     // Test
     testImplementation "junit:junit:$jUnitVersion"
