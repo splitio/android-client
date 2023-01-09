@@ -116,7 +116,7 @@ public class SplitClientConfig {
     private int mLogLevel = SplitLogLevel.NONE;
 
     // To be set during startup
-    public static String mSplitSdkVersion;
+    public static String splitSdkVersion;
 
     public static Builder builder() {
         return new Builder();
@@ -207,7 +207,7 @@ public class SplitClientConfig {
         mSyncEnabled = syncEnabled;
         mLogLevel = logLevel;
 
-        mSplitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
+        splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
         mShouldRecordTelemetry = shouldRecordTelemetry;
 

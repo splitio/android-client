@@ -26,7 +26,7 @@ public class WMWorkersSetupTest {
     @Before
     public void setUp() {
         mContext = ApplicationProvider.getApplicationContext();
-        SplitClientConfig.mSplitSdkVersion = "testversion";
+        SplitClientConfig.splitSdkVersion = "testversion";
     }
 
     @Test
