@@ -1,22 +1,16 @@
 package io.split.android.client.api;
 
+import androidx.annotation.NonNull;
+
+import java.util.Objects;
+
 public final class Key {
-    private final String _matchingKey;
-    private final String _bucketingKey;
-
-    @Deprecated
-    public static Key withMatchingKey(String matchingKey) {
-        return new Key(matchingKey, null);
-    }
-
-    @Deprecated
-    public static Key withMatchingKeyAndBucketingKey(String matchingKey, String bucketingKey) {
-        return new Key(matchingKey, bucketingKey);
-    }
+    private final String mMatchingKey;
+    private final String mBucketingKey;
 
     public Key(String matchingKey, String bucketingKey) {
-        _matchingKey = matchingKey;
-        _bucketingKey = bucketingKey;
+        mMatchingKey = matchingKey;
+        mBucketingKey = bucketingKey;
     }
 
     public Key(String matchingKey) {
@@ -24,11 +18,11 @@ public final class Key {
     }
 
     public String matchingKey() {
-        return _matchingKey;
+        return mMatchingKey;
     }
 
     public String bucketingKey() {
-        return _bucketingKey;
+        return mBucketingKey;
     }
 
     @Override
@@ -46,28 +40,28 @@ public final class Key {
         }
 
         Key other = (Key) o;
-        return _matchingKey.equals(other._matchingKey) &&
-                (_bucketingKey == null ? other._bucketingKey == null : _bucketingKey.equals(other._bucketingKey));
+        return mMatchingKey.equals(other.mMatchingKey) &&
+                (Objects.equals(mBucketingKey, other.mBucketingKey));
     }
 
     @Override
     public int hashCode() {
         int result = 17;
 
+        result *= 1000003;
+        result ^= mMatchingKey.hashCode();
 
         result *= 1000003;
-        result ^= _matchingKey.hashCode();
-
-        result *= 1000003;
-        if (_bucketingKey != null) {
-            result ^= _bucketingKey.hashCode();
+        if (mBucketingKey != null) {
+            result ^= mBucketingKey.hashCode();
         }
 
         return result;
     }
 
+    @NonNull
     @Override
     public String toString() {
-        return _matchingKey + ", " + _bucketingKey;
+        return mMatchingKey + ", " + mBucketingKey;
     }
 }

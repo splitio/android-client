@@ -203,7 +203,6 @@ public class IntegrationTest {
         Map<String, Object> props99 = event99.properties;
 
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
@@ -289,7 +288,6 @@ public class IntegrationTest {
         latch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertFalse(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);

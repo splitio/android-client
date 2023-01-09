@@ -79,7 +79,6 @@ public class SseAuthFail4xxTest {
         Assert.assertTrue(await);
         Assert.assertTrue(mIsStreamingAuth);
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
 
         // Checking no streaming connection
         Assert.assertFalse(mIsStreamingConnected);
