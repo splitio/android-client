@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockitoSession;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -7,13 +9,17 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.storage.impressions.ImpressionsStorage;
+import io.split.android.fake.SplitTaskExecutorStub;
 
 public class UserConsentManagerTest {
 
@@ -30,24 +36,65 @@ public class UserConsentManagerTest {
     @Mock
     private ImpressionManager mImpressionManager;
 
+    private SplitTaskExecutor mTaskExecutor;
+
     private UserConsentManager mManager;
 
     @Before
     public void setup() {
+        mTaskExecutor = new SplitTaskExecutorStub();
         MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    public void initGranted() {
+        createUserConsentManager(UserConsent.GRANTED);
+
+        Assert.assertEquals(UserConsent.GRANTED, mSplitConfig.userConsent());
+        verify(mEventsTracker, times(1)).enableTracking(true);
+        verify(mImpressionManager, times(1)).enableTracking(true);
+        verify(mImpressionsStorage, times(1)).enablePersistence(true);
+        verify(mEventsStorage, times(1)).enablePersistence(true);
+        verify(mSyncManager, times(1)).setupUserConsent(UserConsent.GRANTED);
+    }
+
+    @Test
+    public void initDeclined() {
+        createUserConsentManager(UserConsent.DECLINED);
+
+        Assert.assertEquals(UserConsent.DECLINED, mSplitConfig.userConsent());
+        verify(mEventsTracker, times(1)).enableTracking(false);
+        verify(mImpressionManager, times(1)).enableTracking(false);
+        verify(mImpressionsStorage, times(1)).enablePersistence(false);
+        verify(mEventsStorage, times(1)).enablePersistence(false);
+        verify(mSyncManager, times(1)).setupUserConsent(UserConsent.DECLINED);
+    }
+
+    @Test
+    public void initUnknown() {
+        createUserConsentManager(UserConsent.UNKNOWN);
+
+        Assert.assertEquals(UserConsent.UNKNOWN, mSplitConfig.userConsent());
+        verify(mEventsTracker, times(1)).enableTracking(true);
+        verify(mImpressionManager, times(1)).enableTracking(true);
+        verify(mEventsStorage, times(1)).enablePersistence(false);
+        verify(mImpressionsStorage, times(1)).enablePersistence(false);
+        verify(mEventsStorage, times(1)).enablePersistence(false);
+        verify(mSyncManager, times(1)).setupUserConsent(UserConsent.UNKNOWN);
     }
 
     @Test
     public void setDeclined() {
         createUserConsentManager(UserConsent.GRANTED);
+        Mockito.reset();
 
         mManager.set(UserConsent.DECLINED);
 
         Assert.assertEquals(UserConsent.DECLINED, mSplitConfig.userConsent());
         verify(mEventsTracker, times(1)).enableTracking(false);
         verify(mImpressionManager, times(1)).enableTracking(false);
-        verify(mEventsStorage, times(1)).enablePersistence(false);
         verify(mImpressionsStorage, times(1)).enablePersistence(false);
+        verify(mEventsStorage, times(1)).enablePersistence(false);
         verify(mSyncManager, times(1)).setupUserConsent(UserConsent.DECLINED);
     }
 
@@ -58,10 +105,11 @@ public class UserConsentManagerTest {
         mManager.set(UserConsent.UNKNOWN);
 
         Assert.assertEquals(UserConsent.UNKNOWN, mSplitConfig.userConsent());
-        verify(mEventsTracker, times(1)).enableTracking(true);
-        verify(mImpressionManager, times(1)).enableTracking(true);
+        verify(mEventsTracker, times(2)).enableTracking(true);
+        verify(mImpressionManager, times(2)).enableTracking(true);
         verify(mEventsStorage, times(1)).enablePersistence(false);
         verify(mImpressionsStorage, times(1)).enablePersistence(false);
+        verify(mEventsStorage, times(1)).enablePersistence(false);
         verify(mSyncManager, times(1)).setupUserConsent(UserConsent.UNKNOWN);
     }
 
@@ -72,10 +120,10 @@ public class UserConsentManagerTest {
         mManager.set(UserConsent.GRANTED);
 
         Assert.assertEquals(UserConsent.GRANTED, mSplitConfig.userConsent());
-        verify(mEventsTracker, times(1)).enableTracking(true);
-        verify(mImpressionManager, times(1)).enableTracking(true);
-        verify(mEventsStorage, times(1)).enablePersistence(true);
+        verify(mEventsTracker, times(2)).enableTracking(true);
+        verify(mImpressionManager, times(2)).enableTracking(true);
         verify(mImpressionsStorage, times(1)).enablePersistence(true);
+        verify(mEventsStorage, times(1)).enablePersistence(true);
         verify(mSyncManager, times(1)).setupUserConsent(UserConsent.GRANTED);
     }
 
@@ -86,6 +134,7 @@ public class UserConsentManagerTest {
                 mImpressionsStorage,
                 mEventsStorage, mSyncManager,
                 mEventsTracker,
-                mImpressionManager);
+                mImpressionManager,
+                mTaskExecutor);
     }
 }
