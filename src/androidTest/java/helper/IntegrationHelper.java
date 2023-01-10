@@ -35,7 +35,7 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.logger.Logger;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 
 public class IntegrationHelper {
     public static final int NEVER_REFRESH_RATE = 999999;

@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTask;
@@ -89,7 +90,7 @@ public class ImpressionManagerImplTest {
                 2048,
                 500);
 
-        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
+        mImpressionsManager = new ImpressionManagerImpl(SplitClientConfig.builder().build(), mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
                 mImpressionsStorage, mUniqueKeysTracker, mConfig);
     }
 
@@ -218,7 +219,7 @@ public class ImpressionManagerImplTest {
         when(mImpressionManagerRetryTimerProvider.getImpressionsTimer()).thenReturn(impressionsTimer);
         when(mImpressionManagerRetryTimerProvider.getImpressionsCountTimer()).thenReturn(impressionsCountTimer);
         when(mImpressionManagerRetryTimerProvider.getUniqueKeysTimer()).thenReturn(uniqueKeysTimer);
-        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
+        mImpressionsManager = new ImpressionManagerImpl(SplitClientConfig.builder().build(), mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
                 mImpressionsCounter,
@@ -251,7 +252,7 @@ public class ImpressionManagerImplTest {
         when(mImpressionManagerRetryTimerProvider.getImpressionsCountTimer()).thenReturn(impressionsCountTimer);
         when(mImpressionManagerRetryTimerProvider.getUniqueKeysTimer()).thenReturn(uniqueKeysTimer);
 
-        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
+        mImpressionsManager = new ImpressionManagerImpl(SplitClientConfig.builder().build(), mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
                 mImpressionsCounter,
@@ -348,7 +349,7 @@ public class ImpressionManagerImplTest {
     public void stopPeriodicRecordingNoneMode() {
         when(mImpressionManagerRetryTimerProvider.getUniqueKeysTimer()).thenReturn(mGenericCounterTimer);
 
-        mImpressionsManager = new ImpressionManagerImpl(mTaskExecutor,
+        mImpressionsManager = new ImpressionManagerImpl(SplitClientConfig.builder().build(), mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
                 mImpressionsCounter,
@@ -420,7 +421,7 @@ public class ImpressionManagerImplTest {
 
     @NonNull
     private ImpressionManagerImpl getDebugModeManager() {
-        return new ImpressionManagerImpl(mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
+        return new ImpressionManagerImpl(SplitClientConfig.builder().build(),mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
                 mImpressionsStorage, mUniqueKeysTracker,
                 new ImpressionManagerConfig(
                         1800,
@@ -434,7 +435,7 @@ public class ImpressionManagerImplTest {
 
     @NonNull
     private ImpressionManagerImpl getNoneModeManager() {
-        return new ImpressionManagerImpl(mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
+        return new ImpressionManagerImpl(SplitClientConfig.builder().build(), mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer,
                 mImpressionsStorage, mUniqueKeysTracker,
                 new ImpressionManagerConfig(
                         1800,
@@ -450,7 +451,7 @@ public class ImpressionManagerImplTest {
     private ImpressionManagerImpl getOptimizedModeManager() {
         when(mImpressionManagerRetryTimerProvider.getUniqueKeysTimer()).thenReturn(mGenericCounterTimer);
 
-        return new ImpressionManagerImpl(mTaskExecutor,
+        return new ImpressionManagerImpl(SplitClientConfig.builder().build(), mTaskExecutor,
                 mTaskFactory,
                 mTelemetryRuntimeProducer,
                 mImpressionsCounter,

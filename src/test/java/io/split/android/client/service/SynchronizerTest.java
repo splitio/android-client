@@ -191,7 +191,7 @@ public class SynchronizerTest {
             mImpressionManager = Mockito.mock(ImpressionManager.class);
         } else {
             mImpressionManager =
-                    new ImpressionManagerImpl(
+                    new ImpressionManagerImpl(SplitClientConfig.builder().build(),
                             mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer, mImpressionsStorage,
                             mUniqueKeysTracker,
                             new ImpressionManagerConfig(

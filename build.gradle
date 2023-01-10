@@ -87,6 +87,7 @@ repositories {
 
 dependencies {
 
+    androidTestImplementation project(path: ':android-client')
     def roomVersion = '2.3.0'
     def workVersion = '2.6.0'
     def lifecycleVersion = '2.3.1'

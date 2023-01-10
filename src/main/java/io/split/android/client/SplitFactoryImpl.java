@@ -164,7 +164,7 @@ public class SplitFactoryImpl implements SplitFactory {
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
-        ImpressionManager impressionManager = new ImpressionManagerImpl(splitTaskExecutor,
+        ImpressionManager impressionManager = new ImpressionManagerImpl(config, splitTaskExecutor,
                 splitTaskFactory,
                 mStorageContainer.getTelemetryStorage(),
                 mStorageContainer.getImpressionsStorage(),
