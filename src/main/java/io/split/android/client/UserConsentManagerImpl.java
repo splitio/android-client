@@ -27,12 +27,12 @@ public class UserConsentManagerImpl implements UserConsentManager {
     private final Object mLock = new Object();
 
     public UserConsentManagerImpl(@NonNull SplitClientConfig splitConfig,
-                                  ImpressionsStorage impressionsStorage,
-                                  EventsStorage eventsStorage,
-                                  SyncManager syncManager,
-                                  EventsTracker eventsTracker,
-                                  ImpressionManager impressionManager,
-                                  SplitTaskExecutor taskExecutor) {
+                                  @NonNull ImpressionsStorage impressionsStorage,
+                                  @NonNull EventsStorage eventsStorage,
+                                  @NonNull SyncManager syncManager,
+                                  @NonNull EventsTracker eventsTracker,
+                                  @NonNull ImpressionManager impressionManager,
+                                  @NonNull SplitTaskExecutor taskExecutor) {
         mSplitConfig = checkNotNull(splitConfig);
         mImpressionsStorage = checkNotNull(impressionsStorage);
         mEventsStorage = checkNotNull(eventsStorage);
