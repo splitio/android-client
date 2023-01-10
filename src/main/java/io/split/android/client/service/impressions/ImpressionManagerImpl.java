@@ -7,6 +7,7 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
@@ -17,6 +18,7 @@ import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
+import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.impressions.ImpressionsStorage;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -36,15 +38,18 @@ public class ImpressionManagerImpl implements ImpressionManager {
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
     private final UniqueKeysTracker mUniqueKeysTracker;
     private final ImpressionManagerRetryTimerProvider mRetryTimerProvider;
+    private final SplitClientConfig mSplitConfig;
     private AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
 
-    public ImpressionManagerImpl(@NonNull SplitTaskExecutor taskExecutor,
+    public ImpressionManagerImpl(@NonNull SplitClientConfig splitConfig,
+                                 @NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull ImpressionsTaskFactory splitTaskFactory,
                                  @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                                  @NonNull ImpressionsStorage impressionsStorage,
                                  @NonNull UniqueKeysTracker uniqueKeysTracker,
                                  @NonNull ImpressionManagerConfig impressionManagerConfig) {
         this(
+                splitConfig,
                 taskExecutor,
                 splitTaskFactory,
                 telemetryRuntimeProducer,
@@ -61,7 +66,8 @@ public class ImpressionManagerImpl implements ImpressionManager {
     }
 
     @VisibleForTesting
-    public ImpressionManagerImpl(@NonNull SplitTaskExecutor taskExecutor,
+    public ImpressionManagerImpl(@NonNull SplitClientConfig splitConfig,
+                                 @NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull ImpressionsTaskFactory splitTaskFactory,
                                  @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                                  @NonNull ImpressionsCounter impressionsCounter,
@@ -69,6 +75,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
                                  @NonNull ImpressionManagerConfig impressionManagerConfig,
                                  @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
                                  @NonNull ImpressionManagerRetryTimerProvider retryTimerProvider) {
+        mSplitConfig = checkNotNull(splitConfig);
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
@@ -225,7 +232,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
     }
 
     private void saveImpressionsCount() {
-        if (!shouldTrackImpressionsCount()) {
+        if (!shouldTrackImpressionsCount() || mSplitConfig.userConsent() != UserConsent.GRANTED) {
             return;
         }
         mTaskExecutor.submit(
@@ -233,7 +240,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
     }
 
     private void saveUniqueKeys() {
-        if (!isNoneImpressionsMode()) {
+        if (!isNoneImpressionsMode() || mSplitConfig.userConsent() != UserConsent.GRANTED) {
             return;
         }
         mTaskExecutor.submit(

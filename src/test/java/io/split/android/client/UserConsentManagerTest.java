@@ -1,7 +1,6 @@
 package io.split.android.client;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockitoSession;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -12,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.synchronizer.SyncManager;
@@ -88,7 +86,7 @@ public class UserConsentManagerTest {
         createUserConsentManager(UserConsent.GRANTED);
         Mockito.reset();
 
-        mManager.set(UserConsent.DECLINED);
+        mManager.setStatus(UserConsent.DECLINED);
 
         Assert.assertEquals(UserConsent.DECLINED, mSplitConfig.userConsent());
         verify(mEventsTracker, times(1)).enableTracking(false);
@@ -102,7 +100,7 @@ public class UserConsentManagerTest {
     public void setUnknown() {
         createUserConsentManager(UserConsent.GRANTED);
 
-        mManager.set(UserConsent.UNKNOWN);
+        mManager.setStatus(UserConsent.UNKNOWN);
 
         Assert.assertEquals(UserConsent.UNKNOWN, mSplitConfig.userConsent());
         verify(mEventsTracker, times(2)).enableTracking(true);
@@ -117,7 +115,7 @@ public class UserConsentManagerTest {
     public void setGranted() {
         createUserConsentManager(UserConsent.UNKNOWN);
 
-        mManager.set(UserConsent.GRANTED);
+        mManager.setStatus(UserConsent.GRANTED);
 
         Assert.assertEquals(UserConsent.GRANTED, mSplitConfig.userConsent());
         verify(mEventsTracker, times(2)).enableTracking(true);

@@ -3,7 +3,7 @@ package fake;
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpStreamRequest;
 import io.split.android.client.network.HttpStreamResponse;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 
 public class HttpStreamRequestMock implements HttpStreamRequest {
 

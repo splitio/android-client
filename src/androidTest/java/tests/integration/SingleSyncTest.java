@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import fake.HttpStreamResponseMock;
 import fake.LifecycleManagerStub;
 import helper.DatabaseHelper;
 import helper.FileHelper;
@@ -40,7 +41,6 @@ import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 public class SingleSyncTest {
 

@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import fake.HttpStreamResponseMock;
 import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
@@ -43,7 +44,6 @@ import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
 
 import static java.lang.Thread.sleep;
 

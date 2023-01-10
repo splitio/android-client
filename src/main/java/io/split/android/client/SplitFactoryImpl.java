@@ -9,7 +9,6 @@ import java.util.Set;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerCoordinator;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
@@ -164,7 +163,7 @@ public class SplitFactoryImpl implements SplitFactory {
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
-        ImpressionManager impressionManager = new ImpressionManagerImpl(splitTaskExecutor,
+        ImpressionManager impressionManager = new ImpressionManagerImpl(config, splitTaskExecutor,
                 splitTaskFactory,
                 mStorageContainer.getTelemetryStorage(),
                 mStorageContainer.getImpressionsStorage(),
@@ -349,7 +348,7 @@ public class SplitFactoryImpl implements SplitFactory {
             Logger.e("User consent manager not initialized. Unable to set mode " + newMode.toString());
             return;
         }
-        mUserConsentManager.set(newMode);
+        mUserConsentManager.setStatus(newMode);
     }
 
     @Override
