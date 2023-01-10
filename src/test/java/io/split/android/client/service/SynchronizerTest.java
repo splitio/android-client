@@ -76,8 +76,8 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.common.SplitStorageContainer;
-import io.split.android.client.storage.events.PersistentEventsStorage;
-import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.storage.events.EventsStorage;
+import io.split.android.client.storage.impressions.ImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -98,9 +98,9 @@ public class SynchronizerTest {
     @Mock
     PersistentSplitsStorage mPersistentSplitsStorageContainer;
     @Mock
-    PersistentEventsStorage mEventsStorage;
+    EventsStorage mEventsStorage;
     @Mock
-    PersistentImpressionsStorage mImpressionsStorage;
+    ImpressionsStorage mImpressionsStorage;
     @Mock
     TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
@@ -331,7 +331,7 @@ public class SynchronizerTest {
         testResumeUserConsentNone(UserConsent.UNKNOWN);
     }
 
-    public void testResumeUserConsentNone(UserConsent userConsent) {
+    private void testResumeUserConsentNone(UserConsent userConsent) {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .sychronizeInBackground(false)

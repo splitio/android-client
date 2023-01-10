@@ -255,7 +255,8 @@ public final class SplitClientImpl implements SplitClient {
             mValidationLogger.e("Client has already been destroyed - no calls possible", "track");
             return false;
         }
-        return mEventsTracker.track(key, trafficType, eventType, value, properties);
+        boolean isSdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
+        return mEventsTracker.track(key, trafficType, eventType, value, properties, isSdkReady);
     }
 
     @Override

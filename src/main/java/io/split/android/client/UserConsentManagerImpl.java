@@ -1,0 +1,90 @@
+package io.split.android.client;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import androidx.annotation.NonNull;
+import androidx.arch.core.executor.TaskExecutor;
+
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.impressions.ImpressionManager;
+import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.events.EventsStorage;
+import io.split.android.client.storage.impressions.ImpressionsStorage;
+import io.split.android.client.utils.logger.Logger;
+
+public class UserConsentManagerImpl implements UserConsentManager {
+    private final SplitClientConfig mSplitConfig;
+    private final ImpressionsStorage mImpressionsStorage;
+    private final EventsStorage mEventsStorage;
+    private final SyncManager mSyncManager;
+    private final EventsTracker mEventsTracker;
+    private final ImpressionManager mImpressionManager;
+    private UserConsent mCurrentStatus;
+    private SplitTaskExecutor mTaskExecutor;
+    private final Object mLock = new Object();
+
+    public UserConsentManagerImpl(@NonNull SplitClientConfig splitConfig,
+                                  ImpressionsStorage impressionsStorage,
+                                  EventsStorage eventsStorage,
+                                  SyncManager syncManager,
+                                  EventsTracker eventsTracker,
+                                  ImpressionManager impressionManager,
+                                  SplitTaskExecutor taskExecutor) {
+        mSplitConfig = checkNotNull(splitConfig);
+        mImpressionsStorage = checkNotNull(impressionsStorage);
+        mEventsStorage = checkNotNull(eventsStorage);
+        mSyncManager = checkNotNull(syncManager);
+        mEventsTracker = checkNotNull(eventsTracker);
+        mImpressionManager = checkNotNull(impressionManager);
+        mTaskExecutor = taskExecutor;
+        set(splitConfig.userConsent());
+    }
+
+    public void set(UserConsent status) {
+
+        synchronized (mLock) {
+            if (mCurrentStatus == status) {
+                return;
+            }
+
+            mSplitConfig.setUserConsent(status);
+            enableTracking(status);
+            enablePersistence(status);
+            mSyncManager.setupUserConsent(status);
+            mCurrentStatus = status;
+            Logger.d("User consent set to " + status.toString());
+        }
+    }
+
+    public UserConsent getStatus() {
+        synchronized (mLock) {
+            return mCurrentStatus;
+        }
+    }
+
+    private void enableTracking(UserConsent status) {
+        final boolean enable = (status != UserConsent.DECLINED);
+        mEventsTracker.enableTracking(enable);
+        mImpressionManager.enableTracking(enable);
+        Logger.d("Tracking has been set to " + enable );
+    }
+
+    private void enablePersistence(UserConsent status) {
+        final boolean enable = (status == UserConsent.GRANTED);
+        mTaskExecutor.submit(new SplitTask() {
+            @NonNull
+            @Override
+            public SplitTaskExecutionInfo execute() {
+                mImpressionsStorage.enablePersistence(enable);
+                mEventsStorage.enablePersistence(enable);
+                return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
+            }
+        }, null);
+        Logger.d("Persistence has been set to " + enable );
+    }
+}

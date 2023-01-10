@@ -53,10 +53,13 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactoryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
+import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
@@ -120,14 +123,21 @@ class SplitFactoryHelper {
         return headersBuilder.build();
     }
 
-    SplitStorageContainer buildStorageContainer(SplitRoomDatabase splitRoomDatabase, Key key,
+    SplitStorageContainer buildStorageContainer(UserConsent userConsentStatus,
+            SplitRoomDatabase splitRoomDatabase, Key key,
                                                 boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage /* Testing */) {
+
+        boolean isPersistenceEnabled = userConsentStatus == UserConsent.GRANTED;
+        PersistentEventsStorage persistentEventsStorage = StorageFactory.getPersistentEventsStorage(splitRoomDatabase);
+        PersistentImpressionsStorage persistentImpressionsStorage = StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase);
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase),
-                StorageFactory.getPersistentEventsStorage(splitRoomDatabase),
-                StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase),
+                StorageFactory.getEventsStorage(persistentEventsStorage, isPersistenceEnabled),
+                persistentEventsStorage,
+                StorageFactory.getImpressionsStorage(persistentImpressionsStorage, isPersistenceEnabled),
+                persistentImpressionsStorage,
                 StorageFactory.getPersistentImpressionsCountStorage(splitRoomDatabase),
                 StorageFactory.getPersistentImpressionsUniqueStorage(splitRoomDatabase),
                 StorageFactory.getAttributesStorage(),

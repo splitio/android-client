@@ -36,7 +36,7 @@ public class SqLitePersistentEventsStorage
 
     @Override
     protected void insert(@NonNull List<EventEntity> entities) {
-        // No need to implement this for now
+        mDao.insert(entities);
     }
 
     @NonNull

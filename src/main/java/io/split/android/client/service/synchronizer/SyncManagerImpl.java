@@ -229,6 +229,17 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(matchingKey);
     }
 
+    @Override
+    public void setupUserConsent(UserConsent status) {
+        if (status == UserConsent.GRANTED) {
+            Logger.v("User consent status is granted now. Starting recorders");
+            mSynchronizer.startPeriodicRecording();
+        } else {
+            Logger.v("User consent status is " +  status + " now. Stopping recorders");
+            mSynchronizer.stopPeriodicRecording();
+        }
+    }
+
     private boolean isSyncEnabled() {
         return mSplitClientConfig.syncEnabled();
     }

@@ -547,6 +547,10 @@ public class SplitClientConfig {
         return _userConsent;
     }
 
+    protected void setUserConsent(UserConsent status) {
+        _userConsent = status;
+    }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;

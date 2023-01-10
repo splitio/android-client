@@ -22,7 +22,6 @@ public class EventsTrackerImpl implements EventsTracker {
     // Estimated event size without properties
     private final static int ESTIMATED_EVENT_SIZE_WITHOUT_PROPS = 1024;
 
-    private final SplitEventsManager mEventsManager;
     private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
@@ -30,14 +29,12 @@ public class EventsTrackerImpl implements EventsTracker {
     private final SyncManager mSyncManager;
     private final AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
 
-    public EventsTrackerImpl(@NonNull SplitEventsManager eventsManager,
-                             @NonNull EventValidator eventValidator,
+    public EventsTrackerImpl(@NonNull EventValidator eventValidator,
                              @NonNull ValidationMessageLogger validationLogger,
                              @NonNull TelemetryStorageProducer telemetryStorageProducer,
                              @NonNull EventPropertiesProcessor eventPropertiesProcessor,
                              @NonNull SyncManager syncManager) {
 
-        mEventsManager = checkNotNull(eventsManager);
         mEventValidator = checkNotNull(eventValidator);
         mValidationLogger = checkNotNull(validationLogger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
@@ -49,7 +46,7 @@ public class EventsTrackerImpl implements EventsTracker {
         isTrackingEnabled.set(enable);
     }
     public boolean track(String key, String trafficType, String eventType,
-                         double value, Map<String, Object> properties) {
+                         double value, Map<String, Object> properties, boolean isSdkReady) {
 
         if (!isTrackingEnabled.get()) {
             Logger.v("Event not tracked because tracking is disabled");
@@ -58,7 +55,6 @@ public class EventsTrackerImpl implements EventsTracker {
 
         try {
             final String validationTag = "track";
-            final boolean isSdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
 
             Event event = new Event();
             event.eventTypeId = eventType;

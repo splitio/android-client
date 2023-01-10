@@ -17,7 +17,7 @@ import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
-import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.storage.impressions.ImpressionsStorage;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
@@ -41,7 +41,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
     public ImpressionManagerImpl(@NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull ImpressionsTaskFactory splitTaskFactory,
                                  @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                                 @NonNull PersistentImpressionsStorage persistentImpressionsStorage,
+                                 @NonNull ImpressionsStorage impressionsStorage,
                                  @NonNull UniqueKeysTracker uniqueKeysTracker,
                                  @NonNull ImpressionManagerConfig impressionManagerConfig) {
         this(
@@ -53,7 +53,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
                 impressionManagerConfig,
                 new RecorderSyncHelperImpl<>(
                         SplitTaskType.IMPRESSIONS_RECORDER,
-                        persistentImpressionsStorage,
+                        impressionsStorage,
                         impressionManagerConfig.getImpressionsQueueSize(),
                         impressionManagerConfig.getImpressionsChunkSize(),
                         taskExecutor),

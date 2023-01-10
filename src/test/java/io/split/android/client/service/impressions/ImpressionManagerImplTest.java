@@ -35,7 +35,7 @@ import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
-import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.storage.impressions.ImpressionsStorage;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.fake.SplitTaskExecutorStub;
@@ -53,7 +53,7 @@ public class ImpressionManagerImplTest {
     private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     @Mock
-    private PersistentImpressionsStorage mImpressionsStorage;
+    private ImpressionsStorage mImpressionsStorage;
 
     @Mock
     private UniqueKeysTracker mUniqueKeysTracker;

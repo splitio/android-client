@@ -12,9 +12,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.common.PersistentStorage;
 import io.split.android.client.storage.common.Storage;
+import io.split.android.client.storage.common.StoragePusher;
 import io.split.android.client.utils.logger.Logger;
 
-public class EventsStorage implements Storage<Event> {
+public class EventsStorage implements Storage<Event>, StoragePusher<Event> {
     final private PersistentEventsStorage mPersistentStorage;
     final private AbstractQueue<Event> mEvents = new ConcurrentLinkedQueue<>();
     final private AtomicBoolean mIsPersistenceEnabled = new AtomicBoolean(true);

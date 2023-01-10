@@ -53,8 +53,7 @@ public class EventsTrackerTest {
         when(mEventsManager.eventAlreadyTriggered(any())).thenReturn(true);
         when(mEventPropertiesProcessor.process(any())).thenReturn(new ProcessedEventProperties(true, null, 0));
 
-        mEventsTracker = new EventsTrackerImpl(mEventsManager,
-                mEventValidator, mValidationLogger, mTelemetryStorageProducer,
+        mEventsTracker = new EventsTrackerImpl(mEventValidator, mValidationLogger, mTelemetryStorageProducer,
                 mEventPropertiesProcessor, mSyncManager);
     }
 
@@ -70,7 +69,7 @@ public class EventsTrackerTest {
 
     private void trackingEnabledTest(boolean enabled) {
         mEventsTracker.enableTracking(enabled);
-        boolean res = mEventsTracker.track("pepe", "tt", null, 1.0, null);
+        boolean res = mEventsTracker.track("pepe", "tt", null, 1.0, null, true);
 
         assertEquals(enabled, res);
         if (enabled) {
@@ -86,7 +85,7 @@ public class EventsTrackerTest {
     public void trackRecordsLatencyInEvaluationProducer() {
         ProcessedEventProperties processedEventProperties = mock(ProcessedEventProperties.class);
         when(processedEventProperties.isValid()).thenReturn(true);
-        mEventsTracker.track("any", "tt", "ev", 1, null);
+        mEventsTracker.track("any", "tt", "ev", 1, null, true);
 
         verify(mTelemetryStorageProducer).recordLatency(eq(Method.TRACK), anyLong());
     }
@@ -97,7 +96,7 @@ public class EventsTrackerTest {
             throw new Exception("test exception");
         });
 
-        mEventsTracker.track("event", "tt", "ev", 0, null);
+        mEventsTracker.track("event", "tt", "ev", 0, null, true);
 
         verify(mTelemetryStorageProducer).recordException(Method.TRACK);
     }
