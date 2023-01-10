@@ -3,7 +3,6 @@ package io.split.android.client;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
-import androidx.arch.core.executor.TaskExecutor;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -11,7 +10,6 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.synchronizer.SyncManager;
-import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.storage.impressions.ImpressionsStorage;
@@ -42,10 +40,10 @@ public class UserConsentManagerImpl implements UserConsentManager {
         mEventsTracker = checkNotNull(eventsTracker);
         mImpressionManager = checkNotNull(impressionManager);
         mTaskExecutor = taskExecutor;
-        set(splitConfig.userConsent());
+        setStatus(splitConfig.userConsent());
     }
 
-    public void set(UserConsent status) {
+    public void setStatus(UserConsent status) {
 
         synchronized (mLock) {
             if (mCurrentStatus == status) {
