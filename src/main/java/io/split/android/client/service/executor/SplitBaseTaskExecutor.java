@@ -3,8 +3,12 @@ package io.split.android.client.service.executor;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +25,7 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
     private static final int SHUTDOWN_WAIT_TIME = 15;
     private final PausableScheduledThreadPoolExecutor mScheduler;
     private final Map<String, ScheduledFuture> mScheduledTasks;
+    private Handler mMainHandler;
 
     public SplitBaseTaskExecutor() {
         mScheduler = buildScheduler();
@@ -98,6 +103,27 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
         }
     }
 
+    @VisibleForTesting
+    public void submitOnMainThread(@NonNull Handler handler, @NonNull SplitTask splitTask) {
+        if (!mScheduler.isShutdown()) {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        splitTask.execute();
+                    } catch (Exception exception) {
+                        Logger.e("Error executing task on main thread: " + exception.getLocalizedMessage());
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    public void submitOnMainThread(SplitTask splitTask) {
+        submitOnMainThread(getMainHandler(), splitTask);
+    }
+
     public void pause() {
         mScheduler.pause();
     }
@@ -123,5 +149,13 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    private Handler getMainHandler() {
+        if (mMainHandler == null) {
+            mMainHandler = new Handler(Looper.getMainLooper());
+        }
+
+        return mMainHandler;
     }
 }

@@ -10,15 +10,15 @@ import io.split.android.client.SplitClient;
 
 public class SplitEventExecutorResourcesImpl implements SplitEventExecutorResources {
 
-    private SplitClient _client;
+    private SplitClient mClient;
 
     @Override
     public void setSplitClient(SplitClient client) {
-        _client = checkNotNull(client);
+        mClient = checkNotNull(client);
     }
 
     @Override
     public SplitClient getSplitClient() {
-        return _client;
+        return mClient;
     }
 }

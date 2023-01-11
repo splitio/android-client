@@ -12,6 +12,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.synchronizer.ThreadUtils;
 
 public class EventsManagerTest {
@@ -19,7 +20,7 @@ public class EventsManagerTest {
     public void testSdkUpdateSplits() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
 
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -39,7 +40,7 @@ public class EventsManagerTest {
     public void testSdkFetchedUpdatedSplits() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
 
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -59,7 +60,7 @@ public class EventsManagerTest {
     public void testSdkUpdatedFetchedSplits() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
 
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -80,7 +81,7 @@ public class EventsManagerTest {
     public void testSdkUpdateSegments() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
 
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -100,7 +101,7 @@ public class EventsManagerTest {
     public void testSdkFetchedUpdatedSegments() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
 
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -120,7 +121,7 @@ public class EventsManagerTest {
     public void testSdkUpdatedFetchedSegments() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
 
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -141,7 +142,7 @@ public class EventsManagerTest {
     public void testKilledSplit() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
 
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -161,7 +162,7 @@ public class EventsManagerTest {
     public void testKilledSplitBeforeReady() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
 
 
@@ -181,7 +182,7 @@ public class EventsManagerTest {
     public void testTimeoutSplitsUpdated() throws InterruptedException {
 
         SplitClientConfig cfg =  SplitClientConfig.builder().ready(2000).build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
         CountDownLatch timeoutLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(null);
@@ -204,7 +205,7 @@ public class EventsManagerTest {
     public void testTimeoutMySegmentsUpdated() throws InterruptedException {
 
         SplitClientConfig cfg =  SplitClientConfig.builder().ready(2000).build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg);
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorImpl());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
         CountDownLatch timeoutLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(null);
