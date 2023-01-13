@@ -46,7 +46,7 @@ import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamin
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 import tests.integration.shared.TestingHelper;
 
 public class ControlTest {

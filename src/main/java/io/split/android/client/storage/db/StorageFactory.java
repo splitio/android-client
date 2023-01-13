@@ -10,8 +10,10 @@ import io.split.android.client.storage.attributes.AttributesStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorageContainerImpl;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.attributes.SqLitePersistentAttributesStorage;
+import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
+import io.split.android.client.storage.impressions.ImpressionsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsUniqueStorage;
@@ -43,8 +45,17 @@ public class StorageFactory {
         return getMySegmentsStorageContainer(splitRoomDatabase);
     }
 
+    public static EventsStorage getEventsStorage(PersistentEventsStorage persistentEventsStorage,
+                                                      boolean isPersistenceEnabled) {
+        return new EventsStorage(persistentEventsStorage, isPersistenceEnabled);
+    }
     public static PersistentSplitsStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase) {
         return new SqLitePersistentSplitsStorage(splitRoomDatabase);
+    }
+
+    public static ImpressionsStorage getImpressionsStorage(PersistentImpressionsStorage persistentImpressionsStorage,
+                                                           boolean isPersistenceEnabled) {
+        return new ImpressionsStorage(persistentImpressionsStorage, isPersistenceEnabled);
     }
 
     public static PersistentImpressionsStorage getPersistentImpressionsStorage(

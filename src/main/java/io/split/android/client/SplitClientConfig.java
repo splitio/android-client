@@ -17,6 +17,7 @@ import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
+import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.TelemetryHelperImpl;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
@@ -136,6 +137,7 @@ public class SplitClientConfig {
     private final long _telemetryRefreshRate;
     private boolean _syncEnabled = true;
     private int _logLevel = SplitLogLevel.NONE;
+    private UserConsent _userConsent;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -192,7 +194,8 @@ public class SplitClientConfig {
                               boolean syncEnabled,
                               int logLevel,
                               int mtkPerPush,
-                              int mtkRefreshRate) {
+                              int mtkRefreshRate,
+                              UserConsent userConsent) {
         _endpoint = endpoint;
         _eventsEndpoint = eventsEndpoint;
         _telemetryEndpoint = telemetryEndpoint;
@@ -241,6 +244,7 @@ public class SplitClientConfig {
         _telemetryRefreshRate = telemetryRefreshRate;
         _syncEnabled = syncEnabled;
         _logLevel = logLevel;
+        _userConsent = userConsent;
 
         splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
 
@@ -539,6 +543,14 @@ public class SplitClientConfig {
 
     private void enableTelemetry() { _shouldRecordTelemetry = true; }
 
+    public UserConsent userConsent() {
+        return _userConsent;
+    }
+
+    protected void setUserConsent(UserConsent status) {
+        _userConsent = status;
+    }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;
@@ -603,6 +615,8 @@ public class SplitClientConfig {
         private int _logLevel = SplitLogLevel.NONE;
 
         private int _mtkPerPush = DEFAULT_MTK_PER_PUSH;
+
+        private UserConsent _userConsent = UserConsent.GRANTED;
 
         private final int _mtkRefreshRate = 15 * 60;
 
@@ -1146,6 +1160,22 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * User Consent
+         * @param value Values:<br>
+         *             GRANTED: Impressions and events are tracked and sent to the backend
+         *             DECLINED: Impressions and events aren't tracked nor sent to the backend
+         *             UNKNOWN: Impressions and events are tracked in memory and aren't sent to the backend
+         *
+         * @return: This builder
+         * @default: GRANTED
+         */
+        public Builder userConsent(UserConsent value) {
+            _userConsent = value;
+            Logger.v("User consent has been set to " + value.toString());
+            return this;
+        }
+
         public SplitClientConfig build() {
 
 
@@ -1257,7 +1287,8 @@ public class SplitClientConfig {
                     _syncEnabled,
                     _logLevel,
                     _mtkPerPush,
-                    _mtkRefreshRate);
+                    _mtkRefreshRate,
+                    _userConsent);
         }
 
         public void set_impressionsChunkSize(long _impressionsChunkSize) {
