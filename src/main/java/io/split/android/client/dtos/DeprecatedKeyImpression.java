@@ -1,10 +1,6 @@
 package io.split.android.client.dtos;
 
 
-import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.storage.InBytesSizable;
-
 public class DeprecatedKeyImpression {
 
     public transient long storageId;

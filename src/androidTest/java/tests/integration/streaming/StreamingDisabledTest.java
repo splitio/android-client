@@ -19,7 +19,7 @@ import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import io.split.android.client.api.Key;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;

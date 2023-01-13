@@ -40,7 +40,7 @@ import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 import io.split.android.client.service.telemetry.TelemetryTaskFactoryImpl;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.common.SplitStorageContainer;
 
 public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
@@ -90,7 +90,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     public EventsRecorderTask createEventsRecorderTask() {
         return new EventsRecorderTask(
                 mSplitApiFacade.getEventsRecorder(),
-                mSplitsStorageContainer.getEventsStorage(),
+                mSplitsStorageContainer.getPersistentEventsStorage(),
                 new EventsRecorderTaskConfig(mSplitClientConfig.eventsPerPush()),
                 mSplitsStorageContainer.getTelemetryStorage());
     }
@@ -99,7 +99,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     public ImpressionsRecorderTask createImpressionsRecorderTask() {
         return new ImpressionsRecorderTask(
                 mSplitApiFacade.getImpressionsRecorder(),
-                mSplitsStorageContainer.getImpressionsStorage(),
+                mSplitsStorageContainer.getPersistentImpressionsStorage(),
                 new ImpressionsRecorderTaskConfig(
                         mSplitClientConfig.impressionsPerPush(),
                         ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES,
@@ -137,8 +137,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public CleanUpDatabaseTask createCleanUpDatabaseTask(long maxTimestamp) {
-        return new CleanUpDatabaseTask(mSplitsStorageContainer.getEventsStorage(),
-                mSplitsStorageContainer.getImpressionsStorage(),
+        return new CleanUpDatabaseTask(mSplitsStorageContainer.getPersistentEventsStorage(),
+                mSplitsStorageContainer.getPersistentImpressionsStorage(),
                 mSplitsStorageContainer.getImpressionsCountStorage(),
                 mSplitsStorageContainer.getPersistentImpressionsUniqueStorage(),
                 maxTimestamp);

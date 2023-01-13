@@ -32,7 +32,7 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.logger.Logger;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 
 public abstract class AblyErrorBaseTest {
     private Context mContext;

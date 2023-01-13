@@ -19,8 +19,7 @@ import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import helper.DatabaseHelper;
-import helper.TestingHelper;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
@@ -29,6 +28,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.logger.Logger;
+import tests.integration.shared.TestingHelper;
 
 import static java.lang.Thread.sleep;
 
