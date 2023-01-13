@@ -7,7 +7,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
-import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.storage.BinarySearchLatencyTracker;
 
 public class BinarySearchLatencyTrackerTest {
