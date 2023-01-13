@@ -33,7 +33,7 @@ public class TelemetryConfigBodySerializerTest {
     @Test
     public void nullValuesAreIgnoredForJson() {
 
-        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"iQ\":4000,\"eQ\":3000,\"iM\":\"1\",\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
+        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"iQ\":4000,\"eQ\":3000,\"iM\":\"1\",\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"uC\":0,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
         final String serializedConfig = telemetryConfigBodySerializer.serialize(buildMockConfigWithNulls());
 
         assertEquals(expectedJson, serializedConfig);
@@ -68,6 +68,7 @@ public class TelemetryConfigBodySerializerTest {
         config.setRedundantActiveFactories(0);
         config.setTimeUntilSDKReady(300);
         config.setSDKNotReadyUsage(3);
+        config.setUserConsent(1);
         config.setTags(Arrays.asList("tag1", "tag2"));
         config.setIntegrations(Arrays.asList("integration1", "integration2"));
 
