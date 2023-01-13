@@ -3,6 +3,7 @@ package fake;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.shared.UserConsent;
 
 public class SyncManagerStub implements SyncManager {
 
@@ -25,6 +26,11 @@ public class SyncManagerStub implements SyncManager {
 
     @Override
     public void stop() {
+    }
+
+    @Override
+    public void setupUserConsent(UserConsent status) {
+
     }
 
     @Override

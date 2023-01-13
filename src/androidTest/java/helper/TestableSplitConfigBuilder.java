@@ -8,6 +8,7 @@ import io.split.android.client.SyncConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.service.impressions.ImpressionsMode;
+import io.split.android.client.shared.UserConsent;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.Authenticator;
@@ -53,6 +54,7 @@ public class TestableSplitConfigBuilder {
     private int mLogLevel = SplitLogLevel.NONE;
     private int mMtkPerPush = 30000;
     private int mMtkRefreshRate = 1800;
+    private UserConsent mUserConsent = UserConsent.GRANTED;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -223,6 +225,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder userConsent(UserConsent value) {
+        this.mUserConsent = value;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -270,7 +277,8 @@ public class TestableSplitConfigBuilder {
                     mSyncEnabled,
                     mLogLevel,
                     mMtkPerPush,
-                    mMtkRefreshRate);
+                    mMtkRefreshRate,
+                    mUserConsent);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

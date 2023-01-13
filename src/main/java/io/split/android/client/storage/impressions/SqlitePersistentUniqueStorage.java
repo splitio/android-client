@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.split.android.client.service.impressions.unique.UniqueKey;
-import io.split.android.client.storage.SqLitePersistentStorage;
+import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;

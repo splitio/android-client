@@ -22,10 +22,11 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
+import io.split.android.client.service.impressions.ImpressionManager;
+import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.impressions.ImpressionManagerConfig;
 import io.split.android.client.service.impressions.ImpressionManagerImpl;
 import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
-import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -36,7 +37,8 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
@@ -45,6 +47,8 @@ import io.split.android.client.utils.NetworkHelperImpl;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
+import io.split.android.client.validators.EventValidator;
+import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
@@ -68,6 +72,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
     private final SplitStorageContainer mStorageContainer;
     private final SplitClientContainer mClientContainer;
+    private final UserConsentManager mUserConsentManager;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
@@ -138,7 +143,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
-        mStorageContainer = factoryHelper.buildStorageContainer(_splitDatabase, key, config.shouldRecordTelemetry(), telemetryStorage);
+        mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(), _splitDatabase, key, config.shouldRecordTelemetry(), telemetryStorage);
 
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
 
@@ -157,6 +162,19 @@ public class SplitFactoryImpl implements SplitFactory {
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
+        ImpressionManager impressionManager = new ImpressionManagerImpl(config, splitTaskExecutor,
+                splitTaskFactory,
+                mStorageContainer.getTelemetryStorage(),
+                mStorageContainer.getImpressionsStorage(),
+                new UniqueKeysTrackerImpl(),
+                new ImpressionManagerConfig(
+                        config.impressionsRefreshRate(),
+                        config.impressionsCounterRefreshRate(),
+                        config.impressionsMode(),
+                        config.impressionsQueueSize(),
+                        config.impressionsChunkSize(),
+                        config.mtkRefreshRate()
+                ));
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
@@ -169,19 +187,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 mStorageContainer.getTelemetryStorage(),
                 new AttributesSynchronizerRegistryImpl(),
                 new MySegmentsSynchronizerRegistryImpl(),
-                new ImpressionManagerImpl(splitTaskExecutor,
-                        splitTaskFactory,
-                        mStorageContainer.getTelemetryStorage(),
-                        mStorageContainer.getImpressionsStorage(),
-                        new UniqueKeysTrackerImpl(),
-                        new ImpressionManagerConfig(
-                                config.impressionsRefreshRate(),
-                                config.impressionsCounterRefreshRate(),
-                                config.impressionsMode(),
-                                config.impressionsQueueSize(),
-                                config.impressionsChunkSize(),
-                                config.mtkRefreshRate()
-                        )));
+                impressionManager);
         // Only available for integration tests
         if (synchronizerSpy != null) {
             synchronizerSpy.setSynchronizer(mSynchronizer);
@@ -223,6 +229,11 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             customerImpressionListener = splitImpressionListener;
         }
+        EventsTracker eventsTracker = buildEventsTracker();
+        mUserConsentManager = new UserConsentManagerImpl(config,
+                mStorageContainer.getImpressionsStorage(),
+                mStorageContainer.getEventsStorage(),
+                mSyncManager, eventsTracker, impressionManager, splitTaskExecutor);
         ClientComponentsRegister componentsRegister = factoryHelper.getClientComponentsRegister(config, splitTaskExecutor,
                 mEventsManagerCoordinator, mSynchronizer, streamingComponents.getNotificationParser(),
                 streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
@@ -231,8 +242,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 mDefaultClientKey.matchingKey(), this, config, mSyncManager,
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener,
-                streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper
-        );
+                streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper,
+                eventsTracker);
         mDestroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");
@@ -329,6 +340,21 @@ public class SplitFactoryImpl implements SplitFactory {
         mSyncManager.flush();
     }
 
+    @Override
+    public void setUserConsent(boolean enabled) {
+        UserConsent newMode = (enabled ? UserConsent.GRANTED : UserConsent.DECLINED);
+        if (mUserConsentManager == null) {
+            Logger.e("User consent manager not initialized. Unable to set mode " + newMode.toString());
+            return;
+        }
+        mUserConsentManager.setStatus(newMode);
+    }
+
+    @Override
+    public UserConsent getUserConsent() {
+        return mUserConsentManager.getStatus();
+    }
+
     private void setupValidations(SplitClientConfig splitClientConfig) {
 
         ValidationConfig.getInstance().setMaximumKeyLength(splitClientConfig.maximumKeyLength());
@@ -338,5 +364,11 @@ public class SplitFactoryImpl implements SplitFactory {
     private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,
                                SplitTaskFactory splitTaskFactory) {
         splitTaskExecutor.submit(splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000), null);
+    }
+
+    private EventsTracker buildEventsTracker() {
+        EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mStorageContainer.getSplitsStorage());
+        return new EventsTrackerImpl(eventsValidator, new ValidationMessageLoggerImpl(), mStorageContainer.getTelemetryStorage(),
+                new EventPropertiesProcessorImpl(), mSyncManager);
     }
 }

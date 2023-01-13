@@ -51,6 +51,9 @@ public class Config {
     @SerializedName("nR")
     private long SDKNotReadyUsage;
 
+    @SerializedName("uC")
+    private long userConsent;
+
     @SerializedName("t")
     private List<String> tags;
 
@@ -163,6 +166,14 @@ public class Config {
 
     public long getSDKNotReadyUsage() {
         return SDKNotReadyUsage;
+    }
+
+    public long getUserConsent() {
+        return userConsent;
+    }
+
+    public void setUserConsent(long userConsent) {
+        this.userConsent = userConsent;
     }
 
     public void setSDKNotReadyUsage(long SDKNotReadyUsage) {

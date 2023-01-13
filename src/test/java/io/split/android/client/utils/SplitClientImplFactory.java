@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.EventPropertiesProcessor;
+import io.split.android.client.EventsTracker;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientImpl;
 import io.split.android.client.SplitFactory;
@@ -53,7 +54,7 @@ public class SplitClientImplFactory {
                 cfg,
                 eventsManager,
                 splitsStorage,
-                mock(EventPropertiesProcessor.class),
+                mock(EventsTracker.class),
                 mock(SyncManager.class),
                 attributesManager,
                 telemetryStorage,
@@ -77,7 +78,7 @@ public class SplitClientImplFactory {
                 cfg,
                 new SplitEventsManager(cfg, new SplitTaskExecutorStub()),
                 splitsStorage,
-                mock(EventPropertiesProcessor.class),
+                mock(EventsTracker.class),
                 mock(SyncManager.class),
                 mock(AttributesManager.class),
                 mock(TelemetryStorage.class),
@@ -97,7 +98,7 @@ public class SplitClientImplFactory {
                 SplitClientConfig.builder().build(),
                 eventsManager,
                 splitsStorage,
-                mock(EventPropertiesProcessor.class),
+                mock(EventsTracker.class),
                 mock(SyncManager.class),
                 mock(AttributesManager.class),
                 mock(TelemetryStorage.class),

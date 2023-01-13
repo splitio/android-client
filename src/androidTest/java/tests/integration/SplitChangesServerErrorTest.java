@@ -19,7 +19,7 @@ import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import helper.DatabaseHelper;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 import helper.FileHelper;
 import helper.ImpressionListenerHelper;
 import helper.IntegrationHelper;

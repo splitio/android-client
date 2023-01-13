@@ -29,7 +29,8 @@ import io.split.android.client.service.synchronizer.attributes.AttributesSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -179,6 +180,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     public void stopPeriodicRecording() {
         mTaskExecutor.stopTask(mEventsRecorderTaskId);
         mImpressionManager.stopPeriodicRecording();
+        mEventsRecorderTaskId = null;
     }
 
     private void setupListeners() {
@@ -203,7 +205,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     public void resume() {
         mTaskExecutor.resume();
         mSplitsTaskExecutor.resume();
-        startPeriodicRecording();
+        if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {
+            startPeriodicRecording();
+        }
     }
 
     @Override
@@ -215,9 +219,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     public void flush() {
-        mEventsRecorderUpdateRetryTimer.setTask(mSplitTaskFactory.createEventsRecorderTask());
-        mEventsRecorderUpdateRetryTimer.start();
-        mImpressionManager.flush();
+        if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {
+            mEventsRecorderUpdateRetryTimer.setTask(mSplitTaskFactory.createEventsRecorderTask());
+            mEventsRecorderUpdateRetryTimer.start();
+            mImpressionManager.flush();
+        }
     }
 
     @Override

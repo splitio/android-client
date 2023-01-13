@@ -16,17 +16,21 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.shared.SplitClientContainer;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryInitProducer;
 import io.split.android.client.validators.AttributesValidatorImpl;
+import io.split.android.client.validators.EventValidator;
+import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
+import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManagerFactory;
 import io.split.android.client.validators.TreatmentManagerFactoryImpl;
 import io.split.android.client.validators.ValidationMessageLogger;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
 
 public class SplitClientFactoryImpl implements SplitClientFactory {
@@ -43,7 +47,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final TreatmentManagerFactory mTreatmentManagerFactory;
     private final ImpressionListener mCustomerImpressionListener;
     private final SplitValidatorImpl mSplitValidator;
-    private final EventPropertiesProcessorImpl mEventPropertiesProcessor;
+    private final EventsTracker mEventsTracker;
 
     public SplitClientFactoryImpl(@NonNull SplitFactory splitFactory,
                                   @NonNull SplitClientContainer clientContainer,
@@ -54,6 +58,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull SplitTaskExecutor splitTaskExecutor,
                                   @NonNull ValidationMessageLogger validationLogger,
                                   @NonNull KeyValidator keyValidator,
+                                  @NonNull EventsTracker eventsTracker,
                                   @NonNull ImpressionListener customerImpressionListener) {
         mSplitFactory = checkNotNull(splitFactory);
         mClientContainer = checkNotNull(clientContainer);
@@ -63,6 +68,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
         mStorageContainer = checkNotNull(storageContainer);
         mTelemetrySynchronizer = checkNotNull(telemetrySynchronizer);
         mCustomerImpressionListener = checkNotNull(customerImpressionListener);
+        mEventsTracker = checkNotNull(eventsTracker);
 
         mAttributesManagerFactory = getAttributesManagerFactory(config.persistentAttributesEnabled(),
                 validationLogger,
@@ -79,8 +85,6 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mStorageContainer.getTelemetryStorage(),
                 new EvaluatorImpl(mStorageContainer.getSplitsStorage(), mSplitParser)
         );
-
-        mEventPropertiesProcessor = new EventPropertiesProcessorImpl();
     }
 
     @Override
@@ -92,6 +96,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
 
 
         AttributesStorage attributesStorage = mStorageContainer.getAttributesStorage(key.matchingKey());
+
         SplitClientImpl splitClient = new SplitClientImpl(mSplitFactory,
                 mClientContainer,
                 key,
@@ -100,7 +105,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mConfig,
                 eventsManager,
                 mStorageContainer.getSplitsStorage(),
-                mEventPropertiesProcessor,
+                mEventsTracker,
                 mSyncManager,
                 mAttributesManagerFactory.getManager(key.matchingKey(), attributesStorage),
                 mStorageContainer.getTelemetryStorage(),
@@ -118,7 +123,6 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                     initializationStartTime,
                     mConfig.shouldRecordTelemetry());
         }
-
         return splitClient;
     }
 

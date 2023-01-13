@@ -1,10 +1,8 @@
-package io.split.android.client.storage.impressions;
+package io.split.android.client.storage.common;
 
 import androidx.annotation.NonNull;
 
 import java.util.List;
-
-import io.split.android.client.storage.StoragePusher;
 
 public interface PersistentStorage<T> extends StoragePusher<T> {
 

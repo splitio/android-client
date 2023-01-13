@@ -1,3 +1,27 @@
+3.0.0 (Jan 17, 2023)
+- BREAKING CHANGE: Minimum compileSdk is 31
+- BREAKING CHANGE: Removed deprecated method SplitFactory.isReady()
+- BREAKING CHANGE: in SplitClientConfig methods:
+    - Removed SplitClientConfig.numThreadsForSegmentFetch()
+    - Removed SplitClientConfig.metricsRefreshRate()
+    - Removed SplitClientConfig.debugEnabled()
+    - Removed SplitClientConfig.waitBeforeShutdown()
+    - Removed SplitClientConfig.authRetryBackoffBase()
+    - Removed SplitClientConfig.streamingReconnectBackoffBase()
+    - Removed SplitClientConfig.uniqueKeysRefreshRate()
+    - Removed SplitClientConfig.set_impressionsChunkSize(long _impressionsChunkSize)
+    - Removed SplitClientConfig.Builder metricsRefreshRate(int seconds)
+    - Removed SplitClientConfig.Builder enableDebug()
+    - Removed SplitClientConfig.Builder waitBeforeShutdown(int waitTime)
+    - Removed SplitClientConfig.Builder authRetryBackoffBase(int authRetryBackoffBase)
+    - Removed SplitClientConfig.Builder streamingReconnectBackoffBase(int streamingReconnectBackoffBase)
+    - Renamed SplitClientConfig.sychronizeInBackground to SplitClientConfig.synchronizeInBackground()
+    - Renamed SplitClientConfig.sychronizeInBackgroundPeriod to SplitClientConfig.synchronizeInBackgroundPeriod()
+- Updated WorkManager to 2.7.1
+- Updated Gson to 2.10
+- Updated Guava to 31.1-android
+- Added user consent feature
+
 2.13.1 (Nov 7, 2022)
 - Added improvements in proxy.
 - Added retry logic for impressions and events.

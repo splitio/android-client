@@ -4,7 +4,7 @@ package io.split.android.client.dtos;
 import com.google.gson.annotations.SerializedName;
 
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.storage.InBytesSizable;
+import io.split.android.client.storage.common.InBytesSizable;
 import io.split.android.client.impressions.Impression;
 
 public class KeyImpression implements InBytesSizable, Identifiable {

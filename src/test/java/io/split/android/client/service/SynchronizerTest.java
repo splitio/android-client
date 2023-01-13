@@ -74,9 +74,10 @@ import io.split.android.client.service.synchronizer.attributes.AttributesSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
-import io.split.android.client.storage.SplitStorageContainer;
-import io.split.android.client.storage.events.PersistentEventsStorage;
-import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.common.SplitStorageContainer;
+import io.split.android.client.storage.events.EventsStorage;
+import io.split.android.client.storage.impressions.ImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -97,9 +98,9 @@ public class SynchronizerTest {
     @Mock
     PersistentSplitsStorage mPersistentSplitsStorageContainer;
     @Mock
-    PersistentEventsStorage mEventsStorage;
+    EventsStorage mEventsStorage;
     @Mock
-    PersistentImpressionsStorage mImpressionsStorage;
+    ImpressionsStorage mImpressionsStorage;
     @Mock
     TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
@@ -145,6 +146,10 @@ public class SynchronizerTest {
     }
 
     public void setup(SplitClientConfig splitClientConfig, ImpressionManagerConfig.Mode impressionsMode) {
+        setup(splitClientConfig, impressionsMode, false);
+    }
+
+    public void setup(SplitClientConfig splitClientConfig, ImpressionManagerConfig.Mode impressionsMode, boolean useImpManagerMock) {
         MockitoAnnotations.openMocks(this);
 
         mTaskExecutor = spy(new SplitTaskExecutorStub());
@@ -182,20 +187,23 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
         when(mRetryBackoffFactory.createWithFixedInterval(any(), eq(1), eq(3)))
                 .thenReturn(mRetryTimerEventsRecorder);
-
-        mImpressionManager =
-                new ImpressionManagerImpl(
-                mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer, mImpressionsStorage,
-                mUniqueKeysTracker,
-                new ImpressionManagerConfig(
-                        splitClientConfig.impressionsRefreshRate(),
-                        splitClientConfig.impressionsCounterRefreshRate(),
-                        impressionsMode,
-                        splitClientConfig.impressionsQueueSize(),
-                        splitClientConfig.impressionsChunkSize(),
-                        splitClientConfig.mtkRefreshRate()
-                )
-        );
+        if (useImpManagerMock) {
+            mImpressionManager = Mockito.mock(ImpressionManager.class);
+        } else {
+            mImpressionManager =
+                    new ImpressionManagerImpl(SplitClientConfig.builder().build(),
+                            mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer, mImpressionsStorage,
+                            mUniqueKeysTracker,
+                            new ImpressionManagerConfig(
+                                    splitClientConfig.impressionsRefreshRate(),
+                                    splitClientConfig.impressionsCounterRefreshRate(),
+                                    impressionsMode,
+                                    splitClientConfig.impressionsQueueSize(),
+                                    splitClientConfig.impressionsChunkSize(),
+                                    splitClientConfig.mtkRefreshRate()
+                            )
+                    );
+        }
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor, mSingleThreadedTaskExecutor,
                 mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager);
@@ -294,6 +302,48 @@ public class SynchronizerTest {
         verify(mSingleThreadedTaskExecutor, times(1)).pause();
         verify(mTaskExecutor, never()).submit(
                 any(SaveImpressionsCountTask.class), isNull());
+    }
+
+    @Test
+    public void resumeUserConsentGranted() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .synchronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .userConsent(UserConsent.GRANTED)
+                .impressionsMode("DEBUG")
+                .build();
+        setup(config, ImpressionManagerConfig.Mode.DEBUG, true);
+        mSynchronizer.pause();
+        mSynchronizer.resume();
+        verify(mImpressionManager, times(1)).startPeriodicRecording();
+        verify(mTaskExecutor, times(1)).schedule(any(EventsRecorderTask.class),
+                anyLong(), anyLong(), any(RecorderSyncHelper.class));
+    }
+
+    @Test
+    public void resumeUserConsentDeclined() {
+        testResumeUserConsentNone(UserConsent.DECLINED);
+    }
+
+    @Test
+    public void resumeUserConsentUnknown() {
+        testResumeUserConsentNone(UserConsent.UNKNOWN);
+    }
+
+    private void testResumeUserConsentNone(UserConsent userConsent) {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .synchronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .userConsent(userConsent)
+                .impressionsMode("DEBUG")
+                .build();
+        setup(config, ImpressionManagerConfig.Mode.DEBUG, true);
+        mSynchronizer.pause();
+        mSynchronizer.resume();
+        verify(mImpressionManager, never()).startPeriodicRecording();
+        verify(mTaskExecutor, never()).schedule(any(EventsRecorderTask.class), anyLong(), isNull());
     }
 
     @Test
@@ -653,7 +703,7 @@ public class SynchronizerTest {
 
         mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
-        verify(mTaskExecutor).submit(task,null);
+        verify(mTaskExecutor).submit(task, null);
     }
 
     @Test
