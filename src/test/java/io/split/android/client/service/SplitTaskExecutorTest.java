@@ -1,12 +1,22 @@
 package io.split.android.client.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static java.lang.Thread.sleep;
+
+import android.os.Handler;
+
 import androidx.annotation.NonNull;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
@@ -19,24 +29,12 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
-import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.telemetry.model.OperationType;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-
-import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 public class SplitTaskExecutorTest {
 
-    SplitTaskExecutor mTaskExecutor;
+    private SplitTaskExecutorImpl mTaskExecutor;
 
     @Before
     public void setup() {
@@ -431,5 +429,37 @@ public class SplitTaskExecutorTest {
         for (int i = 0; i < taskCount; i++) {
             Assert.assertEquals(i, tracked.get(i).intValue());
         }
+    }
+
+    @Test
+    public void testSubmitOnMainThread() {
+        ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
+        SplitTask mockTask = mock(SplitTask.class);
+        Handler mockHandler = mock(Handler.class);
+        when(mockHandler.post(captor.capture())).thenAnswer(invocation -> {
+            captor.getValue().run();
+            return true;
+        });
+
+        mTaskExecutor.submitOnMainThread(mockHandler, mockTask);
+
+        verify(mockTask).execute();
+    }
+
+
+    @Test
+    public void testSubmitOnMainThreadWithException() {
+        ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
+        SplitTask mockTask = mock(SplitTask.class);
+        when(mockTask.execute()).thenThrow(new RuntimeException());
+        Handler mockHandler = mock(Handler.class);
+        when(mockHandler.post(captor.capture())).thenAnswer(invocation -> {
+            captor.getValue().run();
+            return true;
+        });
+
+        mTaskExecutor.submitOnMainThread(mockHandler, mockTask);
+
+        verify(mockTask).execute();
     }
 }

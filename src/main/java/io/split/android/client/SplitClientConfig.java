@@ -1176,29 +1176,6 @@ public class SplitClientConfig {
             return this;
         }
 
-        /**
-         * User Consent as a String
-         * @param value Values:<br>
-         *             GRANTED: Impressions and events are tracked and sent to the backend
-         *             DECLINED: Impressions and events aren't tracked nor sent to the backend
-         *             UNKNOWN: Impressions and events are tracked in memory and aren't sent to the backend
-         *
-         * <p>
-         * NOTE: If the string is invalid (Neither GRANTED, DECLINED nor UNKNOWN) default value will be used
-         * </p>
-         *
-         * @return: This builder
-         * @default: GRANTED
-         */
-        public Builder userConsent(String value) {
-            _userConsent = UserConsent.fromString(value);
-            if (_userConsent == null) {
-                Logger.i("User consent value '" + value + "' set in config is not valid. Using default (GRANTED)");
-                _userConsent = UserConsent.GRANTED;
-            }
-            return this;
-        }
-
         public SplitClientConfig build() {
 
 
