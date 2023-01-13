@@ -29,7 +29,6 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
     @Override
     public Config getConfigTelemetry() {
         Config config = new Config();
-
         config.setStreamingEnabled(mSplitClientConfig.streamingEnabled());
         config.setRefreshRates(buildRefreshRates(mSplitClientConfig));
         config.setTags(mTelemetryConsumer.popTags());
@@ -43,6 +42,7 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         config.setUrlOverrides(buildUrlOverrides(mSplitClientConfig));
         config.setImpressionsQueueSize(mSplitClientConfig.impressionsQueueSize());
         config.setEventsQueueSize(mSplitClientConfig.eventsQueueSize());
+        config.setUserConsent(mSplitClientConfig.userConsent().intValue());
 
         return config;
     }
