@@ -44,6 +44,7 @@ import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
+import io.split.android.client.utils.logger.SplitLogLevel;
 
 import static java.lang.Thread.sleep;
 
@@ -126,7 +127,7 @@ public class CleanUpDatabaseTest {
                 .streamingEnabled(true)
                 .impressionsRefreshRate(999999999)
                 .eventFlushInterval(99999999)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .trafficType("account")
                 .build();
 

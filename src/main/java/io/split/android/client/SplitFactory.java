@@ -21,12 +21,4 @@ public interface SplitFactory {
     void setUserConsent(boolean enabled);
 
     UserConsent getUserConsent();
-
-    /**
-     * Deprecated: Use {@link SplitClient#isReady()}
-     *
-     * @return Whether at least one client instance is ready.
-     */
-    @Deprecated
-    boolean isReady();
 }

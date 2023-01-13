@@ -141,15 +141,4 @@ public class LocalhostSplitFactory implements SplitFactory {
     public UserConsent getUserConsent() {
         return UserConsent.GRANTED;
     }
-
-    @Override
-    public boolean isReady() {
-        for (SplitClient client : mClientContainer.getAll()) {
-            if (client.isReady()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

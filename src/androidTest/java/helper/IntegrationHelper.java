@@ -34,6 +34,7 @@ import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.NetworkHelper;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import io.split.android.client.utils.logger.Logger;
 import fake.HttpStreamResponseMock;
 
@@ -175,7 +176,7 @@ public class IntegrationHelper {
         return SplitClientConfig.builder()
                 .ready(30000)
                 .streamingEnabled(true)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .trafficType("account")
                 .build();
     }

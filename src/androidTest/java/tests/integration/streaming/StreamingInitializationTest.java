@@ -75,7 +75,6 @@ public class StreamingInitializationTest {
         mSseConnectLatch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
         Assert.assertTrue(mIsStreamingAuth);

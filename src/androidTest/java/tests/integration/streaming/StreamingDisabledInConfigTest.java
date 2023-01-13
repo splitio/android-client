@@ -77,7 +77,6 @@ public class StreamingDisabledInConfigTest {
 
 
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
 
         Assert.assertEquals(0, mSseAuthHits);

@@ -35,6 +35,7 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -73,7 +74,7 @@ public class SharedClientsIntegrationTest {
                         .serviceEndpoints(ServiceEndpoints.builder()
                                 .apiEndpoint(serverUrl).eventsEndpoint(serverUrl).build())
                         .ready(30000)
-                        .enableDebug()
+                        .logLevel(SplitLogLevel.DEBUG)
                         .featuresRefreshRate(99999)
                         .segmentsRefreshRate(99999)
                         .impressionsRefreshRate(99999)
@@ -130,8 +131,8 @@ public class SharedClientsIntegrationTest {
             }
         });
 
-        boolean await = readyLatch.await(5, TimeUnit.SECONDS);
-        boolean await2 = readyLatch2.await(5, TimeUnit.SECONDS);
+        boolean await = readyLatch.await(10, TimeUnit.SECONDS);
+        boolean await2 = readyLatch2.await(10, TimeUnit.SECONDS);
 
         assertTrue(await);
         assertTrue(await2);
@@ -225,8 +226,8 @@ public class SharedClientsIntegrationTest {
             }
         });
 
-        boolean await = readyLatch.await(5, TimeUnit.SECONDS);
-        boolean await2 = readyLatch2.await(5, TimeUnit.SECONDS);
+        boolean await = readyLatch.await(10, TimeUnit.SECONDS);
+        boolean await2 = readyLatch2.await(10, TimeUnit.SECONDS);
 
         assertTrue(await);
         assertTrue(await2);

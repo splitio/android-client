@@ -23,15 +23,11 @@ public class TestableSplitConfigBuilder {
     private long mImpressionsChunkSize = 2 * 1024;
     private int mImpressionsPerPush = 10;
     private int mImpressionsCountersRefreshRate = 1800;
-    private int mMetricsRefreshRate = 1800;
     private int mConnectionTimeout = 15000;
     private int mReadTimeout = 15000;
-    private int mNumThreadsForSegmentFetch = 2;
     private int mReady = -1;
-    private boolean mDebugEnabled = false;
     private boolean mLabelsEnabled = true;
     private ImpressionListener mImpressionListener;
-    private int mWaitBeforeShutdown = 5000;
     private String mHostname;
     private String mIp;
     private String mProxy = null;
@@ -50,8 +46,6 @@ public class TestableSplitConfigBuilder {
     private boolean mShouldRecordTelemetry = false;
 
     private boolean mStreamingEnabled = true;
-    private int mAuthRetryBackoffBase = 1;
-    private int mStreamingReconnectBackoffBase = 1;
     private DevelopmentSslConfig mDevelopmentSslConfig = null;
     private ImpressionsMode mImpressionsMode = ImpressionsMode.OPTIMIZED;
     private SyncConfig mSyncConfig = SyncConfig.builder().build();
@@ -91,11 +85,6 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
-    public TestableSplitConfigBuilder metricsRefreshRate(int metricsRefreshRate) {
-        this.mMetricsRefreshRate = metricsRefreshRate;
-        return this;
-    }
-
     public TestableSplitConfigBuilder connectionTimeout(int connectionTimeout) {
         this.mConnectionTimeout = connectionTimeout;
         return this;
@@ -106,18 +95,13 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
-    public TestableSplitConfigBuilder numThreadsForSegmentFetch(int numThreadsForSegmentFetch) {
-        this.mNumThreadsForSegmentFetch = numThreadsForSegmentFetch;
-        return this;
-    }
-
     public TestableSplitConfigBuilder ready(int ready) {
         this.mReady = ready;
         return this;
     }
 
     public TestableSplitConfigBuilder enableDebug() {
-        this.mDebugEnabled = true;
+        this.mLogLevel = SplitLogLevel.DEBUG;
         return this;
     }
 
@@ -128,11 +112,6 @@ public class TestableSplitConfigBuilder {
 
     public TestableSplitConfigBuilder impressionListener(ImpressionListener impressionListener) {
         this.mImpressionListener = impressionListener;
-        return this;
-    }
-
-    public TestableSplitConfigBuilder waitBeforeShutdown(int waitBeforeShutdown) {
-        this.mWaitBeforeShutdown = waitBeforeShutdown;
         return this;
     }
 
@@ -178,16 +157,6 @@ public class TestableSplitConfigBuilder {
 
     public TestableSplitConfigBuilder streamingEnabled(boolean streamingEnabled) {
         mStreamingEnabled = streamingEnabled;
-        return this;
-    }
-
-    public TestableSplitConfigBuilder authRetryBackoffBase(int authRetryBackoffBase) {
-        mAuthRetryBackoffBase = authRetryBackoffBase;
-        return this;
-    }
-
-    public TestableSplitConfigBuilder streamingReconnectBackoffBase(int streamingReconnectBackoffBase) {
-        mStreamingReconnectBackoffBase = streamingReconnectBackoffBase;
         return this;
     }
 
@@ -275,15 +244,11 @@ public class TestableSplitConfigBuilder {
                     mImpressionsQueueSize,
                     mImpressionsChunkSize,
                     mImpressionsPerPush,
-                    mMetricsRefreshRate,
                     mConnectionTimeout,
                     mReadTimeout,
-                    mNumThreadsForSegmentFetch,
                     mReady,
-                    mDebugEnabled,
                     mLabelsEnabled,
                     mImpressionListener,
-                    mWaitBeforeShutdown,
                     mHostname,
                     mIp,
                     mProxy,
@@ -297,8 +262,6 @@ public class TestableSplitConfigBuilder {
                     mBackgroundSyncWhenBatteryNotLow,
                     mBackgroundSyncWhenWifiOnly,
                     mStreamingEnabled,
-                    mAuthRetryBackoffBase,
-                    mStreamingReconnectBackoffBase,
                     mServiceEndpoints.getAuthServiceEndpoint(),
                     mServiceEndpoints.getStreamingServiceEndpoint(),
                     mDevelopmentSslConfig,

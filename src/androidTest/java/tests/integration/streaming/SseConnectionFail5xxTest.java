@@ -93,7 +93,6 @@ public class SseConnectionFail5xxTest {
         sleep(5000);
 
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
 
         // More than 1 hits means polling enabled

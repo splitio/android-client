@@ -5,7 +5,6 @@ import android.content.Context;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -43,9 +42,9 @@ import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.NetworkHelperImpl;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
 import io.split.android.client.validators.EventValidator;
@@ -354,19 +353,6 @@ public class SplitFactoryImpl implements SplitFactory {
     @Override
     public UserConsent getUserConsent() {
         return mUserConsentManager.getStatus();
-    }
-
-    @Override
-    @Deprecated
-    public boolean isReady() {
-        Set<SplitClient> clients = mClientContainer.getAll();
-        for (SplitClient client : clients) {
-            if (client.isReady()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private void setupValidations(SplitClientConfig splitClientConfig) {
