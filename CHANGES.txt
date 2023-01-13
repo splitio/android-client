@@ -20,7 +20,7 @@
 - Updated WorkManager to 2.7.1
 - Updated Gson to 2.10
 - Updated Guava to 31.1-android
-- Added user consent feature
+- Added user consent feature to allow delaying or disabling the data tracking from SDK until user consent is explicitly granted or declined. Read more in our docs.
 
 2.13.1 (Nov 7, 2022)
 - Added improvements in proxy.
