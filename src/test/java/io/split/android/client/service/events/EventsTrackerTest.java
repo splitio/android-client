@@ -58,19 +58,19 @@ public class EventsTrackerTest {
     }
 
     @Test
-    public void testTrackEnabled() {
+    public void testTrackEnabled() throws InterruptedException {
         trackingEnabledTest(true);
     }
 
     @Test
-    public void testTrackDisabled() {
+    public void testTrackDisabled() throws InterruptedException {
         trackingEnabledTest(false);
     }
 
-    private void trackingEnabledTest(boolean enabled) {
+    private void trackingEnabledTest(boolean enabled) throws InterruptedException {
         mEventsTracker.enableTracking(enabled);
         boolean res = mEventsTracker.track("pepe", "tt", null, 1.0, null, true);
-
+        Thread.sleep(500);
         assertEquals(enabled, res);
         if (enabled) {
             verify(mSyncManager, times(1)).pushEvent(any());
