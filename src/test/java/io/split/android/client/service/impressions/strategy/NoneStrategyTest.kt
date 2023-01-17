@@ -68,8 +68,10 @@ class NoneStrategyTest {
 
     @Test
     fun `count is incremented`() {
-        strategy.apply(createUniqueImpression(split = "split"))
-        strategy.apply(createUniqueImpression(split = "split"))
+        strategy.run {
+            apply(createUniqueImpression(split = "split"))
+            apply(createUniqueImpression(split = "split"))
+        }
 
         verify(impressionsCounter, times(2)).inc(
             "split",
@@ -87,9 +89,35 @@ class NoneStrategyTest {
             uniqueKeysTracker,
             false
         )
-
         `when`(uniqueKeysTracker.isFull).thenReturn(true)
+
+        strategy.run {
+            apply(createUniqueImpression(split = "split"))
+            apply(createUniqueImpression(split = "split"))
+        }
+
         verifyNoInteractions(taskExecutor)
+    }
+
+
+    @Test
+    fun `persistence can be disabled`() {
+        `when`(uniqueKeysTracker.isFull).thenReturn(true)
+        `when`(taskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(mock(SaveUniqueImpressionsTask::class.java))
+
+        strategy.run {
+            apply(createUniqueImpression(split = "split"))
+            apply(createUniqueImpression(split = "split"))
+            enablePersistence(false)
+            apply(createUniqueImpression(split = "split"))
+            apply(createUniqueImpression(split = "split"))
+            apply(createUniqueImpression(split = "split"))
+        }
+
+        verify(taskExecutor, times(2)).submit(
+            any(SaveUniqueImpressionsTask::class.java),
+            eq<SplitTaskExecutionListener?>(null)
+        )
     }
 }
 
