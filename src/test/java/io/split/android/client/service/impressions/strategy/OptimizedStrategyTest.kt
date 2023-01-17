@@ -3,8 +3,13 @@ package io.split.android.client.service.impressions.strategy
 import io.split.android.client.dtos.KeyImpression
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
-import io.split.android.client.service.impressions.*
+import io.split.android.client.service.impressions.ImpressionsCounter
+import io.split.android.client.service.impressions.ImpressionsObserver
+import io.split.android.client.service.impressions.ImpressionsRecorderTask
+import io.split.android.client.service.impressions.ImpressionsTaskFactory
 import io.split.android.client.service.synchronizer.RecorderSyncHelper
+import io.split.android.client.telemetry.model.ImpressionsDataType
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
@@ -28,6 +33,9 @@ class OptimizedStrategyTest {
     @Mock
     private lateinit var impressionsSyncHelper: RecorderSyncHelper<KeyImpression>
 
+    @Mock
+    private lateinit var telemetryRuntimeProducer: TelemetryRuntimeProducer
+
     private lateinit var strategy: OptimizedStrategy
 
     @Before
@@ -38,7 +46,8 @@ class OptimizedStrategyTest {
             impressionsCounter,
             impressionsSyncHelper,
             taskExecutor,
-            taskFactory
+            taskFactory,
+            telemetryRuntimeProducer
         )
     }
 
@@ -79,12 +88,34 @@ class OptimizedStrategyTest {
 
     @Test
     fun `impression is not flushed when flush is not needed`() {
-        val impressionsTask = mock(ImpressionsRecorderTask::class.java)
-        `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(impressionsTask)
+        `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(mock(ImpressionsRecorderTask::class.java))
         `when`(impressionsSyncHelper.pushAndCheckIfFlushNeeded(any())).thenReturn(false)
 
         strategy.apply(createUniqueImpression(time = 1000000000L))
 
         verifyNoInteractions(taskExecutor)
+    }
+
+    @Test
+    fun `recorded impressions are tracked in telemetry`() {
+        `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(mock(ImpressionsRecorderTask::class.java))
+        `when`(impressionsSyncHelper.pushAndCheckIfFlushNeeded(any())).thenReturn(true)
+
+        strategy.apply(createUniqueImpression(time = 1000000000L))
+
+        verify(telemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1)
+        verify(telemetryRuntimeProducer, never()).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 1)
+    }
+
+    @Test
+    fun `deduped impressions are tracked in telemetry`() {
+        `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(mock(ImpressionsRecorderTask::class.java))
+        `when`(impressionsSyncHelper.pushAndCheckIfFlushNeeded(any())).thenReturn(false)
+
+        strategy.apply(createUniqueImpression(time = 10))
+        strategy.apply(createUniqueImpression(time = 2000000000L))
+
+        verify(telemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1)
+        verify(telemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 1)
     }
 }

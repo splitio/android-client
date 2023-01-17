@@ -12,6 +12,8 @@ import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
+import io.split.android.client.telemetry.model.ImpressionsDataType;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 /**
  * {@link ProcessStrategy} that corresponds to OPTIMIZED Impressions mode.
@@ -23,17 +25,20 @@ class OptimizedStrategy implements ProcessStrategy {
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
                              @NonNull ImpressionsCounter impressionsCounter,
                              @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
                              @NonNull SplitTaskExecutor taskExecutor,
-                             @NonNull ImpressionsTaskFactory taskFactory) {
+                             @NonNull ImpressionsTaskFactory taskFactory,
+                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsCounter = checkNotNull(impressionsCounter);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
@@ -52,6 +57,10 @@ class OptimizedStrategy implements ProcessStrategy {
                         mImpressionsTaskFactory.createImpressionsRecorderTask(),
                         mImpressionsSyncHelper);
             }
+
+            mTelemetryRuntimeProducer.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
+        } else {
+            mTelemetryRuntimeProducer.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 1);
         }
     }
 
