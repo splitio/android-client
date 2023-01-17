@@ -16,7 +16,7 @@ import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 /**
  * {@link ProcessStrategy} that corresponds to OPTIMIZED Impressions mode.
  */
-public class OptimizedStrategy implements ProcessStrategy {
+class OptimizedStrategy implements ProcessStrategy {
 
     private final ImpressionsObserver mImpressionsObserver;
     private final ImpressionsCounter mImpressionsCounter;

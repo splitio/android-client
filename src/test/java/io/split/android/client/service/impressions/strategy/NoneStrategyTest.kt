@@ -121,13 +121,13 @@ class NoneStrategyTest {
     }
 }
 
-fun createUniqueImpression(split: String = UUID.randomUUID().toString()): Impression =
+fun createUniqueImpression(split: String = UUID.randomUUID().toString(), time: Long = 100L): Impression =
     Impression(
         "key",
         "bkey",
         split,
         "on",
-        100L,
+        time,
         "default rule",
         999L,
         null
