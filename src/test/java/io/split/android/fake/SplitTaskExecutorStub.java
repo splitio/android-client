@@ -49,4 +49,9 @@ public class SplitTaskExecutorStub implements SplitTaskExecutor {
     public void stop() {
 
     }
+
+    @Override
+    public void submitOnMainThread(SplitTask splitTask) {
+
+    }
 }

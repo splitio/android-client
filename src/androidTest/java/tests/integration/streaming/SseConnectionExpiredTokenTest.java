@@ -28,7 +28,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.logger.Logger;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 
 import static java.lang.Thread.sleep;
 

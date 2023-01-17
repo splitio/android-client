@@ -19,7 +19,7 @@ import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import helper.DatabaseHelper;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
@@ -75,7 +75,6 @@ public class StreamingInitializationTest {
         mSseConnectLatch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
         Assert.assertTrue(mIsStreamingAuth);

@@ -11,6 +11,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.localhost.LocalhostSplitClient;
 import io.split.android.client.localhost.LocalhostSplitFactory;
+import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.shared.BaseSplitClientContainer;
 import io.split.android.client.storage.attributes.AttributesStorageImpl;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -27,6 +28,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
     private final AttributesMerger mAttributesMerger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final EventsManagerCoordinator mEventsManagerCoordinator;
+    private final SplitTaskExecutor mSplitTaskExecutor;
 
     public LocalhostSplitClientContainerImpl(LocalhostSplitFactory splitFactory,
                                              SplitClientConfig config,
@@ -35,7 +37,8 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
                                              AttributesManagerFactory attributesManagerFactory,
                                              AttributesMerger attributesMerger,
                                              TelemetryStorageProducer telemetryStorageProducer,
-                                             EventsManagerCoordinator eventsManagerCoordinator) {
+                                             EventsManagerCoordinator eventsManagerCoordinator,
+                                             SplitTaskExecutor taskExecutor) {
         mSplitFactory = splitFactory;
         mConfig = config;
         mSplitStorage = splitsStorage;
@@ -44,11 +47,12 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
         mAttributesMerger = attributesMerger;
         mTelemetryStorageProducer = telemetryStorageProducer;
         mEventsManagerCoordinator = eventsManagerCoordinator;
+        mSplitTaskExecutor = taskExecutor;
     }
 
     @Override
     protected void createNewClient(Key key) {
-        SplitEventsManager eventsManager = new SplitEventsManager(mConfig);
+        SplitEventsManager eventsManager = new SplitEventsManager(mConfig, mSplitTaskExecutor);
         eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
         eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);

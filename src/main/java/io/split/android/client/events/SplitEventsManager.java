@@ -10,15 +10,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.events.executors.SplitEventExecutorAbstract;
+import io.split.android.client.events.executors.SplitEventExecutor;
 import io.split.android.client.events.executors.SplitEventExecutorFactory;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
+import io.split.android.client.service.executor.SplitClientEventTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.utils.logger.Logger;
-
-/**
- * Created by sarrubia on 4/3/18.
- */
 
 public class SplitEventsManager extends BaseEventsManager implements ISplitEventsManager, ListenableEventsManager, Runnable {
 
@@ -28,9 +26,11 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
     private final Map<SplitEvent, Integer> mExecutionTimes;
 
-    public SplitEventsManager(SplitClientConfig config) {
-        super();
+    private final SplitTaskExecutor mSplitTaskExecutor;
 
+    public SplitEventsManager(SplitClientConfig config, SplitTaskExecutor splitTaskExecutor) {
+        super();
+        mSplitTaskExecutor = splitTaskExecutor;
         mSubscriptions = new ConcurrentHashMap<>();
         mExecutionTimes = new ConcurrentHashMap<>();
         mResources = new SplitEventExecutorResourcesImpl();
@@ -85,7 +85,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
         // These events were added to handle updated event logic in this component
         // and also to fix some issues when processing queue that made sdk update
         // fire on init
-        if((internalEvent == SplitInternalEvent.SPLITS_FETCHED
+        if ((internalEvent == SplitInternalEvent.SPLITS_FETCHED
                 || internalEvent == SplitInternalEvent.MY_SEGMENTS_FETCHED) &&
                 isTriggered(SplitEvent.SDK_READY)) {
             return;
@@ -205,9 +205,12 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     }
 
     private void executeTask(SplitEvent event, SplitEventTask task) {
-        SplitEventExecutorAbstract executor = SplitEventExecutorFactory.factory(event, task, mResources);
-        if (executor != null) {
-            executor.execute();
+        if (task != null) {
+            SplitEventExecutor executor = SplitEventExecutorFactory.factory(mSplitTaskExecutor, event, task, mResources);
+
+            if (executor != null) {
+                executor.execute();
+            }
         }
     }
 }

@@ -33,9 +33,10 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.NetworkHelper;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import io.split.android.client.utils.logger.SplitLogLevel;
+import io.split.android.client.utils.logger.Logger;
+import fake.HttpStreamResponseMock;
 
 public class IntegrationHelper {
     public static final int NEVER_REFRESH_RATE = 999999;
@@ -175,12 +176,12 @@ public class IntegrationHelper {
         return SplitClientConfig.builder()
                 .ready(30000)
                 .streamingEnabled(true)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .trafficType("account")
                 .build();
     }
 
-    public static TestingConfig  testingConfig(int cdnBackoffTime) {
+    public static TestingConfig testingConfig(int cdnBackoffTime) {
         TestingConfig testingConfig = new TestingConfig();
         testingConfig.setCdnBackoffTime(cdnBackoffTime);
         return testingConfig;
@@ -239,7 +240,7 @@ public class IntegrationHelper {
     /**
      * Builds a dispatcher with the given responses.
      *
-     * @param responses The responses to be returned by the dispatcher. The keys are url paths.
+     * @param responses          The responses to be returned by the dispatcher. The keys are url paths.
      * @param streamingResponses The streaming responses to be returned by the dispatcher. The keys are url paths.
      * @return The dispatcher to be used in {@link HttpClientMock}
      */

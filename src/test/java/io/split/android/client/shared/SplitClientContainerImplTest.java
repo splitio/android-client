@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.EventsTracker;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientFactory;
@@ -41,7 +42,7 @@ import io.split.android.client.service.sseclient.sseclient.PushNotificationManag
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManagerDeferredStartTask;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsBackgroundSyncScheduleTask;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
-import io.split.android.client.storage.SplitStorageContainer;
+import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
 public class SplitClientContainerImplTest {
@@ -64,6 +65,9 @@ public class SplitClientContainerImplTest {
     private SplitTaskExecutor mSplitTaskExecutor;
     @Mock
     private MySegmentsWorkManagerWrapper mWorkManagerWrapper;
+
+    @Mock
+    private EventsTracker mEventsTracker;
 
     private final String mDefaultMatchingKey = "matching_key";
     private SplitClientContainer mClientContainer;
@@ -297,7 +301,8 @@ public class SplitClientContainerImplTest {
                 mConfig,
                 mSplitClientFactory,
                 mClientComponentsRegister,
-                mWorkManagerWrapper
+                mWorkManagerWrapper,
+                mEventsTracker
         );
     }
 

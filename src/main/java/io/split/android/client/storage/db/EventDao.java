@@ -12,6 +12,9 @@ public interface EventDao {
     @Insert
     public void insert(EventEntity event);
 
+    @Insert
+    void insert(List<EventEntity> events);
+
     @Query("SELECT id, body, created_at, status FROM events " +
             "WHERE created_at >= :updateAt " +
             "AND status = :status ORDER BY created_at LIMIT :maxRows")

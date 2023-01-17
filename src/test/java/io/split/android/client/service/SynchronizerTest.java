@@ -74,9 +74,10 @@ import io.split.android.client.service.synchronizer.attributes.AttributesSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
-import io.split.android.client.storage.SplitStorageContainer;
-import io.split.android.client.storage.events.PersistentEventsStorage;
-import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.common.SplitStorageContainer;
+import io.split.android.client.storage.events.EventsStorage;
+import io.split.android.client.storage.impressions.ImpressionsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -97,9 +98,9 @@ public class SynchronizerTest {
     @Mock
     PersistentSplitsStorage mPersistentSplitsStorageContainer;
     @Mock
-    PersistentEventsStorage mEventsStorage;
+    EventsStorage mEventsStorage;
     @Mock
-    PersistentImpressionsStorage mImpressionsStorage;
+    ImpressionsStorage mImpressionsStorage;
     @Mock
     TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
@@ -145,6 +146,10 @@ public class SynchronizerTest {
     }
 
     public void setup(SplitClientConfig splitClientConfig, ImpressionManagerConfig.Mode impressionsMode) {
+        setup(splitClientConfig, impressionsMode, false);
+    }
+
+    public void setup(SplitClientConfig splitClientConfig, ImpressionManagerConfig.Mode impressionsMode, boolean useImpManagerMock) {
         MockitoAnnotations.openMocks(this);
 
         mTaskExecutor = spy(new SplitTaskExecutorStub());
@@ -182,20 +187,23 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
         when(mRetryBackoffFactory.createWithFixedInterval(any(), eq(1), eq(3)))
                 .thenReturn(mRetryTimerEventsRecorder);
-
-        mImpressionManager =
-                new ImpressionManagerImpl(
-                mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer, mImpressionsStorage,
-                mUniqueKeysTracker,
-                new ImpressionManagerConfig(
-                        splitClientConfig.impressionsRefreshRate(),
-                        splitClientConfig.impressionsCounterRefreshRate(),
-                        impressionsMode,
-                        splitClientConfig.impressionsQueueSize(),
-                        splitClientConfig.impressionsChunkSize(),
-                        splitClientConfig.mtkRefreshRate()
-                )
-        );
+        if (useImpManagerMock) {
+            mImpressionManager = Mockito.mock(ImpressionManager.class);
+        } else {
+            mImpressionManager =
+                    new ImpressionManagerImpl(SplitClientConfig.builder().build(),
+                            mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer, mImpressionsStorage,
+                            mUniqueKeysTracker,
+                            new ImpressionManagerConfig(
+                                    splitClientConfig.impressionsRefreshRate(),
+                                    splitClientConfig.impressionsCounterRefreshRate(),
+                                    impressionsMode,
+                                    splitClientConfig.impressionsQueueSize(),
+                                    splitClientConfig.impressionsChunkSize(),
+                                    splitClientConfig.mtkRefreshRate()
+                            )
+                    );
+        }
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor, mSingleThreadedTaskExecutor,
                 mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager);
@@ -205,7 +213,7 @@ public class SynchronizerTest {
     public void splitExecutorSchedule() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
@@ -252,7 +260,7 @@ public class SynchronizerTest {
     public void workManagerSchedule() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(true)
+                .synchronizeInBackground(true)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
@@ -265,7 +273,7 @@ public class SynchronizerTest {
     public void pauseImpOptimized() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
         setup(config, ImpressionManagerConfig.Mode.OPTIMIZED);
@@ -282,7 +290,7 @@ public class SynchronizerTest {
     public void pauseImpDebug() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .impressionsMode("DEBUG")
                 .build();
@@ -297,10 +305,52 @@ public class SynchronizerTest {
     }
 
     @Test
+    public void resumeUserConsentGranted() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .synchronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .userConsent(UserConsent.GRANTED)
+                .impressionsMode("DEBUG")
+                .build();
+        setup(config, ImpressionManagerConfig.Mode.DEBUG, true);
+        mSynchronizer.pause();
+        mSynchronizer.resume();
+        verify(mImpressionManager, times(1)).startPeriodicRecording();
+        verify(mTaskExecutor, times(1)).schedule(any(EventsRecorderTask.class),
+                anyLong(), anyLong(), any(RecorderSyncHelper.class));
+    }
+
+    @Test
+    public void resumeUserConsentDeclined() {
+        testResumeUserConsentNone(UserConsent.DECLINED);
+    }
+
+    @Test
+    public void resumeUserConsentUnknown() {
+        testResumeUserConsentNone(UserConsent.UNKNOWN);
+    }
+
+    private void testResumeUserConsentNone(UserConsent userConsent) {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .synchronizeInBackground(false)
+                .impressionsQueueSize(3)
+                .userConsent(userConsent)
+                .impressionsMode("DEBUG")
+                .build();
+        setup(config, ImpressionManagerConfig.Mode.DEBUG, true);
+        mSynchronizer.pause();
+        mSynchronizer.resume();
+        verify(mImpressionManager, never()).startPeriodicRecording();
+        verify(mTaskExecutor, never()).schedule(any(EventsRecorderTask.class), anyLong(), isNull());
+    }
+
+    @Test
     public void resume() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
@@ -316,7 +366,7 @@ public class SynchronizerTest {
     public void pushEvent() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
@@ -334,7 +384,7 @@ public class SynchronizerTest {
     public void pushEventReachQueueSize() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
@@ -353,7 +403,7 @@ public class SynchronizerTest {
     public void pushEventBytesLimit() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
@@ -375,7 +425,7 @@ public class SynchronizerTest {
 
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
@@ -401,7 +451,7 @@ public class SynchronizerTest {
     public void pushImpressionReachQueueSizeImpDebug() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsMode(ImpressionsMode.DEBUG)
                 .impressionsQueueSize(3)
                 .build();
@@ -421,7 +471,7 @@ public class SynchronizerTest {
     public void pushImpressionReachQueueSizeImpOptimized() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsMode(ImpressionsMode.OPTIMIZED)
                 .impressionsQueueSize(3)
                 .build();
@@ -441,7 +491,7 @@ public class SynchronizerTest {
     public void pushImpressionBytesLimitImpDebug() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .impressionsMode(ImpressionsMode.DEBUG)
                 .build();
@@ -462,7 +512,7 @@ public class SynchronizerTest {
     public void pushImpressionBytesLimitImpOptimized() throws InterruptedException {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .impressionsMode(ImpressionsMode.OPTIMIZED)
                 .build();
@@ -482,7 +532,7 @@ public class SynchronizerTest {
     @Test
     public void loadLocalData() {
         SplitClientConfig config = SplitClientConfig.builder()
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .build();
         setup(config);
 
@@ -516,7 +566,7 @@ public class SynchronizerTest {
     @Test
     public void loadAndSynchronizeSplits() {
         SplitClientConfig config = SplitClientConfig.builder()
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .build();
         setup(config);
 
@@ -541,7 +591,7 @@ public class SynchronizerTest {
     @Test
     public void destroy() {
         SplitClientConfig config = SplitClientConfig.builder()
-                .sychronizeInBackground(false)
+                .synchronizeInBackground(false)
                 .build();
         setup(config);
         ImpressionManager impressionManager = mock(ImpressionManager.class);
@@ -564,7 +614,7 @@ public class SynchronizerTest {
 
     @Test
     public void loadMySegmentsFromCacheDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
 
         mSynchronizer.loadMySegmentsFromCache();
 
@@ -573,7 +623,7 @@ public class SynchronizerTest {
 
     @Test
     public void synchronizeMySegmentsDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
 
         mSynchronizer.synchronizeMySegments();
 
@@ -582,7 +632,7 @@ public class SynchronizerTest {
 
     @Test
     public void forceMySegmentsSyncDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
 
         mSynchronizer.forceMySegmentsSync();
 
@@ -591,7 +641,7 @@ public class SynchronizerTest {
 
     @Test
     public void destroyDelegatesToRegisteredSyncs() {
-        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
 
         mSynchronizer.destroy();
 
@@ -600,7 +650,7 @@ public class SynchronizerTest {
 
     @Test
     public void startPeriodicFetchingDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
 
         mSynchronizer.startPeriodicFetching();
 
@@ -609,7 +659,7 @@ public class SynchronizerTest {
 
     @Test
     public void stopPeriodicFetchingDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
 
         mSynchronizer.stopPeriodicFetching();
 
@@ -653,7 +703,7 @@ public class SynchronizerTest {
 
         mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
-        verify(mTaskExecutor).submit(task,null);
+        verify(mTaskExecutor).submit(task, null);
     }
 
     @Test
@@ -667,7 +717,7 @@ public class SynchronizerTest {
 
     @Test
     public void synchronizeSplitsWithSince() {
-        setup(SplitClientConfig.builder().sychronizeInBackground(false).build());
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
         SplitsUpdateTask task = mock(SplitsUpdateTask.class);
         when(mTaskFactory.createSplitsUpdateTask(1000)).thenReturn(task);
 
@@ -766,6 +816,11 @@ public class SynchronizerTest {
         @Override
         public String schedule(@NonNull SplitTask task, long initialDelayInSecs, @Nullable SplitTaskExecutionListener executionListener) {
             return null;
+        }
+
+        @Override
+        public void submitOnMainThread(SplitTask splitTask) {
+
         }
     }
 }

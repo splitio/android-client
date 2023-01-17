@@ -21,6 +21,7 @@ import io.split.android.client.localhost.shared.LocalhostSplitClientContainerImp
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.shared.SplitClientContainer;
+import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.NoOpTelemetryStorage;
@@ -73,7 +74,8 @@ public class LocalhostSplitFactory implements SplitFactory {
                 attributesManagerFactory,
                 new AttributesMergerImpl(),
                 new NoOpTelemetryStorage(),
-                eventsManagerCoordinator);
+                eventsManagerCoordinator,
+                taskExecutor);
 
         mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage);
         mSynchronizer.start();
@@ -132,13 +134,11 @@ public class LocalhostSplitFactory implements SplitFactory {
     }
 
     @Override
-    public boolean isReady() {
-        for (SplitClient client : mClientContainer.getAll()) {
-            if (client.isReady()) {
-                return true;
-            }
-        }
+    public void setUserConsent(boolean enabled) {
+    }
 
-        return false;
+    @Override
+    public UserConsent getUserConsent() {
+        return UserConsent.GRANTED;
     }
 }

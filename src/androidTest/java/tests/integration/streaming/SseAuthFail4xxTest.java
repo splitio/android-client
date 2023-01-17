@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
@@ -71,15 +71,14 @@ public class SseAuthFail4xxTest {
 
         client.on(SplitEvent.SDK_READY, readyTask);
 
-        latch.await(40, TimeUnit.SECONDS);
+        boolean await = latch.await(40, TimeUnit.SECONDS);
         mSseAuthLatch.await(40, TimeUnit.SECONDS);
         mMySegmentsHitsCountLatch.await(40, TimeUnit.SECONDS);
         mSplitsHitsCountLatch.await(40, TimeUnit.SECONDS);
 
-        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
+        Assert.assertTrue(await);
         Assert.assertTrue(mIsStreamingAuth);
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
 
         // Checking no streaming connection
         Assert.assertFalse(mIsStreamingConnected);

@@ -7,7 +7,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.DeprecatedKeyImpression;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.storage.SqLitePersistentStorage;
+import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.storage.db.ImpressionDao;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;

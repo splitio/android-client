@@ -11,4 +11,6 @@ public interface ImpressionManager {
     void startPeriodicRecording();
 
     void stopPeriodicRecording();
+
+    void enableTracking(boolean enable);
 }

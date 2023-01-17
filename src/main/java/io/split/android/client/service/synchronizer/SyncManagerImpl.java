@@ -22,6 +22,7 @@ import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerR
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
+import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.utils.logger.Logger;
 
@@ -68,7 +69,10 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
         mSynchronizer.synchronizeMySegments();
-        mSynchronizer.startPeriodicRecording();
+        if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {
+            Logger.v("User consent granted. Recording started");
+            mSynchronizer.startPeriodicRecording();
+        }
         mTelemetrySynchronizer.synchronizeStats();
 
         if (!isSyncEnabled()) {
@@ -143,7 +147,9 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void stop() {
-        mSynchronizer.stopPeriodicRecording();
+        if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {
+            mSynchronizer.stopPeriodicRecording();
+        }
         mSynchronizer.destroy();
         mTelemetrySynchronizer.destroy();
         if (isSyncEnabled()) {
@@ -221,6 +227,17 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     @Override
     public void unregisterMySegmentsUpdateWorker(String matchingKey) {
         mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(matchingKey);
+    }
+
+    @Override
+    public void setupUserConsent(UserConsent status) {
+        if (status == UserConsent.GRANTED) {
+            Logger.v("User consent status is granted now. Starting recorders");
+            mSynchronizer.startPeriodicRecording();
+        } else {
+            Logger.v("User consent status is " +  status + " now. Stopping recorders");
+            mSynchronizer.stopPeriodicRecording();
+        }
     }
 
     private boolean isSyncEnabled() {

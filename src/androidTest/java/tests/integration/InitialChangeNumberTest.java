@@ -26,6 +26,7 @@ import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -112,7 +113,7 @@ public class InitialChangeNumberTest {
                 .segmentsRefreshRate(30)
                 .impressionsRefreshRate(99999)
                 .streamingEnabled(false)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .build();
 
 

@@ -34,6 +34,7 @@ import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import tests.integration.shared.TestingHelper;
 
 public class UniqueKeysIntegrationTest {
@@ -199,7 +200,7 @@ public class UniqueKeysIntegrationTest {
                 new SplitClientConfig.Builder()
                         .ready(30000)
                         .streamingEnabled(true)
-                        .enableDebug()
+                        .logLevel(SplitLogLevel.DEBUG)
                         .trafficType("account")
                         .build(),
                 mContext,

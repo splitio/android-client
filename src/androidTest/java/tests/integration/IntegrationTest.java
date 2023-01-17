@@ -47,6 +47,7 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import io.split.android.grammar.Treatments;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -130,7 +131,7 @@ public class IntegrationTest {
                 .segmentsRefreshRate(30)
                 .impressionsRefreshRate(30)
                 .eventFlushInterval(200)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .trafficType("account")
                 .eventsPerPush(10)
                 .eventsQueueSize(100)
@@ -202,7 +203,6 @@ public class IntegrationTest {
         Map<String, Object> props99 = event99.properties;
 
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
@@ -264,7 +264,7 @@ public class IntegrationTest {
                 .featuresRefreshRate(30)
                 .segmentsRefreshRate(30)
                 .impressionsRefreshRate(30)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .trafficType("account")
                 .eventsPerPush(10)
                 .eventsQueueSize(100)
@@ -288,7 +288,6 @@ public class IntegrationTest {
         latch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(client.isReady());
-        Assert.assertTrue(splitFactory.isReady());
         Assert.assertFalse(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);

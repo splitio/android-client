@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
-import io.split.android.client.storage.SqLitePersistentStorage;
+import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.storage.db.ImpressionsCountDao;
 import io.split.android.client.storage.db.ImpressionsCountEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;

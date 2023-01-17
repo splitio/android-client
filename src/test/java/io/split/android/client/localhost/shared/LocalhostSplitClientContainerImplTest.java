@@ -25,6 +25,7 @@ import io.split.android.client.attributes.AttributesManagerFactory;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.localhost.LocalhostSplitFactory;
+import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.engine.experiments.SplitParser;
@@ -47,6 +48,8 @@ public class LocalhostSplitClientContainerImplTest {
     private TelemetryStorageProducer mTelemetryStorageProducer;
     @Mock
     private SplitClientConfig mConfig;
+    @Mock
+    private SplitTaskExecutor mTaskExecutor;
     private LocalhostSplitClientContainerImpl mClientContainer;
 
     @Before
@@ -92,6 +95,6 @@ public class LocalhostSplitClientContainerImplTest {
 
     @NonNull
     private LocalhostSplitClientContainerImpl getClientContainer() {
-        return new LocalhostSplitClientContainerImpl(mFactory, mConfig, mSplitsStorage, mSplitParser, mAttributesManagerFactory, mAttributesMerger, mTelemetryStorageProducer, mEventsManagerCoordinator);
+        return new LocalhostSplitClientContainerImpl(mFactory, mConfig, mSplitsStorage, mSplitParser, mAttributesManagerFactory, mAttributesMerger, mTelemetryStorageProducer, mEventsManagerCoordinator, mTaskExecutor);
     }
 }

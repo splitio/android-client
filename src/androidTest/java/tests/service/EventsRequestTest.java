@@ -56,7 +56,7 @@ public class EventsRequestTest {
         SplitClient client = mSplitFactory.client();
 
         client.track("test_event");
-        Thread.sleep(500);
+        Thread.sleep(1000);
         client.destroy();
         boolean await = mEventsLatch.await(10, TimeUnit.SECONDS);
 

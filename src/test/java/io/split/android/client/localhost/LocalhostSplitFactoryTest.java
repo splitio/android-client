@@ -84,19 +84,4 @@ public class LocalhostSplitFactoryTest {
             verify(client).flush();
         }
     }
-
-    @Test
-    public void isReadyReturnsTrueIfAtLeastOneClientIsReady() {
-        SplitClient readyClientMock = mock(SplitClient.class);
-        when(readyClientMock.isReady()).thenReturn(true);
-        Set<SplitClient> clients = new HashSet<>(Arrays.asList(mock(SplitClient.class), readyClientMock));
-        when(mLocalhostSplitClientContainer.getAll()).thenReturn(clients);
-
-        assertTrue(mFactory.isReady());
-    }
-
-    @Test
-    public void isReadyReturnsFalseWhenThereAreNoReadyClients() {
-        assertFalse(mFactory.isReady());
-    }
 }

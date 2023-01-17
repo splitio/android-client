@@ -25,12 +25,12 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import fake.HttpStreamResponseMock;
 import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
-import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -40,15 +40,11 @@ import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsCount;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
-
-import static java.lang.Thread.sleep;
 
 public class ImpressionsCountTest {
     Context mContext;

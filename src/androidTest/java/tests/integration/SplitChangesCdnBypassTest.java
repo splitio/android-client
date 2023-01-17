@@ -25,7 +25,6 @@ import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
-import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -35,7 +34,8 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.logger.Logger;
-import io.split.sharedtest.fake.HttpStreamResponseMock;
+import fake.HttpStreamResponseMock;
+import tests.integration.shared.TestingHelper;
 
 public class SplitChangesCdnBypassTest {
 

@@ -26,10 +26,10 @@ import io.split.android.client.service.sseclient.sseclient.PushNotificationManag
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 
 public class SyncManagerTest {
-
 
     @Mock
     SplitClientConfig mConfig;
@@ -70,12 +70,11 @@ public class SyncManagerTest {
 
         ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("user_key", mMySegmentUpdateWorker);
         when(mConfig.streamingEnabled()).thenReturn(true);
-
-
     }
 
     @Test
     public void pushNotificationSetupEnabled() {
+        when(mConfig.userConsent()).thenReturn(UserConsent.GRANTED);
         mSyncManager.start();
         verify(mSynchronizer, times(1)).loadAndSynchronizeSplits();
         verify(mSynchronizer, times(1)).loadMySegmentsFromCache();
@@ -88,6 +87,7 @@ public class SyncManagerTest {
     @Test
     public void pushNotificationSetupDisabled() {
         when(mConfig.streamingEnabled()).thenReturn(false);
+        when(mConfig.userConsent()).thenReturn(UserConsent.GRANTED);
         mSyncManager.start();
         verify(mSynchronizer, times(1)).loadAndSynchronizeSplits();
         verify(mSynchronizer, times(1)).loadMySegmentsFromCache();
@@ -181,5 +181,51 @@ public class SyncManagerTest {
 
         verify(mMySegmentUpdateWorker).stop();
         verify(anyKeyUpdateWorker).stop();
+    }
+
+    @Test
+    public void startUserConsentGranted() {
+        when(mConfig.userConsent()).thenReturn(UserConsent.GRANTED);
+        mSyncManager.start();
+        verify(mSynchronizer, times(1)).startPeriodicRecording();
+    }
+
+    @Test
+    public void startUserConsentDeclined() {
+        testStartUserConsentNotGranted(UserConsent.DECLINED);
+    }
+
+    @Test
+    public void startUserConsentUnknown() {
+        testStartUserConsentNotGranted(UserConsent.UNKNOWN);
+    }
+
+    @Test
+    public void stopUserConsentGranted() {
+        when(mConfig.userConsent()).thenReturn(UserConsent.GRANTED);
+        mSyncManager.stop();
+        verify(mSynchronizer, times(1)).stopPeriodicRecording();
+    }
+
+    @Test
+    public void stopUserConsentDeclined() {
+        testStopUserConsentNotGranted(UserConsent.DECLINED);
+    }
+
+    @Test
+    public void stopUserConsentUnknown() {
+        testStopUserConsentNotGranted(UserConsent.UNKNOWN);
+    }
+
+    private void testStartUserConsentNotGranted(UserConsent userConsent) {
+        when(mConfig.userConsent()).thenReturn(userConsent);
+        mSyncManager.start();
+        verify(mSynchronizer, never()).startPeriodicRecording();
+    }
+
+    private void testStopUserConsentNotGranted(UserConsent userConsent) {
+        when(mConfig.userConsent()).thenReturn(userConsent);
+        mSyncManager.stop();
+        verify(mSynchronizer, never()).startPeriodicRecording();
     }
 }

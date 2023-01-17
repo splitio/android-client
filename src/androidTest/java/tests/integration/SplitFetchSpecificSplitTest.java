@@ -38,6 +38,7 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -127,7 +128,7 @@ public class SplitFetchSpecificSplitTest {
                 .impressionsRefreshRate(99999999)
                 .eventFlushInterval(9999999)
                 .syncConfig(syncConfig)
-                .enableDebug()
+                .logLevel(SplitLogLevel.DEBUG)
                 .trafficType("account")
                 .eventsPerPush(10)
                 .eventsQueueSize(100)
