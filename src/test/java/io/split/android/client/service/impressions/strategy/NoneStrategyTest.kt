@@ -39,8 +39,7 @@ class NoneStrategyTest {
             taskExecutor,
             taskFactory,
             impressionsCounter,
-            uniqueKeysTracker,
-            true
+            uniqueKeysTracker
         )
     }
 
@@ -77,46 +76,6 @@ class NoneStrategyTest {
             "split",
             100,
             1
-        )
-    }
-
-    @Test
-    fun `keys are never flushed when persistence is disabled`() {
-        strategy = NoneStrategy(
-            taskExecutor,
-            taskFactory,
-            impressionsCounter,
-            uniqueKeysTracker,
-            false
-        )
-        `when`(uniqueKeysTracker.isFull).thenReturn(true)
-
-        strategy.run {
-            apply(createUniqueImpression(split = "split"))
-            apply(createUniqueImpression(split = "split"))
-        }
-
-        verifyNoInteractions(taskExecutor)
-    }
-
-
-    @Test
-    fun `persistence can be disabled`() {
-        `when`(uniqueKeysTracker.isFull).thenReturn(true)
-        `when`(taskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(mock(SaveUniqueImpressionsTask::class.java))
-
-        strategy.run {
-            apply(createUniqueImpression(split = "split"))
-            apply(createUniqueImpression(split = "split"))
-            enablePersistence(false)
-            apply(createUniqueImpression(split = "split"))
-            apply(createUniqueImpression(split = "split"))
-            apply(createUniqueImpression(split = "split"))
-        }
-
-        verify(taskExecutor, times(2)).submit(
-            any(SaveUniqueImpressionsTask::class.java),
-            eq<SplitTaskExecutionListener?>(null)
         )
     }
 }
