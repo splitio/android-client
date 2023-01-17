@@ -39,7 +39,7 @@ public class ImpressionManagerImpl implements ImpressionManager {
     private final UniqueKeysTracker mUniqueKeysTracker;
     private final ImpressionManagerRetryTimerProvider mRetryTimerProvider;
     private final SplitClientConfig mSplitConfig;
-    private AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
+    private final AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
 
     public ImpressionManagerImpl(@NonNull SplitClientConfig splitConfig,
                                  @NonNull SplitTaskExecutor taskExecutor,

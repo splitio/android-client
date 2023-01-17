@@ -67,8 +67,10 @@ class NoneStrategyTest {
 
     @Test
     fun `count is incremented`() {
-        strategy.apply(createUniqueImpression(split = "split"))
-        strategy.apply(createUniqueImpression(split = "split"))
+        strategy.run {
+            apply(createUniqueImpression(split = "split"))
+            apply(createUniqueImpression(split = "split"))
+        }
 
         verify(impressionsCounter, times(2)).inc(
             "split",
@@ -78,13 +80,13 @@ class NoneStrategyTest {
     }
 }
 
-private fun createUniqueImpression(split: String = UUID.randomUUID().toString()): Impression =
+fun createUniqueImpression(split: String = UUID.randomUUID().toString(), time: Long = 100L): Impression =
     Impression(
         "key",
         "bkey",
         split,
         "on",
-        100L,
+        time,
         "default rule",
         999L,
         null

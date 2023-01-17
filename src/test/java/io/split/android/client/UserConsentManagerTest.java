@@ -1,6 +1,5 @@
 package io.split.android.client;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -127,10 +126,6 @@ public class UserConsentManagerTest {
 
     @Test
     public void telemetryValues() {
-        UserConsent granted = UserConsent.GRANTED;
-        UserConsent unknown = UserConsent.UNKNOWN;
-        UserConsent declined = UserConsent.DECLINED;
-
         Assert.assertEquals(1, UserConsent.UNKNOWN.intValue());
         Assert.assertEquals(2, UserConsent.GRANTED.intValue());
         Assert.assertEquals(3, UserConsent.DECLINED.intValue());
