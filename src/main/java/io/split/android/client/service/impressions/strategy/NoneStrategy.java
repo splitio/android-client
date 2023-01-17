@@ -20,16 +20,20 @@ class NoneStrategy implements ProcessStrategy {
 
     private final ImpressionsCounter mImpressionsCounter;
     private final UniqueKeysTracker mUniqueKeysTracker;
+    private final boolean mEnablePersistence;
 
     public NoneStrategy(@NonNull SplitTaskExecutor taskExecutor,
                         @NonNull ImpressionsTaskFactory taskFactory,
                         @NonNull ImpressionsCounter impressionsCounter,
-                        @NonNull UniqueKeysTracker uniqueKeysTracker) {
+                        @NonNull UniqueKeysTracker uniqueKeysTracker,
+                        boolean enablePersistence) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mTaskFactory = checkNotNull(taskFactory);
 
         mImpressionsCounter = checkNotNull(impressionsCounter);
         mUniqueKeysTracker = checkNotNull(uniqueKeysTracker);
+
+        mEnablePersistence = enablePersistence;
     }
 
     @Override
@@ -37,7 +41,7 @@ class NoneStrategy implements ProcessStrategy {
         mImpressionsCounter.inc(impression.split(), impression.time(), 1);
         mUniqueKeysTracker.track(impression.key(), impression.split());
 
-        if (mUniqueKeysTracker.isFull()) {
+        if (mEnablePersistence && mUniqueKeysTracker.isFull()) {
             saveUniqueKeys();
         }
     }

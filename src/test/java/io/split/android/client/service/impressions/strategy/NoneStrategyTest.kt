@@ -39,7 +39,8 @@ class NoneStrategyTest {
             taskExecutor,
             taskFactory,
             impressionsCounter,
-            uniqueKeysTracker
+            uniqueKeysTracker,
+            true
         )
     }
 
@@ -75,6 +76,20 @@ class NoneStrategyTest {
             100,
             1
         )
+    }
+
+    @Test
+    fun `keys are never flushed when persistence is disabled`() {
+        strategy = NoneStrategy(
+            taskExecutor,
+            taskFactory,
+            impressionsCounter,
+            uniqueKeysTracker,
+            false
+        )
+
+        `when`(uniqueKeysTracker.isFull).thenReturn(true)
+        verifyNoInteractions(taskExecutor)
     }
 }
 
