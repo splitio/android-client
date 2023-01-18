@@ -476,7 +476,7 @@ public class SplitClientImplLegacyTest {
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
         ImpressionListener impressionListener = mock(ImpressionListener.class);
-        SplitClientImpl client = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage, impressionListener);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("pato@codigo.com"), impressionListener);
         Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
 
 
@@ -573,7 +573,7 @@ public class SplitClientImplLegacyTest {
 
         ImpressionListener impressionListener = mock(ImpressionListener.class);
 
-        SplitClientImpl client = SplitClientImplFactory.get(key, splitsStorage, impressionListener);
+        SplitClientImpl client = SplitClientImplFactory.get(key, impressionListener);
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
@@ -645,7 +645,7 @@ public class SplitClientImplLegacyTest {
         ImpressionListener impressionListener = mock(ImpressionListener.class);
 
 
-        SplitClientImpl client = SplitClientImplFactory.get(new Key("pato@codigo.com"), splitsStorage, impressionListener);
+        SplitClientImpl client = SplitClientImplFactory.get(new Key("pato@codigo.com"), impressionListener);
 
         Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
 
