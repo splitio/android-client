@@ -16,7 +16,7 @@ apply plugin: 'signing'
 apply plugin: 'kotlin-android'
 
 ext {
-    splitVersion = '2.13.2-rc2'
+    splitVersion = '3.0.0'
 }
 
 android {
@@ -98,7 +98,7 @@ dependencies {
     def jetBrainsAnnotationsVersion = '22.0.0'
     def okHttpVersion = '3.12.13'
     def playServicesVersion = '17.6.0'
-    def multidexVersion = '1.0.3'
+    def multidexVersion = '2.0.1'
 
     def jUnitVersion = '4.13.2'
     def mockitoVersion = '3.12.4'
@@ -127,7 +127,7 @@ dependencies {
     implementation "org.jetbrains:annotations:$jetBrainsAnnotationsVersion"
     implementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
     implementation "com.google.android.gms:play-services-base:$playServicesVersion"
-    implementation "com.android.support:multidex:$multidexVersion"
+    implementation "androidx.multidex:multidex:$multidexVersion"
 
     // Test
     testImplementation "junit:junit:$jUnitVersion"
