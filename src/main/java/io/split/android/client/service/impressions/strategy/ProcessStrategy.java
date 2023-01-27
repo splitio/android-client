@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import io.split.android.client.impressions.Impression;
 
-public interface ProcessStrategy {
+public interface ProcessStrategy extends PeriodicTracker {
 
     void apply(@NonNull Impression impression);
 }
