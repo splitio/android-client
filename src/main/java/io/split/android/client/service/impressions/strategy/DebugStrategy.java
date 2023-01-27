@@ -82,7 +82,6 @@ class DebugStrategy implements ProcessStrategy {
         scheduleImpressionsRecorderTask();
     }
 
-
     private void scheduleImpressionsRecorderTask() {
         mImpressionsRecorderTaskId = mTaskExecutor.schedule(
                 mImpressionsTaskFactory.createImpressionsRecorderTask(),
