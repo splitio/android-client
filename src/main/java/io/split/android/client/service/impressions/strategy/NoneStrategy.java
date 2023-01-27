@@ -131,5 +131,4 @@ class NoneStrategy implements ProcessStrategy {
                     mTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()), null);
         }
     }
-
 }

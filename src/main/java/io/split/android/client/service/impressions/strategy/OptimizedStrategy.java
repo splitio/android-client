@@ -6,12 +6,16 @@ import androidx.annotation.NonNull;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.impressions.ImpressionUtils;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
+import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
+import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
@@ -27,18 +31,41 @@ class OptimizedStrategy implements ProcessStrategy {
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
+    ///////////
+    private final RetryBackoffCounterTimer mRetryTimer;
+    private final RetryBackoffCounterTimer mImpressionsCountRetryTimer;
+    private final int mImpressionsRefreshRate;
+    private final int mImpressionsCounterRefreshRate;
+    private String mImpressionsRecorderTaskId;
+    private String mImpressionsRecorderCountTaskId;
+    private final boolean mTrackingIsEnabled;
+
     public OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
                              @NonNull ImpressionsCounter impressionsCounter,
                              @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
                              @NonNull SplitTaskExecutor taskExecutor,
                              @NonNull ImpressionsTaskFactory taskFactory,
-                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+
+                             ///////////
+                             @NonNull RetryBackoffCounterTimer impressionsRetryTimer,
+                             @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
+                             int impressionsRefreshRate,
+                             int impressionsCounterRefreshRate,
+                             boolean isTrackingEnabled) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsCounter = checkNotNull(impressionsCounter);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+
+        /////////
+        mRetryTimer = checkNotNull(impressionsRetryTimer);
+        mImpressionsCountRetryTimer = checkNotNull(impressionsCountRetryTimer);
+        mImpressionsRefreshRate = impressionsRefreshRate;
+        mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
+        mTrackingIsEnabled = isTrackingEnabled;
     }
 
     @Override
@@ -71,5 +98,62 @@ class OptimizedStrategy implements ProcessStrategy {
 
     private static boolean previousTimeIsValid(Long previousTime) {
         return previousTime != null && previousTime != 0;
+    }
+
+    @Override
+    public void flush() {
+        flushImpressions();
+        flushImpressionsCount();
+    }
+
+    @Override
+    public void startPeriodicRecording() {
+        scheduleImpressionsRecorderTask();
+        scheduleImpressionsCountRecorderTask();
+    }
+
+    @Override
+    public void stopPeriodicRecording() {
+        saveImpressionsCount();
+        mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
+        mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
+    }
+
+    private void flushImpressions() {
+        mRetryTimer.setTask(
+                mImpressionsTaskFactory.createImpressionsRecorderTask(),
+                mImpressionsSyncHelper);
+        mRetryTimer.start();
+    }
+
+    private void flushImpressionsCount() {
+        mImpressionsCountRetryTimer.setTask(new SplitTaskSerialWrapper(
+                mImpressionsTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
+                mImpressionsTaskFactory.createImpressionsCountRecorderTask()));
+        mImpressionsCountRetryTimer.start();
+    }
+
+
+    private void scheduleImpressionsRecorderTask() {
+        mImpressionsRecorderTaskId = mTaskExecutor.schedule(
+                mImpressionsTaskFactory.createImpressionsRecorderTask(),
+                ServiceConstants.NO_INITIAL_DELAY,
+                mImpressionsRefreshRate,
+                mImpressionsSyncHelper);
+    }
+
+    private void scheduleImpressionsCountRecorderTask() {
+        mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
+                mImpressionsTaskFactory.createImpressionsCountRecorderTask(),
+                ServiceConstants.NO_INITIAL_DELAY,
+                mImpressionsCounterRefreshRate,
+                null);
+    }
+
+    private void saveImpressionsCount() {
+        if (mTrackingIsEnabled) {
+            mTaskExecutor.submit(
+                    mImpressionsTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null);
+        }
     }
 }
