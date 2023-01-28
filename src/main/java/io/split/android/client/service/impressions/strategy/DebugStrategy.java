@@ -18,7 +18,7 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 /**
  * {@link ProcessStrategy} that corresponds to DEBUG Impressions mode.
  */
-class DebugStrategy implements ProcessStrategy {
+public class DebugStrategy implements ProcessStrategy {
 
     private final ImpressionsObserver mImpressionsObserver;
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;

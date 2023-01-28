@@ -22,7 +22,7 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 /**
  * {@link ProcessStrategy} that corresponds to OPTIMIZED Impressions mode.
  */
-class OptimizedStrategy implements ProcessStrategy {
+public class OptimizedStrategy implements ProcessStrategy {
 
     private final ImpressionsObserver mImpressionsObserver;
     private final ImpressionsCounter mImpressionsCounter;

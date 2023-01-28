@@ -18,7 +18,7 @@ import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 /**
  * {@link ProcessStrategy} that corresponds to NONE Impressions mode.
  */
-class NoneStrategy implements ProcessStrategy {
+public class NoneStrategy implements ProcessStrategy {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mTaskFactory;
