@@ -17,9 +17,9 @@ public class StrategyImpressionManager implements ImpressionManager {
     private final ProcessStrategy mProcessStrategy;
     private final PeriodicTracker mPeriodicTracker;
 
-    public StrategyImpressionManager(@NonNull ProcessStrategy processStrategy) {
+    public StrategyImpressionManager(@NonNull ProcessStrategy processStrategy, @NonNull PeriodicTracker periodicTracker) {
         mProcessStrategy = checkNotNull(processStrategy);
-        mPeriodicTracker = checkNotNull(processStrategy);
+        mPeriodicTracker = checkNotNull(periodicTracker);
     }
 
     @Override

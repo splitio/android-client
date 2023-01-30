@@ -1,5 +1,10 @@
 package io.split.android.client.service.impressions.strategy;
 
+import android.util.Pair;
+
+import androidx.annotation.NonNull;
+
+import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -48,55 +53,79 @@ public class ImpressionStrategyProvider {
         mUserConsentIsGranted = userConsentIsGranted;
     }
 
-    public ProcessStrategy getStrategy(ImpressionsMode mode) {
+    public Pair<ProcessStrategy, PeriodicTracker> getStrategy(ImpressionsMode mode) {
         ImpressionManagerRetryTimerProviderImpl impressionManagerRetryTimerProvider = new ImpressionManagerRetryTimerProviderImpl(mSplitTaskExecutor);
+        ProcessStrategy strategy;
+        PeriodicTracker tracker;
+        RecorderSyncHelperImpl<KeyImpression> impressionsSyncHelper;
         switch (mode) {
             case DEBUG:
-                return new DebugStrategy(
+                impressionsSyncHelper = buildImpressionSyncHelper();
+                strategy = new DebugStrategy(
                         new ImpressionsObserver(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE),
-                        new RecorderSyncHelperImpl<>(
-                                SplitTaskType.IMPRESSIONS_RECORDER,
-                                mStorageContainer.getImpressionsStorage(),
-                                mImpressionsQueueSize,
-                                nImpressionsChunkSize,
-                                mSplitTaskExecutor),
+                        impressionsSyncHelper,
                         mSplitTaskExecutor,
                         mSplitTaskFactory,
                         mTelemetryStorage,
                         impressionManagerRetryTimerProvider.getImpressionsTimer(),
-                        mImpressionsRefreshRate
-                );
-            case NONE:
-                return new NoneStrategy(
+                        mImpressionsRefreshRate);
+                tracker = new DebugTracker(
+                        impressionsSyncHelper,
                         mSplitTaskExecutor,
                         mSplitTaskFactory,
-                        new ImpressionsCounter(),
+                        impressionManagerRetryTimerProvider.getImpressionsTimer(),
+                        mImpressionsRefreshRate);
+                break;
+            case NONE:
+                ImpressionsCounter impressionsCounter = new ImpressionsCounter();
+                UniqueKeysTrackerImpl uniqueKeysTracker = new UniqueKeysTrackerImpl();
+                strategy = new NoneStrategy(
+                        mSplitTaskExecutor,
+                        mSplitTaskFactory,
+                        impressionsCounter,
+                        uniqueKeysTracker,
+                        mUserConsentIsGranted);
+                tracker = new NoneTracker(
+                        mSplitTaskExecutor,
+                        mSplitTaskFactory,
+                        impressionsCounter,
                         new UniqueKeysTrackerImpl(),
                         impressionManagerRetryTimerProvider.getImpressionsCountTimer(),
                         impressionManagerRetryTimerProvider.getUniqueKeysTimer(),
                         mImpressionsCounterRefreshRate,
                         mUniqueKeysRefreshRate,
-                        mUserConsentIsGranted
-                );
+                        mUserConsentIsGranted);
+                break;
             default:
-                return new OptimizedStrategy(
+                impressionsCounter = new ImpressionsCounter();
+                impressionsSyncHelper = buildImpressionSyncHelper();
+                strategy = new OptimizedStrategy(
                         new ImpressionsObserver(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE),
-                        new ImpressionsCounter(),
-                        new RecorderSyncHelperImpl<>(
-                                SplitTaskType.IMPRESSIONS_RECORDER,
-                                mStorageContainer.getImpressionsStorage(),
-                                mImpressionsQueueSize,
-                                nImpressionsChunkSize,
-                                mSplitTaskExecutor),
+                        impressionsCounter,
+                        impressionsSyncHelper,
                         mSplitTaskExecutor,
                         mSplitTaskFactory,
-                        mTelemetryStorage,
+                        mTelemetryStorage);
+                tracker = new OptimizedTracker(impressionsCounter,
+                        impressionsSyncHelper,
+                        mSplitTaskExecutor,
+                        mSplitTaskFactory,
                         impressionManagerRetryTimerProvider.getImpressionsTimer(),
                         impressionManagerRetryTimerProvider.getImpressionsCountTimer(),
-                        mImpressionsRefreshRate,
-                        mImpressionsCounterRefreshRate,
-                        mUserConsentIsGranted
-                );
+                        mImpressionsRefreshRate, mImpressionsCounterRefreshRate, mUserConsentIsGranted);
+                break;
         }
+
+        return Pair.create(strategy, tracker);
+    }
+
+    @NonNull
+    private RecorderSyncHelperImpl<KeyImpression> buildImpressionSyncHelper() {
+        return new RecorderSyncHelperImpl<>(
+                SplitTaskType.IMPRESSIONS_RECORDER,
+                mStorageContainer.getImpressionsStorage(),
+                mImpressionsQueueSize,
+                nImpressionsChunkSize,
+                mSplitTaskExecutor);
     }
 }

@@ -60,39 +60,4 @@ class DebugStrategy implements ProcessStrategy {
 
         mTelemetryRuntimeProducer.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
     }
-
-    @Override
-    public void flush() {
-        flushImpressions();
-    }
-
-    private void flushImpressions() {
-        mRetryTimer.setTask(
-                mImpressionsTaskFactory.createImpressionsRecorderTask(),
-                mImpressionsSyncHelper);
-        mRetryTimer.start();
-    }
-
-    @Override
-    public void startPeriodicRecording() {
-        scheduleImpressionsRecorderTask();
-    }
-
-    private void scheduleImpressionsRecorderTask() {
-        mImpressionsRecorderTaskId = mTaskExecutor.schedule(
-                mImpressionsTaskFactory.createImpressionsRecorderTask(),
-                ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionsRefreshRate,
-                mImpressionsSyncHelper);
-    }
-
-    @Override
-    public void stopPeriodicRecording() {
-        mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
-    }
-
-    @Override
-    public void enableTracking(boolean enable) {
-        // no - op
-    }
 }

@@ -1,6 +1,7 @@
 package io.split.android.client;
 
 import android.content.Context;
+import android.util.Pair;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
+import io.split.android.client.service.impressions.strategy.PeriodicTracker;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
@@ -163,7 +165,7 @@ public class SplitFactoryImpl implements SplitFactory {
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
 
-        ProcessStrategy processStrategy = new ImpressionStrategyProvider(splitTaskExecutor,
+        Pair<ProcessStrategy, PeriodicTracker> processStrategy = new ImpressionStrategyProvider(splitTaskExecutor,
                 mStorageContainer,
                 splitTaskFactory,
                 mStorageContainer.getTelemetryStorage(),
@@ -173,7 +175,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 config.impressionsCounterRefreshRate(),
                 config.mtkRefreshRate(),
                 config.userConsent() == UserConsent.GRANTED).getStrategy(config.impressionsMode());
-        ImpressionManager impressionManager = new StrategyImpressionManager(processStrategy);
+        ImpressionManager impressionManager = new StrategyImpressionManager(processStrategy.first, processStrategy.second);
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
