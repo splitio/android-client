@@ -18,7 +18,7 @@ import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTi
 /**
  * {@link ProcessStrategy} that corresponds to NONE Impressions mode.
  */
-public class NoneStrategy implements ProcessStrategy {
+class NoneStrategy implements ProcessStrategy {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mTaskFactory;
@@ -35,16 +35,16 @@ public class NoneStrategy implements ProcessStrategy {
     private final int mUniqueKeysRefreshRate;
     private final AtomicBoolean mTrackingIsEnabled;
 
-    public NoneStrategy(@NonNull SplitTaskExecutor taskExecutor,
-                        @NonNull ImpressionsTaskFactory taskFactory,
-                        @NonNull ImpressionsCounter impressionsCounter,
-                        @NonNull UniqueKeysTracker uniqueKeysTracker,
+    NoneStrategy(@NonNull SplitTaskExecutor taskExecutor,
+                 @NonNull ImpressionsTaskFactory taskFactory,
+                 @NonNull ImpressionsCounter impressionsCounter,
+                 @NonNull UniqueKeysTracker uniqueKeysTracker,
 
-                        @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
-                        @NonNull RetryBackoffCounterTimer uniqueKeysRetryTimer,
-                        int impressionsCounterRefreshRate,
-                        int uniqueKeysRefreshRate,
-                        boolean trackingIsEnabled) {
+                 @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
+                 @NonNull RetryBackoffCounterTimer uniqueKeysRetryTimer,
+                 int impressionsCounterRefreshRate,
+                 int uniqueKeysRefreshRate,
+                 boolean trackingIsEnabled) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mTaskFactory = checkNotNull(taskFactory);
 

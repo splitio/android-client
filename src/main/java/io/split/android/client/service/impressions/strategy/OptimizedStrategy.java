@@ -24,7 +24,7 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 /**
  * {@link ProcessStrategy} that corresponds to OPTIMIZED Impressions mode.
  */
-public class OptimizedStrategy implements ProcessStrategy {
+class OptimizedStrategy implements ProcessStrategy {
 
     private final ImpressionsObserver mImpressionsObserver;
     private final ImpressionsCounter mImpressionsCounter;
@@ -42,19 +42,19 @@ public class OptimizedStrategy implements ProcessStrategy {
     private String mImpressionsRecorderCountTaskId;
     private final AtomicBoolean mTrackingIsEnabled;
 
-    public OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
-                             @NonNull ImpressionsCounter impressionsCounter,
-                             @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
-                             @NonNull SplitTaskExecutor taskExecutor,
-                             @NonNull ImpressionsTaskFactory taskFactory,
-                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+    OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
+                      @NonNull ImpressionsCounter impressionsCounter,
+                      @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+                      @NonNull SplitTaskExecutor taskExecutor,
+                      @NonNull ImpressionsTaskFactory taskFactory,
+                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
 
-                             ///////////
-                             @NonNull RetryBackoffCounterTimer impressionsRetryTimer,
-                             @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
-                             int impressionsRefreshRate,
-                             int impressionsCounterRefreshRate,
-                             boolean isTrackingEnabled) {
+                      ///////////
+                      @NonNull RetryBackoffCounterTimer impressionsRetryTimer,
+                      @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
+                      int impressionsRefreshRate,
+                      int impressionsCounterRefreshRate,
+                      boolean isTrackingEnabled) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsCounter = checkNotNull(impressionsCounter);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);

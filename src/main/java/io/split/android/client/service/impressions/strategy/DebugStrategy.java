@@ -18,7 +18,7 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 /**
  * {@link ProcessStrategy} that corresponds to DEBUG Impressions mode.
  */
-public class DebugStrategy implements ProcessStrategy {
+class DebugStrategy implements ProcessStrategy {
 
     private final ImpressionsObserver mImpressionsObserver;
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
@@ -26,26 +26,22 @@ public class DebugStrategy implements ProcessStrategy {
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
 
-    ///////
     private final RetryBackoffCounterTimer mRetryTimer;
     private final int mImpressionsRefreshRate;
     private String mImpressionsRecorderTaskId;
 
-    public DebugStrategy(@NonNull ImpressionsObserver impressionsObserver,
-                         @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
-                         @NonNull SplitTaskExecutor taskExecutor,
-                         @NonNull ImpressionsTaskFactory taskFactory,
-                         @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                         ////////
-                         @NonNull RetryBackoffCounterTimer retryTimer,
-                         int impressionsRefreshRate) {
+    DebugStrategy(@NonNull ImpressionsObserver impressionsObserver,
+                  @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+                  @NonNull SplitTaskExecutor taskExecutor,
+                  @NonNull ImpressionsTaskFactory taskFactory,
+                  @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                  @NonNull RetryBackoffCounterTimer retryTimer,
+                  int impressionsRefreshRate) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
-
-        //////
         mRetryTimer = retryTimer;
         mImpressionsRefreshRate = impressionsRefreshRate;
     }
