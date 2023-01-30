@@ -4,7 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.dtos.KeyImpression;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -13,7 +14,6 @@ import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
-import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 
 /**
  * {@link ProcessStrategy} that corresponds to NONE Impressions mode.
@@ -33,7 +33,7 @@ public class NoneStrategy implements ProcessStrategy {
     private String mUniqueKeysRecorderTaskId;
     private final int mImpressionsCounterRefreshRate;
     private final int mUniqueKeysRefreshRate;
-    private final boolean mTrackingIsEnabled;
+    private final AtomicBoolean mTrackingIsEnabled;
 
     public NoneStrategy(@NonNull SplitTaskExecutor taskExecutor,
                         @NonNull ImpressionsTaskFactory taskFactory,
@@ -55,7 +55,7 @@ public class NoneStrategy implements ProcessStrategy {
         mUniqueKeysRetryTimer = checkNotNull(uniqueKeysRetryTimer);
         mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
         mUniqueKeysRefreshRate = uniqueKeysRefreshRate;
-        mTrackingIsEnabled = trackingIsEnabled;
+        mTrackingIsEnabled = new AtomicBoolean(trackingIsEnabled);
     }
 
     @Override
@@ -86,6 +86,11 @@ public class NoneStrategy implements ProcessStrategy {
         saveUniqueKeys();
         mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
         mTaskExecutor.stopTask(mUniqueKeysRecorderTaskId);
+    }
+
+    @Override
+    public void enableTracking(boolean enable) {
+        mTrackingIsEnabled.set(enable);
     }
 
     private void flushImpressionsCount() {
@@ -119,14 +124,14 @@ public class NoneStrategy implements ProcessStrategy {
     }
 
     private void saveImpressionsCount() {
-        if (mTrackingIsEnabled) {
+        if (mTrackingIsEnabled.get()) {
             mTaskExecutor.submit(
                     mTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null);
         }
     }
 
     private void saveUniqueKeys() {
-        if (mTrackingIsEnabled) {
+        if (mTrackingIsEnabled.get()) {
             mTaskExecutor.submit(
                     mTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()), null);
         }

@@ -94,4 +94,9 @@ public class DebugStrategy implements ProcessStrategy {
     public void stopPeriodicRecording() {
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
     }
+
+    @Override
+    public void enableTracking(boolean enable) {
+        // no - op
+    }
 }

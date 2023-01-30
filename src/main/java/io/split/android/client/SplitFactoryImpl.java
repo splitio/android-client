@@ -166,7 +166,7 @@ public class SplitFactoryImpl implements SplitFactory {
         ProcessStrategy processStrategy = new ImpressionStrategyProvider(splitTaskExecutor,
                 mStorageContainer,
                 splitTaskFactory,
-                telemetryStorage,
+                mStorageContainer.getTelemetryStorage(),
                 config.impressionsQueueSize(),
                 config.impressionsChunkSize(),
                 config.impressionsRefreshRate(),

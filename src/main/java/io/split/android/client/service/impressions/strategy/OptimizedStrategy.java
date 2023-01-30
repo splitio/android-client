@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
@@ -38,7 +40,7 @@ public class OptimizedStrategy implements ProcessStrategy {
     private final int mImpressionsCounterRefreshRate;
     private String mImpressionsRecorderTaskId;
     private String mImpressionsRecorderCountTaskId;
-    private final boolean mTrackingIsEnabled;
+    private final AtomicBoolean mTrackingIsEnabled;
 
     public OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
                              @NonNull ImpressionsCounter impressionsCounter,
@@ -65,7 +67,7 @@ public class OptimizedStrategy implements ProcessStrategy {
         mImpressionsCountRetryTimer = checkNotNull(impressionsCountRetryTimer);
         mImpressionsRefreshRate = impressionsRefreshRate;
         mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
-        mTrackingIsEnabled = isTrackingEnabled;
+        mTrackingIsEnabled = new AtomicBoolean(isTrackingEnabled);
     }
 
     @Override
@@ -119,6 +121,11 @@ public class OptimizedStrategy implements ProcessStrategy {
         mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
     }
 
+    @Override
+    public void enableTracking(boolean enable) {
+        mTrackingIsEnabled.set(enable);
+    }
+
     private void flushImpressions() {
         mRetryTimer.setTask(
                 mImpressionsTaskFactory.createImpressionsRecorderTask(),
@@ -151,7 +158,7 @@ public class OptimizedStrategy implements ProcessStrategy {
     }
 
     private void saveImpressionsCount() {
-        if (mTrackingIsEnabled) {
+        if (mTrackingIsEnabled.get()) {
             mTaskExecutor.submit(
                     mImpressionsTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null);
         }

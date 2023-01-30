@@ -7,4 +7,6 @@ public interface PeriodicTracker {
     void startPeriodicRecording();
 
     void stopPeriodicRecording();
+
+    void enableTracking(boolean enable);
 }
