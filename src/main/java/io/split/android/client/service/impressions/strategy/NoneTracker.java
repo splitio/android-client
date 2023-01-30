@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.impressions.ImpressionsCounter;
@@ -77,16 +78,28 @@ class NoneTracker implements PeriodicTracker {
     }
 
     private void flushImpressionsCount() {
-        mImpressionsCountRetryTimer.setTask(new SplitTaskSerialWrapper(
-                mTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
-                mTaskFactory.createImpressionsCountRecorderTask()));
+        SplitTask task;
+        if (mTrackingIsEnabled.get()) {
+            task = new SplitTaskSerialWrapper(
+                    mTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
+                    mTaskFactory.createImpressionsCountRecorderTask());
+        } else {
+            task = mTaskFactory.createImpressionsCountRecorderTask();
+        }
+        mImpressionsCountRetryTimer.setTask(task);
         mImpressionsCountRetryTimer.start();
     }
 
     private void flushUniqueKeys() {
-        mUniqueKeysRetryTimer.setTask(new SplitTaskSerialWrapper(
-                mTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()),
-                mTaskFactory.createUniqueImpressionsRecorderTask()));
+        SplitTask task;
+        if (mTrackingIsEnabled.get()) {
+            task = new SplitTaskSerialWrapper(
+                    mTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()),
+                    mTaskFactory.createUniqueImpressionsRecorderTask());
+        } else {
+            task = mTaskFactory.createUniqueImpressionsRecorderTask();
+        }
+        mUniqueKeysRetryTimer.setTask(task);
         mUniqueKeysRetryTimer.start();
     }
 

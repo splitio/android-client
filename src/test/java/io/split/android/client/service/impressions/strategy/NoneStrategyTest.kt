@@ -39,7 +39,8 @@ class NoneStrategyTest {
             taskExecutor,
             taskFactory,
             impressionsCounter,
-            uniqueKeysTracker
+            uniqueKeysTracker,
+            true
         )
     }
 

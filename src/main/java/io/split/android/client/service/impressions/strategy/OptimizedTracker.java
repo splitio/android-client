@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.impressions.ImpressionsCounter;
@@ -81,12 +82,19 @@ class OptimizedTracker implements PeriodicTracker {
     }
 
     private void flushImpressionsCount() {
-        mImpressionsCountRetryTimer.setTask(new SplitTaskSerialWrapper(
-                mImpressionsTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
-                mImpressionsTaskFactory.createImpressionsCountRecorderTask()));
+        SplitTask task;
+        if (mTrackingIsEnabled.get()) {
+            task = new SplitTaskSerialWrapper(
+                    mImpressionsTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
+                    mImpressionsTaskFactory.createImpressionsCountRecorderTask());
+
+        } else {
+            task = mImpressionsTaskFactory.createImpressionsCountRecorderTask();
+        }
+
+        mImpressionsCountRetryTimer.setTask(task);
         mImpressionsCountRetryTimer.start();
     }
-
 
     private void scheduleImpressionsRecorderTask() {
         mImpressionsRecorderTaskId = mTaskExecutor.schedule(
