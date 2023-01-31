@@ -171,9 +171,7 @@ class UserConsentModeOptimizedTest {
 
         mLifecycleManager.simulateOnPause()
         mLifecycleManager.simulateOnResume()
-        sleep(2000)
         client.flush()
-        sleep(2000)
         val impPostedBefore = mImpPosted
         val countPostedBefore = mCountPosted
 
@@ -183,9 +181,7 @@ class UserConsentModeOptimizedTest {
         factory.setUserConsent(false)
         mLifecycleManager.simulateOnPause()
         mLifecycleManager.simulateOnResume()
-        sleep(2000)
         client.flush()
-        sleep(2000)
 
         val impPostedAfter = mImpPosted
         val countPostedAfter = mCountPosted
