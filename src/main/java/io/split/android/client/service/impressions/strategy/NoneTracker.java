@@ -33,7 +33,6 @@ class NoneTracker implements PeriodicTracker {
                  @NonNull ImpressionsTaskFactory taskFactory,
                  @NonNull ImpressionsCounter impressionsCounter,
                  @NonNull UniqueKeysTracker uniqueKeysTracker,
-
                  @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
                  @NonNull RetryBackoffCounterTimer uniqueKeysRetryTimer,
                  int impressionsCounterRefreshRate,

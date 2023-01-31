@@ -25,6 +25,7 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.logger.Logger;
 
@@ -67,7 +68,12 @@ public class SseAuthFail4xxTest {
 
         SplitClient client = splitFactory.client();
 
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTask readyTask = new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client) {
+                latch.countDown();
+            }
+        };
 
         client.on(SplitEvent.SDK_READY, readyTask);
 

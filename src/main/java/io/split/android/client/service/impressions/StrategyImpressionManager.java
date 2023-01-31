@@ -25,6 +25,7 @@ public class StrategyImpressionManager implements ImpressionManager {
     @Override
     public void enableTracking(boolean enable) {
         isTrackingEnabled.set(enable);
+        mPeriodicTracker.enableTracking(enable);
     }
 
     @Override

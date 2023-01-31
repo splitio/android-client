@@ -95,6 +95,7 @@ public class UniqueKeysIntegrationTest {
 
         mMtkEndpointHitCount.set(2);
         client.flush();
+        client2.flush();
         boolean await = mMtkLatch.await(10, TimeUnit.SECONDS);
 
         assertTrue(await);
@@ -235,6 +236,7 @@ public class UniqueKeysIntegrationTest {
 
         responses.put("v1/keys/cs", (uri, httpMethod, body) -> {
             Logger.d("counter " + mMtkEndpointHitCount.get());
+            Logger.e("OHH NOOO, COUNT IS " + mMtkEndpointHitCount.get());
             if (mMtkEndpointHitCount.incrementAndGet() == 3) {
                 mUniqueKeysBody.set(body);
                 mMtkLatch.countDown();

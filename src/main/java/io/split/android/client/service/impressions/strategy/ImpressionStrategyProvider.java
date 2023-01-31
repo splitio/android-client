@@ -89,7 +89,7 @@ public class ImpressionStrategyProvider {
                         mSplitTaskExecutor,
                         mSplitTaskFactory,
                         impressionsCounter,
-                        new UniqueKeysTrackerImpl(),
+                        uniqueKeysTracker,
                         impressionManagerRetryTimerProvider.getImpressionsCountTimer(),
                         impressionManagerRetryTimerProvider.getUniqueKeysTimer(),
                         mImpressionsCounterRefreshRate,

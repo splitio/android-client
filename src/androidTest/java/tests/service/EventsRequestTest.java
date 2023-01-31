@@ -73,7 +73,7 @@ public class EventsRequestTest {
         assertNull(expectedResponseJson.get("storageId"));
     }
 
-    private JsonObject jsonFromResponse(String body) {
+    private synchronized JsonObject jsonFromResponse(String body) {
         JsonArray asJsonArray = JsonParser.parseString(body).getAsJsonArray();
         JsonElement jsonElement = asJsonArray.get(0);
 

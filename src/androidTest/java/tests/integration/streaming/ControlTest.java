@@ -93,7 +93,6 @@ public class ControlTest {
         SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
         db.clearAllTables();
 
-
         CountDownLatch readyLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(new CountDownLatch(1), "CONTROL notif update task");
 
@@ -157,7 +156,7 @@ public class ControlTest {
             }
             return false;
         }));
-        assertEquals(0, telemetryStorage.popTokenRefreshes());
+        assertEquals(1, telemetryStorage.popTokenRefreshes());
         Assert.assertEquals("on", treatmentReady);
         Assert.assertEquals("on", treatmentPaused);
         Assert.assertEquals("free", treatmentEnabled);

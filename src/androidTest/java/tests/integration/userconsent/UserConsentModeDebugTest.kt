@@ -26,8 +26,8 @@ import java.util.concurrent.TimeUnit
 
 class UserConsentModeDebugTest {
 
-    private var mImpLatch: CountDownLatch? = null
-    private var mEveLatch: CountDownLatch? = null
+    private lateinit var mImpLatch: CountDownLatch
+    private lateinit var mEveLatch: CountDownLatch
     private lateinit var mContext: Context
     private lateinit var mImpDao: ImpressionDao
     private lateinit var mEventDao: EventDao
@@ -41,9 +41,6 @@ class UserConsentModeDebugTest {
         mContext = InstrumentationRegistry.getInstrumentation().context
         mImpPosted = false
         mEvePosted = false
-        mEveLatch = null
-        mImpLatch = null
-
     }
 
     @Test
@@ -66,8 +63,8 @@ class UserConsentModeDebugTest {
             client.getTreatment("FACUNDO_TEST")
             client.track("ev", i.toDouble())
         }
-        mImpLatch?.await(10, TimeUnit.SECONDS)
-        mEveLatch?.await(10, TimeUnit.SECONDS)
+        mImpLatch.await(10, TimeUnit.SECONDS)
+        mEveLatch.await(10, TimeUnit.SECONDS)
 
         Assert.assertTrue(mImpPosted)
         Assert.assertTrue(mEvePosted)
@@ -133,8 +130,8 @@ class UserConsentModeDebugTest {
         factory.setUserConsent(true)
         sleep(2000)
         client.flush()
-        mImpLatch?.await(10, TimeUnit.SECONDS)
-        mEveLatch?.await(10, TimeUnit.SECONDS)
+        mImpLatch.await(10, TimeUnit.SECONDS)
+        mEveLatch.await(10, TimeUnit.SECONDS)
 
         val impPostedAfter = mImpPosted
         val evePostedAfter = mEvePosted
