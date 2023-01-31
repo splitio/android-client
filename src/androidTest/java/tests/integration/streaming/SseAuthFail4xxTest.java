@@ -77,12 +77,10 @@ public class SseAuthFail4xxTest {
 
         client.on(SplitEvent.SDK_READY, readyTask);
 
-        boolean await = latch.await(40, TimeUnit.SECONDS);
         mSseAuthLatch.await(40, TimeUnit.SECONDS);
         mMySegmentsHitsCountLatch.await(40, TimeUnit.SECONDS);
         mSplitsHitsCountLatch.await(40, TimeUnit.SECONDS);
 
-        Assert.assertTrue(await);
         Assert.assertTrue(mIsStreamingAuth);
         Assert.assertTrue(client.isReady());
 

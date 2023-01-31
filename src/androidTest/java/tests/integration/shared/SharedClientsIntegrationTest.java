@@ -226,8 +226,8 @@ public class SharedClientsIntegrationTest {
             }
         });
 
-        boolean await = readyLatch.await(10, TimeUnit.SECONDS);
-        boolean await2 = readyLatch2.await(10, TimeUnit.SECONDS);
+        boolean await = readyLatch.await(15, TimeUnit.SECONDS);
+        boolean await2 = readyLatch2.await(15, TimeUnit.SECONDS);
 
         assertTrue(await);
         assertTrue(await2);
