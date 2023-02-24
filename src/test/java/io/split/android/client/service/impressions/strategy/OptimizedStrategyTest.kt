@@ -38,10 +38,7 @@ class OptimizedStrategyTest {
     private lateinit var telemetryRuntimeProducer: TelemetryRuntimeProducer
 
     @Mock
-    private lateinit var impressionsRetryTimer: RetryBackoffCounterTimer
-
-    @Mock
-    private lateinit var impressionsCountRetryTimer: RetryBackoffCounterTimer
+    private lateinit var tracker: PeriodicTracker
 
     private lateinit var strategy: OptimizedStrategy
 
@@ -55,11 +52,8 @@ class OptimizedStrategyTest {
             taskExecutor,
             taskFactory,
             telemetryRuntimeProducer,
-            impressionsRetryTimer,
-            impressionsCountRetryTimer,
-            30,
-            30,
-            true
+            true,
+            tracker
         )
     }
 
@@ -141,5 +135,33 @@ class OptimizedStrategyTest {
             ImpressionsDataType.IMPRESSIONS_DEDUPED,
             1
         )
+    }
+
+    @Test
+    fun `flush calls flush on tracker`() {
+        strategy.flush()
+
+        verify(tracker).flush()
+    }
+
+    @Test
+    fun `startPeriodicRecording calls startPeriodicRecording on tracker`() {
+        strategy.startPeriodicRecording()
+
+        verify(tracker).startPeriodicRecording()
+    }
+
+    @Test
+    fun `stopPeriodicRecording calls stopPeriodicRecording on tracker`() {
+        strategy.stopPeriodicRecording()
+
+        verify(tracker).stopPeriodicRecording()
+    }
+
+    @Test
+    fun `enableTracking calls enableTracking on tracker`() {
+        strategy.enableTracking(true)
+
+        verify(tracker).enableTracking(true)
     }
 }

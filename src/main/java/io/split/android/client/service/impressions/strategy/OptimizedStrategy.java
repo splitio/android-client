@@ -3,6 +3,7 @@ package io.split.android.client.service.impressions.strategy;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -43,26 +44,41 @@ class OptimizedStrategy implements ProcessStrategy {
                       int impressionsRefreshRate,
                       int impressionsCounterRefreshRate,
                       boolean isTrackingEnabled) {
+        this(impressionsObserver,
+                impressionsCounter,
+                impressionsSyncHelper,
+                taskExecutor,
+                taskFactory,
+                telemetryRuntimeProducer,
+                isTrackingEnabled,
+                new OptimizedTracker(impressionsCounter,
+                        impressionsSyncHelper,
+                        taskExecutor,
+                        taskFactory,
+                        impressionsRetryTimer,
+                        impressionsCountRetryTimer,
+                        impressionsRefreshRate,
+                        impressionsCounterRefreshRate,
+                        isTrackingEnabled));
+    }
+
+    @VisibleForTesting
+    OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
+                      @NonNull ImpressionsCounter impressionsCounter,
+                      @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+                      @NonNull SplitTaskExecutor taskExecutor,
+                      @NonNull ImpressionsTaskFactory taskFactory,
+                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                      boolean isTrackingEnabled,
+                      @NonNull PeriodicTracker tracker) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsCounter = checkNotNull(impressionsCounter);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
-
-        RetryBackoffCounterTimer mRetryTimer = checkNotNull(impressionsRetryTimer);
-        RetryBackoffCounterTimer mImpressionsCountRetryTimer = checkNotNull(impressionsCountRetryTimer);
         mTrackingIsEnabled = new AtomicBoolean(isTrackingEnabled);
-
-        mOptimizedTracker = new OptimizedTracker(mImpressionsCounter,
-                mImpressionsSyncHelper,
-                mTaskExecutor,
-                mImpressionsTaskFactory,
-                mRetryTimer,
-                mImpressionsCountRetryTimer,
-                impressionsRefreshRate,
-                impressionsCounterRefreshRate,
-                isTrackingEnabled);
+        mOptimizedTracker = checkNotNull(tracker);
     }
 
     @Override

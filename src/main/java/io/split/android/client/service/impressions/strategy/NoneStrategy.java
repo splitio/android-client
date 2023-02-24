@@ -3,6 +3,7 @@ package io.split.android.client.service.impressions.strategy;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -34,24 +35,36 @@ class NoneStrategy implements ProcessStrategy {
                  int impressionsCounterRefreshRate,
                  int uniqueKeysRefreshRate,
                  boolean trackingIsEnabled) {
-        mTaskExecutor = checkNotNull(taskExecutor);
-        mTaskFactory = checkNotNull(taskFactory);
-
-        mImpressionsCounter = checkNotNull(impressionsCounter);
-        mUniqueKeysTracker = checkNotNull(uniqueKeysTracker);
-
-        mTrackingIsEnabled = new AtomicBoolean(trackingIsEnabled);
-
-        mNoneTracker = new NoneTracker(
-                taskExecutor,
+        this(taskExecutor,
                 taskFactory,
                 impressionsCounter,
                 uniqueKeysTracker,
-                impressionsCountRetryTimer,
-                uniqueKeysRetryTimer,
-                impressionsCounterRefreshRate,
-                uniqueKeysRefreshRate,
-                trackingIsEnabled);
+                trackingIsEnabled,
+                new NoneTracker(
+                        taskExecutor,
+                        taskFactory,
+                        impressionsCounter,
+                        uniqueKeysTracker,
+                        impressionsCountRetryTimer,
+                        uniqueKeysRetryTimer,
+                        impressionsCounterRefreshRate,
+                        uniqueKeysRefreshRate,
+                        trackingIsEnabled));
+    }
+
+    @VisibleForTesting
+    NoneStrategy(@NonNull SplitTaskExecutor taskExecutor,
+                 @NonNull ImpressionsTaskFactory taskFactory,
+                 @NonNull ImpressionsCounter impressionsCounter,
+                 @NonNull UniqueKeysTracker uniqueKeysTracker,
+                 boolean trackingIsEnabled,
+                 @NonNull PeriodicTracker tracker) {
+        mTaskExecutor = checkNotNull(taskExecutor);
+        mTaskFactory = checkNotNull(taskFactory);
+        mImpressionsCounter = checkNotNull(impressionsCounter);
+        mUniqueKeysTracker = checkNotNull(uniqueKeysTracker);
+        mTrackingIsEnabled = new AtomicBoolean(trackingIsEnabled);
+        mNoneTracker = checkNotNull(tracker);
     }
 
     @Override

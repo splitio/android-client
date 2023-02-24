@@ -37,6 +37,9 @@ class NoneStrategyTest {
     @Mock
     private lateinit var uniqueKeysRetryTimer: RetryBackoffCounterTimer
 
+    @Mock
+    private lateinit var tracker: PeriodicTracker
+
     private lateinit var strategy: NoneStrategy
 
     @Before
@@ -47,9 +50,8 @@ class NoneStrategyTest {
             taskFactory,
             impressionsCounter,
             uniqueKeysTracker,
-            countRetryTimer,
-            uniqueKeysRetryTimer,
-            1, 2, true
+            true,
+            tracker
         )
     }
 
@@ -87,6 +89,34 @@ class NoneStrategyTest {
             100,
             1
         )
+    }
+
+    @Test
+    fun `flush calls flush on tracker`() {
+        strategy.flush()
+
+        verify(tracker).flush()
+    }
+
+    @Test
+    fun `startPeriodicRecording calls startPeriodicRecording on tracker`() {
+        strategy.startPeriodicRecording()
+
+        verify(tracker).startPeriodicRecording()
+    }
+
+    @Test
+    fun `stopPeriodicRecording calls stopPeriodicRecording on tracker`() {
+        strategy.stopPeriodicRecording()
+
+        verify(tracker).stopPeriodicRecording()
+    }
+
+    @Test
+    fun `enableTracking calls enableTracking on tracker`() {
+        strategy.enableTracking(true)
+
+        verify(tracker).enableTracking(true)
     }
 }
 

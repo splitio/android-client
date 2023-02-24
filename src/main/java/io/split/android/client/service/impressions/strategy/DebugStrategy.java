@@ -3,6 +3,7 @@ package io.split.android.client.service.impressions.strategy;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
@@ -33,12 +34,27 @@ class DebugStrategy implements ProcessStrategy {
                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                   @NonNull RetryBackoffCounterTimer retryTimer,
                   int impressionsRefreshRate) {
+        this(impressionsObserver,
+                impressionsSyncHelper,
+                taskExecutor,
+                taskFactory,
+                telemetryRuntimeProducer,
+                new DebugTracker(impressionsSyncHelper, taskExecutor, taskFactory, retryTimer, impressionsRefreshRate));
+    }
+
+    @VisibleForTesting
+    DebugStrategy(@NonNull ImpressionsObserver impressionsObserver,
+                  @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+                  @NonNull SplitTaskExecutor taskExecutor,
+                  @NonNull ImpressionsTaskFactory taskFactory,
+                  @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                  @NonNull PeriodicTracker tracker) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
-        mDebugTracker = new DebugTracker(impressionsSyncHelper, taskExecutor, taskFactory, retryTimer, impressionsRefreshRate);
+        mDebugTracker = checkNotNull(tracker);
     }
 
     @Override
