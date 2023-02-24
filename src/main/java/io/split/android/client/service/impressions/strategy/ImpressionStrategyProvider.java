@@ -20,7 +20,7 @@ public class ImpressionStrategyProvider {
     private final ImpressionsTaskFactory mSplitTaskFactory;
     private final TelemetryRuntimeProducer mTelemetryStorage;
     private final int mImpressionsQueueSize;
-    private final long nImpressionsChunkSize;
+    private final long mImpressionsChunkSize;
     private final int mImpressionsRefreshRate;
     private final int mImpressionsCounterRefreshRate;
     private final int mUniqueKeysRefreshRate;
@@ -41,7 +41,7 @@ public class ImpressionStrategyProvider {
         mSplitTaskFactory = splitTaskFactory;
         mTelemetryStorage = telemetryStorage;
         mImpressionsQueueSize = impressionsQueueSize;
-        nImpressionsChunkSize = impressionsChunkSize;
+        mImpressionsChunkSize = impressionsChunkSize;
         mImpressionsRefreshRate = impressionsRefreshRate;
         mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
         mUniqueKeysRefreshRate = uniqueKeysRefreshRate;
@@ -58,7 +58,7 @@ public class ImpressionStrategyProvider {
                                 SplitTaskType.IMPRESSIONS_RECORDER,
                                 mStorageContainer.getImpressionsStorage(),
                                 mImpressionsQueueSize,
-                                nImpressionsChunkSize,
+                                mImpressionsChunkSize,
                                 mSplitTaskExecutor),
                         mSplitTaskExecutor,
                         mSplitTaskFactory,
@@ -86,7 +86,7 @@ public class ImpressionStrategyProvider {
                                 SplitTaskType.IMPRESSIONS_RECORDER,
                                 mStorageContainer.getImpressionsStorage(),
                                 mImpressionsQueueSize,
-                                nImpressionsChunkSize,
+                                mImpressionsChunkSize,
                                 mSplitTaskExecutor),
                         mSplitTaskExecutor,
                         mSplitTaskFactory,

@@ -33,14 +33,9 @@ class OptimizedStrategy implements ProcessStrategy {
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
-    ///////////
-    private final RetryBackoffCounterTimer mRetryTimer;
-    private final RetryBackoffCounterTimer mImpressionsCountRetryTimer;
-    private final int mImpressionsRefreshRate;
-    private final int mImpressionsCounterRefreshRate;
-    private String mImpressionsRecorderTaskId;
-    private String mImpressionsRecorderCountTaskId;
     private final AtomicBoolean mTrackingIsEnabled;
+
+    private final OptimizedTracker mOptimizedTracker;
 
     OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
                       @NonNull ImpressionsCounter impressionsCounter,
@@ -62,12 +57,19 @@ class OptimizedStrategy implements ProcessStrategy {
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
 
-        /////////
-        mRetryTimer = checkNotNull(impressionsRetryTimer);
-        mImpressionsCountRetryTimer = checkNotNull(impressionsCountRetryTimer);
-        mImpressionsRefreshRate = impressionsRefreshRate;
-        mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
+        RetryBackoffCounterTimer mRetryTimer = checkNotNull(impressionsRetryTimer);
+        RetryBackoffCounterTimer mImpressionsCountRetryTimer = checkNotNull(impressionsCountRetryTimer);
         mTrackingIsEnabled = new AtomicBoolean(isTrackingEnabled);
+
+        mOptimizedTracker = new OptimizedTracker(mImpressionsCounter,
+                mImpressionsSyncHelper,
+                mTaskExecutor,
+                mImpressionsTaskFactory,
+                mRetryTimer,
+                mImpressionsCountRetryTimer,
+                impressionsRefreshRate,
+                impressionsCounterRefreshRate,
+                isTrackingEnabled);
     }
 
     @Override
@@ -104,63 +106,22 @@ class OptimizedStrategy implements ProcessStrategy {
 
     @Override
     public void flush() {
-        flushImpressions();
-        flushImpressionsCount();
+        mOptimizedTracker.flush();
     }
 
     @Override
     public void startPeriodicRecording() {
-        scheduleImpressionsRecorderTask();
-        scheduleImpressionsCountRecorderTask();
+        mOptimizedTracker.startPeriodicRecording();
     }
 
     @Override
     public void stopPeriodicRecording() {
-        saveImpressionsCount();
-        mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
-        mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
+        mOptimizedTracker.stopPeriodicRecording();
     }
 
     @Override
     public void enableTracking(boolean enable) {
         mTrackingIsEnabled.set(enable);
-    }
-
-    private void flushImpressions() {
-        mRetryTimer.setTask(
-                mImpressionsTaskFactory.createImpressionsRecorderTask(),
-                mImpressionsSyncHelper);
-        mRetryTimer.start();
-    }
-
-    private void flushImpressionsCount() {
-        mImpressionsCountRetryTimer.setTask(new SplitTaskSerialWrapper(
-                mImpressionsTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
-                mImpressionsTaskFactory.createImpressionsCountRecorderTask()));
-        mImpressionsCountRetryTimer.start();
-    }
-
-
-    private void scheduleImpressionsRecorderTask() {
-        mImpressionsRecorderTaskId = mTaskExecutor.schedule(
-                mImpressionsTaskFactory.createImpressionsRecorderTask(),
-                ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionsRefreshRate,
-                mImpressionsSyncHelper);
-    }
-
-    private void scheduleImpressionsCountRecorderTask() {
-        mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
-                mImpressionsTaskFactory.createImpressionsCountRecorderTask(),
-                ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionsCounterRefreshRate,
-                null);
-    }
-
-    private void saveImpressionsCount() {
-        if (mTrackingIsEnabled.get()) {
-            mTaskExecutor.submit(
-                    mImpressionsTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null);
-        }
+        mOptimizedTracker.enableTracking(enable);
     }
 }
