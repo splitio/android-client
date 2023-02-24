@@ -18,10 +18,8 @@ public class NoneTracker implements PeriodicTracker {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mTaskFactory;
-
     private final ImpressionsCounter mImpressionsCounter;
     private final UniqueKeysTracker mUniqueKeysTracker;
-
     private final RetryBackoffCounterTimer mImpressionsCountRetryTimer;
     private final RetryBackoffCounterTimer mUniqueKeysRetryTimer;
     private String mImpressionsRecorderCountTaskId;

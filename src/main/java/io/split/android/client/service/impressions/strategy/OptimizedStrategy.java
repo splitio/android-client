@@ -8,16 +8,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskSerialWrapper;
 import io.split.android.client.service.impressions.ImpressionUtils;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
-import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
@@ -32,10 +29,8 @@ class OptimizedStrategy implements ProcessStrategy {
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
-
     private final AtomicBoolean mTrackingIsEnabled;
-
-    private final OptimizedTracker mOptimizedTracker;
+    private final PeriodicTracker mOptimizedTracker;
 
     OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
                       @NonNull ImpressionsCounter impressionsCounter,
@@ -43,8 +38,6 @@ class OptimizedStrategy implements ProcessStrategy {
                       @NonNull SplitTaskExecutor taskExecutor,
                       @NonNull ImpressionsTaskFactory taskFactory,
                       @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-
-                      ///////////
                       @NonNull RetryBackoffCounterTimer impressionsRetryTimer,
                       @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
                       int impressionsRefreshRate,

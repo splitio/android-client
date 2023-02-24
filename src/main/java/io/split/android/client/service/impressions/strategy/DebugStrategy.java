@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
@@ -25,10 +24,7 @@ class DebugStrategy implements ProcessStrategy {
     private final SplitTaskExecutor mTaskExecutor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
-
-    private final RetryBackoffCounterTimer mRetryTimer;
-    private final int mImpressionsRefreshRate;
-    private String mImpressionsRecorderTaskId;
+    private final PeriodicTracker mDebugTracker;
 
     DebugStrategy(@NonNull ImpressionsObserver impressionsObserver,
                   @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
@@ -42,8 +38,7 @@ class DebugStrategy implements ProcessStrategy {
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
-        mRetryTimer = retryTimer;
-        mImpressionsRefreshRate = impressionsRefreshRate;
+        mDebugTracker = new DebugTracker(impressionsSyncHelper, taskExecutor, taskFactory, retryTimer, impressionsRefreshRate);
     }
 
     @Override
@@ -63,36 +58,21 @@ class DebugStrategy implements ProcessStrategy {
 
     @Override
     public void flush() {
-        flushImpressions();
-    }
-
-    private void flushImpressions() {
-        mRetryTimer.setTask(
-                mImpressionsTaskFactory.createImpressionsRecorderTask(),
-                mImpressionsSyncHelper);
-        mRetryTimer.start();
+        mDebugTracker.flush();
     }
 
     @Override
     public void startPeriodicRecording() {
-        scheduleImpressionsRecorderTask();
-    }
-
-    private void scheduleImpressionsRecorderTask() {
-        mImpressionsRecorderTaskId = mTaskExecutor.schedule(
-                mImpressionsTaskFactory.createImpressionsRecorderTask(),
-                ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionsRefreshRate,
-                mImpressionsSyncHelper);
+        mDebugTracker.startPeriodicRecording();
     }
 
     @Override
     public void stopPeriodicRecording() {
-        mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
+        mDebugTracker.stopPeriodicRecording();
     }
 
     @Override
     public void enableTracking(boolean enable) {
-        // no - op
+        mDebugTracker.enableTracking(enable);
     }
 }

@@ -20,13 +20,10 @@ class NoneStrategy implements ProcessStrategy {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mTaskFactory;
-
     private final ImpressionsCounter mImpressionsCounter;
     private final UniqueKeysTracker mUniqueKeysTracker;
-
     private final AtomicBoolean mTrackingIsEnabled;
-
-    private final NoneTracker mNoneTracker;
+    private final PeriodicTracker mNoneTracker;
 
     NoneStrategy(@NonNull SplitTaskExecutor taskExecutor,
                  @NonNull ImpressionsTaskFactory taskFactory,
