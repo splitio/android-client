@@ -24,8 +24,6 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
-import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
-import io.split.android.client.service.impressions.strategy.ProcessStrategy;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -163,17 +161,7 @@ public class SplitFactoryImpl implements SplitFactory {
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
 
-        ProcessStrategy processStrategy = new ImpressionStrategyProvider(splitTaskExecutor,
-                mStorageContainer,
-                splitTaskFactory,
-                mStorageContainer.getTelemetryStorage(),
-                config.impressionsQueueSize(),
-                config.impressionsChunkSize(),
-                config.impressionsRefreshRate(),
-                config.impressionsCounterRefreshRate(),
-                config.mtkRefreshRate(),
-                config.userConsent() == UserConsent.GRANTED).getStrategy(config.impressionsMode());
-        ImpressionManager impressionManager = new StrategyImpressionManager(processStrategy);
+        ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
