@@ -5,6 +5,7 @@ import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.service.impressions.ImpressionsObserver
 import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
+import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer
 import io.split.android.client.service.synchronizer.RecorderSyncHelper
 import io.split.android.client.telemetry.model.ImpressionsDataType
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer
@@ -32,6 +33,9 @@ class DebugStrategyTest {
     @Mock
     private lateinit var telemetryRuntimeProducer: TelemetryRuntimeProducer
 
+    @Mock
+    private lateinit var retryTimer: RetryBackoffCounterTimer
+
     private lateinit var strategy: DebugStrategy
 
     @Before
@@ -42,7 +46,9 @@ class DebugStrategyTest {
             impressionsSyncHelper,
             taskExecutor,
             taskFactory,
-            telemetryRuntimeProducer
+            telemetryRuntimeProducer,
+            retryTimer,
+            10
         )
     }
 

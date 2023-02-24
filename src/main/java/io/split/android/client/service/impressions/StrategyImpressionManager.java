@@ -3,6 +3,7 @@ package io.split.android.client.service.impressions;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -18,8 +19,13 @@ public class StrategyImpressionManager implements ImpressionManager {
     private final PeriodicTracker mPeriodicTracker;
 
     public StrategyImpressionManager(@NonNull ProcessStrategy processStrategy) {
+        this(processStrategy, processStrategy);
+    }
+
+    @VisibleForTesting
+    StrategyImpressionManager(@NonNull ProcessStrategy processStrategy, @NonNull PeriodicTracker periodicTracker) {
         mProcessStrategy = checkNotNull(processStrategy);
-        mPeriodicTracker = checkNotNull(processStrategy);
+        mPeriodicTracker = checkNotNull(periodicTracker);
     }
 
     @Override

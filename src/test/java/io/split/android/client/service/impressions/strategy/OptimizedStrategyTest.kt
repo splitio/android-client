@@ -7,6 +7,7 @@ import io.split.android.client.service.impressions.ImpressionsCounter
 import io.split.android.client.service.impressions.ImpressionsObserver
 import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
+import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer
 import io.split.android.client.service.synchronizer.RecorderSyncHelper
 import io.split.android.client.telemetry.model.ImpressionsDataType
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer
@@ -36,6 +37,12 @@ class OptimizedStrategyTest {
     @Mock
     private lateinit var telemetryRuntimeProducer: TelemetryRuntimeProducer
 
+    @Mock
+    private lateinit var impressionsRetryTimer: RetryBackoffCounterTimer
+
+    @Mock
+    private lateinit var impressionsCountRetryTimer: RetryBackoffCounterTimer
+
     private lateinit var strategy: OptimizedStrategy
 
     @Before
@@ -47,7 +54,12 @@ class OptimizedStrategyTest {
             impressionsSyncHelper,
             taskExecutor,
             taskFactory,
-            telemetryRuntimeProducer
+            telemetryRuntimeProducer,
+            impressionsRetryTimer,
+            impressionsCountRetryTimer,
+            30,
+            30,
+            true
         )
     }
 
@@ -103,8 +115,14 @@ class OptimizedStrategyTest {
 
         strategy.apply(createUniqueImpression(time = 1000000000L))
 
-        verify(telemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1)
-        verify(telemetryRuntimeProducer, never()).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 1)
+        verify(telemetryRuntimeProducer).recordImpressionStats(
+            ImpressionsDataType.IMPRESSIONS_QUEUED,
+            1
+        )
+        verify(
+            telemetryRuntimeProducer,
+            never()
+        ).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 1)
     }
 
     @Test
@@ -115,7 +133,13 @@ class OptimizedStrategyTest {
         strategy.apply(createUniqueImpression(time = 10))
         strategy.apply(createUniqueImpression(time = 2000000000L))
 
-        verify(telemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1)
-        verify(telemetryRuntimeProducer).recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 1)
+        verify(telemetryRuntimeProducer).recordImpressionStats(
+            ImpressionsDataType.IMPRESSIONS_QUEUED,
+            1
+        )
+        verify(telemetryRuntimeProducer).recordImpressionStats(
+            ImpressionsDataType.IMPRESSIONS_DEDUPED,
+            1
+        )
     }
 }

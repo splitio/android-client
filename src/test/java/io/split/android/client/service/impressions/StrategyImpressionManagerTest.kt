@@ -1,7 +1,7 @@
 package io.split.android.client.service.impressions
 
 import io.split.android.client.impressions.Impression
-import io.split.android.client.service.impressions.tracker.PeriodicTracker
+import io.split.android.client.service.impressions.strategy.PeriodicTracker
 import io.split.android.client.service.impressions.strategy.ProcessStrategy
 import org.junit.Before
 import org.junit.Test
@@ -23,7 +23,7 @@ class StrategyImpressionManagerTest {
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        impressionManager = StrategyImpressionManager(strategy)
+        impressionManager = StrategyImpressionManager(strategy, tracker)
     }
 
     @Test
