@@ -22,6 +22,8 @@ import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
+import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
+import io.split.android.client.service.impressions.strategy.ProcessStrategy;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
@@ -338,6 +340,22 @@ class SplitFactoryHelper {
                 notificationProcessor,
                 sseAuthenticator,
                 pushManagerEventBroadcaster);
+    }
+
+    public ProcessStrategy getImpressionStrategy(SplitTaskExecutor splitTaskExecutor,
+                                                 SplitTaskFactory splitTaskFactory,
+                                                 SplitStorageContainer splitStorageContainer,
+                                                 SplitClientConfig config) {
+        return new ImpressionStrategyProvider(splitTaskExecutor,
+                splitStorageContainer,
+                splitTaskFactory,
+                splitStorageContainer.getTelemetryStorage(),
+                config.impressionsQueueSize(),
+                config.impressionsChunkSize(),
+                config.impressionsRefreshRate(),
+                config.impressionsCounterRefreshRate(),
+                config.mtkRefreshRate(),
+                config.userConsent() == UserConsent.GRANTED).getStrategy(config.impressionsMode());
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {

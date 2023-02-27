@@ -3,6 +3,9 @@ package io.split.android.client.service.impressions.strategy;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
@@ -11,6 +14,7 @@ import io.split.android.client.service.impressions.ImpressionUtils;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
+import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -26,19 +30,55 @@ class OptimizedStrategy implements ProcessStrategy {
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private final AtomicBoolean mTrackingIsEnabled;
+    private final PeriodicTracker mOptimizedTracker;
 
-    public OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
-                             @NonNull ImpressionsCounter impressionsCounter,
-                             @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
-                             @NonNull SplitTaskExecutor taskExecutor,
-                             @NonNull ImpressionsTaskFactory taskFactory,
-                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+    OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
+                      @NonNull ImpressionsCounter impressionsCounter,
+                      @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+                      @NonNull SplitTaskExecutor taskExecutor,
+                      @NonNull ImpressionsTaskFactory taskFactory,
+                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                      @NonNull RetryBackoffCounterTimer impressionsRetryTimer,
+                      @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
+                      int impressionsRefreshRate,
+                      int impressionsCounterRefreshRate,
+                      boolean isTrackingEnabled) {
+        this(impressionsObserver,
+                impressionsCounter,
+                impressionsSyncHelper,
+                taskExecutor,
+                taskFactory,
+                telemetryRuntimeProducer,
+                isTrackingEnabled,
+                new OptimizedTracker(impressionsCounter,
+                        impressionsSyncHelper,
+                        taskExecutor,
+                        taskFactory,
+                        impressionsRetryTimer,
+                        impressionsCountRetryTimer,
+                        impressionsRefreshRate,
+                        impressionsCounterRefreshRate,
+                        isTrackingEnabled));
+    }
+
+    @VisibleForTesting
+    OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
+                      @NonNull ImpressionsCounter impressionsCounter,
+                      @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+                      @NonNull SplitTaskExecutor taskExecutor,
+                      @NonNull ImpressionsTaskFactory taskFactory,
+                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                      boolean isTrackingEnabled,
+                      @NonNull PeriodicTracker tracker) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsCounter = checkNotNull(impressionsCounter);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+        mTrackingIsEnabled = new AtomicBoolean(isTrackingEnabled);
+        mOptimizedTracker = checkNotNull(tracker);
     }
 
     @Override
@@ -71,5 +111,26 @@ class OptimizedStrategy implements ProcessStrategy {
 
     private static boolean previousTimeIsValid(Long previousTime) {
         return previousTime != null && previousTime != 0;
+    }
+
+    @Override
+    public void flush() {
+        mOptimizedTracker.flush();
+    }
+
+    @Override
+    public void startPeriodicRecording() {
+        mOptimizedTracker.startPeriodicRecording();
+    }
+
+    @Override
+    public void stopPeriodicRecording() {
+        mOptimizedTracker.stopPeriodicRecording();
+    }
+
+    @Override
+    public void enableTracking(boolean enable) {
+        mTrackingIsEnabled.set(enable);
+        mOptimizedTracker.enableTracking(enable);
     }
 }

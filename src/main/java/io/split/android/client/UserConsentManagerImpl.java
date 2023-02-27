@@ -23,7 +23,7 @@ public class UserConsentManagerImpl implements UserConsentManager {
     private final EventsTracker mEventsTracker;
     private final ImpressionManager mImpressionManager;
     private UserConsent mCurrentStatus;
-    private SplitTaskExecutor mTaskExecutor;
+    private final SplitTaskExecutor mTaskExecutor;
     private final Object mLock = new Object();
 
     public UserConsentManagerImpl(@NonNull SplitClientConfig splitConfig,

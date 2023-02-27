@@ -139,6 +139,7 @@ public class IntegrationHelper {
                     testingConfig, lifecycleManager, telemetryStorage);
         } catch (Exception e) {
             Logger.e("Error creating factory: " + e.getLocalizedMessage());
+            e.printStackTrace();
         }
         return factory;
     }
