@@ -8,7 +8,6 @@ import androidx.annotation.VisibleForTesting;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
@@ -20,21 +19,19 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
  */
 class DebugStrategy implements ProcessStrategy {
 
-    private final ImpressionsObserver mImpressionsObserver;
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
     private final SplitTaskExecutor mTaskExecutor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
     private final PeriodicTracker mDebugTracker;
 
-    DebugStrategy(@NonNull ImpressionsObserver impressionsObserver,
-                  @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+    DebugStrategy(@NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
                   @NonNull SplitTaskExecutor taskExecutor,
                   @NonNull ImpressionsTaskFactory taskFactory,
                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                   @NonNull RetryBackoffCounterTimer retryTimer,
                   int impressionsRefreshRate) {
-        this(impressionsObserver,
+        this(
                 impressionsSyncHelper,
                 taskExecutor,
                 taskFactory,
@@ -43,13 +40,11 @@ class DebugStrategy implements ProcessStrategy {
     }
 
     @VisibleForTesting
-    DebugStrategy(@NonNull ImpressionsObserver impressionsObserver,
-                  @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+    DebugStrategy(@NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
                   @NonNull SplitTaskExecutor taskExecutor,
                   @NonNull ImpressionsTaskFactory taskFactory,
                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                   @NonNull PeriodicTracker tracker) {
-        mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
@@ -59,9 +54,6 @@ class DebugStrategy implements ProcessStrategy {
 
     @Override
     public void apply(@NonNull Impression impression) {
-        Long previousTime = mImpressionsObserver.testAndSet(impression);
-        impression = impression.withPreviousTime(previousTime);
-
         KeyImpression keyImpression = KeyImpression.fromImpression(impression);
         if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression)) {
             mTaskExecutor.submit(

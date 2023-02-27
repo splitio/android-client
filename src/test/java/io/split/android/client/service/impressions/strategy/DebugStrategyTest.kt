@@ -2,10 +2,8 @@ package io.split.android.client.service.impressions.strategy
 
 import io.split.android.client.dtos.KeyImpression
 import io.split.android.client.service.executor.SplitTaskExecutor
-import io.split.android.client.service.impressions.ImpressionsObserver
 import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
-import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer
 import io.split.android.client.service.synchronizer.RecorderSyncHelper
 import io.split.android.client.telemetry.model.ImpressionsDataType
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer
@@ -25,9 +23,6 @@ class DebugStrategyTest {
     private lateinit var taskFactory: ImpressionsTaskFactory
 
     @Mock
-    private lateinit var impressionsObserver: ImpressionsObserver
-
-    @Mock
     private lateinit var impressionsSyncHelper: RecorderSyncHelper<KeyImpression>
 
     @Mock
@@ -42,7 +37,6 @@ class DebugStrategyTest {
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         strategy = DebugStrategy(
-            impressionsObserver,
             impressionsSyncHelper,
             taskExecutor,
             taskFactory,
