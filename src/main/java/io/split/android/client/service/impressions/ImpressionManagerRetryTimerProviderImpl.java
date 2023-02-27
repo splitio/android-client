@@ -13,7 +13,7 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 
-class ImpressionManagerRetryTimerProviderImpl implements ImpressionManagerRetryTimerProvider {
+public class ImpressionManagerRetryTimerProviderImpl implements ImpressionManagerRetryTimerProvider {
 
     private final RetryBackoffCounterTimerFactory mRetryBackoffCounterTimerFactory;
 
@@ -25,7 +25,7 @@ class ImpressionManagerRetryTimerProviderImpl implements ImpressionManagerRetryT
 
     private final Supplier<RetryBackoffCounterTimer> mImpressionsCountRetrySupplier = Suppliers.memoize(buildBackoffTimerDelegate());
 
-    ImpressionManagerRetryTimerProviderImpl(SplitTaskExecutor taskExecutor) {
+    public ImpressionManagerRetryTimerProviderImpl(SplitTaskExecutor taskExecutor) {
         this(taskExecutor, new RetryBackoffCounterTimerFactory());
     }
 
