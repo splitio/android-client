@@ -1,8 +1,8 @@
 package io.split.android.client.lifecycle;
 
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.DefaultLifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ProcessLifecycleOwner;
 
 import java.lang.ref.WeakReference;
@@ -11,7 +11,7 @@ import java.util.List;
 
 import io.split.android.client.service.synchronizer.ThreadUtils;
 
-public class SplitLifecycleManagerImpl implements LifecycleObserver, SplitLifecycleManager {
+public class SplitLifecycleManagerImpl implements DefaultLifecycleObserver, SplitLifecycleManager {
 
     private final List<WeakReference<SplitLifecycleAware>> mComponents;
 
@@ -30,13 +30,13 @@ public class SplitLifecycleManagerImpl implements LifecycleObserver, SplitLifecy
         mComponents.add(new WeakReference<>(component));
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-    private void onPause() {
+    @Override
+    public void onPause(@NonNull LifecycleOwner owner) {
         changeRunningStatus(false);
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    private void onResume() {
+    @Override
+    public void onResume(@NonNull LifecycleOwner owner) {
         changeRunningStatus(true);
     }
 
@@ -64,5 +64,4 @@ public class SplitLifecycleManagerImpl implements LifecycleObserver, SplitLifecy
             }
         });
     }
-
 }
