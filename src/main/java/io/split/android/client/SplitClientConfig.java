@@ -35,14 +35,16 @@ public class SplitClientConfig {
     private static final int MIN_IMPRESSIONS_REFRESH_RATE = 30;
     private static final int MIN_IMPRESSIONS_QUEUE_SIZE = 0;
     private static final int MIN_IMPRESSIONS_CHUNK_SIZE = 0;
+    private static final int MIN_CONNECTION_TIMEOUT = 0;
+    private static final int MIN_READ_TIMEOUT = 0;
     private static final int DEFAULT_FEATURES_REFRESH_RATE_SECS = 3600;
     private static final int DEFAULT_SEGMENTS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_IMPRESSIONS_QUEUE_SIZE = 30000;
     private static final int DEFAULT_IMPRESSIONS_PER_PUSH = 2000;
     private static final int DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS = 1800;
-    private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 1500;
-    private static final int DEFAULT_READ_TIMEOUT_SECS = 1500;
+    private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 10000;
+    private static final int DEFAULT_READ_TIMEOUT_SECS = 10000;
     private static final int DEFAULT_READY = -1;
     private static final int DEFAULT_IMPRESSIONS_CHUNK_SIZE = 2 * 1024;
     private static final int DEFAULT_EVENTS_QUEUE_SIZE = 10000;
@@ -648,25 +650,24 @@ public class SplitClientConfig {
         }
 
         /**
-         * Http client connection timeout. Default value is 1500ms.
+         * Http client connection timeout. Default value is 10000ms.
          *
-         * @deprecated This method has no effect anymore.
          * @param ms MUST be greater than 0.
          * @return this builder
          */
         public Builder connectionTimeout(int ms) {
+            mConnectionTimeout = ms;
             return this;
         }
 
         /**
-         * Http client read timeout. Default value is 1500ms.
+         * Http client read timeout. Default value is 10000ms.
          *
-         * @deprecated This method has no effect anymore.
          * @param ms MUST be greater than 0.
          * @return this builder
          */
-        @Deprecated
         public Builder readTimeout(int ms) {
+            mReadTimeout = ms;
             return this;
         }
 
@@ -1015,6 +1016,18 @@ public class SplitClientConfig {
                 Logger.w("Impressions chunk size is lower than allowed. " +
                         "Setting to default value.");
                 mImpressionsChunkSize = DEFAULT_IMPRESSIONS_CHUNK_SIZE;
+            }
+
+            if (mConnectionTimeout <= MIN_CONNECTION_TIMEOUT) {
+                Logger.w("Connection timeout is lower than allowed. " +
+                        "Setting to default value.");
+                mConnectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
+            }
+
+            if (mReadTimeout <= MIN_READ_TIMEOUT) {
+                Logger.w("Read timeout is lower than allowed. " +
+                        "Setting to default value.");
+                mReadTimeout = DEFAULT_READ_TIMEOUT_SECS;
             }
 
             if (mBackgroundSyncPeriod < DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES) {
