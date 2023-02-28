@@ -2,16 +2,6 @@ package io.split.android.client.utils;
 
 import com.google.common.base.Strings;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-import io.split.android.client.network.URIBuilder;
-import io.split.android.client.utils.logger.Logger;
-
 
 public class Utils {
 
