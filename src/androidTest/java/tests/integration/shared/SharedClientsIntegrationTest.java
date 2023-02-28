@@ -212,7 +212,7 @@ public class SharedClientsIntegrationTest {
 
         client.on(event, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client) {
+            public void onPostExecutionView(SplitClient client) {
                 readyCount.addAndGet(1);
                 readyLatch.countDown();
             }
@@ -220,7 +220,7 @@ public class SharedClientsIntegrationTest {
 
         client2.on(event, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client) {
+            public void onPostExecutionView(SplitClient client) {
                 readyCount2.addAndGet(1);
                 readyLatch2.countDown();
             }
