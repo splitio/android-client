@@ -19,8 +19,7 @@ public class UniqueKeysRecorderWorker extends SplitWorker {
         super(context, workerParams);
         try {
             Data inputData = workerParams.getInputData();
-            mSplitTask = new UniqueKeysRecorderTask(ServiceFactory.getUniqueKeysRecorder(getNetworkHelper(),
-                    getHttpClient(),
+            mSplitTask = new UniqueKeysRecorderTask(ServiceFactory.getUniqueKeysRecorder(getHttpClient(),
                     getEndPoint()),
                     StorageFactory.getPersistentImpressionsUniqueStorage(getDatabase()),
                     new UniqueKeysRecorderTaskConfig(

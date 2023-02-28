@@ -34,7 +34,7 @@ public class SplitsSyncWorker extends SplitWorker {
             // StorageFactory.getSplitsStorage creates a new storage instance, so it needs
             // to be populated by calling loadLocal
             splitsStorage.loadLocal();
-            HttpFetcher<SplitChange> splitsFetcher = ServiceFactory.getSplitsFetcher(getNetworkHelper(), getHttpClient(),
+            HttpFetcher<SplitChange> splitsFetcher = ServiceFactory.getSplitsFetcher(getHttpClient(),
                     getEndPoint(), splitsStorage.getSplitsFilterQueryString());
 
             TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(shouldRecordTelemetry);

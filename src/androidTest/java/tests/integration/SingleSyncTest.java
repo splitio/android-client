@@ -27,7 +27,6 @@ import fake.LifecycleManagerStub;
 import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
-import helper.NetworkHelperStub;
 import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
@@ -98,7 +97,7 @@ public class SingleSyncTest {
                     config,
                     mContext,
                     new HttpClientMock(dispatcher),
-                    splitRoomDatabase, null, new NetworkHelperStub(), null,
+                    splitRoomDatabase, null, null,
                     mLifecycleManager);
 
             return factory;

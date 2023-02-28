@@ -72,7 +72,7 @@ public class SplitChangesCdnBypassTest {
                 config,
                 mContext,
                 new HttpClientMock(buildDispatcher()),
-                splitRoomDatabase, null, null, testingConfig);
+                splitRoomDatabase, null, testingConfig);
     }
 
     @Test

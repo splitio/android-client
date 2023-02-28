@@ -125,7 +125,7 @@ public abstract class OccupancyBaseTest {
         mTelemetryStorage = StorageFactory.getTelemetryStorage(true);
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock, null, null, null,
+                config, mContext, httpClientMock, null, null,
                 null, null, mTelemetryStorage);
 
         SplitClient client = splitFactory.client();

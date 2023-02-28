@@ -27,7 +27,7 @@ public class EventsRecorderWorker extends SplitWorker {
                     ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
 
             mSplitTask = new EventsRecorderTask(ServiceFactory.getEventsRecorder(
-                    getNetworkHelper(), getHttpClient(), getEndPoint()),
+                    getHttpClient(), getEndPoint()),
                     StorageFactory.getPersistentEventsStorage(getDatabase()),
                     new EventsRecorderTaskConfig(eventsPerPush),
                     StorageFactory.getTelemetryStorage(shouldRecordTelemetry));

@@ -29,100 +29,90 @@ import io.split.android.client.telemetry.TelemetryConfigBodySerializer;
 import io.split.android.client.telemetry.TelemetryStatsBodySerializer;
 import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.Stats;
-import io.split.android.client.utils.NetworkHelper;
 
 @RestrictTo(RestrictTo.Scope.LIBRARY)
 public class ServiceFactory {
 
     public static HttpFetcher<SplitChange> getSplitsFetcher(
-            NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint,
             String splitFilterQueryString) throws URISyntaxException {
 
         return new HttpFetcherImpl<>(httpClient,
                 SdkTargetPath.splitChanges(endPoint, splitFilterQueryString),
-                networkHelper, new SplitChangeResponseParser());
+                new SplitChangeResponseParser());
     }
 
     public static HttpFetcher<List<MySegment>> getMySegmentsFetcher(
-            NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint,
             String key) throws URISyntaxException {
 
         return new HttpFetcherImpl<>(httpClient,
                 SdkTargetPath.mySegments(endPoint, key),
-                networkHelper, new MySegmentsResponseParser());
+                new MySegmentsResponseParser());
     }
 
     public static HttpRecorder<List<Event>> getEventsRecorder(
-            NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint) throws URISyntaxException {
 
         return new HttpRecorderImpl<>(
-                httpClient, SdkTargetPath.events(endPoint), networkHelper,
+                httpClient, SdkTargetPath.events(endPoint),
                 new EventsRequestBodySerializer());
     }
 
     public static HttpRecorder<List<KeyImpression>> getImpressionsRecorder(
-            NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint) throws URISyntaxException {
 
         return new HttpRecorderImpl<>(
-                httpClient, SdkTargetPath.impressions(endPoint), networkHelper,
+                httpClient, SdkTargetPath.impressions(endPoint),
                 new ImpressionsRequestBodySerializer());
     }
 
     public static HttpRecorder<ImpressionsCount> getImpressionsCountRecorder(
-            NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint) throws URISyntaxException {
 
         return new HttpRecorderImpl<>(
-                httpClient, SdkTargetPath.impressionsCount(endPoint), networkHelper,
+                httpClient, SdkTargetPath.impressionsCount(endPoint),
                 new ImpressionsCountRequestBodySerializer());
     }
 
     public static HttpRecorder<MTK> getUniqueKeysRecorder(
-            NetworkHelper networkHelper,
             HttpClient httpClient,
             String endpoint) throws URISyntaxException {
 
         return new HttpRecorderImpl<>(
-                httpClient, SdkTargetPath.uniqueKeys(endpoint), networkHelper,
+                httpClient, SdkTargetPath.uniqueKeys(endpoint),
                 new MTKRequestBodySerializer());
     }
 
     public static HttpSseAuthTokenFetcher getSseAuthenticationFetcher(
-            NetworkHelper networkHelper,
             HttpClient httpClient,
             String endPoint) throws URISyntaxException {
 
         return new HttpSseAuthTokenFetcher(httpClient,
                 SdkTargetPath.sseAuthentication(endPoint),
-                networkHelper, new SseAuthenticationResponseParser());
+                new SseAuthenticationResponseParser());
     }
 
     public static HttpRecorder<Config> getTelemetryConfigRecorder(
-            NetworkHelper networkHelper,
             HttpClient httpClient,
             String endpoint) throws URISyntaxException {
 
         return new HttpRecorderImpl<>(
-                httpClient, SdkTargetPath.telemetryConfig(endpoint), networkHelper,
+                httpClient, SdkTargetPath.telemetryConfig(endpoint),
                 new TelemetryConfigBodySerializer());
     }
 
     public static HttpRecorder<Stats> getTelemetryStatsRecorder(
-            NetworkHelper networkHelper,
             HttpClient httpClient,
             String endpoint) throws URISyntaxException {
 
         return new HttpRecorderImpl<>(
-                httpClient, SdkTargetPath.telemetryStats(endpoint), networkHelper,
+                httpClient, SdkTargetPath.telemetryStats(endpoint),
                 new TelemetryStatsBodySerializer()
         );
     }
