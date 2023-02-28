@@ -40,8 +40,6 @@ import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.NetworkHelper;
-import io.split.android.client.utils.NetworkHelperImpl;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -75,13 +73,13 @@ public class SplitFactoryImpl implements SplitFactory {
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
         this(apiToken, key, config, context,
-                null, null, null, null,
+                null, null, null,
                 null, null, null);
     }
 
     private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
                              Context context, HttpClient httpClient, SplitRoomDatabase testDatabase,
-                             SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper,
+                             SynchronizerSpy synchronizerSpy,
                              TestingConfig testingConfig, SplitLifecycleManager testLifecycleManager,
                              TelemetryStorage telemetryStorage)
             throws URISyntaxException {
@@ -148,8 +146,7 @@ public class SplitFactoryImpl implements SplitFactory {
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
-                config, defaultHttpClient, splitsFilterQueryString,
-                networkHelper == null ? new NetworkHelperImpl() : networkHelper);
+                config, defaultHttpClient, splitsFilterQueryString);
 
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 

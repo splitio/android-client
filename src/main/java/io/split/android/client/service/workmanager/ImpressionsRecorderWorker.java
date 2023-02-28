@@ -32,7 +32,7 @@ public class ImpressionsRecorderWorker extends SplitWorker {
                             shouldRecordTelemetry);
 
             mSplitTask = new ImpressionsRecorderTask(ServiceFactory.getImpressionsRecorder(
-                    getNetworkHelper(), getHttpClient(), getEndPoint()),
+                    getHttpClient(), getEndPoint()),
                     StorageFactory.getPersistentImpressionsStorage(getDatabase()),
                     config,
                     StorageFactory.getTelemetryStorage(config.shouldRecordTelemetry()));

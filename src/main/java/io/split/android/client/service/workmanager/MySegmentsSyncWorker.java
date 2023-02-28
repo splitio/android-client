@@ -18,7 +18,6 @@ import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.utils.logger.Logger;
-import io.split.android.client.utils.NetworkHelper;
 
 public class MySegmentsSyncWorker extends SplitWorker {
 
@@ -35,7 +34,7 @@ public class MySegmentsSyncWorker extends SplitWorker {
                 return;
             }
 
-            mSplitTask = new MySegmentsBulkSyncTask(Collections.unmodifiableSet(getIndividualMySegmentsSyncTasks(keys, shouldRecordTelemetry, getNetworkHelper(), getHttpClient(), getEndPoint(), getDatabase())));
+            mSplitTask = new MySegmentsBulkSyncTask(Collections.unmodifiableSet(getIndividualMySegmentsSyncTasks(keys, shouldRecordTelemetry, getHttpClient(), getEndPoint(), getDatabase())));
 
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
@@ -44,7 +43,6 @@ public class MySegmentsSyncWorker extends SplitWorker {
 
     private static Set<MySegmentsSyncTask> getIndividualMySegmentsSyncTasks(String[] keys,
                                                                             boolean shouldRecordTelemetry,
-                                                                            NetworkHelper networkHelper,
                                                                             HttpClient httpClient,
                                                                             String endPoint,
                                                                             SplitRoomDatabase database) throws URISyntaxException {
@@ -52,7 +50,7 @@ public class MySegmentsSyncWorker extends SplitWorker {
         for (String key : keys) {
             mySegmentsSyncTasks.add(
                     new MySegmentsSyncTask(
-                            ServiceFactory.getMySegmentsFetcher(networkHelper, httpClient,
+                            ServiceFactory.getMySegmentsFetcher(httpClient,
                                     endPoint, key),
                             StorageFactory.getMySegmentsStorage(database).getStorageForKey(key),
                             false,

@@ -12,12 +12,10 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -41,7 +39,6 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
-import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
@@ -104,7 +101,7 @@ public class ControlTest {
         TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(true);
         SplitFactory mFactory = IntegrationHelper.buildFactory(
                 mApiKey, mUserKey,
-                config, mContext, httpClientMock, db, synchronizerSpy, null, null, null, telemetryStorage);
+                config, mContext, httpClientMock, db, synchronizerSpy, null, null, telemetryStorage);
 
 //        mClient = mFactory.client();
         SplitClient mClient = mFactory.client();

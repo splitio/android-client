@@ -79,7 +79,7 @@ public abstract class AblyErrorBaseTest {
         mTelemetryStorage = StorageFactory.getTelemetryStorage(true);
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock, db, null, null, null,
+                config, mContext, httpClientMock, db, null, null,
                 null, mTelemetryStorage);
 
         mClient = mFactory.client();

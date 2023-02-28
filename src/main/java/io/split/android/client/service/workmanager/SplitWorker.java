@@ -16,14 +16,11 @@ import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.NetworkHelper;
-import io.split.android.client.utils.NetworkHelperImpl;
 
 public abstract class SplitWorker extends Worker {
 
     private final SplitRoomDatabase mDatabase;
     private final HttpClient mHttpClient;
-    private final NetworkHelper mNetworkHelper;
     private final String mEndpoint;
     private final long mCacheExpirationInSeconds;
 
@@ -46,7 +43,6 @@ public abstract class SplitWorker extends Worker {
         headersBuilder.addJsonTypeHeaders();
         mHttpClient = new HttpClientImpl.Builder().build();
         mHttpClient.addHeaders(headersBuilder.build());
-        mNetworkHelper = new NetworkHelperImpl();
     }
 
     @NonNull
@@ -63,10 +59,6 @@ public abstract class SplitWorker extends Worker {
 
     public HttpClient getHttpClient() {
         return mHttpClient;
-    }
-
-    public NetworkHelper getNetworkHelper() {
-        return mNetworkHelper;
     }
 
     public String getEndPoint() {

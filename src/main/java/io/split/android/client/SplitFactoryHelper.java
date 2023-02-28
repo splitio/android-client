@@ -67,7 +67,6 @@ import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
 
 class SplitFactoryHelper {
@@ -157,27 +156,26 @@ class SplitFactoryHelper {
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
                                   HttpClient httpClient,
-                                  String splitsFilterQueryString,
-                                  NetworkHelper networkHelper) throws URISyntaxException {
+                                  String splitsFilterQueryString) throws URISyntaxException {
 
         return new SplitApiFacade(
-                ServiceFactory.getSplitsFetcher(networkHelper, httpClient,
+                ServiceFactory.getSplitsFetcher(httpClient,
                         splitClientConfig.endpoint(), splitsFilterQueryString),
-                new MySegmentsFetcherFactoryImpl(networkHelper, httpClient,
+                new MySegmentsFetcherFactoryImpl(httpClient,
                         splitClientConfig.endpoint()),
-                ServiceFactory.getSseAuthenticationFetcher(networkHelper, httpClient,
+                ServiceFactory.getSseAuthenticationFetcher(httpClient,
                         splitClientConfig.authServiceUrl()),
-                ServiceFactory.getEventsRecorder(networkHelper, httpClient,
+                ServiceFactory.getEventsRecorder(httpClient,
                         splitClientConfig.eventsEndpoint()),
-                ServiceFactory.getImpressionsRecorder(networkHelper, httpClient,
+                ServiceFactory.getImpressionsRecorder(httpClient,
                         splitClientConfig.eventsEndpoint()),
-                ServiceFactory.getImpressionsCountRecorder(networkHelper, httpClient,
+                ServiceFactory.getImpressionsCountRecorder(httpClient,
                         splitClientConfig.eventsEndpoint()),
-                ServiceFactory.getUniqueKeysRecorder(networkHelper, httpClient,
+                ServiceFactory.getUniqueKeysRecorder(httpClient,
                         splitClientConfig.telemetryEndpoint()),
-                ServiceFactory.getTelemetryConfigRecorder(networkHelper, httpClient,
+                ServiceFactory.getTelemetryConfigRecorder(httpClient,
                         splitClientConfig.telemetryEndpoint()),
-                ServiceFactory.getTelemetryStatsRecorder(networkHelper, httpClient,
+                ServiceFactory.getTelemetryStatsRecorder(httpClient,
                         splitClientConfig.telemetryEndpoint()));
     }
 

@@ -13,23 +13,19 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.utils.logger.Logger;
-import io.split.android.client.utils.NetworkHelper;
 
 public class HttpFetcherImpl<T> implements HttpFetcher<T> {
 
     private final HttpClient mClient;
     private final URI mTarget;
-    private final NetworkHelper mNetworkHelper;
-    private HttpResponseParser<T> mResponseParser;
+    private final HttpResponseParser<T> mResponseParser;
 
     public HttpFetcherImpl(@NonNull HttpClient client,
                            @NonNull URI target,
-                           @NonNull NetworkHelper networkHelper,
                            @NonNull HttpResponseParser<T> responseParser) {
 
         mClient = checkNotNull(client);
         mTarget = checkNotNull(target);
-        mNetworkHelper = checkNotNull(networkHelper);
         mResponseParser = checkNotNull(responseParser);
     }
 

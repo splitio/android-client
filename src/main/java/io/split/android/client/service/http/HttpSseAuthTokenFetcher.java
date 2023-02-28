@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
 import java.util.Map;
 
 import io.split.android.client.network.HttpClient;
@@ -15,23 +14,19 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
-import io.split.android.client.utils.NetworkHelper;
 
 public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationResponse> {
 
     private final HttpClient mClient;
     private final URI mTarget;
-    private final NetworkHelper mNetworkHelper;
     private final HttpResponseParser<SseAuthenticationResponse> mResponseParser;
 
     public HttpSseAuthTokenFetcher(@NonNull HttpClient client,
                                    @NonNull URI target,
-                                   @NonNull NetworkHelper networkHelper,
                                    @NonNull HttpResponseParser<SseAuthenticationResponse> responseParser) {
 
         mClient = checkNotNull(client);
         mTarget = checkNotNull(target);
-        mNetworkHelper = checkNotNull(networkHelper);
         mResponseParser = checkNotNull(responseParser);
     }
 
