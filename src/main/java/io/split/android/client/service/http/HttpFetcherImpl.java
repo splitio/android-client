@@ -39,9 +39,6 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
         checkNotNull(params);
         T responseData;
         try {
-            if (!mNetworkHelper.isReachable(mTarget)) {
-                throw new IllegalStateException("Source not reachable");
-            }
             URIBuilder uriBuilder = new URIBuilder(mTarget);
             for (Map.Entry<String, Object> param : params.entrySet()) {
                 Object value = param.getValue();

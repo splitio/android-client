@@ -42,9 +42,6 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
         SseAuthenticationResponse responseData;
 
         try {
-            if (!mNetworkHelper.isReachable(mTarget)) {
-                throw new IllegalStateException("Source not reachable");
-            }
             URI build = getUri(params, mTarget);
             HttpResponse response = mClient.request(build, HttpMethod.GET).execute();
 

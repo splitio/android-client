@@ -35,9 +35,6 @@ public class HttpRecorderImpl<T> implements HttpRecorder<T> {
 
         String serializedData = mRequestSerializer.serialize(data);
         try {
-            if (!mNetworkHelper.isReachable(mTarget)) {
-                throw new IllegalStateException("Source not reachable");
-            }
 
             HttpResponse response = mClient.request(mTarget, HttpMethod.POST, serializedData).execute();
             if (!response.isSuccess()) {
