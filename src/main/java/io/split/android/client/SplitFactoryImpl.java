@@ -23,10 +23,8 @@ import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.impressions.ImpressionManager;
+import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
-import io.split.android.client.service.impressions.ImpressionManagerConfig;
-import io.split.android.client.service.impressions.ImpressionManagerImpl;
-import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -42,8 +40,6 @@ import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.NetworkHelper;
-import io.split.android.client.utils.NetworkHelperImpl;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
@@ -77,13 +73,13 @@ public class SplitFactoryImpl implements SplitFactory {
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
         this(apiToken, key, config, context,
-                null, null, null, null,
+                null, null, null,
                 null, null, null);
     }
 
     private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
                              Context context, HttpClient httpClient, SplitRoomDatabase testDatabase,
-                             SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper,
+                             SynchronizerSpy synchronizerSpy,
                              TestingConfig testingConfig, SplitLifecycleManager testLifecycleManager,
                              TelemetryStorage telemetryStorage)
             throws URISyntaxException {
@@ -150,8 +146,7 @@ public class SplitFactoryImpl implements SplitFactory {
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
-                config, defaultHttpClient, splitsFilterQueryString,
-                networkHelper == null ? new NetworkHelperImpl() : networkHelper);
+                config, defaultHttpClient, splitsFilterQueryString);
 
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
@@ -162,19 +157,8 @@ public class SplitFactoryImpl implements SplitFactory {
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
-        ImpressionManager impressionManager = new ImpressionManagerImpl(config, splitTaskExecutor,
-                splitTaskFactory,
-                mStorageContainer.getTelemetryStorage(),
-                mStorageContainer.getImpressionsStorage(),
-                new UniqueKeysTrackerImpl(),
-                new ImpressionManagerConfig(
-                        config.impressionsRefreshRate(),
-                        config.impressionsCounterRefreshRate(),
-                        config.impressionsMode(),
-                        config.impressionsQueueSize(),
-                        config.impressionsChunkSize(),
-                        config.mtkRefreshRate()
-                ));
+
+        ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,

@@ -52,7 +52,6 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.ImpressionManagerConfig;
-import io.split.android.client.service.impressions.ImpressionManagerImpl;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
@@ -187,23 +186,7 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
         when(mRetryBackoffFactory.createWithFixedInterval(any(), eq(1), eq(3)))
                 .thenReturn(mRetryTimerEventsRecorder);
-        if (useImpManagerMock) {
-            mImpressionManager = Mockito.mock(ImpressionManager.class);
-        } else {
-            mImpressionManager =
-                    new ImpressionManagerImpl(SplitClientConfig.builder().build(),
-                            mTaskExecutor, mTaskFactory, mTelemetryRuntimeProducer, mImpressionsStorage,
-                            mUniqueKeysTracker,
-                            new ImpressionManagerConfig(
-                                    splitClientConfig.impressionsRefreshRate(),
-                                    splitClientConfig.impressionsCounterRefreshRate(),
-                                    impressionsMode,
-                                    splitClientConfig.impressionsQueueSize(),
-                                    splitClientConfig.impressionsChunkSize(),
-                                    splitClientConfig.mtkRefreshRate()
-                            )
-                    );
-        }
+        mImpressionManager = Mockito.mock(ImpressionManager.class);
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor, mSingleThreadedTaskExecutor,
                 mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager);
@@ -213,6 +196,7 @@ public class SynchronizerTest {
     public void splitExecutorSchedule() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
+                .userConsent(UserConsent.GRANTED)
                 .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
@@ -226,9 +210,7 @@ public class SynchronizerTest {
         verify(mTaskExecutor).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
-        verify(mTaskExecutor).schedule(
-                any(ImpressionsRecorderTask.class), anyLong(), anyLong(),
-                any(SplitTaskExecutionListener.class));
+        verify(mImpressionManager).startPeriodicRecording();
 
         verify(mWorkManager, never()).enqueueUniquePeriodicWork(
                 eq(SplitTaskType.SPLITS_SYNC.toString()),
@@ -282,8 +264,7 @@ public class SynchronizerTest {
         mSynchronizer.pause();
         verify(mTaskExecutor, times(1)).pause();
         verify(mSingleThreadedTaskExecutor, times(1)).pause();
-        verify(mTaskExecutor, times(1)).submit(
-                any(SaveImpressionsCountTask.class), isNull());
+        verify(mImpressionManager).stopPeriodicRecording();
     }
 
     @Test
@@ -430,21 +411,21 @@ public class SynchronizerTest {
                 .build();
         setup(config);
         Impression impression = createImpression();
-        ArgumentCaptor<KeyImpression> impressionCaptor = ArgumentCaptor.forClass(KeyImpression.class);
+        ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
         mSynchronizer.startPeriodicRecording();
         mSynchronizer.pushImpression(impression);
         Thread.sleep(200);
         verify(mTaskExecutor, times(0)).submit(
                 any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
-        verify(mImpressionsStorage, times(1)).push(impressionCaptor.capture());
-        Assert.assertEquals("key", impressionCaptor.getValue().keyName);
-        Assert.assertEquals("bkey", impressionCaptor.getValue().bucketingKey);
-        Assert.assertEquals("split", impressionCaptor.getValue().feature);
-        Assert.assertEquals("on", impressionCaptor.getValue().treatment);
-        Assert.assertEquals(100L, impressionCaptor.getValue().time);
-        Assert.assertEquals("default rule", impressionCaptor.getValue().label);
-        Assert.assertEquals(999, impressionCaptor.getValue().changeNumber.longValue());
+        verify(mImpressionManager).pushImpression(impressionCaptor.capture());
+        Assert.assertEquals("key", impressionCaptor.getValue().key());
+        Assert.assertEquals("bkey", impressionCaptor.getValue().bucketingKey());
+        Assert.assertEquals("split", impressionCaptor.getValue().split());
+        Assert.assertEquals("on", impressionCaptor.getValue().treatment());
+        Assert.assertEquals(100L, impressionCaptor.getValue().time());
+        Assert.assertEquals("default rule", impressionCaptor.getValue().appliedRule());
+        Assert.assertEquals(999, impressionCaptor.getValue().changeNumber().longValue());
     }
 
     @Test
@@ -461,10 +442,7 @@ public class SynchronizerTest {
             mSynchronizer.pushImpression(createImpression());
         }
         Thread.sleep(200);
-        verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
-        verify(mTaskExecutor, times(2)).submit(
-                any(ImpressionsRecorderTask.class),
-                any(RecorderSyncHelper.class));
+        verify(mImpressionManager, times(8)).pushImpression(any(Impression.class));
     }
 
     @Test
@@ -481,10 +459,7 @@ public class SynchronizerTest {
             mSynchronizer.pushImpression(createUniqueImpression());
         }
         Thread.sleep(200);
-        verify(mImpressionsStorage, times(8)).push(any(KeyImpression.class));
-        verify(mTaskExecutor, times(2)).submit(
-                any(ImpressionsRecorderTask.class),
-                any(RecorderSyncHelper.class));
+        verify(mImpressionManager, times(8)).pushImpression(any(Impression.class));
     }
 
     @Test
@@ -502,10 +477,7 @@ public class SynchronizerTest {
             mSynchronizer.pushImpression(createImpression());
         }
         Thread.sleep(200);
-        verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
-        verify(mTaskExecutor, times(2)).submit(
-                any(ImpressionsRecorderTask.class),
-                any(SplitTaskExecutionListener.class));
+        verify(mImpressionManager, times(10)).pushImpression(any(Impression.class));
     }
 
     @Test
@@ -523,10 +495,7 @@ public class SynchronizerTest {
             mSynchronizer.pushImpression(createUniqueImpression());
         }
         Thread.sleep(200);
-        verify(mImpressionsStorage, times(10)).push(any(KeyImpression.class));
-        verify(mTaskExecutor, times(2)).submit(
-                any(ImpressionsRecorderTask.class),
-                any(SplitTaskExecutionListener.class));
+        verify(mImpressionManager, times(10)).pushImpression(any(Impression.class));
     }
 
     @Test

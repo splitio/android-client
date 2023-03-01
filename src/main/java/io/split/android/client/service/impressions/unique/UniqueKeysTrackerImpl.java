@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.split.android.client.service.ServiceConstants;
+
 public class UniqueKeysTrackerImpl implements UniqueKeysTracker {
 
     private final Map<String, Set<String>> mCache;
@@ -43,7 +45,7 @@ public class UniqueKeysTrackerImpl implements UniqueKeysTracker {
     }
 
     @Override
-    public int size() {
-        return mCache.size();
+    public boolean isFull() {
+        return mCache.size() >= ServiceConstants.MAX_UNIQUE_KEYS_IN_MEMORY;
     }
 }

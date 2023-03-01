@@ -22,6 +22,8 @@ import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
+import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
+import io.split.android.client.service.impressions.strategy.ProcessStrategy;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
@@ -65,7 +67,6 @@ import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.Utils;
 
 class SplitFactoryHelper {
@@ -155,27 +156,26 @@ class SplitFactoryHelper {
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
                                   HttpClient httpClient,
-                                  String splitsFilterQueryString,
-                                  NetworkHelper networkHelper) throws URISyntaxException {
+                                  String splitsFilterQueryString) throws URISyntaxException {
 
         return new SplitApiFacade(
-                ServiceFactory.getSplitsFetcher(networkHelper, httpClient,
+                ServiceFactory.getSplitsFetcher(httpClient,
                         splitClientConfig.endpoint(), splitsFilterQueryString),
-                new MySegmentsFetcherFactoryImpl(networkHelper, httpClient,
+                new MySegmentsFetcherFactoryImpl(httpClient,
                         splitClientConfig.endpoint()),
-                ServiceFactory.getSseAuthenticationFetcher(networkHelper, httpClient,
+                ServiceFactory.getSseAuthenticationFetcher(httpClient,
                         splitClientConfig.authServiceUrl()),
-                ServiceFactory.getEventsRecorder(networkHelper, httpClient,
+                ServiceFactory.getEventsRecorder(httpClient,
                         splitClientConfig.eventsEndpoint()),
-                ServiceFactory.getImpressionsRecorder(networkHelper, httpClient,
+                ServiceFactory.getImpressionsRecorder(httpClient,
                         splitClientConfig.eventsEndpoint()),
-                ServiceFactory.getImpressionsCountRecorder(networkHelper, httpClient,
+                ServiceFactory.getImpressionsCountRecorder(httpClient,
                         splitClientConfig.eventsEndpoint()),
-                ServiceFactory.getUniqueKeysRecorder(networkHelper, httpClient,
+                ServiceFactory.getUniqueKeysRecorder(httpClient,
                         splitClientConfig.telemetryEndpoint()),
-                ServiceFactory.getTelemetryConfigRecorder(networkHelper, httpClient,
+                ServiceFactory.getTelemetryConfigRecorder(httpClient,
                         splitClientConfig.telemetryEndpoint()),
-                ServiceFactory.getTelemetryStatsRecorder(networkHelper, httpClient,
+                ServiceFactory.getTelemetryStatsRecorder(httpClient,
                         splitClientConfig.telemetryEndpoint()));
     }
 
@@ -338,6 +338,22 @@ class SplitFactoryHelper {
                 notificationProcessor,
                 sseAuthenticator,
                 pushManagerEventBroadcaster);
+    }
+
+    public ProcessStrategy getImpressionStrategy(SplitTaskExecutor splitTaskExecutor,
+                                                 SplitTaskFactory splitTaskFactory,
+                                                 SplitStorageContainer splitStorageContainer,
+                                                 SplitClientConfig config) {
+        return new ImpressionStrategyProvider(splitTaskExecutor,
+                splitStorageContainer,
+                splitTaskFactory,
+                splitStorageContainer.getTelemetryStorage(),
+                config.impressionsQueueSize(),
+                config.impressionsChunkSize(),
+                config.impressionsRefreshRate(),
+                config.impressionsCounterRefreshRate(),
+                config.mtkRefreshRate(),
+                config.userConsent() == UserConsent.GRANTED).getStrategy(config.impressionsMode());
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {

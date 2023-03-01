@@ -43,8 +43,8 @@ public class SplitClientConfig {
     private static final int DEFAULT_IMPRESSIONS_QUEUE_SIZE = 30000;
     private static final int DEFAULT_IMPRESSIONS_PER_PUSH = 2000;
     private static final int DEFAULT_IMP_COUNTERS_REFRESH_RATE_SECS = 1800;
-    private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 15000;
-    private static final int DEFAULT_READ_TIMEOUT_SECS = 15000;
+    private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 10000;
+    private static final int DEFAULT_READ_TIMEOUT_SECS = 10000;
     private static final int DEFAULT_READY = -1;
     private static final int DEFAULT_IMPRESSIONS_CHUNK_SIZE = 2 * 1024;
     private static final int DEFAULT_EVENTS_QUEUE_SIZE = 10000;
@@ -650,7 +650,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * Http client connection timeout. Default value is 15000ms.
+         * Http client connection timeout. Default value is 10000ms.
          *
          * @param ms MUST be greater than 0.
          * @return this builder
@@ -661,7 +661,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * Http client read timeout. Default value is 15000ms.
+         * Http client read timeout. Default value is 10000ms.
          *
          * @param ms MUST be greater than 0.
          * @return this builder

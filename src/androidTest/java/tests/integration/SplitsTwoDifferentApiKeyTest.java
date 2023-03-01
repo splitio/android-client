@@ -92,7 +92,7 @@ public class SplitsTwoDifferentApiKeyTest {
 
         mFactory1 = IntegrationHelper.buildFactory(
                 mApiKey1, IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock, db, null, null, testingConfig);
+                config, mContext, httpClientMock, db, null, testingConfig);
 
         mClient1 = mFactory1.client();
 
@@ -120,7 +120,7 @@ public class SplitsTwoDifferentApiKeyTest {
         mFactory2 = IntegrationHelper.buildFactory(
                 mApiKey2, IntegrationHelper.dummyUserKey(),
                 config, mContext, httpClientMock2, DatabaseHelper.getTestDatabase(mContext),
-                null, null, testingConfig);
+                null, testingConfig);
 
         mClient2 = mFactory2.client();
 

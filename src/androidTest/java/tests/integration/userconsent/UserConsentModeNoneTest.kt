@@ -213,7 +213,7 @@ class UserConsentModeNoneTest {
             config,
             mContext,
             HttpClientMock(dispatcher),
-            splitRoomDatabase, null, NetworkHelperStub(), null,
+            splitRoomDatabase, null, null,
             mLifecycleManager
         )
     }

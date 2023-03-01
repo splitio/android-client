@@ -79,38 +79,4 @@ public class SplitFactoryBuilder {
     public static SplitFactory local(String key, Context context) throws IOException {
         return new LocalhostSplitFactory(key, context, SplitClientConfig.builder().build() );
     }
-
-    public static void main(String... args) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
-        if (args.length != 1) {
-            System.out.println("Usage: <api_token>");
-            System.exit(1);
-            return;
-        }
-
-        SplitClientConfig config = SplitClientConfig.builder().build();
-
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-
-            for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-                if ("exit".equals(line)) {
-                    System.exit(0);
-                }
-                String[] userIdAndSplit = line.split(" ");
-
-                if (userIdAndSplit.length != 2) {
-                    System.out.println("Could not understand command");
-                    continue;
-                }
-                Key k = new Key(userIdAndSplit[0], null);
-                SplitClient client = SplitFactoryBuilder.build("API_KEY", k, config, null).client();
-
-                boolean isOn = client.getTreatment(userIdAndSplit[1]).equals("on");
-
-                System.out.println(isOn ? Treatments.ON : Treatments.OFF);
-            }
-        } catch (IOException io) {
-            Logger.e(io);
-        }
-    }
 }

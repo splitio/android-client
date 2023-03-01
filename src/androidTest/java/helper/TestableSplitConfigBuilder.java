@@ -23,8 +23,8 @@ public class TestableSplitConfigBuilder {
     private long mImpressionsChunkSize = 2 * 1024;
     private int mImpressionsPerPush = 10;
     private int mImpressionsCountersRefreshRate = 1800;
-    private int mConnectionTimeout = 15000;
-    private int mReadTimeout = 15000;
+    private int mConnectionTimeout = 1500;
+    private int mReadTimeout = 1500;
     private int mReady = -1;
     private boolean mLabelsEnabled = true;
     private ImpressionListener mImpressionListener;

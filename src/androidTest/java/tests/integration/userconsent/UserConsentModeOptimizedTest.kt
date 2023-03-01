@@ -12,7 +12,6 @@ import io.split.android.client.events.SplitEventTask
 import io.split.android.client.network.HttpMethod
 import io.split.android.client.service.impressions.ImpressionsMode
 import io.split.android.client.shared.UserConsent
-import io.split.android.client.storage.db.EventDao
 import io.split.android.client.storage.db.ImpressionDao
 import io.split.android.client.storage.db.ImpressionsCountDao
 import io.split.android.client.storage.db.StorageRecordStatus
@@ -222,7 +221,7 @@ class UserConsentModeOptimizedTest {
             config,
             mContext,
             HttpClientMock(dispatcher),
-            splitRoomDatabase, null, NetworkHelperStub(), null,
+            splitRoomDatabase, null, null,
             mLifecycleManager
         )
     }

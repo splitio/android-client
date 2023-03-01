@@ -1,11 +1,11 @@
 package io.split.android.client.service.impressions
 
 import io.split.android.client.service.executor.SplitTaskExecutor
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.MockitoAnnotations
-import kotlin.test.assertEquals
 
 class ImpressionManagerRetryTimerProviderImplTest {
 

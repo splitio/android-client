@@ -24,14 +24,11 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpRequest;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
-import io.split.android.client.utils.NetworkHelper;
 
 public class HttpSseAuthTokenFetcherTest {
 
     @Mock
     private HttpClient mHttpClient;
-    @Mock
-    private NetworkHelper mNetworkHelper;
     @Mock
     private HttpResponseParser<SseAuthenticationResponse> mResponseParser;
     private HttpSseAuthTokenFetcher fetcher;
@@ -39,9 +36,8 @@ public class HttpSseAuthTokenFetcherTest {
     @Before
     public void setUp() throws URISyntaxException, HttpResponseParserException, HttpException {
         MockitoAnnotations.openMocks(this);
-        fetcher = new HttpSseAuthTokenFetcher(mHttpClient, new URI("target"), mNetworkHelper, mResponseParser);
+        fetcher = new HttpSseAuthTokenFetcher(mHttpClient, new URI("target"), mResponseParser);
 
-        when(mNetworkHelper.isReachable(any())).thenReturn(true);
         when(mResponseParser.parse(any())).thenReturn(new SseAuthenticationResponse());
 
         HttpResponse responseMock = mock(HttpResponse.class);

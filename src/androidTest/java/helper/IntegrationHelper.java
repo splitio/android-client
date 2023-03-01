@@ -33,7 +33,6 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.NetworkHelper;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import io.split.android.client.utils.logger.Logger;
 import fake.HttpStreamResponseMock;
@@ -105,28 +104,22 @@ public class IntegrationHelper {
 
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
                                             Context context, HttpClient httpClient, SplitRoomDatabase database,
-                                            SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper) {
-        return buildFactory(apiToken, key, config, context, httpClient, database, synchronizerSpy, networkHelper, null);
-    }
-
-    public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
-                                            Context context, HttpClient httpClient, SplitRoomDatabase database,
-                                            SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper, TestingConfig testingConfig) {
+                                            SynchronizerSpy synchronizerSpy, TestingConfig testingConfig) {
         return buildFactory(apiToken, key, config, context, httpClient, database,
-                synchronizerSpy, networkHelper, testingConfig, null);
+                synchronizerSpy, testingConfig, null);
     }
 
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
                                             Context context, HttpClient httpClient, SplitRoomDatabase database,
-                                            SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper, TestingConfig testingConfig,
+                                            SynchronizerSpy synchronizerSpy, TestingConfig testingConfig,
                                             SplitLifecycleManager lifecycleManager) {
         return buildFactory(apiToken, key, config, context, httpClient, database,
-                synchronizerSpy, networkHelper, testingConfig, lifecycleManager, null);
+                synchronizerSpy, testingConfig, lifecycleManager, null);
     }
 
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
                                             Context context, HttpClient httpClient, SplitRoomDatabase database,
-                                            SynchronizerSpy synchronizerSpy, NetworkHelper networkHelper,
+                                            SynchronizerSpy synchronizerSpy,
                                             TestingConfig testingConfig, SplitLifecycleManager lifecycleManager,
                                             TelemetryStorage telemetryStorage) {
         Constructor[] c = SplitFactoryImpl.class.getDeclaredConstructors();
@@ -135,16 +128,13 @@ public class IntegrationHelper {
         SplitFactory factory = null;
         try {
             factory = (SplitFactory) constructor.newInstance(
-                    apiToken, key, config, context, httpClient, database, synchronizerSpy, selectNetworkHelper(networkHelper),
+                    apiToken, key, config, context, httpClient, database, synchronizerSpy,
                     testingConfig, lifecycleManager, telemetryStorage);
         } catch (Exception e) {
             Logger.e("Error creating factory: " + e.getLocalizedMessage());
+            e.printStackTrace();
         }
         return factory;
-    }
-
-    private static NetworkHelper selectNetworkHelper(NetworkHelper networkHelper) {
-        return networkHelper != null ? networkHelper : new NetworkHelperStub();
     }
 
     public static String dummyMySegments() {

@@ -14,7 +14,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -25,7 +24,6 @@ import java.util.stream.Collectors;
 import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
-import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
 import helper.TestingHelper;
 import io.split.android.client.ServiceEndpoints;
@@ -241,7 +239,7 @@ public class TelemetryIntegrationTest {
                 config,
                 mContext,
                 null,
-                testDatabase, null, null, null, null,
+                testDatabase, null, null, null,
                 mTelemetryStorage);
     }
 
