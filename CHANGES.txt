@@ -1,3 +1,9 @@
+3.1.0 (Mar 1, 2023)
+- Changed default connection timeout to 10 seconds.
+- Updated Lifecycle library to 2.5.1.
+- Added additional ProGuard rules.
+- Downgrade Gson to 2.9.1 due to issues in older API versions.
+
 3.0.0 (Jan 17, 2023)
 - BREAKING CHANGE: Minimum compileSdk is 31
 - BREAKING CHANGE: Removed deprecated method SplitFactory.isReady()
