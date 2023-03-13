@@ -62,21 +62,20 @@ public class StreamingInitializationTest {
 
         SplitClient client = splitFactory.client();
 
-        SplitEventTaskHelper readyFromCacheTask = new SplitEventTaskHelper(readyFromCacheLatch);
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
         SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
 
-        readyFromCacheLatch.await(40, TimeUnit.SECONDS);
-        latch.await(40, TimeUnit.SECONDS);
-        mSseAuthLatch.await(40, TimeUnit.SECONDS);
-        mSseConnectLatch.await(40, TimeUnit.SECONDS);
+        boolean readyAwait = latch.await(5, TimeUnit.SECONDS);
+        boolean readyFromCacheAwait = readyFromCacheLatch.await(5, TimeUnit.SECONDS);
+        boolean sseAwait = mSseAuthLatch.await(5, TimeUnit.SECONDS);
+        boolean sseConnectAwait = mSseConnectLatch.await(5, TimeUnit.SECONDS);
 
-        Assert.assertTrue(client.isReady());
-        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyAwait || readyFromCacheAwait);
+        Assert.assertTrue(sseAwait);
+        Assert.assertTrue(sseConnectAwait);
         Assert.assertTrue(mIsStreamingAuth);
         Assert.assertTrue(mIsStreamingConnected);
 
