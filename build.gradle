@@ -16,7 +16,7 @@ apply plugin: 'signing'
 apply plugin: 'kotlin-android'
 
 ext {
-    splitVersion = '3.0.0'
+    splitVersion = '3.1.0'
 }
 
 android {
@@ -92,7 +92,7 @@ dependencies {
     def workVersion = '2.7.1'
     def lifecycleVersion = '2.5.1'
     def annotationVersion = '1.2.0'
-    def gsonVersion = '2.8.9'
+    def gsonVersion = '2.9.1'
     def guavaVersion = '31.1-android'
     def snakeYamlVersion = '1.32'
     def jetBrainsAnnotationsVersion = '22.0.0'
@@ -135,6 +135,8 @@ dependencies {
     testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
     testImplementation "org.apache.commons:commons-lang3:$apacheCommonsVersion"
     testImplementation "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
 
     androidTestImplementation "androidx.test:core:$androidTestVersion"
     androidTestImplementation "androidx.test:runner:$androidTestVersion"
@@ -142,6 +144,8 @@ dependencies {
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
     androidTestImplementation "androidx.room:room-testing:$roomVersion"
     androidTestImplementation "androidx.work:work-testing:$workVersion"
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
 }
 
 afterEvaluate {
