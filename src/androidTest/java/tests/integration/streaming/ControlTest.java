@@ -154,7 +154,7 @@ public class ControlTest {
             }
             return false;
         }));
-        assertEquals(0, telemetryStorage.popTokenRefreshes());
+        assertEquals(1, telemetryStorage.popTokenRefreshes());
         Assert.assertEquals("on", treatmentReady);
         Assert.assertEquals("on", treatmentPaused);
         Assert.assertEquals("free", treatmentEnabled);

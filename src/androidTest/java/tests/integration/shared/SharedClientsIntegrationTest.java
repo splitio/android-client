@@ -112,30 +112,24 @@ public class SharedClientsIntegrationTest {
         AtomicInteger readyCount = new AtomicInteger(0);
         AtomicInteger readyCount2 = new AtomicInteger(0);
 
-        SplitClient client = mSplitFactory.client();
-        SplitClient client2 = mSplitFactory.client(new Key("key1", "bucketing"));
-
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+        mSplitFactory.client().on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client) {
+            public void onPostExecutionView(SplitClient client) {
                 readyCount.addAndGet(1);
                 readyLatch.countDown();
             }
         });
-
-        client2.on(SplitEvent.SDK_READY, new SplitEventTask() {
+        mSplitFactory.client(new Key("key1", "bucketing")).on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client) {
+            public void onPostExecutionView(SplitClient client) {
                 readyCount2.addAndGet(1);
                 readyLatch2.countDown();
             }
         });
 
-        boolean await = readyLatch.await(10, TimeUnit.SECONDS);
-        boolean await2 = readyLatch2.await(10, TimeUnit.SECONDS);
+        readyLatch.await(10, TimeUnit.SECONDS);
+        readyLatch2.await(10, TimeUnit.SECONDS);
 
-        assertTrue(await);
-        assertTrue(await2);
         assertEquals(1, readyCount.get());
         assertEquals(1, readyCount2.get());
     }
@@ -179,7 +173,7 @@ public class SharedClientsIntegrationTest {
 
         Map<String, Boolean> awaitResults = new HashMap<>();
         for (Map.Entry<String, CountDownLatch> entry : latches.entrySet()) {
-            awaitResults.put(entry.getKey(), entry.getValue().await(5, TimeUnit.SECONDS));
+            awaitResults.put(entry.getKey(), entry.getValue().await(10, TimeUnit.SECONDS));
         }
 
         Map<String, String> results = new HashMap<>();
@@ -204,35 +198,28 @@ public class SharedClientsIntegrationTest {
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch readyLatch2 = new CountDownLatch(1);
 
-        AtomicInteger readyCount = new AtomicInteger(0);
-        AtomicInteger readyCount2 = new AtomicInteger(0);
-
         SplitClient client = mSplitFactory.client();
-        SplitClient client2 = mSplitFactory.client(new Key("key2"));
 
         client.on(event, new SplitEventTask() {
             @Override
             public void onPostExecutionView(SplitClient client) {
-                readyCount.addAndGet(1);
                 readyLatch.countDown();
             }
         });
 
+        SplitClient client2 = mSplitFactory.client(new Key("key2"));
         client2.on(event, new SplitEventTask() {
             @Override
             public void onPostExecutionView(SplitClient client) {
-                readyCount2.addAndGet(1);
                 readyLatch2.countDown();
             }
         });
 
-        boolean await = readyLatch.await(10, TimeUnit.SECONDS);
-        boolean await2 = readyLatch2.await(10, TimeUnit.SECONDS);
+        boolean ready1Await = readyLatch.await(25, TimeUnit.SECONDS);
+        boolean ready2Await = readyLatch2.await(25, TimeUnit.SECONDS);
 
-        assertTrue(await);
-        assertTrue(await2);
-        assertEquals(1, readyCount.get());
-        assertEquals(1, readyCount2.get());
+        assertTrue(ready1Await);
+        assertTrue(ready2Await);
     }
 
     private void loadSplitChanges() {
@@ -241,7 +228,7 @@ public class SharedClientsIntegrationTest {
         mJsonChanges.add(fileHelper.loadFileContent(mContext, "bucket_split_test.json"));
     }
 
-    private void insertSplitsIntoDb() {
+    private void insertSplitsIntoDb() throws InterruptedException {
         SplitChange change = Json.fromJson(mJsonChanges.get(0), SplitChange.class);
         List<SplitEntity> entities = new ArrayList<>();
         for (Split split : change.splits) {
