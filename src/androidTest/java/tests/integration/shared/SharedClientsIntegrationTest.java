@@ -93,19 +93,16 @@ public class SharedClientsIntegrationTest {
 
     @Test
     public void multipleClientsAreReadyFromCache() throws InterruptedException {
-        insertSplitsIntoDb();
         verifyEventExecution(SplitEvent.SDK_READY_FROM_CACHE);
     }
 
     @Test
     public void multipleClientsAreReady() throws InterruptedException {
-        insertSplitsIntoDb();
         verifyEventExecution(SplitEvent.SDK_READY);
     }
 
     @Test
     public void equalMatchingKeyAndDifferentBucketingKey() throws InterruptedException {
-        insertSplitsIntoDb();
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch readyLatch2 = new CountDownLatch(1);
 
@@ -126,7 +123,7 @@ public class SharedClientsIntegrationTest {
                 readyLatch2.countDown();
             }
         });
-
+        insertSplitsIntoDb();
         readyLatch.await(10, TimeUnit.SECONDS);
         readyLatch2.await(10, TimeUnit.SECONDS);
 
@@ -202,7 +199,7 @@ public class SharedClientsIntegrationTest {
 
         client.on(event, new SplitEventTask() {
             @Override
-            public void onPostExecutionView(SplitClient client) {
+            public void onPostExecution(SplitClient client) {
                 readyLatch.countDown();
             }
         });
@@ -210,11 +207,12 @@ public class SharedClientsIntegrationTest {
         SplitClient client2 = mSplitFactory.client(new Key("key2"));
         client2.on(event, new SplitEventTask() {
             @Override
-            public void onPostExecutionView(SplitClient client) {
+            public void onPostExecution(SplitClient client) {
                 readyLatch2.countDown();
             }
         });
 
+        insertSplitsIntoDb();
         boolean ready1Await = readyLatch.await(25, TimeUnit.SECONDS);
         boolean ready2Await = readyLatch2.await(25, TimeUnit.SECONDS);
 
