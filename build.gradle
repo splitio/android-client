@@ -5,8 +5,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21'
     }
 }
 
@@ -33,8 +33,6 @@ android {
 
         minSdkVersion 15
         targetSdkVersion 30
-        versionCode 0
-        versionName splitVersion
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -146,6 +144,9 @@ dependencies {
     androidTestImplementation "androidx.work:work-testing:$workVersion"
     androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
     androidTestImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
+//    androidTestImplementation('androidx.test.espresso:espresso-contrib:3.4.0') {
+//        exclude module: "protobuf-lite"
+//    }
 }
 
 afterEvaluate {
