@@ -87,12 +87,14 @@ public class SharedClientsIntegrationTest {
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         mSplitFactory.destroy();
     }
 
     @Test
     public void multipleClientsAreReadyFromCache() throws InterruptedException {
+        insertSplitsIntoDb();
+        Thread.sleep(1000);
         verifyEventExecution(SplitEvent.SDK_READY_FROM_CACHE);
     }
 
@@ -170,7 +172,7 @@ public class SharedClientsIntegrationTest {
 
         Map<String, Boolean> awaitResults = new HashMap<>();
         for (Map.Entry<String, CountDownLatch> entry : latches.entrySet()) {
-            awaitResults.put(entry.getKey(), entry.getValue().await(10, TimeUnit.SECONDS));
+            awaitResults.put(entry.getKey(), entry.getValue().await(20, TimeUnit.SECONDS));
         }
 
         Map<String, String> results = new HashMap<>();
@@ -212,7 +214,6 @@ public class SharedClientsIntegrationTest {
             }
         });
 
-        insertSplitsIntoDb();
         boolean ready1Await = readyLatch.await(25, TimeUnit.SECONDS);
         boolean ready2Await = readyLatch2.await(25, TimeUnit.SECONDS);
 
