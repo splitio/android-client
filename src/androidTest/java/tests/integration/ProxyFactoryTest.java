@@ -19,7 +19,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
-import helper.TestableSplitConfigBuilder;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
@@ -89,7 +88,6 @@ public class ProxyFactoryTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String requestLine = request.getRequestLine();
-                System.out.println("requestLine: " + requestLine);
                 if (requestLine.contains("/mySegments")) {
                     mySegmentsHit.set(true);
                     return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
@@ -114,7 +112,6 @@ public class ProxyFactoryTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String requestLine = request.getRequestLine();
-                System.out.println("requestLine in base server: " + requestLine);
                 return new MockResponse().setResponseCode(200);
             }
         });

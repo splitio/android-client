@@ -50,7 +50,6 @@ public class StreamingInitializationTest {
     @Test
     public void sdkReady() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        CountDownLatch readyFromCacheLatch = new CountDownLatch(1);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
@@ -69,11 +68,10 @@ public class StreamingInitializationTest {
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
 
         boolean readyAwait = latch.await(5, TimeUnit.SECONDS);
-        boolean readyFromCacheAwait = readyFromCacheLatch.await(5, TimeUnit.SECONDS);
         boolean sseAwait = mSseAuthLatch.await(5, TimeUnit.SECONDS);
         boolean sseConnectAwait = mSseConnectLatch.await(5, TimeUnit.SECONDS);
 
-        Assert.assertTrue(readyAwait || readyFromCacheAwait);
+        Assert.assertTrue(readyAwait);
         Assert.assertTrue(sseAwait);
         Assert.assertTrue(sseConnectAwait);
         Assert.assertTrue(mIsStreamingAuth);
