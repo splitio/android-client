@@ -178,15 +178,24 @@ public class MySegmentsServerErrorTest {
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
         client.on(SplitEvent.SDK_READY_FROM_CACHE, readyFromCacheTask);
 
-        latch.await(15, TimeUnit.SECONDS);
+        boolean readyAwait = latch.await(15, TimeUnit.SECONDS);
+        if (!readyAwait) {
+            Assert.fail("SDK not ready");
+        }
         readyFromCacheLatch.await(5, TimeUnit.SECONDS);
 
         for (int i = 0; i < 4; i++) {
-            mLatchs.get(i).await(20, TimeUnit.SECONDS);
+            boolean await = mLatchs.get(i).await(20, TimeUnit.SECONDS);
+            if (!await) {
+                Assert.fail("MySegments request timeout");
+            }
             treatments.add(client.getTreatment("test_feature"));
         }
-        mImpLatch.await(30, TimeUnit.SECONDS);
         client.destroy();
+        boolean await = mImpLatch.await(10, TimeUnit.SECONDS);
+        if (!await) {
+            Assert.fail("Impressions request timeout");
+        }
 
         Assert.assertFalse(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertEquals("on_s1", treatments.get(0));

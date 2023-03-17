@@ -377,7 +377,7 @@ public class IntegrationTest {
 
         Key key = new Key("CUSTOMER_ID", null);
         SplitClientConfig config = SplitClientConfig.builder()
-                .ready(30000)
+                .ready(5000)
                 .featuresRefreshRate(99999)
                 .segmentsRefreshRate(99999)
                 .impressionsRefreshRate(99999)
@@ -395,7 +395,7 @@ public class IntegrationTest {
         client.on(SplitEvent.SDK_READY, readyTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
 
-        latch.await(40, TimeUnit.SECONDS);
+        latch.await(10, TimeUnit.SECONDS);
 
         Assert.assertFalse(readyTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTimeOutTask.isOnPostExecutionCalled);

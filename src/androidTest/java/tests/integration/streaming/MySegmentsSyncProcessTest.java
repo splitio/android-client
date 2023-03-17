@@ -111,7 +111,6 @@ public class MySegmentsSyncProcessTest {
         updLatch.await(5, TimeUnit.SECONDS);
         MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
-
         updLatch = new CountDownLatch(1);
         updTask.setLatch(updLatch);
         testMySegmentsPush(MSG_SEGMENT_UPDATE_PAYLOAD);
@@ -196,13 +195,19 @@ public class MySegmentsSyncProcessTest {
     private void testMySegmentsUpdate() throws InterruptedException {
         mMySegmentsUpdateLatch = new CountDownLatch(1);
         pushMessage(MSG_SEGMENT_UPDATE);
-        mMySegmentsUpdateLatch.await(10, TimeUnit.SECONDS);
+        boolean await = mMySegmentsUpdateLatch.await(25, TimeUnit.SECONDS);
+        if (!await) {
+            Assert.fail("MySegments update not received");
+        }
     }
 
     private void testMySegmentsPush(String message) throws InterruptedException {
         mMySegmentsPushLatch = new CountDownLatch(1);
         pushMessage(message);
-        mMySegmentsPushLatch.await(10, TimeUnit.SECONDS);
+        boolean await = mMySegmentsPushLatch.await(15, TimeUnit.SECONDS);
+        if (!await) {
+            Assert.fail("MySegments push not received");
+        }
     }
 
     @After

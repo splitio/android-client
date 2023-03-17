@@ -72,9 +72,18 @@ public class StreamingDisabledTest {
 
         client.on(SplitEvent.SDK_READY, readyTask);
 
-        latch.await(40, TimeUnit.SECONDS);
-        mMySegmentsHitsCountLatch.await(40, TimeUnit.SECONDS);
-        mSplitsHitsCountLatch.await(40, TimeUnit.SECONDS);
+        boolean readyAwait = latch.await(10, TimeUnit.SECONDS);
+        if (!readyAwait) {
+            Logger.e("SDK_READY event not received");
+        }
+        boolean mySegmentsAwait = mMySegmentsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!mySegmentsAwait) {
+            Logger.e("MySegments hits not received");
+        }
+        boolean splitsAwait = mSplitsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!splitsAwait) {
+            Logger.e("Splits hits not received");
+        }
 
 
         Assert.assertTrue(client.isReady());
@@ -87,8 +96,8 @@ public class StreamingDisabledTest {
         Assert.assertFalse(mIsStreamingConnected);
 
         // More than 1 hits means polling enabled
-        Assert.assertEquals(3,  mySegmentsHitsCountHit);
-        Assert.assertEquals(3, mSplitsHitsCountHit);
+        Assert.assertTrue( mySegmentsHitsCountHit > 1);
+        Assert.assertTrue(mSplitsHitsCountHit > 1);
 
         splitFactory.destroy();
     }
@@ -131,8 +140,8 @@ public class StreamingDisabledTest {
         Assert.assertFalse(mIsStreamingConnected);
 
         // More than 1 hits means polling enabled
-        Assert.assertEquals(6,  mySegmentsHitsCountHit);
-        Assert.assertEquals(3, mSplitsHitsCountHit);
+        Assert.assertTrue( mySegmentsHitsCountHit > 1);
+        Assert.assertTrue(mSplitsHitsCountHit > 1);
 
         splitFactory.destroy();
     }

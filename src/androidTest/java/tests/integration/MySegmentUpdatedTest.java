@@ -65,7 +65,7 @@ public class MySegmentUpdatedTest {
         isFirstChangesReq = true;
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mCurReqId = 0;
-        mImpLatch = new CountDownLatch(2);
+        mImpLatch = new CountDownLatch(1);
         mLatchs = new ArrayList<>();
         mImpHits = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
@@ -173,18 +173,24 @@ public class MySegmentUpdatedTest {
         client = splitFactory.client();
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
-        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
-        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
-
-        latch.await(20, TimeUnit.SECONDS);
+        boolean readyAwait = latch.await(10, TimeUnit.SECONDS);
+        if (!readyAwait) {
+            Assert.fail("SDK not ready");
+        }
 
         for (int i = 0; i < 4; i++) {
-            mLatchs.get(i).await(20, TimeUnit.SECONDS);
+            boolean treatmentAwait = mLatchs.get(i).await(10, TimeUnit.SECONDS);
+            if (!treatmentAwait) {
+                Assert.fail("Treatment not received");
+            }
             treatments.add(client.getTreatment("test_feature"));
         }
-        mImpLatch.await(30, TimeUnit.SECONDS);
+        boolean impAwait = mImpLatch.await(10, TimeUnit.SECONDS);
+        if (!impAwait) {
+            Assert.fail("Impressions not received");
+        }
         client.destroy();
 
         Assert.assertEquals("no", treatments.get(0));

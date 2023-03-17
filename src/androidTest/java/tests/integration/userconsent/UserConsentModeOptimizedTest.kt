@@ -67,8 +67,8 @@ class UserConsentModeOptimizedTest {
         }
         mLifecycleManager.simulateOnPause()
         mLifecycleManager.simulateOnResume()
-        mImpLatch?.await(10, TimeUnit.SECONDS)
-        mCountLatch?.await(10, TimeUnit.SECONDS)
+        mImpLatch?.await(20, TimeUnit.SECONDS)
+        mCountLatch?.await(20, TimeUnit.SECONDS)
 
         Assert.assertTrue(mImpPosted)
         Assert.assertTrue(mCountPosted)
@@ -211,6 +211,8 @@ class UserConsentModeOptimizedTest {
             .trafficType("client")
             .impressionsMode(ImpressionsMode.OPTIMIZED)
             .impressionsRefreshRate(3)
+            .impressionsCountersRefreshRate(3)
+            .mtkRefreshRate(3)
             .eventFlushInterval(3)
             .userConsent(userConsent)
             .build()

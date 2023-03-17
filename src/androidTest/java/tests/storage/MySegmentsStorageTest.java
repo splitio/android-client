@@ -178,9 +178,10 @@ public class MySegmentsStorageTest {
                     }
                     try {
                         Thread.sleep(80);
+                        mMySegmentsStorage.set(segments);
+                        Thread.sleep(80);
                     } catch (InterruptedException e) {
                     }
-                    mMySegmentsStorage.set(segments);
                 }
                 latch.countDown();
             }
