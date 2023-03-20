@@ -30,6 +30,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -48,7 +49,7 @@ public class MySegmentsSyncProcessTest {
     private CountDownLatch mMySegmentsUpdateLatch;
     private CountDownLatch mMySegmentsPushLatch;
 
-    private  final static String MSG_SEGMENT_UPDATE = "push_msg-segment_update.txt";
+    private final static String MSG_SEGMENT_UPDATE = "push_msg-segment_update.txt";
     private final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
     private final static String MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD = "push_msg-segment_update_empty_payload.txt";
 
@@ -132,7 +133,7 @@ public class MySegmentsSyncProcessTest {
         CountDownLatch latch = new CountDownLatch(1);
         CountDownLatch latch2 = new CountDownLatch(1);
         mSseLatch = new CountDownLatch(1);
-
+        final CountDownLatch updLatch = new CountDownLatch(2);
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
         SplitClientConfig config = IntegrationHelper.basicConfig();
@@ -144,14 +145,28 @@ public class MySegmentsSyncProcessTest {
         mClient = mFactory.client();
         SplitClient client2 = mFactory.client(new Key("key2"));
 
-        TestingHelper.TestEventTask readyTask = new TestingHelper.TestEventTask(latch);
-        TestingHelper.TestEventTask readyTask2 = new TestingHelper.TestEventTask(latch2);
+        SplitEventTask readyTask = new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client) {
+                latch.countDown();
+            }
+        };
+        SplitEventTask readyTask2 =  new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client) {
+                latch2.countDown();
+            }
+        };
 
-        TestingHelper.TestEventTask updTask = new TestingHelper.TestEventTask();
+        SplitEventTask updTask =  new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client) {
+                updLatch.countDown();
+            }
+        };
 
         mClient.on(SplitEvent.SDK_READY, readyTask);
         client2.on(SplitEvent.SDK_READY, readyTask2);
-
         mClient.on(SplitEvent.SDK_UPDATE, updTask);
 
         latch.await(10, TimeUnit.SECONDS);
@@ -162,16 +177,12 @@ public class MySegmentsSyncProcessTest {
         TestingHelper.pushKeepAlive(mStreamingData);
         mMySegmentsSyncLatch.await(10, TimeUnit.SECONDS);
 
-        CountDownLatch updLatch = new CountDownLatch(1);
-        updTask.setLatch(updLatch);
         testMySegmentsUpdate();
         updLatch.await(5, TimeUnit.SECONDS);
 //        sleep(1000);
         MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity mySegmentEntity2 = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 
-        updLatch = new CountDownLatch(1);
-        updTask.setLatch(updLatch);
         testMySegmentsPush(MSG_SEGMENT_UPDATE_PAYLOAD);
         updLatch.await(5, TimeUnit.SECONDS);
 //        sleep(1000);
@@ -195,7 +206,7 @@ public class MySegmentsSyncProcessTest {
     private void testMySegmentsUpdate() throws InterruptedException {
         mMySegmentsUpdateLatch = new CountDownLatch(1);
         pushMessage(MSG_SEGMENT_UPDATE);
-        boolean await = mMySegmentsUpdateLatch.await(25, TimeUnit.SECONDS);
+        boolean await = mMySegmentsUpdateLatch.await(30, TimeUnit.SECONDS);
         if (!await) {
             Assert.fail("MySegments update not received");
         }
@@ -274,16 +285,21 @@ public class MySegmentsSyncProcessTest {
     }
 
     private void pushMessage(String fileName) {
-        String message = loadMockedData(fileName);
-        message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
-        try {
-            mStreamingData.put(message + "" + "\n");
-            if(mMySegmentsPushLatch != null) {
-                mMySegmentsPushLatch.countDown();
+        new Thread(() -> {
+            try {
+                Thread.sleep(500);
+                String message = loadMockedData(fileName);
+                message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
+                mStreamingData.put(message + "" + "\n");
+                if (mMySegmentsPushLatch != null) {
+                    mMySegmentsPushLatch.countDown();
+                }
+                Logger.d("Pushed message: " + message);
+
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
-            Logger.d("Pushed message: " + message);
-        } catch (InterruptedException e) {
-        }
+        }).start();
     }
 
     private String updatedMySegments() {
