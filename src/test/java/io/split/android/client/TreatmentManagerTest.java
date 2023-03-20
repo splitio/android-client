@@ -5,7 +5,10 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+
+import static io.split.android.client.TreatmentLabels.DEFINITION_NOT_FOUND;
 
 import com.google.common.base.Strings;
 
@@ -78,7 +81,7 @@ public class TreatmentManagerTest {
 
             evaluator = new EvaluatorImpl(splitsStorage, splitParser);
         }
-        impressionListener = new ImpressionListenerMock();
+        impressionListener = mock(ImpressionListener.class);
         eventsManagerStub = new SplitEventsManagerStub();
     }
 
@@ -238,6 +241,18 @@ public class TreatmentManagerTest {
     }
 
     @Test
+    public void testDefinitionNotFoundLabel() {
+        Evaluator evaluatorMock = mock(Evaluator.class);
+        when(evaluatorMock.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("FACUNDO_TEST"), any()))
+                .thenReturn(new EvaluationResult("off", DEFINITION_NOT_FOUND));
+
+        TreatmentManagerImpl tManager = initializeTreatmentManager(evaluatorMock);
+
+        tManager.getTreatment("FACUNDO_TEST", null, false);
+        verifyNoInteractions(impressionListener);
+    }
+
+    @Test
     public void getTreatmentTakesValuesFromAttributesManagerIntoAccount() {
 
         treatmentManager.getTreatment("test_split", new HashMap<>(), false);
@@ -309,8 +324,11 @@ public class TreatmentManagerTest {
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
+        return initializeTreatmentManager(mock(Evaluator.class));
+    }
+
+    private TreatmentManagerImpl initializeTreatmentManager(Evaluator evaluator) {
         ListenableEventsManager eventsManager = mock(ListenableEventsManager.class);
-        Evaluator evaluator = mock(Evaluator.class);
 
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
         Mockito.when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(true);
