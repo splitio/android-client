@@ -197,22 +197,22 @@ public class SharedClientsIntegrationTest {
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch readyLatch2 = new CountDownLatch(1);
 
-        SplitClient client = mSplitFactory.client();
-
-        client.on(event, new SplitEventTask() {
+        SplitEventTask task = new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
                 readyLatch.countDown();
             }
-        });
-
-        SplitClient client2 = mSplitFactory.client(new Key("key2"));
-        client2.on(event, new SplitEventTask() {
+        };
+        SplitEventTask task2 = new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
                 readyLatch2.countDown();
             }
-        });
+        };
+
+
+        mSplitFactory.client().on(event, task);
+        mSplitFactory.client(new Key("key2")).on(event, task2);
 
         boolean ready1Await = readyLatch.await(25, TimeUnit.SECONDS);
         boolean ready2Await = readyLatch2.await(25, TimeUnit.SECONDS);

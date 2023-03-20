@@ -152,6 +152,7 @@ public class TelemetryIntegrationTest {
     @Test
     public void recordAuthRejections() throws InterruptedException {
         client.destroy();
+        Thread.sleep(1000);
         CountDownLatch sseLatch = new CountDownLatch(1);
         final Dispatcher dispatcher = new Dispatcher() {
 
