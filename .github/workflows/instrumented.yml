@@ -45,26 +45,8 @@ jobs:
           disable-animations: true
           script: echo "Generated AVD snapshot for caching."
 
-      - name: Cache Gradle dependencies
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Assemble debug AndroidTest
         run: ./gradlew assembleDebugAndroidTest
-
-      - name: Cache assembleDebugAndroidTest output
-        uses: actions/cache@v2
-        with:
-          path: app/build/outputs/apk/androidTest
-          key: ${{ runner.os }}-assembleDebugAndroidTest-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-assembleDebugAndroidTest-
 
       - name: Run tests
         uses: reactivecircus/android-emulator-runner@v2
