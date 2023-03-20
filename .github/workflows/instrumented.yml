@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         api-level: [ 29 ]
-        shard: [ 0, 1, 2, 3, 4, 5 ]
+        shard: [ 0, 1, 2, 3 ]
 
     steps:
       - name: checkout
@@ -45,12 +45,30 @@ jobs:
           disable-animations: true
           script: echo "Generated AVD snapshot for caching."
 
-      - name: Build tests
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Assemble debug AndroidTest
         run: ./gradlew assembleDebugAndroidTest
+
+      - name: Cache assembleDebugAndroidTest output
+        uses: actions/cache@v2
+        with:
+          path: app/build/outputs/apk/androidTest
+          key: ${{ runner.os }}-assembleDebugAndroidTest-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-assembleDebugAndroidTest-
 
       - name: Run tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           profile: Galaxy Nexus
-          script: ./gradlew connectedCheck --continue -Pandroid.testInstrumentationRunnerArguments.numShards=6 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}
+          script: ./gradlew connectedCheck --continue -Pandroid.testInstrumentationRunnerArguments.numShards=4 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}
