@@ -8,7 +8,13 @@ import com.google.gson.JsonSyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.crypto.Cipher;
+
+import io.split.android.client.common.SplitCipher;
+import io.split.android.client.common.SplitCipherImpl;
+import io.split.android.client.common.SplitCipherNop;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
 import io.split.android.client.storage.db.SplitEntity;
@@ -32,12 +38,13 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
         int entitiesCount = entities.size();
 
         if (entitiesCount > mTaskExecutor.getAvailableThreads()) {
+            long start = System.currentTimeMillis();
             List<List<Split>> result = mTaskExecutor.execute(getSplitDeserializationTasks(entities, entitiesCount));
+            Logger.v("\n\n-> PARSING TIME: " + (System.currentTimeMillis() - start));
             List<Split> splits = new ArrayList<>();
             for (List<Split> subList : result) {
                 splits.addAll(subList);
             }
-
             return splits;
         } else {
             return convertEntitiesToSplitList(entities);
@@ -59,20 +66,24 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
     }
 
     @NonNull
-    private static List<Split> convertEntitiesToSplitList(List<SplitEntity> entities) {
+    private List<Split> convertEntitiesToSplitList(List<SplitEntity> entities) {
         List<Split> splits = new ArrayList<>();
 
         if (entities == null) {
             return splits;
         }
-
+//        final SplitCipher cipher = new SplitCipherNop();
+        final SplitCipher cipher = new SplitCipherImpl(Cipher.DECRYPT_MODE, ServiceConstants.SECRET_KEY);
         for (SplitEntity entity : entities) {
+            String json = "";
             try {
-                splits.add(Json.fromJson(entity.getBody(), Split.class));
+                json = cipher.decrypt(entity.getBody());
+                splits.add(Json.fromJson(json, Split.class));
             } catch (JsonSyntaxException e) {
-                Logger.e("Could not parse entity to split: " + entity.getName());
+                Logger.e("JSON parsing failed for: " + entity.getName());
             }
         }
+
         return splits;
     }
 }

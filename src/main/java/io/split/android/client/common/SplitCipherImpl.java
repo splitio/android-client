@@ -3,39 +3,48 @@ package io.split.android.client.common;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.nio.charset.Charset;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.security.auth.DestroyFailedException;
 
 import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.logger.Logger;
 
 public class SplitCipherImpl implements SplitCipher {
-    private final static String CipherSettings = "AES/ECB/PKCS7Padding";
+
+    public final static int DECRYPT_MODE = Cipher.DECRYPT_MODE;
+    public final static int ENCRYPT_MODE = Cipher.ENCRYPT_MODE;
+
+    private final static String CipherSettings = "AES/CBC/PKCS5Padding";
     private final static String ALGO = "AES";
-    private final static int KEY_LENGTH = 32;
+    private final static int KEY_LENGTH = 16;
+
+    private Cipher mCipher;
+
+    private final SecretKeySpec mSecretKey;
+
+    public SplitCipherImpl(int mode, String secretKey) {
+        mSecretKey = new SecretKeySpec(sanitizeKey(secretKey).getBytes(), ALGO);
+        mCipher = getCipher(mode);
+    }
 
     @Override
     @Nullable
-    public String encrypt(@NonNull String plainText, @NonNull String key) {
+    public String encrypt(@NonNull String plainText) {
 
-        Cipher cipher = getCipher(Cipher.ENCRYPT_MODE, key);
-        if (cipher == null) {
+        if (mCipher == null) {
             return null;
         }
 
         try {
             byte[] plainTextBytes = plainText.getBytes();
-            byte[] ciphertext = cipher.doFinal(plainTextBytes);
+            byte[] ciphertext = mCipher.doFinal(plainTextBytes);
             return Base64Util.encode(ciphertext);
         } catch (IllegalBlockSizeException e) {
             Logger.v("Cypher IllegalBlockSizeException: " + e.getLocalizedMessage());
@@ -44,38 +53,41 @@ public class SplitCipherImpl implements SplitCipher {
         } catch (Exception e) {
             Logger.v("Cypher Unknown error: " + e.getLocalizedMessage());
         }
-
         return null;
     }
 
     @Override
     @Nullable
-    public String decrypt(@NonNull String cipherText, @NonNull String key) {
+    public String decrypt(String cipherText) {
 
-        Cipher cipher = getCipher(Cipher.DECRYPT_MODE, key);
-        if (cipher == null) {
+        if (cipherText == null) {
+            return null;
+        }
+
+        if (mCipher == null) {
             return null;
         }
         try {
             byte[] cipherBytes = Base64Util.bytesDecode(cipherText);
-            byte[] plainTextBytes = cipher.doFinal(cipherBytes);
+            byte[] plainTextBytes = mCipher.doFinal(cipherBytes);
             return new String(plainTextBytes);
         } catch (IllegalBlockSizeException e) {
             Logger.v("Cypher IllegalBlockSizeException: " + e.getLocalizedMessage());
         } catch (BadPaddingException e) {
             Logger.v("Cypher BadPaddingException: " + e.getLocalizedMessage());
         } catch (Exception e) {
-            Logger.v("Could not create cipher");
+            Logger.v("Could not create cipher: " + e.getLocalizedMessage());
         }
         return null;
     }
 
-    private Cipher getCipher(int mode, String key) {
+    private Cipher getCipher(int mode) {
         try {
             Cipher cipher = null;
-            SecretKeySpec secretKey = new SecretKeySpec(sanitizeKey(key).getBytes(), ALGO);
             cipher = Cipher.getInstance(CipherSettings);
-            cipher.init(mode, secretKey);
+            // TODO: Replace iv by part of the API_KEY
+            IvParameterSpec ivP = new IvParameterSpec("pepepepepepepepe".getBytes());
+            cipher.init(mode, mSecretKey, ivP);
             return cipher;
 
         } catch (NoSuchAlgorithmException e) {
@@ -84,6 +96,8 @@ public class SplitCipherImpl implements SplitCipher {
             Logger.v("Could not create Cipher: " + e.getLocalizedMessage());
         } catch (InvalidKeyException e) {
             Logger.v("Cypher InvalidKeyException: " + e.getLocalizedMessage());
+        } catch (Exception e) {
+            Logger.v("Cypher WTF: " + e.getLocalizedMessage());
         }
         return null;
     }

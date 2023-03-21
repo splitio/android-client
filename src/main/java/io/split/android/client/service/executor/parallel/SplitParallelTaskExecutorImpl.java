@@ -15,7 +15,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class SplitParallelTaskExecutorImpl<T> implements SplitParallelTaskExecutor<T> {
 
-    private static final int TIMEOUT_IN_SECONDS = 5;
+    private static final int TIMEOUT_IN_SECONDS = 15;
 
     private final int mThreads;
 
@@ -40,6 +40,14 @@ public class SplitParallelTaskExecutorImpl<T> implements SplitParallelTaskExecut
             return results;
         } catch (InterruptedException | ExecutionException | CancellationException e) {
             Logger.e(e.getLocalizedMessage());
+
+            Logger.v("----------------------------");
+            Logger.v("----------------------------");
+            Logger.v("----------------------------");
+            Logger.v("CANCELATED by " + e.getLocalizedMessage());
+            Logger.v("----------------------------");
+            Logger.v("----------------------------");
+            Logger.v("----------------------------");
 
             return new ArrayList<>();
         }
