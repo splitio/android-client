@@ -93,8 +93,6 @@ public class SharedClientsIntegrationTest {
 
     @Test
     public void multipleClientsAreReadyFromCache() throws InterruptedException {
-        insertSplitsIntoDb();
-        Thread.sleep(1000);
         verifyEventExecution(SplitEvent.SDK_READY_FROM_CACHE);
     }
 
@@ -257,7 +255,7 @@ public class SharedClientsIntegrationTest {
 
                 @Override
                 public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                     if (request.getPath().contains("/mySegments/key1")) {
                         return new MockResponse()
                                 .setResponseCode(200)
