@@ -2,7 +2,6 @@ package tests.integration.shared;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import android.content.Context;
 
@@ -16,11 +15,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import helper.DatabaseHelper;
@@ -97,42 +93,9 @@ public class SharedClientsIntegrationTest {
 
     @Test
     public void multipleClientsAreReadyFromCache() throws InterruptedException {
-        CyclicBarrier barrier = new CyclicBarrier(3);
-        SplitEvent event = SplitEvent.SDK_READY_FROM_CACHE;
-
-        SplitEventTask task = new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                try {
-                    barrier.await(10, TimeUnit.SECONDS);
-                } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-                    fail("Client 1 not ready");
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        SplitEventTask task2 = new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                try {
-                    barrier.await(10, TimeUnit.SECONDS);
-                } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
-                    fail("Client 2 not ready");
-                    e.printStackTrace();
-                }
-            }
-        };
-
-        mSplitFactory.client().on(event, task);
-        mSplitFactory.client(new Key("key2")).on(event, task2);
-
         insertSplitsIntoDb();
-        try {
-            barrier.await(10, TimeUnit.SECONDS);
-        } catch (BrokenBarrierException | TimeoutException e) {
-            fail("Clients not ready");
-        }
+        Thread.sleep(1000);
+        verifyEventExecution(SplitEvent.SDK_READY_FROM_CACHE);
     }
 
     @Test
@@ -234,22 +197,22 @@ public class SharedClientsIntegrationTest {
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch readyLatch2 = new CountDownLatch(1);
 
-        SplitEventTask task = new SplitEventTask() {
+        SplitClient client = mSplitFactory.client();
+
+        client.on(event, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
                 readyLatch.countDown();
             }
-        };
-        SplitEventTask task2 = new SplitEventTask() {
+        });
+
+        SplitClient client2 = mSplitFactory.client(new Key("key2"));
+        client2.on(event, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
                 readyLatch2.countDown();
             }
-        };
-
-
-        mSplitFactory.client().on(event, task);
-        mSplitFactory.client(new Key("key2")).on(event, task2);
+        });
 
         boolean ready1Await = readyLatch.await(25, TimeUnit.SECONDS);
         boolean ready2Await = readyLatch2.await(25, TimeUnit.SECONDS);
@@ -294,6 +257,7 @@ public class SharedClientsIntegrationTest {
 
                 @Override
                 public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+                    Thread.sleep(500);
                     if (request.getPath().contains("/mySegments/key1")) {
                         return new MockResponse()
                                 .setResponseCode(200)
