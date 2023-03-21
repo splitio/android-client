@@ -146,7 +146,6 @@ public class TelemetryIntegrationTest {
     public void recordAuthRejections() throws InterruptedException {
         CountDownLatch sseLatch = new CountDownLatch(1);
         CountDownLatch metricsLatch = new CountDownLatch(1);
-        AtomicReference<String> metricsBody = new AtomicReference<>("");
         final Dispatcher dispatcher = new Dispatcher() {
 
             @Override
@@ -161,9 +160,6 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("/events/bulk")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("metrics/usage")) {
-                    String newValue = request.getBody().readUtf8();
-                    Logger.e("METRICS BODY: " + newValue);
-                    metricsBody.set(newValue);
                     metricsLatch.countDown();
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("metrics")) {
@@ -182,7 +178,7 @@ public class TelemetryIntegrationTest {
         initializeClient(true);
         sseLatch.await(10, TimeUnit.SECONDS);
         metricsLatch.await(20, TimeUnit.SECONDS);
-        assertTrue(metricsBody.get().contains("\"aR\":1,"));
+        assertTrue(mTelemetryStorage.popAuthRejections() == 1);
     }
 
     @Test
