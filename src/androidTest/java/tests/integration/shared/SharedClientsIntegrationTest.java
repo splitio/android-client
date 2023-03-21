@@ -2,6 +2,7 @@ package tests.integration.shared;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 
@@ -15,8 +16,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import helper.DatabaseHelper;
@@ -35,6 +39,7 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -52,19 +57,17 @@ public class SharedClientsIntegrationTest {
     public void setUp() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
-
         if (mJsonChanges == null) {
             loadSplitChanges();
         }
+        insertSplitsIntoDb();
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
 
         ServerMock mWebServer = new ServerMock(mJsonChanges);
 
         String serverUrl = mWebServer.getServerUrl();
         mSplitFactory = getFactory(serverUrl);
-
-        mRoomDb.clearAllTables();
     }
 
     private SplitFactory getFactory(String serverUrl) {
@@ -93,7 +96,41 @@ public class SharedClientsIntegrationTest {
 
     @Test
     public void multipleClientsAreReadyFromCache() throws InterruptedException {
-        verifyEventExecution(SplitEvent.SDK_READY_FROM_CACHE);
+        CyclicBarrier barrier = new CyclicBarrier(3);
+
+        SplitEventTask task = new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                try {
+                    barrier.await(10, TimeUnit.SECONDS);
+                } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+                    fail("Client 1 not ready");
+                    e.printStackTrace();
+                }
+            }
+        };
+        SplitEventTask task2 = new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                try {
+                    barrier.await(10, TimeUnit.SECONDS);
+                } catch (InterruptedException | BrokenBarrierException | TimeoutException e) {
+                    fail("Client 2 not ready");
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        SplitClient client1 = mSplitFactory.client();
+        SplitClient client2 = mSplitFactory.client(new Key("key2"));
+        client1.on(SplitEvent.SDK_READY_FROM_CACHE, task);
+        client2.on(SplitEvent.SDK_READY_FROM_CACHE, task2);
+
+        try {
+            barrier.await(10, TimeUnit.SECONDS);
+        } catch (BrokenBarrierException | TimeoutException e) {
+            fail("Clients not ready");
+        }
     }
 
     @Test
@@ -225,7 +262,9 @@ public class SharedClientsIntegrationTest {
         mJsonChanges.add(fileHelper.loadFileContent(mContext, "bucket_split_test.json"));
     }
 
-    private void insertSplitsIntoDb() throws InterruptedException {
+    private void insertSplitsIntoDb() {
+        Logger.e("Inserting splits into db...");
+
         SplitChange change = Json.fromJson(mJsonChanges.get(0), SplitChange.class);
         List<SplitEntity> entities = new ArrayList<>();
         for (Split split : change.splits) {
@@ -255,7 +294,6 @@ public class SharedClientsIntegrationTest {
 
                 @Override
                 public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                    Thread.sleep(1000);
                     if (request.getPath().contains("/mySegments/key1")) {
                         return new MockResponse()
                                 .setResponseCode(200)
