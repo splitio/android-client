@@ -1,6 +1,9 @@
-name: instrumented tests
+name: Instrumented tests
 
-on: [ push ]
+on:
+  pull_request:
+    branches:
+      - '*'
 
 jobs:
   test:
@@ -9,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [ 29 ]
+        api-level: [ 31 ]
         shard: [ 0, 1, 2, 3 ]
 
     steps:
