@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [ 31 ]
+        api-level: [ 29 ]
         shard: [ 0, 1, 2, 3 ]
 
     steps:
