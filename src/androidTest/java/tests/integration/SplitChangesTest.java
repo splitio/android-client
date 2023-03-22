@@ -134,7 +134,7 @@ public class SplitChangesTest {
         Key key = new Key("CUSTOMER_ID", null);
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .serviceEndpoints(ServiceEndpoints.builder().apiEndpoint(url).eventsEndpoint(url).build())
-                .ready(30000)
+                .ready(5000)
                 .featuresRefreshRate(5)
                 .segmentsRefreshRate(5)
                 .impressionsRefreshRate(25)
@@ -175,6 +175,7 @@ public class SplitChangesTest {
             Assert.fail("Impressions not received");
         }
         client.destroy();
+        Thread.sleep(1000);
 
         ArrayList<Impression> impLis = new ArrayList<>();
         impLis.add(impListener.getImpression(impListener.buildKey(
