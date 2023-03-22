@@ -178,7 +178,7 @@ public class TelemetryIntegrationTest {
         initializeClient(true);
         sseLatch.await(10, TimeUnit.SECONDS);
         metricsLatch.await(20, TimeUnit.SECONDS);
-        assertTrue(mTelemetryStorage.popAuthRejections() == 1);
+        assertEquals(1, mTelemetryStorage.popAuthRejections());
     }
 
     @Test

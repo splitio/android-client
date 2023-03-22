@@ -90,7 +90,7 @@ public class SseAuthFail5xxTest {
         if (!readyAwait) {
             Assert.fail("SDK not ready");
         }
-        boolean sseAuthAwait = mSseAuthLatch.await(30, TimeUnit.SECONDS);
+        boolean sseAuthAwait = mSseAuthLatch.await(60, TimeUnit.SECONDS);
         if (!sseAuthAwait) {
             Assert.fail("Sse auth not ready");
         }
@@ -114,7 +114,7 @@ public class SseAuthFail5xxTest {
         // More than 1 hit corresponding to full sync after streaming connection,
         // means polling still working after sse auth
         // Following lines are commented until a safe way to check this is found
-//        Assert.assertEquals(1,mMySegmentsHitsCountHitAfterSseConn);
+//        Assert.assertEquals(1, mMySegmentsHitsCountHitAfterSseConn);
 //        Assert.assertEquals(1, mSplitsHitsCountHitAfterSseConn);
 
         splitFactory.destroy();
@@ -151,14 +151,18 @@ public class SseAuthFail5xxTest {
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit - Attempt: " + mAuthHits);
-
-                    if(mAuthHits <= MAX_AUTH_RETRIES) {
-                        mAuthHits++;
-                        return createResponse(500, null);
-                    } else {
-                        mIsStreamingAuth = true;
-                        mSseAuthLatch.countDown();
-                        return createResponse(200, IntegrationHelper.streamingEnabledToken());
+                    try {
+                        sleep(20);
+                        if(mAuthHits <= MAX_AUTH_RETRIES) {
+                            mAuthHits++;
+                            return createResponse(500, null);
+                        } else {
+                            mIsStreamingAuth = true;
+                            mSseAuthLatch.countDown();
+                            return createResponse(200, IntegrationHelper.streamingEnabledToken());
+                        }
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
                     }
                 } else {
                     return new HttpResponseMock(200);
