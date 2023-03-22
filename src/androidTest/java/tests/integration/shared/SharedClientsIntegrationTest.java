@@ -263,8 +263,6 @@ public class SharedClientsIntegrationTest {
     }
 
     private void insertSplitsIntoDb() {
-        Logger.e("Inserting splits into db...");
-
         SplitChange change = Json.fromJson(mJsonChanges.get(0), SplitChange.class);
         List<SplitEntity> entities = new ArrayList<>();
         for (Split split : change.splits) {
