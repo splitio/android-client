@@ -284,7 +284,7 @@ public class ControlTest {
         message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
         try {
             mStreamingData.put(message + "" + "\n");
-            sleep(200);
+            sleep(500);
             mPushLatch.countDown();
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException e) {
