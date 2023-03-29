@@ -33,7 +33,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     private final AtomicBoolean mIsPaused;
     private final TelemetrySynchronizer mTelemetrySynchronizer;
 
-    private AtomicBoolean isPollingEnabled;
+    private final AtomicBoolean isPollingEnabled;
     private PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private MySegmentsUpdateWorkerRegistry mMySegmentsUpdateWorkerRegistry;
     private PushNotificationManager mPushNotificationManager;
@@ -101,6 +101,10 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void pause() {
+        if (mIsPaused.get()) {
+            return;
+        }
+        Logger.w("NETWORK: pausing syncmanager");
         mIsPaused.set(true);
         mSynchronizer.pause();
         mTelemetrySynchronizer.flush();
@@ -116,6 +120,10 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void resume() {
+        if (!mIsPaused.get()) {
+            return;
+        }
+        Logger.w("NETWORK: resuming syncmanager");
         mIsPaused.set(false);
         mSynchronizer.resume();
 
@@ -255,5 +263,17 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
             mSynchronizer.startPeriodicFetching();
             Logger.i("Polling enabled.");
         }
+    }
+
+    @Override
+    public void onNetworkConnected() {
+        Logger.w("Network available");
+        resume();
+    }
+
+    @Override
+    public void onNetworkDisconnected() {
+        Logger.w("Network unavailable");
+        pause();
     }
 }

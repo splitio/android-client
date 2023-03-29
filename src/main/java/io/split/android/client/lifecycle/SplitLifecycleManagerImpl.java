@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.service.synchronizer.ThreadUtils;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitLifecycleManagerImpl implements DefaultLifecycleObserver, SplitLifecycleManager {
 
@@ -46,8 +47,10 @@ public class SplitLifecycleManagerImpl implements DefaultLifecycleObserver, Spli
                 SplitLifecycleAware component = reference.get();
                 if (component != null) {
                     if (run) {
+                        Logger.w("NETWORK: Resuming component: " + component.getClass().getSimpleName());
                         component.resume();
                     } else {
+                        Logger.w("NETWORK: Pausing component: " + component.getClass().getSimpleName());
                         component.pause();
                     }
                 }

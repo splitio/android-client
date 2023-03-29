@@ -23,6 +23,7 @@ import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.PushCounterEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.util.AtomicLongArray;
+import io.split.android.client.utils.logger.Logger;
 
 public class InMemoryTelemetryStorage implements TelemetryStorage {
 
@@ -215,7 +216,10 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
 
     @Override
     public long popAuthRejections() {
-        return pushCounters.get(PushCounterEvent.AUTH_REJECTIONS).getAndSet(0);
+        Logger.e("Popping auth Rejections pre value: " + pushCounters.get(PushCounterEvent.AUTH_REJECTIONS).get());
+        long andSet = pushCounters.get(PushCounterEvent.AUTH_REJECTIONS).getAndSet(0);
+        Logger.e("Popping auth Rejections post value: " + andSet);
+        return andSet;
     }
 
     @Override
@@ -228,7 +232,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         synchronized (streamingEventsLock) {
             List<StreamingEvent> streamingEventsList = streamingEvents;
             streamingEvents = new ArrayList<>();
-
+Logger.e("Popping streaming events: " + streamingEventsList.size());
             return streamingEventsList;
         }
     }
@@ -302,7 +306,8 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
 
     @Override
     public void recordAuthRejections() {
-        pushCounters.get(PushCounterEvent.AUTH_REJECTIONS).incrementAndGet();
+        long l = pushCounters.get(PushCounterEvent.AUTH_REJECTIONS).incrementAndGet();
+        Logger.e("Recording auth Rejections: " + l);
     }
 
     @Override
