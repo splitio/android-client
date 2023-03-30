@@ -14,7 +14,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class SplitLifecycleManagerImpl implements DefaultLifecycleObserver, SplitLifecycleManager {
 
-    private final List<WeakReference<SplitLifecycleAware>> mComponents;
+    private final List<SplitLifecycleAware> mComponents;
 
     public SplitLifecycleManagerImpl() {
         mComponents = new ArrayList<>();
@@ -28,7 +28,8 @@ public class SplitLifecycleManagerImpl implements DefaultLifecycleObserver, Spli
 
     @Override
     public void register(SplitLifecycleAware component) {
-        mComponents.add(new WeakReference<>(component));
+        Logger.w("NETWORK: Registering component: " + component.getClass().getSimpleName());
+        mComponents.add(component);
     }
 
     @Override
@@ -42,9 +43,9 @@ public class SplitLifecycleManagerImpl implements DefaultLifecycleObserver, Spli
     }
 
     private void changeRunningStatus(boolean run) {
-        for (WeakReference<SplitLifecycleAware> reference : mComponents) {
+        for (SplitLifecycleAware reference : mComponents) {
             if (reference != null) {
-                SplitLifecycleAware component = reference.get();
+                SplitLifecycleAware component = reference;//reference.get();
                 if (component != null) {
                     if (run) {
                         Logger.w("NETWORK: Resuming component: " + component.getClass().getSimpleName());
@@ -53,7 +54,11 @@ public class SplitLifecycleManagerImpl implements DefaultLifecycleObserver, Spli
                         Logger.w("NETWORK: Pausing component: " + component.getClass().getSimpleName());
                         component.pause();
                     }
+                } else {
+                    Logger.w("NETWORK: Component is null");
                 }
+            } else {
+                Logger.w("NETWORK: Reference is null");
             }
         }
     }
