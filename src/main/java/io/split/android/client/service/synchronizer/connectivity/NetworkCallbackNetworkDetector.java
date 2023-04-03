@@ -37,7 +37,6 @@ class NetworkCallbackNetworkDetector implements NetworkDetector {
 
     @Override
     public void deactivate() {
-//        unregisterNetworkCallback();
         mNetworkCallback.pause();
     }
 
@@ -98,29 +97,31 @@ class NetworkCallbackNetworkDetector implements NetworkDetector {
 
     private static class Callback extends ConnectivityManager.NetworkCallback {
 
-        private final WeakReference<NetworkChangeListener> mListener;
+        private final NetworkChangeListener mListener;
         private final AtomicBoolean mIsPaused = new AtomicBoolean(false);
 
         private final AtomicBoolean mIsConnected = new AtomicBoolean(false);
 
         public Callback(NetworkChangeListener listener) {
-            mListener = new WeakReference<>(listener);
+            mListener = listener;
         }
 
         @Override
         public void onAvailable(Network network) {
             super.onAvailable(network);
-            Logger.w("NETWORK: Network available triggered by callback");
-            mIsConnected.set(true);
-            notifyListenerConnected();
+            if (mIsConnected.compareAndSet(false, true)) {
+                Logger.w("NETWORK: Notifying network available");
+                notifyListenerConnected();
+            }
         }
 
         @Override
         public void onLost(Network network) {
             super.onLost(network);
-            Logger.w("NETWORK: Network lost triggered by callback");
-            mIsConnected.set(false);
-            notifyListenerDisconnected();
+            if (mIsConnected.compareAndSet(true, false)) {
+                Logger.w("NETWORK: Notifying network lost");
+                notifyListenerDisconnected();
+            }
         }
 
         public void pause() {
@@ -139,14 +140,14 @@ class NetworkCallbackNetworkDetector implements NetworkDetector {
         }
 
         void notifyListenerDisconnected() {
-            if (mListener.get() != null) {
-                mListener.get().onDisconnected();
+            if (mListener != null) {
+                mListener.onDisconnected();
             }
         }
 
         void notifyListenerConnected() {
-            if (mListener.get() != null) {
-                mListener.get().onConnected();
+            if (mListener != null) {
+                mListener.onConnected();
             }
         }
     }

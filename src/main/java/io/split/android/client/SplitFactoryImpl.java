@@ -31,10 +31,7 @@ import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
-//import io.split.android.client.service.synchronizer.connectivity.NetworkDetector;
-//import io.split.android.client.service.synchronizer.connectivity.NetworkDetectorProvider;
-//import io.split.android.client.service.synchronizer.connectivity.NetworkMonitor;
-import io.split.android.client.service.synchronizer.connectivity.ManagerPauser;
+import io.split.android.client.service.synchronizer.connectivity.PauseManager;
 import io.split.android.client.service.synchronizer.connectivity.NetworkMonitorImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.ClientComponentsRegister;
@@ -205,11 +202,11 @@ public class SplitFactoryImpl implements SplitFactory {
         }
 
         NetworkMonitorImpl networkMonitor = new NetworkMonitorImpl(context);
-        ManagerPauser managerPauser = new ManagerPauser(mSyncManager);
+        PauseManager pauseManager = new PauseManager(mSyncManager);
 
-        networkMonitor.register(managerPauser);
+        networkMonitor.register(pauseManager);
+        mLifecycleManager.register(pauseManager);
         mLifecycleManager.register(networkMonitor);
-        mLifecycleManager.register(managerPauser);
 
         final ImpressionListener splitImpressionListener
                 = new SyncImpressionListener(mSyncManager);

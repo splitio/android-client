@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.split.android.client.lifecycle.SplitLifecycleAware;
 import io.split.android.client.service.synchronizer.SyncManager;
 
-public class ManagerPauser implements SplitLifecycleAware, NetworkAware {
+public class PauseManager implements SplitLifecycleAware, NetworkAware {
 
     private final SyncManager mSyncManager;
 
@@ -13,7 +13,7 @@ public class ManagerPauser implements SplitLifecycleAware, NetworkAware {
 
     private final AtomicBoolean mNetworkPaused = new AtomicBoolean(false);
 
-    public ManagerPauser(SyncManager syncManager) {
+    public PauseManager(SyncManager syncManager) {
         mSyncManager = syncManager;
     }
 
