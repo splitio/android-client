@@ -28,7 +28,6 @@ public class SplitLifecycleManagerImpl implements DefaultLifecycleObserver, Spli
 
     @Override
     public void register(SplitLifecycleAware component) {
-        Logger.w("NETWORK: Registering component: " + component.getClass().getSimpleName());
         mComponents.add(component);
     }
 
@@ -48,10 +47,10 @@ public class SplitLifecycleManagerImpl implements DefaultLifecycleObserver, Spli
                 SplitLifecycleAware component = reference;//reference.get();
                 if (component != null) {
                     if (run) {
-                        Logger.w("NETWORK: Resuming component: " + component.getClass().getSimpleName());
+//                        Logger.w("NETWORK: Resuming component because of lifecycle: " + component.getClass().getSimpleName());
                         component.resume();
                     } else {
-                        Logger.w("NETWORK: Pausing component: " + component.getClass().getSimpleName());
+//                        Logger.w("NETWORK: Pausing component because of lifecycle: " + component.getClass().getSimpleName());
                         component.pause();
                     }
                 } else {

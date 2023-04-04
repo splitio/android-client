@@ -18,8 +18,6 @@ public class NetworkMonitorImpl implements NetworkMonitor, SplitLifecycleAware, 
     public NetworkMonitorImpl(Context context) {
         mListeners = new HashSet<>();
         mNetworkDetector = NetworkDetectorProvider.getNetworkDetector(context, this);
-        mNetworkDetector.setNetworkChangeListener(this);
-        mNetworkDetector.activate();
     }
 
     @Override

@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -51,10 +52,9 @@ class BroadcastReceiverNetworkDetector implements NetworkDetector {
     private static class NetworkChangeBroadcastReceiver extends BroadcastReceiver {
 
         private final AtomicBoolean mIsPaused = new AtomicBoolean(false);
-
         private final AtomicBoolean mIsConnected = new AtomicBoolean(false);
-
         private NetworkChangeListener mListener;
+        private Debouncer mDebouncer = new Debouncer(500, TimeUnit.MILLISECONDS);
 
         NetworkChangeBroadcastReceiver(NetworkChangeListener listener) {
             mListener = listener;

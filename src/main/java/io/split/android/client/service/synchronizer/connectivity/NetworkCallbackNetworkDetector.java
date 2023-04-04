@@ -10,6 +10,7 @@ import android.os.Build;
 import androidx.annotation.RequiresApi;
 
 import java.lang.ref.WeakReference;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.utils.logger.Logger;
@@ -50,7 +51,6 @@ class NetworkCallbackNetworkDetector implements NetworkDetector {
 
         if (mConnectivityManager != null) {
             mConnectivityManager.registerNetworkCallback(getNetworkRequest(), mNetworkCallback);
-
             // Check if we are already connected to the internet
             if (canReachInternet(mConnectivityManager)) {
                 mNetworkCallback.notifyListenerConnected();
@@ -99,8 +99,8 @@ class NetworkCallbackNetworkDetector implements NetworkDetector {
 
         private final NetworkChangeListener mListener;
         private final AtomicBoolean mIsPaused = new AtomicBoolean(false);
-
         private final AtomicBoolean mIsConnected = new AtomicBoolean(false);
+        private final Debouncer mDebouncer = new Debouncer(500, TimeUnit.MILLISECONDS);
 
         public Callback(NetworkChangeListener listener) {
             mListener = listener;
@@ -109,28 +109,30 @@ class NetworkCallbackNetworkDetector implements NetworkDetector {
         @Override
         public void onAvailable(Network network) {
             super.onAvailable(network);
-            if (mIsConnected.compareAndSet(false, true)) {
-                Logger.w("NETWORK: Notifying network available");
-                notifyListenerConnected();
-            }
+            mDebouncer.setTask(() -> {
+                Logger.w("NETWORK: Network available: " + network.toString());
+                if (mIsConnected.compareAndSet(false, true)) {
+                    notifyListenerConnected();
+                }
+            });
         }
 
         @Override
         public void onLost(Network network) {
             super.onLost(network);
-            if (mIsConnected.compareAndSet(true, false)) {
-                Logger.w("NETWORK: Notifying network lost");
-                notifyListenerDisconnected();
-            }
+            mDebouncer.setTask(() -> {
+                Logger.w("NETWORK: Network lost: " + network.toString());
+                if (mIsConnected.compareAndSet(true, false)) {
+                    notifyListenerDisconnected();
+                }
+            });
         }
 
         public void pause() {
-            Logger.w("NETWORK: Pause network detector");
             mIsPaused.set(true);
         }
 
         public void resume() {
-            Logger.w("NETWORK: Resume network detector");
             mIsPaused.set(false);
             if (mIsConnected.get()) {
                 notifyListenerConnected();
