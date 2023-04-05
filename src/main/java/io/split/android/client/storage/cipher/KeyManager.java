@@ -34,7 +34,7 @@ public class KeyManager {
     }
 
     @Nullable
-    public SecretKey getAESKey(String apiKey) {
+    public SecretKey getKey(String apiKey) {
         return mProvider.getKey(KEY_ALIAS_PREFIX + apiKey);
     }
 }

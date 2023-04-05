@@ -21,7 +21,7 @@ public class KeyManagerTest {
     public void getKeyWithLegacyProvider() {
         mKeyManager = new KeyManager(new LegacyKeyProvider(ApplicationProvider.getApplicationContext().getApplicationContext()));
 
-        SecretKey key = mKeyManager.getAESKey("my_api_key");
+        SecretKey key = mKeyManager.getKey("my_api_key");
 
         assertNotNull(key);
     }
@@ -30,9 +30,9 @@ public class KeyManagerTest {
     public void getExistingKeyWithLegacyProvider() {
         mKeyManager = new KeyManager(new LegacyKeyProvider(ApplicationProvider.getApplicationContext().getApplicationContext()));
 
-        SecretKey key = mKeyManager.getAESKey("my_api_key");
+        SecretKey key = mKeyManager.getKey("my_api_key");
 
-        SecretKey secondKey = mKeyManager.getAESKey("my_api_key");
+        SecretKey secondKey = mKeyManager.getKey("my_api_key");
 
         assertNotNull(key);
         assertEquals(key, secondKey);
@@ -45,7 +45,7 @@ public class KeyManagerTest {
         }
         mKeyManager = new KeyManager(new AndroidKeyStoreKeyProvider());
 
-        SecretKey key = mKeyManager.getAESKey("my_api_key");
+        SecretKey key = mKeyManager.getKey("my_api_key");
 
         assertNotNull(key);
     }
@@ -58,9 +58,9 @@ public class KeyManagerTest {
 
         mKeyManager = new KeyManager(new AndroidKeyStoreKeyProvider());
 
-        SecretKey key = mKeyManager.getAESKey("my_api_key");
+        SecretKey key = mKeyManager.getKey("my_api_key");
 
-        SecretKey secondKey = mKeyManager.getAESKey("my_api_key");
+        SecretKey secondKey = mKeyManager.getKey("my_api_key");
 
         assertNotNull(key);
         assertEquals(key, secondKey);
