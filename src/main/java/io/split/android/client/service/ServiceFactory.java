@@ -25,6 +25,7 @@ import io.split.android.client.service.impressions.unique.MTKRequestBodySerializ
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
+import io.split.android.client.service.synchronizer.connectivity.NetworkCallbackNetworkDetector;
 import io.split.android.client.telemetry.TelemetryConfigBodySerializer;
 import io.split.android.client.telemetry.TelemetryStatsBodySerializer;
 import io.split.android.client.telemetry.model.Config;

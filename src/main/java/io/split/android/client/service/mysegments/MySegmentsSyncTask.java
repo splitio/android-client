@@ -58,7 +58,7 @@ public class MySegmentsSyncTask implements SplitTask {
 
             long now = System.currentTimeMillis();
             latency = now - startTime;
-            List<String> oldSegments = new ArrayList(mMySegmentsStorage.getAll());
+            List<String> oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
             List<String> mySegments = getNameList(segments);
             mMySegmentsStorage.set(mySegments);
 

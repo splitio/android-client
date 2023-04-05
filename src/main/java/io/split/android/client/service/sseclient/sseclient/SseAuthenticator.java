@@ -11,6 +11,7 @@ import java.util.Set;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.http.NetworkNotAvailableException;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.service.sseclient.SseJwtParser;
@@ -39,7 +40,9 @@ public class SseAuthenticator {
             authResponse = mAuthFetcher.execute(params, null);
 
         } catch (HttpFetcherException httpFetcherException) {
-            logError("Unexpected " + httpFetcherException.getLocalizedMessage());
+            if (!(httpFetcherException instanceof NetworkNotAvailableException)) {
+                logError("Unexpected " + httpFetcherException.getLocalizedMessage());
+            }
             if (httpFetcherException.getHttpStatus() != null) {
                 return unexpectedHttpError(httpFetcherException.getHttpStatus());
             } else {
@@ -51,12 +54,12 @@ public class SseAuthenticator {
         }
         Logger.d("SSE Authentication done, now parsing token");
 
-        if(authResponse.isClientError()) {
+        if (authResponse.isClientError()) {
             Logger.d("Error while authenticating to streaming. Check your api key is correct.");
             return new SseAuthenticationResult(false, false, false, 0, null);
         }
 
-        if(!authResponse.isStreamingEnabled()) {
+        if (!authResponse.isStreamingEnabled()) {
             Logger.d("Streaming disabled for api key");
             return new SseAuthenticationResult(true, true, false, 0, null);
         }
