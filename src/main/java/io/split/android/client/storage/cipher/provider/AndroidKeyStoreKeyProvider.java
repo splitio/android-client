@@ -43,8 +43,7 @@ public class AndroidKeyStoreKeyProvider implements KeyProvider {
         keyStore.load(null);
 
         if (!keyStore.containsAlias(alias)) {
-            SecretKey secretKey = generateSecretKey(alias);
-            keyStore.setEntry(alias, new KeyStore.SecretKeyEntry(secretKey), null);
+            return generateSecretKey(alias);
         }
 
         return (SecretKey) keyStore.getKey(alias, null);
@@ -60,6 +59,7 @@ public class AndroidKeyStoreKeyProvider implements KeyProvider {
                 .build();
         keyGenerator.init(keySpec);
 
+        // Key is generated and stored in the Android KeyStore
         return keyGenerator.generateKey();
     }
 }
