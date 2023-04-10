@@ -5,12 +5,17 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -18,8 +23,7 @@ import javax.crypto.SecretKey;
 import io.split.android.client.utils.logger.Logger;
 
 @RequiresApi(api = Build.VERSION_CODES.M)
-public
-class AndroidKeyStoreKeyProvider implements KeyProvider {
+public class AndroidKeyStoreKeyProvider implements KeyProvider {
 
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
 
@@ -33,7 +37,8 @@ class AndroidKeyStoreKeyProvider implements KeyProvider {
         }
     }
 
-    private SecretKey getAESKeyWithAndroidKeystore(String alias) throws Exception {
+    @Nullable
+    private SecretKey getAESKeyWithAndroidKeystore(String alias) throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchProviderException, UnrecoverableKeyException {
         KeyStore keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER);
         keyStore.load(null);
 
