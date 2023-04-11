@@ -25,12 +25,19 @@ import io.split.android.client.utils.logger.Logger;
 @RequiresApi(api = Build.VERSION_CODES.M)
 public class AndroidKeyStoreKeyProvider implements KeyProvider {
 
+    private static final String KEY_ALIAS_PREFIX = "split_key_";
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
 
+    private final String mAlias;
+
+    public AndroidKeyStoreKeyProvider(String apiKey) {
+        mAlias = KEY_ALIAS_PREFIX + apiKey;
+    }
+
     @Override
-    public SecretKey getKey(@NonNull String alias) {
+    public SecretKey getKey() {
         try {
-            return getAESKeyWithAndroidKeystore(alias);
+            return getAESKeyWithAndroidKeystore(mAlias);
         } catch (Exception e) {
             Logger.e("Error while getting key from Android KeyStore: " + e.getMessage());
             return null;

@@ -16,15 +16,15 @@ public class AndroidKeyStoreKeyProviderTest {
 
     @Before
     public void setUp() {
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
-            return;
-        }
-        mProvider = new AndroidKeyStoreKeyProvider();
+        mProvider = new AndroidKeyStoreKeyProvider("abcdefghijklmnopqrstuvwxyz");
     }
 
     @Test
     public void getKeyReturnsNonNullKey() {
-        SecretKey key = mProvider.getKey("alias");
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
+            return;
+        }
+        SecretKey key = mProvider.getKey();
 
         assertNotNull(key);
         assertEquals("AES", key.getAlgorithm());
@@ -32,8 +32,11 @@ public class AndroidKeyStoreKeyProviderTest {
 
     @Test
     public void getKeyWhenKeyExistsDoesNotCreateNewOne() {
-        SecretKey key = mProvider.getKey("alias");
-        SecretKey key2 = mProvider.getKey("alias");
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
+            return;
+        }
+        SecretKey key = mProvider.getKey();
+        SecretKey key2 = mProvider.getKey();
 
         assertNotNull(key);
         assertEquals(key, key2);

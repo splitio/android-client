@@ -18,18 +18,18 @@ public class LegacyKeyProviderTest {
 
     @Before
     public void setUp() {
-        mProvider = new LegacyKeyProvider(ApplicationProvider.getApplicationContext().getApplicationContext());
+        mProvider = new LegacyKeyProvider("abcdefghijklmnopqrstuvwxyz");
     }
 
     @Test
     public void getKeyReturnsNonNullKey() {
-        assertNotNull(mProvider.getKey("alias"));
+        assertNotNull(mProvider.getKey());
     }
 
     @Test
     public void getKeyWhenKeyExistsDoesNotCreateNewOne() {
-        SecretKey key = mProvider.getKey("alias");
-        SecretKey key2 = mProvider.getKey("alias");
+        SecretKey key = mProvider.getKey();
+        SecretKey key2 = mProvider.getKey();
         assertNotNull(key);
         assertEquals(key, key2);
     }

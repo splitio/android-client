@@ -19,20 +19,20 @@ public class KeyManagerTest {
 
     @Test
     public void getKeyWithLegacyProvider() {
-        mKeyManager = new KeyManager(new LegacyKeyProvider(ApplicationProvider.getApplicationContext().getApplicationContext()));
+        mKeyManager = new KeyManager(new LegacyKeyProvider("abcdefghijklmnopqrstuvwxyz"));
 
-        SecretKey key = mKeyManager.getKey("my_api_key");
+        SecretKey key = mKeyManager.getKey();
 
         assertNotNull(key);
     }
 
     @Test
     public void getExistingKeyWithLegacyProvider() {
-        mKeyManager = new KeyManager(new LegacyKeyProvider(ApplicationProvider.getApplicationContext().getApplicationContext()));
+        mKeyManager = new KeyManager(new LegacyKeyProvider("abcdefghijklmnopqrstuvwxyz"));
 
-        SecretKey key = mKeyManager.getKey("my_api_key");
+        SecretKey key = mKeyManager.getKey();
 
-        SecretKey secondKey = mKeyManager.getKey("my_api_key");
+        SecretKey secondKey = mKeyManager.getKey();
 
         assertNotNull(key);
         assertEquals(key, secondKey);
@@ -43,9 +43,9 @@ public class KeyManagerTest {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
             return;
         }
-        mKeyManager = new KeyManager(new AndroidKeyStoreKeyProvider());
+        mKeyManager = new KeyManager(new AndroidKeyStoreKeyProvider("abcdefghijklmnopqrstuvwxyz"));
 
-        SecretKey key = mKeyManager.getKey("my_api_key");
+        SecretKey key = mKeyManager.getKey();
 
         assertNotNull(key);
     }
@@ -56,11 +56,11 @@ public class KeyManagerTest {
             return;
         }
 
-        mKeyManager = new KeyManager(new AndroidKeyStoreKeyProvider());
+        mKeyManager = new KeyManager(new AndroidKeyStoreKeyProvider("abcdefghijklmnopqrstuvwxyz"));
 
-        SecretKey key = mKeyManager.getKey("my_api_key");
+        SecretKey key = mKeyManager.getKey();
 
-        SecretKey secondKey = mKeyManager.getKey("my_api_key");
+        SecretKey secondKey = mKeyManager.getKey();
 
         assertNotNull(key);
         assertEquals(key, secondKey);

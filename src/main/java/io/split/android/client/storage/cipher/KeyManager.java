@@ -1,7 +1,5 @@
 package io.split.android.client.storage.cipher;
 
-import android.content.Context;
-
 import androidx.annotation.VisibleForTesting;
 
 import javax.annotation.Nullable;
@@ -14,27 +12,27 @@ import io.split.android.client.utils.logger.Logger;
 
 public class KeyManager {
 
-    private static final String KEY_ALIAS_PREFIX = "split_key_";
 
     private final KeyProvider mProvider;
+
 
     @VisibleForTesting
     public KeyManager(KeyProvider provider) {
         mProvider = provider;
     }
 
-    public KeyManager(Context context) {
+    public KeyManager(String apiKey) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             Logger.d("Using AndroidKeyStoreKeyProvider");
-            mProvider = new AndroidKeyStoreKeyProvider();
+            mProvider = new AndroidKeyStoreKeyProvider(apiKey);
         } else {
             Logger.d("Using LegacyKeyProvider");
-            mProvider = new LegacyKeyProvider(context);
+            mProvider = new LegacyKeyProvider(apiKey);
         }
     }
 
     @Nullable
-    public SecretKey getKey(String apiKey) {
-        return mProvider.getKey(KEY_ALIAS_PREFIX + apiKey);
+    public SecretKey getKey() {
+        return mProvider.getKey();
     }
 }
