@@ -8,15 +8,15 @@ import org.junit.Test;
 
 import javax.crypto.SecretKey;
 
-import io.split.android.client.storage.cipher.provider.AndroidKeyStoreKeyProvider;
+import io.split.android.client.storage.cipher.provider.SecureKeyStorageProvider;
 
-public class AndroidKeyStoreKeyProviderTest {
+public class SecureKeyStorageProviderTest {
 
-    private AndroidKeyStoreKeyProvider mProvider;
+    private SecureKeyStorageProvider mProvider;
 
     @Before
     public void setUp() {
-        mProvider = new AndroidKeyStoreKeyProvider("abcdefghijklmnopqrstuvwxyz");
+        mProvider = new SecureKeyStorageProvider("abcdefghijklmnopqrstuvwxyz");
     }
 
     @Test

@@ -3,14 +3,12 @@ package tests.storage.cipher;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import androidx.test.core.app.ApplicationProvider;
-
 import org.junit.Test;
 
 import javax.crypto.SecretKey;
 
 import io.split.android.client.storage.cipher.KeyManager;
-import io.split.android.client.storage.cipher.provider.AndroidKeyStoreKeyProvider;
+import io.split.android.client.storage.cipher.provider.SecureKeyStorageProvider;
 import io.split.android.client.storage.cipher.provider.LegacyKeyProvider;
 
 public class KeyManagerTest {
@@ -43,7 +41,7 @@ public class KeyManagerTest {
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
             return;
         }
-        mKeyManager = new KeyManager(new AndroidKeyStoreKeyProvider("abcdefghijklmnopqrstuvwxyz"));
+        mKeyManager = new KeyManager(new SecureKeyStorageProvider("abcdefghijklmnopqrstuvwxyz"));
 
         SecretKey key = mKeyManager.getKey();
 
@@ -56,7 +54,7 @@ public class KeyManagerTest {
             return;
         }
 
-        mKeyManager = new KeyManager(new AndroidKeyStoreKeyProvider("abcdefghijklmnopqrstuvwxyz"));
+        mKeyManager = new KeyManager(new SecureKeyStorageProvider("abcdefghijklmnopqrstuvwxyz"));
 
         SecretKey key = mKeyManager.getKey();
 
