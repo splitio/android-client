@@ -16,7 +16,7 @@ class SplitCipherImplTest {
 
     @Before
     fun setUp() {
-        cipher = SplitCipherImpl("abcdefghijklmnopqrstuvwxyz")
+        cipher = SplitCipherImpl("abcdefghijklmnopqrstuvwxyz", true)
     }
 
     @Test
@@ -36,28 +36,28 @@ class SplitCipherImplTest {
 
     @Test
     fun testLongTextEncryption() {
-        StringBuilder().append(MOCK_DATA_LONG_TEXT).apply {
+        StringBuilder().apply {
             for (i in 0..1000) {
                 append(MOCK_DATA_LONG_TEXT)
             }
-        }.let {
-            encryptDecryptTest(it.toString())
+        }.run {
+            encryptDecryptTest(toString())
         }
     }
 
     @Test
     fun testEncryptWithOneInstanceAndDecryptWithOther() {
         val testData = cipher.encrypt(MOCK_DATA_SPLIT)
-        val secondCipher = SplitCipherImpl("abcdefghijklmnopqrstuvwxyz")
+        val secondCipher = SplitCipherImpl("abcdefghijklmnopqrstuvwxyz", true)
         val decryptedData = secondCipher.decrypt(testData)
         assertEquals(MOCK_DATA_SPLIT, decryptedData)
     }
 
     private fun encryptDecryptTest(plainText: String) {
         val encrypted = cipher.encrypt(plainText)
-        val decrypted = cipher.decrypt(encrypted!!)
+        val decrypted = cipher.decrypt(encrypted)
 
         assertEquals(plainText, decrypted)
-        assertNotEquals("Encrypted is equal to planText", plainText, encrypted)
+        assertNotEquals("Encrypted is equal to plainText", plainText, encrypted)
     }
 }

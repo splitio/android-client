@@ -23,7 +23,8 @@ public class CBCCipher implements SplitCipher {
     private static final String SPEC = "AES/CBC/PKCS7Padding";
     private static final int ENCRYPT_MODE = Cipher.ENCRYPT_MODE;
     private static final int DECRYPT_MODE = Cipher.DECRYPT_MODE;
-    public static final Charset CHARSET = Charset.forName("UTF-8");
+    private static final Charset CHARSET = Charset.forName("UTF-8");
+
     private final IvParameterSpec mIvParameterSpec;
     private final SecretKey mKey;
 
@@ -71,23 +72,16 @@ public class CBCCipher implements SplitCipher {
 
     @Nullable
     private Cipher getInitializedCipher(int encryptMode) {
-        Cipher cipher;
         try {
-            cipher = Cipher.getInstance(SPEC);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            Logger.e("Error getting cipher: " + e.getMessage());
-            return null;
-        }
-
-
-        try {
+            Cipher cipher = Cipher.getInstance(SPEC);
             cipher.init(encryptMode, mKey, mIvParameterSpec);
-        } catch (InvalidAlgorithmParameterException | InvalidKeyException e) {
+
+            return cipher;
+        } catch (InvalidAlgorithmParameterException | InvalidKeyException |
+                 NoSuchAlgorithmException | NoSuchPaddingException e) {
             Logger.e("Error initializing cipher: " + e.getMessage());
 
             return null;
         }
-
-        return cipher;
     }
 }
