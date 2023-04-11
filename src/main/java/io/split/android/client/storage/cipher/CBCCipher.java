@@ -11,9 +11,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
@@ -24,10 +22,11 @@ import io.split.android.client.utils.logger.Logger;
 public class CBCCipher implements SplitCipher {
 
     private static final String SPEC = "AES/CBC/PKCS7Padding";
+    private static final int ENCRYPT_MODE = Cipher.ENCRYPT_MODE;
+    private static final int DECRYPT_MODE = Cipher.DECRYPT_MODE;
+    public static final Charset CHARSET = Charset.forName("UTF-8");
     private final SecretKey mKey;
     private final String mApiKey;
-    private Cipher mEncryptCipher;
-    private Cipher mDecryptCipher;
 
     @VisibleForTesting
     public CBCCipher(SecretKey key, @NonNull String apiKey) {
@@ -45,10 +44,10 @@ public class CBCCipher implements SplitCipher {
             return null;
         }
 
-        Cipher cipher = getInitializedCipher(Cipher.ENCRYPT_MODE);
+        Cipher cipher = getInitializedCipher(ENCRYPT_MODE);
         byte[] encryptedBytes;
         try {
-            encryptedBytes = cipher.doFinal(data.getBytes(Charset.forName("UTF-8")));
+            encryptedBytes = cipher.doFinal(data.getBytes(CHARSET));
         } catch (Exception e) {
             Logger.e("Error encrypting data: " + e.getMessage());
             return null;
@@ -63,7 +62,7 @@ public class CBCCipher implements SplitCipher {
             return null;
         }
 
-        Cipher cipher = getInitializedCipher(Cipher.DECRYPT_MODE);
+        Cipher cipher = getInitializedCipher(DECRYPT_MODE);
         try {
             byte[] bytes = cipher.doFinal(Base64Util.bytesDecode(data));
 
@@ -76,12 +75,6 @@ public class CBCCipher implements SplitCipher {
 
     @Nullable
     private Cipher getInitializedCipher(int encryptMode) {
-        if (encryptMode == Cipher.ENCRYPT_MODE && mEncryptCipher != null) {
-            return mEncryptCipher;
-        } else if (encryptMode == Cipher.DECRYPT_MODE && mDecryptCipher != null) {
-            return mDecryptCipher;
-        }
-
         Cipher cipher;
         try {
             cipher = Cipher.getInstance(SPEC);
@@ -100,12 +93,6 @@ public class CBCCipher implements SplitCipher {
             Logger.e("Error initializing cipher: " + e.getMessage());
 
             return null;
-        }
-
-        if (encryptMode == Cipher.ENCRYPT_MODE) {
-            mEncryptCipher = cipher;
-        } else {
-            mDecryptCipher = cipher;
         }
 
         return cipher;
