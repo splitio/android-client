@@ -4,7 +4,6 @@ import android.util.Base64;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 
 import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
@@ -25,17 +24,14 @@ public class CBCCipher implements SplitCipher {
     private static final int ENCRYPT_MODE = Cipher.ENCRYPT_MODE;
     private static final int DECRYPT_MODE = Cipher.DECRYPT_MODE;
     public static final Charset CHARSET = Charset.forName("UTF-8");
+    private final IvParameterSpec mIvParameterSpec;
     private final SecretKey mKey;
-    private final String mApiKey;
 
-    @VisibleForTesting
-    public CBCCipher(SecretKey key, @NonNull String apiKey) {
-        mKey = key;
-        mApiKey = apiKey;
-    }
-
-    public CBCCipher(String apiKey) {
-        this(new KeyManager(apiKey).getKey(), apiKey);
+    public CBCCipher(@NonNull String apiKey) {
+        mKey = new KeyManager(apiKey).getKey();
+        byte[] ivCBC = new byte[16];
+        System.arraycopy(apiKey.getBytes(), 0, ivCBC, 0, 16);
+        mIvParameterSpec = new IvParameterSpec(ivCBC);
     }
 
     @Override
@@ -83,12 +79,9 @@ public class CBCCipher implements SplitCipher {
             return null;
         }
 
-        byte[] ivCBC = new byte[16];
-        System.arraycopy(mApiKey.getBytes(), 0, ivCBC, 0, 16);
-        IvParameterSpec ivParameterSpec = new IvParameterSpec(ivCBC);
 
         try {
-            cipher.init(encryptMode, mKey, ivParameterSpec);
+            cipher.init(encryptMode, mKey, mIvParameterSpec);
         } catch (InvalidAlgorithmParameterException | InvalidKeyException e) {
             Logger.e("Error initializing cipher: " + e.getMessage());
 
