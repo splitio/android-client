@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,21 +20,24 @@ import java.util.List;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
-import io.split.android.client.storage.cipher.NoOpCipher;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SplitEntity;
 
 public class SplitEntityToSplitTransformerTest {
 
     @Mock
     private SplitParallelTaskExecutor<List<Split>> mSplitTaskExecutor;
+    @Mock
+    private SplitCipher mSplitCipher;
     private SplitEntityToSplitTransformer mConverter;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(2);
+        when(mSplitCipher.decrypt(any())).then((Answer<String>) invocation -> (String) invocation.getArguments()[0]);
 
-        mConverter = new SplitEntityToSplitTransformer(mSplitTaskExecutor, new NoOpCipher());
+        mConverter = new SplitEntityToSplitTransformer(mSplitTaskExecutor, mSplitCipher);
     }
 
     @Test
@@ -73,6 +77,26 @@ public class SplitEntityToSplitTransformerTest {
         List<Split> splits = mConverter.transform(mockEntities);
 
         assertEquals(3, splits.size());
+    }
+
+    @Test
+    public void transformingNullReturnsEmptyList() {
+        when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
+
+        List<Split> splits = mConverter.transform(null);
+
+        assertEquals(0, splits.size());
+    }
+
+    @Test
+    public void valuesAreIgnoredWhenCipherThrowsException() {
+        when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
+        List<SplitEntity> mockEntities = getMockEntities(3);
+        when(mSplitCipher.decrypt(any())).thenReturn(null);
+
+        List<Split> splits = mConverter.transform(mockEntities);
+
+        assertEquals(0, splits.size());
     }
 
     private List<SplitEntity> getMockEntities(int amount) {
