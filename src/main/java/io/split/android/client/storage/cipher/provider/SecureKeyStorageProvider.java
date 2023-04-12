@@ -35,7 +35,6 @@ public class SecureKeyStorageProvider implements KeyProvider {
         mAlias = KEY_ALIAS_PREFIX + apiKey;
     }
 
-
     @Nullable
     @Override
     public SecretKey getKey() {

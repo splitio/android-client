@@ -10,6 +10,8 @@ import io.split.android.client.storage.attributes.AttributesStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorageContainerImpl;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.attributes.SqLitePersistentAttributesStorage;
+import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.cipher.SplitCipherImpl;
 import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
@@ -27,7 +29,6 @@ import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
-import io.split.android.client.telemetry.storage.BinarySearchLatencyTracker;
 import io.split.android.client.telemetry.storage.InMemoryTelemetryStorage;
 import io.split.android.client.telemetry.storage.NoOpTelemetryStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
@@ -35,10 +36,14 @@ import io.split.android.client.telemetry.storage.TelemetryStorage;
 @RestrictTo(LIBRARY)
 public class StorageFactory {
 
-    public static SplitsStorage getSplitsStorage(SplitRoomDatabase splitRoomDatabase) {
+    public static SplitsStorage getSplitsStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
         PersistentSplitsStorage persistentSplitsStorage
-                = new SqLitePersistentSplitsStorage(splitRoomDatabase);
+                = getPersistentSplitsStorage(splitRoomDatabase, splitCipher);
         return new SplitsStorageImpl(persistentSplitsStorage);
+    }
+
+    public static SplitsStorage getSplitsStorageForWorker(SplitRoomDatabase splitRoomDatabase, String apiKey, boolean encryptionEnabled) {
+        return getSplitsStorage(splitRoomDatabase, new SplitCipherImpl(apiKey, encryptionEnabled));
     }
 
     public static MySegmentsStorageContainer getMySegmentsStorage(SplitRoomDatabase splitRoomDatabase) {
@@ -49,8 +54,8 @@ public class StorageFactory {
                                                       boolean isPersistenceEnabled) {
         return new EventsStorage(persistentEventsStorage, isPersistenceEnabled);
     }
-    public static PersistentSplitsStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase) {
-        return new SqLitePersistentSplitsStorage(splitRoomDatabase);
+    public static PersistentSplitsStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
+        return new SqLitePersistentSplitsStorage(splitRoomDatabase, splitCipher);
     }
 
     public static ImpressionsStorage getImpressionsStorage(PersistentImpressionsStorage persistentImpressionsStorage,
@@ -80,7 +85,7 @@ public class StorageFactory {
         return getAttributesStorageContainerInstance();
     }
 
-    public static PersistentAttributesStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase, String matchingKey) {
+    public static PersistentAttributesStorage getPersistentAttributesStorage(SplitRoomDatabase splitRoomDatabase, String matchingKey) {
         return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), matchingKey);
     }
 

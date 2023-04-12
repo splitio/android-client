@@ -36,6 +36,7 @@ import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.cipher.SplitCipherImpl;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
@@ -128,18 +129,18 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Check if test database available
         String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
-        SplitRoomDatabase _splitDatabase;
+        SplitRoomDatabase splitDatabase;
         if (testDatabase == null) {
-            _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
+            splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         } else {
-            _splitDatabase = testDatabase;
+            splitDatabase = testDatabase;
             Logger.d("Using test database");
             System.out.println("USING TEST DB: " + testDatabase);
         }
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
-        mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(), _splitDatabase, key, config.shouldRecordTelemetry(), telemetryStorage);
+        mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(), splitDatabase, key, config.shouldRecordTelemetry(), new SplitCipherImpl(mApiKey, config.isEncryptionEnabled()), telemetryStorage);
 
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
 

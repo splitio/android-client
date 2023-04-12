@@ -11,6 +11,8 @@ import java.util.List;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
+import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.cipher.SplitCipherImpl;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
@@ -18,9 +20,11 @@ import io.split.android.client.utils.logger.Logger;
 public class SplitEntityToSplitTransformer implements SplitListTransformer<SplitEntity, Split> {
 
     private final SplitParallelTaskExecutor<List<Split>> mTaskExecutor;
+    private final SplitCipher mSplitCipher;
 
-    public SplitEntityToSplitTransformer(SplitParallelTaskExecutor<List<Split>> taskExecutor) {
+    public SplitEntityToSplitTransformer(SplitParallelTaskExecutor<List<Split>> taskExecutor, SplitCipher splitCipher) {
         mTaskExecutor = taskExecutor;
+        mSplitCipher = splitCipher;
     }
 
     @Override
