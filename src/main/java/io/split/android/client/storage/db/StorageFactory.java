@@ -10,8 +10,8 @@ import io.split.android.client.storage.attributes.AttributesStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorageContainerImpl;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.attributes.SqLitePersistentAttributesStorage;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.cipher.SplitCipher;
-import io.split.android.client.storage.cipher.SplitCipherImpl;
 import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
@@ -43,7 +43,7 @@ public class StorageFactory {
     }
 
     public static SplitsStorage getSplitsStorageForWorker(SplitRoomDatabase splitRoomDatabase, String apiKey, boolean encryptionEnabled) {
-        return getSplitsStorage(splitRoomDatabase, new SplitCipherImpl(apiKey, encryptionEnabled));
+        return getSplitsStorage(splitRoomDatabase, SplitCipherFactory.create(apiKey, encryptionEnabled));
     }
 
     public static MySegmentsStorageContainer getMySegmentsStorage(SplitRoomDatabase splitRoomDatabase) {

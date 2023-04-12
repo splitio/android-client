@@ -36,7 +36,8 @@ import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.shared.UserConsent;
-import io.split.android.client.storage.cipher.SplitCipherImpl;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
@@ -140,7 +141,18 @@ public class SplitFactoryImpl implements SplitFactory {
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
-        mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(), splitDatabase, key, config.shouldRecordTelemetry(), new SplitCipherImpl(mApiKey, config.isEncryptionEnabled()), telemetryStorage);
+
+        SplitCipher splitCipher;
+        try {
+            splitCipher = SplitCipherFactory.create(mApiKey,
+                    config.isEncryptionEnabled());
+        } catch (RuntimeException e) {
+            Logger.e("Error while creating cipher: " + e.getMessage() + ". Disabling encryption");
+            splitCipher = SplitCipherFactory.create(mApiKey, false);
+            // TODO use DB cipher to change mode
+        }
+        mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
+                splitDatabase, key, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
 
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
 
