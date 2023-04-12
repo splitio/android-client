@@ -13,15 +13,19 @@ import java.util.concurrent.Callable;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.utils.Json;
 
 public class SplitToSplitEntityTransformer implements SplitListTransformer<Split, SplitEntity> {
 
     private final SplitParallelTaskExecutor<List<SplitEntity>> mTaskExecutor;
+    private final SplitCipher mSplitCipher;
 
-    public SplitToSplitEntityTransformer(@NonNull SplitParallelTaskExecutor<List<SplitEntity>> taskExecutor) {
+    public SplitToSplitEntityTransformer(@NonNull SplitParallelTaskExecutor<List<SplitEntity>> taskExecutor,
+                                         @NonNull SplitCipher splitCipher) {
         mTaskExecutor = checkNotNull(taskExecutor);
+        mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
@@ -43,18 +47,22 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
             return splitEntities;
 
         } else {
-            return getSplitEntities(splits);
+            return getSplitEntities(splits, mSplitCipher);
         }
     }
 
     @NonNull
-    private List<SplitEntity> getSplitEntities(List<Split> partition) {
+    private List<SplitEntity> getSplitEntities(List<Split> partition, SplitCipher cipher) {
         List<SplitEntity> result = new ArrayList<>();
 
         for (Split split : partition) {
+            String encryptedJson = cipher.encrypt(Json.toJson(split));
+            if (encryptedJson == null) {
+                continue;
+            }
             SplitEntity entity = new SplitEntity();
             entity.setName(split.name);
-            entity.setBody(Json.toJson(split));
+            entity.setBody(encryptedJson);
             entity.setUpdatedAt(System.currentTimeMillis() / 1000);
             result.add(entity);
         }
@@ -72,8 +80,8 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
         for (List<Split> partition : partitions) {
             taskList.add(new SplitDeferredTaskItem<>(new Callable<List<SplitEntity>>() {
                 @Override
-                public List<SplitEntity> call() throws Exception {
-                    return SplitToSplitEntityTransformer.this.getSplitEntities(partition);
+                public List<SplitEntity> call() {
+                    return SplitToSplitEntityTransformer.this.getSplitEntities(partition, mSplitCipher);
                 }
             }));
         }

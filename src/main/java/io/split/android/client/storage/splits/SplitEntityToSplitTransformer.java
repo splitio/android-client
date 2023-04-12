@@ -46,7 +46,7 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
 
             return splits;
         } else {
-            return convertEntitiesToSplitList(entities);
+            return convertEntitiesToSplitList(entities, mSplitCipher);
         }
     }
 
@@ -59,14 +59,15 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
 
         for (List<SplitEntity> partition : partitions) {
             taskList.add(new SplitDeferredTaskItem<>(
-                    () -> convertEntitiesToSplitList(partition)));
+                    () -> convertEntitiesToSplitList(partition, mSplitCipher)));
         }
 
         return taskList;
     }
 
     @NonNull
-    private static List<Split> convertEntitiesToSplitList(List<SplitEntity> entities) {
+    private static List<Split> convertEntitiesToSplitList(List<SplitEntity> entities,
+                                                          SplitCipher cipher) {
         List<Split> splits = new ArrayList<>();
 
         if (entities == null) {
@@ -74,8 +75,12 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
         }
 
         for (SplitEntity entity : entities) {
+            String json;
             try {
-                splits.add(Json.fromJson(entity.getBody(), Split.class));
+                json = cipher.decrypt(entity.getBody());
+                if (json != null) {
+                    splits.add(Json.fromJson(json, Split.class));
+                }
             } catch (JsonSyntaxException e) {
                 Logger.e("Could not parse entity to split: " + entity.getName());
             }

@@ -44,7 +44,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                                           @NonNull SplitCipher splitCipher) {
         this(database,
                 new SplitEntityToSplitTransformer(executorFactory.createForList(Split.class), splitCipher),
-                new SplitToSplitEntityTransformer(executorFactory.createForList(SplitEntity.class)));
+                new SplitToSplitEntityTransformer(executorFactory.createForList(SplitEntity.class), splitCipher));
     }
 
     @Override
