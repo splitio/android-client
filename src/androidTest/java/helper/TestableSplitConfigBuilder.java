@@ -55,6 +55,7 @@ public class TestableSplitConfigBuilder {
     private int mMtkPerPush = 30000;
     private int mMtkRefreshRate = 1800;
     private UserConsent mUserConsent = UserConsent.GRANTED;
+    private boolean mEncryptionEnabled;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -230,6 +231,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder encryptionEnabled(boolean enabled) {
+        this.mEncryptionEnabled = enabled;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -278,7 +284,8 @@ public class TestableSplitConfigBuilder {
                     mLogLevel,
                     mMtkPerPush,
                     mMtkRefreshRate,
-                    mUserConsent);
+                    mUserConsent,
+                    mEncryptionEnabled);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "
