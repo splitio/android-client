@@ -14,10 +14,10 @@ import java.util.List;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactory;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactoryImpl;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Json;
 
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
@@ -26,8 +26,8 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     private final SplitListTransformer<Split, SplitEntity> mSplitToEntityTransformer;
     private final SplitRoomDatabase mDatabase;
 
-    public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database) {
-        this(database, new SplitParallelTaskExecutorFactoryImpl());
+    public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database, @NonNull SplitCipher splitCipher) {
+        this(database, new SplitParallelTaskExecutorFactoryImpl(), splitCipher);
     }
 
     @VisibleForTesting
@@ -39,9 +39,11 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         mSplitToEntityTransformer = checkNotNull(splitToEntityTransformer);
     }
 
-    private SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database, @NonNull SplitParallelTaskExecutorFactory executorFactory) {
+    private SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database,
+                                          @NonNull SplitParallelTaskExecutorFactory executorFactory,
+                                          @NonNull SplitCipher splitCipher) {
         this(database,
-                new SplitEntityToSplitTransformer(executorFactory.createForList(Split.class)),
+                new SplitEntityToSplitTransformer(executorFactory.createForList(Split.class), splitCipher),
                 new SplitToSplitEntityTransformer(executorFactory.createForList(SplitEntity.class)));
     }
 

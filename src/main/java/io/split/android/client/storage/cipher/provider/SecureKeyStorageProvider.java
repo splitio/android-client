@@ -27,7 +27,7 @@ public class SecureKeyStorageProvider implements KeyProvider {
     private static final String KEY_ALIAS_PREFIX = "split_key_";
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
     public static final String ALGORITHM = "AES";
-    public static final int KEY_SIZE = 256;
+    public static final int KEY_SIZE = 128;
 
     private final String mAlias;
 
@@ -35,12 +35,11 @@ public class SecureKeyStorageProvider implements KeyProvider {
         mAlias = KEY_ALIAS_PREFIX + apiKey;
     }
 
-
     @Nullable
     @Override
     public SecretKey getKey() {
         try {
-            return getAESKeyWithAndroidKeystore();
+            return getKeyFromKeystore();
         } catch (Exception e) {
             Logger.e("Error while getting key from Android KeyStore: " + e.getMessage());
             return null;
@@ -48,7 +47,7 @@ public class SecureKeyStorageProvider implements KeyProvider {
     }
 
     @Nullable
-    private SecretKey getAESKeyWithAndroidKeystore() throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchProviderException, UnrecoverableKeyException {
+    private SecretKey getKeyFromKeystore() throws KeyStoreException, CertificateException, IOException, NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchProviderException, UnrecoverableKeyException {
         KeyStore keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER);
         keyStore.load(null);
 

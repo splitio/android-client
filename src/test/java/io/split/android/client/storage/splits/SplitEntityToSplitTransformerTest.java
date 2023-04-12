@@ -19,6 +19,7 @@ import java.util.List;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
+import io.split.android.client.storage.cipher.NoOpCipher;
 import io.split.android.client.storage.db.SplitEntity;
 
 public class SplitEntityToSplitTransformerTest {
@@ -32,7 +33,7 @@ public class SplitEntityToSplitTransformerTest {
         MockitoAnnotations.openMocks(this);
         when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(2);
 
-        mConverter = new SplitEntityToSplitTransformer(mSplitTaskExecutor);
+        mConverter = new SplitEntityToSplitTransformer(mSplitTaskExecutor, new NoOpCipher());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package io.split.android.client.storage.cipher;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.nio.charset.Charset;
@@ -26,6 +27,7 @@ public class CBCCipher implements SplitCipher {
     }
 
     @Override
+    @Nullable
     public String encrypt(String data) {
         if (data == null) {
             return null;
@@ -44,6 +46,7 @@ public class CBCCipher implements SplitCipher {
     }
 
     @Override
+    @Nullable
     public String decrypt(String data) {
         if (data == null) {
             return null;

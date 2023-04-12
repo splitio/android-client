@@ -16,6 +16,7 @@ import java.util.Map;
 import helper.DatabaseHelper;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.storage.cipher.NoOpCipher;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -47,7 +48,7 @@ public class PersistentSplitsStorageTest {
         }
         mRoomDb.splitDao().insert(entities);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
-        mPersistentSplitsStorage = new SqLitePersistentSplitsStorage(mRoomDb);
+        mPersistentSplitsStorage = new SqLitePersistentSplitsStorage(mRoomDb, new NoOpCipher());
     }
 
     @Test

@@ -56,6 +56,7 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -125,16 +126,19 @@ class SplitFactoryHelper {
     }
 
     SplitStorageContainer buildStorageContainer(UserConsent userConsentStatus,
-            SplitRoomDatabase splitRoomDatabase, Key key,
-                                                boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage /* Testing */) {
+                                                SplitRoomDatabase splitRoomDatabase,
+                                                Key key,
+                                                boolean shouldRecordTelemetry,
+                                                SplitCipher splitCipher,
+                                                TelemetryStorage telemetryStorage) {
 
         boolean isPersistenceEnabled = userConsentStatus == UserConsent.GRANTED;
         PersistentEventsStorage persistentEventsStorage = StorageFactory.getPersistentEventsStorage(splitRoomDatabase);
         PersistentImpressionsStorage persistentImpressionsStorage = StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase);
         return new SplitStorageContainer(
-                StorageFactory.getSplitsStorage(splitRoomDatabase),
+                StorageFactory.getSplitsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase),
-                StorageFactory.getPersistentSplitsStorage(splitRoomDatabase),
+                StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getEventsStorage(persistentEventsStorage, isPersistenceEnabled),
                 persistentEventsStorage,
                 StorageFactory.getImpressionsStorage(persistentImpressionsStorage, isPersistenceEnabled),
@@ -142,7 +146,7 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistentImpressionsCountStorage(splitRoomDatabase),
                 StorageFactory.getPersistentImpressionsUniqueStorage(splitRoomDatabase),
                 StorageFactory.getAttributesStorage(),
-                StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, key.matchingKey()),
+                StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, key.matchingKey()),
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage));
     }
 

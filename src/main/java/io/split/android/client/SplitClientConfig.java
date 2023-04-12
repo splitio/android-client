@@ -116,6 +116,7 @@ public class SplitClientConfig {
     private boolean mSyncEnabled = true;
     private int mLogLevel = SplitLogLevel.NONE;
     private UserConsent mUserConsent;
+    private boolean mEncryptionEnabled;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -166,7 +167,8 @@ public class SplitClientConfig {
                               int logLevel,
                               int mtkPerPush,
                               int mtkRefreshRate,
-                              UserConsent userConsent) {
+                              UserConsent userConsent,
+                              boolean encryptionEnabled) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -217,6 +219,7 @@ public class SplitClientConfig {
         mShouldRecordTelemetry = shouldRecordTelemetry;
 
         mMtkPerPush = mtkPerPush;
+        mEncryptionEnabled = encryptionEnabled;
 
         Logger.instance().setLevel(mLogLevel);
     }
@@ -422,8 +425,6 @@ public class SplitClientConfig {
         return mMtkRefreshRate;
     }
 
-    private void enableTelemetry() { mShouldRecordTelemetry = true; }
-
     public UserConsent userConsent() {
         return mUserConsent;
     }
@@ -431,6 +432,12 @@ public class SplitClientConfig {
     protected void setUserConsent(UserConsent status) {
         mUserConsent = status;
     }
+
+    public boolean isEncryptionEnabled() {
+        return mEncryptionEnabled;
+    }
+
+    private void enableTelemetry() { mShouldRecordTelemetry = true; }
 
     public static final class Builder {
 
@@ -493,6 +500,8 @@ public class SplitClientConfig {
         private final int mMtkRefreshRate = 15 * 60;
 
         private UserConsent mUserConsent = UserConsent.GRANTED;
+
+        private boolean mEncryptionEnabled = false;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -976,12 +985,22 @@ public class SplitClientConfig {
          *             DECLINED: Impressions and events aren't tracked nor sent to the backend
          *             UNKNOWN: Impressions and events are tracked in memory and aren't sent to the backend
          *
-         * @return: This builder
-         * @default: GRANTED
+         * @default GRANTED
          */
         public Builder userConsent(UserConsent value) {
             mUserConsent = value;
             Logger.v("User consent has been set to " + value.toString());
+            return this;
+        }
+
+        /**
+         * Enable/disable encryption of stored data.
+         * @param enabled: Whether encryption is enabled or not.
+         * @default: false
+         * @return: This builder
+         */
+        public Builder encryptionEnabled(boolean enabled) {
+            mEncryptionEnabled = enabled;
             return this;
         }
 
@@ -1087,7 +1106,8 @@ public class SplitClientConfig {
                     mLogLevel,
                     mMtkPerPush,
                     mMtkRefreshRate,
-                    mUserConsent);
+                    mUserConsent,
+                    mEncryptionEnabled);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {
