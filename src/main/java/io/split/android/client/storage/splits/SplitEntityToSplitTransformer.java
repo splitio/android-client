@@ -1,5 +1,7 @@
 package io.split.android.client.storage.splits;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import com.google.common.collect.Lists;
@@ -12,7 +14,6 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
 import io.split.android.client.storage.cipher.SplitCipher;
-import io.split.android.client.storage.cipher.SplitCipherImpl;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
@@ -22,9 +23,10 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
     private final SplitParallelTaskExecutor<List<Split>> mTaskExecutor;
     private final SplitCipher mSplitCipher;
 
-    public SplitEntityToSplitTransformer(SplitParallelTaskExecutor<List<Split>> taskExecutor, SplitCipher splitCipher) {
-        mTaskExecutor = taskExecutor;
-        mSplitCipher = splitCipher;
+    public SplitEntityToSplitTransformer(@NonNull SplitParallelTaskExecutor<List<Split>> taskExecutor,
+                                         @NonNull SplitCipher splitCipher) {
+        mTaskExecutor = checkNotNull(taskExecutor);
+        mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
@@ -56,7 +58,8 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
         List<SplitDeferredTaskItem<List<Split>>> taskList = new ArrayList<>(partitions.size());
 
         for (List<SplitEntity> partition : partitions) {
-            taskList.add(new SplitDeferredTaskItem<>(() -> convertEntitiesToSplitList(partition)));
+            taskList.add(new SplitDeferredTaskItem<>(
+                    () -> convertEntitiesToSplitList(partition)));
         }
 
         return taskList;
