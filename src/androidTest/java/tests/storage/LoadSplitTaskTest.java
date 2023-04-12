@@ -17,6 +17,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.splits.LoadSplitsTask;
+import io.split.android.client.storage.cipher.NoOpCipher;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -47,7 +48,7 @@ public class LoadSplitTaskTest {
         }
         mRoomDb.splitDao().insert(entities);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
-        mSplitsStorage = new SplitsStorageImpl(new SqLitePersistentSplitsStorage(mRoomDb));
+        mSplitsStorage = new SplitsStorageImpl(new SqLitePersistentSplitsStorage(mRoomDb, new NoOpCipher()));
     }
 
     @Test
@@ -68,4 +69,3 @@ public class LoadSplitTaskTest {
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 }
-
