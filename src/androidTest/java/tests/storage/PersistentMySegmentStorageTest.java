@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,7 +65,23 @@ public class PersistentMySegmentStorageTest {
     @Test
     public void updateSegments() {
 
-        mPersistentMySegmentsStorage.set(mUserKey, Arrays.asList("a1,a2,a3,a4"));
+        mPersistentMySegmentsStorage.set(mUserKey, Collections.singletonList("a1,a2,a3,a4"));
+
+        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
+
+        Assert.assertEquals(4, snapshot.size());
+        Assert.assertTrue(snapshot.contains("a1"));
+        Assert.assertTrue(snapshot.contains("a2"));
+        Assert.assertTrue(snapshot.contains("a3"));
+        Assert.assertTrue(snapshot.contains("a4"));
+    }
+
+    @Test
+    public void updateSegmentsEncrypted() {
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb,
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true));
+
+        mPersistentMySegmentsStorage.set(mUserKey, Collections.singletonList("a1,a2,a3,a4"));
 
         Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
 
@@ -77,7 +94,6 @@ public class PersistentMySegmentStorageTest {
 
     @Test
     public void updateEmptyMySegment() {
-        List<String> splits = new ArrayList<>();
 
         mPersistentMySegmentsStorage.set(mUserKey, new ArrayList<>());
 
@@ -94,5 +110,4 @@ public class PersistentMySegmentStorageTest {
 
         Assert.assertEquals(3, snapshot.size());
     }
-
 }
