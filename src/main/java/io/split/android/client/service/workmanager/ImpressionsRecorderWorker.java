@@ -24,6 +24,10 @@ public class ImpressionsRecorderWorker extends SplitWorker {
                     ServiceConstants.DEFAULT_RECORDS_PER_PUSH);
             boolean shouldRecordTelemetry = workerParams.getInputData().getBoolean(
                     ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
+            String apiKey = workerParams.getInputData().getString(
+                    ServiceConstants.WORKER_PARAM_API_KEY);
+            boolean encryptionEnabled = workerParams.getInputData().getBoolean(
+                    ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, false);
 
             ImpressionsRecorderTaskConfig config =
                     new ImpressionsRecorderTaskConfig(
@@ -33,7 +37,7 @@ public class ImpressionsRecorderWorker extends SplitWorker {
 
             mSplitTask = new ImpressionsRecorderTask(ServiceFactory.getImpressionsRecorder(
                     getHttpClient(), getEndPoint()),
-                    StorageFactory.getPersistentImpressionsStorage(getDatabase()),
+                    StorageFactory.getPersistentImpressionsStorageForWorker(getDatabase(), apiKey, encryptionEnabled),
                     config,
                     StorageFactory.getTelemetryStorage(config.shouldRecordTelemetry()));
         } catch (URISyntaxException e) {

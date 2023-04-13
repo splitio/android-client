@@ -134,7 +134,8 @@ class SplitFactoryHelper {
 
         boolean isPersistenceEnabled = userConsentStatus == UserConsent.GRANTED;
         PersistentEventsStorage persistentEventsStorage = StorageFactory.getPersistentEventsStorage(splitRoomDatabase);
-        PersistentImpressionsStorage persistentImpressionsStorage = StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase);
+        PersistentImpressionsStorage persistentImpressionsStorage =
+                StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase, splitCipher);
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, splitCipher),

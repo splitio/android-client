@@ -68,9 +68,14 @@ public class StorageFactory {
     }
 
     public static PersistentImpressionsStorage getPersistentImpressionsStorage(
-            SplitRoomDatabase splitRoomDatabase) {
+            SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
         return new SqLitePersistentImpressionsStorage(splitRoomDatabase,
-                ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
+                ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD, splitCipher);
+    }
+
+    public static PersistentImpressionsStorage getPersistentImpressionsStorageForWorker(
+            SplitRoomDatabase splitRoomDatabase, String apiKey, boolean encryptionEnabled) {
+        return getPersistentImpressionsStorage(splitRoomDatabase, SplitCipherFactory.create(apiKey, encryptionEnabled));
     }
 
     public static PersistentEventsStorage getPersistentEventsStorage(
@@ -98,7 +103,6 @@ public class StorageFactory {
     }
 
     // Forces telemetry storage recreation to avoid flaky tests
-    @VisibleForTesting
     public static TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry) {
         if (shouldRecordTelemetry) {
             return new InMemoryTelemetryStorage();
