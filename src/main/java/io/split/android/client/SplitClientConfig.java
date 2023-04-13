@@ -116,7 +116,7 @@ public class SplitClientConfig {
     private boolean mSyncEnabled = true;
     private int mLogLevel = SplitLogLevel.NONE;
     private UserConsent mUserConsent;
-    private boolean mEncryptionEnabled;
+    private boolean mEncryptionEnabled = false;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -433,7 +433,7 @@ public class SplitClientConfig {
         mUserConsent = status;
     }
 
-    public boolean isEncryptionEnabled() {
+    public boolean encryptionEnabled() {
         return mEncryptionEnabled;
     }
 

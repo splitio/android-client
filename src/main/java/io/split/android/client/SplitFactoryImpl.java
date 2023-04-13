@@ -145,7 +145,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitCipher splitCipher;
         try {
             splitCipher = SplitCipherFactory.create(mApiKey,
-                    config.isEncryptionEnabled());
+                    config.encryptionEnabled());
         } catch (RuntimeException e) {
             Logger.e("Error while creating cipher: " + e.getMessage() + ". Disabling encryption");
             splitCipher = SplitCipherFactory.create(mApiKey, false);

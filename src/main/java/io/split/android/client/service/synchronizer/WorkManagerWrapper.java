@@ -139,7 +139,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         Data.Builder dataBuilder = new Data.Builder();
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_DATABASE_NAME, mDatabaseName);
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_API_KEY, mApiKey);
-        dataBuilder.putBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, mSplitClientConfig.isEncryptionEnabled());
+        dataBuilder.putBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, mSplitClientConfig.encryptionEnabled());
         if (customData != null) {
             dataBuilder.putAll(customData);
         }
