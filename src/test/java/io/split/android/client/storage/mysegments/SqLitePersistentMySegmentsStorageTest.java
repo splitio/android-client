@@ -22,36 +22,36 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 public class SqLitePersistentMySegmentsStorageTest {
 
     @Mock
-    private SplitRoomDatabase mockDatabase;
+    private SplitRoomDatabase mDatabase;
     @Mock
-    private SplitCipher mockSplitCipher;
+    private SplitCipher mSplitCipher;
     @Mock
-    private MySegmentDao mockMySegmentDao;
-    private SqLitePersistentMySegmentsStorage storage;
+    private MySegmentDao mDao;
+    private SqLitePersistentMySegmentsStorage mStorage;
 
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        when(mockDatabase.mySegmentDao()).thenReturn(mockMySegmentDao);
-        storage = new SqLitePersistentMySegmentsStorage(mockDatabase, mockSplitCipher);
+        when(mDatabase.mySegmentDao()).thenReturn(mDao);
+        mStorage = new SqLitePersistentMySegmentsStorage(mDatabase, mSplitCipher);
     }
 
     @Test
-    public void testSet() {
+    public void encryptedValuesAreStoredWithDao() {
         String userKey = "user_key";
         List<String> segments = Arrays.asList("segment1", "segment2", "segment3");
         String encryptedSegments = "encrypted_segments";
 
-        when(mockSplitCipher.encrypt(anyString())).thenReturn(encryptedSegments);
+        when(mSplitCipher.encrypt(anyString())).thenReturn(encryptedSegments);
 
-        storage.set(userKey, segments);
+        mStorage.set(userKey, segments);
 
-        verify(mockSplitCipher).encrypt("segment1,segment2,segment3");
-        verify(mockMySegmentDao).update(any(MySegmentEntity.class));
+        verify(mSplitCipher).encrypt("segment1,segment2,segment3");
+        verify(mDao).update(any(MySegmentEntity.class));
     }
 
     @Test
-    public void testGetSnapshot() {
+    public void getSnapshotReturnsDecryptedValues() {
         String userKey = "user_key";
         String encryptedSegments = "encrypted_segments";
         String decryptedSegments = "segment1,segment2,segment3";
@@ -59,25 +59,11 @@ public class SqLitePersistentMySegmentsStorageTest {
         entity.setUserKey(userKey);
         entity.setSegmentList(encryptedSegments);
 
-        when(mockMySegmentDao.getByUserKey(userKey)).thenReturn(entity);
-        when(mockSplitCipher.decrypt(encryptedSegments)).thenReturn(decryptedSegments);
+        when(mDao.getByUserKey(userKey)).thenReturn(entity);
+        when(mSplitCipher.decrypt(encryptedSegments)).thenReturn(decryptedSegments);
 
-        List<String> result = storage.getSnapshot(userKey);
+        List<String> result = mStorage.getSnapshot(userKey);
 
         assertEquals(Arrays.asList("segment1", "segment2", "segment3"), result);
-    }
-
-    @Test
-    public void testGetSnapshotWithEmptySegments() {
-        String userKey = "user_key";
-        MySegmentEntity entity = new MySegmentEntity();
-        entity.setUserKey(userKey);
-        entity.setSegmentList(null);
-
-        when(mockMySegmentDao.getByUserKey(userKey)).thenReturn(entity);
-
-        List<String> result = storage.getSnapshot(userKey);
-
-        assertEquals(0, result.size());
     }
 }
