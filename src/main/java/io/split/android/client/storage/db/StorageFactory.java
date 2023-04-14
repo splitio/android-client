@@ -55,9 +55,10 @@ public class StorageFactory {
     }
 
     public static EventsStorage getEventsStorage(PersistentEventsStorage persistentEventsStorage,
-                                                      boolean isPersistenceEnabled) {
+                                                 boolean isPersistenceEnabled) {
         return new EventsStorage(persistentEventsStorage, isPersistenceEnabled);
     }
+
     public static PersistentSplitsStorage getPersistentSplitsStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
         return new SqLitePersistentSplitsStorage(splitRoomDatabase, splitCipher);
     }
@@ -90,9 +91,10 @@ public class StorageFactory {
     }
 
     public static PersistentImpressionsCountStorage getPersistentImpressionsCountStorage(
-            SplitRoomDatabase splitRoomDatabase) {
+            SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
         return new SqLitePersistentImpressionsCountStorage(splitRoomDatabase,
-                ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
+                ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD,
+                splitCipher);
     }
 
     public static AttributesStorageContainer getAttributesStorage() {
