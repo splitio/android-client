@@ -133,7 +133,8 @@ class SplitFactoryHelper {
                                                 TelemetryStorage telemetryStorage) {
 
         boolean isPersistenceEnabled = userConsentStatus == UserConsent.GRANTED;
-        PersistentEventsStorage persistentEventsStorage = StorageFactory.getPersistentEventsStorage(splitRoomDatabase);
+        PersistentEventsStorage persistentEventsStorage =
+                StorageFactory.getPersistentEventsStorage(splitRoomDatabase, splitCipher);
         PersistentImpressionsStorage persistentImpressionsStorage =
                 StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase, splitCipher);
         return new SplitStorageContainer(
