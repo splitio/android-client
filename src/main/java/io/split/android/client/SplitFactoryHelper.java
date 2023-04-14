@@ -137,7 +137,7 @@ class SplitFactoryHelper {
         PersistentImpressionsStorage persistentImpressionsStorage = StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase);
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase, splitCipher),
-                StorageFactory.getMySegmentsStorage(splitRoomDatabase),
+                StorageFactory.getMySegmentsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getEventsStorage(persistentEventsStorage, isPersistenceEnabled),
                 persistentEventsStorage,
