@@ -12,6 +12,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
 import io.split.android.client.utils.Json;
@@ -22,9 +23,12 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
     private static final Type ATTRIBUTES_MAP_TYPE = new TypeToken<Map<String, Object>>() {
     }.getType();
     private final AttributesDao mAttributesDao;
+    private final SplitCipher mSplitCipher;
 
-    public SqLitePersistentAttributesStorage(@NonNull AttributesDao attributesDao, @NonNull String userKey) {
+    public SqLitePersistentAttributesStorage(@NonNull AttributesDao attributesDao,
+                                             @NonNull SplitCipher splitCipher) {
         mAttributesDao = checkNotNull(attributesDao);
+        mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
@@ -33,7 +37,8 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
             return;
         }
 
-        AttributesEntity entity = new AttributesEntity(matchingKey, Json.toJson(attributes), System.currentTimeMillis() / 1000);
+        AttributesEntity entity = new AttributesEntity(matchingKey,
+                mSplitCipher.encrypt(Json.toJson(attributes)), System.currentTimeMillis() / 1000);
 
         mAttributesDao.update(entity);
     }
@@ -56,7 +61,8 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
 
         if (attributesEntity != null) {
             try {
-                attributesMap = Json.genericValueMapFromJson(attributesEntity.getAttributes(), ATTRIBUTES_MAP_TYPE);
+                attributesMap = Json.genericValueMapFromJson(mSplitCipher.decrypt(attributesEntity.getAttributes()),
+                        ATTRIBUTES_MAP_TYPE);
             } catch (JsonSyntaxException exception) {
                 Logger.e(exception);
             }

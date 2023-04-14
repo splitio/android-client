@@ -3,7 +3,6 @@ package io.split.android.client.storage.db;
 import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 
 import androidx.annotation.RestrictTo;
-import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.attributes.AttributesStorageContainer;
@@ -101,8 +100,8 @@ public class StorageFactory {
         return getAttributesStorageContainerInstance();
     }
 
-    public static PersistentAttributesStorage getPersistentAttributesStorage(SplitRoomDatabase splitRoomDatabase, String matchingKey) {
-        return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), matchingKey);
+    public static PersistentAttributesStorage getPersistentAttributesStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
+        return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), splitCipher);
     }
 
     public static PersistentImpressionsUniqueStorage getPersistentImpressionsUniqueStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
