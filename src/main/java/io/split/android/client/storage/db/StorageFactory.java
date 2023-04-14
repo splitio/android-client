@@ -105,8 +105,13 @@ public class StorageFactory {
         return new SqLitePersistentAttributesStorage(splitRoomDatabase.attributesDao(), matchingKey);
     }
 
-    public static PersistentImpressionsUniqueStorage getPersistentImpressionsUniqueStorage(SplitRoomDatabase splitRoomDatabase) {
-        return new SqlitePersistentUniqueStorage(splitRoomDatabase, ServiceConstants.TEN_DAYS_EXPIRATION_PERIOD);
+    public static PersistentImpressionsUniqueStorage getPersistentImpressionsUniqueStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
+        return new SqlitePersistentUniqueStorage(splitRoomDatabase,
+                ServiceConstants.TEN_DAYS_EXPIRATION_PERIOD, splitCipher);
+    }
+
+    public static PersistentImpressionsUniqueStorage getPersistentImpressionsUniqueStorageForWorker(SplitRoomDatabase splitRoomDatabase, String apiKey, boolean encryptionEnabled) {
+        return getPersistentImpressionsUniqueStorage(splitRoomDatabase, SplitCipherFactory.create(apiKey, encryptionEnabled));
     }
 
     // Forces telemetry storage recreation to avoid flaky tests

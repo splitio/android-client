@@ -146,7 +146,7 @@ class SplitFactoryHelper {
                 StorageFactory.getImpressionsStorage(persistentImpressionsStorage, isPersistenceEnabled),
                 persistentImpressionsStorage,
                 StorageFactory.getPersistentImpressionsCountStorage(splitRoomDatabase, splitCipher),
-                StorageFactory.getPersistentImpressionsUniqueStorage(splitRoomDatabase),
+                StorageFactory.getPersistentImpressionsUniqueStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getAttributesStorage(),
                 StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, key.matchingKey()),
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage));
