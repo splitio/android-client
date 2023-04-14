@@ -27,7 +27,8 @@ public class SqLitePersistentImpressionsStorage
     private final SplitCipher mSplitCipher;
 
     public SqLitePersistentImpressionsStorage(@NonNull SplitRoomDatabase database,
-                                              long expirationPeriod, SplitCipher splitCipher) {
+                                              long expirationPeriod,
+                                              @NonNull SplitCipher splitCipher) {
         super(expirationPeriod);
         mDatabase = checkNotNull(database);
         mDao = mDatabase.impressionDao();
@@ -48,19 +49,18 @@ public class SqLitePersistentImpressionsStorage
     @Override
     protected ImpressionEntity entityForModel(@NonNull KeyImpression model) {
         ImpressionEntity entity = new ImpressionEntity();
-        String body = null;
+        String body;
         try {
             body = Json.toJson(model);
+            String encryptedBody = mSplitCipher.encrypt(body);
+            if (encryptedBody != null) {
+                entity.setStatus(StorageRecordStatus.ACTIVE);
+                entity.setBody(encryptedBody);
+                entity.setTestName(model.feature);
+                entity.setCreatedAt(System.currentTimeMillis() / 1000);
+            }
         } catch (JsonParseException e) {
             Logger.e("Error parsing impression: " + e.getMessage());
-        }
-
-        String encryptedBody = mSplitCipher.encrypt(body);
-        if (encryptedBody != null) {
-            entity.setStatus(StorageRecordStatus.ACTIVE);
-            entity.setBody(encryptedBody);
-            entity.setTestName(model.feature);
-            entity.setCreatedAt(System.currentTimeMillis() / 1000);
         }
 
         return entity;
