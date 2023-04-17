@@ -1,5 +1,7 @@
 package io.split.android.client.utils;
 
+import androidx.annotation.NonNull;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -47,6 +49,7 @@ public class Json {
         return mJson.fromJson(json, clz);
     }
 
+    @NonNull
     public static Map<String, Object> genericValueMapFromJson(String json, Type attributesMapType) {
         Map<String, Object> map = mJson.fromJson(json, attributesMapType);
 
