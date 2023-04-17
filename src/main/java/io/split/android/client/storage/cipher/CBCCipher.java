@@ -28,7 +28,7 @@ public class CBCCipher implements SplitCipher {
 
     @Override
     @Nullable
-    public String encrypt(String data) {
+    public synchronized String encrypt(String data) {
         if (data == null) {
             return null;
         }
@@ -47,7 +47,7 @@ public class CBCCipher implements SplitCipher {
 
     @Override
     @Nullable
-    public String decrypt(String data) {
+    public synchronized String decrypt(String data) {
         if (data == null) {
             return null;
         }

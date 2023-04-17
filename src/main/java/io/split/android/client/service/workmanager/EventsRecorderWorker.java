@@ -25,10 +25,14 @@ public class EventsRecorderWorker extends SplitWorker {
 
             boolean shouldRecordTelemetry = workerParams.getInputData().getBoolean(
                     ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
+            String apiKey = workerParams.getInputData().getString(
+                    ServiceConstants.WORKER_PARAM_API_KEY);
+            boolean encryptionEnabled =
+                    workerParams.getInputData().getBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, false);
 
             mSplitTask = new EventsRecorderTask(ServiceFactory.getEventsRecorder(
                     getHttpClient(), getEndPoint()),
-                    StorageFactory.getPersistentEventsStorage(getDatabase()),
+                    StorageFactory.getPersistentEventsStorageForWorker(getDatabase(), apiKey, encryptionEnabled),
                     new EventsRecorderTaskConfig(eventsPerPush),
                     StorageFactory.getTelemetryStorage(shouldRecordTelemetry));
         } catch (URISyntaxException e) {

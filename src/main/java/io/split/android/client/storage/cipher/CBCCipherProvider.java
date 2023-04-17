@@ -22,6 +22,8 @@ public class CBCCipherProvider implements CipherProvider {
 
     private static final int DECRYPT_MODE = Cipher.DECRYPT_MODE;
 
+    private Cipher mCipher;
+
     private final SecretKey mKey;
     private final IvParameterSpec mIvParameterSpec;
 
@@ -45,12 +47,14 @@ public class CBCCipherProvider implements CipherProvider {
     }
 
     @Nullable
-    private Cipher getInitializedCipher(int encryptMode) {
+    private synchronized Cipher getInitializedCipher(int encryptMode) {
         try {
-            Cipher cipher = Cipher.getInstance(SPEC);
-            cipher.init(encryptMode, mKey, mIvParameterSpec);
+            if (mCipher == null) {
+                mCipher = Cipher.getInstance(SPEC);
+            }
+            mCipher.init(encryptMode, mKey, mIvParameterSpec);
 
-            return cipher;
+            return mCipher;
         } catch (InvalidAlgorithmParameterException | InvalidKeyException |
                  NoSuchAlgorithmException | NoSuchPaddingException e) {
             Logger.e("Error initializing cipher: " + e.getMessage());

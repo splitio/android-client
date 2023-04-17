@@ -79,9 +79,14 @@ public class StorageFactory {
     }
 
     public static PersistentEventsStorage getPersistentEventsStorage(
-            SplitRoomDatabase splitRoomDatabase) {
+            SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
         return new SqLitePersistentEventsStorage(splitRoomDatabase,
-                ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD);
+                ServiceConstants.RECORDED_DATA_EXPIRATION_PERIOD, splitCipher);
+    }
+
+    public static PersistentEventsStorage getPersistentEventsStorageForWorker(
+            SplitRoomDatabase splitRoomDatabase, String apiKey, boolean encryptionEnabled) {
+        return getPersistentEventsStorage(splitRoomDatabase, SplitCipherFactory.create(apiKey, encryptionEnabled));
     }
 
     public static PersistentImpressionsCountStorage getPersistentImpressionsCountStorage(
