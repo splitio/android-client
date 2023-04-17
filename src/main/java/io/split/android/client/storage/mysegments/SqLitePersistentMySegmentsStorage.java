@@ -14,6 +14,7 @@ import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.StringHelper;
+import io.split.android.client.utils.logger.Logger;
 
 public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsStorage {
 
@@ -33,12 +34,13 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
         if (mySegments == null) {
             return;
         }
-        MySegmentEntity entity = new MySegmentEntity();
 
         String encryptedSegmentList = mSplitCipher.encrypt(mStringHelper.join(",", mySegments));
         if (encryptedSegmentList == null) {
+            Logger.e("Error encrypting my segments");
             return;
         }
+        MySegmentEntity entity = new MySegmentEntity();
         entity.setUserKey(userKey);
         entity.setSegmentList(encryptedSegmentList);
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);

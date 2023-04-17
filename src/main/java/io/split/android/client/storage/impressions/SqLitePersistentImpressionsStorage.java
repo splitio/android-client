@@ -45,25 +45,27 @@ public class SqLitePersistentImpressionsStorage
         mDao.insert(entities);
     }
 
-    @NonNull
     @Override
     protected ImpressionEntity entityForModel(@NonNull KeyImpression model) {
         ImpressionEntity entity = new ImpressionEntity();
-        String body;
         try {
-            body = Json.toJson(model);
+            String body = Json.toJson(model);
             String encryptedBody = mSplitCipher.encrypt(body);
-            if (encryptedBody != null) {
-                entity.setStatus(StorageRecordStatus.ACTIVE);
-                entity.setBody(encryptedBody);
-                entity.setTestName(model.feature);
-                entity.setCreatedAt(System.currentTimeMillis() / 1000);
+            if (encryptedBody == null) {
+                Logger.e("Error encrypting impression");
+                return null;
             }
+            entity.setStatus(StorageRecordStatus.ACTIVE);
+            entity.setBody(encryptedBody);
+            entity.setTestName(model.feature);
+            entity.setCreatedAt(System.currentTimeMillis() / 1000);
+
+            return entity;
         } catch (JsonParseException e) {
             Logger.e("Error parsing impression: " + e.getMessage());
-        }
 
-        return entity;
+            return null;
+        }
     }
 
     @Override

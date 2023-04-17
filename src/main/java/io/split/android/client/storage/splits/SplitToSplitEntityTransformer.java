@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 
 import com.google.common.collect.Lists;
+import com.google.gson.JsonParseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ import io.split.android.client.service.executor.parallel.SplitParallelTaskExecut
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitToSplitEntityTransformer implements SplitListTransformer<Split, SplitEntity> {
 
@@ -58,6 +60,7 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
         for (Split split : partition) {
             String encryptedJson = cipher.encrypt(Json.toJson(split));
             if (encryptedJson == null) {
+                Logger.e("Error encrypting split: " + split.name);
                 continue;
             }
             SplitEntity entity = new SplitEntity();

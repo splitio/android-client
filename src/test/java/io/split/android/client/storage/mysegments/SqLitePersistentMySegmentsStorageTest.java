@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
@@ -48,6 +49,19 @@ public class SqLitePersistentMySegmentsStorageTest {
 
         verify(mSplitCipher).encrypt("segment1,segment2,segment3");
         verify(mDao).update(any(MySegmentEntity.class));
+    }
+
+    @Test
+    public void noUpdatesAreMadeWhenEncryptionResultIsNull() {
+        String userKey = "user_key";
+        List<String> segments = Arrays.asList("segment1", "segment2", "segment3");
+
+        when(mSplitCipher.encrypt(anyString())).thenReturn(null);
+
+        mStorage.set(userKey, segments);
+
+        verify(mSplitCipher).encrypt("segment1,segment2,segment3");
+        verifyNoInteractions(mDao);
     }
 
     @Test

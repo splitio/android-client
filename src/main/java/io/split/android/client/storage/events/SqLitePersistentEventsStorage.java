@@ -14,6 +14,7 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -44,16 +45,17 @@ public class SqLitePersistentEventsStorage
         mDao.insert(entities);
     }
 
-    @NonNull
     @Override
     protected EventEntity entityForModel(@NonNull Event model) {
-        EventEntity entity = new EventEntity();
         String body = mSplitCipher.encrypt(Json.toJson(model));
-        if (body != null) {
-            entity.setBody(body);
-            entity.setStatus(StorageRecordStatus.ACTIVE);
-            entity.setCreatedAt(System.currentTimeMillis() / 1000);
+        if (body == null) {
+            Logger.e("Error encrypting event");
+            return null;
         }
+        EventEntity entity = new EventEntity();
+        entity.setBody(body);
+        entity.setStatus(StorageRecordStatus.ACTIVE);
+        entity.setCreatedAt(System.currentTimeMillis() / 1000);
 
         return entity;
     }

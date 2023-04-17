@@ -1,5 +1,7 @@
 package io.split.android.client.storage.impressions;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import com.google.gson.JsonParseException;
@@ -8,12 +10,14 @@ import java.util.List;
 import java.util.Set;
 
 import io.split.android.client.service.impressions.unique.UniqueKey;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 
 public class SqlitePersistentUniqueStorage
         extends SqLitePersistentStorage<UniqueKeyEntity, UniqueKey>
@@ -22,10 +26,14 @@ public class SqlitePersistentUniqueStorage
     private final SplitRoomDatabase mDatabase;
     private final UniqueKeysDao mDao;
 
-    public SqlitePersistentUniqueStorage(SplitRoomDatabase database, long expirationPeriod) {
+    private final SplitCipher mSplitCipher;
+
+    public SqlitePersistentUniqueStorage(SplitRoomDatabase database, long expirationPeriod,
+                                         SplitCipher splitCipher) {
         super(expirationPeriod);
-        mDatabase = database;
+        mDatabase = checkNotNull(database);
         mDao = mDatabase.uniqueKeysDao();
+        mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
@@ -38,12 +46,18 @@ public class SqlitePersistentUniqueStorage
         mDao.insert(entities);
     }
 
-    @NonNull
     @Override
     protected UniqueKeyEntity entityForModel(@NonNull UniqueKey model) {
+        String key = mSplitCipher.encrypt(model.getKey());
+        String featureList = mSplitCipher.encrypt(Json.toJson(model.getFeatures()));
+        if (key == null || featureList == null) {
+            Logger.e("Error encrypting unique key");
+            return null;
+        }
+
         return new UniqueKeyEntity(
-                model.getKey(),
-                Json.toJson(model.getFeatures()),
+                key,
+                featureList,
                 System.currentTimeMillis() / 1000,
                 StorageRecordStatus.ACTIVE
         );
@@ -76,8 +90,8 @@ public class SqlitePersistentUniqueStorage
 
     @Override
     protected UniqueKey entityToModel(UniqueKeyEntity entity) throws JsonParseException {
-        Set<String> features = Json.fromJson(entity.getFeatureList(), Set.class);
-        UniqueKey model = new UniqueKey(entity.getUserKey(), features);
+        Set<String> features = Json.fromJson(mSplitCipher.decrypt(entity.getFeatureList()), Set.class);
+        UniqueKey model = new UniqueKey(mSplitCipher.decrypt(entity.getUserKey()), features);
         model.setStorageId(entity.getId());
 
         return model;
