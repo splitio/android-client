@@ -7,12 +7,14 @@ import java.util.List;
 
 import io.split.android.client.dtos.DeprecatedKeyImpression;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.storage.db.ImpressionDao;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -20,13 +22,17 @@ public class SqLitePersistentImpressionsStorage
         extends SqLitePersistentStorage<ImpressionEntity, KeyImpression>
         implements PersistentImpressionsStorage {
 
-    final SplitRoomDatabase mDatabase;
-    final ImpressionDao mDao;
+    private final SplitRoomDatabase mDatabase;
+    private final ImpressionDao mDao;
+    private final SplitCipher mSplitCipher;
 
-    public SqLitePersistentImpressionsStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
+    public SqLitePersistentImpressionsStorage(@NonNull SplitRoomDatabase database,
+                                              long expirationPeriod,
+                                              @NonNull SplitCipher splitCipher) {
         super(expirationPeriod);
         mDatabase = checkNotNull(database);
         mDao = mDatabase.impressionDao();
+        mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
@@ -43,10 +49,20 @@ public class SqLitePersistentImpressionsStorage
     @Override
     protected ImpressionEntity entityForModel(@NonNull KeyImpression model) {
         ImpressionEntity entity = new ImpressionEntity();
-        entity.setStatus(StorageRecordStatus.ACTIVE);
-        entity.setBody(Json.toJson(model));
-        entity.setTestName(model.feature);
-        entity.setCreatedAt(System.currentTimeMillis() / 1000);
+        String body;
+        try {
+            body = Json.toJson(model);
+            String encryptedBody = mSplitCipher.encrypt(body);
+            if (encryptedBody != null) {
+                entity.setStatus(StorageRecordStatus.ACTIVE);
+                entity.setBody(encryptedBody);
+                entity.setTestName(model.feature);
+                entity.setCreatedAt(System.currentTimeMillis() / 1000);
+            }
+        } catch (JsonParseException e) {
+            Logger.e("Error parsing impression: " + e.getMessage());
+        }
+
         return entity;
     }
 
@@ -79,11 +95,18 @@ public class SqLitePersistentImpressionsStorage
     protected KeyImpression entityToModel(ImpressionEntity entity) throws JsonParseException {
         KeyImpression impression = null;
         try {
-            impression = Json.fromJson(entity.getBody(), KeyImpression.class);
-            impression.feature = entity.getTestName();
+            String encryptedBody = entity.getBody();
+            String body = mSplitCipher.decrypt(encryptedBody);
+            if (body != null) {
+                impression = Json.fromJson(body, KeyImpression.class);
+                impression.feature = entity.getTestName();
+            }
         } catch (JsonParseException e) {
             // Try deprecated serialization
-            DeprecatedKeyImpression deprecatedImp = Json.fromJson(entity.getBody(), DeprecatedKeyImpression.class);
+            String encryptedBody = entity.getBody();
+            String body = mSplitCipher.decrypt(encryptedBody);
+            DeprecatedKeyImpression deprecatedImp = Json.fromJson(body,
+                    DeprecatedKeyImpression.class);
             impression = updateImpression(deprecatedImp);
         }
         if (impression == null) {
