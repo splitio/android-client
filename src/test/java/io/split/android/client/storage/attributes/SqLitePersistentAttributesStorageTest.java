@@ -1,5 +1,6 @@
 package io.split.android.client.storage.attributes;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.junit.Assert;
@@ -66,6 +67,17 @@ public class SqLitePersistentAttributesStorageTest {
 
         Assert.assertEquals("encrypted_attributes",
                 attributeCaptor.getValue().getAttributes());
+    }
+
+    @Test
+    public void setDoesNotCallUpdateWhenEncryptedValueIsNull() {
+        Map<String, Object> attributesMap = getExampleAttributesMap();
+        when(mSplitCipher.encrypt(any()))
+                .thenReturn(null);
+
+        storage.set(matchingKey, attributesMap);
+
+        Mockito.verify(mAttributesDao, Mockito.never()).update(any());
     }
 
     @Test

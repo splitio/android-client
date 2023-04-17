@@ -37,10 +37,13 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
             return;
         }
 
-        AttributesEntity entity = new AttributesEntity(matchingKey,
-                mSplitCipher.encrypt(Json.toJson(attributes)), System.currentTimeMillis() / 1000);
-
-        mAttributesDao.update(entity);
+        String encryptedAttributes = mSplitCipher.encrypt(Json.toJson(attributes));
+        if (encryptedAttributes != null) {
+            mAttributesDao.update(new AttributesEntity(matchingKey,
+                    encryptedAttributes, System.currentTimeMillis() / 1000));
+        } else {
+            Logger.e("Error encrypting attributes");
+        }
     }
 
     @NonNull
