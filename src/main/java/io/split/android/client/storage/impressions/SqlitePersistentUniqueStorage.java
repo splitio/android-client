@@ -17,6 +17,7 @@ import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 
 public class SqlitePersistentUniqueStorage
         extends SqLitePersistentStorage<UniqueKeyEntity, UniqueKey>
@@ -45,13 +46,13 @@ public class SqlitePersistentUniqueStorage
         mDao.insert(entities);
     }
 
-    @NonNull
     @Override
     protected UniqueKeyEntity entityForModel(@NonNull UniqueKey model) {
         String key = mSplitCipher.encrypt(model.getKey());
         String featureList = mSplitCipher.encrypt(Json.toJson(model.getFeatures()));
         if (key == null || featureList == null) {
-            return new UniqueKeyEntity();
+            Logger.e("Error encrypting unique key");
+            return null;
         }
 
         return new UniqueKeyEntity(

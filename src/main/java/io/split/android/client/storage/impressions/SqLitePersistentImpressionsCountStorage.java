@@ -16,6 +16,7 @@ import io.split.android.client.storage.db.ImpressionsCountEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -46,17 +47,18 @@ public class SqLitePersistentImpressionsCountStorage
         mDao.insert(entities);
     }
 
-    @NonNull
-    @NotNull
     @Override
     protected ImpressionsCountEntity entityForModel(@NonNull ImpressionsCountPerFeature model) {
         ImpressionsCountEntity entity = new ImpressionsCountEntity();
         String body = mSplitCipher.encrypt(Json.toJson(model));
-        if (body != null) {
-            entity.setBody(body);
-            entity.setStatus(StorageRecordStatus.ACTIVE);
-            entity.setCreatedAt(System.currentTimeMillis() / 1000);
+        if (body == null) {
+            Logger.e("Error encrypting impression count");
+            return null;
         }
+        entity.setBody(body);
+        entity.setStatus(StorageRecordStatus.ACTIVE);
+        entity.setCreatedAt(System.currentTimeMillis() / 1000);
+
         return entity;
     }
 

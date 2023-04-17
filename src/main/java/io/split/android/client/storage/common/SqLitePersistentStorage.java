@@ -29,7 +29,10 @@ public abstract class SqLitePersistentStorage<E extends Identifiable, M extends 
         if (model == null) {
             return;
         }
-        insert(entityForModel(model));
+        E entity = entityForModel(model);
+        if (entity != null) {
+            insert(entity);
+        }
     }
 
     public void pushMany(@NonNull List<M> models) {
@@ -38,7 +41,10 @@ public abstract class SqLitePersistentStorage<E extends Identifiable, M extends 
         }
         List<E> entities = new ArrayList<>();
         for (M model : models) {
-            entities.add(entityForModel(model));
+            E entity = entityForModel(model);
+            if (entity != null) {
+                entities.add(entity);
+            }
         }
         insert(entities);
     }
@@ -126,8 +132,7 @@ public abstract class SqLitePersistentStorage<E extends Identifiable, M extends 
 
     protected abstract void insert(@NonNull List<E> entities);
 
-    protected abstract @NonNull
-    E entityForModel(@NonNull M model);
+    protected abstract E entityForModel(@NonNull M model);
 
     protected abstract int deleteByStatus(int status, long maxTimestamp);
 

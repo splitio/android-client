@@ -1,5 +1,6 @@
 package io.split.android.client.storage.events;
 
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -127,6 +128,15 @@ public class SqLitePersistentEventsStorageTest {
         verify(mSplitCipher).encrypt("{\"sizeInBytes\":0,\"eventTypeId\":\"test_event_0\"," +
                 "\"trafficTypeName\":\"custom\",\"key\":\"key1\",\"value\":0,\"timestamp\":0," +
                 "\"properties\":{}}");
+    }
+
+    @Test
+    public void entityForModelReturnsNullWhenEncryptionResultIsNull() {
+        when(mSplitCipher.encrypt(anyString())).thenReturn(null);
+
+        EventEntity entity = mStorage.entityForModel(createTestEvent(0));
+
+        assertNull(entity);
     }
 
     @Test

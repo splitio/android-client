@@ -1,6 +1,7 @@
 package io.split.android.client.storage.impressions;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -111,6 +112,19 @@ public class SqlitePersistentUniqueStorageTest {
         assertEquals("encrypted_set", uniqueKeyEntity.getFeatureList());
         assertEquals(0, uniqueKeyEntity.getStatus());
         assertTrue(uniqueKeyEntity.getCreatedAt() > 0);
+    }
+
+    @Test
+    public void modelToEntityReturnsNullWhenEncryptionResultIsNull() {
+        Set<String> features = getBasicFeatures();
+        when(mSplitCipher.encrypt(any()))
+                .thenReturn(null)
+                .thenReturn(null);
+        UniqueKey model = new UniqueKey("key", features);
+
+        UniqueKeyEntity uniqueKeyEntity = mStorage.entityForModel(model);
+
+        assertNull(uniqueKeyEntity);
     }
 
     @Test

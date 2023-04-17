@@ -1,6 +1,7 @@
 package io.split.android.client.storage.impressions;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,6 +75,17 @@ public class SqlitePersistentImpressionsStorageTest {
         ImpressionEntity entity = mStorage.entityForModel(keyImpression);
         assertEquals(encryptedJson, entity.getBody());
         assertEquals("test_feature", entity.getTestName());
+    }
+
+    @Test
+    public void entityForModelReturnsNullWhenEncryptionResultIsNull() {
+        KeyImpression keyImpression = new KeyImpression();
+        keyImpression.feature = "test_feature";
+
+        when(mSplitCipher.encrypt(any())).thenReturn(null);
+
+        ImpressionEntity entity = mStorage.entityForModel(keyImpression);
+        assertNull(entity);
     }
 
     @Test

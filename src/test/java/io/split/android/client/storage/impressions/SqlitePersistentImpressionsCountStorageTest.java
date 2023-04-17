@@ -70,6 +70,16 @@ public class SqlitePersistentImpressionsCountStorageTest {
     }
 
     @Test
+    public void entityForModelReturnsNullWhenEncryptionResultIsNull() {
+        ImpressionsCountPerFeature count = createTestImpressionsCountPerFeature();
+        when(mSplitCipher.encrypt(convertToJson())).thenReturn(null);
+
+        ImpressionsCountEntity entity = mStorage.entityForModel(count);
+
+        assert(entity == null);
+    }
+
+    @Test
     public void deleteByStatusUsesDao() {
         int status = 1;
         long maxTimestamp = 1234567890L;
@@ -114,7 +124,7 @@ public class SqlitePersistentImpressionsCountStorageTest {
     }
 
     @Test
-    public void entityForModelDecryptsEntityBody() throws JsonParseException {
+    public void entityToModelDecryptsEntityBody() throws JsonParseException {
         ImpressionsCountPerFeature count = createTestImpressionsCountPerFeature();
         ImpressionsCountEntity entity = mStorage.entityForModel(count);
         when(mSplitCipher.decrypt(entity.getBody())).thenReturn(convertToJson());
