@@ -14,6 +14,7 @@ import java.util.List;
 import helper.DatabaseHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.ImpressionsCountEntity;
 import io.split.android.client.storage.db.ImpressionsCountEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -39,7 +40,8 @@ public class PersistentImpressionCountStorageTest {
         generateImpressionsCount(101, 110, StorageRecordStatus.DELETED, false);
         generateImpressionsCount(301, 310, StorageRecordStatus.ACTIVE, true);
 
-        mStorage = new SqLitePersistentImpressionsCountStorage(mRoomDb, EXPIRATION_PERIOD);
+        mStorage = new SqLitePersistentImpressionsCountStorage(mRoomDb, EXPIRATION_PERIOD,
+                SplitCipherFactory.create("abcdefghijklmnopqrstuvxyz", false));
     }
 
     @Test
