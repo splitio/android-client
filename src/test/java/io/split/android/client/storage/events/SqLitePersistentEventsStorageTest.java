@@ -46,6 +46,8 @@ public class SqLitePersistentEventsStorageTest {
 
     @Test
     public void entityIsInsertedUsingDao() {
+        when(mSplitCipher.encrypt(anyString())).thenReturn("encrypted_body");
+
         Event event = createTestEvent(0);
         EventEntity entity = mStorage.entityForModel(event);
         when(mSplitCipher.encrypt(anyString())).thenReturn(entity.getBody());
@@ -57,6 +59,7 @@ public class SqLitePersistentEventsStorageTest {
 
     @Test
     public void entitiesAreInsertedUsingDao() {
+        when(mSplitCipher.encrypt(anyString())).thenReturn("encrypted_body");
         List<Event> events = Arrays.asList(createTestEvent(0), createTestEvent(1));
 
         List<EventEntity> entities = new ArrayList<>();
@@ -141,6 +144,7 @@ public class SqLitePersistentEventsStorageTest {
 
     @Test
     public void runInTransactionCallsRunInTransactionOnDatabase() {
+        when(mSplitCipher.encrypt(anyString())).thenReturn("encrypted_body");
         List<Event> events = Arrays.asList(createTestEvent(0), createTestEvent(1));
 
         List<EventEntity> entities = new ArrayList<>();

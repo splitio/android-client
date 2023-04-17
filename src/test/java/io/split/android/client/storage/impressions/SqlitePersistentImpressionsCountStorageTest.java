@@ -1,6 +1,7 @@
 package io.split.android.client.storage.impressions;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -125,6 +126,7 @@ public class SqlitePersistentImpressionsCountStorageTest {
 
     @Test
     public void entityToModelDecryptsEntityBody() throws JsonParseException {
+        when(mSplitCipher.encrypt(anyString())).thenReturn("encrypted_body");
         ImpressionsCountPerFeature count = createTestImpressionsCountPerFeature();
         ImpressionsCountEntity entity = mStorage.entityForModel(count);
         when(mSplitCipher.decrypt(entity.getBody())).thenReturn(convertToJson());
