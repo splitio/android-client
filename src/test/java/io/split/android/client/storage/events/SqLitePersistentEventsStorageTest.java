@@ -60,6 +60,7 @@ public class SqLitePersistentEventsStorageTest {
     @Test
     public void entitiesAreInsertedUsingDao() {
         when(mSplitCipher.encrypt(anyString())).thenReturn("encrypted_body");
+
         List<Event> events = Arrays.asList(createTestEvent(0), createTestEvent(1));
 
         List<EventEntity> entities = new ArrayList<>();

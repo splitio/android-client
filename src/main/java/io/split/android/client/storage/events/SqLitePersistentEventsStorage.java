@@ -47,12 +47,12 @@ public class SqLitePersistentEventsStorage
 
     @Override
     protected EventEntity entityForModel(@NonNull Event model) {
-        EventEntity entity = new EventEntity();
         String body = mSplitCipher.encrypt(Json.toJson(model));
         if (body == null) {
             Logger.e("Error encrypting event");
             return null;
         }
+        EventEntity entity = new EventEntity();
         entity.setBody(body);
         entity.setStatus(StorageRecordStatus.ACTIVE);
         entity.setCreatedAt(System.currentTimeMillis() / 1000);
