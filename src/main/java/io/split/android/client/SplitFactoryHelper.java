@@ -62,6 +62,7 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.cipher.DBCipher;
+import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.cipher.SplitEncryptionLevel;
 import io.split.android.client.storage.common.SplitStorageContainer;
@@ -378,47 +379,16 @@ class SplitFactoryHelper {
         AtomicReference<SplitCipher> splitCipher = new AtomicReference<>(null);
         CountDownLatch alwaysLatch = new CountDownLatch(1);
 
-        splitTaskExecutor.submit(new SplitTask() {
-            @Override
-            public SplitTaskExecutionInfo execute() {
-                try {
-                    // Get current encryption level
-                    GeneralInfoEntity entity = splitDatabase
-                            .generalInfoDao()
-                            .getByName(GeneralInfoEntity.DATABASE_ENCRYPTION_MODE);
-                    SplitEncryptionLevel fromLevel = (entity != null) ? SplitEncryptionLevel.fromString(
-                            entity.getStringValue()) : encryptionEnabled ?
-                            SplitEncryptionLevel.AES_128_CBC : SplitEncryptionLevel.NONE;
-
-                    // Set new encryption level
-                    SplitEncryptionLevel toLevel = encryptionEnabled ? SplitEncryptionLevel.AES_128_CBC :
-                            SplitEncryptionLevel.NONE;
-
-                    // Update encryption level
-                    splitDatabase
-                            .generalInfoDao()
-                            .update(new GeneralInfoEntity(GeneralInfoEntity.DATABASE_ENCRYPTION_MODE,
-                                    toLevel.toString()));
-
-                    // Apply encryption
-                    splitCipher.set(new DBCipher(apiKey, splitDatabase,
-                            fromLevel, toLevel).apply());
-                    Logger.v("Migration finished successfully");
-
-                    return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK); //TODO
-                } catch (Exception e) {
-                    Logger.e("Error while migrating encryption: " + e.getMessage());
-                    return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
-                } finally {
-                    alwaysLatch.countDown();
-                }
-            }
-        }, null);
+        splitTaskExecutor.submit(new EncryptionMigrationTask(apiKey,
+                splitDatabase,
+                splitCipher,
+                alwaysLatch,
+                encryptionEnabled), null);
 
         try {
             alwaysLatch.await();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        } catch (InterruptedException ignored) {
+
         }
 
         return splitCipher.get();

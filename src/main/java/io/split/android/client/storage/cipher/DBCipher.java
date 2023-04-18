@@ -33,9 +33,9 @@ public class DBCipher {
         mMustApply = !mFromCipher.getClass().equals(mToCipher.getClass());
 
         if (mMustApply) {
-            Logger.v("Migrating encryption mode");
+            Logger.d("Migrating encryption mode");
         } else {
-            Logger.v("No need to migrate encryption mode");
+            Logger.d("No need to migrate encryption mode");
         }
     }
 
@@ -44,9 +44,9 @@ public class DBCipher {
         if (mMustApply) {
             new ApplyCipherTask(mSplitDatabase, mFromCipher,
                     mToCipher).execute();
+            Logger.d("Encryption mode migration done");
         }
 
-        Logger.v("Encryption mode migration done");
         return mToCipher;
     }
 }

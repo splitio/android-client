@@ -51,9 +51,9 @@ public class ApplyCipherTask implements SplitTask {
             updateUniqueKeys(mSplitDatabase.uniqueKeysDao());
             updateAttributes(mSplitDatabase.attributesDao());
 
-            return SplitTaskExecutionInfo.success(SplitTaskType.APPLY_CIPHER);
+            return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
         } catch (Exception e) {
-            return SplitTaskExecutionInfo.error(SplitTaskType.APPLY_CIPHER);
+            return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
         }
     }
 
@@ -68,7 +68,6 @@ public class ApplyCipherTask implements SplitTask {
             if (decryptedBody != null) {
                 item.setAttributes(decryptedBody);
                 attributesDao.update(item);
-                Logger.v("Updated encryption of attributes");
             } else {
                 Logger.e("Error applying cipher to attributes storage");
             }
@@ -86,7 +85,6 @@ public class ApplyCipherTask implements SplitTask {
             if (decryptedFeatureList != null) {
                 item.setFeatureList(decryptedFeatureList);
                 uniqueKeysDao.insert(item);
-                Logger.v("Updated encryption of unique keys");
             } else {
                 Logger.e("Error applying cipher to unique keys storage");
             }
@@ -104,7 +102,6 @@ public class ApplyCipherTask implements SplitTask {
             if (decryptedBody != null) {
                 item.setBody(decryptedBody);
                 impressionsCountDao.insert(item);
-                Logger.v("Updated encryption of impression count");
             } else {
                 Logger.e("Error applying cipher to impression count storage");
             }
@@ -125,7 +122,6 @@ public class ApplyCipherTask implements SplitTask {
                 item.setTestName(decryptedName);
                 item.setBody(decryptedBody);
                 impressionDao.insert(item);
-                Logger.v("Updated encryption of impression with name " + name);
             } else {
                 Logger.e("Error applying cipher to impression storage");
             }
@@ -143,7 +139,6 @@ public class ApplyCipherTask implements SplitTask {
             if (decryptedBody != null) {
                 item.setSegmentList(decryptedBody);
                 mySegmentDao.update(item);
-                Logger.v("Updated encryption of my segment");
             } else {
                 Logger.e("Error applying cipher to my segment");
             }
@@ -161,7 +156,6 @@ public class ApplyCipherTask implements SplitTask {
             if (decryptedBody != null) {
                 item.setBody(decryptedBody);
                 eventDao.insert(item);
-                Logger.v("Updated encryption of event");
             } else {
                 Logger.e("Error applying cipher to event");
             }
@@ -178,7 +172,6 @@ public class ApplyCipherTask implements SplitTask {
             if (toBody != null) {
                 item.setBody(toBody);
                 dao.insert(Collections.singletonList(item));
-                Logger.v("Updated encryption of split");
             } else {
                 Logger.e("Error applying cipher to split storage");
             }
