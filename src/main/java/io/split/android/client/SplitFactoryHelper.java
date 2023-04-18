@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.split.android.client.api.Key;
@@ -391,7 +392,7 @@ class SplitFactoryHelper {
                 });
 
         try {
-            alwaysLatch.await();
+            alwaysLatch.await(2, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {
 
         }
