@@ -43,13 +43,18 @@ public class ApplyCipherTask implements SplitTask {
     @Override
     public SplitTaskExecutionInfo execute() {
         try {
-            updateSplits(mSplitDatabase.splitDao());
-            updateSegments(mSplitDatabase.mySegmentDao());
-            updateImpressions(mSplitDatabase.impressionDao());
-            updateEvents(mSplitDatabase.eventDao());
-            updateImpressionsCount(mSplitDatabase.impressionsCountDao());
-            updateUniqueKeys(mSplitDatabase.uniqueKeysDao());
-            updateAttributes(mSplitDatabase.attributesDao());
+            mSplitDatabase.runInTransaction(new Runnable() {
+                @Override
+                public void run() {
+                    updateSplits(mSplitDatabase.splitDao());
+                    updateSegments(mSplitDatabase.mySegmentDao());
+                    updateImpressions(mSplitDatabase.impressionDao());
+                    updateEvents(mSplitDatabase.eventDao());
+                    updateImpressionsCount(mSplitDatabase.impressionsCountDao());
+                    updateUniqueKeys(mSplitDatabase.uniqueKeysDao());
+                    updateAttributes(mSplitDatabase.attributesDao());
+                }
+            });
 
             return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
         } catch (Exception e) {

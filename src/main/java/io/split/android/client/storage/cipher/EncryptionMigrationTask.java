@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.storage.db.GeneralInfoDao;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.logger.Logger;
@@ -20,17 +21,17 @@ public class EncryptionMigrationTask implements SplitTask {
     private final SplitRoomDatabase mSplitDatabase;
     private final AtomicReference<SplitCipher> mSplitCipher;
     private final boolean mEncryptionEnabled;
-    private final CountDownLatch mLatch;
+    private final CountDownLatch mCountDownLatch;
 
     public EncryptionMigrationTask(String apiKey,
                                    SplitRoomDatabase splitDatabase,
                                    AtomicReference<SplitCipher> splitCipher,
-                                   CountDownLatch latch,
+                                   CountDownLatch countDownLatch,
                                    boolean encryptionEnabled) {
         mApiKey = checkNotNull(apiKey);
         mSplitDatabase = checkNotNull(splitDatabase);
         mSplitCipher = checkNotNull(splitCipher);
-        mLatch = checkNotNull(latch);
+        mCountDownLatch = checkNotNull(countDownLatch);
         mEncryptionEnabled = encryptionEnabled;
     }
 
@@ -39,15 +40,20 @@ public class EncryptionMigrationTask implements SplitTask {
     public SplitTaskExecutionInfo execute() {
         try {
             // Get current encryption level
-            SplitEncryptionLevel fromLevel = getFromLevel();
+            SplitEncryptionLevel fromLevel = getFromLevel(mSplitDatabase.generalInfoDao(), mEncryptionEnabled);
 
-            // Set new encryption level
-            SplitEncryptionLevel toLevel = getLevel();
+            // Determine target encryption level
+            SplitEncryptionLevel toLevel = getLevel(mEncryptionEnabled);
+
+            // Create target level cipher
+            SplitCipher toCipher = SplitCipherFactory.create(mApiKey, toLevel);
+
+            // Return cipher to be used by the SDK
+            mSplitCipher.set(toCipher);
+            mCountDownLatch.countDown();
 
             // Apply encryption
-            Logger.v("Applying encryption migration from " + fromLevel + " to " + toLevel);
-            mSplitCipher.set(new DBCipher(mApiKey, mSplitDatabase,
-                    fromLevel, toLevel).apply());
+            new DBCipher(mApiKey, mSplitDatabase, fromLevel, toLevel, toCipher).apply();
 
             // Update encryption level
             updateCurrentLevel(toLevel);
@@ -57,8 +63,6 @@ public class EncryptionMigrationTask implements SplitTask {
             Logger.e("Error while migrating encryption: " + e.getMessage());
 
             return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
-        } finally {
-            mLatch.countDown();
         }
     }
 
@@ -69,8 +73,8 @@ public class EncryptionMigrationTask implements SplitTask {
     }
 
     @NonNull
-    private SplitEncryptionLevel getFromLevel() {
-        GeneralInfoEntity entity = mSplitDatabase.generalInfoDao()
+    private static SplitEncryptionLevel getFromLevel(GeneralInfoDao generalInfoDao, boolean encryptionEnabled) {
+        GeneralInfoEntity entity = generalInfoDao
                 .getByName(GeneralInfoEntity.DATABASE_ENCRYPTION_MODE);
 
         if (entity != null) {
@@ -78,12 +82,12 @@ public class EncryptionMigrationTask implements SplitTask {
                     entity.getStringValue());
         }
 
-        return getLevel();
+        return getLevel(encryptionEnabled);
     }
 
     @NonNull
-    private SplitEncryptionLevel getLevel() {
-        return mEncryptionEnabled ? SplitEncryptionLevel.AES_128_CBC :
+    private static SplitEncryptionLevel getLevel(boolean encryptionEnabled) {
+        return encryptionEnabled ? SplitEncryptionLevel.AES_128_CBC :
                 SplitEncryptionLevel.NONE;
     }
 }

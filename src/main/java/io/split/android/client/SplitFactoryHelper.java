@@ -17,15 +17,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
+import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
-import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
@@ -61,13 +62,10 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.shared.UserConsent;
-import io.split.android.client.storage.cipher.DBCipher;
 import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
-import io.split.android.client.storage.cipher.SplitEncryptionLevel;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
-import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.events.PersistentEventsStorage;
@@ -78,7 +76,6 @@ import io.split.android.client.telemetry.TelemetrySynchronizerStub;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Utils;
-import io.split.android.client.utils.logger.Logger;
 
 class SplitFactoryHelper {
     private static final int DB_MAGIC_CHARS_COUNT = 4;
@@ -373,17 +370,25 @@ class SplitFactoryHelper {
     }
 
     @NonNull
-    SplitCipher migrateEncryption(String apiKey, SplitRoomDatabase splitDatabase,
+    SplitCipher migrateEncryption(String apiKey,
+                                  SplitRoomDatabase splitDatabase,
                                   SplitTaskExecutor splitTaskExecutor,
+                                  ISplitEventsManager eventsManager,
                                   final boolean encryptionEnabled) {
         AtomicReference<SplitCipher> splitCipher = new AtomicReference<>(null);
         CountDownLatch alwaysLatch = new CountDownLatch(1);
 
         splitTaskExecutor.submit(new EncryptionMigrationTask(apiKey,
-                splitDatabase,
-                splitCipher,
-                alwaysLatch,
-                encryptionEnabled), null);
+                        splitDatabase,
+                        splitCipher,
+                        alwaysLatch,
+                        encryptionEnabled),
+                new SplitTaskExecutionListener() {
+                    @Override
+                    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                        eventsManager.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+                    }
+                });
 
         try {
             alwaysLatch.await();

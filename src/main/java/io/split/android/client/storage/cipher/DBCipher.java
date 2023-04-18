@@ -10,43 +10,46 @@ import io.split.android.client.utils.logger.Logger;
 
 public class DBCipher {
 
-    private final SplitRoomDatabase mSplitDatabase;
-    private final SplitCipher mFromCipher;
-    private final SplitCipher mToCipher;
     private final boolean mMustApply;
+    private SplitRoomDatabase mSplitDatabase;
+    private SplitCipher mFromCipher;
+    private SplitCipher mToCipher;
 
     public DBCipher(@NonNull String apiKey,
                     @NonNull SplitRoomDatabase splitDatabase,
                     @NonNull SplitEncryptionLevel fromLevel,
-                    @NonNull SplitEncryptionLevel toLevel) {
+                    @NonNull SplitEncryptionLevel toLevel,
+                    @NonNull SplitCipher toCipher) {
         this(splitDatabase,
-                SplitCipherFactory.create(apiKey, fromLevel),
-                SplitCipherFactory.create(apiKey, toLevel));
+                apiKey,
+                toCipher,
+                fromLevel,
+                toLevel);
     }
 
     private DBCipher(@NonNull SplitRoomDatabase splitDatabase,
-                     @NonNull SplitCipher fromCipher,
-                    @NonNull SplitCipher toCipher) {
-        mSplitDatabase = checkNotNull(splitDatabase);
-        mFromCipher = checkNotNull(fromCipher);
-        mToCipher = checkNotNull(toCipher);
-        mMustApply = !mFromCipher.getClass().equals(mToCipher.getClass());
+                     @NonNull String apiKey,
+                     @NonNull SplitCipher toCipher,
+                     @NonNull SplitEncryptionLevel fromLevel,
+                     @NonNull SplitEncryptionLevel toLevel) {
+        mMustApply = fromLevel != toLevel;
 
         if (mMustApply) {
             Logger.d("Migrating encryption mode");
+            mFromCipher = SplitCipherFactory.create(apiKey, fromLevel);
+            mToCipher = checkNotNull(toCipher);
+            mSplitDatabase = checkNotNull(splitDatabase);
         } else {
             Logger.d("No need to migrate encryption mode");
         }
     }
 
     @WorkerThread
-    public SplitCipher apply() {
+    public void apply() {
         if (mMustApply) {
             new ApplyCipherTask(mSplitDatabase, mFromCipher,
                     mToCipher).execute();
             Logger.d("Encryption mode migration done");
         }
-
-        return mToCipher;
     }
 }

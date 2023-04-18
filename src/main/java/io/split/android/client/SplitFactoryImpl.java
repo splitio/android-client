@@ -154,9 +154,12 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
 
+        EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
+
         SplitCipher splitCipher = factoryHelper.migrateEncryption(mApiKey,
                 splitDatabase,
                 splitTaskExecutor,
+                mEventsManagerCoordinator,
                 config.encryptionEnabled());
 
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
@@ -166,8 +169,6 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryString);
-
-        EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator,
