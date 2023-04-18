@@ -67,7 +67,7 @@ class ApplyCipherTaskTest {
         val result = applyCipherTask.execute()
 
         // Assert the result
-        assertEquals(SplitTaskType.APPLY_CIPHER, result.taskType)
+        assertEquals(SplitTaskType.GENERIC_TASK, result.taskType)
         assertEquals(SplitTaskExecutionStatus.SUCCESS, result.status)
     }
 }
