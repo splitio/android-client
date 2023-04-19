@@ -49,12 +49,13 @@ public class SqLitePersistentImpressionsCountStorage
 
     @Override
     protected ImpressionsCountEntity entityForModel(@NonNull ImpressionsCountPerFeature model) {
-        ImpressionsCountEntity entity = new ImpressionsCountEntity();
         String body = mSplitCipher.encrypt(Json.toJson(model));
         if (body == null) {
             Logger.e("Error encrypting impression count");
             return null;
         }
+
+        ImpressionsCountEntity entity = new ImpressionsCountEntity();
         entity.setBody(body);
         entity.setStatus(StorageRecordStatus.ACTIVE);
         entity.setCreatedAt(System.currentTimeMillis() / 1000);
