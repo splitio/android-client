@@ -377,12 +377,12 @@ class SplitFactoryHelper {
                                   ISplitEventsManager eventsManager,
                                   final boolean encryptionEnabled) {
         AtomicReference<SplitCipher> splitCipher = new AtomicReference<>(null);
-        CountDownLatch alwaysLatch = new CountDownLatch(1);
+        CountDownLatch cipherLatch = new CountDownLatch(1);
 
         splitTaskExecutor.submit(new EncryptionMigrationTask(apiKey,
                         splitDatabase,
                         splitCipher,
-                        alwaysLatch,
+                        cipherLatch,
                         encryptionEnabled),
                 new SplitTaskExecutionListener() {
                     @Override
@@ -392,7 +392,7 @@ class SplitFactoryHelper {
                 });
 
         try {
-            alwaysLatch.await(2, TimeUnit.SECONDS);
+            cipherLatch.await(2, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {
 
         }

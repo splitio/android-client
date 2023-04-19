@@ -40,21 +40,21 @@ public class DBCipher {
         mMustApply = fromLevel != toLevel;
 
         if (mMustApply) {
-            Logger.d("Migrating encryption mode");
             mFromCipher = SplitCipherFactory.create(apiKey, fromLevel);
             mToCipher = checkNotNull(toCipher);
             mSplitDatabase = checkNotNull(splitDatabase);
             mTaskProvider = checkNotNull(taskProvider);
-        } else {
-            Logger.d("No need to migrate encryption mode");
         }
     }
 
     @WorkerThread
     public void apply() {
         if (mMustApply) {
+            Logger.d("Migrating encryption mode");
             mTaskProvider.get(mSplitDatabase, mFromCipher, mToCipher).execute();
             Logger.d("Encryption mode migration done");
+        } else {
+            Logger.d("No need to migrate encryption mode");
         }
     }
 
