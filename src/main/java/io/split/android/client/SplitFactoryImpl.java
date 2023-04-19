@@ -255,24 +255,24 @@ public class SplitFactoryImpl implements SplitFactory {
                     mStorageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
                     telemetrySynchronizer.flush();
                     telemetrySynchronizer.destroy();
-                    Logger.i("Successful shutdown of telemetry");
+                    Logger.d("Successful shutdown of telemetry");
                     mSyncManager.stop();
-                    Logger.i("Flushing impressions and events");
+                    Logger.d("Flushing impressions and events");
                     mLifecycleManager.destroy();
-                    Logger.i("Successful shutdown of lifecycle manager");
+                    Logger.d("Successful shutdown of lifecycle manager");
                     mFactoryMonitor.remove(mApiKey);
-                    Logger.i("Successful shutdown of segment fetchers");
+                    Logger.d("Successful shutdown of segment fetchers");
                     customerImpressionListener.close();
-                    Logger.i("Successful shutdown of ImpressionListener");
+                    Logger.d("Successful shutdown of ImpressionListener");
                     defaultHttpClient.close();
-                    Logger.i("Successful shutdown of httpclient");
+                    Logger.d("Successful shutdown of httpclient");
                     mManager.destroy();
-                    Logger.i("Successful shutdown of manager");
+                    Logger.d("Successful shutdown of manager");
                     splitTaskExecutor.stop();
                     splitSingleThreadTaskExecutor.stop();
-                    Logger.i("Successful shutdown of task executor");
+                    Logger.d("Successful shutdown of task executor");
                     mStorageContainer.getAttributesStorageContainer().destroy();
-                    Logger.i("Successful shutdown of attributes storage");
+                    Logger.d("Successful shutdown of attributes storage");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
