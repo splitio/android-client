@@ -54,6 +54,7 @@ public class SqLitePersistentImpressionsCountStorage
             Logger.e("Error encrypting impression count");
             return null;
         }
+
         ImpressionsCountEntity entity = new ImpressionsCountEntity();
         entity.setBody(body);
         entity.setStatus(StorageRecordStatus.ACTIVE);

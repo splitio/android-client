@@ -2,6 +2,7 @@ package io.split.android.client.storage.cipher
 
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -28,6 +29,7 @@ class CBCCipherTest {
     @Test
     fun cipherForEncryptionIsRetrievedFromProvider() {
         `when`(cipherProvider.encryptionCipher).thenReturn(cipherMock)
+        `when`(cipherMock.doFinal(any())).thenReturn(byteArrayOf(1, 2, 3))
 
         cipher.encrypt("test")
 

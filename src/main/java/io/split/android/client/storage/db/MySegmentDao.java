@@ -5,6 +5,8 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
+import java.util.List;
+
 @Dao
 public interface MySegmentDao {
 
@@ -13,4 +15,7 @@ public interface MySegmentDao {
 
     @Query("SELECT user_key, segment_list, updated_at FROM my_segments WHERE user_key = :userKey")
     MySegmentEntity getByUserKey(String userKey);
+
+    @Query("SELECT user_key, segment_list, updated_at FROM my_segments")
+    List<MySegmentEntity> getAll();
 }

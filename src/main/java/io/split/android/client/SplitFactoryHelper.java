@@ -10,15 +10,22 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
+import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
@@ -56,6 +63,7 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
@@ -360,6 +368,36 @@ class SplitFactoryHelper {
                 config.impressionsCounterRefreshRate(),
                 config.mtkRefreshRate(),
                 config.userConsent() == UserConsent.GRANTED).getStrategy(config.impressionsMode());
+    }
+
+    @NonNull
+    SplitCipher migrateEncryption(String apiKey,
+                                  SplitRoomDatabase splitDatabase,
+                                  SplitTaskExecutor splitTaskExecutor,
+                                  ISplitEventsManager eventsManager,
+                                  final boolean encryptionEnabled) {
+        AtomicReference<SplitCipher> splitCipher = new AtomicReference<>(null);
+        CountDownLatch cipherLatch = new CountDownLatch(1);
+
+        splitTaskExecutor.submit(new EncryptionMigrationTask(apiKey,
+                        splitDatabase,
+                        splitCipher,
+                        cipherLatch,
+                        encryptionEnabled),
+                new SplitTaskExecutionListener() {
+                    @Override
+                    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                        eventsManager.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+                    }
+                });
+
+        try {
+            cipherLatch.await(2, TimeUnit.SECONDS);
+        } catch (InterruptedException ignored) {
+
+        }
+
+        return splitCipher.get();
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {

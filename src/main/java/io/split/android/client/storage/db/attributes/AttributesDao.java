@@ -5,6 +5,8 @@ import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
+import java.util.List;
+
 @Dao
 public interface AttributesDao {
 
@@ -16,4 +18,7 @@ public interface AttributesDao {
 
     @Query("DELETE FROM attributes WHERE user_key = :userKey")
     void deleteAll(String userKey);
+
+    @Query("SELECT user_key, attributes, updated_at FROM attributes")
+    List<AttributesEntity> getAll();
 }

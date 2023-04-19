@@ -13,4 +13,15 @@ public class SplitCipherFactory {
             return new NoOpCipher();
         }
     }
+
+    public static SplitCipher create(String apiKey, SplitEncryptionLevel fromLevel) {
+        if (fromLevel == SplitEncryptionLevel.AES_128_CBC) {
+            try {
+                return new CBCCipher(apiKey);
+            } catch (Exception e) {
+                throw new RuntimeException("Error initializing SplitCipher", e);
+            }
+        }
+        return new NoOpCipher();
+    }
 }

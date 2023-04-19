@@ -2,9 +2,12 @@ package io.split.android.client;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -18,10 +21,14 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
@@ -36,9 +43,12 @@ import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.cipher.DBCipher;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.cipher.SplitEncryptionLevel;
 import io.split.android.client.storage.common.SplitStorageContainer;
+import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
@@ -142,26 +152,23 @@ public class SplitFactoryImpl implements SplitFactory {
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
 
-        SplitCipher splitCipher;
-        try {
-            splitCipher = SplitCipherFactory.create(mApiKey,
-                    config.encryptionEnabled());
-        } catch (RuntimeException e) {
-            Logger.e("Error while creating cipher: " + e.getMessage() + ". Disabling encryption");
-            splitCipher = SplitCipherFactory.create(mApiKey, false);
-            // TODO use DB cipher to change mode
-        }
+        SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
+
+        EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
+
+        SplitCipher splitCipher = factoryHelper.migrateEncryption(mApiKey,
+                splitDatabase,
+                splitTaskExecutor,
+                mEventsManagerCoordinator,
+                config.encryptionEnabled());
+
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
                 splitDatabase, key, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
-
-        SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
 
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryString);
-
-        EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator,
@@ -248,24 +255,24 @@ public class SplitFactoryImpl implements SplitFactory {
                     mStorageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
                     telemetrySynchronizer.flush();
                     telemetrySynchronizer.destroy();
-                    Logger.i("Successful shutdown of telemetry");
+                    Logger.d("Successful shutdown of telemetry");
                     mSyncManager.stop();
-                    Logger.i("Flushing impressions and events");
+                    Logger.d("Flushing impressions and events");
                     mLifecycleManager.destroy();
-                    Logger.i("Successful shutdown of lifecycle manager");
+                    Logger.d("Successful shutdown of lifecycle manager");
                     mFactoryMonitor.remove(mApiKey);
-                    Logger.i("Successful shutdown of segment fetchers");
+                    Logger.d("Successful shutdown of segment fetchers");
                     customerImpressionListener.close();
-                    Logger.i("Successful shutdown of ImpressionListener");
+                    Logger.d("Successful shutdown of ImpressionListener");
                     defaultHttpClient.close();
-                    Logger.i("Successful shutdown of httpclient");
+                    Logger.d("Successful shutdown of httpclient");
                     mManager.destroy();
-                    Logger.i("Successful shutdown of manager");
+                    Logger.d("Successful shutdown of manager");
                     splitTaskExecutor.stop();
                     splitSingleThreadTaskExecutor.stop();
-                    Logger.i("Successful shutdown of task executor");
+                    Logger.d("Successful shutdown of task executor");
                     mStorageContainer.getAttributesStorageContainer().destroy();
-                    Logger.i("Successful shutdown of attributes storage");
+                    Logger.d("Successful shutdown of attributes storage");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {

@@ -14,8 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
-import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
+import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
 
 @Database(
         entities = {
@@ -57,6 +57,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
             if (instance == null) {
                 instance = Room.databaseBuilder(context.getApplicationContext(),
                         SplitRoomDatabase.class, databaseName)
+                        .setJournalMode(JournalMode.TRUNCATE)
                         .fallbackToDestructiveMigration()
                         .build();
                 mInstances.put(databaseName, instance);
