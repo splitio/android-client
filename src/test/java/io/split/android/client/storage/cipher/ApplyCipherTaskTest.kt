@@ -15,6 +15,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mock
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 
@@ -49,7 +50,6 @@ class ApplyCipherTaskTest {
 
     @Test
     fun testExecute() {
-        // Mock DAO methods
         `when`(splitDatabase.splitDao()).thenReturn(splitDao)
         `when`(splitDatabase.mySegmentDao()).thenReturn(mySegmentDao)
         `when`(splitDatabase.impressionDao()).thenReturn(impressionDao)
@@ -58,15 +58,12 @@ class ApplyCipherTaskTest {
         `when`(splitDatabase.uniqueKeysDao()).thenReturn(uniqueKeysDao)
         `when`(splitDatabase.attributesDao()).thenReturn(attributesDao)
 
-        // Mock cipher methods
         `when`(fromCipher.decrypt(anyString())).thenAnswer { invocation -> invocation.arguments[0] }
         `when`(toCipher.encrypt(anyString())).thenAnswer { invocation -> invocation.arguments[0] }
 
-        // Create the task and execute
         val applyCipherTask = ApplyCipherTask(splitDatabase, fromCipher, toCipher)
         val result = applyCipherTask.execute()
 
-        // Assert the result
         assertEquals(SplitTaskType.GENERIC_TASK, result.taskType)
         assertEquals(SplitTaskExecutionStatus.SUCCESS, result.status)
     }
