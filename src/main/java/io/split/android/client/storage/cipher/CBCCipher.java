@@ -28,7 +28,7 @@ public class CBCCipher implements SplitCipher {
 
     @Override
     @Nullable
-    public synchronized String encrypt(String data) {
+    public String encrypt(String data) {
         if (data == null) {
             return null;
         }
@@ -40,6 +40,8 @@ public class CBCCipher implements SplitCipher {
         } catch (Exception e) {
             Logger.e("Error encrypting data: " + e.getMessage());
             return null;
+        } finally {
+            mCipherProvider.release(cipher);
         }
 
         return Base64Util.encode(encryptedBytes);
@@ -47,7 +49,7 @@ public class CBCCipher implements SplitCipher {
 
     @Override
     @Nullable
-    public synchronized String decrypt(String data) {
+    public String decrypt(String data) {
         if (data == null) {
             return null;
         }
@@ -60,6 +62,8 @@ public class CBCCipher implements SplitCipher {
         } catch (Exception e) {
             Logger.e("Error decrypting data: " + e.getMessage());
             return null;
+        } finally {
+            mCipherProvider.release(cipher);
         }
     }
 }
