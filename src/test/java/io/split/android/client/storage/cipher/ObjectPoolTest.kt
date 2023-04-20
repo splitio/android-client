@@ -42,11 +42,11 @@ class ObjectPoolTest {
     fun acquireDoesNotReturnNullInstances() {
         val objectPool = ObjectPool(3) { "ABCDEFGHIJKLMNOPQRSTUVWXYZ".random() }
 
-        val instance1 = objectPool.acquire()
-        val instance2 = objectPool.acquire()
-        val instance3 = objectPool.acquire()
-        val instance4 = objectPool.acquire()
+        objectPool.acquire()
+        objectPool.acquire()
+        objectPool.acquire()
+        val instance = objectPool.acquire()
 
-        assertNotNull(instance4)
+        assertNotNull(instance)
     }
 }
