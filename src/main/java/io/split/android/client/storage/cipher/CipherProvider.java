@@ -11,4 +11,6 @@ public interface CipherProvider {
 
     @Nullable
     Cipher getDecryptionCipher();
+
+    void release(Cipher cipher);
 }
