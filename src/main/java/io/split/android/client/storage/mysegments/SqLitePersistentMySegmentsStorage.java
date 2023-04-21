@@ -35,13 +35,14 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
             return;
         }
 
+        String encryptedUserKey = mSplitCipher.encrypt(userKey);
         String encryptedSegmentList = mSplitCipher.encrypt(mStringHelper.join(",", mySegments));
-        if (encryptedSegmentList == null) {
+        if (encryptedUserKey == null || encryptedSegmentList == null) {
             Logger.e("Error encrypting my segments");
             return;
         }
         MySegmentEntity entity = new MySegmentEntity();
-        entity.setUserKey(userKey);
+        entity.setUserKey(encryptedUserKey);
         entity.setSegmentList(encryptedSegmentList);
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mDatabase.mySegmentDao().update(entity);
@@ -49,7 +50,8 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
 
     @Override
     public List<String> getSnapshot(String userKey) {
-        return getMySegmentsFromEntity(mDatabase.mySegmentDao().getByUserKey(userKey));
+        String encryptedUserKey = mSplitCipher.encrypt(userKey);
+        return getMySegmentsFromEntity(mDatabase.mySegmentDao().getByUserKey(encryptedUserKey));
     }
 
     @Override

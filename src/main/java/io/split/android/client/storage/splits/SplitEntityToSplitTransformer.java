@@ -9,6 +9,7 @@ import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
@@ -59,7 +60,12 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
 
         for (List<SplitEntity> partition : partitions) {
             taskList.add(new SplitDeferredTaskItem<>(
-                    () -> convertEntitiesToSplitList(partition, mSplitCipher)));
+                    new Callable<List<Split>>() {
+                        @Override
+                        public List<Split> call() throws Exception {
+                            return convertEntitiesToSplitList(partition, mSplitCipher);
+                        }
+                    }));
         }
 
         return taskList;
@@ -75,11 +81,15 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
         }
 
         for (SplitEntity entity : entities) {
+            String name;
             String json;
             try {
+                name = cipher.decrypt(entity.getName());
                 json = cipher.decrypt(entity.getBody());
-                if (json != null) {
-                    splits.add(Json.fromJson(json, Split.class));
+                if (name != null && json != null) {
+                    Split split = Json.fromJson(json, Split.class);
+                    split.name = name;
+                    splits.add(split);
                 }
             } catch (JsonSyntaxException e) {
                 Logger.e("Could not parse entity to split: " + entity.getName());

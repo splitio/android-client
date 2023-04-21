@@ -54,17 +54,18 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
     }
 
     @NonNull
-    private List<SplitEntity> getSplitEntities(List<Split> partition, SplitCipher cipher) {
+    private static List<SplitEntity> getSplitEntities(List<Split> partition, SplitCipher cipher) {
         List<SplitEntity> result = new ArrayList<>();
 
         for (Split split : partition) {
+            String encryptedName = cipher.encrypt(split.name);
             String encryptedJson = cipher.encrypt(Json.toJson(split));
-            if (encryptedJson == null) {
+            if (encryptedName == null || encryptedJson == null) {
                 Logger.e("Error encrypting split: " + split.name);
                 continue;
             }
             SplitEntity entity = new SplitEntity();
-            entity.setName(split.name);
+            entity.setName(encryptedName);
             entity.setBody(encryptedJson);
             entity.setUpdatedAt(System.currentTimeMillis() / 1000);
             result.add(entity);
@@ -81,12 +82,13 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
         List<SplitDeferredTaskItem<List<SplitEntity>>> taskList = new ArrayList<>(partitions.size());
 
         for (List<Split> partition : partitions) {
-            taskList.add(new SplitDeferredTaskItem<>(new Callable<List<SplitEntity>>() {
-                @Override
-                public List<SplitEntity> call() {
-                    return SplitToSplitEntityTransformer.this.getSplitEntities(partition, mSplitCipher);
-                }
-            }));
+            taskList.add(new SplitDeferredTaskItem<>(
+                    new Callable<List<SplitEntity>>() {
+                        @Override
+                        public List<SplitEntity> call() {
+                            return getSplitEntities(partition, mSplitCipher);
+                        }
+                    }));
         }
 
         return taskList;

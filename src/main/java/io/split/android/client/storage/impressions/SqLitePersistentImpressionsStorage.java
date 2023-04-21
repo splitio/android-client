@@ -51,13 +51,14 @@ public class SqLitePersistentImpressionsStorage
         try {
             String body = Json.toJson(model);
             String encryptedBody = mSplitCipher.encrypt(body);
-            if (encryptedBody == null) {
+            String encryptedName = mSplitCipher.encrypt(model.feature);
+            if (encryptedName == null || encryptedBody == null) {
                 Logger.e("Error encrypting impression");
                 return null;
             }
             entity.setStatus(StorageRecordStatus.ACTIVE);
             entity.setBody(encryptedBody);
-            entity.setTestName(model.feature);
+            entity.setTestName(encryptedName);
             entity.setCreatedAt(System.currentTimeMillis() / 1000);
 
             return entity;
@@ -97,18 +98,23 @@ public class SqLitePersistentImpressionsStorage
     protected KeyImpression entityToModel(ImpressionEntity entity) throws JsonParseException {
         KeyImpression impression = null;
         try {
+            String encryptedName = entity.getTestName();
             String encryptedBody = entity.getBody();
+            String name = mSplitCipher.decrypt(encryptedName);
             String body = mSplitCipher.decrypt(encryptedBody);
-            if (body != null) {
+            if (name != null && body != null) {
                 impression = Json.fromJson(body, KeyImpression.class);
-                impression.feature = entity.getTestName();
+                impression.feature = name;
             }
         } catch (JsonParseException e) {
             // Try deprecated serialization
+            String encryptedName = entity.getTestName();
             String encryptedBody = entity.getBody();
+            String name = mSplitCipher.decrypt(encryptedName);
             String body = mSplitCipher.decrypt(encryptedBody);
             DeprecatedKeyImpression deprecatedImp = Json.fromJson(body,
                     DeprecatedKeyImpression.class);
+            deprecatedImp.feature = name;
             impression = updateImpression(deprecatedImp);
         }
         if (impression == null) {
