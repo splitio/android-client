@@ -3,6 +3,7 @@ package io.split.android.client.storage.db;
 import androidx.room.Dao;
 import androidx.room.Delete;
 import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 import androidx.room.Update;
 
@@ -12,10 +13,10 @@ import io.split.android.client.impressions.Impression;
 
 @Dao
 public interface ImpressionDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(ImpressionEntity impression);
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(List<ImpressionEntity> impressions);
 
     @Query("SELECT id, test_name, body, created_at, status FROM impressions " +

@@ -66,13 +66,15 @@ public class ApplyCipherTask implements SplitTask {
         List<AttributesEntity> items = attributesDao.getAll();
 
         for (AttributesEntity item : items) {
-            String body = mFromCipher.decrypt(item.getAttributes());
+            String userKey = item.getUserKey();
+            String fromUserKey = mFromCipher.decrypt(userKey);
+            String fromBody = mFromCipher.decrypt(item.getAttributes());
 
-            String decryptedBody = mToCipher.encrypt(body);
+            String toUserKey = mToCipher.encrypt(fromUserKey);
+            String toBody = mToCipher.encrypt(fromBody);
 
-            if (decryptedBody != null) {
-                item.setAttributes(decryptedBody);
-                attributesDao.update(item);
+            if (toBody != null) {
+                attributesDao.update(userKey, toUserKey, toBody);
             } else {
                 Logger.e("Error applying cipher to attributes storage");
             }
@@ -83,12 +85,15 @@ public class ApplyCipherTask implements SplitTask {
         List<UniqueKeyEntity> items = uniqueKeysDao.getAll();
 
         for (UniqueKeyEntity item : items) {
+            String fromUserKey = mFromCipher.decrypt(item.getUserKey());
             String featureList = mFromCipher.decrypt(item.getFeatureList());
 
-            String decryptedFeatureList = mToCipher.encrypt(featureList);
+            String toUserKey = mToCipher.encrypt(fromUserKey);
+            String toFeatureList = mToCipher.encrypt(featureList);
 
-            if (decryptedFeatureList != null) {
-                item.setFeatureList(decryptedFeatureList);
+            if (toFeatureList != null) {
+                item.setUserKey(toUserKey);
+                item.setFeatureList(toFeatureList);
                 uniqueKeysDao.insert(item);
             } else {
                 Logger.e("Error applying cipher to unique keys storage");
@@ -100,12 +105,12 @@ public class ApplyCipherTask implements SplitTask {
         List<ImpressionsCountEntity> items = impressionsCountDao.getAll();
 
         for (ImpressionsCountEntity item : items) {
-            String body = mFromCipher.decrypt(item.getBody());
+            String fromBody = mFromCipher.decrypt(item.getBody());
 
-            String decryptedBody = mToCipher.encrypt(body);
+            String toBody = mToCipher.encrypt(fromBody);
 
-            if (decryptedBody != null) {
-                item.setBody(decryptedBody);
+            if (toBody != null) {
+                item.setBody(toBody);
                 impressionsCountDao.insert(item);
             } else {
                 Logger.e("Error applying cipher to impression count storage");
@@ -117,15 +122,15 @@ public class ApplyCipherTask implements SplitTask {
         List<ImpressionEntity> items = impressionDao.getAll();
 
         for (ImpressionEntity item : items) {
-            String name = mFromCipher.decrypt(item.getTestName());
-            String body = mFromCipher.decrypt(item.getBody());
+            String fromName = mFromCipher.decrypt(item.getTestName());
+            String fromBody = mFromCipher.decrypt(item.getBody());
 
-            String decryptedName = mToCipher.encrypt(name);
-            String decryptedBody = mToCipher.encrypt(body);
+            String toName = mToCipher.encrypt(fromName);
+            String toBody = mToCipher.encrypt(fromBody);
 
-            if (decryptedName != null && decryptedBody != null) {
-                item.setTestName(decryptedName);
-                item.setBody(decryptedBody);
+            if (toName != null && toBody != null) {
+                item.setTestName(toName);
+                item.setBody(toBody);
                 impressionDao.insert(item);
             } else {
                 Logger.e("Error applying cipher to impression storage");
@@ -137,13 +142,15 @@ public class ApplyCipherTask implements SplitTask {
         List<MySegmentEntity> items = mySegmentDao.getAll();
 
         for (MySegmentEntity item : items) {
-            String body = mFromCipher.decrypt(item.getSegmentList());
+            String userKey = item.getUserKey();
+            String fromUserKey = mFromCipher.decrypt(userKey);
+            String fromBody = mFromCipher.decrypt(item.getSegmentList());
 
-            String decryptedBody = mToCipher.encrypt(body);
+            String toUserKey = mToCipher.encrypt(fromUserKey);
+            String toBody = mToCipher.encrypt(fromBody);
 
-            if (decryptedBody != null) {
-                item.setSegmentList(decryptedBody);
-                mySegmentDao.update(item);
+            if (toBody != null) {
+                mySegmentDao.update(userKey, toUserKey, toBody);
             } else {
                 Logger.e("Error applying cipher to my segment");
             }
@@ -171,12 +178,15 @@ public class ApplyCipherTask implements SplitTask {
         List<SplitEntity> items = dao.getAll();
 
         for (SplitEntity item : items) {
+            String name = item.getName();
+            String fromName = mFromCipher.decrypt(name);
             String fromBody = mFromCipher.decrypt(item.getBody());
+
+            String toName = mToCipher.encrypt(fromName);
             String toBody = mToCipher.encrypt(fromBody);
 
             if (toBody != null) {
-                item.setBody(toBody);
-                dao.insert(Collections.singletonList(item));
+                dao.update(name, toName, toBody);
             } else {
                 Logger.e("Error applying cipher to split storage");
             }
