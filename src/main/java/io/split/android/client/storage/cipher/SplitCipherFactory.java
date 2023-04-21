@@ -7,11 +7,11 @@ public class SplitCipherFactory {
             try {
                 return new CBCCipher(apiKey);
             } catch (Exception e) {
-                throw new RuntimeException("Error initializing SplitCipher", e);
+                return null;
             }
-        } else {
-            return new NoOpCipher();
         }
+
+        return new NoOpCipher();
     }
 
     public static SplitCipher create(String apiKey, SplitEncryptionLevel fromLevel) {
@@ -19,7 +19,7 @@ public class SplitCipherFactory {
             try {
                 return new CBCCipher(apiKey);
             } catch (Exception e) {
-                throw new RuntimeException("Error initializing SplitCipher", e);
+                return null;
             }
         }
         return new NoOpCipher();

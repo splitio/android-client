@@ -2,7 +2,7 @@ package io.split.android.client.storage.cipher;
 
 import androidx.annotation.NonNull;
 
-public enum SplitEncryptionLevel {
+enum SplitEncryptionLevel {
 
     /**
      * AES 128 CBC.
@@ -17,7 +17,7 @@ public enum SplitEncryptionLevel {
     private final String mDescription;
 
     SplitEncryptionLevel(String description) {
-        this.mDescription = description;
+        mDescription = description;
     }
 
     @NonNull
