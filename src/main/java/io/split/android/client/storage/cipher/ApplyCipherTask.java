@@ -86,10 +86,10 @@ public class ApplyCipherTask implements SplitTask {
 
         for (UniqueKeyEntity item : items) {
             String fromUserKey = mFromCipher.decrypt(item.getUserKey());
-            String featureList = mFromCipher.decrypt(item.getFeatureList());
+            String fromFeatureList = mFromCipher.decrypt(item.getFeatureList());
 
             String toUserKey = mToCipher.encrypt(fromUserKey);
-            String toFeatureList = mToCipher.encrypt(featureList);
+            String toFeatureList = mToCipher.encrypt(fromFeatureList);
 
             if (toFeatureList != null) {
                 item.setUserKey(toUserKey);
@@ -149,7 +149,7 @@ public class ApplyCipherTask implements SplitTask {
             String toUserKey = mToCipher.encrypt(fromUserKey);
             String toBody = mToCipher.encrypt(fromBody);
 
-            if (toBody != null) {
+            if (toUserKey != null && toBody != null) {
                 mySegmentDao.update(userKey, toUserKey, toBody);
             } else {
                 Logger.e("Error applying cipher to my segment");
@@ -185,7 +185,7 @@ public class ApplyCipherTask implements SplitTask {
             String toName = mToCipher.encrypt(fromName);
             String toBody = mToCipher.encrypt(fromBody);
 
-            if (toBody != null) {
+            if (toName != null && toBody != null) {
                 dao.update(name, toName, toBody);
             } else {
                 Logger.e("Error applying cipher to split storage");
