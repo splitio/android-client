@@ -62,7 +62,7 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
             taskList.add(new SplitDeferredTaskItem<>(
                     new Callable<List<Split>>() {
                         @Override
-                        public List<Split> call() throws Exception {
+                        public List<Split> call() {
                             return convertEntitiesToSplitList(partition, mSplitCipher);
                         }
                     }));

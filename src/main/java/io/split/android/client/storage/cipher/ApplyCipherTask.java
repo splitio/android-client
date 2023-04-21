@@ -73,7 +73,7 @@ public class ApplyCipherTask implements SplitTask {
             String toUserKey = mToCipher.encrypt(fromUserKey);
             String toBody = mToCipher.encrypt(fromBody);
 
-            if (toBody != null) {
+            if (toUserKey != null && toBody != null) {
                 attributesDao.update(userKey, toUserKey, toBody);
             } else {
                 Logger.e("Error applying cipher to attributes storage");
