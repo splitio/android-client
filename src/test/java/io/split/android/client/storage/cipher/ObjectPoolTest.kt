@@ -7,7 +7,7 @@ class ObjectPoolTest {
 
     @Test
     fun testInstancesAreDifferent() {
-        val objectPool = ObjectPool(3) { "ABCDEFGHIJKLMNOPQRSTUVWXYZ".random() }
+        val objectPool = ObjectPool(3) { (0 .. 1000000L).random() }
 
         val instance1 = objectPool.acquire()
         val instance2 = objectPool.acquire()
@@ -26,7 +26,7 @@ class ObjectPoolTest {
         val instance6 = objectPool.acquire()
         objectPool.release(instance6)
 
-        val list = mutableListOf<Char>(
+        val list = mutableListOf<Long>(
             instance1,
             instance2,
             instance3,
@@ -40,7 +40,7 @@ class ObjectPoolTest {
 
     @Test
     fun acquireDoesNotReturnNullInstances() {
-        val objectPool = ObjectPool(3) { "ABCDEFGHIJKLMNOPQRSTUVWXYZ".random() }
+        val objectPool = ObjectPool(3) { (0 .. 1000000L).random() }
 
         objectPool.acquire()
         objectPool.acquire()

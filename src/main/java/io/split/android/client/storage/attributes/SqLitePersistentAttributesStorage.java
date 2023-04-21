@@ -37,10 +37,13 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
             return;
         }
 
+        String encryptedMatchingKey = mSplitCipher.encrypt(matchingKey);
         String encryptedAttributes = mSplitCipher.encrypt(Json.toJson(attributes));
         if (encryptedAttributes != null) {
-            mAttributesDao.update(new AttributesEntity(matchingKey,
-                    encryptedAttributes, System.currentTimeMillis() / 1000));
+            mAttributesDao.update(
+                    new AttributesEntity(encryptedMatchingKey,
+                            encryptedAttributes,
+                            System.currentTimeMillis() / 1000));
         } else {
             Logger.e("Error encrypting attributes");
         }
@@ -49,7 +52,8 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
     @NonNull
     @Override
     public Map<String, Object> getAll(String matchingKey) {
-        AttributesEntity attributesEntity = mAttributesDao.getByUserKey(matchingKey);
+        String encryptedMatchingKey = mSplitCipher.encrypt(matchingKey);
+        AttributesEntity attributesEntity = mAttributesDao.getByUserKey(encryptedMatchingKey);
 
         return getAttributesMapFromEntity(attributesEntity);
     }

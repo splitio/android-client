@@ -35,9 +35,10 @@ public class SqLitePersistentAttributesStorageTest {
 
     @Test
     public void getRetrievesValuesFromDao() {
+        when(mSplitCipher.encrypt("matching_key")).thenReturn("encrypted_matching_key");
         storage.getAll(matchingKey);
 
-        Mockito.verify(mAttributesDao).getByUserKey("matching_key");
+        Mockito.verify(mAttributesDao).getByUserKey("encrypted_matching_key");
     }
 
     @Test
@@ -82,8 +83,9 @@ public class SqLitePersistentAttributesStorageTest {
 
     @Test
     public void getAllReturnsDecryptedValues() {
-        AttributesEntity attributesEntity = new AttributesEntity(matchingKey, "encrypted_attributes", 0);
-        when(mAttributesDao.getByUserKey(matchingKey)).thenReturn(attributesEntity);
+        when(mSplitCipher.encrypt("matching_key")).thenReturn("encrypted_matching_key");
+        AttributesEntity attributesEntity = new AttributesEntity("encrypted_matching_key", "encrypted_attributes", 0);
+        when(mAttributesDao.getByUserKey("encrypted_matching_key")).thenReturn(attributesEntity);
         when(mSplitCipher.decrypt("encrypted_attributes"))
                 .thenReturn("{\"attr2\":80.05,\"attr1\":125,\"attr4\":null,\"attr3\":\"String\"}");
 

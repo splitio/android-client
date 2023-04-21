@@ -11,7 +11,6 @@ import io.split.android.client.dtos.Identifiable;
 @Entity(tableName = "impressions")
 public class ImpressionEntity implements Identifiable {
 
-
     @PrimaryKey(autoGenerate = true)
     private long id;
 

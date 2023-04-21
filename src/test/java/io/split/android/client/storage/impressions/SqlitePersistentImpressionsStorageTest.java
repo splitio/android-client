@@ -70,11 +70,13 @@ public class SqlitePersistentImpressionsStorageTest {
         String encryptedJson = "encrypted_key_impression";
 
         when(mSplitCipher.encrypt(any())).thenReturn(encryptedJson);
+        when(mSplitCipher.encrypt("test_feature")).thenReturn("encrypted_test_feature");
         when(mSplitCipher.decrypt(encryptedJson)).thenReturn(jsonKeyImpression);
+        when(mSplitCipher.decrypt("encrypted_test_feature")).thenReturn("test_feature");
 
         ImpressionEntity entity = mStorage.entityForModel(keyImpression);
+        assertEquals("encrypted_test_feature", entity.getTestName());
         assertEquals(encryptedJson, entity.getBody());
-        assertEquals("test_feature", entity.getTestName());
     }
 
     @Test
@@ -116,21 +118,24 @@ public class SqlitePersistentImpressionsStorageTest {
     public void entityToModelUsesEncryption() throws JsonParseException {
         ImpressionEntity entity = new ImpressionEntity();
         entity.setBody("encrypted_body");
-        entity.setTestName("test");
+        entity.setTestName("encrypted_test_name");
         entity.setId(1L);
 
         String decryptedBody = "{\"feature\":\"test\"}";
+        String decryptedTestName = "test";
         KeyImpression expectedKeyImpression = new KeyImpression();
         expectedKeyImpression.feature = "test";
         expectedKeyImpression.storageId = 1L;
 
         when(mSplitCipher.decrypt("encrypted_body")).thenReturn(decryptedBody);
+        when(mSplitCipher.decrypt("encrypted_test_name")).thenReturn(decryptedTestName);
 
         KeyImpression keyImpression = mStorage.entityToModel(entity);
 
         assertEquals(expectedKeyImpression.feature, keyImpression.feature);
         assertEquals(expectedKeyImpression.storageId, keyImpression.storageId);
         verify(mSplitCipher).decrypt("encrypted_body");
+        verify(mSplitCipher).decrypt("encrypted_test_name");
     }
 
     private ImpressionEntity createImpressionEntity(long createdAt, int status, String name) {

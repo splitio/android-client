@@ -58,6 +58,8 @@ public class SplitToSplitEntityTransformerTest {
     @Test
     public void amountOfSplitsEqualsAmountOfEntities() {
         when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
+        when(mSplitCipher.encrypt(any())).thenAnswer(invocation -> (invocation.getArgument(0) == null) ? "null" : invocation.getArgument(0));
+        when(mSplitCipher.decrypt(any())).thenAnswer(invocation -> (invocation.getArgument(0) == null) ? "null" : invocation.getArgument(0));
         List<Split> mockEntities = getMockSplits(3);
 
         List<SplitEntity> splits = mConverter.transform(mockEntities);
@@ -103,8 +105,11 @@ public class SplitToSplitEntityTransformerTest {
     public void entitiesBodiesAreEncrypted() {
         when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
         List<Split> mockEntities = getMockSplits(3);
-        when(mSplitCipher.encrypt(any())).thenReturn("encrypted-0")
+        when(mSplitCipher.encrypt(any())).thenReturn("encrypted-key-0")
+                .thenReturn("encrypted-0")
+                .thenReturn("encrypted-key-1")
                 .thenReturn("encrypted-1")
+                .thenReturn("encrypted-key-2")
                 .thenReturn("encrypted-2");
 
         List<SplitEntity> splits = mConverter.transform(mockEntities);
@@ -112,7 +117,9 @@ public class SplitToSplitEntityTransformerTest {
         assertEquals(3, splits.size());
 
         for (int i = 0; i < splits.size(); i++) {
-            assertEquals("encrypted-" + i, splits.get(i).getBody());
+            SplitEntity entity = splits.get(i);
+            assertEquals("encrypted-key-" + i, entity.getName());
+            assertEquals("encrypted-" + i, entity.getBody());
         }
     }
 
