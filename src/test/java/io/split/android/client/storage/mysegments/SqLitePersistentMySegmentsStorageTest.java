@@ -73,7 +73,8 @@ public class SqLitePersistentMySegmentsStorageTest {
         entity.setUserKey(userKey);
         entity.setSegmentList(encryptedSegments);
 
-        when(mDao.getByUserKey(userKey)).thenReturn(entity);
+        when(mDao.getByUserKey("encrypted_user_key")).thenReturn(entity);
+        when(mSplitCipher.encrypt(userKey)).thenReturn("encrypted_user_key");
         when(mSplitCipher.decrypt(encryptedSegments)).thenReturn(decryptedSegments);
 
         List<String> result = mStorage.getSnapshot(userKey);
