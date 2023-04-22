@@ -19,9 +19,12 @@ public class UniqueKeysRecorderWorker extends SplitWorker {
         super(context, workerParams);
         try {
             Data inputData = workerParams.getInputData();
+            String apiKey = inputData.getString(ServiceConstants.WORKER_PARAM_API_KEY);
+            boolean encryptionEnabled = inputData.getBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, false);
             mSplitTask = new UniqueKeysRecorderTask(ServiceFactory.getUniqueKeysRecorder(getHttpClient(),
                     getEndPoint()),
-                    StorageFactory.getPersistentImpressionsUniqueStorage(getDatabase()),
+                    StorageFactory.getPersistentImpressionsUniqueStorageForWorker(getDatabase(),
+                            apiKey, encryptionEnabled),
                     new UniqueKeysRecorderTaskConfig(
                             inputData.getInt(ServiceConstants.WORKER_PARAM_UNIQUE_KEYS_PER_PUSH, ServiceConstants.DEFAULT_RECORDS_PER_PUSH),
                             inputData.getLong(ServiceConstants.WORKER_PARAM_UNIQUE_KEYS_ESTIMATED_SIZE_IN_BYTES, ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES)

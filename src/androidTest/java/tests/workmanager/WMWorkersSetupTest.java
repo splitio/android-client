@@ -100,8 +100,7 @@ public class WMWorkersSetupTest {
         Data.Builder dataBuilder = new Data.Builder();
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_DATABASE_NAME, "thedatabase");
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_API_KEY, "thisapikey");
-        dataBuilder.putString(
-                ServiceConstants.WORKER_PARAM_EVENTS_ENDPOINT, "http://events.com/");
+        dataBuilder.putBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, false);
         if (customData != null) {
             dataBuilder.putAll(customData);
         }

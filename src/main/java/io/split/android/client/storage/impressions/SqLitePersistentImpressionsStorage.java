@@ -7,12 +7,14 @@ import java.util.List;
 
 import io.split.android.client.dtos.DeprecatedKeyImpression;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.storage.db.ImpressionDao;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -20,13 +22,17 @@ public class SqLitePersistentImpressionsStorage
         extends SqLitePersistentStorage<ImpressionEntity, KeyImpression>
         implements PersistentImpressionsStorage {
 
-    final SplitRoomDatabase mDatabase;
-    final ImpressionDao mDao;
+    private final SplitRoomDatabase mDatabase;
+    private final ImpressionDao mDao;
+    private final SplitCipher mSplitCipher;
 
-    public SqLitePersistentImpressionsStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
+    public SqLitePersistentImpressionsStorage(@NonNull SplitRoomDatabase database,
+                                              long expirationPeriod,
+                                              @NonNull SplitCipher splitCipher) {
         super(expirationPeriod);
         mDatabase = checkNotNull(database);
         mDao = mDatabase.impressionDao();
+        mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
@@ -39,15 +45,28 @@ public class SqLitePersistentImpressionsStorage
         mDao.insert(entities);
     }
 
-    @NonNull
     @Override
     protected ImpressionEntity entityForModel(@NonNull KeyImpression model) {
         ImpressionEntity entity = new ImpressionEntity();
-        entity.setStatus(StorageRecordStatus.ACTIVE);
-        entity.setBody(Json.toJson(model));
-        entity.setTestName(model.feature);
-        entity.setCreatedAt(System.currentTimeMillis() / 1000);
-        return entity;
+        try {
+            String body = Json.toJson(model);
+            String encryptedBody = mSplitCipher.encrypt(body);
+            String encryptedName = mSplitCipher.encrypt(model.feature);
+            if (encryptedName == null || encryptedBody == null) {
+                Logger.e("Error encrypting impression");
+                return null;
+            }
+            entity.setStatus(StorageRecordStatus.ACTIVE);
+            entity.setBody(encryptedBody);
+            entity.setTestName(encryptedName);
+            entity.setCreatedAt(System.currentTimeMillis() / 1000);
+
+            return entity;
+        } catch (JsonParseException e) {
+            Logger.e("Error parsing impression: " + e.getMessage());
+
+            return null;
+        }
     }
 
     @Override
@@ -79,11 +98,23 @@ public class SqLitePersistentImpressionsStorage
     protected KeyImpression entityToModel(ImpressionEntity entity) throws JsonParseException {
         KeyImpression impression = null;
         try {
-            impression = Json.fromJson(entity.getBody(), KeyImpression.class);
-            impression.feature = entity.getTestName();
+            String encryptedName = entity.getTestName();
+            String encryptedBody = entity.getBody();
+            String name = mSplitCipher.decrypt(encryptedName);
+            String body = mSplitCipher.decrypt(encryptedBody);
+            if (name != null && body != null) {
+                impression = Json.fromJson(body, KeyImpression.class);
+                impression.feature = name;
+            }
         } catch (JsonParseException e) {
             // Try deprecated serialization
-            DeprecatedKeyImpression deprecatedImp = Json.fromJson(entity.getBody(), DeprecatedKeyImpression.class);
+            String encryptedName = entity.getTestName();
+            String encryptedBody = entity.getBody();
+            String name = mSplitCipher.decrypt(encryptedName);
+            String body = mSplitCipher.decrypt(encryptedBody);
+            DeprecatedKeyImpression deprecatedImp = Json.fromJson(body,
+                    DeprecatedKeyImpression.class);
+            deprecatedImp.feature = name;
             impression = updateImpression(deprecatedImp);
         }
         if (impression == null) {

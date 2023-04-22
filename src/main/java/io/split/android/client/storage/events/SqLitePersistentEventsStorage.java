@@ -7,12 +7,14 @@ import com.google.gson.JsonParseException;
 import java.util.List;
 
 import io.split.android.client.dtos.Event;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.EventDao;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -20,13 +22,17 @@ public class SqLitePersistentEventsStorage
         extends SqLitePersistentStorage<EventEntity, Event>
         implements PersistentEventsStorage {
 
-    final SplitRoomDatabase mDatabase;
-    final EventDao mDao;
+    private final SplitRoomDatabase mDatabase;
+    private final EventDao mDao;
+    private final SplitCipher mSplitCipher;
 
-    public SqLitePersistentEventsStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
+    public SqLitePersistentEventsStorage(@NonNull SplitRoomDatabase database,
+                                         long expirationPeriod,
+                                         @NonNull SplitCipher splitCipher) {
         super(expirationPeriod);
         mDatabase = checkNotNull(database);
         mDao = mDatabase.eventDao();
+        mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
@@ -39,13 +45,18 @@ public class SqLitePersistentEventsStorage
         mDao.insert(entities);
     }
 
-    @NonNull
     @Override
     protected EventEntity entityForModel(@NonNull Event model) {
+        String body = mSplitCipher.encrypt(Json.toJson(model));
+        if (body == null) {
+            Logger.e("Error encrypting event");
+            return null;
+        }
         EventEntity entity = new EventEntity();
+        entity.setBody(body);
         entity.setStatus(StorageRecordStatus.ACTIVE);
-        entity.setBody(Json.toJson(model));
         entity.setCreatedAt(System.currentTimeMillis() / 1000);
+
         return entity;
     }
 
@@ -76,9 +87,10 @@ public class SqLitePersistentEventsStorage
 
     @Override
     protected Event entityToModel(EventEntity entity) throws JsonParseException {
-        Event count = Json.fromJson(entity.getBody(), Event.class);
-        count.storageId = entity.getId();
-        return count;
+        String body = mSplitCipher.decrypt(entity.getBody());
+        Event event = Json.fromJson(body, Event.class);
+        event.storageId = entity.getId();
+        return event;
     }
 
     static class GetAndUpdate extends

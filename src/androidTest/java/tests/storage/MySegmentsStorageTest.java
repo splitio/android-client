@@ -1,10 +1,12 @@
 package tests.storage;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -17,6 +19,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import helper.DatabaseHelper;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
@@ -26,11 +29,12 @@ import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
 
 public class MySegmentsStorageTest {
-    SplitRoomDatabase mRoomDb;
-    Context mContext;
-    PersistentMySegmentsStorage mPersistentMySegmentsStorage;
-    MySegmentsStorage mMySegmentsStorage;
-    final String mUserKey = "userkey-1";
+
+    private SplitRoomDatabase mRoomDb;
+    private Context mContext;
+    private PersistentMySegmentsStorage mPersistentMySegmentsStorage;
+    private MySegmentsStorage mMySegmentsStorage;
+    private final String mUserKey = "userkey-1";
     private MySegmentsStorageContainer mMySegmentsStorageContainer;
 
     @Before
@@ -51,7 +55,8 @@ public class MySegmentsStorageTest {
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb);
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb,
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false));
         mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
         mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
     }
@@ -60,7 +65,7 @@ public class MySegmentsStorageTest {
     public void noLocalLoaded() {
         Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
 
-        Assert.assertEquals(0, snapshot.size());
+        assertEquals(0, snapshot.size());
     }
 
     @Test
@@ -68,10 +73,10 @@ public class MySegmentsStorageTest {
         mMySegmentsStorage.loadLocal();
         Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
 
-        Assert.assertEquals(3, snapshot.size());
-        Assert.assertTrue(snapshot.contains("s1"));
-        Assert.assertTrue(snapshot.contains("s2"));
-        Assert.assertTrue(snapshot.contains("s3"));
+        assertEquals(3, snapshot.size());
+        assertTrue(snapshot.contains("s1"));
+        assertTrue(snapshot.contains("s2"));
+        assertTrue(snapshot.contains("s3"));
     }
 
     @Test
@@ -84,17 +89,17 @@ public class MySegmentsStorageTest {
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
 
-        Assert.assertEquals(4, snapshot.size());
-        Assert.assertTrue(snapshot.contains("a1"));
-        Assert.assertTrue(snapshot.contains("a2"));
-        Assert.assertTrue(snapshot.contains("a3"));
-        Assert.assertTrue(snapshot.contains("a4"));
+        assertEquals(4, snapshot.size());
+        assertTrue(snapshot.contains("a1"));
+        assertTrue(snapshot.contains("a2"));
+        assertTrue(snapshot.contains("a3"));
+        assertTrue(snapshot.contains("a4"));
 
-        Assert.assertEquals(4, newSnapshot.size());
-        Assert.assertTrue(newSnapshot.contains("a1"));
-        Assert.assertTrue(newSnapshot.contains("a2"));
-        Assert.assertTrue(newSnapshot.contains("a3"));
-        Assert.assertTrue(newSnapshot.contains("a4"));
+        assertEquals(4, newSnapshot.size());
+        assertTrue(newSnapshot.contains("a1"));
+        assertTrue(newSnapshot.contains("a2"));
+        assertTrue(newSnapshot.contains("a3"));
+        assertTrue(newSnapshot.contains("a4"));
     }
 
     @Test
@@ -108,8 +113,8 @@ public class MySegmentsStorageTest {
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
 
-        Assert.assertEquals(0, snapshot.size());
-        Assert.assertEquals(0, newSnapshot.size());
+        assertEquals(0, snapshot.size());
+        assertEquals(0, newSnapshot.size());
     }
 
     @Test
@@ -123,8 +128,8 @@ public class MySegmentsStorageTest {
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
 
-        Assert.assertEquals(3, snapshot.size());
-        Assert.assertEquals(3, newSnapshot.size());
+        assertEquals(3, snapshot.size());
+        assertEquals(3, newSnapshot.size());
     }
 
     @Test
@@ -137,9 +142,27 @@ public class MySegmentsStorageTest {
         mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
-        Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
 
-        Assert.assertEquals(0, snapshot.size());
+        assertEquals(0, snapshot.size());
+    }
+
+    @Test
+    public void originalValuesCanBeRetrievedWhenStorageIsEncrypted() {
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb,
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true));
+        mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
+        mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
+
+        mMySegmentsStorage.set(Arrays.asList("a1", "a2", "a3", "a4"));
+        MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
+        mySegmentsStorage.loadLocal();
+
+        Set<String> all = mySegmentsStorage.getAll();
+        assertTrue(all.contains("a1"));
+        assertTrue(all.contains("a2"));
+        assertTrue(all.contains("a3"));
+        assertTrue(all.contains("a4"));
+        assertEquals(4, all.size());
     }
 
     @Test
@@ -188,7 +211,6 @@ public class MySegmentsStorageTest {
         }).start();
         latch.await(40, TimeUnit.SECONDS);
         Set<String> l = mMySegmentsStorage.getAll();
-        Assert.assertEquals(10, mMySegmentsStorage.getAll().size());
+        assertEquals(10, mMySegmentsStorage.getAll().size());
     }
-
 }

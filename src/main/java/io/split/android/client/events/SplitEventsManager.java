@@ -148,9 +148,11 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
                 case SPLITS_LOADED_FROM_STORAGE:
                 case MY_SEGMENTS_LOADED_FROM_STORAGE:
                 case ATTRIBUTES_LOADED_FROM_STORAGE:
+                case ENCRYPTION_MIGRATION_DONE:
                     if (wasTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE) &&
-                            wasTriggered(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE)) {
+                            wasTriggered(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE) &&
+                            wasTriggered(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE)) {
                         trigger(SplitEvent.SDK_READY_FROM_CACHE);
                     }
                     break;

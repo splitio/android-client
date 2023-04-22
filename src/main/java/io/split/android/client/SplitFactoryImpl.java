@@ -36,6 +36,7 @@ import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
@@ -128,27 +129,35 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Check if test database available
         String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
-        SplitRoomDatabase _splitDatabase;
+        SplitRoomDatabase splitDatabase;
         if (testDatabase == null) {
-            _splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
+            splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         } else {
-            _splitDatabase = testDatabase;
+            splitDatabase = testDatabase;
             Logger.d("Using test database");
             System.out.println("USING TEST DB: " + testDatabase);
         }
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
-        mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(), _splitDatabase, key, config.shouldRecordTelemetry(), telemetryStorage);
 
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
+
+        EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
+
+        SplitCipher splitCipher = factoryHelper.migrateEncryption(mApiKey,
+                splitDatabase,
+                splitTaskExecutor,
+                mEventsManagerCoordinator,
+                config.encryptionEnabled());
+
+        mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
+                splitDatabase, key, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
 
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryString);
-
-        EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator,
@@ -235,24 +244,24 @@ public class SplitFactoryImpl implements SplitFactory {
                     mStorageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
                     telemetrySynchronizer.flush();
                     telemetrySynchronizer.destroy();
-                    Logger.i("Successful shutdown of telemetry");
+                    Logger.d("Successful shutdown of telemetry");
                     mSyncManager.stop();
-                    Logger.i("Flushing impressions and events");
+                    Logger.d("Flushing impressions and events");
                     mLifecycleManager.destroy();
-                    Logger.i("Successful shutdown of lifecycle manager");
+                    Logger.d("Successful shutdown of lifecycle manager");
                     mFactoryMonitor.remove(mApiKey);
-                    Logger.i("Successful shutdown of segment fetchers");
+                    Logger.d("Successful shutdown of segment fetchers");
                     customerImpressionListener.close();
-                    Logger.i("Successful shutdown of ImpressionListener");
+                    Logger.d("Successful shutdown of ImpressionListener");
                     defaultHttpClient.close();
-                    Logger.i("Successful shutdown of httpclient");
+                    Logger.d("Successful shutdown of httpclient");
                     mManager.destroy();
-                    Logger.i("Successful shutdown of manager");
+                    Logger.d("Successful shutdown of manager");
                     splitTaskExecutor.stop();
                     splitSingleThreadTaskExecutor.stop();
-                    Logger.i("Successful shutdown of task executor");
+                    Logger.d("Successful shutdown of task executor");
                     mStorageContainer.getAttributesStorageContainer().destroy();
-                    Logger.i("Successful shutdown of attributes storage");
+                    Logger.d("Successful shutdown of attributes storage");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
