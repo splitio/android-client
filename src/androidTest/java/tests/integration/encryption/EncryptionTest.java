@@ -121,7 +121,7 @@ public class EncryptionTest {
         mLifecycleManager.simulateOnPause();
         Thread.sleep(200);
         mLifecycleManager.simulateOnResume();
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         verifyImpressionsCount(testDatabase);
     }
