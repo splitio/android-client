@@ -49,47 +49,7 @@ public class EncryptionTest {
     private final LifecycleManagerStub mLifecycleManager = new LifecycleManagerStub();
 
     @Test
-    public void testSplitsAreEncrypted() throws IOException, InterruptedException {
-        SplitRoomDatabase testDatabase = DatabaseHelper.getTestDatabase(mContext);
-
-        SplitFactory factory = createFactory(mContext, testDatabase, true, ImpressionsMode.DEBUG);
-        CountDownLatch latch = new CountDownLatch(1);
-
-        factory.client().on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecutionView(SplitClient client) {
-                factory.destroy();
-                latch.countDown();
-            }
-        });
-
-        assertTrue(latch.await(2, TimeUnit.SECONDS));
-
-        verifySplits(testDatabase);
-    }
-
-    @Test
-    public void testSegmentsAreEncrypted() throws IOException, InterruptedException {
-        SplitRoomDatabase testDatabase = DatabaseHelper.getTestDatabase(mContext);
-
-        SplitFactory factory = createFactory(mContext, testDatabase, true, ImpressionsMode.DEBUG);
-        CountDownLatch latch = new CountDownLatch(1);
-
-        factory.client().on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecutionView(SplitClient client) {
-                factory.destroy();
-                latch.countDown();
-            }
-        });
-
-        assertTrue(latch.await(2, TimeUnit.SECONDS));
-
-        verifySegments(testDatabase);
-    }
-
-    @Test
-    public void eventsAreEncrypted() throws IOException, InterruptedException {
+    public void splitsSegmentsEventsAreEncrypted() throws IOException, InterruptedException {
         SplitRoomDatabase testDatabase = DatabaseHelper.getTestDatabase(mContext);
 
         SplitFactory factory = createFactory(mContext, testDatabase, true, ImpressionsMode.DEBUG);
@@ -106,8 +66,10 @@ public class EncryptionTest {
         });
 
         assertTrue(latch.await(2, TimeUnit.SECONDS));
-        Thread.sleep(250);
+        Thread.sleep(200);
 
+        verifySplits(testDatabase);
+        verifySegments(testDatabase);
         verifyEvents(testDatabase);
     }
 
@@ -129,7 +91,7 @@ public class EncryptionTest {
         });
 
         assertTrue(latch.await(2, TimeUnit.SECONDS));
-        Thread.sleep(250);
+        Thread.sleep(200);
 
         verifyImpressions(testDatabase);
     }
