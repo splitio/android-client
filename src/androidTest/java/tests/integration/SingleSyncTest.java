@@ -3,6 +3,9 @@ package tests.integration;
 
 import static android.os.SystemClock.sleep;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -44,7 +47,6 @@ import io.split.android.client.utils.logger.Logger;
 public class SingleSyncTest {
 
     private Context mContext;
-    String mUserKey = "key";
     int mUniqueKeysHitCount = 0;
     int mImpressionsCountHitCount = 0;
     int mImpressionsHitCount = 0;
@@ -86,12 +88,13 @@ public class SingleSyncTest {
                 .impressionsMode(impressionsMode)
                 .impressionsRefreshRate(1)
                 .impressionsCountersRefreshRate(1)
+                .mtkRefreshRate(1)
                 .eventFlushInterval(1)
                 .build();
 
         try {
 
-            SplitFactory factory = IntegrationHelper.buildFactory(
+            return IntegrationHelper.buildFactory(
                     IntegrationHelper.dummyApiKey(),
                     IntegrationHelper.dummyUserKey(),
                     config,
@@ -99,9 +102,8 @@ public class SingleSyncTest {
                     new HttpClientMock(dispatcher),
                     splitRoomDatabase, null, null,
                     mLifecycleManager);
-
-            return factory;
         } catch (IOException e) {
+            e.printStackTrace();
         }
         return null;
     }
@@ -135,9 +137,9 @@ public class SingleSyncTest {
         Assert.assertEquals(1, mSplitsHitCount);
         Assert.assertEquals(4, mMySegmentsHitCount); // One for key
         Assert.assertEquals(0, mSseAuthHitCount);
-        Assert.assertTrue(mEventsHitCount > 3);
-        Assert.assertTrue(mImpressionsHitCount > 3);
-        Assert.assertTrue(mImpressionsCountHitCount > 0);
+        assertTrue(mEventsHitCount > 3);
+        assertTrue(mImpressionsHitCount > 3);
+        assertTrue(mImpressionsCountHitCount > 0);
 
         client.destroy();
     }
@@ -171,8 +173,8 @@ public class SingleSyncTest {
         Assert.assertEquals(1, mSplitsHitCount);
         Assert.assertEquals(4, mMySegmentsHitCount); // One for key
         Assert.assertEquals(0, mSseAuthHitCount);
-        Assert.assertTrue(mEventsHitCount > 3);
-        Assert.assertTrue(mImpressionsHitCount > 3);
+        assertTrue(mEventsHitCount > 3);
+        assertTrue(mImpressionsHitCount > 3);
         Assert.assertEquals(0, mImpressionsCountHitCount);
 
         client.destroy();
@@ -190,7 +192,10 @@ public class SingleSyncTest {
         client.on(SplitEvent.SDK_READY, readyTask);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
 
-        readyLatch.await(5, TimeUnit.SECONDS);
+        boolean awaitReady = readyLatch.await(20, TimeUnit.SECONDS);
+        if (!awaitReady) {
+            Assert.fail("First SDK not ready");
+        }
 
         generateData(factory, client);
 
@@ -199,30 +204,35 @@ public class SingleSyncTest {
         mImpCountLatch = new CountDownLatch(1);
 
         simulateBgFg(); // Make the SDK to store impressions count
-
-        mKeyLatch.await(5, TimeUnit.SECONDS);
-        mEveLatch.await(5, TimeUnit.SECONDS);
-        mImpCountLatch.await(5, TimeUnit.SECONDS);
+        boolean awaitKeys = mKeyLatch.await(10, TimeUnit.SECONDS);
+        if (!awaitKeys) {
+            Assert.fail("Keys not sent");
+        }
+        mEveLatch.await(10, TimeUnit.SECONDS);
+        mImpCountLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertEquals(1, mSplitsHitCount);
         Assert.assertEquals(4, mMySegmentsHitCount); // One for key
         Assert.assertEquals(0, mSseAuthHitCount);
-        Assert.assertTrue(mEventsHitCount > 3);
-        Assert.assertTrue(mUniqueKeysHitCount > 3);
-        Assert.assertTrue(mImpressionsCountHitCount > 0);
+        assertTrue(mEventsHitCount > 3);
+        assertTrue(mUniqueKeysHitCount > 3);
+        assertTrue(mImpressionsCountHitCount > 0);
 
         client.destroy();
     }
 
-    void simulateBgFg() {
+    void simulateBgFg() throws InterruptedException {
         mLifecycleManager.simulateOnPause();
+        Thread.sleep(3000);
         mLifecycleManager.simulateOnResume();
+        Thread.sleep(3000);
     }
 
     private void generateData(SplitFactory factory, SplitClient client) throws InterruptedException {
         for (int i = 0; i < 3; i++) {
             CountDownLatch readyLatch = new CountDownLatch(1);
-            SplitClient cli = factory.client("key" + i);
+            String matchingKey = "key" + i;
+            SplitClient cli = factory.client(matchingKey);
             cli.on(SplitEvent.SDK_READY, new SplitEventTask() {
                 @Override
                 public void onPostExecution(SplitClient client) {
@@ -233,9 +243,10 @@ public class SingleSyncTest {
                 @Override
                 public void onPostExecutionView(SplitClient client) {
                     client.getTreatment("TEST");
+                    readyLatch.countDown();
                 }
             });
-            readyLatch.await(5, TimeUnit.SECONDS);
+            boolean readyAwait = readyLatch.await(15, TimeUnit.SECONDS);
             client.track("eve" + i);
         }
     }
@@ -257,7 +268,7 @@ public class SingleSyncTest {
             @Override
 
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                System.out.println(uri.getPath());
+                System.out.println("Path is " + uri.getPath());
                 if (uri.getPath().contains("/mySegments")) {
                     mMySegmentsHitCount++;
                     return new HttpResponseMock(200, IntegrationHelper.emptyMySegments());

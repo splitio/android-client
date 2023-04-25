@@ -27,6 +27,9 @@ public class MySegmentsSyncWorker extends SplitWorker {
         super(context, workerParams);
         String[] keys =
                 workerParams.getInputData().getStringArray(ServiceConstants.WORKER_PARAM_KEY);
+        String apiKey = workerParams.getInputData().getString(ServiceConstants.WORKER_PARAM_API_KEY);
+        boolean isEncryptionEnabled = workerParams.getInputData().getBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED,
+                false);
         boolean shouldRecordTelemetry = workerParams.getInputData().getBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
         try {
             if (keys == null) {
@@ -34,7 +37,13 @@ public class MySegmentsSyncWorker extends SplitWorker {
                 return;
             }
 
-            mSplitTask = new MySegmentsBulkSyncTask(Collections.unmodifiableSet(getIndividualMySegmentsSyncTasks(keys, shouldRecordTelemetry, getHttpClient(), getEndPoint(), getDatabase())));
+            mSplitTask = new MySegmentsBulkSyncTask(Collections.unmodifiableSet(getIndividualMySegmentsSyncTasks(keys,
+                    shouldRecordTelemetry,
+                    getHttpClient(),
+                    getEndPoint(),
+                    getDatabase(),
+                    apiKey,
+                    isEncryptionEnabled)));
 
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
@@ -45,14 +54,16 @@ public class MySegmentsSyncWorker extends SplitWorker {
                                                                             boolean shouldRecordTelemetry,
                                                                             HttpClient httpClient,
                                                                             String endPoint,
-                                                                            SplitRoomDatabase database) throws URISyntaxException {
+                                                                            SplitRoomDatabase database,
+                                                                            String apiKey,
+                                                                            boolean isEncryptionEnabled) throws URISyntaxException {
         Set<MySegmentsSyncTask> mySegmentsSyncTasks = new HashSet<>();
         for (String key : keys) {
             mySegmentsSyncTasks.add(
                     new MySegmentsSyncTask(
                             ServiceFactory.getMySegmentsFetcher(httpClient,
                                     endPoint, key),
-                            StorageFactory.getMySegmentsStorage(database).getStorageForKey(key),
+                            StorageFactory.getMySegmentsStorageForWorker(database, apiKey, isEncryptionEnabled).getStorageForKey(key),
                             false,
                             null,
                             StorageFactory.getTelemetryStorage(shouldRecordTelemetry))

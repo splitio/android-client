@@ -8,6 +8,7 @@ public interface PersistentSplitsStorage {
     boolean update(ProcessedSplitChange splitChange);
     SplitsSnapshot getSnapshot();
     List<Split> getAll();
+
     void update(Split splitName);
     String getFilterQueryString();
     void updateFilterQueryString(String queryString);

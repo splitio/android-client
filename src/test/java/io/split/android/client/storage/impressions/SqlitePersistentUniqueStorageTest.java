@@ -1,7 +1,9 @@
 package io.split.android.client.storage.impressions;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.split.android.client.service.impressions.unique.UniqueKey;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
@@ -36,12 +39,14 @@ public class SqlitePersistentUniqueStorageTest {
     @Mock
     private UniqueKeysDao mDao;
 
+    @Mock
+    private SplitCipher mSplitCipher;
+
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-
         when(mDatabase.uniqueKeysDao()).thenReturn(mDao);
-        mStorage = new SqlitePersistentUniqueStorage(mDatabase, 3600);
+        mStorage = new SqlitePersistentUniqueStorage(mDatabase, 3600, mSplitCipher);
     }
 
     @Test
@@ -95,19 +100,42 @@ public class SqlitePersistentUniqueStorageTest {
     @Test
     public void modelToEntity() {
         Set<String> features = getBasicFeatures();
+        when(mSplitCipher.encrypt(any()))
+                .thenReturn("encrypted_key")
+                .thenReturn("encrypted_set");
         UniqueKey model = new UniqueKey("key", features);
+
         UniqueKeyEntity uniqueKeyEntity = mStorage.entityForModel(model);
 
-        assertEquals("key", uniqueKeyEntity.getUserKey());
+        assertEquals("encrypted_key", uniqueKeyEntity.getUserKey());
         assertEquals(0, uniqueKeyEntity.getId());
-        assertEquals("[\"split_1\",\"split_2\"]", uniqueKeyEntity.getFeatureList());
+        assertEquals("encrypted_set", uniqueKeyEntity.getFeatureList());
         assertEquals(0, uniqueKeyEntity.getStatus());
         assertTrue(uniqueKeyEntity.getCreatedAt() > 0);
     }
 
     @Test
+    public void modelToEntityReturnsNullWhenEncryptionResultIsNull() {
+        Set<String> features = getBasicFeatures();
+        when(mSplitCipher.encrypt(any()))
+                .thenReturn(null)
+                .thenReturn(null);
+        UniqueKey model = new UniqueKey("key", features);
+
+        UniqueKeyEntity uniqueKeyEntity = mStorage.entityForModel(model);
+
+        assertNull(uniqueKeyEntity);
+    }
+
+    @Test
     public void entityToModel() {
+        when(mSplitCipher.decrypt(any()))
+                .thenReturn("[\"split_1\",\"split_2\"]")
+                .thenReturn("key");
+
         UniqueKeyEntity entity = new UniqueKeyEntity("key", "[\"split_1\",\"split_2\"]", 200L, 0);
+
+
         UniqueKey model = mStorage.entityToModel(entity);
 
         assertEquals("key", model.getKey());

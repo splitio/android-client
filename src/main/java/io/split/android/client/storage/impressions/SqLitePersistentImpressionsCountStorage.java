@@ -9,12 +9,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SqLitePersistentStorage;
 import io.split.android.client.storage.db.ImpressionsCountDao;
 import io.split.android.client.storage.db.ImpressionsCountEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -22,13 +24,17 @@ public class SqLitePersistentImpressionsCountStorage
         extends SqLitePersistentStorage<ImpressionsCountEntity, ImpressionsCountPerFeature>
         implements PersistentImpressionsCountStorage {
 
-    final SplitRoomDatabase mDatabase;
-    final ImpressionsCountDao mDao;
+    private final SplitRoomDatabase mDatabase;
+    private final ImpressionsCountDao mDao;
+    private final SplitCipher mSplitCipher;
 
-    public SqLitePersistentImpressionsCountStorage(@NonNull SplitRoomDatabase database, long expirationPeriod) {
+    public SqLitePersistentImpressionsCountStorage(@NonNull SplitRoomDatabase database,
+                                                   long expirationPeriod,
+                                                   @NonNull SplitCipher splitCipher) {
         super(expirationPeriod);
         mDatabase = checkNotNull(database);
         mDao = mDatabase.impressionsCountDao();
+        mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
@@ -41,14 +47,19 @@ public class SqLitePersistentImpressionsCountStorage
         mDao.insert(entities);
     }
 
-    @NonNull
-    @NotNull
     @Override
     protected ImpressionsCountEntity entityForModel(@NonNull ImpressionsCountPerFeature model) {
+        String body = mSplitCipher.encrypt(Json.toJson(model));
+        if (body == null) {
+            Logger.e("Error encrypting impression count");
+            return null;
+        }
+
         ImpressionsCountEntity entity = new ImpressionsCountEntity();
+        entity.setBody(body);
         entity.setStatus(StorageRecordStatus.ACTIVE);
-        entity.setBody(Json.toJson(model));
         entity.setCreatedAt(System.currentTimeMillis() / 1000);
+
         return entity;
     }
 
@@ -79,14 +90,15 @@ public class SqLitePersistentImpressionsCountStorage
 
     @Override
     protected ImpressionsCountPerFeature entityToModel(ImpressionsCountEntity entity) throws JsonParseException {
-        ImpressionsCountPerFeature count = Json.fromJson(entity.getBody(), ImpressionsCountPerFeature.class);
+        ImpressionsCountPerFeature count = Json.fromJson(mSplitCipher.decrypt(entity.getBody()),
+                ImpressionsCountPerFeature.class);
         count.storageId = entity.getId();
         return count;
     }
 
     static class GetAndUpdate extends
             SqLitePersistentStorage.GetAndUpdateTransaction<ImpressionsCountEntity,
-            ImpressionsCountPerFeature> {
+                    ImpressionsCountPerFeature> {
 
         final ImpressionsCountDao mDao;
 

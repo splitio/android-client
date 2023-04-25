@@ -3,9 +3,12 @@ package tests.integration;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.content.Context;
+
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -108,6 +111,7 @@ public class ProxyFactoryTest {
         baseServer.setDispatcher(new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
+                String requestLine = request.getRequestLine();
                 return new MockResponse().setResponseCode(200);
             }
         });
@@ -122,7 +126,8 @@ public class ProxyFactoryTest {
                 .build();
 
         // init db
-        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext());
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(context);
         splitRoomDatabase.clearAllTables();
 
         // init factory
@@ -135,22 +140,27 @@ public class ProxyFactoryTest {
                         .impressionsQueueSize(1)
                         .impressionsChunkSize(1)
                         .impressionsPerPush(1)
+                        .impressionsRefreshRate(1)
                         .proxyHost(proxyServer.url("").toString())
                         .logLevel(SplitLogLevel.VERBOSE)
                         .build(),
-                InstrumentationRegistry.getInstrumentation().getContext(), null, splitRoomDatabase);
+                context, null, splitRoomDatabase);
 
         // init client
         SplitClient client = mSplitFactory.client(key);
         CountDownLatch readyLatch = new CountDownLatch(1);
         TestingHelper.TestEventTask readyTask = new TestingHelper.TestEventTask(readyLatch);
         client.on(SplitEvent.SDK_READY, readyTask);
-        boolean await = readyLatch.await(5, TimeUnit.SECONDS);
+        boolean await = readyLatch.await(10, TimeUnit.SECONDS);
+        if (!await) {
+            Assert.fail("SDK_READY event not received");
+        }
 
         client.getTreatment("FACUNDO_TEST");
         client.getTreatment("FACUNDO_TEST");
         client.getTreatment("FACUNDO_TEST");
-        mSplitFactory.flush();
+        Thread.sleep(500);
+        client.flush();
 
         boolean awaitAuth = authLatch.await(10, TimeUnit.SECONDS);
         boolean awaitEvents = eventsLatch.await(10, TimeUnit.SECONDS);

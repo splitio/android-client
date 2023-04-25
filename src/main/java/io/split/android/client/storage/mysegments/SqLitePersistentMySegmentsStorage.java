@@ -10,18 +10,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.StringHelper;
+import io.split.android.client.utils.logger.Logger;
 
 public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsStorage {
 
-    final SplitRoomDatabase mDatabase;
-    final StringHelper mStringHelper;
+    private final SplitRoomDatabase mDatabase;
+    private final StringHelper mStringHelper;
+    private final SplitCipher mSplitCipher;
 
-    public SqLitePersistentMySegmentsStorage(@NonNull SplitRoomDatabase database) {
+    public SqLitePersistentMySegmentsStorage(@NonNull SplitRoomDatabase database,
+                                             @NonNull SplitCipher splitCipher) {
         mDatabase = checkNotNull(database);
         mStringHelper = new StringHelper();
+        mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
@@ -29,26 +34,40 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
         if (mySegments == null) {
             return;
         }
+
+        String encryptedUserKey = mSplitCipher.encrypt(userKey);
+        String encryptedSegmentList = mSplitCipher.encrypt(mStringHelper.join(",", mySegments));
+        if (encryptedUserKey == null || encryptedSegmentList == null) {
+            Logger.e("Error encrypting my segments");
+            return;
+        }
         MySegmentEntity entity = new MySegmentEntity();
-        entity.setUserKey(userKey);
-        entity.setSegmentList(mStringHelper.join(",", mySegments));
+        entity.setUserKey(encryptedUserKey);
+        entity.setSegmentList(encryptedSegmentList);
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mDatabase.mySegmentDao().update(entity);
     }
 
     @Override
     public List<String> getSnapshot(String userKey) {
-        return getMySegmentsFromEntity(mDatabase.mySegmentDao().getByUserKey(userKey));
+        String encryptedUserKey = mSplitCipher.encrypt(userKey);
+        return getMySegmentsFromEntity(mDatabase.mySegmentDao().getByUserKey(encryptedUserKey));
     }
 
     @Override
     public void close() {
     }
 
-    private static List<String> getMySegmentsFromEntity(MySegmentEntity entity) {
+    private List<String> getMySegmentsFromEntity(MySegmentEntity entity) {
         if (entity == null || Strings.isNullOrEmpty(entity.getSegmentList())) {
             return new ArrayList<>();
         }
-        return Arrays.asList(entity.getSegmentList().split(","));
+
+        String segmentList = mSplitCipher.decrypt(entity.getSegmentList());
+        if (segmentList == null) {
+            return new ArrayList<>();
+        }
+        String[] segments = segmentList.split(",");
+        return Arrays.asList(segments);
     }
 }

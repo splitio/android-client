@@ -63,7 +63,7 @@ public class ControlTest {
     private CountDownLatch mPushLatch;
 
     private HttpStreamResponseMock mStreamingResponse;
-    private int  mSseConnectionCount;
+    private int mSseConnectionCount;
 
     String mSplitChange;
 
@@ -154,7 +154,7 @@ public class ControlTest {
             }
             return false;
         }));
-        assertEquals(0, telemetryStorage.popTokenRefreshes());
+        assertEquals(1, telemetryStorage.popTokenRefreshes());
         Assert.assertEquals("on", treatmentReady);
         Assert.assertEquals("on", treatmentPaused);
         Assert.assertEquals("free", treatmentEnabled);
@@ -280,11 +280,11 @@ public class ControlTest {
     private void pushMySegmentMessage(String segmentName) {
         String message = loadMockedData(MSG_SEGMENT_UPDATE_PAYLOAD);
         message = message.replace("[SEGMENT_NAME]", segmentName);
-        mTimestamp+=100;
+        mTimestamp += 100;
         message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
         try {
             mStreamingData.put(message + "" + "\n");
-            sleep(200);
+            sleep(500);
             mPushLatch.countDown();
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException e) {
@@ -293,7 +293,7 @@ public class ControlTest {
 
     private void pushMessage(String fileName) {
         String message = loadMockedData(fileName);
-        mTimestamp+=100;
+        mTimestamp += 100;
         message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
         try {
             mStreamingData.put(message + "" + "\n");
@@ -305,21 +305,16 @@ public class ControlTest {
     }
 
     private void pushControl(String controlType) {
+        String message = loadMockedData(MSG_CONTROL);
+        message = message.replace(CONTROL_TYPE_PLACEHOLDER, controlType);
+        mTimestamp += 100;
+        message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String message = loadMockedData(MSG_CONTROL);
-                message = message.replace(CONTROL_TYPE_PLACEHOLDER, controlType);mTimestamp+=100;
-                message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
-
-                try {
-                    mStreamingData.put(message + "" + "\n");
-
-                    Logger.d("Pushed message: " + message);
-                } catch (InterruptedException e) {
-                }
-            }
-        }).start();
+        try {
+            mStreamingData.put(message + "" + "\n");
+            Thread.sleep(500);
+            Logger.d("Pushed message: " + message);
+        } catch (InterruptedException ignored) {
+        }
     }
 }

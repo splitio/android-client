@@ -15,6 +15,7 @@ import helper.DatabaseHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -39,7 +40,8 @@ public class PersistentImpressionStorageTest {
         generateImpressions(101, 110, StorageRecordStatus.DELETED, false);
         generateImpressions(301, 310, StorageRecordStatus.ACTIVE, true);
 
-        mPersistentImpressionStorage = new SqLitePersistentImpressionsStorage(mRoomDb, EXPIRATION_PERIOD);
+        mPersistentImpressionStorage = new SqLitePersistentImpressionsStorage(mRoomDb,
+                EXPIRATION_PERIOD, SplitCipherFactory.create("abcdedfghijklmnopqrstuvxyz", false));
     }
 
     @Test

@@ -78,9 +78,15 @@ public class SseConnectionFail5xxTest {
 
         client.on(SplitEvent.SDK_READY, readyTask);
 
-        readyLatch.await(40, TimeUnit.SECONDS);
+        boolean readyAwait = readyLatch.await(10, TimeUnit.SECONDS);
+        if (!readyAwait) {
+            Assert.fail("SDK_READY event not received");
+        }
 
-        mSseConnLatch.await(40, TimeUnit.SECONDS);
+        boolean sseConnAwait = mSseConnLatch.await(30, TimeUnit.SECONDS);
+        if (!sseConnAwait) {
+            Assert.fail("SSE connection not received");
+        }
         TestingHelper.pushKeepAlive(mStreamingData);
 
         // Wait for pollling to be stopped

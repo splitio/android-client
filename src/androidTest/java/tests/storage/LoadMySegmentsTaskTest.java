@@ -16,6 +16,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
@@ -50,7 +51,7 @@ public class LoadMySegmentsTaskTest {
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb);
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb, SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false));
         mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
         mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
     }

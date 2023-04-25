@@ -12,6 +12,12 @@ public interface SplitDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(List<SplitEntity> splits);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insert(SplitEntity split);
+
+    @Query("UPDATE splits SET name = :name, body = :body WHERE name = :formerName")
+    void update(String formerName, String name, String body);
+
     @Query("DELETE FROM splits WHERE name IN (:names)")
     void delete(List<String> names);
 

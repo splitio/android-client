@@ -37,6 +37,7 @@ public class EventsManagerCoordinator extends BaseEventsManager implements ISpli
                     case SPLITS_FETCHED:
                     case SPLITS_LOADED_FROM_STORAGE:
                     case SPLIT_KILLED_NOTIFICATION:
+                    case ENCRYPTION_MIGRATION_DONE:
                         for (ISplitEventsManager child : mChildren.values()) {
                             child.notifyInternalEvent(event);
                         }

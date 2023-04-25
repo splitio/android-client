@@ -15,6 +15,7 @@ import helper.DatabaseHelper;
 import helper.IntegrationHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -39,7 +40,8 @@ public class PersistentEventStorageTest {
         generateEvents(101, 110, StorageRecordStatus.DELETED, false);
         generateEvents(301, 310, StorageRecordStatus.ACTIVE, true);
 
-        mPersistentEventsStorage = new SqLitePersistentEventsStorage(mRoomDb, EXPIRATION_PERIOD);
+        mPersistentEventsStorage = new SqLitePersistentEventsStorage(mRoomDb, EXPIRATION_PERIOD,
+                SplitCipherFactory.create("abcdefghijklmnopqrstuvxyz", false));
     }
 
     @Test

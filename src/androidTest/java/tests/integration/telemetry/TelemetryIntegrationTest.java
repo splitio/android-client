@@ -8,17 +8,15 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import helper.DatabaseHelper;
@@ -43,6 +41,7 @@ import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -66,21 +65,11 @@ public class TelemetryIntegrationTest {
         testDatabase.clearAllTables();
         configEndpointHits = new AtomicInteger(0);
         statsEndpointHits = new AtomicInteger(0);
-        initializeClient(false);
-    }
-
-    @After
-    public void tearDown() throws IOException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        if (mWebServer != null) {
-            mWebServer.shutdown();
-        }
-        client.destroy();
     }
 
     @Test
     public void telemetryInitTest() {
-
-//        assertEquals(1, telemetryStorage.getNonReadyUsage());
+        initializeClient(false);
         assertEquals(1, mTelemetryStorage.getActiveFactories());
         assertEquals(0, mTelemetryStorage.getRedundantFactories());
         assertTrue(mTelemetryStorage.getTimeUntilReadyFromCache() > 0);
@@ -90,7 +79,7 @@ public class TelemetryIntegrationTest {
 
     @Test
     public void telemetryEvaluationLatencyTest() {
-
+        initializeClient(false);
         client.getTreatment("test_split");
         client.getTreatments(Arrays.asList("test_split", "test_split_2"), null);
         client.getTreatmentWithConfig("test_split", null);
@@ -107,7 +96,7 @@ public class TelemetryIntegrationTest {
 
     @Test
     public void recordImpressionStats() {
-
+        initializeClient(false);
         client.getTreatment("test_feature");
 
         client.getTreatment("test_feature");
@@ -120,6 +109,7 @@ public class TelemetryIntegrationTest {
 
     @Test
     public void recordEventsStats() {
+        initializeClient(false);
         client.track("event", "traffic_type");
 
         assertEquals(1, mTelemetryStorage.getEventsStats(EventsDataRecordsEnum.EVENTS_QUEUED));
@@ -127,6 +117,7 @@ public class TelemetryIntegrationTest {
 
     @Test
     public void configIsPostedAfterInitialization() throws InterruptedException {
+        initializeClient(false);
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         countDownLatch.await(1, TimeUnit.SECONDS);
@@ -135,6 +126,7 @@ public class TelemetryIntegrationTest {
 
     @Test
     public void statsAreFlushedOnDestroy() throws InterruptedException {
+        initializeClient(false);
         client.destroy();
         Thread.sleep(5200);
 
@@ -143,6 +135,7 @@ public class TelemetryIntegrationTest {
 
     @Test
     public void statsAreSentOnSynchronizerStart() throws InterruptedException {
+        initializeClient(false);
         CountDownLatch countDownLatch = new CountDownLatch(1);
         countDownLatch.await(5200, TimeUnit.MILLISECONDS);
 
@@ -151,8 +144,9 @@ public class TelemetryIntegrationTest {
 
     @Test
     public void recordAuthRejections() throws InterruptedException {
-        client.destroy();
         CountDownLatch sseLatch = new CountDownLatch(1);
+        CountDownLatch metricsLatch = new CountDownLatch(2);
+        AtomicReference<String> metricsPayload = new AtomicReference<>();
         final Dispatcher dispatcher = new Dispatcher() {
 
             @Override
@@ -165,6 +159,10 @@ public class TelemetryIntegrationTest {
                     return new MockResponse().setResponseCode(200)
                             .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
                 } else if (path.contains("/events/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("metrics/usage")) {
+                    metricsPayload.set(request.getBody().readUtf8());
+                    metricsLatch.countDown();
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("metrics")) {
                     return new MockResponse().setResponseCode(200);
@@ -181,8 +179,8 @@ public class TelemetryIntegrationTest {
 
         initializeClient(true);
         sseLatch.await(10, TimeUnit.SECONDS);
-        Thread.sleep(1000);
-        assertEquals(1, mTelemetryStorage.popAuthRejections());
+        metricsLatch.await(20, TimeUnit.SECONDS);
+        assertTrue(metricsPayload.get().contains("aR\":1"));
     }
 
     @Test
@@ -224,6 +222,7 @@ public class TelemetryIntegrationTest {
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .serviceEndpoints(endpoints)
                 .enableDebug()
+                .telemetryRefreshRate(10)
                 .featuresRefreshRate(9999)
                 .segmentsRefreshRate(9999)
                 .impressionsRefreshRate(9999)

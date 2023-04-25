@@ -29,9 +29,11 @@ public class SplitsSyncWorker extends SplitWorker {
         super(context, workerParams);
         try {
             boolean shouldRecordTelemetry = workerParams.getInputData().getBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, false);
+            String apiKey = workerParams.getInputData().getString(ServiceConstants.WORKER_PARAM_API_KEY);
+            boolean encryptionEnabled = workerParams.getInputData().getBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, false);
 
-            SplitsStorage splitsStorage = StorageFactory.getSplitsStorage(getDatabase());
-            // StorageFactory.getSplitsStorage creates a new storage instance, so it needs
+            SplitsStorage splitsStorage = StorageFactory.getSplitsStorageForWorker(getDatabase(), apiKey, encryptionEnabled);
+            // StorageFactory.getSplitsStorageForWorker creates a new storage instance, so it needs
             // to be populated by calling loadLocal
             splitsStorage.loadLocal();
             HttpFetcher<SplitChange> splitsFetcher = ServiceFactory.getSplitsFetcher(getHttpClient(),

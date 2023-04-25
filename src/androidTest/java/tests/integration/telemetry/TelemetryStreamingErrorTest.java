@@ -32,7 +32,6 @@ public class TelemetryStreamingErrorTest extends AblyErrorBaseTest {
     public void syncModeChangeStreamingEventTest() throws IOException, InterruptedException {
         initializeForTelemetry();
 
-
         List<StreamingEvent> streamingEvents = mTelemetryStorage.popStreamingEvents();
         assertTrue(streamingEvents.stream().anyMatch(event -> {
             if (event instanceof SyncModeUpdateStreamingEvent) {
@@ -56,8 +55,6 @@ public class TelemetryStreamingErrorTest extends AblyErrorBaseTest {
                 .trafficType("account")
                 .build());
 
-        mSseLatch = new CountDownLatch(1);
         pushErrorMessage(40012);
-        mSseLatch.await(5, TimeUnit.SECONDS);
     }
 }

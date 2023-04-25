@@ -198,23 +198,23 @@ public class WorkManagerWrapperTest {
     }
 
     private void assertWorkSpecMatches(WorkSpec workSpec, WorkSpec expectedWorkSpec) {
-        assertEquals(workSpec.backoffPolicy, expectedWorkSpec.backoffPolicy);
-        assertEquals(workSpec.backoffDelayDuration, expectedWorkSpec.backoffDelayDuration);
-        assertEquals(workSpec.constraints, expectedWorkSpec.constraints);
-        assertEquals(workSpec.initialDelay, expectedWorkSpec.initialDelay);
-        assertEquals(workSpec.input, expectedWorkSpec.input);
-        assertEquals(workSpec.minimumRetentionDuration, expectedWorkSpec.minimumRetentionDuration);
-        assertEquals(workSpec.periodStartTime, expectedWorkSpec.periodStartTime);
-        assertEquals(workSpec.workerClassName, expectedWorkSpec.workerClassName);
-        assertEquals(workSpec.isBackedOff(), expectedWorkSpec.isBackedOff());
-        assertEquals(workSpec.isPeriodic(), expectedWorkSpec.isPeriodic());
+        assertEquals(expectedWorkSpec.backoffPolicy, workSpec.backoffPolicy);
+        assertEquals(expectedWorkSpec.backoffDelayDuration, workSpec.backoffDelayDuration);
+        assertEquals(expectedWorkSpec.constraints, workSpec.constraints);
+        assertEquals(expectedWorkSpec.initialDelay, workSpec.initialDelay);
+        assertEquals(expectedWorkSpec.input, workSpec.input);
+        assertEquals(expectedWorkSpec.minimumRetentionDuration, workSpec.minimumRetentionDuration);
+        assertEquals(expectedWorkSpec.periodStartTime, workSpec.periodStartTime);
+        assertEquals(expectedWorkSpec.workerClassName, workSpec.workerClassName);
+        assertEquals(expectedWorkSpec.isBackedOff(), workSpec.isBackedOff());
+        assertEquals(expectedWorkSpec.isPeriodic(), workSpec.isPeriodic());
     }
 
     private Data buildInputData(Data customData) {
         Data.Builder dataBuilder = new Data.Builder();
         dataBuilder.putString("databaseName", "test_database_name");
         dataBuilder.putString("apiKey", "api_key");
-        dataBuilder.putString("eventsEndpoint", "https://test.split.io/events");
+        dataBuilder.putBoolean("encryptionEnabled", false);
         if (customData != null) {
             dataBuilder.putAll(customData);
         }

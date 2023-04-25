@@ -26,7 +26,6 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.Partition;
@@ -58,7 +57,7 @@ public class SplitChangesTest {
 
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mCurSplitReqId = 0;
-        mImpLatch = new CountDownLatch(2);
+        mImpLatch = new CountDownLatch(1);
         mLatchs = new ArrayList<>();
         mImpHits = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
@@ -122,7 +121,6 @@ public class SplitChangesTest {
         ArrayList<String> treatments = new ArrayList<>();
         CountDownLatch latch = new CountDownLatch(1);
         String apiKey = "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
-        String dataFolderName = "2a1099049fd8653247c5ea42bOIajMRhH0R0FcBwJZM4ca7zj6HAq1ZDS";
 
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
 
@@ -136,7 +134,7 @@ public class SplitChangesTest {
         Key key = new Key("CUSTOMER_ID", null);
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .serviceEndpoints(ServiceEndpoints.builder().apiEndpoint(url).eventsEndpoint(url).build())
-                .ready(30000)
+                .ready(5000)
                 .featuresRefreshRate(5)
                 .segmentsRefreshRate(5)
                 .impressionsRefreshRate(25)
@@ -155,20 +153,29 @@ public class SplitChangesTest {
 
         client = splitFactory.client();
 
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
         SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
 
-        client.on(SplitEvent.SDK_READY, readyTask);
-        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+        client.on(SplitEvent.SDK_READY, readyTimeOutTask);
 
-        latch.await(20, TimeUnit.SECONDS);
+        boolean await = latch.await(5, TimeUnit.SECONDS);
+
+        if (!await) {
+            Assert.fail("SDK not ready");
+        }
 
         for (int i = 0; i < 4; i++) {
-            mLatchs.get(i).await(20, TimeUnit.SECONDS);
+            boolean awaitTreatment = mLatchs.get(i).await(8, TimeUnit.SECONDS);
+            if (!awaitTreatment) {
+                Assert.fail("Treatment not received");
+            }
             treatments.add(client.getTreatment("test_feature"));
         }
-        mImpLatch.await(40, TimeUnit.SECONDS);
+        boolean impAwait = mImpLatch.await(10, TimeUnit.SECONDS);
+        if (!impAwait) {
+            Assert.fail("Impressions not received");
+        }
         client.destroy();
+        Thread.sleep(1000);
 
         ArrayList<Impression> impLis = new ArrayList<>();
         impLis.add(impListener.getImpression(impListener.buildKey(

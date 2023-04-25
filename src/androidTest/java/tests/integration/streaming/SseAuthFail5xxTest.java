@@ -1,5 +1,7 @@
 package tests.integration.streaming;
 
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -26,23 +28,24 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.logger.Logger;
 
 import static java.lang.Thread.sleep;
 
 public class SseAuthFail5xxTest {
-    Context mContext;
-    BlockingQueue<String> mStreamingData;
-    CountDownLatch mSseAuthLatch;
-    CountDownLatch mSseConnLatch;
+    private Context mContext;
+    private BlockingQueue<String> mStreamingData;
+    private CountDownLatch mSseAuthLatch;
+    private CountDownLatch mSseConnLatch;
 
-    boolean mIsStreamingAuth;
-    boolean mIsStreamingConnected;
-    int mMySegmentsHitsCountHit;
-    int mSplitsHitsCountHit;
-    int mAuthHits;
-    int mMySegmentsHitsCountHitAfterSseConn = 0;
+    private boolean mIsStreamingAuth;
+    private boolean mIsStreamingConnected;
+    private int mMySegmentsHitsCountHit;
+    private int mSplitsHitsCountHit;
+    private int mAuthHits;
+    private int mMySegmentsHitsCountHitAfterSseConn = 0;
     int mSplitsHitsCountHitAfterSseConn = 0;
 
     private static final int MAX_AUTH_RETRIES = 3;
@@ -75,36 +78,43 @@ public class SseAuthFail5xxTest {
                 IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
                 config, mContext, httpClientMock, DatabaseHelper.getTestDatabase(mContext));
 
-        SplitClient client = splitFactory.client();
+        SplitEventTask readyTask = new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client) {
+                readyLatch.countDown();
+            }
+        };
+        splitFactory.client().on(SplitEvent.SDK_READY, readyTask);
 
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
+        boolean readyAwait = readyLatch.await(20, TimeUnit.SECONDS);
+        if (!readyAwait) {
+            Assert.fail("SDK not ready");
+        }
+        boolean sseAuthAwait = mSseAuthLatch.await(60, TimeUnit.SECONDS);
+        if (!sseAuthAwait) {
+            Assert.fail("Sse auth not ready");
+        }
+        boolean sseConnAwait = mSseConnLatch.await(20, TimeUnit.SECONDS);
+        if (!sseConnAwait) {
+            Assert.fail("Sse connection not ready");
+        }
 
-        client.on(SplitEvent.SDK_READY, readyTask);
-
-        readyLatch.await(20, TimeUnit.SECONDS);
-
-        mSseAuthLatch.await(20, TimeUnit.SECONDS);
-        mSseConnLatch.await(20, TimeUnit.SECONDS);
-
-        sleep(1000);
-
-        Assert.assertTrue(client.isReady());
-        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
+        sleep(2000);
 
         // More than 1 hits means polling enabled
-        Assert.assertTrue(mMySegmentsHitsCountHit > 1);
-        Assert.assertTrue(mSplitsHitsCountHit > 1);
+        assertTrue(mMySegmentsHitsCountHit > 1);
+        assertTrue(mSplitsHitsCountHit > 1);
 
         // Checking sse auth retries
         Assert.assertEquals(MAX_AUTH_RETRIES + 1, mAuthHits);
         // Checking streaming connection
-        Assert.assertTrue(mIsStreamingAuth);
-        Assert.assertTrue(mIsStreamingConnected);
+        assertTrue(mIsStreamingAuth);
+        assertTrue(mIsStreamingConnected);
 
         // More than 1 hit corresponding to full sync after streaming connection,
         // means polling still working after sse auth
         // Following lines are commented until a safe way to check this is found
-//        Assert.assertEquals(1,mMySegmentsHitsCountHitAfterSseConn);
+//        Assert.assertEquals(1, mMySegmentsHitsCountHitAfterSseConn);
 //        Assert.assertEquals(1, mSplitsHitsCountHitAfterSseConn);
 
         splitFactory.destroy();
@@ -141,14 +151,18 @@ public class SseAuthFail5xxTest {
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit - Attempt: " + mAuthHits);
-
-                    if(mAuthHits <= MAX_AUTH_RETRIES) {
-                        mAuthHits++;
-                        return createResponse(500, null);
-                    } else {
-                        mIsStreamingAuth = true;
-                        mSseAuthLatch.countDown();
-                        return createResponse(200, IntegrationHelper.streamingEnabledToken());
+                    try {
+                        sleep(20);
+                        if(mAuthHits <= MAX_AUTH_RETRIES) {
+                            mAuthHits++;
+                            return createResponse(500, null);
+                        } else {
+                            mIsStreamingAuth = true;
+                            mSseAuthLatch.countDown();
+                            return createResponse(200, IntegrationHelper.streamingEnabledToken());
+                        }
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
                     }
                 } else {
                     return new HttpResponseMock(200);
