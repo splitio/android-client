@@ -134,7 +134,6 @@ dependencies {
 
     implementation "org.yaml:snakeyaml:$snakeYamlVersion"
     implementation "org.jetbrains:annotations:$jetBrainsAnnotationsVersion"
-    implementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
     implementation "com.google.android.gms:play-services-base:$playServicesVersion"
     implementation "androidx.multidex:multidex:$multidexVersion"
 

@@ -8,47 +8,52 @@ import androidx.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
+import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.Map;
 
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+import javax.net.ssl.HttpsURLConnection;
 
 public class HttpRequestImpl implements HttpRequest {
 
-    private static final MediaType JSON
-            = MediaType.get("application/json; charset=utf-8");
-    private final OkHttpClient mOkHttpClient;
     private final URI mUri;
     private final String mBody;
     private final HttpMethod mHttpMethod;
     private final Map<String, String> mHeaders;
     private final UrlSanitizer mUrlSanitizer;
+    private final HttpProxy mProxy;
+    private final SplitAuthenticator mProxyAuthenticator;
+    private final long mReadTimeout;
+    private final long mConnectionTimeout;
+    private final DevelopmentSslConfig mDevelopmentSslConfig;
 
-    HttpRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
+    HttpRequestImpl(@NonNull URI uri,
                     @NonNull HttpMethod httpMethod,
-                    @Nullable String body, @NonNull Map<String, String> headers) {
-        this(okHttpClient, uri, httpMethod, body, headers, new UrlSanitizerImpl());
-    }
-
-    HttpRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
-                    @NonNull HttpMethod httpMethod,
-                    @Nullable String body, @NonNull Map<String, String> headers,
-                    @NonNull UrlSanitizer urlSanitizer) {
-        mOkHttpClient = checkNotNull(okHttpClient);
+                    @Nullable String body,
+                    @NonNull Map<String, String> headers,
+                    @Nullable HttpProxy proxy,
+                    @Nullable SplitAuthenticator proxyAuthenticator,
+                    long readTimeout,
+                    long connectionTimeout,
+                    @Nullable DevelopmentSslConfig developmentSslConfig) {
         mUri = checkNotNull(uri);
         mHttpMethod = checkNotNull(httpMethod);
         mBody = body;
         mHeaders = new HashMap<>(checkNotNull(headers));
-        mUrlSanitizer = checkNotNull(urlSanitizer);
+        mUrlSanitizer = new UrlSanitizerImpl();
+        mProxy = proxy;
+        mProxyAuthenticator = proxyAuthenticator;
+        mReadTimeout = readTimeout;
+        mConnectionTimeout = connectionTimeout;
+        mDevelopmentSslConfig = developmentSslConfig;
     }
 
     @Override
@@ -70,19 +75,11 @@ public class HttpRequestImpl implements HttpRequest {
     }
 
     private HttpResponse getRequest() throws HttpException {
-        URL url;
         HttpResponse response;
         try {
-
-            url = mUrlSanitizer.getUrl(mUri);
-
-            Request.Builder requestBuilder = new Request.Builder()
-                    .url(url);
-            addHeaders(requestBuilder);
-            Request okHttpRequest = requestBuilder.build();
-            Response okHttpResponse = mOkHttpClient.newCall(okHttpRequest).execute();
-            response = buildResponse(okHttpResponse);
-
+            URLConnection connection = setUpConnection(mHttpMethod.name());
+            response = buildResponse((HttpURLConnection) connection);
+            ((HttpURLConnection) connection).disconnect();
         } catch (MalformedURLException e) {
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
         } catch (ProtocolException e) {
@@ -93,37 +90,76 @@ public class HttpRequestImpl implements HttpRequest {
         return response;
     }
 
-    private HttpResponse postRequest() throws IOException {
+    @NonNull
+    private URLConnection setUpConnection(String method) throws IOException {
+        URL url = mUrlSanitizer.getUrl(mUri);
 
+        URLConnection connection;
+        if (mProxy != null) {
+            System.out.println("Using proxy: " + mProxy.getHost() + " with port" + mProxy.getPort());
+            Proxy proxy = new Proxy(
+                    Proxy.Type.HTTP,
+                    InetSocketAddress.createUnresolved(mProxy.getHost(), mProxy.getPort()));
+            connection = url.openConnection(proxy);
+        } else {
+            connection = url.openConnection();
+        }
+
+        if (mProxyAuthenticator != null) {
+            connection = mProxyAuthenticator.authenticate(connection);
+        }
+
+        if (mReadTimeout > 0) {
+            connection.setReadTimeout((int) mReadTimeout);
+        }
+
+        if (mConnectionTimeout > 0) {
+            connection.setConnectTimeout((int) mConnectionTimeout);
+        }
+
+        if (mDevelopmentSslConfig != null) {
+            try {
+                ((HttpsURLConnection) connection).setSSLSocketFactory(mDevelopmentSslConfig.getSslSocketFactory());
+                ((HttpsURLConnection) connection).setHostnameVerifier(mDevelopmentSslConfig.getHostnameVerifier());
+            } catch (Exception ex) {
+
+            }
+        }
+        ((HttpURLConnection) connection).setRequestMethod(method);
+        addHeaders((HttpURLConnection) connection);
+        return connection;
+    }
+
+    private HttpResponse postRequest() throws IOException {
         if (mBody == null) {
             throw new IOException("Json data is null");
         }
 
-        URL url = mUri.toURL();
-        RequestBody body = RequestBody.create(JSON, mBody);
-        Request.Builder builder = new Request.Builder()
-                .url(url)
-                .post(body);
+        HttpURLConnection connection = (HttpURLConnection) setUpConnection(mHttpMethod.name());
+        if (!mBody.trim().isEmpty()) {
+            connection.setDoOutput(true);
+            try (OutputStream bodyStream = connection.getOutputStream()) {
+                bodyStream.write(mBody.getBytes());
+                bodyStream.flush();
+            }
+        }
+        HttpResponse httpResponse = buildResponse(connection);
+        connection.disconnect();
 
-        addHeaders(builder);
-        Request httpOkRequest = builder.build();
-        Response httpOkResponse = mOkHttpClient.newCall(httpOkRequest).execute();
-        HttpResponse httpResponse = buildResponse(httpOkResponse);
         return httpResponse;
     }
 
-    private void addHeaders(Request.Builder request) {
+    private void addHeaders(HttpURLConnection connection) {
         for (Map.Entry<String, String> entry : mHeaders.entrySet()) {
-            request.header(entry.getKey(), entry.getValue());
+            connection.setRequestProperty(entry.getKey(), entry.getValue());
         }
     }
 
-    private HttpResponse buildResponse(Response okHttpResponse) throws IOException {
-        int responseCode = okHttpResponse.code();
+    private HttpResponse buildResponse(HttpURLConnection connection) throws IOException {
+        int responseCode = connection.getResponseCode();
         if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < 300) {
             BufferedReader in = new BufferedReader(new InputStreamReader(
-                    okHttpResponse.body().byteStream()));
-
+                    connection.getInputStream()));
             String inputLine;
             StringBuilder responseData = new StringBuilder();
             while ((inputLine = in.readLine()) != null) {
@@ -135,5 +171,4 @@ public class HttpRequestImpl implements HttpRequest {
         }
         return new HttpResponseImpl(responseCode);
     }
-
 }

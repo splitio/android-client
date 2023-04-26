@@ -101,7 +101,6 @@ public class InitialChangeNumberTest {
         SplitClient client;
 
         final String url = mWebServer.url("/").url().toString();
-
         ServiceEndpoints endpoints = ServiceEndpoints.builder()
                 .apiEndpoint(url).eventsEndpoint(url).build();
 

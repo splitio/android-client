@@ -101,7 +101,8 @@ public class SplitFactoryImpl implements SplitFactory {
                     .setProxy(config.proxy())
                     .setDevelopmentSslConfig(config.developmentSslConfig())
                     .setContext(context)
-                    .setProxyAuthenticator(config.authenticator()).build();
+                    .setProxyAuthenticator(config.authenticator())
+                    .build();
         } else {
             defaultHttpClient = httpClient;
         }

@@ -15,13 +15,13 @@ import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.HttpProxy;
+import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.TelemetryHelperImpl;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
-import okhttp3.Authenticator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -69,7 +69,7 @@ public class SplitClientConfig {
     private final String mHostname;
     private final String mIp;
     private final HttpProxy mProxy;
-    private final Authenticator mProxyAuthenticator;
+    private final SplitAuthenticator mProxyAuthenticator;
 
     private final int mFeaturesRefreshRate;
     private final int mSegmentsRefreshRate;
@@ -141,7 +141,7 @@ public class SplitClientConfig {
                               String hostname,
                               String ip,
                               HttpProxy proxy,
-                              Authenticator proxyAuthenticator,
+                              SplitAuthenticator proxyAuthenticator,
                               int eventsQueueSize,
                               int eventsPerPush,
                               long eventFlushInterval,
@@ -304,7 +304,7 @@ public class SplitClientConfig {
         return mProxy;
     }
 
-    public Authenticator proxyAuthenticator() {
+    public SplitAuthenticator proxyAuthenticator() {
         return mProxyAuthenticator;
     }
 
@@ -377,7 +377,7 @@ public class SplitClientConfig {
         return mStreamingServiceUrl;
     }
 
-    public Authenticator authenticator() {
+    public SplitAuthenticator authenticator() {
         return mProxyAuthenticator;
     }
 
@@ -469,7 +469,7 @@ public class SplitClientConfig {
         private String mIp = "unknown";
 
         private String mProxyHost = null;
-        private Authenticator mProxyAuthenticator = null;
+        private SplitAuthenticator mProxyAuthenticator = null;
 
         private boolean mSynchronizeInBackground = false;
         private long mBackgroundSyncPeriod = DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES;
@@ -752,7 +752,7 @@ public class SplitClientConfig {
          * @param proxyAuthenticator
          * @return this builder
          */
-        public Builder proxyAuthenticator(Authenticator proxyAuthenticator) {
+        public Builder proxyAuthenticator(SplitAuthenticator proxyAuthenticator) {
             mProxyAuthenticator = proxyAuthenticator;
             return this;
         }

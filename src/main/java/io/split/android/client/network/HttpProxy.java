@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 public class HttpProxy {
 
@@ -12,6 +13,7 @@ public class HttpProxy {
     final private String username;
     final private String password;
 
+    @VisibleForTesting
     public HttpProxy(@NonNull String host, int port) {
         this(host, port, null, null);
     }

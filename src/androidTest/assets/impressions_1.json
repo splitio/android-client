@@ -1,0 +1,93 @@
+[
+  {
+    "i": [
+      {
+        "b": null,
+        "c": 1561500492437,
+        "feature": "ANDROID_sameTreatmentWithBucketingKey",
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667586092,
+        "t": "V1"
+      },
+      {
+        "b": null,
+        "c": 1561500492437,
+        "feature": "ANDROID_sameTreatmentWithBucketingKey",
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667586413,
+        "t": "V1"
+      },
+      {
+        "b": null,
+        "c": 1561500492437,
+        "feature": "ANDROID_sameTreatmentWithBucketingKey",
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667587616,
+        "t": "V1"
+      },
+      {
+        "b": null,
+        "c": 1561500492437,
+        "feature": "ANDROID_sameTreatmentWithBucketingKey",
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667588973,
+        "t": "V1"
+      }
+    ],
+    "f": "ANDROID_sameTreatmentWithBucketingKey"
+  },
+  {
+    "i": [
+      {
+        "b": null,
+        "c": 1515711580857,
+        "feature": "sample_feature",
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667786937,
+        "t": "off"
+      },
+      {
+        "b": null,
+        "c": 1515711580857,
+        "feature": "sample_feature",
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667787361,
+        "t": "off"
+      },
+      {
+        "b": null,
+        "c": 1515711580857,
+        "feature": "sample_feature",
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667787780,
+        "t": "off"
+      },
+      {
+        "b": null,
+        "c": 1515711580857,
+        "feature": "sample_feature",
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667788275,
+        "t": "off"
+      },
+      {
+        "b": null,
+        "c": 1515711580857,
+        "feature": "sample_feature",
+        "k": "CUSTOMER_ID",
+        "r": "default rule",
+        "m": 1561667788863,
+        "t": "off"
+      }
+    ],
+    "f": "sample_feature"
+  }
+]

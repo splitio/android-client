@@ -1,11 +1,12 @@
-package io.split.android.http;
+package tests.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
 
 import android.content.Context;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.google.gson.reflect.TypeToken;
 
@@ -21,6 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import helper.FileHelper;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
@@ -34,7 +36,6 @@ import io.split.android.client.network.HttpRequest;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.HttpStreamRequest;
 import io.split.android.client.utils.Json;
-import io.split.android.helpers.FileHelper;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.Dispatcher;
@@ -93,7 +94,7 @@ public class HttpClientTest {
         mWebServer.takeRequest();
 
         // Test post tracks
-        String postTracksData = new FileHelper().loadFileContent("tracks_1.json");
+        String postTracksData = new FileHelper().loadFileContent(InstrumentationRegistry.getInstrumentation().getContext(), "tracks_1.json");
         url = mWebServer.url("/tracks/");
         HttpRequest postTracksReq = client.request(url.uri(), HttpMethod.POST, postTracksData);
         HttpResponse postTracksResp = postTracksReq.execute();
@@ -102,7 +103,7 @@ public class HttpClientTest {
         List<Event> trackEventsSent = parseTrackEvents(receivedPostTrackData);
 
         // Test post impressions
-        String postImpData = new FileHelper().loadFileContent("impressions_1.json");
+        String postImpData = new FileHelper().loadFileContent(InstrumentationRegistry.getInstrumentation().getContext(), "impressions_1.json");
         url = mWebServer.url("/impressions/");
         HttpRequest postImpReq = client.request(url.uri(), HttpMethod.POST, postImpData);
         HttpResponse postImpResp = postImpReq.execute();
@@ -263,7 +264,7 @@ public class HttpClientTest {
         mProxyServer.start();
 
         HttpClient client = new HttpClientImpl.Builder()
-                .setContext(mock(Context.class))
+                .setContext(InstrumentationRegistry.getInstrumentation().getContext())
                 .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
                 .build();
 
@@ -284,7 +285,7 @@ public class HttpClientTest {
 
     private void setupServer() throws IOException {
 
-        final String splitChangesResponse = new FileHelper().loadFileContent("split_changes_1.json");
+        final String splitChangesResponse = new FileHelper().loadFileContent(InstrumentationRegistry.getInstrumentation().getContext(), "split_changes_1.json");
 
         mWebServer = new MockWebServer();
         final Dispatcher dispatcher = new Dispatcher() {

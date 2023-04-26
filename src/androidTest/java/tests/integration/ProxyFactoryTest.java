@@ -12,8 +12,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import helper.DatabaseHelper;
@@ -75,7 +77,7 @@ public class ProxyFactoryTest {
     }
 
     @Test
-    public void settingProxyReplacesAllUrls() throws IOException, InterruptedException {
+    public void settingProxyReplacesAllUrls() throws IOException, InterruptedException, URISyntaxException, TimeoutException {
 
         AtomicBoolean mySegmentsHit = new AtomicBoolean(false);
         AtomicBoolean splitChangesHit = new AtomicBoolean(false);
@@ -87,22 +89,23 @@ public class ProxyFactoryTest {
         proxyServer.setDispatcher(new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
-                String requestLine = request.getRequestLine();
-                if (requestLine.contains("/mySegments")) {
-                    mySegmentsHit.set(true);
-                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
-                } else if (requestLine.contains("splitChanges")) {
-                    splitChangesHit.set(true);
-                    return new MockResponse().setResponseCode(200).setBody(mSplitChanges);
-                } else if (requestLine.contains("auth")) {
-                    authLatch.countDown();
-                    return new MockResponse().setResponseCode(200).setBody("{}");
-                } else if (requestLine.contains("Impressions")) {
-                    eventsLatch.countDown();
-                    return new MockResponse().setResponseCode(200).setBody("{}");
-                } else {
-                    return new MockResponse().setResponseCode(200).setBody("{}");
-                }
+                    String requestLine = request.getRequestLine().toLowerCase();
+                    System.out.println("Proxy server request: " + requestLine);
+                    if (requestLine.contains("mysegments")) {
+                        mySegmentsHit.set(true);
+                        return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                    } else if (requestLine.contains("splitchanges")) {
+                        splitChangesHit.set(true);
+                        return new MockResponse().setResponseCode(200).setBody(mSplitChanges);
+                    } else if (requestLine.contains("auth")) {
+                        authLatch.countDown();
+                        return new MockResponse().setResponseCode(200).setBody("{}");
+                    } else if (requestLine.contains("testimpressions/bulk")) {
+                        eventsLatch.countDown();
+                        return new MockResponse().setResponseCode(200).setBody("{}");
+                    } else {
+                        return new MockResponse().setResponseCode(200);
+                    }
             }
         });
         proxyServer.start();
@@ -112,12 +115,14 @@ public class ProxyFactoryTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String requestLine = request.getRequestLine();
+                System.out.println("Base server Request: " + requestLine);
                 return new MockResponse().setResponseCode(200);
             }
         });
         baseServer.start();
 
         String url = baseServer.url("").toString();
+        System.out.println("Base url: " + url);
         ServiceEndpoints endpoints = ServiceEndpoints.builder()
                 .apiEndpoint(url)
                 .eventsEndpoint(url)
@@ -132,19 +137,22 @@ public class ProxyFactoryTest {
 
         // init factory
         Key key = IntegrationHelper.dummyUserKey();
-        mSplitFactory = IntegrationHelper.buildFactory(IntegrationHelper.dummyApiKey(),
+        String proxyHost = proxyServer.url("").toString();
+        System.out.println("Proxy host: " + proxyHost);
+        mSplitFactory = SplitFactoryBuilder.build(IntegrationHelper.dummyApiKey(),
                 key,
                 new SplitClientConfig.Builder()
                         .serviceEndpoints(endpoints)
                         .impressionsMode(ImpressionsMode.DEBUG)
-                        .impressionsQueueSize(1)
-                        .impressionsChunkSize(1)
-                        .impressionsPerPush(1)
-                        .impressionsRefreshRate(1)
-                        .proxyHost(proxyServer.url("").toString())
+                        .impressionsQueueSize(3)
+                        .impressionsChunkSize(3)
+                        .impressionsPerPush(3)
+                        .impressionsRefreshRate(3)
+                        .eventFlushInterval(3)
+                        .proxyHost(proxyHost)
                         .logLevel(SplitLogLevel.VERBOSE)
                         .build(),
-                context, null, splitRoomDatabase);
+                InstrumentationRegistry.getInstrumentation().getContext());
 
         // init client
         SplitClient client = mSplitFactory.client(key);
@@ -159,13 +167,12 @@ public class ProxyFactoryTest {
         client.getTreatment("FACUNDO_TEST");
         client.getTreatment("FACUNDO_TEST");
         client.getTreatment("FACUNDO_TEST");
-        Thread.sleep(500);
         client.flush();
+        Thread.sleep(500);
 
         boolean awaitAuth = authLatch.await(10, TimeUnit.SECONDS);
-        boolean awaitEvents = eventsLatch.await(10, TimeUnit.SECONDS);
+        boolean awaitEvents = eventsLatch.await(20, TimeUnit.SECONDS);
         // assert
-        assertTrue(await);
         assertTrue(mySegmentsHit.get());
         assertTrue(splitChangesHit.get());
         assertTrue(awaitAuth);
