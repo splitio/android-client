@@ -15,19 +15,24 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
+
 import io.split.android.client.utils.logger.Logger;
 
 public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     private final URI mUri;
     private final Map<String, String> mHeaders;
-
+    private final SSLSocketFactory mSslSocketFactory;
     private HttpURLConnection mConnection;
 
     HttpStreamRequestImpl(@NonNull URI uri,
-                          @NonNull Map<String, String> headers) {
+                          @NonNull Map<String, String> headers,
+                          SSLSocketFactory sslSocketFactory) {
         mUri = checkNotNull(uri);
         mHeaders = new HashMap<>(checkNotNull(headers));
+        mSslSocketFactory = sslSocketFactory;
     }
 
     @Override
@@ -53,6 +58,11 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
             url = mUri.toURL();
             mConnection = (HttpURLConnection) url.openConnection();
             addHeaders(mConnection);
+
+            if (mSslSocketFactory != null) {
+                Logger.w("Setting factory in stream request");
+                ((HttpsURLConnection) mConnection).setSSLSocketFactory(mSslSocketFactory);
+            }
 
             response = buildResponse(mConnection);
 

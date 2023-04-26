@@ -17,11 +17,11 @@ public class LegacyTlsUpdater {
     private static final String TLS_VERSION = "TLSv1.2";
 
     public static boolean couldBeOld() {
-        return  Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1;
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1;
     }
 
     public static void update(Context context) {
-        if(context == null) {
+        if (context == null) {
             return;
         }
         try {
@@ -38,5 +38,3 @@ public class LegacyTlsUpdater {
         }
     }
 }
-
-

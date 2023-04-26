@@ -11,6 +11,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.net.ssl.SSLSocketFactory;
+
 import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.logger.Logger;
 
@@ -24,12 +26,14 @@ public class HttpClientImpl implements HttpClient {
     private final long mReadTimeout;
     private final long mConnectionTimeout;
     private final DevelopmentSslConfig mDevelopmentSslConfig;
+    private final SSLSocketFactory mSslSocketFactory;
 
     public HttpClientImpl(HttpProxy proxy,
                           SplitAuthenticator proxyAuthenticator,
                           long readTimeout,
                           long connectionTimeout,
-                          DevelopmentSslConfig developmentSslConfig) {
+                          DevelopmentSslConfig developmentSslConfig,
+                          SSLSocketFactory sslSocketFactory) {
         mProxy = proxy;
         mProxyAuthenticator = proxyAuthenticator;
         mReadTimeout = readTimeout;
@@ -37,6 +41,7 @@ public class HttpClientImpl implements HttpClient {
         mDevelopmentSslConfig = developmentSslConfig;
         mCommonHeaders = new HashMap<>();
         mStreamingHeaders = new HashMap<>();
+        mSslSocketFactory = sslSocketFactory;
     }
 
     @Override
@@ -55,7 +60,8 @@ public class HttpClientImpl implements HttpClient {
                 mProxyAuthenticator,
                 mReadTimeout,
                 mConnectionTimeout,
-                mDevelopmentSslConfig);
+                mDevelopmentSslConfig,
+                mSslSocketFactory);
     }
 
     public HttpRequest request(URI uri, HttpMethod requestMethod) {
@@ -69,7 +75,7 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpStreamRequest streamRequest(URI uri) {
-        return new HttpStreamRequestImpl(uri, mStreamingHeaders);
+        return new HttpStreamRequestImpl(uri, mStreamingHeaders, mSslSocketFactory);
     }
 
     @Override
@@ -113,6 +119,7 @@ public class HttpClientImpl implements HttpClient {
         private long readTimeout = -1;
         private long connectionTimeout = -1;
         private DevelopmentSslConfig developmentSslConfig = null;
+        private SSLSocketFactory sslSocketFactory = null;
         private Context mHostAppContext;
 
         public Builder setContext(Context context) {
@@ -145,6 +152,10 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
+        private void setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
+            this.sslSocketFactory = sslSocketFactory;
+        }
+
         public HttpClient build() {
             SplitAuthenticator proxyAuthenticator = null;
             if (mProxy != null) {
@@ -155,8 +166,12 @@ public class HttpClientImpl implements HttpClient {
                 }
             }
 
-            // Avoiding newBuilder on purpose to use different thread pool and resources
-            return createOkHttpClient(mProxy, proxyAuthenticator, readTimeout, connectionTimeout, developmentSslConfig, mHostAppContext);
+            return createOkHttpClient(mProxy,
+                    proxyAuthenticator,
+                    readTimeout,
+                    connectionTimeout,
+                    developmentSslConfig,
+                    mHostAppContext);
         }
 
         private HttpClient createOkHttpClient(HttpProxy proxy,
@@ -175,11 +190,11 @@ public class HttpClientImpl implements HttpClient {
             }
 
             if (readTimeout != null && readTimeout > 0) {
-                builder.setReadTimeout(readTimeout/*, TimeUnit.MILLISECONDS*/);
+                builder.setReadTimeout(readTimeout);
             }
 
             if (connectionTimeout != null && connectionTimeout > 0) {
-                builder.setConnectionTimeout(connectionTimeout/*, TimeUnit.MILLISECONDS*/);
+                builder.setConnectionTimeout(connectionTimeout);
             }
 
             // Both options overrides SSLSocketFactory
@@ -188,11 +203,18 @@ public class HttpClientImpl implements HttpClient {
             } else if (LegacyTlsUpdater.couldBeOld()) {
                 forceTls12OnOldAndroid(builder, context);
             }
+
+            Logger.w("Creating client");
             return new HttpClientImpl(
-                    builder.mProxy, builder.mProxyAuthenticator, builder.readTimeout, builder.connectionTimeout, builder.developmentSslConfig);
+                    builder.mProxy,
+                    builder.mProxyAuthenticator,
+                    builder.readTimeout,
+                    builder.connectionTimeout,
+                    builder.developmentSslConfig,
+                    builder.sslSocketFactory);
         }
 
-        private SplitAuthenticator createBasicAuthenticator(String username, String password) {
+        private static SplitAuthenticator createBasicAuthenticator(String username, String password) {
             return new SplitAuthenticator() {
                 @Override
                 public URLConnection authenticate(URLConnection connection) {
@@ -204,12 +226,11 @@ public class HttpClientImpl implements HttpClient {
             };
         }
 
-        private void forceTls12OnOldAndroid(HttpClientImpl.Builder builder, Context context) {
-
+        private static void forceTls12OnOldAndroid(HttpClientImpl.Builder builder, Context context) {
+            Logger.w("Forcing TLS v1.2 on old Android versions");
             LegacyTlsUpdater.update(context);
             try {
-                Tls12OnlySocketFactory factory = new Tls12OnlySocketFactory();
-//                okHttpBuilder.sslSocketFactory(factory, factory.defaultTrustManager());
+                builder.setSSLSocketFactory(new Tls12OnlySocketFactory());
             } catch (NoSuchAlgorithmException | KeyManagementException e) {
                 Logger.e("TLS v12 algorithm not available: " + e.getLocalizedMessage());
             } catch (Exception e) {

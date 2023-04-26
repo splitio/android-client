@@ -127,13 +127,13 @@ public class SseClientImpl implements SseClient {
                 isErrorRetryable = !response.isClientRelatedError();
             }
         } catch (URISyntaxException e) {
-            logError("An error has ocurred while creating stream Url ", e);
+            logError("An error has occurred while creating stream Url ", e);
             isErrorRetryable = false;
         } catch (IOException e) {
-            logError("An error has ocurred while parsing stream from: ", e);
+            logError("An error has occurred while parsing stream from: ", e);
             isErrorRetryable = true;
         } catch (Exception e) {
-            logError("An unexpected error has ocurred while receiving stream events from: ", e);
+            logError("An unexpected error has occurred while receiving stream events from: ", e);
             isErrorRetryable = true;
         } finally {
             if (!isDisconnectCalled.getAndSet(false)) {

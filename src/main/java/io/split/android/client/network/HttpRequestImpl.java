@@ -17,10 +17,13 @@ import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 
 public class HttpRequestImpl implements HttpRequest {
 
@@ -34,6 +37,7 @@ public class HttpRequestImpl implements HttpRequest {
     private final long mReadTimeout;
     private final long mConnectionTimeout;
     private final DevelopmentSslConfig mDevelopmentSslConfig;
+    private final SSLSocketFactory mSslSocketFactory;
 
     HttpRequestImpl(@NonNull URI uri,
                     @NonNull HttpMethod httpMethod,
@@ -43,7 +47,8 @@ public class HttpRequestImpl implements HttpRequest {
                     @Nullable SplitAuthenticator proxyAuthenticator,
                     long readTimeout,
                     long connectionTimeout,
-                    @Nullable DevelopmentSslConfig developmentSslConfig) {
+                    @Nullable DevelopmentSslConfig developmentSslConfig,
+                    SSLSocketFactory sslSocketFactory) {
         mUri = checkNotNull(uri);
         mHttpMethod = checkNotNull(httpMethod);
         mBody = body;
@@ -54,6 +59,7 @@ public class HttpRequestImpl implements HttpRequest {
         mReadTimeout = readTimeout;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
+        mSslSocketFactory = sslSocketFactory;
     }
 
     @Override
@@ -125,6 +131,11 @@ public class HttpRequestImpl implements HttpRequest {
 
             }
         }
+
+        if (mSslSocketFactory != null) {
+            ((HttpsURLConnection) connection).setSSLSocketFactory(mSslSocketFactory);
+        }
+
         ((HttpURLConnection) connection).setRequestMethod(method);
         addHeaders((HttpURLConnection) connection);
         return connection;
