@@ -1,3 +1,6 @@
+3.2.0 (Apr 25, 2023)
+- Added the ability to encrypt the local cache of rollout plans via encryptionEnabled config.
+
 3.1.0 (Mar 1, 2023)
 - Changed default connection timeout to 10 seconds.
 - Updated Lifecycle library to 2.5.1.
