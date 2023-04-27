@@ -5,6 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.common.net.MediaType;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,16 +19,18 @@ import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
+import io.split.android.client.utils.logger.Logger;
+
 public class HttpRequestImpl implements HttpRequest {
 
+    public static final String CONTENT_TYPE = "Content-Type";
+    public static final String APPLICATION_JSON_CHARSET_UTF_8 = "application/json; charset=utf-8";
     private final URI mUri;
     private final String mBody;
     private final HttpMethod mHttpMethod;
@@ -128,7 +132,7 @@ public class HttpRequestImpl implements HttpRequest {
                 ((HttpsURLConnection) connection).setSSLSocketFactory(mDevelopmentSslConfig.getSslSocketFactory());
                 ((HttpsURLConnection) connection).setHostnameVerifier(mDevelopmentSslConfig.getHostnameVerifier());
             } catch (Exception ex) {
-
+                Logger.e("Could not set development SSL config");
             }
         }
 
@@ -147,6 +151,8 @@ public class HttpRequestImpl implements HttpRequest {
         }
 
         HttpURLConnection connection = (HttpURLConnection) setUpConnection(mHttpMethod.name());
+        connection.setRequestProperty(CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8);
+
         if (!mBody.trim().isEmpty()) {
             connection.setDoOutput(true);
             try (OutputStream bodyStream = connection.getOutputStream()) {
@@ -166,7 +172,7 @@ public class HttpRequestImpl implements HttpRequest {
         }
     }
 
-    private HttpResponse buildResponse(HttpURLConnection connection) throws IOException {
+    private static HttpResponse buildResponse(HttpURLConnection connection) throws IOException {
         int responseCode = connection.getResponseCode();
         if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < 300) {
             BufferedReader in = new BufferedReader(new InputStreamReader(
