@@ -157,17 +157,17 @@ public class HttpClientImpl implements HttpClient {
         }
 
         public HttpClient build() {
-            SplitAuthenticator proxyAuthenticator = null;
+            SplitAuthenticator authenticator = null;
             if (mProxy != null) {
                 if (mProxyAuthenticator != null) {
-                    proxyAuthenticator = mProxyAuthenticator;
+                    authenticator = mProxyAuthenticator;
                 } else if (!Strings.isNullOrEmpty(mProxy.getUsername())) {
-                    proxyAuthenticator = createBasicAuthenticator(mProxy.getUsername(), mProxy.getPassword());
+                    authenticator = createBasicAuthenticator(mProxy.getUsername(), mProxy.getPassword());
                 }
             }
 
             return createOkHttpClient(mProxy,
-                    proxyAuthenticator,
+                    authenticator,
                     readTimeout,
                     connectionTimeout,
                     developmentSslConfig,
@@ -204,7 +204,6 @@ public class HttpClientImpl implements HttpClient {
                 forceTls12OnOldAndroid(builder, context);
             }
 
-            Logger.w("Creating client");
             return new HttpClientImpl(
                     builder.mProxy,
                     builder.mProxyAuthenticator,
@@ -227,7 +226,6 @@ public class HttpClientImpl implements HttpClient {
         }
 
         private static void forceTls12OnOldAndroid(HttpClientImpl.Builder builder, Context context) {
-            Logger.w("Forcing TLS v1.2 on old Android versions");
             LegacyTlsUpdater.update(context);
             try {
                 builder.setSSLSocketFactory(new Tls12OnlySocketFactory());

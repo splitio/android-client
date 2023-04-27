@@ -65,7 +65,6 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
             }
 
             response = buildResponse(mConnection);
-
         } catch (MalformedURLException e) {
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
         } catch (ProtocolException e) {
@@ -82,7 +81,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         }
     }
 
-    private HttpStreamResponse buildResponse(HttpURLConnection connection) throws IOException {
+    private static HttpStreamResponse buildResponse(HttpURLConnection connection) throws IOException {
         int responseCode = connection.getResponseCode();
         if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < 300 && connection.getInputStream() != null) {
             BufferedReader mResponseBufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
