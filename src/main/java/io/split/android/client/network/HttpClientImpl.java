@@ -2,6 +2,8 @@ package io.split.android.client.network;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import com.google.common.base.Strings;
 
 import java.net.URI;
@@ -215,12 +217,14 @@ public class HttpClientImpl implements HttpClient {
 
         private static SplitAuthenticator createBasicAuthenticator(String username, String password) {
             return new SplitAuthenticator() {
-                @Override
-                public URLConnection authenticate(URLConnection connection) {
-                    String credential = basic(username, password);
-                    connection.setRequestProperty(PROXY_AUTHORIZATION_HEADER, credential);
 
-                    return connection;
+                @NonNull
+                @Override
+                public AuthenticatedRequest<?> authenticate(AuthenticatedRequest<?> request) {
+                    String credential = basic(username, password);
+                    request.setHeader(PROXY_AUTHORIZATION_HEADER, credential);
+
+                    return request;
                 }
             };
         }

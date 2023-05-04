@@ -116,7 +116,7 @@ public class HttpRequestImpl implements HttpRequest {
         }
 
         if (mProxyAuthenticator != null) {
-            connection = mProxyAuthenticator.authenticate(connection);
+            connection = (URLConnection) mProxyAuthenticator.authenticate(new RequestWrapper(connection)).getRequest();
         }
 
         if (mReadTimeout > 0) {

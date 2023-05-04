@@ -1,8 +1,5 @@
 package io.split.android.client.network;
 
-import java.net.URLConnection;
+public abstract class SplitAuthenticator implements GenericAuthenticator<AuthenticatedRequest<?>> {
 
-public interface SplitAuthenticator {
-
-    URLConnection authenticate(URLConnection connection);
 }
