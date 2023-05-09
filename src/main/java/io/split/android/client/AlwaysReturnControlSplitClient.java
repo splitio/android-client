@@ -18,43 +18,43 @@ import java.util.Map;
 public class AlwaysReturnControlSplitClient implements io.split.android.client.SplitClient {
 
     @Override
-    public String getTreatment(String featureFlag) {
+    public String getTreatment(String featureFlagName) {
         return Treatments.CONTROL;
     }
 
     @Override
-    public Map<String, String> getTreatments(List<String> featureFlags, Map<String, Object> attributes) {
+    public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes) {
         Map<String, String> results = new HashMap<>();
-        if(featureFlags == null) {
+        if(featureFlagNames == null) {
             return results;
         }
 
-        for(String featureFlag : featureFlags) {
-            results.put(featureFlag, Treatments.CONTROL);
+        for(String featureFlagName : featureFlagNames) {
+            results.put(featureFlagName, Treatments.CONTROL);
         }
         return results;
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlags, Map<String, Object> attributes) {
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes) {
         Map<String, SplitResult> results = new HashMap<>();
-        if(featureFlags == null) {
+        if(featureFlagNames == null) {
             return results;
         }
 
-        for(String featureFlag : featureFlags) {
-            results.put(featureFlag, new SplitResult(Treatments.CONTROL));
+        for(String featureFlagName : featureFlagNames) {
+            results.put(featureFlagName, new SplitResult(Treatments.CONTROL));
         }
         return results;
     }
 
     @Override
-    public String getTreatment(String featureFlag, Map<String, Object> attributes) {
+    public String getTreatment(String featureFlagName, Map<String, Object> attributes) {
         return Treatments.CONTROL;
     }
 
     @Override
-    public SplitResult getTreatmentWithConfig(String featureFlag, Map<String, Object> attributes) {
+    public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes) {
         return new SplitResult(Treatments.CONTROL);
     }
 

@@ -132,14 +132,14 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
-    public String getTreatment(String featureFlag) {
-        return getTreatment(featureFlag, Collections.emptyMap());
+    public String getTreatment(String featureFlagName) {
+        return getTreatment(featureFlagName, Collections.emptyMap());
     }
 
     @Override
-    public String getTreatment(String featureFlag, Map<String, Object> attributes) {
+    public String getTreatment(String featureFlagName, Map<String, Object> attributes) {
         try {
-            return mTreatmentManager.getTreatment(featureFlag, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatment(featureFlagName, attributes, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e("Client getTreatment exception", exception);
 
@@ -150,9 +150,9 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
-    public SplitResult getTreatmentWithConfig(String featureFlag, Map<String, Object> attributes) {
+    public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes) {
         try {
-            return mTreatmentManager.getTreatmentWithConfig(featureFlag, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentWithConfig(featureFlagName, attributes, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e("Client getTreatmentWithConfig exception", exception);
 
@@ -163,28 +163,28 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
-    public Map<String, String> getTreatments(List<String> featureFlags, Map<String, Object> attributes) {
+    public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes) {
         try {
-            return mTreatmentManager.getTreatments(featureFlags, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatments(featureFlagNames, attributes, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e("Client getTreatments exception", exception);
 
             mTelemetryStorageProducer.recordException(Method.TREATMENTS);
 
-            return TreatmentManagerHelper.controlTreatmentsForSplits(featureFlags, mSplitValidator);
+            return TreatmentManagerHelper.controlTreatmentsForSplits(featureFlagNames, mSplitValidator);
         }
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlags, Map<String, Object> attributes) {
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes) {
         try {
-            return mTreatmentManager.getTreatmentsWithConfig(featureFlags, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentsWithConfig(featureFlagNames, attributes, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e("Client getTreatmentsWithConfig exception", exception);
 
             mTelemetryStorageProducer.recordException(Method.TREATMENTS_WITH_CONFIG);
 
-            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(featureFlags, mSplitValidator);
+            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(featureFlagNames, mSplitValidator);
         }
     }
 
