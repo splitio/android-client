@@ -17,7 +17,7 @@ public class SplitValidatorImpl implements SplitValidator {
         if (name == null) {
             return new ValidationErrorInfo(
                     ValidationErrorInfo.ERROR_SOME,
-                    "you passed a null feature flag name, it must " +
+                    "you passed a null feature flag name, feature flag name must " +
                             "be a non-empty string");
         }
 
@@ -25,7 +25,7 @@ public class SplitValidatorImpl implements SplitValidator {
             return new ValidationErrorInfo(
                     ValidationErrorInfo.ERROR_SOME,
                     "you passed an empty feature flag name, " +
-                            "it must be a non-empty string");
+                            "feature flag name must be a non-empty string");
         }
 
         if (name.trim().length() != name.length()) {
