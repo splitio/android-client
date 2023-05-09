@@ -31,7 +31,7 @@ public class SplitValidatorImpl implements SplitValidator {
         if (name.trim().length() != name.length()) {
             return new ValidationErrorInfo(
                     ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED,
-                    "feature flag '" + name + "' has extra whitespace, trimming",
+                    "feature flag name '" + name + "' has extra whitespace, trimming",
                     true);
         }
 
