@@ -27,7 +27,7 @@ public class ApiKeyValidatorTest {
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
-        Assert.assertEquals("you passed a null api_key, the api_key must be a non-empty string", errorInfo.getErrorMessage());
+        Assert.assertEquals("you passed a null sdkKey, the sdkKey must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -36,7 +36,7 @@ public class ApiKeyValidatorTest {
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
-        Assert.assertEquals("you passed an empty api_key, api_key must be a non-empty string", errorInfo.getErrorMessage());
+        Assert.assertEquals("you passed an empty sdkKey, sdkKey must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -45,6 +45,6 @@ public class ApiKeyValidatorTest {
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
-        Assert.assertEquals("you passed an empty api_key, api_key must be a non-empty string", errorInfo.getErrorMessage());
+        Assert.assertEquals("you passed an empty sdkKey, sdkKey must be a non-empty string", errorInfo.getErrorMessage());
     }
 }
