@@ -180,7 +180,7 @@ public class PushNotificationManager {
             mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TOKEN, System.currentTimeMillis() - startTime);
 
             if (authResult.isSuccess() && !authResult.isPushEnabled()) {
-                Logger.d("Streaming disabled for api key");
+                Logger.d("Streaming disabled for SDK key");
                 mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
                 mIsStopped.set(true);
                 return;

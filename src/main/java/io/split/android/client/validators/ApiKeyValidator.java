@@ -7,10 +7,10 @@ package io.split.android.client.validators;
 public interface ApiKeyValidator {
 
     /**
-     * Checks that an ApiKey is valid
-     * @param apiKey: ApiKey string
-     * @return true when the api key is valid, false when it is not
+     * Checks that an SDK key is valid
+     * @param sdkKey: SDK key string
+     * @return true when the SDK key is valid, false when it is not
      */
-    ValidationErrorInfo validate(String apiKey);
+    ValidationErrorInfo validate(String sdkKey);
 
 }
