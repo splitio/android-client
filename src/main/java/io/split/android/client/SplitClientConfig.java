@@ -337,7 +337,7 @@ public class SplitClientConfig {
     /**
      * Default data folder to use when some
      * problem arises while creating it
-     * based on api key
+     * based on SDK key
      * @return Default data folder
      */
     String defaultDataFolder() {

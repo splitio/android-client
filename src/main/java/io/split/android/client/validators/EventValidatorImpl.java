@@ -59,8 +59,8 @@ public class EventValidatorImpl implements EventValidator {
         }
 
         if (validateTrafficType && !mSplitsStorage.isValidTrafficType(event.trafficTypeName)) {
-            String message = "Traffic Type " + event.trafficTypeName + " does not have any corresponding Splits in this environment, "
-                    + "make sure you’re tracking your events to a valid traffic type defined in the Split console";
+            String message = "Traffic Type " + event.trafficTypeName + " does not have any corresponding feature flags in this environment, "
+                    + "make sure you’re tracking your events to a valid traffic type defined in the Split user interface";
             if(errorInfo == null) {
                 errorInfo = new ValidationErrorInfo(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_WITHOUT_SPLIT_IN_ENVIRONMENT, message, true);
             } else {

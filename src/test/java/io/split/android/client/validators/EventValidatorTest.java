@@ -272,8 +272,8 @@ public class EventValidatorTest {
 
         Assert.assertNotNull(errorInfo);
         Assert.assertFalse(errorInfo.isError());
-        Assert.assertEquals("Traffic Type nocached does not have any corresponding Splits in this environment, "
-                + "make sure you’re tracking your events to a valid traffic type defined in the Split console", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_WITHOUT_SPLIT_IN_ENVIRONMENT));
+        Assert.assertEquals("Traffic Type nocached does not have any corresponding feature flags in this environment, "
+                + "make sure you’re tracking your events to a valid traffic type defined in the Split user interface", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_TRAFFIC_TYPE_WITHOUT_SPLIT_IN_ENVIRONMENT));
     }
 
     private Event newEventTypeName()  {
