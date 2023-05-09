@@ -68,10 +68,10 @@ public class SplitManagerImpl implements SplitManager {
     }
 
     @Override
-    public SplitView split(String featureName) {
+    public SplitView split(String featureFlagName) {
 
         final String validationTag = "split";
-        String splitName = featureName;
+        String splitName = featureFlagName;
 
         try {
             if (_isManagerDestroyed) {
@@ -79,13 +79,13 @@ public class SplitManagerImpl implements SplitManager {
                 return null;
             }
 
-            ValidationErrorInfo errorInfo = _splitValidator.validateName(featureName);
+            ValidationErrorInfo errorInfo = _splitValidator.validateName(featureFlagName);
             if (errorInfo != null) {
                 _validationMessageLogger.log(errorInfo, validationTag);
                 if (errorInfo.isError()) {
                     return null;
                 }
-                splitName = featureName.trim();
+                splitName = featureFlagName.trim();
             }
 
             ParsedSplit parsedSplit = null;

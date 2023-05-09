@@ -72,9 +72,9 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     @Override
-    public String getTreatment(String split) {
+    public String getTreatment(String featureFlag) {
         try {
-            return mTreatmentManager.getTreatment(split, null, mIsClientDestroyed);
+            return mTreatmentManager.getTreatment(featureFlag, null, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -83,9 +83,9 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     @Override
-    public String getTreatment(String split, Map<String, Object> attributes) {
+    public String getTreatment(String featureFlag, Map<String, Object> attributes) {
         try {
-            return mTreatmentManager.getTreatment(split, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatment(featureFlag, attributes, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -94,9 +94,9 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     @Override
-    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
+    public SplitResult getTreatmentWithConfig(String featureFlag, Map<String, Object> attributes) {
         try {
-            return mTreatmentManager.getTreatmentWithConfig(split, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentWithConfig(featureFlag, attributes, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -105,15 +105,15 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     @Override
-    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
+    public Map<String, String> getTreatments(List<String> featureFlags, Map<String, Object> attributes) {
         try {
-            return mTreatmentManager.getTreatments(splits, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatments(featureFlags, attributes, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
             Map<String, String> result = new HashMap<>();
 
-            for (String split : splits) {
+            for (String split : featureFlags) {
                 result.put(split, Treatments.CONTROL);
             }
 
@@ -122,15 +122,15 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlags, Map<String, Object> attributes) {
         try {
-            return mTreatmentManager.getTreatmentsWithConfig(splits, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentsWithConfig(featureFlags, attributes, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
             Map<String, SplitResult> result = new HashMap<>();
 
-            for (String split : splits) {
+            for (String split : featureFlags) {
                 result.put(split, new SplitResult(Treatments.CONTROL));
             }
 

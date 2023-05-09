@@ -14,27 +14,27 @@ import io.split.android.client.events.SplitEventTask;
 
 public class SplitClientStub implements SplitClient {
     @Override
-    public String getTreatment(String split) {
-        return getTreatment(split);
+    public String getTreatment(String featureFlag) {
+        return getTreatment(featureFlag);
     }
 
     @Override
-    public String getTreatment(String split, Map<String, Object> attributes) {
+    public String getTreatment(String featureFlag, Map<String, Object> attributes) {
         return "control";
     }
 
     @Override
-    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
+    public SplitResult getTreatmentWithConfig(String featureFlag, Map<String, Object> attributes) {
         return null;
     }
 
     @Override
-    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
+    public Map<String, String> getTreatments(List<String> featureFlags, Map<String, Object> attributes) {
         return null;
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlags, Map<String, Object> attributes) {
         return null;
     }
 

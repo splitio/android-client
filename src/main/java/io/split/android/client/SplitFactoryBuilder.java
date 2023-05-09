@@ -21,8 +21,8 @@ public class SplitFactoryBuilder {
 
     /**
      *
-     * @param apiToken
-     * @param matchingkey
+     * @param sdkKey
+     * @param matchingKey
      * @param context
      * @return
      * @throws IOException
@@ -30,15 +30,15 @@ public class SplitFactoryBuilder {
      * @throws TimeoutException
      * @throws URISyntaxException
      */
-    public static SplitFactory build(String apiToken, String matchingkey, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
-        Key key = new Key(matchingkey, null);
-        return build(apiToken, key, context);
+    public static SplitFactory build(String sdkKey, String matchingKey, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+        Key key = new Key(matchingKey, null);
+        return build(sdkKey, key, context);
     }
 
     /**
      * Instantiates a SplitFactory with default configurations
      *
-     * @param apiToken the API token. MUST NOT be null
+     * @param sdkKey the SDK key. MUST NOT be null
      * @return a SplitFactory
      * @throws IOException                           if the SDK was being started in 'localhost' mode, but
      *                                               there were problems reading the override file from disk.
@@ -47,12 +47,12 @@ public class SplitFactoryBuilder {
      * @throws java.util.concurrent.TimeoutException if you asked to block until the sdk was
      *                                               ready and the timeout specified via config#ready() passed.
      */
-    public static SplitFactory build(String apiToken, Key key, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
-        return build(apiToken, key, SplitClientConfig.builder().build(), context);
+    public static SplitFactory build(String sdkKey, Key key, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+        return build(sdkKey, key, SplitClientConfig.builder().build(), context);
     }
 
     /**
-     * @param apiToken the API token. MUST NOT be null
+     * @param sdkKey the SDK key. MUST NOT be null
      * @param config   parameters to control sdk construction. MUST NOT be null.
      * @return a SplitFactory
      * @throws java.io.IOException                   if the SDK was being started in 'localhost' mode, but
@@ -62,11 +62,11 @@ public class SplitFactoryBuilder {
      * @throws java.util.concurrent.TimeoutException if you asked to block until the sdk was
      *                                               ready and the timeout specified via config#ready() passed.
      */
-    public static synchronized SplitFactory build(String apiToken, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
-        if (ServiceConstants.LOCALHOST.equals(apiToken)) {
+    public static synchronized SplitFactory build(String sdkKey, Key key, SplitClientConfig config, Context context) throws IOException, InterruptedException, TimeoutException, URISyntaxException {
+        if (ServiceConstants.LOCALHOST.equals(sdkKey)) {
             return new LocalhostSplitFactory(key.matchingKey(), context, config);
         } else {
-            return new SplitFactoryImpl(apiToken, key, config, context);
+            return new SplitFactoryImpl(sdkKey, key, config, context);
         }
     }
 

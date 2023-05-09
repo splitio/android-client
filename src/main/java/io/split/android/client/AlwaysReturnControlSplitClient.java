@@ -18,43 +18,43 @@ import java.util.Map;
 public class AlwaysReturnControlSplitClient implements io.split.android.client.SplitClient {
 
     @Override
-    public String getTreatment(String split) {
+    public String getTreatment(String featureFlag) {
         return Treatments.CONTROL;
     }
 
     @Override
-    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes) {
+    public Map<String, String> getTreatments(List<String> featureFlags, Map<String, Object> attributes) {
         Map<String, String> results = new HashMap<>();
-        if(splits == null) {
+        if(featureFlags == null) {
             return results;
         }
 
-        for(String split : splits) {
-            results.put(split, Treatments.CONTROL);
+        for(String featureFlag : featureFlags) {
+            results.put(featureFlag, Treatments.CONTROL);
         }
         return results;
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes) {
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlags, Map<String, Object> attributes) {
         Map<String, SplitResult> results = new HashMap<>();
-        if(splits == null) {
+        if(featureFlags == null) {
             return results;
         }
 
-        for(String split : splits) {
-            results.put(split, new SplitResult(Treatments.CONTROL));
+        for(String featureFlag : featureFlags) {
+            results.put(featureFlag, new SplitResult(Treatments.CONTROL));
         }
         return results;
     }
 
     @Override
-    public String getTreatment(String split, Map<String, Object> attributes) {
+    public String getTreatment(String featureFlag, Map<String, Object> attributes) {
         return Treatments.CONTROL;
     }
 
     @Override
-    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes) {
+    public SplitResult getTreatmentWithConfig(String featureFlag, Map<String, Object> attributes) {
         return new SplitResult(Treatments.CONTROL);
     }
 
