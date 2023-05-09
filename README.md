@@ -34,7 +34,7 @@ splitClient.on(SplitEvent.SDK_READY, new SplitEventTask(){
 
     public void onPostExecution(SplitClient client) {
         Log.i("TAG", "Do some NO UI work");
-        String treatment = client.getTreatment("SPLIT_NAME");
+        String treatment = client.getTreatment("FEATURE_FLAG_NAME");
 
         if (treatment.equals("on")) {
             Log.i("TAG", "I'm ON    ");
