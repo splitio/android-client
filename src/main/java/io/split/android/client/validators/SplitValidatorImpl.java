@@ -17,21 +17,21 @@ public class SplitValidatorImpl implements SplitValidator {
         if (name == null) {
             return new ValidationErrorInfo(
                     ValidationErrorInfo.ERROR_SOME,
-                    "you passed a null split name, split name must " +
+                    "you passed a null feature flag name, it must " +
                             "be a non-empty string");
         }
 
         if (Strings.isNullOrEmpty(name.trim())) {
             return new ValidationErrorInfo(
                     ValidationErrorInfo.ERROR_SOME,
-                    "you passed an empty split name, " +
-                            "split name must be a non-empty string");
+                    "you passed an empty feature flag name, " +
+                            "it must be a non-empty string");
         }
 
         if (name.trim().length() != name.length()) {
             return new ValidationErrorInfo(
                     ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED,
-                    "split name '" + name + "' has extra whitespace, trimming",
+                    "feature flag '" + name + "' has extra whitespace, trimming",
                     true);
         }
 
@@ -39,9 +39,9 @@ public class SplitValidatorImpl implements SplitValidator {
     }
 
     public String splitNotFoundMessage(String splitName) {
-        return "split: you passed '" + splitName +
+        return "feature flag: you passed '" + splitName +
                 "' that does not exist in this environment, " +
-                "please double check what Splits exist in the web console.";
+                "please double check what feature flags exist in the user interface.";
     }
 
 }
