@@ -3,8 +3,10 @@ package io.split.android.client.api;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.SplitManager;
+
 /**
- * A view of a Split meant for consumption through SplitManager interface.
+ * A view of a feature flag, meant for consumption through {@link SplitManager} interface.
  *
  */
 public class SplitView {

@@ -8,8 +8,9 @@ import java.util.List;
  * An interface to manage an instance of Split SDK.
  */
 public interface SplitManager {
+
     /**
-     * Retrieves the features (or Splits) that are currently registered with the
+     * Retrieves the feature flags that are currently registered with the
      * SDK.
      *
      * @return a List of SplitView or empty
@@ -17,14 +18,14 @@ public interface SplitManager {
     List<SplitView> splits();
 
     /**
-     * Returns the feature (or Split) registered with the SDK of this name.
+     * Returns the feature flag registered with the SDK of this name.
      *
      * @return SplitView or null
      */
     SplitView split(String featureName);
 
     /**
-     * Returns the names of features (or Splits) registered with the SDK.
+     * Returns the names of feature flags registered with the SDK.
      *
      * @return a List of String (Split Feature Names) or empty
      */
