@@ -41,7 +41,7 @@ public class SplitValidatorImpl implements SplitValidator {
     public String splitNotFoundMessage(String splitName) {
         return "split: you passed '" + splitName +
                 "' that does not exist in this environment, " +
-                "please double check what Splits exist in the web console.";
+                "please double check what feature flags exist in the Split user interface.";
     }
 
 }
