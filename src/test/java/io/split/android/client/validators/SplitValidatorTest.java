@@ -31,7 +31,7 @@ public class SplitValidatorTest {
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
-        Assert.assertEquals("you passed a null feature flag name, feature flag name must be a non-empty string", errorInfo.getErrorMessage());
+        Assert.assertEquals("you passed a null feature flag name, flag name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -40,15 +40,16 @@ public class SplitValidatorTest {
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
-        Assert.assertEquals("you passed an empty feature flag name, feature flag name must be a non-empty string", errorInfo.getErrorMessage());
+        Assert.assertEquals("you passed an empty feature flag name, flag name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
+    @Test
     public void testInvalidAllSpacesInName() {
         ValidationErrorInfo errorInfo = validator.validateName("    ");
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
-        Assert.assertEquals("you passed a empty feature flag name, feature flag name must be a non-empty string", errorInfo.getErrorMessage());
+        Assert.assertEquals("you passed an empty feature flag name, flag name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
