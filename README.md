@@ -2,7 +2,7 @@
 ![Build Status](https://github.com/splitio/android-client/actions/workflows/sonar.yml/badge.svg?branch=master)
 
 ## Overview
-This SDK is designed to work with Split, the platform for controlled rollouts, which serves features to your users via a Split feature flag to manage your complete customer experience.
+This SDK is designed to work with Split, the platform for controlled rollouts, which serves features to your users via feature flags to manage your complete customer experience.
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/splitsoftware.svg?style=social&label=Follow&maxAge=1529000)](https://twitter.com/intent/follow?screen_name=splitsoftware)
 
@@ -12,7 +12,7 @@ This SDK is compatible with Android SDK versions 15 and later (4.0.3 Ice Cream S
 ## Getting started
 Below is a simple example that describes the instantiation and most basic usage of our SDK:
 ```
-String apikey = "API_KEY";
+String sdkKey = "YOUR_SDK_KEY";
 SplitClientConfig config = SplitClientConfig.builder()
         .build();
 // User Key
@@ -22,7 +22,7 @@ Key key = new Key(matchingKey);
 SplitClient splitClient = null;
 try {
     // Create a Split factory
-    SplitFactory splitFactory = SplitFactoryBuilder.build(apikey, key, config, getApplicationContext());
+    SplitFactory splitFactory = SplitFactoryBuilder.build(sdkKey, key, config, getApplicationContext());
     // Get Split Client instance
     splitClient = splitFactory.client();
 } catch (Exception e) {
