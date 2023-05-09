@@ -11,7 +11,7 @@ public interface SplitClient extends AttributesManager {
 
     /**
      * Returns the treatment to show this key for this feature flag. The set of treatments
-     * for a feature flag can be configured on the Split web console.
+     * for a feature flag can be configured on the Split user interface.
      * <p/>
      * <p/>
      * This method returns the string 'control' if:
@@ -19,7 +19,7 @@ public interface SplitClient extends AttributesManager {
      * <li>Any of the parameters were null</li>
      * <li>There was an exception in evaluating the treatment</li>
      * <li>The SDK does not know of the existence of this feature flag</li>
-     * <li>The feature flag was deleted through the web console.</li>
+     * <li>The feature flag was deleted through the Split user interface.</li>
      * </ol>
      * 'control' is a reserved treatment (you cannot create a treatment with the
      * same name) to highlight these exceptional circumstances.
@@ -30,7 +30,7 @@ public interface SplitClient extends AttributesManager {
      * <li>The feature flag was killed</li>
      * <li>The key did not match any of the conditions in the feature roll-out plan</li>
      * </ol>
-     * The default treatment of a feature flag is set on the Split web console.
+     * The default treatment of a feature flag is set on the Split user interface.
      * <p/>
      * <p/>
      * This method does not throw any exceptions. It also never returns null.
