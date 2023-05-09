@@ -35,10 +35,10 @@ public interface SplitClient extends AttributesManager {
      * <p/>
      * This method does not throw any exceptions. It also never returns null.
      *
-     * @param split the feature flag we want to evaluate. MUST NOT be null.
+     * @param featureFlagName the feature flag we want to evaluate. MUST NOT be null.
      * @return the evaluated treatment, the default treatment of this feature flag, or 'control'.
      */
-    String getTreatment(String split);
+    String getTreatment(String featureFlagName);
 
     /**
      * This method is useful when you want to determine the treatment to show
@@ -50,11 +50,11 @@ public interface SplitClient extends AttributesManager {
      * vs. premium plan. Another example is to show a different treatment
      * to users created after a certain date.
      *
-     * @param split    the feature flag we want to evaluate. MUST NOT be null.
+     * @param featureFlagName    the feature flag we want to evaluate. MUST NOT be null.
      * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatment, the default treatment of this feature flag, or 'control'.
      */
-    String getTreatment(String split, Map<String, Object> attributes);
+    String getTreatment(String featureFlagName, Map<String, Object> attributes);
 
 
     /**
@@ -67,12 +67,12 @@ public interface SplitClient extends AttributesManager {
      * vs. premium plan. Another example is to show a different treatment
      * to users created after a certain date.
      *
-     * @param split    the feature flag we want to evaluate. MUST NOT be null.
+     * @param featureFlagName    the feature flag we want to evaluate. MUST NOT be null.
      * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatment, the default treatment of this feature flag, or 'control'
      *  with its corresponding configurations if it has one.
      */
-    SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes);
+    SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes);
 
     /**
      * This method is useful when you want to determine the treatment of several feature flags at
@@ -81,11 +81,11 @@ public interface SplitClient extends AttributesManager {
      * <p/>
      * It can be used to cache treatments you know it won't change very often.
      *
-     * @param splits    the feature flags you want to evaluate. MUST NOT be null.
+     * @param featureFlagNames    the feature flags you want to evaluate. MUST NOT be null.
      * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatments, the default treatment of a feature, or 'control'.
      */
-    Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes);
+    Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes);
 
 
     /**
@@ -95,12 +95,12 @@ public interface SplitClient extends AttributesManager {
      * <p/>
      * It can be used to cache treatments you know it won't change very often.
      *
-     * @param splits    the feature flags you want to evaluate. MUST NOT be null.
+     * @param featureFlagNames    the feature flags you want to evaluate. MUST NOT be null.
      * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatments, the default treatment of a feature flag, or 'control'
      * with its corresponding configurations if it has one.
      */
-    Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes);
+    Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes);
 
     /**
      * Destroys the background processes and clears the cache, releasing the resources used by
