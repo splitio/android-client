@@ -61,7 +61,7 @@ public class SplitManagerImpl implements SplitManager {
                 }
             }
         } catch (Exception exception) {
-            Logger.e("Error getting splits: " + exception.getLocalizedMessage());
+            Logger.e("Error getting feature flags: " + exception.getLocalizedMessage());
         }
 
         return result;
@@ -124,7 +124,7 @@ public class SplitManagerImpl implements SplitManager {
 
             return result;
         } catch (Exception exception) {
-            Logger.e("Error getting split names: " + exception.getLocalizedMessage());
+            Logger.e("Error getting feature flags: " + exception.getLocalizedMessage());
 
             return result;
         }
