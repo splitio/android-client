@@ -39,7 +39,7 @@
 2.13.0 (Oct 4, 2022)
 - Added a new impressions mode for the SDK called NONE, to be used in factory when there is no desire to capture impressions on an SDK factory to feed Split's analytics engine. Running NONE mode, the SDK will only capture unique keys evaluated for a particular feature flag instead of full blown impressions.
 - Fixed issue when scheduling new tasks.
-- Fixed issue in splits background synchronization when using splits filter.
+- Fixed issue in feature flag background synchronization when using feature flag filter.
 
 2.12.2 (Sep 15, 2022)
 - Fixed issue in telemetry for latencies.
@@ -56,12 +56,12 @@
 - Added a new config option to control the tasks that listen or poll for updates on feature flags and segments, via the new config syncEnabled . Running online Split will always pull the most recent updates upon initialization, this only affects updates fetching on a running instance. Useful when a consistent session experience is a must or to save resources when updates are not being used.
 
 2.10.3 (Jun 10, 2022)
-- Fixed issue that prevented split list from being updated after modifying sync config.
+- Fixed issue that prevented feature flag list from being updated after modifying sync config.
 
 2.10.2 (May 9, 2022)
 - Added support for resumed streaming event.
 - SplitClient instances are tracked by key.
-- Improved logging and error handling when encountering incorrect format in splits file for localhost mode.
+- Improved logging and error handling when encountering incorrect format in feature flags file for localhost mode.
 
 2.10.1 (Apr 25, 2022)
 - Updated the synchronization flow to be more reliable in the event of an edge case generating delay in cache purge propagation, keeping the SDK cache properly synced.
@@ -71,7 +71,7 @@
 - Added support for multiple clients: Factories can now create multiple clients with different keys while reusing the common tasks, data and behavior. Read more in our Android SDK docs.
 
 2.9.1 (Feb 24, 2022)
-- Updated splits initialization workflow to reduce latencies.
+- Updated feature flag initialization workflow to reduce latencies.
 - Removed sizeInBytes property in Events.
 
 2.9.0 (Jan 24, 2022)
@@ -84,7 +84,7 @@
 
 2.8.0: (Nov 19, 2021)
 - Added Attribute binding feature to allow to optionally keep user attributes loaded within the SDK, along with the user ID, for easier usage when requesting flag.
-- Updated localhost mode by converting yaml and properties config to split rollout rules.
+- Updated localhost mode by converting yaml and properties config to feature flag rollout rules.
 
 2.7.4: (Oct 28, 2021)
 - Added support for a user key containing a slash character.
@@ -107,7 +107,7 @@
 - Added telemetry headers to SSE connection
 
 2.7.0: (Abr 21, 2021)
-- Added SDK Update event to notify when Splits or My Segments have changed
+- Added SDK Update event to notify when feature flags or segments have changed
 
 2.6.10: (Mar 26, 2021)
 - Fixed issue when using two factories with api keys from different environments
@@ -126,7 +126,7 @@
 - Fixed backoff algorithm issue
 
 2.6.6: (Ago 03, 2020)
-- Added `syncConfig.addFilter()` method to SDK configuration to pass a list of filters for the splits that will be downloaded. Read more in our docs.
+- Added `syncConfig.addFilter()` method to SDK configuration to pass a list of filters for the feature flags that will be downloaded. Read more in our docs.
 
 2.6.5: (Jul 23, 2020)
 - Improved logic to refresh streaming token
@@ -147,13 +147,13 @@
 - Fixed Interruption handling on workers
 
 2.6.1: (Jun 2, 2020)
-- Added expiration policy to split cache
+- Added expiration policy to feature flag cache
 - Replaced HttpUrlConnection by OkHttp
 - Fixed some issues on streaming while host app in background
 - Fixed issue when retrying sending impressions and events
 
 2.6.0: (Apr 30, 2020)
-- Added support for the new Split streaming architecture. When enabled, the SDK will not poll for updates but instead receive notifications every time there's a change in your environments, allowing to process those much quicker. If disabled (default) or in the event of an issue, the SDK will fallback to the known polling mechanism to provide a seamless experience.
+- Added support for the new streaming architecture. When enabled, the SDK will not poll for updates but instead receive notifications every time there's a change in your environments, allowing to process those much quicker. If disabled (default) or in the event of an issue, the SDK will fallback to the known polling mechanism to provide a seamless experience.
 
 2.5.0: (Mar 13, 2020)
 - Replaced disk files by Room to handle cache data
@@ -191,7 +191,7 @@
  - Added integration tests
 
 2.3.1: (Jun 14, 2019)
- - Bugfixing - concurrence issue when writing split to disk
+ - Bugfixing - concurrence issue when writing feature flag to disk
  - Added missing UTF-8 support to some json parsing
 
 2.3.0: (May 24, 2019)
@@ -210,17 +210,17 @@
  - Added several validations for passed parameters
 
 1.2.3: (Jan 21, 2019)
- - Storing splits, segments, impressions and tracks on disk only when app goes to background or close
+ - Storing feature flags, segments, impressions and tracks on disk only when app goes to background or close
  - Bugfixing - issue when traffic allocation equals to zero
 
 1.2.2: (Oct 1, 2018)
- - Fixed issue fetching split changes
+ - Fixed issue fetching feature flag changes
 
 1.2.1: (Sep 27, 2018)
  - Added proguard rules file
 
 1.2.0: (Sep 24, 2018)
- - Added split manager feature
+ - Added Split Manager feature
 
 1.1.0: (Aug 28, 2018)
  - Added get treatments feature
@@ -235,7 +235,7 @@
  - Added .Track feature
 
 0.9.4: (May 24, 2018)
- - Bugfixing - event SDK_READY not reachable when segments were not linked to a split definition
+ - Bugfixing - event SDK_READY not reachable when segments were not linked to a feature flag definition
 
 0.9.3: (Apr 16, 2018)
  - Added Events listener. Available events: SDK_READY, SDK_READY_TIMEOUT
