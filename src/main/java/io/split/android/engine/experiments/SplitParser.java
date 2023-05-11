@@ -62,7 +62,7 @@ public class SplitParser {
         try {
             return parseWithoutExceptionHandling(split, matchingKey);
         } catch (Throwable t) {
-            Logger.e(t, "Could not parse split: %s", split);
+            Logger.e(t, "Could not parse feature flag: %s", split);
             return null;
         }
     }
@@ -77,7 +77,7 @@ public class SplitParser {
         }
 
         if (split.conditions.size() > CONDITIONS_UPPER_LIMIT) {
-            Logger.w("Dropping Split name=%s due to large number of conditions(%d)",
+            Logger.w("Dropping feature flag name=%s due to large number of conditions(%d)",
                     split.name, split.conditions.size());
             return null;
         }

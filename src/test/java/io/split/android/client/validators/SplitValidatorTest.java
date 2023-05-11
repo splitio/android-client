@@ -31,7 +31,7 @@ public class SplitValidatorTest {
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
-        Assert.assertEquals("you passed a null split name, split name must be a non-empty string", errorInfo.getErrorMessage());
+        Assert.assertEquals("you passed a null feature flag name, flag name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
@@ -40,35 +40,36 @@ public class SplitValidatorTest {
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
-        Assert.assertEquals("you passed an empty split name, split name must be a non-empty string", errorInfo.getErrorMessage());
+        Assert.assertEquals("you passed an empty feature flag name, flag name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
+    @Test
     public void testInvalidAllSpacesInName() {
         ValidationErrorInfo errorInfo = validator.validateName("    ");
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
-        Assert.assertEquals("you passed a empty split name, split name must be a non-empty string", errorInfo.getErrorMessage());
+        Assert.assertEquals("you passed an empty feature flag name, flag name must be a non-empty string", errorInfo.getErrorMessage());
     }
 
     @Test
     public void testLeadingSpacesName() {
-        String splitName = " splitName";
+        String splitName = " featureFlag";
         ValidationErrorInfo errorInfo = validator.validateName(splitName);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertFalse(errorInfo.isError());
-        Assert.assertEquals("split name ' splitName' has extra whitespace, trimming", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED));
+        Assert.assertEquals("feature flag name ' featureFlag' has extra whitespace, trimming", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED));
     }
 
     @Test
     public void testTrailingSpacesName() {
-        String splitName = "splitName ";
+        String splitName = "featureFlag ";
         ValidationErrorInfo errorInfo = validator.validateName(splitName);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertFalse(errorInfo.isError());
-        Assert.assertEquals("split name 'splitName ' has extra whitespace, trimming", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED));
+        Assert.assertEquals("feature flag name 'featureFlag ' has extra whitespace, trimming", errorInfo.getWarnings().get(ValidationErrorInfo.WARNING_SPLIT_NAME_SHOULD_BE_TRIMMED));
     }
 
     private Split createSplit(String name) {

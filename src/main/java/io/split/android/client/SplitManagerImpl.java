@@ -61,17 +61,17 @@ public class SplitManagerImpl implements SplitManager {
                 }
             }
         } catch (Exception exception) {
-            Logger.e("Error getting splits: " + exception.getLocalizedMessage());
+            Logger.e("Error getting feature flags: " + exception.getLocalizedMessage());
         }
 
         return result;
     }
 
     @Override
-    public SplitView split(String featureName) {
+    public SplitView split(String featureFlagName) {
 
         final String validationTag = "split";
-        String splitName = featureName;
+        String splitName = featureFlagName;
 
         try {
             if (_isManagerDestroyed) {
@@ -79,13 +79,13 @@ public class SplitManagerImpl implements SplitManager {
                 return null;
             }
 
-            ValidationErrorInfo errorInfo = _splitValidator.validateName(featureName);
+            ValidationErrorInfo errorInfo = _splitValidator.validateName(featureFlagName);
             if (errorInfo != null) {
                 _validationMessageLogger.log(errorInfo, validationTag);
                 if (errorInfo.isError()) {
                     return null;
                 }
-                splitName = featureName.trim();
+                splitName = featureFlagName.trim();
             }
 
             ParsedSplit parsedSplit = null;
@@ -124,7 +124,7 @@ public class SplitManagerImpl implements SplitManager {
 
             return result;
         } catch (Exception exception) {
-            Logger.e("Error getting split names: " + exception.getLocalizedMessage());
+            Logger.e("Error getting feature flags: " + exception.getLocalizedMessage());
 
             return result;
         }

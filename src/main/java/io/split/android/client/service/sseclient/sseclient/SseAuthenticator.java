@@ -52,12 +52,12 @@ public class SseAuthenticator {
         Logger.d("SSE Authentication done, now parsing token");
 
         if(authResponse.isClientError()) {
-            Logger.d("Error while authenticating to streaming. Check your api key is correct.");
+            Logger.d("Error while authenticating to streaming. Check your SDK key is correct.");
             return new SseAuthenticationResult(false, false, false, 0, null);
         }
 
         if(!authResponse.isStreamingEnabled()) {
-            Logger.d("Streaming disabled for api key");
+            Logger.d("Streaming disabled for SDK key");
             return new SseAuthenticationResult(true, true, false, 0, null);
         }
 

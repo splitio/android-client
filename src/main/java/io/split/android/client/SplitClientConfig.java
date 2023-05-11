@@ -337,7 +337,7 @@ public class SplitClientConfig {
     /**
      * Default data folder to use when some
      * problem arises while creating it
-     * based on api key
+     * based on SDK key
      * @return Default data folder
      */
     String defaultDataFolder() {
@@ -586,9 +586,9 @@ public class SplitClientConfig {
         }
 
         /**
-         * The ImpressionListener captures the which key saw what treatment ("on", "off", etc)
-         * at what time. This log is periodically pushed back to split endpoint.
-         * This parameter controls how quickly does the cache expire after a write.
+         * The ImpressionListener captures the key saw what treatment ("on", "off", etc)
+         * at what time. This log is periodically pushed to Split.
+         * This parameter controls how quickly the cache expires after a write.
          * <p/>
          * This is an ADVANCED parameter
          *
@@ -602,9 +602,9 @@ public class SplitClientConfig {
 
         /**
          * The impression listener captures the which key saw what treatment ("on", "off", etc)
-         * at what time. This log is periodically pushed back to split endpoint.
+         * at what time. This log is periodically pushed to Split.
          * This parameter controls the in-memory queue size to store them before they are
-         * pushed back to split endpoint.
+         * pushed to Split.
          * <p>
          * If the value chosen is too small and more than the default size(5000) of impressions
          * are generated, the old ones will be dropped and the sdk will show a warning.
@@ -705,7 +705,7 @@ public class SplitClientConfig {
         /**
          * The SDK kicks off background threads to download data necessary
          * for using the SDK. You can choose to block until the SDK has
-         * downloaded split definitions so that you will not get
+         * downloaded feature flag definitions so that you will not get
          * the 'control' treatment.
          * <p/>
          * <p/>
@@ -943,7 +943,7 @@ public class SplitClientConfig {
         }
 
         /**
-         * Only used in localhost mode. If offlineRefreshRate is a positive integer, split values
+         * Only used in localhost mode. If offlineRefreshRate is a positive integer, feature flag values
          * will be loaded from a local file every `offlineRefreshRate` seconds.
          *
          * @return: This builder
