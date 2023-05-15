@@ -5,8 +5,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.0.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21'
     }
 }
 
@@ -16,7 +16,7 @@ apply plugin: 'signing'
 apply plugin: 'kotlin-android'
 
 ext {
-    splitVersion = '3.2.0'
+    splitVersion = '3.2.1-rc1'
 }
 
 android {
@@ -33,8 +33,6 @@ android {
 
         minSdkVersion 15
         targetSdkVersion 30
-        versionCode 0
-        versionName splitVersion
         multiDexEnabled true
 
         consumerProguardFiles 'split-proguard-rules.pro'
@@ -57,10 +55,6 @@ android {
         javadocDeps
     }
 
-    lintOptions {
-        disable 'InvalidPackage'
-        abortOnError false
-    }
 
     testOptions {
         unitTests.returnDefaultValues = true
@@ -84,6 +78,11 @@ android {
         release {
             buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
         }
+    }
+    namespace 'io.split.android.android_client'
+    lint {
+        abortOnError false
+        disable 'InvalidPackage'
     }
 }
 
