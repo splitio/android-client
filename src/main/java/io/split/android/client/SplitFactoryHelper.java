@@ -65,6 +65,8 @@ import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
+import io.split.android.client.storage.cipher.SplitEncryptionLevel;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -376,14 +378,13 @@ class SplitFactoryHelper {
                                   SplitTaskExecutor splitTaskExecutor,
                                   ISplitEventsManager eventsManager,
                                   final boolean encryptionEnabled) {
-        AtomicReference<SplitCipher> splitCipher = new AtomicReference<>(null);
-        CountDownLatch cipherLatch = new CountDownLatch(1);
 
+        SplitCipher toCipher = SplitCipherFactory.create(apiKey, encryptionEnabled ? SplitEncryptionLevel.AES_128_CBC :
+                SplitEncryptionLevel.NONE);
         splitTaskExecutor.submit(new EncryptionMigrationTask(apiKey,
                         splitDatabase,
-                        splitCipher,
-                        cipherLatch,
-                        encryptionEnabled),
+                        encryptionEnabled,
+                        toCipher),
                 new SplitTaskExecutionListener() {
                     @Override
                     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
@@ -391,13 +392,7 @@ class SplitFactoryHelper {
                     }
                 });
 
-        try {
-            cipherLatch.await(10, TimeUnit.SECONDS);
-        } catch (InterruptedException ignored) {
-
-        }
-
-        return splitCipher.get();
+        return toCipher;
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {

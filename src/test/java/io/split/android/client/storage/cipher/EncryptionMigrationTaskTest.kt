@@ -10,35 +10,28 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.argThat
-import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mock
-import org.mockito.Mockito.mockStatic
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicReference
 
 
 class EncryptionMigrationTaskTest {
 
     private val mApiKey: String = "abcdedfghijklmnopqrstuvwxyz"
+
     @Mock
     private lateinit var mSplitDatabase: SplitRoomDatabase
+
     @Mock
     private lateinit var mGeneralInfoDao: GeneralInfoDao
-    @Mock
-    private lateinit var mSplitCipherReference: AtomicReference<SplitCipher>
-    @Mock
-    private lateinit var mFromCipher: SplitCipher
+
     @Mock
     private lateinit var mToCipher: SplitCipher
-    private lateinit var mCountDownLatch: CountDownLatch
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        mCountDownLatch = CountDownLatch(1)
         `when`(mSplitDatabase.generalInfoDao()).thenReturn(mGeneralInfoDao)
     }
 
@@ -47,9 +40,8 @@ class EncryptionMigrationTaskTest {
         val encryptionMigrationTask = EncryptionMigrationTask(
             mApiKey,
             mSplitDatabase,
-            mSplitCipherReference,
-            mCountDownLatch,
-            false
+            false,
+            mToCipher
         )
         `when`(mGeneralInfoDao.getByName("databaseEncryptionMode")).thenReturn(
             GeneralInfoEntity(
@@ -64,96 +56,19 @@ class EncryptionMigrationTaskTest {
     }
 
     @Test
-    fun targetEncryptionLevelIsDeterminedWithEncryptionEnabledProperty() {
-        val encryptionMigrationTask = EncryptionMigrationTask(
-            mApiKey,
-            mSplitDatabase,
-            mSplitCipherReference,
-            mCountDownLatch,
-            true
-        )
-
-        mockStatic(SplitCipherFactory::class.java).use { mock ->
-            mock.`when`<Any> {
-                SplitCipherFactory.create(
-                    any(), eq(SplitEncryptionLevel.AES_128_CBC)
-                )
-            }.thenReturn(mToCipher)
-
-            encryptionMigrationTask.execute()
-
-            mock.verify { SplitCipherFactory.create(mApiKey, SplitEncryptionLevel.AES_128_CBC) }
-        }
-    }
-
-    @Test
     fun targetEncryptionLevelIsDeterminedWithEncryptionDisabledProperty() {
         val encryptionMigrationTask = EncryptionMigrationTask(
             mApiKey,
             mSplitDatabase,
-            mSplitCipherReference,
-            mCountDownLatch,
-            false
+            false,
+            mToCipher
         )
 
-        mockStatic(SplitCipherFactory::class.java).use { mock ->
-            mock.`when`<Any> {
-                SplitCipherFactory.create(
-                    any(), eq(SplitEncryptionLevel.NONE)
-                )
-            }.thenReturn(mToCipher)
+        encryptionMigrationTask.execute()
 
-            encryptionMigrationTask.execute()
-
-            mock.verify { SplitCipherFactory.create(mApiKey, SplitEncryptionLevel.NONE) }
-        }
-    }
-
-    @Test
-    fun toCipherIsSetToCipherReference() {
-        val encryptionMigrationTask = EncryptionMigrationTask(
-            mApiKey,
-            mSplitDatabase,
-            mSplitCipherReference,
-            mCountDownLatch,
-            false
-        )
-
-        mockStatic(SplitCipherFactory::class.java).use { mock ->
-            mock.`when`<Any> {
-                SplitCipherFactory.create(
-                    any(), eq(SplitEncryptionLevel.NONE)
-                )
-            }.thenReturn(mToCipher)
-
-            encryptionMigrationTask.execute()
-
-            verify(mSplitCipherReference).set(mToCipher)
-        }
-    }
-
-    @Test
-    fun countDownLatchIsCountedDownAfterReferenceIsSet() {
-        val encryptionMigrationTask = EncryptionMigrationTask(
-            mApiKey,
-            mSplitDatabase,
-            mSplitCipherReference,
-            mCountDownLatch,
-            true
-        )
-
-        mockStatic(SplitCipherFactory::class.java).use { mock ->
-            mock.`when`<Any> {
-                SplitCipherFactory.create(
-                    any(), eq(SplitEncryptionLevel.AES_128_CBC)
-                )
-            }.thenReturn(mToCipher)
-
-            encryptionMigrationTask.execute()
-
-            verify(mSplitCipherReference).set(mToCipher)
-            assertEquals(0L, mCountDownLatch.count)
-        }
+        verify(mGeneralInfoDao).update(argThat { entity ->
+            entity.name == "databaseEncryptionMode" && entity.stringValue == "NONE"
+        })
     }
 
     @Test
@@ -161,9 +76,8 @@ class EncryptionMigrationTaskTest {
         EncryptionMigrationTask(
             mApiKey,
             mSplitDatabase,
-            mSplitCipherReference,
-            mCountDownLatch,
-            true
+            true,
+            mToCipher
         ).execute()
 
         verify(mGeneralInfoDao).update(argThat {
@@ -176,9 +90,8 @@ class EncryptionMigrationTaskTest {
         val encryptionMigrationTask = EncryptionMigrationTask(
             mApiKey,
             mSplitDatabase,
-            mSplitCipherReference,
-            mCountDownLatch,
-            true
+            true,
+            mToCipher
         )
 
         val taskInfo = encryptionMigrationTask.execute()
@@ -192,22 +105,14 @@ class EncryptionMigrationTaskTest {
         val encryptionMigrationTask = EncryptionMigrationTask(
             mApiKey,
             mSplitDatabase,
-            mSplitCipherReference,
-            mCountDownLatch,
-            true
+            true,
+            mToCipher
         )
+        `when`(mGeneralInfoDao.update(any())).thenThrow(RuntimeException())
 
-        mockStatic(SplitCipherFactory::class.java).use { mock ->
-            mock.`when`<Any> {
-                SplitCipherFactory.create(
-                    any(), eq(SplitEncryptionLevel.AES_128_CBC)
-                )
-            }.thenThrow(RuntimeException("Test exception"))
+        val taskInfo = encryptionMigrationTask.execute()
 
-            val taskInfo = encryptionMigrationTask.execute()
-
-            assertEquals(SplitTaskExecutionStatus.ERROR, taskInfo.status)
-            assertEquals(SplitTaskType.GENERIC_TASK, taskInfo.taskType)
-        }
+        assertEquals(SplitTaskExecutionStatus.ERROR, taskInfo.status)
+        assertEquals(SplitTaskType.GENERIC_TASK, taskInfo.taskType)
     }
 }
