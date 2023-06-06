@@ -56,6 +56,22 @@ class EncryptionMigrationTaskTest {
     }
 
     @Test
+    fun targetEncryptionLevelIsDeterminedWithEncryptionEnabledProperty() {
+        val encryptionMigrationTask = EncryptionMigrationTask(
+            mApiKey,
+            mSplitDatabase,
+            true,
+            mToCipher
+        )
+
+        encryptionMigrationTask.execute()
+
+        verify(mGeneralInfoDao).update(argThat { entity ->
+            entity.name == "databaseEncryptionMode" && entity.stringValue == "AES_128_CBC"
+        })
+    }
+
+    @Test
     fun targetEncryptionLevelIsDeterminedWithEncryptionDisabledProperty() {
         val encryptionMigrationTask = EncryptionMigrationTask(
             mApiKey,
@@ -68,20 +84,6 @@ class EncryptionMigrationTaskTest {
 
         verify(mGeneralInfoDao).update(argThat { entity ->
             entity.name == "databaseEncryptionMode" && entity.stringValue == "NONE"
-        })
-    }
-
-    @Test
-    fun levelIsUpdatedInGeneralInfo() {
-        EncryptionMigrationTask(
-            mApiKey,
-            mSplitDatabase,
-            true,
-            mToCipher
-        ).execute()
-
-        verify(mGeneralInfoDao).update(argThat {
-            it.name == "databaseEncryptionMode" && it.stringValue == "AES_128_CBC"
         })
     }
 
