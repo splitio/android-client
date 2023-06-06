@@ -19,20 +19,17 @@ public class EncryptionMigrationTask implements SplitTask {
 
     private final String mApiKey;
     private final SplitRoomDatabase mSplitDatabase;
-    private final AtomicReference<SplitCipher> mSplitCipher;
     private final boolean mEncryptionEnabled;
-    private final CountDownLatch mCountDownLatch;
+    private final SplitCipher mToCipher;
 
     public EncryptionMigrationTask(String apiKey,
                                    SplitRoomDatabase splitDatabase,
-                                   AtomicReference<SplitCipher> splitCipher,
-                                   CountDownLatch countDownLatch,
-                                   boolean encryptionEnabled) {
+                                   boolean encryptionEnabled,
+                                   SplitCipher toCipher) {
         mApiKey = checkNotNull(apiKey);
         mSplitDatabase = checkNotNull(splitDatabase);
-        mSplitCipher = checkNotNull(splitCipher);
-        mCountDownLatch = checkNotNull(countDownLatch);
         mEncryptionEnabled = encryptionEnabled;
+        mToCipher = checkNotNull(toCipher);
     }
 
     @NonNull
@@ -45,15 +42,8 @@ public class EncryptionMigrationTask implements SplitTask {
             // Determine target encryption level
             SplitEncryptionLevel toLevel = getLevel(mEncryptionEnabled);
 
-            // Create target level cipher
-            SplitCipher toCipher = SplitCipherFactory.create(mApiKey, toLevel);
-
-            // Return cipher to be used by the SDK
-            mSplitCipher.set(toCipher);
-            mCountDownLatch.countDown();
-
             // Apply encryption
-            new DBCipher(mApiKey, mSplitDatabase, fromLevel, toLevel, toCipher).apply();
+            new DBCipher(mApiKey, mSplitDatabase, fromLevel, toLevel, mToCipher).apply();
 
             // Update encryption level
             updateCurrentLevel(toLevel);
