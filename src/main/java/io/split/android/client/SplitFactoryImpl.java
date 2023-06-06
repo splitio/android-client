@@ -152,7 +152,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 config.encryptionEnabled());
 
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
-                splitDatabase, key, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
+                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
 
         String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
 

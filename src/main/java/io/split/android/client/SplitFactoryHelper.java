@@ -137,7 +137,6 @@ class SplitFactoryHelper {
 
     SplitStorageContainer buildStorageContainer(UserConsent userConsentStatus,
                                                 SplitRoomDatabase splitRoomDatabase,
-                                                Key key,
                                                 boolean shouldRecordTelemetry,
                                                 SplitCipher splitCipher,
                                                 TelemetryStorage telemetryStorage) {
@@ -372,7 +371,6 @@ class SplitFactoryHelper {
                 config.userConsent() == UserConsent.GRANTED).getStrategy(config.impressionsMode());
     }
 
-    @NonNull
     SplitCipher migrateEncryption(String apiKey,
                                   SplitRoomDatabase splitDatabase,
                                   SplitTaskExecutor splitTaskExecutor,
