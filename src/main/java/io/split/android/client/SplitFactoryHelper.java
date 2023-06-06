@@ -392,7 +392,7 @@ class SplitFactoryHelper {
                 });
 
         try {
-            cipherLatch.await(2, TimeUnit.SECONDS);
+            cipherLatch.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException ignored) {
 
         }
