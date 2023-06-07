@@ -1,10 +1,8 @@
 package io.split.android.client
 
-import io.split.android.client.events.ISplitEventsManager
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.storage.cipher.EncryptionMigrationTask
-import io.split.android.client.storage.db.GeneralInfoDao
 import io.split.android.client.storage.db.SplitRoomDatabase
 import org.junit.Before
 import org.junit.Test
@@ -20,9 +18,7 @@ class SplitFactoryHelperTest {
     @Mock
     private lateinit var splitTaskExecutor: SplitTaskExecutor
     @Mock
-    private lateinit var splitEventsManager: ISplitEventsManager
-    @Mock
-    private lateinit var generalInfoDao: GeneralInfoDao
+    private lateinit var taskListener: SplitTaskExecutionListener
 
     private lateinit var helper: SplitFactoryHelper
 
@@ -39,12 +35,12 @@ class SplitFactoryHelperTest {
             "abcdedfghijklmnopqrstuvwxyz",
             splitRoomDatabase,
             splitTaskExecutor,
-            splitEventsManager,
             true,
+            taskListener,
         )
 
         verify(splitTaskExecutor).submit(
             argThat { it is EncryptionMigrationTask },
-            argThat { it is SplitTaskExecutionListener })
+            argThat { it?.equals(taskListener) == true })
     }
 }
