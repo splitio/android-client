@@ -2,12 +2,15 @@ package io.split.android.client;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerCoordinator;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
@@ -18,6 +21,8 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -70,6 +75,9 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitStorageContainer mStorageContainer;
     private final SplitClientContainer mClientContainer;
     private final UserConsentManager mUserConsentManager;
+
+    @SuppressWarnings("FieldCanBeLocal")
+    private final SplitTaskExecutionListener mMigrationExecutionListener;
 
     public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
             throws URISyntaxException {
@@ -145,11 +153,17 @@ public class SplitFactoryImpl implements SplitFactory {
 
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
+        mMigrationExecutionListener = new SplitTaskExecutionListener() {
+            @Override
+            public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+            }
+        };
         SplitCipher splitCipher = factoryHelper.migrateEncryption(mApiKey,
                 splitDatabase,
                 splitTaskExecutor,
-                mEventsManagerCoordinator,
-                config.encryptionEnabled());
+                config.encryptionEnabled(),
+                mMigrationExecutionListener);
 
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
                 splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);

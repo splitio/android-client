@@ -8,7 +8,7 @@ import io.split.android.client.utils.logger.Logger;
 
 class TaskWrapper implements Runnable {
     private final SplitTask mTask;
-    private WeakReference<SplitTaskExecutionListener> mExecutionListener;
+    private final WeakReference<SplitTaskExecutionListener> mExecutionListener;
 
     TaskWrapper(SplitTask task,
                 SplitTaskExecutionListener executionListener) {

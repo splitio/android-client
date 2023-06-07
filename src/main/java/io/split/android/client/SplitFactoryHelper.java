@@ -10,21 +10,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
-import io.split.android.client.events.ISplitEventsManager;
-import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -374,8 +367,8 @@ class SplitFactoryHelper {
     SplitCipher migrateEncryption(String apiKey,
                                   SplitRoomDatabase splitDatabase,
                                   SplitTaskExecutor splitTaskExecutor,
-                                  ISplitEventsManager eventsManager,
-                                  final boolean encryptionEnabled) {
+                                  final boolean encryptionEnabled,
+                                  SplitTaskExecutionListener executionListener) {
 
         SplitCipher toCipher = SplitCipherFactory.create(apiKey, encryptionEnabled ? SplitEncryptionLevel.AES_128_CBC :
                 SplitEncryptionLevel.NONE);
@@ -383,12 +376,7 @@ class SplitFactoryHelper {
                         splitDatabase,
                         encryptionEnabled,
                         toCipher),
-                new SplitTaskExecutionListener() {
-                    @Override
-                    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-                        eventsManager.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-                    }
-                });
+                executionListener);
 
         return toCipher;
     }
