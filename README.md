@@ -1,5 +1,4 @@
 # Split SDK for Android
-![Build Status](https://github.com/splitio/android-client/actions/workflows/sonar.yml/badge.svg?branch=master)
 
 ## Overview
 This SDK is designed to work with Split, the platform for controlled rollouts, which serves features to your users via feature flags to manage your complete customer experience.

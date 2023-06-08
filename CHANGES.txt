@@ -1,3 +1,6 @@
+3.2.2 (Jun 7, 2023)
+- Refactored cipher creation to avoid NPE scenarios.
+
 3.2.1 (May 15, 2023)
 - Updated terminology on the SDKs codebase to be more aligned with current standard without causing a breaking change.
 The core change is the term split for feature flag on things like logs and Javadoc comments.
