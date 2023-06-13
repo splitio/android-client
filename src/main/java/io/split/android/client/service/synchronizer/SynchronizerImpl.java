@@ -7,7 +7,6 @@ import androidx.annotation.NonNull;
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -24,7 +23,8 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.UserConsent;
-import io.split.android.client.storage.common.SplitStorageContainer;
+import io.split.android.client.storage.common.StoragePusher;
+import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -33,12 +33,13 @@ import io.split.android.client.utils.logger.Logger;
 public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegistry, AttributesSynchronizerRegistry {
 
     private final SplitTaskExecutor mTaskExecutor;
-    private final SplitTaskExecutor mSplitsTaskExecutor;
-    private final SplitStorageContainer mSplitsStorageContainer;
+    private final SplitTaskExecutor mSingleThreadTaskExecutor;
+    private final StoragePusher<Event> mEventsStorage;
     private final SplitClientConfig mSplitClientConfig;
     private final SplitTaskFactory mSplitTaskFactory;
     private final WorkManagerWrapper mWorkManagerWrapper;
     private final ImpressionManager mImpressionManager;
+    private final FeatureFlagsSynchronizer mFeatureFlagsSynchronizer;
 
     private RecorderSyncHelper<Event> mEventsSyncHelper;
 
@@ -47,38 +48,32 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     private final MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
-    private final FeatureFlagsSynchronizer mFeatureFlagsSynchronizer;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
                             @NonNull SplitTaskExecutor splitSingleThreadTaskExecutor,
-                            @NonNull SplitStorageContainer splitStorageContainer,
                             @NonNull SplitTaskFactory splitTaskFactory,
-                            @NonNull ISplitEventsManager splitEventsManager,
                             @NonNull WorkManagerWrapper workManagerWrapper,
                             @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @NonNull AttributesSynchronizerRegistryImpl attributesSynchronizerRegistry,
                             @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry,
-                            @NonNull ImpressionManager impressionManager) {
+                            @NonNull ImpressionManager impressionManager,
+                            @NonNull FeatureFlagsSynchronizerImpl featureFlagsSynchronizer,
+                            @NonNull StoragePusher<Event> eventsStorage) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
-        mSplitsTaskExecutor = splitSingleThreadTaskExecutor;
-        mSplitsStorageContainer = checkNotNull(splitStorageContainer);
+        mSingleThreadTaskExecutor = checkNotNull(splitSingleThreadTaskExecutor);
+        mEventsStorage = eventsStorage;
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
+        mFeatureFlagsSynchronizer = checkNotNull(featureFlagsSynchronizer);
         mAttributesSynchronizerRegistry = attributesSynchronizerRegistry;
         mEventsRecorderUpdateRetryTimer = retryBackoffCounterTimerFactory.createWithFixedInterval(
-                mSplitsTaskExecutor,
+                mSingleThreadTaskExecutor,
                 ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS,
                 ServiceConstants.UNIQUE_KEYS_MAX_RETRY_ATTEMPTS);
-        mFeatureFlagsSynchronizer = new FeatureFlagsSynchronizerImpl(splitClientConfig,
-                taskExecutor,
-                splitSingleThreadTaskExecutor,
-                splitTaskFactory,
-                splitEventsManager,
-                retryBackoffCounterTimerFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mMySegmentsSynchronizerRegistry = checkNotNull(mySegmentsSynchronizerRegistry);
         mImpressionManager = checkNotNull(impressionManager);
@@ -164,7 +159,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private void setupListeners() {
         mEventsSyncHelper = new RecorderSyncHelperImpl<>(
                 SplitTaskType.EVENTS_RECORDER,
-                mSplitsStorageContainer.getEventsStorage(),
+                mEventsStorage,
                 mSplitClientConfig.eventsQueueSize(),
                 ServiceConstants.MAX_EVENTS_SIZE_BYTES,
                 mTaskExecutor
@@ -174,13 +169,15 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     public void pause() {
         stopPeriodicRecording();
+        stopPeriodicFetching();
+
         mTaskExecutor.pause();
-        mSplitsTaskExecutor.pause();
+        mSingleThreadTaskExecutor.pause();
     }
 
     public void resume() {
         mTaskExecutor.resume();
-        mSplitsTaskExecutor.resume();
+        mSingleThreadTaskExecutor.resume();
         if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {
             startPeriodicRecording();
         }

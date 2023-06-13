@@ -101,19 +101,6 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                 mSplitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
     }
 
-    public void pause() {
-        stopPeriodicFetching();
-        mTaskExecutor.pause();
-        mSplitsTaskExecutor.pause();
-    }
-
-    public void resume() {
-        mSplitsTaskExecutor.resume();
-        if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {
-            startPeriodicFetching();
-        }
-    }
-
     @Override
     public void stopSynchronization() {
         mSplitsSyncRetryTimer.stop();

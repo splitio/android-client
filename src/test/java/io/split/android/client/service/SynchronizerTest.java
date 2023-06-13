@@ -65,6 +65,7 @@ import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
+import io.split.android.client.service.synchronizer.FeatureFlagsSynchronizerImpl;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
@@ -189,7 +190,12 @@ public class SynchronizerTest {
         mImpressionManager = Mockito.mock(ImpressionManager.class);
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor, mSingleThreadedTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager);
+                mTaskFactory, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager, new FeatureFlagsSynchronizerImpl(splitClientConfig,
+                mTaskExecutor,
+                mSingleThreadedTaskExecutor,
+                mTaskFactory,
+                mEventsManager,
+                mRetryBackoffFactory), mSplitStorageContainer.getEventsStorage());
     }
 
     @Test
@@ -515,7 +521,12 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(config, executor, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager);
+                mTaskFactory, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager, new FeatureFlagsSynchronizerImpl(config,
+                executor,
+                executor,
+                mTaskFactory,
+                mEventsManager,
+                mRetryBackoffFactory), mSplitStorageContainer.getEventsStorage());
 
         LoadMySegmentsTask loadMySegmentsTask = mock(LoadMySegmentsTask.class);
         when(loadMySegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
@@ -550,7 +561,12 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(config, executor, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager);
+                mTaskFactory, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager, new FeatureFlagsSynchronizerImpl(config,
+                executor,
+                executor,
+                mTaskFactory,
+                mEventsManager,
+                mRetryBackoffFactory), mSplitStorageContainer.getEventsStorage());
         mSynchronizer.loadAndSynchronizeSplits();
         verify(mEventsManager, times(1))
                 .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
@@ -568,9 +584,14 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsSync)
                 .thenReturn(mRetryTimerSplitsUpdate);
         mSynchronizer = new SynchronizerImpl(config, mTaskExecutor, mSingleThreadedTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper,
+                mTaskFactory, mWorkManagerWrapper,
                 mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry,
-                mMySegmentsSynchronizerRegistry, impressionManager);
+                mMySegmentsSynchronizerRegistry, impressionManager, new FeatureFlagsSynchronizerImpl(config,
+                mTaskExecutor,
+                mSingleThreadedTaskExecutor,
+                mTaskFactory,
+                mEventsManager,
+                mRetryBackoffFactory), mSplitStorageContainer.getEventsStorage());
 
         mSynchronizer.destroy();
 
