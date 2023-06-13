@@ -55,12 +55,12 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     }
 
     @Override
-    public void loadSplitsFromCache() {
-        submitSplitLoadingTask(mLoadLocalSplitsListener);
+    public void loadFromCache() {
+        submitLoadingTask(mLoadLocalSplitsListener);
     }
 
     @Override
-    public void loadAndSynchronizeSplits() {
+    public void loadAndSynchronize() {
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createFilterSplitsInCacheTask(), null));
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(), mLoadLocalSplitsListener));
@@ -68,7 +68,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
             @NonNull
             @Override
             public SplitTaskExecutionInfo execute() {
-                synchronizeSplits();
+                synchronize();
                 return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
             }
         }, null));
@@ -76,23 +76,23 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     }
 
     @Override
-    public void synchronizeSplits(long since) {
+    public void synchronize(long since) {
         mSplitsUpdateRetryTimer.setTask(mSplitTaskFactory.createSplitsUpdateTask(since), null);
         mSplitsUpdateRetryTimer.start();
     }
 
     @Override
-    public void synchronizeSplits() {
+    public void synchronize() {
         mSplitsSyncRetryTimer.start();
     }
 
     @Override
-    public void startFeatureFlagsPeriodicFetching() {
+    public void startPeriodicFetching() {
         scheduleSplitsFetcherTask();
     }
 
     @Override
-    public void stopFeatureFlagsPeriodicFetching() {
+    public void stopPeriodicFetching() {
         mSplitsTaskExecutor.stopTask(mSplitsFetcherTaskId);
     }
 
@@ -102,7 +102,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     }
 
     public void pause() {
-        stopFeatureFlagsPeriodicFetching();
+        stopPeriodicFetching();
         mTaskExecutor.pause();
         mSplitsTaskExecutor.pause();
     }
@@ -110,7 +110,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     public void resume() {
         mSplitsTaskExecutor.resume();
         if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {
-            startFeatureFlagsPeriodicFetching();
+            startPeriodicFetching();
         }
     }
 
@@ -129,7 +129,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     }
 
     @Override
-    public void submitSplitLoadingTask(SplitTaskExecutionListener listener) {
+    public void submitLoadingTask(SplitTaskExecutionListener listener) {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
                 listener);
     }

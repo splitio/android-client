@@ -4,19 +4,19 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 
 public interface FeatureFlagsSynchronizer {
 
-    void loadAndSynchronizeSplits();
+    void loadAndSynchronize();
 
-    void loadSplitsFromCache();
+    void loadFromCache();
 
-    void synchronizeSplits(long since);
+    void synchronize(long since);
 
-    void synchronizeSplits();
+    void synchronize();
 
-    void startFeatureFlagsPeriodicFetching();
+    void startPeriodicFetching();
 
-    void stopFeatureFlagsPeriodicFetching();
+    void stopPeriodicFetching();
 
     void stopSynchronization();
 
-    void submitSplitLoadingTask(SplitTaskExecutionListener listener);
+    void submitLoadingTask(SplitTaskExecutionListener listener);
 }

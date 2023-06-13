@@ -95,7 +95,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadSplitsFromCache() {
-        mFeatureFlagsSynchronizer.loadSplitsFromCache();
+        mFeatureFlagsSynchronizer.loadFromCache();
     }
 
     @Override
@@ -110,17 +110,17 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadAndSynchronizeSplits() {
-        mFeatureFlagsSynchronizer.loadAndSynchronizeSplits();
+        mFeatureFlagsSynchronizer.loadAndSynchronize();
     }
 
     @Override
     public void synchronizeSplits(long since) {
-        mFeatureFlagsSynchronizer.synchronizeSplits(since);
+        mFeatureFlagsSynchronizer.synchronize(since);
     }
 
     @Override
     public void synchronizeSplits() {
-        mFeatureFlagsSynchronizer.synchronizeSplits();
+        mFeatureFlagsSynchronizer.synchronize();
     }
 
     @Override
@@ -135,7 +135,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     synchronized public void startPeriodicFetching() {
-        mFeatureFlagsSynchronizer.startFeatureFlagsPeriodicFetching();
+        mFeatureFlagsSynchronizer.startPeriodicFetching();
         scheduleMySegmentsFetcherTask();
         mTelemetryRuntimeProducer.recordStreamingEvents(new SyncModeUpdateStreamingEvent(SyncModeUpdateStreamingEvent.Mode.POLLING, System.currentTimeMillis()));
         Logger.i("Periodic fetcher tasks scheduled");
@@ -143,7 +143,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     synchronized public void stopPeriodicFetching() {
-        mFeatureFlagsSynchronizer.stopFeatureFlagsPeriodicFetching();
+        mFeatureFlagsSynchronizer.stopPeriodicFetching();
         mMySegmentsSynchronizerRegistry.stopPeriodicFetching();
     }
 
@@ -251,7 +251,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
         switch (taskInfo.getTaskType()) {
             case SPLITS_SYNC:
-                mFeatureFlagsSynchronizer.submitSplitLoadingTask(null);
+                mFeatureFlagsSynchronizer.submitLoadingTask(null);
                 break;
             case MY_SEGMENTS_SYNC:
                 Logger.d("Loading my segments updated in background");
