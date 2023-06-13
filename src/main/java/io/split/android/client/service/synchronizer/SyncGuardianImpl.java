@@ -29,11 +29,8 @@ public class SyncGuardianImpl implements SyncGuardian {
 
     @Override
     public boolean mustSync() {
-        if (!mSyncEnabled || !mStreamingEnabled) {
-            return false;
-        }
-
-        return mNewTimestamp.get() - mLastSyncTimestamp.get() >= mMaxSyncPeriod.get();
+        return mSyncEnabled && mStreamingEnabled &&
+                mNewTimestamp.get() - mLastSyncTimestamp.get() >= mMaxSyncPeriod.get();
     }
 
     @Override
