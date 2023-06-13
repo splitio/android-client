@@ -4,18 +4,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.ISplitEventsManager;
-import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -42,23 +36,18 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final SplitTaskExecutor mSplitsTaskExecutor;
     private final SplitStorageContainer mSplitsStorageContainer;
     private final SplitClientConfig mSplitClientConfig;
-    private final ISplitEventsManager mSplitEventsManager;
     private final SplitTaskFactory mSplitTaskFactory;
     private final WorkManagerWrapper mWorkManagerWrapper;
     private final ImpressionManager mImpressionManager;
 
     private RecorderSyncHelper<Event> mEventsSyncHelper;
 
-    private LoadLocalDataListener mLoadLocalSplitsListener;
-
-    private String mSplitsFetcherTaskId;
     private String mEventsRecorderTaskId;
-    private final RetryBackoffCounterTimer mSplitsSyncRetryTimer;
-    private final RetryBackoffCounterTimer mSplitsUpdateRetryTimer;
     private final RetryBackoffCounterTimer mEventsRecorderUpdateRetryTimer;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     private final MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
+    private final FeatureFlagsSynchronizer mFeatureFlagsSynchronizer;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -77,23 +66,24 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mSplitsTaskExecutor = splitSingleThreadTaskExecutor;
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
-        mSplitEventsManager = checkNotNull(splitEventsManager);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mWorkManagerWrapper = checkNotNull(workManagerWrapper);
         mAttributesSynchronizerRegistry = attributesSynchronizerRegistry;
-        mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(mSplitsTaskExecutor, 1);
-        mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(mSplitsTaskExecutor, 1);
         mEventsRecorderUpdateRetryTimer = retryBackoffCounterTimerFactory.createWithFixedInterval(
                 mSplitsTaskExecutor,
                 ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS,
                 ServiceConstants.UNIQUE_KEYS_MAX_RETRY_ATTEMPTS);
-
+        mFeatureFlagsSynchronizer = new FeatureFlagsSynchronizerImpl(splitClientConfig,
+                taskExecutor,
+                splitSingleThreadTaskExecutor,
+                splitTaskFactory,
+                splitEventsManager,
+                retryBackoffCounterTimerFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mMySegmentsSynchronizerRegistry = checkNotNull(mySegmentsSynchronizerRegistry);
         mImpressionManager = checkNotNull(impressionManager);
 
         setupListeners();
-        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
 
         if (mSplitClientConfig.synchronizeInBackground()) {
             mWorkManagerWrapper.setFetcherExecutionListener(this);
@@ -105,7 +95,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadSplitsFromCache() {
-        submitSplitLoadingTask(mLoadLocalSplitsListener);
+        mFeatureFlagsSynchronizer.loadSplitsFromCache();
     }
 
     @Override
@@ -120,29 +110,17 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadAndSynchronizeSplits() {
-        List<SplitTaskBatchItem> enqueued = new ArrayList<>();
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createFilterSplitsInCacheTask(), null));
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(), mLoadLocalSplitsListener));
-        enqueued.add(new SplitTaskBatchItem(new SplitTask() {
-            @NonNull
-            @Override
-            public SplitTaskExecutionInfo execute() {
-                synchronizeSplits();
-                return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
-            }
-        }, null));
-        mTaskExecutor.executeSerially(enqueued);
+        mFeatureFlagsSynchronizer.loadAndSynchronizeSplits();
     }
 
     @Override
     public void synchronizeSplits(long since) {
-        mSplitsUpdateRetryTimer.setTask(mSplitTaskFactory.createSplitsUpdateTask(since), null);
-        mSplitsUpdateRetryTimer.start();
+        mFeatureFlagsSynchronizer.synchronizeSplits(since);
     }
 
     @Override
     public void synchronizeSplits() {
-        mSplitsSyncRetryTimer.start();
+        mFeatureFlagsSynchronizer.synchronizeSplits();
     }
 
     @Override
@@ -157,7 +135,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     synchronized public void startPeriodicFetching() {
-        scheduleSplitsFetcherTask();
+        mFeatureFlagsSynchronizer.startFeatureFlagsPeriodicFetching();
         scheduleMySegmentsFetcherTask();
         mTelemetryRuntimeProducer.recordStreamingEvents(new SyncModeUpdateStreamingEvent(SyncModeUpdateStreamingEvent.Mode.POLLING, System.currentTimeMillis()));
         Logger.i("Periodic fetcher tasks scheduled");
@@ -165,7 +143,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     synchronized public void stopPeriodicFetching() {
-        mSplitsTaskExecutor.stopTask(mSplitsFetcherTaskId);
+        mFeatureFlagsSynchronizer.stopFeatureFlagsPeriodicFetching();
         mMySegmentsSynchronizerRegistry.stopPeriodicFetching();
     }
 
@@ -192,8 +170,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mTaskExecutor
         );
 
-        mLoadLocalSplitsListener = new LoadLocalDataListener(
-                mSplitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
     }
 
     public void pause() {
@@ -212,8 +188,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void destroy() {
-        mSplitsSyncRetryTimer.stop();
-        mSplitsUpdateRetryTimer.stop();
+        mFeatureFlagsSynchronizer.stopSynchronization();
         mMySegmentsSynchronizerRegistry.destroy();
         flush();
     }
@@ -261,14 +236,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mAttributesSynchronizerRegistry.unregisterAttributesSynchronizer(userKey);
     }
 
-    private void scheduleSplitsFetcherTask() {
-        mSplitsFetcherTaskId = mSplitsTaskExecutor.schedule(
-                mSplitTaskFactory.createSplitsSyncTask(false),
-                mSplitClientConfig.featuresRefreshRate(),
-                mSplitClientConfig.featuresRefreshRate(),
-                null);
-    }
-
     private void scheduleMySegmentsFetcherTask() {
         mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask();
     }
@@ -280,17 +247,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mSplitClientConfig.eventFlushInterval(), mEventsSyncHelper);
     }
 
-    private void submitSplitLoadingTask(SplitTaskExecutionListener listener) {
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
-                listener);
-    }
-
     @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
         switch (taskInfo.getTaskType()) {
             case SPLITS_SYNC:
-                Logger.d("Loading split definitions updated in background");
-                submitSplitLoadingTask(null);
+                mFeatureFlagsSynchronizer.submitSplitLoadingTask(null);
                 break;
             case MY_SEGMENTS_SYNC:
                 Logger.d("Loading my segments updated in background");
