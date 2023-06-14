@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [ 29 ]
+        api-level: [ 31 ]
         shard: [ 0, 1, 2, 3 ]
 
     steps:
@@ -43,6 +43,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2.28.0
         with:
           api-level: ${{ matrix.api-level }}
+          avd-name: macOS-avd-arm64-v8a-31
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
@@ -55,5 +56,5 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
-          profile: Galaxy Nexus
+          profile: Nexus 6
           script: ./gradlew connectedCheck --continue -Pandroid.testInstrumentationRunnerArguments.numShards=4 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}
