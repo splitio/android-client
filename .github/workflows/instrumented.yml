@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        api-level: [ 31 ]
+        api-level: [ 29 ]
         shard: [ 0, 1, 2, 3 ]
 
     steps:
@@ -43,7 +43,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2.28.0
         with:
           api-level: ${{ matrix.api-level }}
-          avd-name: macOS-avd-arm64-v8a-31
+          avd-name: macOS-avd-arm64-v8a-29
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
