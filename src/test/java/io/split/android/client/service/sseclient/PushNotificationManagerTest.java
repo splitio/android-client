@@ -291,6 +291,10 @@ public class PushNotificationManagerTest {
     public void buildWithDefaultExecutor() {
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, mock(SseClient.class), mRefreshTokenTimer,
                 mDisconnectionTimer, mTelemetryRuntimeProducer, null);
+
+        mPushManager.start();
+
+        verify(mAuthenticator).authenticate();
     }
 
     private void performSuccessfulConnection() throws InterruptedException {
