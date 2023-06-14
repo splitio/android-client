@@ -25,15 +25,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class SseClientImpl implements SseClient {
 
     private final URI mTargetUrl;
-    private AtomicInteger mStatus;
+    private final AtomicInteger mStatus;
     private final HttpClient mHttpClient;
-    private EventStreamParser mEventStreamParser;
-    private AtomicBoolean isDisconnectCalled;
-    private SseHandler mSseHandler;
+    private final EventStreamParser mEventStreamParser;
+    private final AtomicBoolean mIsDisconnectCalled;
+    private final SseHandler mSseHandler;
 
     private final StringHelper mStringHelper;
 
-    private BufferedReader mBufferedReader;
     private HttpStreamRequest mHttpStreamRequest = null;
 
     private static final String PUSH_NOTIFICATION_CHANNELS_PARAM = "channel";
@@ -50,7 +49,7 @@ public class SseClientImpl implements SseClient {
         mEventStreamParser = checkNotNull(eventStreamParser);
         mSseHandler = checkNotNull(sseHandler);
         mStatus = new AtomicInteger(DISCONNECTED);
-        isDisconnectCalled = new AtomicBoolean(false);
+        mIsDisconnectCalled = new AtomicBoolean(false);
         mStringHelper = new StringHelper();
         mStatus.set(DISCONNECTED);
     }
@@ -61,7 +60,7 @@ public class SseClientImpl implements SseClient {
 
     @Override
     public void disconnect() {
-        isDisconnectCalled.set(true);
+        mIsDisconnectCalled.set(true);
         close();
     }
 
@@ -78,12 +77,12 @@ public class SseClientImpl implements SseClient {
     @Override
     public void connect(SseJwtToken token, ConnectionListener connectionListener) {
         boolean isConnectionConfirmed = false;
-        isDisconnectCalled.set(false);
+        mIsDisconnectCalled.set(false);
         mStatus.set(CONNECTING);
         String channels = mStringHelper.join(",", token.getChannels());
         String rawToken = token.getRawJwt();
         boolean isErrorRetryable = true;
-        mBufferedReader = null;
+        BufferedReader bufferedReader = null;
         try {
             URI url = new URIBuilder(mTargetUrl)
                     .addParameter(PUSH_NOTIFICATION_VERSION_PARAM, PUSH_NOTIFICATION_VERSION_VALUE)
@@ -93,13 +92,13 @@ public class SseClientImpl implements SseClient {
             mHttpStreamRequest = mHttpClient.streamRequest(url);
             HttpStreamResponse response = mHttpStreamRequest.execute();
             if (response.isSuccess()) {
-                mBufferedReader = response.getBufferedReader();
-                if (mBufferedReader != null) {
+                bufferedReader = response.getBufferedReader();
+                if (bufferedReader != null) {
                     Logger.d("Streaming connection opened");
                     mStatus.set(CONNECTED);
                     String inputLine;
                     Map<String, String> values = new HashMap<>();
-                    while ((inputLine = mBufferedReader.readLine()) != null) {
+                    while ((inputLine = bufferedReader.readLine()) != null) {
                         if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
                             if(!isConnectionConfirmed) {
                                 if(mEventStreamParser.isKeepAlive(values) || mSseHandler.isConnectionConfirmed(values)) {
@@ -136,7 +135,7 @@ public class SseClientImpl implements SseClient {
             logError("An unexpected error has occurred while receiving stream events from: ", e);
             isErrorRetryable = true;
         } finally {
-            if (!isDisconnectCalled.getAndSet(false)) {
+            if (!mIsDisconnectCalled.getAndSet(false)) {
                 mSseHandler.handleError(isErrorRetryable);
                 close();
             }

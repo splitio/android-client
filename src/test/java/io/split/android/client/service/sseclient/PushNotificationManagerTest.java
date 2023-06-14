@@ -20,23 +20,28 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.network.HttpException;
+import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticationResult;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
+import io.split.android.client.service.sseclient.sseclient.SseClient;
 import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.fake.SplitTaskExecutorStub;
 import io.split.android.fake.SseClientMock;
 
 import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -49,28 +54,28 @@ public class PushNotificationManagerTest {
     private static final int POOL_SIZE = 1;
 
     @Mock
-    ScheduledThreadPoolExecutor mExecutor;
+    private ScheduledThreadPoolExecutor mExecutor;
 
     @Mock
-    SseAuthenticator mAuthenticator;
+    private SseAuthenticator mAuthenticator;
 
     @Mock
-    PushManagerEventBroadcaster mBroadcasterChannel;
+    private PushManagerEventBroadcaster mBroadcasterChannel;
 
     @Mock
-    SseRefreshTokenTimer mRefreshTokenTimer;
+    private SseRefreshTokenTimer mRefreshTokenTimer;
 
     @Mock
-    SseDisconnectionTimer mDisconnectionTimer;
+    private SseDisconnectionTimer mDisconnectionTimer;
 
     @Mock
-    SseJwtToken mJwt;
+    private SseJwtToken mJwt;
 
     @Mock
-    SseAuthenticationResult mResult;
+    private SseAuthenticationResult mResult;
 
     @Mock
-    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     PushNotificationManager mPushManager;
 
@@ -103,7 +108,7 @@ public class PushNotificationManagerTest {
         verify(mRefreshTokenTimer, times(1)).schedule(issuedAt.capture(), expirationTime.capture());
         Assert.assertEquals(1000L, issuedAt.getValue().longValue());
         Assert.assertEquals(10000L, expirationTime.getValue().longValue());
-        Assert.assertTrue(time < 2000);
+        assertTrue(time < 2000);
     }
 
     @Test
@@ -128,7 +133,7 @@ public class PushNotificationManagerTest {
         verify(mRefreshTokenTimer, times(1)).schedule(issuedAt.capture(), expirationTime.capture());
         Assert.assertEquals(1000L, issuedAt.getValue().longValue());
         Assert.assertEquals(10000L, expirationTime.getValue().longValue());
-        Assert.assertTrue(time > 3000);
+        assertTrue(time > 3000);
     }
 
     @Test
@@ -269,6 +274,25 @@ public class PushNotificationManagerTest {
         verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TOKEN), anyLong());
     }
 
+    @Test
+    public void stopDisconnectsClient() {
+        SseClient sseClient = mock(SseClient.class);
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
+                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+
+        mPushManager.stop();
+
+        verify(mDisconnectionTimer).cancel();
+        verify(mRefreshTokenTimer).cancel();
+        verify(sseClient).disconnect();
+    }
+
+    @Test
+    public void buildWithDefaultExecutor() {
+        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, mock(SseClient.class), mRefreshTokenTimer,
+                mDisconnectionTimer, mTelemetryRuntimeProducer, null);
+    }
+
     private void performSuccessfulConnection() throws InterruptedException {
         setupOkAuthResponse();
         SseClientMock sseClient = new SseClientMock();
@@ -289,7 +313,6 @@ public class PushNotificationManagerTest {
         when(mJwt.getIssuedAtTime()).thenReturn(1000L);
         when(mJwt.getExpirationTime()).thenReturn(10000L);
 
-
         when(mJwt.getRawJwt()).thenReturn(DUMMY_TOKEN);
 
         when(mResult.isSuccess()).thenReturn(true);
@@ -302,7 +325,7 @@ public class PushNotificationManagerTest {
     }
 
     private BufferedReader dummyData() {
-        InputStream inputStream = new ByteArrayInputStream("hola".getBytes(Charset.forName("UTF-8")));
+        InputStream inputStream = new ByteArrayInputStream("hola" .getBytes(Charset.forName("UTF-8")));
 
         return new BufferedReader(new InputStreamReader(inputStream));
     }

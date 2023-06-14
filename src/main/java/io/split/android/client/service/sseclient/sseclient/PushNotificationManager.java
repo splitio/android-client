@@ -15,9 +15,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.SseJwtToken;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
@@ -44,6 +44,7 @@ public class PushNotificationManager {
     private final AtomicBoolean mIsPaused;
     private final AtomicBoolean mIsStopped;
     private Future<?> mConnectionTask;
+    private final SplitTask mBackgroundDisconnectionTask;
 
     public PushNotificationManager(@NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                    @NonNull SseAuthenticator sseAuthenticator,
@@ -55,7 +56,7 @@ public class PushNotificationManager {
                 sseAuthenticator,
                 sseClient,
                 refreshTokenTimer,
-                new SseDisconnectionTimer(new SplitTaskExecutorImpl()),
+                new SseDisconnectionTimer(new SplitSingleThreadTaskExecutor()),
                 telemetryRuntimeProducer,
                 executorService);
     }
@@ -76,7 +77,7 @@ public class PushNotificationManager {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mIsStopped = new AtomicBoolean(false);
         mIsPaused = new AtomicBoolean(false);
-
+        mBackgroundDisconnectionTask = new BackgroundDisconnectionTask(mSseClient, mRefreshTokenTimer);
         if (executor != null) {
             mExecutor = executor;
         } else {
@@ -93,16 +94,7 @@ public class PushNotificationManager {
     public void pause() {
         Logger.d("Push notification manager paused");
         mIsPaused.set(true);
-        mDisconnectionTimer.schedule(new SplitTask() {
-            @NonNull
-            @Override
-            public SplitTaskExecutionInfo execute() {
-                Logger.d("Disconnecting streaming while in background");
-                mSseClient.disconnect();
-                mRefreshTokenTimer.cancel();
-                return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
-            }
-        });
+        mDisconnectionTimer.schedule(mBackgroundDisconnectionTask);
     }
 
     public void resume() {
@@ -112,9 +104,13 @@ public class PushNotificationManager {
         Logger.d("Push notification manager resumed");
         mIsPaused.set(false);
         mDisconnectionTimer.cancel();
-        if (mSseClient.status() == SseClient.DISCONNECTED && !mIsStopped.get()) {
+        if (sseClientIsDisconnected() && !mIsStopped.get()) {
             connect();
         }
+    }
+
+    public boolean sseClientIsDisconnected() {
+        return mSseClient.status() == SseClient.DISCONNECTED;
     }
 
     public synchronized void stop() {
@@ -265,6 +261,27 @@ public class PushNotificationManager {
                 return false;
             }
             return true;
+        }
+    }
+
+    public static class BackgroundDisconnectionTask implements SplitTask {
+
+        private final SseClient mSseClient;
+        private final SseRefreshTokenTimer mRefreshTokenTimer;
+
+        @VisibleForTesting
+        public BackgroundDisconnectionTask(SseClient sseClient, SseRefreshTokenTimer refreshTokenTimer) {
+            mSseClient = sseClient;
+            mRefreshTokenTimer = refreshTokenTimer;
+        }
+
+        @NonNull
+        @Override
+        public SplitTaskExecutionInfo execute() {
+            Logger.d("Disconnecting streaming while in background");
+            mSseClient.disconnect();
+            mRefreshTokenTimer.cancel();
+            return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
         }
     }
 }

@@ -15,15 +15,21 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 import static java.lang.reflect.Modifier.PRIVATE;
 
-// TODO: This disconnection timer should use an executor that is not paused on app background
 public class SseDisconnectionTimer implements SplitTaskExecutionListener {
 
     private final static int DISCONNECT_ON_BG_TIME_IN_SECONDS = 60;
-    SplitTaskExecutor mTaskExecutor;
-    String mTaskId;
+    private final SplitTaskExecutor mTaskExecutor;
+    private final int mInitialDelayInSeconds;
+    private String mTaskId;
 
     public SseDisconnectionTimer(@NonNull SplitTaskExecutor taskExecutor) {
+        this(taskExecutor, DISCONNECT_ON_BG_TIME_IN_SECONDS);
+    }
+
+    @VisibleForTesting
+    public SseDisconnectionTimer(@NonNull SplitTaskExecutor taskExecutor, int initialDelayInSeconds) {
         mTaskExecutor = checkNotNull(taskExecutor);
+        mInitialDelayInSeconds = initialDelayInSeconds;
     }
 
     public void cancel() {
@@ -32,7 +38,7 @@ public class SseDisconnectionTimer implements SplitTaskExecutionListener {
 
     public void schedule(SplitTask task) {
         cancel();
-        mTaskId = mTaskExecutor.schedule(task, DISCONNECT_ON_BG_TIME_IN_SECONDS, this);
+        mTaskId = mTaskExecutor.schedule(task, mInitialDelayInSeconds, this);
     }
 
     @Override
