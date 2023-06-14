@@ -33,7 +33,9 @@ public class SseDisconnectionTimer implements SplitTaskExecutionListener {
     }
 
     public void cancel() {
-        mTaskExecutor.stopTask(mTaskId);
+        if (mTaskId != null) {
+            mTaskExecutor.stopTask(mTaskId);
+        }
     }
 
     public void schedule(SplitTask task) {
