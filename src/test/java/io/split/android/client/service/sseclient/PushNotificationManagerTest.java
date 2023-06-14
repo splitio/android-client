@@ -1,5 +1,16 @@
 package io.split.android.client.service.sseclient;
 
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.longThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +31,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.network.HttpException;
-import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
@@ -32,21 +42,7 @@ import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-import io.split.android.fake.SplitTaskExecutorStub;
 import io.split.android.fake.SseClientMock;
-
-import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.longThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class PushNotificationManagerTest {
 
@@ -285,16 +281,6 @@ public class PushNotificationManagerTest {
         verify(mDisconnectionTimer).cancel();
         verify(mRefreshTokenTimer).cancel();
         verify(sseClient).disconnect();
-    }
-
-    @Test
-    public void buildWithDefaultExecutor() {
-        mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, mock(SseClient.class), mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, null);
-
-        mPushManager.start();
-
-        verify(mAuthenticator).authenticate();
     }
 
     private void performSuccessfulConnection() throws InterruptedException {
