@@ -11,7 +11,6 @@ import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
-import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -19,17 +18,15 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
-import io.split.android.client.shared.UserConsent;
 
 public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitTaskExecutor mSplitsTaskExecutor;
     private final SplitClientConfig mSplitClientConfig;
-    private final ISplitEventsManager mSplitEventsManager;
     private final SplitTaskFactory mSplitTaskFactory;
 
-    private LoadLocalDataListener mLoadLocalSplitsListener;
+    private final LoadLocalDataListener mLoadLocalSplitsListener;
 
     private String mSplitsFetcherTaskId;
     private final RetryBackoffCounterTimer mSplitsSyncRetryTimer;
@@ -45,12 +42,11 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsTaskExecutor = splitSingleThreadTaskExecutor;
         mSplitClientConfig = checkNotNull(splitClientConfig);
-        mSplitEventsManager = checkNotNull(splitEventsManager);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(mSplitsTaskExecutor, 1);
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(mSplitsTaskExecutor, 1);
-
-        setupListeners();
+        mLoadLocalSplitsListener = new LoadLocalDataListener(
+                splitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), null);
     }
 
@@ -64,13 +60,9 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createFilterSplitsInCacheTask(), null));
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(), mLoadLocalSplitsListener));
-        enqueued.add(new SplitTaskBatchItem(new SplitTask() {
-            @NonNull
-            @Override
-            public SplitTaskExecutionInfo execute() {
-                synchronize();
-                return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
-            }
+        enqueued.add(new SplitTaskBatchItem(() -> {
+            synchronize();
+            return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
         }, null));
         mTaskExecutor.executeSerially(enqueued);
     }
@@ -96,15 +88,16 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
         mSplitsTaskExecutor.stopTask(mSplitsFetcherTaskId);
     }
 
-    private void setupListeners() {
-        mLoadLocalSplitsListener = new LoadLocalDataListener(
-                mSplitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-    }
-
     @Override
     public void stopSynchronization() {
         mSplitsSyncRetryTimer.stop();
         mSplitsUpdateRetryTimer.stop();
+    }
+
+    @Override
+    public void submitLoadingTask(SplitTaskExecutionListener listener) {
+        mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
+                listener);
     }
 
     private void scheduleSplitsFetcherTask() {
@@ -113,11 +106,5 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.featuresRefreshRate(),
                 null);
-    }
-
-    @Override
-    public void submitLoadingTask(SplitTaskExecutionListener listener) {
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
-                listener);
     }
 }

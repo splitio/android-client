@@ -93,12 +93,14 @@ public class SynchronizerImplTelemetryTest {
                 mTelemetryRuntimeProducer,
                 mAttributesSynchronizerRegistry,
                 mMySegmentsSynchronizerRegistry,
-                mImpressionManager, new FeatureFlagsSynchronizerImpl(mConfig,
-                mTaskExecutor,
-                mSingleThreadTaskExecutor,
-                mTaskFactory,
-                mEventsManager,
-                mRetryBackoffCounterFactory), mSplitStorageContainer.getEventsStorage());
+                mImpressionManager,
+                new FeatureFlagsSynchronizerImpl(mConfig,
+                        mTaskExecutor,
+                        mSingleThreadTaskExecutor,
+                        mTaskFactory,
+                        mEventsManager,
+                        mRetryBackoffCounterFactory),
+                mSplitStorageContainer.getEventsStorage());
     }
 
     @Test

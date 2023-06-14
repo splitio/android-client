@@ -24,7 +24,6 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.common.StoragePusher;
-import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -37,7 +36,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final StoragePusher<Event> mEventsStorage;
     private final SplitClientConfig mSplitClientConfig;
     private final SplitTaskFactory mSplitTaskFactory;
-    private final WorkManagerWrapper mWorkManagerWrapper;
     private final ImpressionManager mImpressionManager;
     private final FeatureFlagsSynchronizer mFeatureFlagsSynchronizer;
 
@@ -59,7 +57,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull AttributesSynchronizerRegistryImpl attributesSynchronizerRegistry,
                             @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry,
                             @NonNull ImpressionManager impressionManager,
-                            @NonNull FeatureFlagsSynchronizerImpl featureFlagsSynchronizer,
+                            @NonNull FeatureFlagsSynchronizer featureFlagsSynchronizer,
                             @NonNull StoragePusher<Event> eventsStorage) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
@@ -67,7 +65,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mEventsStorage = eventsStorage;
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
-        mWorkManagerWrapper = checkNotNull(workManagerWrapper);
         mFeatureFlagsSynchronizer = checkNotNull(featureFlagsSynchronizer);
         mAttributesSynchronizerRegistry = attributesSynchronizerRegistry;
         mEventsRecorderUpdateRetryTimer = retryBackoffCounterTimerFactory.createWithFixedInterval(
@@ -81,10 +78,10 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         setupListeners();
 
         if (mSplitClientConfig.synchronizeInBackground()) {
-            mWorkManagerWrapper.setFetcherExecutionListener(this);
-            mWorkManagerWrapper.scheduleWork();
+            workManagerWrapper.setFetcherExecutionListener(this);
+            workManagerWrapper.scheduleWork();
         } else {
-            mWorkManagerWrapper.removeWork();
+            workManagerWrapper.removeWork();
         }
     }
 
