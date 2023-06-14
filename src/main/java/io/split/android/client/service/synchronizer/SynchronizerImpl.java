@@ -62,7 +62,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSingleThreadTaskExecutor = checkNotNull(splitSingleThreadTaskExecutor);
-        mEventsStorage = eventsStorage;
+        mEventsStorage = checkNotNull(eventsStorage);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mFeatureFlagsSynchronizer = checkNotNull(featureFlagsSynchronizer);
