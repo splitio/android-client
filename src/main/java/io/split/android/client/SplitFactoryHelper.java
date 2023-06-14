@@ -14,10 +14,12 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -45,6 +47,8 @@ import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
+import io.split.android.client.service.synchronizer.FeatureFlagsSynchronizerImpl;
+import io.split.android.client.service.synchronizer.LoadLocalDataListener;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -379,6 +383,20 @@ class SplitFactoryHelper {
                 executionListener);
 
         return toCipher;
+    }
+
+    static FeatureFlagsSynchronizerImpl buildFeatureFlagsSynchronizer(SplitClientConfig config,
+                                                                      SplitTaskExecutor splitTaskExecutor,
+                                                                      EventsManagerCoordinator mEventsManagerCoordinator,
+                                                                      SplitTaskFactory splitTaskFactory,
+                                                                      SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor,
+                                                                      RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory) {
+        return new FeatureFlagsSynchronizerImpl(config,
+                splitTaskExecutor,
+                splitSingleThreadTaskExecutor,
+                splitTaskFactory,
+                mEventsManagerCoordinator,
+                retryBackoffCounterTimerFactory);
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {
