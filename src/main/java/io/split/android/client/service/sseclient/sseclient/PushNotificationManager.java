@@ -180,38 +180,28 @@ public class PushNotificationManager {
             mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TOKEN, System.currentTimeMillis() - startTime);
 
             if (authResult.isSuccess() && !authResult.isPushEnabled()) {
-                Logger.d("Streaming disabled for SDK key");
-                mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
-                mIsStopped.set(true);
+                handlePushDisabled();
                 return;
             }
 
             if (!authResult.isSuccess() && !authResult.isErrorRecoverable()) {
-                Logger.d("Streaming no recoverable auth error.");
-                mTelemetryRuntimeProducer.recordAuthRejections();
-                if (authResult.getHttpStatus() != null) {
-                    mTelemetryRuntimeProducer.recordSyncError(OperationType.TOKEN, authResult.getHttpStatus());
-                }
-                mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_NON_RETRYABLE_ERROR));
-                mIsStopped.set(true);
+                handleNonRetryableError(authResult);
+                recordNonRetryableError(authResult);
                 return;
             }
 
             if (!authResult.isSuccess() && authResult.isErrorRecoverable()) {
-                mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RETRYABLE_ERROR));
+                handleRetryableError();
                 return;
             }
 
             SseJwtToken token = authResult.getJwtToken();
             if (token == null || token.getChannels() == null || token.getRawJwt() == null) {
-                Logger.d("Streaming auth error. Retrying");
-                mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RETRYABLE_ERROR));
+                handleAuthError();
                 return;
             }
 
-            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.TOKEN, System.currentTimeMillis());
-            mTelemetryRuntimeProducer.recordStreamingEvents(new TokenRefreshStreamingEvent(token.getExpirationTime(), System.currentTimeMillis()));
-            mTelemetryRuntimeProducer.recordTokenRefreshes();
+            recordSuccessfulSyncAndTokenRefreshes(token);
 
             long delay = authResult.getSseConnectionDelay();
             // Delay returns false if some error occurs
@@ -231,6 +221,40 @@ public class PushNotificationManager {
                     mRefreshTokenTimer.schedule(token.getIssuedAtTime(), token.getExpirationTime());
                 }
             });
+        }
+
+        private void recordSuccessfulSyncAndTokenRefreshes(SseJwtToken token) {
+            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.TOKEN, System.currentTimeMillis());
+            mTelemetryRuntimeProducer.recordStreamingEvents(new TokenRefreshStreamingEvent(token.getExpirationTime(), System.currentTimeMillis()));
+            mTelemetryRuntimeProducer.recordTokenRefreshes();
+        }
+
+        private void handlePushDisabled() {
+            Logger.d("Streaming disabled for SDK key");
+            mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
+            mIsStopped.set(true);
+        }
+
+        private void handleNonRetryableError(SseAuthenticationResult authResult) {
+            Logger.d("Streaming no recoverable auth error.");
+            mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_NON_RETRYABLE_ERROR));
+            mIsStopped.set(true);
+        }
+
+        private void recordNonRetryableError(SseAuthenticationResult authResult) {
+            mTelemetryRuntimeProducer.recordAuthRejections();
+            if (authResult.getHttpStatus() != null) {
+                mTelemetryRuntimeProducer.recordSyncError(OperationType.TOKEN, authResult.getHttpStatus());
+            }
+        }
+
+        private void handleAuthError() {
+            Logger.d("Streaming auth error. Retrying");
+            handleRetryableError();
+        }
+
+        private void handleRetryableError() {
+            mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RETRYABLE_ERROR));
         }
 
         private boolean delay(long seconds) {
