@@ -23,6 +23,7 @@ import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerR
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
+import io.split.android.client.service.synchronizer.SyncGuardian;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -32,32 +33,24 @@ import io.split.android.client.telemetry.TelemetrySynchronizer;
 public class SyncManagerTest {
 
     @Mock
-    SplitClientConfig mConfig;
-
+    private SplitClientConfig mConfig;
     @Mock
-    Synchronizer mSynchronizer;
-
+    private Synchronizer mSynchronizer;
     @Mock
-    PushNotificationManager mPushNotificationManager;
-
+    private PushNotificationManager mPushNotificationManager;
     @Spy
-    PushManagerEventBroadcaster mPushManagerEventBroadcaster;
-
+    private PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     @Mock
-    SplitUpdatesWorker mSplitsUpdateWorker;
-
+    private SplitUpdatesWorker mSplitsUpdateWorker;
     @Mock
-    MySegmentsUpdateWorker mMySegmentUpdateWorker;
-
+    private MySegmentsUpdateWorker mMySegmentUpdateWorker;
     @Mock
-    BackoffCounterTimer mBackoffTimer;
-
+    private BackoffCounterTimer mBackoffTimer;
     @Mock
-    TelemetrySynchronizer mTelemetrySynchronizer;
-
-
-    SyncManager mSyncManager;
-
+    private SyncGuardian mSyncGuardian;
+    @Mock
+    private TelemetrySynchronizer mTelemetrySynchronizer;
+    private SyncManager mSyncManager;
 
     @Before
     public void setup() {
@@ -66,7 +59,7 @@ public class SyncManagerTest {
         mSyncManager = new SyncManagerImpl(
                 mConfig, mSynchronizer, mPushNotificationManager,
                 mSplitsUpdateWorker, mPushManagerEventBroadcaster,
-                mBackoffTimer, mTelemetrySynchronizer);
+                mBackoffTimer, mSyncGuardian, mTelemetrySynchronizer);
 
         ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("user_key", mMySegmentUpdateWorker);
         when(mConfig.streamingEnabled()).thenReturn(true);
@@ -215,6 +208,42 @@ public class SyncManagerTest {
     @Test
     public void stopUserConsentUnknown() {
         testStopUserConsentNotGranted(UserConsent.UNKNOWN);
+    }
+
+    @Test
+    public void resumeCallsSynchronizeSplitsWhenSyncGuardianMustSyncIsTrue() {
+        when(mSyncGuardian.mustSync()).thenReturn(true);
+
+        mSyncManager.resume();
+
+        verify(mSynchronizer).synchronizeSplits();
+    }
+
+    @Test
+    public void resumeDoesNotCallSynchronizeSplitsWhenSyncGuardianMustSyncIsNotTrue() {
+        when(mSyncGuardian.mustSync()).thenReturn(false);
+
+        mSyncManager.resume();
+
+        verify(mSynchronizer, never()).synchronizeSplits();
+    }
+
+    @Test
+    public void syncGuardianIsNotCheckedWhenStreamingIsDisabled() {
+        when(mConfig.streamingEnabled()).thenReturn(false);
+
+        mSyncManager.resume();
+
+        verify(mSyncGuardian, never()).mustSync();
+    }
+
+    @Test
+    public void syncGuardianIsNotCheckedWhenSyncIsDisabled() {
+        when(mConfig.syncEnabled()).thenReturn(false);
+
+        mSyncManager.resume();
+
+        verify(mSyncGuardian, never()).mustSync();
     }
 
     private void testStartUserConsentNotGranted(UserConsent userConsent) {

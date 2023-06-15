@@ -138,6 +138,9 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         if (isSyncEnabled()) {
             if (mSplitClientConfig.streamingEnabled()) {
                 mPushNotificationManager.resume();
+                if (mSyncGuardian.mustSync()) {
+                    mSynchronizer.synchronizeSplits();
+                }
             }
             if (mIsPollingEnabled.get()) {
                 mSynchronizer.startPeriodicFetching();
@@ -202,7 +205,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
                 Logger.d("Push Subsystem recoverable error received.");
                 enablePolling();
                 // If sdk is paused (host app in bg) push manager should reconnect on resume
-                if(!mIsPaused.get()) {
+                if (!mIsPaused.get()) {
                     mStreamingReconnectTimer.schedule();
                 }
                 break;
@@ -225,7 +228,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
                 Logger.d("Push Subsystem reset received.");
                 // If sdk is paused (host app in bg) push manager should reconnect on resume
                 mPushNotificationManager.disconnect();
-                if(!mIsPaused.get()) {
+                if (!mIsPaused.get()) {
                     mStreamingReconnectTimer.schedule();
                 }
                 break;
@@ -251,7 +254,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
             Logger.v("User consent status is granted now. Starting recorders");
             mSynchronizer.startPeriodicRecording();
         } else {
-            Logger.v("User consent status is " +  status + " now. Stopping recorders");
+            Logger.v("User consent status is " + status + " now. Stopping recorders");
             mSynchronizer.stopPeriodicRecording();
         }
     }
@@ -261,7 +264,6 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     }
 
     private void enablePolling() {
-
         if (!isSyncEnabled()) {
             return;
         }
