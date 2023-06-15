@@ -166,7 +166,6 @@ public class PushNotificationManager {
         return new ScheduledThreadPoolExecutor(POOL_SIZE, threadFactoryBuilder.build());
     }
 
-
     private class StreamingConnection implements Runnable {
 
         @Override
@@ -228,7 +227,7 @@ public class PushNotificationManager {
         }
 
         private void handlePushDisabled() {
-            Logger.d("Streaming disabled for SDK key");
+            Logger.d("Streaming disabled");
             mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
             mIsStopped.set(true);
         }

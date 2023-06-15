@@ -15,6 +15,7 @@ import org.mockito.Spy;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
+import io.split.android.client.service.sseclient.feedbackchannel.DelayStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
@@ -50,7 +51,7 @@ public class SyncManagerTest {
     private SyncGuardian mSyncGuardian;
     @Mock
     private TelemetrySynchronizer mTelemetrySynchronizer;
-    private SyncManager mSyncManager;
+    private SyncManagerImpl mSyncManager;
 
     @Before
     public void setup() {
@@ -244,6 +245,20 @@ public class SyncManagerTest {
         mSyncManager.resume();
 
         verify(mSyncGuardian, never()).mustSync();
+    }
+
+    @Test
+    public void pushDelayReceivedEventUpdatesMaxSyncPeriodInGuardian() {
+        mSyncManager.onEvent(new DelayStatusEvent(546));
+
+        verify(mSyncGuardian).setMaxSyncPeriod(546);
+    }
+
+    @Test
+    public void successfulSyncEventUpdatesLastSyncInGuardian() {
+        mSyncManager.onEvent(new PushStatusEvent(EventType.SUCCESSFUL_SYNC));
+
+        verify(mSyncGuardian).updateLastSyncTimestamp();
     }
 
     private void testStartUserConsentNotGranted(UserConsent userConsent) {
