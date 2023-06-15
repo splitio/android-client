@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +31,7 @@ import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 
 public class FeatureFlagsSynchronizerImplTest {
@@ -156,5 +158,16 @@ public class FeatureFlagsSynchronizerImplTest {
         mFeatureFlagsSynchronizer.stopPeriodicFetching();
 
         verify(mSingleThreadTaskExecutor).stopTask("12");
+    }
+
+    @Test
+    public void successfulSynchronizationWithSynchronizePushesEventInBroadcaster() {
+        SplitsSyncTask mockTask = mock(SplitsSyncTask.class);
+        when(mTaskFactory.createSplitsSyncTask(false)).thenReturn(mockTask);
+        when(mockTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        mFeatureFlagsSynchronizer.synchronize();
+
+        verify(mPushManagerEventBroadcaster).pushMessage(argThat(argument -> argument.getMessage().equals(PushStatusEvent.EventType.SUCCESSFUL_SYNC)));
     }
 }

@@ -143,6 +143,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
                     mSynchronizer.synchronizeSplits();
                 }
             }
+
             if (mIsPollingEnabled.get()) {
                 mSynchronizer.startPeriodicFetching();
             }
