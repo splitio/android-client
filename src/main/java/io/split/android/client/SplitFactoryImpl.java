@@ -184,6 +184,9 @@ public class SplitFactoryImpl implements SplitFactory {
 
         ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
+
+        StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
+                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer);
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
@@ -196,14 +199,13 @@ public class SplitFactoryImpl implements SplitFactory {
                 new MySegmentsSynchronizerRegistryImpl(),
                 impressionManager,
                 mStorageContainer.getEventsStorage(),
-                mEventsManagerCoordinator);
+                mEventsManagerCoordinator,
+                streamingComponents.getPushManagerEventBroadcaster());
         // Only available for integration tests
         if (synchronizerSpy != null) {
             synchronizerSpy.setSynchronizer(mSynchronizer);
             mSynchronizer = synchronizerSpy;
         }
-        StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
-                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer);
 
         TelemetrySynchronizer telemetrySynchronizer = factoryHelper.getTelemetrySynchronizer(splitTaskExecutor,
                 splitTaskFactory, config.telemetryRefreshRate(), config.shouldRecordTelemetry());

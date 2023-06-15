@@ -3,6 +3,7 @@ package io.split.android.client.service.synchronizer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
@@ -17,6 +18,7 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionManager;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistry;
@@ -60,7 +62,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry,
                             @NonNull ImpressionManager impressionManager,
                             @NonNull StoragePusher<Event> eventsStorage,
-                            @NonNull ISplitEventsManager eventsManagerCoordinator) {
+                            @NonNull ISplitEventsManager eventsManagerCoordinator,
+                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster) {
         this(splitClientConfig,
                 taskExecutor,
                 splitSingleThreadTaskExecutor,
@@ -75,7 +78,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                         splitSingleThreadTaskExecutor,
                         splitTaskFactory,
                         eventsManagerCoordinator,
-                        retryBackoffCounterTimerFactory),
+                        retryBackoffCounterTimerFactory,
+                        pushManagerEventBroadcaster),
                 eventsStorage);
     }
 

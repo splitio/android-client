@@ -14,6 +14,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
+import io.split.android.client.service.sseclient.feedbackchannel.DelayStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
@@ -230,6 +231,23 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
                 mPushNotificationManager.disconnect();
                 if (!mIsPaused.get()) {
                     mStreamingReconnectTimer.schedule();
+                }
+                break;
+
+            case SUCCESSFUL_SYNC:
+                if (mSyncGuardian != null) {
+                    mSyncGuardian.updateLastSyncTimestamp();
+                }
+                break;
+
+            case PUSH_DELAY_RECEIVED:
+                try {
+                    DelayStatusEvent delayEvent = (DelayStatusEvent) message;
+                    if (mSyncGuardian != null) {
+                        mSyncGuardian.setMaxSyncPeriod(delayEvent.getDelay());
+                    }
+                } catch (ClassCastException ex) {
+                    Logger.w("Invalid delay event received");
                 }
                 break;
 

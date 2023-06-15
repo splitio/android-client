@@ -20,6 +20,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.SseJwtToken;
+import io.split.android.client.service.sseclient.feedbackchannel.DelayStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
@@ -204,6 +205,7 @@ public class PushNotificationManager {
             if (delay > 0 && !delay(delay)) {
                 return;
             }
+            mBroadcasterChannel.pushMessage(new DelayStatusEvent(delay));
 
             // If host app is in bg or push manager stopped, abort the process
             if (mIsPaused.get() || mIsStopped.get()) {
