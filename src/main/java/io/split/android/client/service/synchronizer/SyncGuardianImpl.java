@@ -13,7 +13,7 @@ public class SyncGuardianImpl implements SyncGuardian {
     private final boolean mSyncEnabled;
     private final boolean mStreamingEnabled;
 
-    SyncGuardianImpl(long maxSyncPeriod, SplitClientConfig splitConfig, TimestampProvider timestampProvider) {
+    public SyncGuardianImpl(long maxSyncPeriod, SplitClientConfig splitConfig, TimestampProvider timestampProvider) {
         mDefaultMaxSyncPeriod = new AtomicLong(maxSyncPeriod);
         mMaxSyncPeriod = new AtomicLong(maxSyncPeriod);
         mLastSyncTimestamp = new AtomicLong(0);

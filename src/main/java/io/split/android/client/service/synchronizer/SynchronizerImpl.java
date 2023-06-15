@@ -3,10 +3,12 @@ package io.split.android.client.service.synchronizer;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -47,6 +49,37 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     private final MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
 
+    public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
+                            @NonNull SplitTaskExecutor taskExecutor,
+                            @NonNull SplitTaskExecutor splitSingleThreadTaskExecutor,
+                            @NonNull SplitTaskFactory splitTaskFactory,
+                            @NonNull WorkManagerWrapper workManagerWrapper,
+                            @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
+                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                            @NonNull AttributesSynchronizerRegistryImpl attributesSynchronizerRegistry,
+                            @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry,
+                            @NonNull ImpressionManager impressionManager,
+                            @NonNull StoragePusher<Event> eventsStorage,
+                            @NonNull ISplitEventsManager eventsManagerCoordinator) {
+        this(splitClientConfig,
+                taskExecutor,
+                splitSingleThreadTaskExecutor,
+                splitTaskFactory,
+                workManagerWrapper,
+                retryBackoffCounterTimerFactory,
+                telemetryRuntimeProducer,
+                attributesSynchronizerRegistry,
+                mySegmentsSynchronizerRegistry,
+                impressionManager,
+                new FeatureFlagsSynchronizerImpl(splitClientConfig, taskExecutor,
+                        splitSingleThreadTaskExecutor,
+                        splitTaskFactory,
+                        eventsManagerCoordinator,
+                        retryBackoffCounterTimerFactory),
+                eventsStorage);
+    }
+
+    @VisibleForTesting
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
                             @NonNull SplitTaskExecutor splitSingleThreadTaskExecutor,

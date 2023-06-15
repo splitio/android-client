@@ -195,8 +195,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 new AttributesSynchronizerRegistryImpl(),
                 new MySegmentsSynchronizerRegistryImpl(),
                 impressionManager,
-                factoryHelper.buildFeatureFlagsSynchronizer(config, splitTaskExecutor, mEventsManagerCoordinator, splitTaskFactory, splitSingleThreadTaskExecutor, retryBackoffCounterTimerFactory),
-                mStorageContainer.getEventsStorage());
+                mStorageContainer.getEventsStorage(),
+                mEventsManagerCoordinator);
         // Only available for integration tests
         if (synchronizerSpy != null) {
             synchronizerSpy.setSynchronizer(mSynchronizer);
@@ -215,8 +215,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 telemetrySynchronizer,
                 streamingComponents.getPushNotificationManager(),
                 streamingComponents.getSplitsUpdateNotificationQueue(),
-                streamingComponents.getPushManagerEventBroadcaster()
-        );
+                streamingComponents.getPushManagerEventBroadcaster(),
+                streamingComponents.getSyncGuardian());
 
         if (testLifecycleManager == null) {
             mLifecycleManager = new SplitLifecycleManagerImpl();

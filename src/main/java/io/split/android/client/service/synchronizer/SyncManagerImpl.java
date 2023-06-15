@@ -33,12 +33,19 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     private final AtomicBoolean mIsPaused;
     private final TelemetrySynchronizer mTelemetrySynchronizer;
 
-    private AtomicBoolean isPollingEnabled;
-    private PushManagerEventBroadcaster mPushManagerEventBroadcaster;
-    private MySegmentsUpdateWorkerRegistry mMySegmentsUpdateWorkerRegistry;
-    private PushNotificationManager mPushNotificationManager;
-    private SplitUpdatesWorker mSplitUpdateWorker;
-    private BackoffCounterTimer mStreamingReconnectTimer;
+    private final AtomicBoolean mIsPollingEnabled;
+    @Nullable
+    private final PushManagerEventBroadcaster mPushManagerEventBroadcaster;
+    @Nullable
+    private final MySegmentsUpdateWorkerRegistry mMySegmentsUpdateWorkerRegistry;
+    @Nullable
+    private final PushNotificationManager mPushNotificationManager;
+    @Nullable
+    private final SplitUpdatesWorker mSplitUpdateWorker;
+    @Nullable
+    private final BackoffCounterTimer mStreamingReconnectTimer;
+    @Nullable
+    private final SyncGuardian mSyncGuardian;
 
     public SyncManagerImpl(@NonNull SplitClientConfig splitClientConfig,
                            @NonNull Synchronizer synchronizer,
@@ -46,13 +53,14 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
                            @Nullable SplitUpdatesWorker splitUpdateWorker,
                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
                            @Nullable BackoffCounterTimer streamingReconnectTimer,
+                           @Nullable SyncGuardian syncGuardian,
                            @NonNull TelemetrySynchronizer telemetrySynchronizer) {
 
         mSynchronizer = checkNotNull(synchronizer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mTelemetrySynchronizer = checkNotNull(telemetrySynchronizer);
         mIsPaused = new AtomicBoolean(false);
-        isPollingEnabled = new AtomicBoolean(false);
+        mIsPollingEnabled = new AtomicBoolean(false);
 
         if (isSyncEnabled()) {
             mPushNotificationManager = pushNotificationManager;
@@ -60,6 +68,14 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
             mPushManagerEventBroadcaster = pushManagerEventBroadcaster;
             mStreamingReconnectTimer = streamingReconnectTimer;
             mMySegmentsUpdateWorkerRegistry = new MySegmentsUpdateWorkerRegistryImpl();
+            mSyncGuardian = syncGuardian;
+        } else {
+            mPushNotificationManager = null;
+            mSplitUpdateWorker = null;
+            mPushManagerEventBroadcaster = null;
+            mStreamingReconnectTimer = null;
+            mMySegmentsUpdateWorkerRegistry = null;
+            mSyncGuardian = null;
         }
     }
 
@@ -79,7 +95,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
             return;
         }
 
-        isPollingEnabled.set(!mSplitClientConfig.streamingEnabled());
+        mIsPollingEnabled.set(!mSplitClientConfig.streamingEnabled());
         if (mSplitClientConfig.streamingEnabled()) {
             mPushManagerEventBroadcaster.register(this);
             mSplitUpdateWorker.start();
@@ -108,7 +124,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
             if (mSplitClientConfig.streamingEnabled()) {
                 mPushNotificationManager.pause();
             }
-            if (isPollingEnabled.get()) {
+            if (mIsPollingEnabled.get()) {
                 mSynchronizer.stopPeriodicFetching();
             }
         }
@@ -123,7 +139,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
             if (mSplitClientConfig.streamingEnabled()) {
                 mPushNotificationManager.resume();
             }
-            if (isPollingEnabled.get()) {
+            if (mIsPollingEnabled.get()) {
                 mSynchronizer.startPeriodicFetching();
             }
         }
@@ -173,7 +189,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
                 mSynchronizer.synchronizeMySegments();
                 mSynchronizer.stopPeriodicFetching();
                 mStreamingReconnectTimer.cancel();
-                isPollingEnabled.set(false);
+                mIsPollingEnabled.set(false);
                 break;
 
             case PUSH_SUBSYSTEM_DOWN:
@@ -250,8 +266,8 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
             return;
         }
 
-        if (!isPollingEnabled.get()) {
-            isPollingEnabled.set(true);
+        if (!mIsPollingEnabled.get()) {
+            mIsPollingEnabled.set(true);
             mSynchronizer.startPeriodicFetching();
             Logger.i("Polling enabled.");
         }
