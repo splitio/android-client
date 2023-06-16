@@ -220,7 +220,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void pauseInitializedSyncGuardian() {
+    public void pauseInitializesSyncGuardian() {
         mSyncManager.pause();
         verify(mSyncGuardian).initialize();
     }
