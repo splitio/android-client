@@ -7,4 +7,6 @@ public interface SyncGuardian {
     void updateLastSyncTimestamp();
 
     boolean mustSync();
+
+    void initialize();
 }

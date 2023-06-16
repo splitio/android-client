@@ -3,6 +3,7 @@ package io.split.android.client.service.sseclient;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.mock;
@@ -50,9 +51,6 @@ public class PushNotificationManagerTest {
     private static final int POOL_SIZE = 1;
 
     @Mock
-    private ScheduledThreadPoolExecutor mExecutor;
-
-    @Mock
     private SseAuthenticator mAuthenticator;
 
     @Mock
@@ -79,7 +77,7 @@ public class PushNotificationManagerTest {
 
     @Before
     public void setup() throws URISyntaxException {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         mUri = new URI("http://api/sse");
     }
 
@@ -95,9 +93,8 @@ public class PushNotificationManagerTest {
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
         time = System.currentTimeMillis() - time;
-        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
-        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_SUBSYSTEM_UP);
+        verify(mBroadcasterChannel).pushMessage(argThat(argument -> argument.getMessage().equals(PushStatusEvent.EventType.PUSH_SUBSYSTEM_UP)));
+        verify(mBroadcasterChannel).pushMessage(argThat(argument -> argument.getMessage().equals(PushStatusEvent.EventType.PUSH_DELAY_RECEIVED)));
 
         ArgumentCaptor<Long> issuedAt = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<Long> expirationTime = ArgumentCaptor.forClass(Long.class);
@@ -120,13 +117,11 @@ public class PushNotificationManagerTest {
         sseClient.mConnectLatch.await(10, TimeUnit.SECONDS);
         time = System.currentTimeMillis() - time;
 
-        ArgumentCaptor<PushStatusEvent> messageCaptor = ArgumentCaptor.forClass(PushStatusEvent.class);
-        verify(mBroadcasterChannel, times(1)).pushMessage(messageCaptor.capture());
-        Assert.assertEquals(messageCaptor.getValue().getMessage(), PushStatusEvent.EventType.PUSH_SUBSYSTEM_UP);
-
+        verify(mBroadcasterChannel, times(1)).pushMessage(argThat(argument -> argument.getMessage().equals(PushStatusEvent.EventType.PUSH_SUBSYSTEM_UP)));
+        verify(mBroadcasterChannel).pushMessage(argThat(argument -> argument.getMessage().equals(PushStatusEvent.EventType.PUSH_DELAY_RECEIVED)));
         ArgumentCaptor<Long> issuedAt = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<Long> expirationTime = ArgumentCaptor.forClass(Long.class);
-        verify(mRefreshTokenTimer, times(1)).schedule(issuedAt.capture(), expirationTime.capture());
+        verify(mRefreshTokenTimer).schedule(issuedAt.capture(), expirationTime.capture());
         Assert.assertEquals(1000L, issuedAt.getValue().longValue());
         Assert.assertEquals(10000L, expirationTime.getValue().longValue());
         assertTrue(time > 3000);

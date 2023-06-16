@@ -184,6 +184,9 @@ public class SplitFactoryImpl implements SplitFactory {
 
         ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
+
+        StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
+                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer);
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
@@ -195,15 +198,14 @@ public class SplitFactoryImpl implements SplitFactory {
                 new AttributesSynchronizerRegistryImpl(),
                 new MySegmentsSynchronizerRegistryImpl(),
                 impressionManager,
-                factoryHelper.buildFeatureFlagsSynchronizer(config, splitTaskExecutor, mEventsManagerCoordinator, splitTaskFactory, splitSingleThreadTaskExecutor, retryBackoffCounterTimerFactory),
-                mStorageContainer.getEventsStorage());
+                mStorageContainer.getEventsStorage(),
+                mEventsManagerCoordinator,
+                streamingComponents.getPushManagerEventBroadcaster());
         // Only available for integration tests
         if (synchronizerSpy != null) {
             synchronizerSpy.setSynchronizer(mSynchronizer);
             mSynchronizer = synchronizerSpy;
         }
-        StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
-                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer);
 
         TelemetrySynchronizer telemetrySynchronizer = factoryHelper.getTelemetrySynchronizer(splitTaskExecutor,
                 splitTaskFactory, config.telemetryRefreshRate(), config.shouldRecordTelemetry());
@@ -215,8 +217,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 telemetrySynchronizer,
                 streamingComponents.getPushNotificationManager(),
                 streamingComponents.getSplitsUpdateNotificationQueue(),
-                streamingComponents.getPushManagerEventBroadcaster()
-        );
+                streamingComponents.getPushManagerEventBroadcaster(),
+                streamingComponents.getSyncGuardian());
 
         if (testLifecycleManager == null) {
             mLifecycleManager = new SplitLifecycleManagerImpl();

@@ -20,6 +20,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.SseJwtToken;
+import io.split.android.client.service.sseclient.feedbackchannel.DelayStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
@@ -104,12 +105,12 @@ public class PushNotificationManager {
         Logger.d("Push notification manager resumed");
         mIsPaused.set(false);
         mDisconnectionTimer.cancel();
-        if (sseClientIsDisconnected() && !mIsStopped.get()) {
+        if (isSseClientDisconnected() && !mIsStopped.get()) {
             connect();
         }
     }
 
-    public boolean sseClientIsDisconnected() {
+    public boolean isSseClientDisconnected() {
         return mSseClient.status() == SseClient.DISCONNECTED;
     }
 
@@ -165,7 +166,6 @@ public class PushNotificationManager {
         return new ScheduledThreadPoolExecutor(POOL_SIZE, threadFactoryBuilder.build());
     }
 
-
     private class StreamingConnection implements Runnable {
 
         @Override
@@ -204,6 +204,7 @@ public class PushNotificationManager {
             if (delay > 0 && !delay(delay)) {
                 return;
             }
+            mBroadcasterChannel.pushMessage(new DelayStatusEvent(delay));
 
             // If host app is in bg or push manager stopped, abort the process
             if (mIsPaused.get() || mIsStopped.get()) {
@@ -226,7 +227,7 @@ public class PushNotificationManager {
         }
 
         private void handlePushDisabled() {
-            Logger.d("Streaming disabled for SDK key");
+            Logger.d("Streaming disabled");
             mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
             mIsStopped.set(true);
         }

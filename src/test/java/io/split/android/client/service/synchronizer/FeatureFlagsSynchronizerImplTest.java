@@ -29,6 +29,8 @@ import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
+import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 
 public class FeatureFlagsSynchronizerImplTest {
@@ -41,6 +43,7 @@ public class FeatureFlagsSynchronizerImplTest {
     private RetryBackoffCounterTimerFactory mRetryBackoffCounterFactory;
     private RetryBackoffCounterTimer mRetryTimerSplitsUpdate;
     private RetryBackoffCounterTimer mRetryTimerSplitsSync;
+    private PushManagerEventBroadcaster mPushManagerEventBroadcaster;
 
     private FeatureFlagsSynchronizerImpl mFeatureFlagsSynchronizer;
 
@@ -54,13 +57,14 @@ public class FeatureFlagsSynchronizerImplTest {
         mRetryBackoffCounterFactory = mock(RetryBackoffCounterTimerFactory.class);
         mRetryTimerSplitsUpdate = mock(RetryBackoffCounterTimer.class);
         mRetryTimerSplitsSync = mock(RetryBackoffCounterTimer.class);
+        mPushManagerEventBroadcaster = mock(PushManagerEventBroadcaster.class);
         when(mRetryBackoffCounterFactory.create(mSingleThreadTaskExecutor, 1))
                 .thenReturn(mRetryTimerSplitsSync)
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mFeatureFlagsSynchronizer = new FeatureFlagsSynchronizerImpl(mConfig,
                 mTaskExecutor, mSingleThreadTaskExecutor, mTaskFactory,
-                mEventsManager, mRetryBackoffCounterFactory);
+                mEventsManager, mRetryBackoffCounterFactory, mPushManagerEventBroadcaster);
     }
 
     @Test
@@ -70,7 +74,7 @@ public class FeatureFlagsSynchronizerImplTest {
 
         mFeatureFlagsSynchronizer.synchronize(1000);
 
-        verify(mRetryTimerSplitsUpdate).setTask(task, null);
+        verify(mRetryTimerSplitsUpdate).setTask(eq(task), argThat(Objects::nonNull));
         verify(mRetryTimerSplitsUpdate).start();
     }
 

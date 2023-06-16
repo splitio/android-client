@@ -15,6 +15,7 @@ import org.mockito.Spy;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.sseclient.feedbackchannel.BroadcastedEventListener;
+import io.split.android.client.service.sseclient.feedbackchannel.DelayStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
@@ -23,7 +24,7 @@ import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerR
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
-import io.split.android.client.service.synchronizer.SyncManager;
+import io.split.android.client.service.synchronizer.SyncGuardian;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.shared.UserConsent;
@@ -32,32 +33,24 @@ import io.split.android.client.telemetry.TelemetrySynchronizer;
 public class SyncManagerTest {
 
     @Mock
-    SplitClientConfig mConfig;
-
+    private SplitClientConfig mConfig;
     @Mock
-    Synchronizer mSynchronizer;
-
+    private Synchronizer mSynchronizer;
     @Mock
-    PushNotificationManager mPushNotificationManager;
-
+    private PushNotificationManager mPushNotificationManager;
     @Spy
-    PushManagerEventBroadcaster mPushManagerEventBroadcaster;
-
+    private PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     @Mock
-    SplitUpdatesWorker mSplitsUpdateWorker;
-
+    private SplitUpdatesWorker mSplitsUpdateWorker;
     @Mock
-    MySegmentsUpdateWorker mMySegmentUpdateWorker;
-
+    private MySegmentsUpdateWorker mMySegmentUpdateWorker;
     @Mock
-    BackoffCounterTimer mBackoffTimer;
-
+    private BackoffCounterTimer mBackoffTimer;
     @Mock
-    TelemetrySynchronizer mTelemetrySynchronizer;
-
-
-    SyncManager mSyncManager;
-
+    private SyncGuardian mSyncGuardian;
+    @Mock
+    private TelemetrySynchronizer mTelemetrySynchronizer;
+    private SyncManagerImpl mSyncManager;
 
     @Before
     public void setup() {
@@ -66,7 +59,7 @@ public class SyncManagerTest {
         mSyncManager = new SyncManagerImpl(
                 mConfig, mSynchronizer, mPushNotificationManager,
                 mSplitsUpdateWorker, mPushManagerEventBroadcaster,
-                mBackoffTimer, mTelemetrySynchronizer);
+                mBackoffTimer, mSyncGuardian, mTelemetrySynchronizer);
 
         ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("user_key", mMySegmentUpdateWorker);
         when(mConfig.streamingEnabled()).thenReturn(true);
@@ -142,7 +135,6 @@ public class SyncManagerTest {
     @Test
     public void pauseCallsFlushOnTelemetrySynchronizer() {
         mSyncManager.pause();
-
         verify(mTelemetrySynchronizer).flush();
     }
 
@@ -215,6 +207,66 @@ public class SyncManagerTest {
     @Test
     public void stopUserConsentUnknown() {
         testStopUserConsentNotGranted(UserConsent.UNKNOWN);
+    }
+
+    @Test
+    public void resumeCallsSynchronizeSplitsWhenSseClientIsDisconnectedAndSyncGuardianMustSyncIsTrue() {
+        when(mPushNotificationManager.isSseClientDisconnected()).thenReturn(true);
+        when(mSyncGuardian.mustSync()).thenReturn(true);
+
+        mSyncManager.resume();
+
+        verify(mSynchronizer).synchronizeSplits();
+    }
+
+    @Test
+    public void pauseInitializesSyncGuardian() {
+        mSyncManager.pause();
+        verify(mSyncGuardian).initialize();
+    }
+
+    @Test
+    public void resumeDoesNotCallSynchronizeSplitsWhenSyncGuardianMustSyncIsNotTrue() {
+        when(mPushNotificationManager.isSseClientDisconnected()).thenReturn(true);
+        when(mSyncGuardian.mustSync()).thenReturn(false);
+
+        mSyncManager.resume();
+
+        verify(mSynchronizer, never()).synchronizeSplits();
+    }
+
+    @Test
+    public void syncGuardianIsNotCheckedWhenStreamingIsDisabled() {
+        when(mConfig.streamingEnabled()).thenReturn(false);
+
+        mSyncManager.resume();
+
+        verify(mSyncGuardian, never()).mustSync();
+        verify(mPushNotificationManager, never()).isSseClientDisconnected();
+    }
+
+    @Test
+    public void syncGuardianIsNotCheckedWhenSyncIsDisabled() {
+        when(mConfig.syncEnabled()).thenReturn(false);
+
+        mSyncManager.resume();
+
+        verify(mSyncGuardian, never()).mustSync();
+        verify(mPushNotificationManager, never()).isSseClientDisconnected();
+    }
+
+    @Test
+    public void pushDelayReceivedEventUpdatesMaxSyncPeriodInGuardian() {
+        mSyncManager.onEvent(new DelayStatusEvent(546));
+
+        verify(mSyncGuardian).setMaxSyncPeriod(546);
+    }
+
+    @Test
+    public void successfulSyncEventUpdatesLastSyncInGuardian() {
+        mSyncManager.onEvent(new PushStatusEvent(EventType.SUCCESSFUL_SYNC));
+
+        verify(mSyncGuardian).updateLastSyncTimestamp();
     }
 
     private void testStartUserConsentNotGranted(UserConsent userConsent) {
