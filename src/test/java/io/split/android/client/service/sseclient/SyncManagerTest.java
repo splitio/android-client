@@ -134,7 +134,7 @@ public class SyncManagerTest {
 
     @Test
     public void pauseCallsFlushOnTelemetrySynchronizer() {
-
+        mSyncManager.pause();
         verify(mTelemetrySynchronizer).flush();
     }
 
