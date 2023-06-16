@@ -346,8 +346,7 @@ class SplitFactoryHelper {
                 sseClient,
                 storageContainer.getTelemetryStorage());
 
-        SyncGuardian syncGuardian = new SyncGuardianImpl(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS,
-                config, null);
+        SyncGuardian syncGuardian = new SyncGuardianImpl(config);
 
         return new StreamingComponents(pushNotificationManager,
                 splitsUpdateNotificationQueue,

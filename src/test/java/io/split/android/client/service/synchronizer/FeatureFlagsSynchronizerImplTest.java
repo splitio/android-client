@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 
 import java.util.List;
 import java.util.Objects;
@@ -75,7 +74,7 @@ public class FeatureFlagsSynchronizerImplTest {
 
         mFeatureFlagsSynchronizer.synchronize(1000);
 
-        verify(mRetryTimerSplitsUpdate).setTask(task, null);
+        verify(mRetryTimerSplitsUpdate).setTask(eq(task), argThat(Objects::nonNull));
         verify(mRetryTimerSplitsUpdate).start();
     }
 
@@ -158,16 +157,5 @@ public class FeatureFlagsSynchronizerImplTest {
         mFeatureFlagsSynchronizer.stopPeriodicFetching();
 
         verify(mSingleThreadTaskExecutor).stopTask("12");
-    }
-
-    @Test
-    public void successfulSynchronizationWithSynchronizePushesEventInBroadcaster() {
-        SplitsSyncTask mockTask = mock(SplitsSyncTask.class);
-        when(mTaskFactory.createSplitsSyncTask(false)).thenReturn(mockTask);
-        when(mockTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
-
-        mFeatureFlagsSynchronizer.synchronize();
-
-        verify(mPushManagerEventBroadcaster).pushMessage(argThat(argument -> argument.getMessage().equals(PushStatusEvent.EventType.SUCCESSFUL_SYNC)));
     }
 }

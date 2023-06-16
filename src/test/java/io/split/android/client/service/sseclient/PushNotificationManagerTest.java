@@ -51,9 +51,6 @@ public class PushNotificationManagerTest {
     private static final int POOL_SIZE = 1;
 
     @Mock
-    private ScheduledThreadPoolExecutor mExecutor;
-
-    @Mock
     private SseAuthenticator mAuthenticator;
 
     @Mock
@@ -80,7 +77,7 @@ public class PushNotificationManagerTest {
 
     @Before
     public void setup() throws URISyntaxException {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         mUri = new URI("http://api/sse");
     }
 

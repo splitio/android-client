@@ -105,12 +105,12 @@ public class PushNotificationManager {
         Logger.d("Push notification manager resumed");
         mIsPaused.set(false);
         mDisconnectionTimer.cancel();
-        if (sseClientIsDisconnected() && !mIsStopped.get()) {
+        if (isSseClientDisconnected() && !mIsStopped.get()) {
             connect();
         }
     }
 
-    public boolean sseClientIsDisconnected() {
+    public boolean isSseClientDisconnected() {
         return mSseClient.status() == SseClient.DISCONNECTED;
     }
 

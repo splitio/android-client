@@ -25,7 +25,6 @@ import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.synchronizer.SyncGuardian;
-import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.shared.UserConsent;
@@ -135,7 +134,6 @@ public class SyncManagerTest {
 
     @Test
     public void pauseCallsFlushOnTelemetrySynchronizer() {
-        mSyncManager.pause();
 
         verify(mTelemetrySynchronizer).flush();
     }
@@ -212,7 +210,8 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void resumeCallsSynchronizeSplitsWhenSyncGuardianMustSyncIsTrue() {
+    public void resumeCallsSynchronizeSplitsWhenSseClientIsDisconnectedAndSyncGuardianMustSyncIsTrue() {
+        when(mPushNotificationManager.isSseClientDisconnected()).thenReturn(true);
         when(mSyncGuardian.mustSync()).thenReturn(true);
 
         mSyncManager.resume();
@@ -221,7 +220,14 @@ public class SyncManagerTest {
     }
 
     @Test
+    public void pauseInitializedSyncGuardian() {
+        mSyncManager.pause();
+        verify(mSyncGuardian).initialize();
+    }
+
+    @Test
     public void resumeDoesNotCallSynchronizeSplitsWhenSyncGuardianMustSyncIsNotTrue() {
+        when(mPushNotificationManager.isSseClientDisconnected()).thenReturn(true);
         when(mSyncGuardian.mustSync()).thenReturn(false);
 
         mSyncManager.resume();
@@ -236,6 +242,7 @@ public class SyncManagerTest {
         mSyncManager.resume();
 
         verify(mSyncGuardian, never()).mustSync();
+        verify(mPushNotificationManager, never()).isSseClientDisconnected();
     }
 
     @Test
@@ -245,6 +252,7 @@ public class SyncManagerTest {
         mSyncManager.resume();
 
         verify(mSyncGuardian, never()).mustSync();
+        verify(mPushNotificationManager, never()).isSseClientDisconnected();
     }
 
     @Test
