@@ -1,7 +1,6 @@
 package tests.integration.streaming;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -215,7 +214,7 @@ public class SyncGuardianIntegrationTest {
     private Pair<SplitClient, SplitEventTaskHelper> getClient(CountDownLatch latch, boolean streamingEnabled, boolean singleSync) throws IOException {
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
-        SplitClientConfig config = (singleSync) ? IntegrationHelper.syncDisabledConfig() : IntegrationHelper.lowRefreshRateConfig(streamingEnabled);
+        SplitClientConfig config = (singleSync) ? IntegrationHelper.syncDisabledConfig() : IntegrationHelper.customSseConnectionDelayConfig(streamingEnabled, 2L);
 
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),
