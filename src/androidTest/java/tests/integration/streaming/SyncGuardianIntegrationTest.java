@@ -1,11 +1,13 @@
 package tests.integration.streaming;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
 
+import androidx.core.util.Pair;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Before;
@@ -59,9 +61,123 @@ public class SyncGuardianIntegrationTest {
     @Test
     public void splitsAreNotFetchedWhenSSEConnectionIsActive() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
+
+        Pair<SplitClient, SplitEventTaskHelper> pair = getClient(latch, true, false);
+        SplitClient client = pair.first;
+        SplitEventTaskHelper readyTask = pair.second;
+
+        boolean mySegmentsAwait = mMySegmentsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!mySegmentsAwait) {
+            Logger.e("MySegments hits not received");
+            fail();
+        }
+
+        boolean splitsAwait = mSplitsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!splitsAwait) {
+            Logger.e("Splits hits not received");
+            fail();
+        }
+
+        boolean readyAwait = latch.await(10, TimeUnit.SECONDS);
+        if (!readyAwait) {
+            Logger.e("SDK_READY event not received");
+        }
+
+        boolean sseConnectionAwait = mIsStreamingConnected.await(10, TimeUnit.SECONDS);
+        int initialSplitsHit = mSplitsHitsCountHit.get();
+
+        mLifecycleManager.simulateOnPause();
+        mLifecycleManager.simulateOnResume();
+
+        int finalSplitsHit = mSplitsHitsCountHit.get();
+        assertTrue(readyTask.isOnPostExecutionCalled);
+        assertTrue(sseConnectionAwait);
+        assertEquals(initialSplitsHit, finalSplitsHit);
+
+        client.destroy();
+    }
+
+    @Test
+    public void splitsAreNotFetchedOnResumeWhenStreamingIsDisabled() throws InterruptedException, IOException {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Pair<SplitClient, SplitEventTaskHelper> pair = getClient(latch, false, false);
+        SplitClient client = pair.first;
+        SplitEventTaskHelper readyTask = pair.second;
+
+        boolean mySegmentsAwait = mMySegmentsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!mySegmentsAwait) {
+            Logger.e("MySegments hits not received");
+            fail();
+        }
+
+        boolean splitsAwait = mSplitsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!splitsAwait) {
+            Logger.e("Splits hits not received");
+            fail();
+        }
+
+        boolean readyAwait = latch.await(10, TimeUnit.SECONDS);
+        if (!readyAwait) {
+            Logger.e("SDK_READY event not received");
+        }
+
+        int initialSplitsHit = mSplitsHitsCountHit.get();
+
+        mLifecycleManager.simulateOnPause();
+        mLifecycleManager.simulateOnResume();
+
+        int finalSplitsHit = mSplitsHitsCountHit.get();
+        assertTrue(readyTask.isOnPostExecutionCalled);
+        assertEquals(0, mSseAuthHits.get());
+        assertEquals(initialSplitsHit, finalSplitsHit);
+
+        client.destroy();
+    }
+
+    @Test
+    public void splitsAreNotFetchedOnResumeWhenSingleSyncIsEnabled() throws InterruptedException, IOException {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Pair<SplitClient, SplitEventTaskHelper> pair = getClient(latch, false, true);
+        SplitClient client = pair.first;
+        SplitEventTaskHelper readyTask = pair.second;
+
+        boolean mySegmentsAwait = mMySegmentsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!mySegmentsAwait) {
+            Logger.e("MySegments hits not received");
+            fail();
+        }
+
+        boolean splitsAwait = mSplitsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!splitsAwait) {
+            Logger.e("Splits hits not received");
+            fail();
+        }
+
+        boolean readyAwait = latch.await(10, TimeUnit.SECONDS);
+        if (!readyAwait) {
+            Logger.e("SDK_READY event not received");
+        }
+
+        boolean sseConnectionAwait = mIsStreamingConnected.await(10, TimeUnit.SECONDS);
+        int initialSplitsHit = mSplitsHitsCountHit.get();
+
+        mLifecycleManager.simulateOnPause();
+        mLifecycleManager.simulateOnResume();
+
+        int finalSplitsHit = mSplitsHitsCountHit.get();
+        assertTrue(readyTask.isOnPostExecutionCalled);
+        assertEquals(0, mSseAuthHits.get());
+        assertEquals(initialSplitsHit, finalSplitsHit);
+
+        client.destroy();
+    }
+
+    private Pair<SplitClient, SplitEventTaskHelper> getClient(CountDownLatch latch, boolean streamingEnabled, boolean singleSync) throws IOException {
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(true);
+        SplitClientConfig config = (singleSync) ? IntegrationHelper.syncDisabledConfig() : IntegrationHelper.lowRefreshRateConfig(streamingEnabled);
 
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),
@@ -75,39 +191,10 @@ public class SyncGuardianIntegrationTest {
                 mLifecycleManager);
 
         SplitClient client = splitFactory.client();
-
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
-
         client.on(SplitEvent.SDK_READY, readyTask);
-        boolean mySegmentsAwait = mMySegmentsHitsCountLatch.await(10, TimeUnit.SECONDS);
-        if (!mySegmentsAwait) {
-            Logger.e("MySegments hits not received");
-            fail();
-        }
-        boolean readyAwait = latch.await(10, TimeUnit.SECONDS);
-        if (!readyAwait) {
-            Logger.e("SDK_READY event not received");
-        }
 
-        boolean splitsAwait = mSplitsHitsCountLatch.await(10, TimeUnit.SECONDS);
-        if (!splitsAwait) {
-            Logger.e("Splits hits not received");
-            fail();
-        }
-
-        boolean sseConnectionAwait = mIsStreamingConnected.await(10, TimeUnit.SECONDS);
-        int initialSplitsHit = mSplitsHitsCountHit.get();
-
-        mLifecycleManager.simulateOnPause();
-        mLifecycleManager.simulateOnResume();
-
-        int finalSplitsHit = mSplitsHitsCountHit.get();
-        assertTrue(readyTask.isOnPostExecutionCalled);
-        assertTrue(sseConnectionAwait);
-        assertEquals(1, initialSplitsHit);
-        assertEquals(1, finalSplitsHit);
-
-        splitFactory.destroy();
+        return new Pair<>(client, readyTask);
     }
 
     private HttpResponseMock createResponse(String data) {

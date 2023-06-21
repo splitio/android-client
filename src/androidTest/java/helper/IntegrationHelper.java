@@ -182,16 +182,25 @@ public class IntegrationHelper {
     }
 
     public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled) {
-        return lowRefreshRateConfig(streamingEnabled, false);
+        return lowRefreshRateConfig(streamingEnabled, false, true);
     }
 
     public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled, boolean telemetryEnabled) {
+        return lowRefreshRateConfig(streamingEnabled, telemetryEnabled, true);
+    }
+
+    public static SplitClientConfig syncDisabledConfig() {
+        return lowRefreshRateConfig(true, false, false);
+    }
+
+    public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled, boolean telemetryEnabled, boolean syncEnabled) {
         TestableSplitConfigBuilder builder = new TestableSplitConfigBuilder()
                 .ready(30000)
                 .featuresRefreshRate(3)
                 .segmentsRefreshRate(3)
                 .impressionsRefreshRate(3)
                 .impressionsChunkSize(999999)
+                .syncEnabled(syncEnabled)
                 .streamingEnabled(streamingEnabled)
                 .shouldRecordTelemetry(telemetryEnabled)
                 .enableDebug()
