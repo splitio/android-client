@@ -117,6 +117,7 @@ public class SplitClientConfig {
     private int mLogLevel = SplitLogLevel.NONE;
     private UserConsent mUserConsent;
     private boolean mEncryptionEnabled = false;
+    private final long mDefaultSSEConnectionDelayInSecs;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -168,7 +169,8 @@ public class SplitClientConfig {
                               int mtkPerPush,
                               int mtkRefreshRate,
                               UserConsent userConsent,
-                              boolean encryptionEnabled) {
+                              boolean encryptionEnabled,
+                              long defaultSSEConnectionDelayInSecs) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -220,6 +222,7 @@ public class SplitClientConfig {
 
         mMtkPerPush = mtkPerPush;
         mEncryptionEnabled = encryptionEnabled;
+        mDefaultSSEConnectionDelayInSecs = defaultSSEConnectionDelayInSecs;
 
         Logger.instance().setLevel(mLogLevel);
     }
@@ -437,6 +440,10 @@ public class SplitClientConfig {
         return mEncryptionEnabled;
     }
 
+    public long defaultSSEConnectionDelay() {
+        return mDefaultSSEConnectionDelayInSecs;
+    }
+
     private void enableTelemetry() { mShouldRecordTelemetry = true; }
 
     public static final class Builder {
@@ -502,6 +509,8 @@ public class SplitClientConfig {
         private UserConsent mUserConsent = UserConsent.GRANTED;
 
         private boolean mEncryptionEnabled = false;
+
+        private long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -1107,7 +1116,8 @@ public class SplitClientConfig {
                     mMtkPerPush,
                     mMtkRefreshRate,
                     mUserConsent,
-                    mEncryptionEnabled);
+                    mEncryptionEnabled,
+                    mDefaultSSEConnectionDelayInSecs);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {

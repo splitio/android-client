@@ -98,6 +98,45 @@ public class SyncGuardianIntegrationTest {
     }
 
     @Test
+    public void splitsAreNotFetchedWhenSSEConnectionIsInactiveAndTimeHasNotElapsed() throws IOException, InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Pair<SplitClient, SplitEventTaskHelper> pair = getClient(latch, true, false);
+        SplitClient client = pair.first;
+        SplitEventTaskHelper readyTask = pair.second;
+
+        boolean mySegmentsAwait = mMySegmentsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!mySegmentsAwait) {
+            Logger.e("MySegments hits not received");
+            fail();
+        }
+
+        boolean splitsAwait = mSplitsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!splitsAwait) {
+            Logger.e("Splits hits not received");
+            fail();
+        }
+
+        boolean readyAwait = latch.await(10, TimeUnit.SECONDS);
+        if (!readyAwait) {
+            Logger.e("SDK_READY event not received");
+        }
+
+        boolean sseConnectionAwait = mIsStreamingConnected.await(10, TimeUnit.SECONDS);
+        int initialSplitsHit = mSplitsHitsCountHit.get();
+
+        mLifecycleManager.simulateOnPause();
+        mLifecycleManager.simulateOnResume();
+
+        int finalSplitsHit = mSplitsHitsCountHit.get();
+        assertTrue(readyTask.isOnPostExecutionCalled);
+        assertTrue(sseConnectionAwait);
+        assertEquals(initialSplitsHit, finalSplitsHit);
+
+        client.destroy();
+    }
+
+    @Test
     public void splitsAreNotFetchedOnResumeWhenStreamingIsDisabled() throws InterruptedException, IOException {
         CountDownLatch latch = new CountDownLatch(1);
 
@@ -160,7 +199,6 @@ public class SyncGuardianIntegrationTest {
             Logger.e("SDK_READY event not received");
         }
 
-        boolean sseConnectionAwait = mIsStreamingConnected.await(10, TimeUnit.SECONDS);
         int initialSplitsHit = mSplitsHitsCountHit.get();
 
         mLifecycleManager.simulateOnPause();
@@ -206,6 +244,10 @@ public class SyncGuardianIntegrationTest {
     }
 
     private HttpResponseMockDispatcher createBasicResponseDispatcher() {
+        return createStreamingResponseDispatcher(IntegrationHelper.streamingEnabledToken());
+    }
+
+    private HttpResponseMockDispatcher createStreamingResponseDispatcher(final String sseResponse) {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
@@ -222,7 +264,7 @@ public class SyncGuardianIntegrationTest {
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
                     mSseAuthHits.incrementAndGet();
-                    return createResponse(IntegrationHelper.streamingEnabledToken());
+                    return createResponse(sseResponse);
                 } else {
                     return new HttpResponseMock(200);
                 }
