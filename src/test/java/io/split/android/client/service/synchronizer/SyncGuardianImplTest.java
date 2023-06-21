@@ -27,7 +27,7 @@ public class SyncGuardianImplTest {
         when(mSplitConfig.syncEnabled()).thenReturn(false);
         when(mSplitConfig.streamingEnabled()).thenReturn(true);
         when(mTimestampProvider.get()).thenReturn(2000L);
-        mSyncGuardian = new SyncGuardianImpl(1000L, mSplitConfig, mTimestampProvider);
+        mSyncGuardian = new SyncGuardianImpl(mSplitConfig, mTimestampProvider);
         mSyncGuardian.initialize();
         mSyncGuardian.updateLastSyncTimestamp();
 
@@ -39,7 +39,7 @@ public class SyncGuardianImplTest {
         when(mSplitConfig.syncEnabled()).thenReturn(true);
         when(mSplitConfig.streamingEnabled()).thenReturn(false);
         when(mTimestampProvider.get()).thenReturn(2000L);
-        mSyncGuardian = new SyncGuardianImpl(1000L, mSplitConfig, mTimestampProvider);
+        mSyncGuardian = new SyncGuardianImpl(mSplitConfig, mTimestampProvider);
         mSyncGuardian.initialize();
         mSyncGuardian.updateLastSyncTimestamp();
 
@@ -50,8 +50,8 @@ public class SyncGuardianImplTest {
     public void mustSyncReturnsFalseWhenDiffBetweenLastSyncIsLessThanMaxSyncPeriod() {
         when(mSplitConfig.syncEnabled()).thenReturn(true);
         when(mSplitConfig.streamingEnabled()).thenReturn(true);
-        when(mTimestampProvider.get()).thenReturn(1000L, 1500L);
-        mSyncGuardian = new SyncGuardianImpl(1000L, mSplitConfig, mTimestampProvider);
+        when(mTimestampProvider.get()).thenReturn(100L, 150L);
+        mSyncGuardian = new SyncGuardianImpl(mSplitConfig, mTimestampProvider);
 
         mSyncGuardian.updateLastSyncTimestamp();
 
@@ -62,8 +62,8 @@ public class SyncGuardianImplTest {
     public void mustSyncReturnsTrueWhenDiffBetweenLastSyncIsGreaterThanMaxSyncPeriod() {
         when(mSplitConfig.syncEnabled()).thenReturn(true);
         when(mSplitConfig.streamingEnabled()).thenReturn(true);
-        when(mTimestampProvider.get()).thenReturn(1000L, 2001L);
-        mSyncGuardian = new SyncGuardianImpl(1000L, mSplitConfig, mTimestampProvider);
+        when(mTimestampProvider.get()).thenReturn(100L, 201L);
+        mSyncGuardian = new SyncGuardianImpl(mSplitConfig, mTimestampProvider);
 
         mSyncGuardian.initialize();
         mSyncGuardian.updateLastSyncTimestamp();
@@ -75,10 +75,11 @@ public class SyncGuardianImplTest {
     public void setMaxSyncPeriodDoesNotChangeMaxSyncPeriodWhenItIsLowerThanTheDefault() {
         when(mSplitConfig.syncEnabled()).thenReturn(true);
         when(mSplitConfig.streamingEnabled()).thenReturn(true);
-        when(mTimestampProvider.get()).thenReturn(1000L, 1500L);
-        mSyncGuardian = new SyncGuardianImpl(1000L, mSplitConfig, mTimestampProvider);
+        when(mSplitConfig.defaultSSEConnectionDelay()).thenReturn(60L);
+        when(mTimestampProvider.get()).thenReturn(100L, 150L);
+        mSyncGuardian = new SyncGuardianImpl(mSplitConfig, mTimestampProvider);
         mSyncGuardian.initialize();
-        mSyncGuardian.setMaxSyncPeriod(500L);
+        mSyncGuardian.setMaxSyncPeriod(50L);
         mSyncGuardian.updateLastSyncTimestamp();
 
         assertFalse(mSyncGuardian.mustSync());
@@ -88,10 +89,11 @@ public class SyncGuardianImplTest {
     public void setMaxSyncPeriodChangesMaxSyncPeriodWhenItIsHigherThanTheDefault() {
         when(mSplitConfig.syncEnabled()).thenReturn(true);
         when(mSplitConfig.streamingEnabled()).thenReturn(true);
-        when(mTimestampProvider.get()).thenReturn(1000L, 3000L);
-        mSyncGuardian = new SyncGuardianImpl(1000L, mSplitConfig, mTimestampProvider);
+        when(mSplitConfig.defaultSSEConnectionDelay()).thenReturn(60L);
+        when(mTimestampProvider.get()).thenReturn(100L, 180L);
+        mSyncGuardian = new SyncGuardianImpl(mSplitConfig, mTimestampProvider);
         mSyncGuardian.initialize();
-        mSyncGuardian.setMaxSyncPeriod(2000L);
+        mSyncGuardian.setMaxSyncPeriod(80L);
         mSyncGuardian.updateLastSyncTimestamp();
 
         assertTrue(mSyncGuardian.mustSync());
@@ -101,8 +103,8 @@ public class SyncGuardianImplTest {
     public void mustSyncAlwaysReturnsFalseWhenSyncGuardianHasNotBeenInitialized() {
         when(mSplitConfig.syncEnabled()).thenReturn(true);
         when(mSplitConfig.streamingEnabled()).thenReturn(true);
-        when(mTimestampProvider.get()).thenReturn(1000L, 3000L);
-        mSyncGuardian = new SyncGuardianImpl(1000L, mSplitConfig, mTimestampProvider);
+        when(mTimestampProvider.get()).thenReturn(100L, 300L);
+        mSyncGuardian = new SyncGuardianImpl(mSplitConfig, mTimestampProvider);
 
         boolean firstAttempt = mSyncGuardian.mustSync();
         boolean secondAttempt = mSyncGuardian.mustSync();

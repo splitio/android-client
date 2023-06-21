@@ -118,6 +118,7 @@ public class SplitClientConfig {
     private UserConsent mUserConsent;
     private boolean mEncryptionEnabled = false;
     private final long mDefaultSSEConnectionDelayInSecs;
+    private final long mSSEDisconnectionDelayInSecs;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -170,7 +171,8 @@ public class SplitClientConfig {
                               int mtkRefreshRate,
                               UserConsent userConsent,
                               boolean encryptionEnabled,
-                              long defaultSSEConnectionDelayInSecs) {
+                              long defaultSSEConnectionDelayInSecs,
+                              long sseDisconnectionDelayInSecs) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -223,6 +225,7 @@ public class SplitClientConfig {
         mMtkPerPush = mtkPerPush;
         mEncryptionEnabled = encryptionEnabled;
         mDefaultSSEConnectionDelayInSecs = defaultSSEConnectionDelayInSecs;
+        mSSEDisconnectionDelayInSecs = sseDisconnectionDelayInSecs;
 
         Logger.instance().setLevel(mLogLevel);
     }
@@ -444,6 +447,10 @@ public class SplitClientConfig {
         return mDefaultSSEConnectionDelayInSecs;
     }
 
+    public long sseDisconnectionDelay() {
+        return mSSEDisconnectionDelayInSecs;
+    }
+
     private void enableTelemetry() { mShouldRecordTelemetry = true; }
 
     public static final class Builder {
@@ -510,7 +517,9 @@ public class SplitClientConfig {
 
         private boolean mEncryptionEnabled = false;
 
-        private long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
+        private final long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
+
+        private final long mSSEDisconnectionDelayInSecs = 60L;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -1117,7 +1126,8 @@ public class SplitClientConfig {
                     mMtkRefreshRate,
                     mUserConsent,
                     mEncryptionEnabled,
-                    mDefaultSSEConnectionDelayInSecs);
+                    mDefaultSSEConnectionDelayInSecs,
+                    mSSEDisconnectionDelayInSecs);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {

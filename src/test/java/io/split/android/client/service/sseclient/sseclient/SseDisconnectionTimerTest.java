@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 
+import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -56,7 +57,7 @@ public class SseDisconnectionTimerTest {
 
     @Test
     public void scheduleInitialDelayInSecondsDefaultValueIs60() {
-        mSseDisconnectionTimer = new SseDisconnectionTimer(mTaskExecutor);
+        mSseDisconnectionTimer = new SseDisconnectionTimer(mTaskExecutor, 60);
 
         mSseDisconnectionTimer.schedule(mTask);
         verify(mTaskExecutor).schedule(mTask, 60L, mSseDisconnectionTimer);

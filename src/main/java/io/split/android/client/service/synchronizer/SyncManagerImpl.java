@@ -238,7 +238,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
             case SUCCESSFUL_SYNC:
                 if (mSyncGuardian != null) {
-                    Logger.d("Successful sync event received, updating last sync timestamp");
+                    Logger.v("Successful sync event received, updating last sync timestamp");
                     mSyncGuardian.updateLastSyncTimestamp();
                 }
                 break;
@@ -247,7 +247,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
                 try {
                     DelayStatusEvent delayEvent = (DelayStatusEvent) message;
                     if (mSyncGuardian != null) {
-                        Logger.d("Streaming delay event received");
+                        Logger.v("Streaming delay event received");
                         mSyncGuardian.setMaxSyncPeriod(delayEvent.getDelay());
                     }
                 } catch (ClassCastException ex) {
@@ -300,13 +300,13 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     private void triggerFeatureFlagsSyncIfNeeded() {
         if (mPushNotificationManager.isSseClientDisconnected()) {
             if (mSyncGuardian.mustSync()) {
-                Logger.d("Must sync, synchronizing splits");
+                Logger.v("Must sync, synchronizing splits");
                 mSynchronizer.synchronizeSplits();
             } else {
-                Logger.d("No need to sync");
+                Logger.v("No need to sync");
             }
         } else {
-            Logger.d("SSE client is connected, no need to trigger sync");
+            Logger.v("SSE client is connected, no need to trigger sync");
         }
     }
 }

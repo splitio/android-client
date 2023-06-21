@@ -228,13 +228,15 @@ class SplitFactoryHelper {
                                                        PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                                        SseClient sseClient,
                                                        TelemetryRuntimeProducer telemetryRuntimeProducer,
-                                                       long defaultSseConnectionDelayInSecs) {
+                                                       long defaultSseConnectionDelayInSecs,
+                                                       long sseDisconnectionDelayInSecs) {
         return new PushNotificationManager(pushManagerEventBroadcaster,
                 sseAuthenticator,
                 sseClient,
                 new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
                 telemetryRuntimeProducer,
                 defaultSseConnectionDelayInSecs,
+                sseDisconnectionDelayInSecs,
                 null);
     }
 
@@ -346,7 +348,8 @@ class SplitFactoryHelper {
                 pushManagerEventBroadcaster,
                 sseClient,
                 storageContainer.getTelemetryStorage(),
-                config.defaultSSEConnectionDelay());
+                config.defaultSSEConnectionDelay(),
+                config.sseDisconnectionDelay());
 
         SyncGuardian syncGuardian = new SyncGuardianImpl(config);
 

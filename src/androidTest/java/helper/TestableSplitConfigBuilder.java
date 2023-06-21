@@ -58,6 +58,7 @@ public class TestableSplitConfigBuilder {
     private UserConsent mUserConsent = UserConsent.GRANTED;
     private boolean mEncryptionEnabled;
     private long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
+    private long mSSEDisconnectionDelayInSecs = 60L;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -104,7 +105,7 @@ public class TestableSplitConfigBuilder {
     }
 
     public TestableSplitConfigBuilder enableDebug() {
-        this.mLogLevel = SplitLogLevel.DEBUG;
+        this.mLogLevel = SplitLogLevel.VERBOSE;
         return this;
     }
 
@@ -243,6 +244,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder sseDisconnectionDelayInSecs(long seconds) {
+        this.mSSEDisconnectionDelayInSecs = seconds;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -293,7 +299,8 @@ public class TestableSplitConfigBuilder {
                     mMtkRefreshRate,
                     mUserConsent,
                     mEncryptionEnabled,
-                    mDefaultSSEConnectionDelayInSecs);
+                    mDefaultSSEConnectionDelayInSecs,
+                    mSSEDisconnectionDelayInSecs);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

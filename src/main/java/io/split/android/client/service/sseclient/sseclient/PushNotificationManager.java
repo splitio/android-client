@@ -47,7 +47,7 @@ public class PushNotificationManager {
     private final AtomicBoolean mIsStopped;
     private Future<?> mConnectionTask;
     private final SplitTask mBackgroundDisconnectionTask;
-    private long mDefaultSSEConnectionDelayInSecs;
+    private final long mDefaultSSEConnectionDelayInSecs;
 
     public PushNotificationManager(@NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                    @NonNull SseAuthenticator sseAuthenticator,
@@ -55,12 +55,13 @@ public class PushNotificationManager {
                                    @NonNull SseRefreshTokenTimer refreshTokenTimer,
                                    @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                                    long defaultSSEConnectionDelayInSecs,
+                                   long sseDisconnectionDelayInSecs,
                                    @Nullable ScheduledExecutorService executorService) {
         this(pushManagerEventBroadcaster,
                 sseAuthenticator,
                 sseClient,
                 refreshTokenTimer,
-                new SseDisconnectionTimer(new SplitSingleThreadTaskExecutor()),
+                new SseDisconnectionTimer(new SplitSingleThreadTaskExecutor(), Math.toIntExact(sseDisconnectionDelayInSecs)),
                 telemetryRuntimeProducer,
                 defaultSSEConnectionDelayInSecs,
                 executorService);
@@ -99,21 +100,20 @@ public class PushNotificationManager {
     }
 
     public void pause() {
-        Logger.d("Push notification manager paused");
         mIsPaused.set(true);
         mDisconnectionTimer.schedule(mBackgroundDisconnectionTask);
+        Logger.d("Push notification manager paused");
     }
 
     public void resume() {
-        if (!mIsPaused.get()) {
+        if (!mIsPaused.compareAndSet(true, false)) {
             return;
         }
-        Logger.d("Push notification manager resumed");
-        mIsPaused.set(false);
         mDisconnectionTimer.cancel();
         if (isSseClientDisconnected() && !mIsStopped.get()) {
             connect();
         }
+        Logger.d("Push notification manager resumed");
     }
 
     public boolean isSseClientDisconnected() {
