@@ -1,10 +1,13 @@
 package tests.integration.streaming;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,17 +17,18 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import fake.HttpStreamResponseMock;
+import fake.LifecycleManagerStub;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.logger.Logger;
@@ -36,63 +40,72 @@ public class SyncGuardianIntegrationTest {
     private CountDownLatch mMySegmentsHitsCountLatch;
     private CountDownLatch mSplitsHitsCountLatch;
 
-    private boolean mIsStreamingAuth;
-    private boolean mIsStreamingConnected;
-    private int mySegmentsHitsCountHit;
-    private int mSplitsHitsCountHit;
-    private int mSseAuthHits;
+    private CountDownLatch mIsStreamingConnected;
+    private AtomicInteger mSplitsHitsCountHit;
+    private AtomicInteger mSseAuthHits;
+    private final LifecycleManagerStub mLifecycleManager = new LifecycleManagerStub();
 
     @Before
     public void setup() {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mStreamingData = new LinkedBlockingDeque<>();
-        mSplitsHitsCountLatch = new CountDownLatch(3);
-        mMySegmentsHitsCountLatch = new CountDownLatch(3);
-        mIsStreamingAuth = false;
-        mIsStreamingConnected = false;
-        mySegmentsHitsCountHit = 0;
-        mSplitsHitsCountHit = 0;
-        mSseAuthHits = 0;
+        mSplitsHitsCountLatch = new CountDownLatch(1);
+        mMySegmentsHitsCountLatch = new CountDownLatch(1);
+        mIsStreamingConnected = new CountDownLatch(1);
+        mSplitsHitsCountHit = new AtomicInteger(0);
+        mSseAuthHits = new AtomicInteger(0);
     }
 
     @Test
-    public void streamingDisabled() throws IOException, InterruptedException {
+    public void splitsAreNotFetchedWhenSSEConnectionIsActive() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
-        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig();
+        SplitClientConfig config = IntegrationHelper.lowRefreshRateConfig(true);
 
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
-                IntegrationHelper.dummyApiKey(), IntegrationHelper.dummyUserKey(),
-                config, mContext, httpClientMock);
+                IntegrationHelper.dummyApiKey(),
+                IntegrationHelper.dummyUserKey(),
+                config,
+                mContext,
+                httpClientMock,
+                null,
+                null,
+                null,
+                mLifecycleManager);
 
         SplitClient client = splitFactory.client();
 
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
 
         client.on(SplitEvent.SDK_READY, readyTask);
-
+        boolean mySegmentsAwait = mMySegmentsHitsCountLatch.await(10, TimeUnit.SECONDS);
+        if (!mySegmentsAwait) {
+            Logger.e("MySegments hits not received");
+            fail();
+        }
         boolean readyAwait = latch.await(10, TimeUnit.SECONDS);
         if (!readyAwait) {
             Logger.e("SDK_READY event not received");
         }
-        boolean mySegmentsAwait = mMySegmentsHitsCountLatch.await(10, TimeUnit.SECONDS);
-        if (!mySegmentsAwait) {
-            Logger.e("MySegments hits not received");
-        }
+
         boolean splitsAwait = mSplitsHitsCountLatch.await(10, TimeUnit.SECONDS);
         if (!splitsAwait) {
             Logger.e("Splits hits not received");
+            fail();
         }
 
-        Assert.assertTrue(client.isReady());
-        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
+        boolean sseConnectionAwait = mIsStreamingConnected.await(10, TimeUnit.SECONDS);
+        int initialSplitsHit = mSplitsHitsCountHit.get();
 
-        Assert.assertEquals(1, mSseAuthHits);
+        mLifecycleManager.simulateOnPause();
+        mLifecycleManager.simulateOnResume();
 
-        Assert.assertTrue(mIsStreamingConnected);
-
+        int finalSplitsHit = mSplitsHitsCountHit.get();
+        assertTrue(readyTask.isOnPostExecutionCalled);
+        assertTrue(sseConnectionAwait);
+        assertEquals(1, initialSplitsHit);
+        assertEquals(1, finalSplitsHit);
 
         splitFactory.destroy();
     }
@@ -106,24 +119,22 @@ public class SyncGuardianIntegrationTest {
     }
 
     private HttpResponseMockDispatcher createBasicResponseDispatcher() {
-        return new HttpResponseMockDispatcher(){
+        return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("mySegments")) {
                     Logger.i("** My segments hit");
                     mMySegmentsHitsCountLatch.countDown();
-                    mySegmentsHitsCountHit++;
                     return createResponse(IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     Logger.i("** Split Changes hit");
                     mSplitsHitsCountLatch.countDown();
-                    mSplitsHitsCountHit++;
+                    mSplitsHitsCountHit.incrementAndGet();
                     String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
-                    mIsStreamingAuth = true;
-                    mSseAuthHits++;
+                    mSseAuthHits.incrementAndGet();
                     return createResponse(IntegrationHelper.streamingEnabledToken());
                 } else {
                     return new HttpResponseMock(200);
@@ -134,7 +145,7 @@ public class SyncGuardianIntegrationTest {
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
                     Logger.i("** SSE Connect hit");
-                    mIsStreamingConnected = true;
+                    mIsStreamingConnected.countDown();
                     return createStreamResponse(mStreamingData);
                 } catch (Exception e) {
                 }
