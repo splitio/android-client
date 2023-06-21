@@ -32,7 +32,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.network.HttpException;
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
@@ -137,7 +136,7 @@ public class PushNotificationManagerTest {
 
         SseAuthenticationResult result = new SseAuthenticationResult(false, false, false, 0, null);
 
-        when(mAuthenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS)).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -155,7 +154,7 @@ public class PushNotificationManagerTest {
 
         SseAuthenticationResult result = new SseAuthenticationResult(true, false, false, 0, null);
 
-        when(mAuthenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS)).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -173,7 +172,7 @@ public class PushNotificationManagerTest {
 
         SseAuthenticationResult result = new SseAuthenticationResult(false, true, false, 0, null);
 
-        when(mAuthenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS)).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -232,7 +231,7 @@ public class PushNotificationManagerTest {
 
         SseAuthenticationResult result = new SseAuthenticationResult(false, false, false, 0, null);
 
-        when(mAuthenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS)).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -250,7 +249,7 @@ public class PushNotificationManagerTest {
         SseAuthenticationResult result = new SseAuthenticationResult(
                 false, false, false, 0, null, 500);
 
-        when(mAuthenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS)).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -307,7 +306,7 @@ public class PushNotificationManagerTest {
         when(mResult.getJwtToken()).thenReturn(mJwt);
         when(mResult.getSseConnectionDelay()).thenReturn(delay);
 
-        when(mAuthenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS)).thenReturn(mResult);
+        when(mAuthenticator.authenticate(60L)).thenReturn(mResult);
     }
 
     private BufferedReader dummyData() {

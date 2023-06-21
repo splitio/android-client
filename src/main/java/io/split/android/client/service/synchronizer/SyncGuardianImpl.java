@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.utils.logger.Logger;
 
 public class SyncGuardianImpl implements SyncGuardian {
 
@@ -19,11 +19,13 @@ public class SyncGuardianImpl implements SyncGuardian {
     private boolean mIsInitialized = false;
 
     public SyncGuardianImpl(SplitClientConfig splitConfig) {
-        this(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS, splitConfig, null);
+        this(splitConfig, null);
     }
 
     @VisibleForTesting
-    SyncGuardianImpl(long maxSyncPeriod, SplitClientConfig splitConfig, TimestampProvider timestampProvider) {
+    SyncGuardianImpl(SplitClientConfig splitConfig, TimestampProvider timestampProvider) {
+        long maxSyncPeriod = splitConfig.defaultSSEConnectionDelay();
+        Logger.v("Instantiating sync guardian with max sync period: " + maxSyncPeriod + " seconds");
         mDefaultMaxSyncPeriod = new AtomicLong(maxSyncPeriod);
         mMaxSyncPeriod = new AtomicLong(maxSyncPeriod);
         mLastSyncTimestamp = new AtomicLong(0);
@@ -45,6 +47,7 @@ public class SyncGuardianImpl implements SyncGuardian {
 
     @Override
     public void setMaxSyncPeriod(long newPeriod) {
+        Logger.v("Setting new max sync period: " + newPeriod + " seconds");
         mMaxSyncPeriod.set(Math.max(newPeriod, mDefaultMaxSyncPeriod.get()));
     }
 

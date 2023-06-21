@@ -54,7 +54,7 @@ public class SseAuthenticatorTest {
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
-        SseAuthenticationResult result = authenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS);
+        SseAuthenticationResult result = authenticator.authenticate(60L);
 
         SseJwtToken respToken = result.getJwtToken();
         Assert.assertTrue(result.isPushEnabled());
@@ -74,7 +74,7 @@ public class SseAuthenticatorTest {
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
-        SseAuthenticationResult result = authenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS);
+        SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
         Assert.assertFalse(result.isSuccess());
@@ -90,7 +90,7 @@ public class SseAuthenticatorTest {
         when(mFetcher.execute(any(), any())).thenThrow(HttpFetcherException.class);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
-        SseAuthenticationResult result = authenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS);
+        SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
         Assert.assertFalse(result.isSuccess());
@@ -107,7 +107,7 @@ public class SseAuthenticatorTest {
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
-        SseAuthenticationResult result = authenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS);
+        SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
         Assert.assertFalse(result.isSuccess());
@@ -129,7 +129,7 @@ public class SseAuthenticatorTest {
         usersSet.add("user2");
         map.put("users", usersSet);
 
-        authenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS);
+        authenticator.authenticate(60L);
 
         verify(mFetcher).execute(map, null);
     }
@@ -150,7 +150,7 @@ public class SseAuthenticatorTest {
         usersSet.add("user3");
         map.put("users", usersSet);
 
-        authenticator.authenticate(ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS);
+        authenticator.authenticate(60L);
 
         verify(mFetcher).execute(map, null);
     }
