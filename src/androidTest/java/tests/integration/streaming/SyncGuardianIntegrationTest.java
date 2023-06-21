@@ -135,22 +135,21 @@ public class SyncGuardianIntegrationTest {
         Pair<SplitClient, SplitEventTaskHelper> pair = getClient(latch,
                 true,
                 false,
-                IntegrationHelper.streamingEnabledToken(10),
-                3L,
+                IntegrationHelper.streamingEnabledToken(6),
+                1L,
                 0L);
         SplitClient client = pair.first;
         SplitEventTaskHelper readyTask = pair.second;
 
         awaitInitialization(latch);
 
-        boolean sseConnectionAwait = mIsStreamingConnected.await(10, TimeUnit.SECONDS);
+        boolean sseConnectionAwait = mIsStreamingConnected.await(20, TimeUnit.SECONDS);
         int initialSplitsHit = mSplitsHitsCountHit.get();
 
-        sendToBackgroundFor(1000);
+        sendToBackgroundFor(3000);
         int secondSplitsHit = mSplitsHitsCountHit.get();
-        Thread.sleep(3000);
 
-        sendToBackgroundFor(1000);
+        sendToBackgroundFor(3000);
         int thirdSplitsHit = mSplitsHitsCountHit.get();
 
         assertTrue(readyTask.isOnPostExecutionCalled);

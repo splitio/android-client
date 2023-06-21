@@ -25,7 +25,6 @@ public class SyncGuardianImpl implements SyncGuardian {
     @VisibleForTesting
     SyncGuardianImpl(SplitClientConfig splitConfig, TimestampProvider timestampProvider) {
         long maxSyncPeriod = splitConfig.defaultSSEConnectionDelay();
-        Logger.v("Instantiating sync guardian with max sync period: " + maxSyncPeriod + " seconds");
 
         mDefaultMaxSyncPeriod = new AtomicLong(maxSyncPeriod);
         mMaxSyncPeriod = new AtomicLong(maxSyncPeriod);
