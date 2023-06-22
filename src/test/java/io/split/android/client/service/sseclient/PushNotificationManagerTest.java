@@ -87,7 +87,7 @@ public class PushNotificationManagerTest {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         long time = System.currentTimeMillis();
         mPushManager.start();
@@ -110,7 +110,7 @@ public class PushNotificationManagerTest {
         sseClient.mConnectLatch = new CountDownLatch(1);
         setupOkAuthResponse(4);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         long time = System.currentTimeMillis();
         mPushManager.start();
@@ -132,11 +132,11 @@ public class PushNotificationManagerTest {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         SseAuthenticationResult result = new SseAuthenticationResult(false, false, false, 0, null);
 
-        when(mAuthenticator.authenticate()).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -150,11 +150,11 @@ public class PushNotificationManagerTest {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         SseAuthenticationResult result = new SseAuthenticationResult(true, false, false, 0, null);
 
-        when(mAuthenticator.authenticate()).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -168,11 +168,11 @@ public class PushNotificationManagerTest {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         SseAuthenticationResult result = new SseAuthenticationResult(false, true, false, 0, null);
 
-        when(mAuthenticator.authenticate()).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -186,7 +186,7 @@ public class PushNotificationManagerTest {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
         setupOkAuthResponse();
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -202,7 +202,7 @@ public class PushNotificationManagerTest {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
         setupOkAuthResponse();
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -227,11 +227,11 @@ public class PushNotificationManagerTest {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         SseAuthenticationResult result = new SseAuthenticationResult(false, false, false, 0, null);
 
-        when(mAuthenticator.authenticate()).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -244,12 +244,12 @@ public class PushNotificationManagerTest {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         SseAuthenticationResult result = new SseAuthenticationResult(
                 false, false, false, 0, null, 500);
 
-        when(mAuthenticator.authenticate()).thenReturn(result);
+        when(mAuthenticator.authenticate(60L)).thenReturn(result);
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -269,7 +269,7 @@ public class PushNotificationManagerTest {
     public void stopDisconnectsClient() {
         SseClient sseClient = mock(SseClient.class);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         mPushManager.stop();
 
@@ -283,7 +283,7 @@ public class PushNotificationManagerTest {
         SseClientMock sseClient = new SseClientMock();
         sseClient.mConnectLatch = new CountDownLatch(1);
         mPushManager = new PushNotificationManager(mBroadcasterChannel, mAuthenticator, sseClient, mRefreshTokenTimer,
-                mDisconnectionTimer, mTelemetryRuntimeProducer, new ScheduledThreadPoolExecutor(POOL_SIZE));
+                mDisconnectionTimer, mTelemetryRuntimeProducer, 60L, new ScheduledThreadPoolExecutor(POOL_SIZE));
 
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
@@ -306,7 +306,7 @@ public class PushNotificationManagerTest {
         when(mResult.getJwtToken()).thenReturn(mJwt);
         when(mResult.getSseConnectionDelay()).thenReturn(delay);
 
-        when(mAuthenticator.authenticate()).thenReturn(mResult);
+        when(mAuthenticator.authenticate(60L)).thenReturn(mResult);
     }
 
     private BufferedReader dummyData() {

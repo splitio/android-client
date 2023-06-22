@@ -54,6 +54,7 @@ public class SseClientImpl implements SseClient {
         mStatus.set(DISCONNECTED);
     }
 
+    @Override
     public int status() {
         return mStatus.get();
     }
@@ -76,9 +77,9 @@ public class SseClientImpl implements SseClient {
 
     @Override
     public void connect(SseJwtToken token, ConnectionListener connectionListener) {
-        boolean isConnectionConfirmed = false;
         mIsDisconnectCalled.set(false);
         mStatus.set(CONNECTING);
+        boolean isConnectionConfirmed = false;
         String channels = mStringHelper.join(",", token.getChannels());
         String rawToken = token.getRawJwt();
         boolean isErrorRetryable = true;

@@ -16,7 +16,6 @@ import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -224,16 +223,20 @@ class SplitFactoryHelper {
     }
 
     @NonNull
-    PushNotificationManager getPushNotificationManager(SplitTaskExecutor _splitTaskExecutor,
+    PushNotificationManager getPushNotificationManager(SplitTaskExecutor splitTaskExecutor,
                                                        SseAuthenticator sseAuthenticator,
                                                        PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                                        SseClient sseClient,
-                                                       TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                                                       TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                                       long defaultSseConnectionDelayInSecs,
+                                                       long sseDisconnectionDelayInSecs) {
         return new PushNotificationManager(pushManagerEventBroadcaster,
                 sseAuthenticator,
                 sseClient,
-                new SseRefreshTokenTimer(_splitTaskExecutor, pushManagerEventBroadcaster),
+                new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
                 telemetryRuntimeProducer,
+                defaultSseConnectionDelayInSecs,
+                sseDisconnectionDelayInSecs,
                 null);
     }
 
@@ -344,7 +347,9 @@ class SplitFactoryHelper {
                 sseAuthenticator,
                 pushManagerEventBroadcaster,
                 sseClient,
-                storageContainer.getTelemetryStorage());
+                storageContainer.getTelemetryStorage(),
+                config.defaultSSEConnectionDelay(),
+                config.sseDisconnectionDelay());
 
         SyncGuardian syncGuardian = new SyncGuardianImpl(config);
 

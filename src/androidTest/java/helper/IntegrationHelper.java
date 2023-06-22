@@ -182,16 +182,31 @@ public class IntegrationHelper {
     }
 
     public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled) {
-        return lowRefreshRateConfig(streamingEnabled, false);
+        return lowRefreshRateConfig(streamingEnabled, false, true, 60L, 2L);
     }
 
     public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled, boolean telemetryEnabled) {
+        return lowRefreshRateConfig(streamingEnabled, telemetryEnabled, true, 60L, 2L);
+    }
+
+    public static SplitClientConfig syncDisabledConfig() {
+        return lowRefreshRateConfig(true, false, false, 60L, 2L);
+    }
+
+    public static SplitClientConfig customSseConnectionDelayConfig(boolean streamingEnabled, long delay, long disconnectionDelay) {
+        return lowRefreshRateConfig(streamingEnabled, false, true, delay, disconnectionDelay);
+    }
+
+    public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled, boolean telemetryEnabled, boolean syncEnabled, long delay, long sseDisconnectionDelay) {
         TestableSplitConfigBuilder builder = new TestableSplitConfigBuilder()
                 .ready(30000)
                 .featuresRefreshRate(3)
                 .segmentsRefreshRate(3)
                 .impressionsRefreshRate(3)
                 .impressionsChunkSize(999999)
+                .syncEnabled(syncEnabled)
+                .defaultSSEConnectionDelayInSecs(delay)
+                .sseDisconnectionDelayInSecs(sseDisconnectionDelay)
                 .streamingEnabled(streamingEnabled)
                 .shouldRecordTelemetry(telemetryEnabled)
                 .enableDebug()
@@ -200,10 +215,14 @@ public class IntegrationHelper {
     }
 
     public static String streamingEnabledToken() {
+        return streamingEnabledToken(0);
+    }
+
+    public static String streamingEnabledToken(int delay) {
         // This token expires in 2040
         return "{" +
                 "    \"pushEnabled\": true," +
-                "    \"connDelay\": 0," +
+                "    \"connDelay\": " + delay + "," +
                 "    \"token\": \"eyJhbGciOiJIUzI1NiIsImtpZCI6IjVZOU05US45QnJtR0EiLCJ0eXAiOiJKV1QifQ.eyJ4LWFibHktY2FwYWJpbGl0eSI6IntcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X01UY3dOVEkyTVRNME1nPT1fbXlTZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X3NwbGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xfcHJpXCI6W1wic3Vic2NyaWJlXCIsXCJjaGFubmVsLW1ldGFkYXRhOnB1Ymxpc2hlcnNcIl0sXCJjb250cm9sX3NlY1wiOltcInN1YnNjcmliZVwiLFwiY2hhbm5lbC1tZXRhZGF0YTpwdWJsaXNoZXJzXCJdfSIsIngtYWJseS1jbGllbnRJZCI6ImNsaWVudElkIiwiZXhwIjoyMjA4OTg4ODAwLCJpYXQiOjE1ODc0MDQzODh9.LcKAXnkr-CiYVxZ7l38w9i98Y-BMAv9JlGP2i92nVQY\"" +
                 "}";
 
