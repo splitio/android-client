@@ -1,6 +1,9 @@
 package io.split.android.client.service.splits;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
@@ -14,10 +17,18 @@ public class SplitChangeProcessor {
             return new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), -1L, 0);
         }
 
+        return buildProcessedSplitChange(splitChange.splits, splitChange.till);
+    }
+
+    public ProcessedSplitChange process(Split split, long changeNumber) {
+        return buildProcessedSplitChange(Collections.singletonList(split), changeNumber);
+    }
+
+    @NonNull
+    private static ProcessedSplitChange buildProcessedSplitChange(List<Split> featureFlags, long changeNumber) {
         List<Split> activeSplits = new ArrayList<>();
         List<Split> archivedSplits = new ArrayList<>();
-        List<Split> splits = splitChange.splits;
-        for (Split split : splits) {
+        for (Split split : featureFlags) {
             if (split.name == null) {
                 continue;
             }
@@ -27,6 +38,7 @@ public class SplitChangeProcessor {
                 archivedSplits.add(split);
             }
         }
-        return new ProcessedSplitChange(activeSplits, archivedSplits, splitChange.till, System.currentTimeMillis() / 100);
+
+        return new ProcessedSplitChange(activeSplits, archivedSplits, changeNumber, System.currentTimeMillis() / 100);
     }
 }

@@ -59,7 +59,7 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
                     processMySegmentUpdateV2(mNotificationParser.parseMySegmentUpdateV2(notificationJson));
                     break;
                 default:
-                    Logger.e("Unknow notification arrived: " + notificationJson);
+                    Logger.e("Unknown notification arrived: " + notificationJson);
             }
         } catch (JsonSyntaxException e) {
             Logger.e("Error processing incoming push notification: " +

@@ -87,6 +87,55 @@ public class SplitChangeProcessorTest {
         Assert.assertEquals(9, result.getActiveSplits().size());
     }
 
+    @Test
+    public void processSingleActiveSplit() {
+        Split activeSplit = createSplits(1, 1, Status.ACTIVE).get(0);
+
+        ProcessedSplitChange result = mProcessor.process(activeSplit, 14500);
+
+        Assert.assertEquals(0, result.getArchivedSplits().size());
+        Assert.assertEquals(1, result.getActiveSplits().size());
+        Assert.assertEquals(14500, result.getChangeNumber());
+
+        Split split = result.getActiveSplits().get(0);
+        Assert.assertEquals(activeSplit.name, split.name);
+        Assert.assertEquals(activeSplit.status, split.status);
+        Assert.assertEquals(activeSplit.trafficTypeName, split.trafficTypeName);
+        Assert.assertEquals(activeSplit.trafficAllocation, split.trafficAllocation);
+        Assert.assertEquals(activeSplit.trafficAllocationSeed, split.trafficAllocationSeed);
+        Assert.assertEquals(activeSplit.seed, split.seed);
+        Assert.assertEquals(activeSplit.conditions, split.conditions);
+        Assert.assertEquals(activeSplit.defaultTreatment, split.defaultTreatment);
+        Assert.assertEquals(activeSplit.configurations, split.configurations);
+        Assert.assertEquals(activeSplit.algo, split.algo);
+        Assert.assertEquals(activeSplit.changeNumber, split.changeNumber);
+        Assert.assertEquals(activeSplit.killed, split.killed);
+    }
+
+    @Test
+    public void processSingleArchivedSplit() {
+        Split archivedSplit = createSplits(1, 1, Status.ARCHIVED).get(0);
+
+        ProcessedSplitChange result = mProcessor.process(archivedSplit, 14500);
+
+        Assert.assertEquals(1, result.getArchivedSplits().size());
+        Assert.assertEquals(0, result.getActiveSplits().size());
+        Assert.assertEquals(14500, result.getChangeNumber());
+
+        Split split = result.getArchivedSplits().get(0);
+        Assert.assertEquals(archivedSplit.name, split.name);
+        Assert.assertEquals(archivedSplit.status, split.status);
+        Assert.assertEquals(archivedSplit.trafficTypeName, split.trafficTypeName);
+        Assert.assertEquals(archivedSplit.trafficAllocation, split.trafficAllocation);
+        Assert.assertEquals(archivedSplit.trafficAllocationSeed, split.trafficAllocationSeed);
+        Assert.assertEquals(archivedSplit.seed, split.seed);
+        Assert.assertEquals(archivedSplit.conditions, split.conditions);
+        Assert.assertEquals(archivedSplit.defaultTreatment, split.defaultTreatment);
+        Assert.assertEquals(archivedSplit.configurations, split.configurations);
+        Assert.assertEquals(archivedSplit.algo, split.algo);
+        Assert.assertEquals(archivedSplit.changeNumber, split.changeNumber);
+        Assert.assertEquals(archivedSplit.killed, split.killed);
+    }
 
     private List<Split> createSplits(int from, int count, Status status) {
         List<Split> splits = new ArrayList<>();

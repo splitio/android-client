@@ -2,6 +2,8 @@ package io.split.android.client.service.executor;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import android.annotation.SuppressLint;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -31,6 +33,7 @@ import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
@@ -51,7 +54,9 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final String mSplitsFilterQueryString;
     private final ISplitEventsManager mEventsManager;
     private final TelemetryTaskFactory mTelemetryTaskFactory;
+    private final SplitChangeProcessor mSplitChangeProcessor;
 
+    @SuppressLint("VisibleForTests")
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
                                 @NonNull SplitApiFacade splitApiFacade,
                                 @NonNull SplitStorageContainer splitStorageContainer,
@@ -64,11 +69,12 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
         mSplitsFilterQueryString = splitsFilterQueryString;
         mEventsManager = eventsManager;
+        mSplitChangeProcessor = new SplitChangeProcessor();
 
         if (testingConfig != null) {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
-                    new SplitChangeProcessor(),
+                    mSplitChangeProcessor,
                     mSplitsStorageContainer.getTelemetryStorage(),
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()));
         } else {
@@ -180,5 +186,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public TelemetryStatsRecorderTask getTelemetryStatsRecorderTask() {
         return mTelemetryTaskFactory.getTelemetryStatsRecorderTask();
+    }
+
+    @Override
+    public SplitInPlaceUpdateTask createSplitsUpdateTask(Split featureFlag, long since) {
+        return new SplitInPlaceUpdateTask(mSplitsStorageContainer.getSplitsStorage(), mSplitChangeProcessor, mEventsManager, featureFlag, since);
     }
 }
