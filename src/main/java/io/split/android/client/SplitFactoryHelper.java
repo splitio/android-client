@@ -3,6 +3,7 @@ package io.split.android.client;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.work.WorkManager;
 
 import java.io.File;
@@ -201,32 +202,21 @@ class SplitFactoryHelper {
                                  SplitTaskExecutor splitTaskExecutor,
                                  Synchronizer synchronizer,
                                  TelemetrySynchronizer telemetrySynchronizer,
+                                 @Nullable PushNotificationManager pushNotificationManager,
+                                 @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                                 @Nullable SplitUpdatesWorker splitUpdatesWorker,
+                                 @Nullable SyncGuardian syncGuardian) {
 
-                                 SplitsStorage splitsStorage,
-                                 CompressionUtilProvider compressionUtilProvider,
-                                 SplitTaskFactory splitTaskFactory,
 
-                                 PushNotificationManager pushNotificationManager,
-                                 BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue,
-                                 PushManagerEventBroadcaster pushManagerEventBroadcaster,
-                                 SyncGuardian syncGuardian) {
-
-        SplitUpdatesWorker updateWorker = null;
         BackoffCounterTimer backoffCounterTimer = null;
         if (config.syncEnabled()) {
-            updateWorker = new SplitUpdatesWorker(synchronizer,
-                    splitsUpdateNotificationQueue,
-                    splitsStorage,
-                    compressionUtilProvider,
-                    splitTaskExecutor,
-                    splitTaskFactory);
             backoffCounterTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
         }
 
         return new SyncManagerImpl(config,
                 synchronizer,
                 pushNotificationManager,
-                updateWorker,
+                splitUpdatesWorker,
                 pushManagerEventBroadcaster,
                 backoffCounterTimer,
                 syncGuardian,
@@ -405,6 +395,26 @@ class SplitFactoryHelper {
                 executionListener);
 
         return toCipher;
+    }
+
+    @Nullable
+    SplitUpdatesWorker getSplitUpdatesWorker(SplitClientConfig config,
+                                             SplitTaskExecutor splitTaskExecutor,
+                                             SplitTaskFactory splitTaskFactory,
+                                             Synchronizer mSynchronizer,
+                                             BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue,
+                                             SplitsStorage splitsStorage,
+                                             CompressionUtilProvider compressionProvider) {
+        if (config.syncEnabled()) {
+            return new SplitUpdatesWorker(mSynchronizer,
+                    splitsUpdateNotificationQueue,
+                    splitsStorage,
+                    compressionProvider,
+                    splitTaskExecutor,
+                    splitTaskFactory);
+        }
+
+        return null;
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {

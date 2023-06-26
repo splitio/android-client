@@ -7,7 +7,6 @@ import io.split.android.client.service.sseclient.notifications.NotificationParse
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.synchronizer.SyncGuardian;
-import io.split.android.client.service.synchronizer.SyncManager;
 
 public class StreamingComponents {
 

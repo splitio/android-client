@@ -208,21 +208,25 @@ public class SplitFactoryImpl implements SplitFactory {
             mSynchronizer = synchronizerSpy;
         }
 
+        CompressionUtilProvider compressionProvider = new CompressionUtilProvider();
+
         TelemetrySynchronizer telemetrySynchronizer = factoryHelper.getTelemetrySynchronizer(splitTaskExecutor,
                 splitTaskFactory, config.telemetryRefreshRate(), config.shouldRecordTelemetry());
 
-        CompressionUtilProvider compressionProvider = new CompressionUtilProvider();
         mSyncManager = factoryHelper.buildSyncManager(
                 config,
                 splitTaskExecutor,
                 mSynchronizer,
                 telemetrySynchronizer,
-                mStorageContainer.getSplitsStorage(),
-                compressionProvider,
-                splitTaskFactory,
                 streamingComponents.getPushNotificationManager(),
-                streamingComponents.getSplitsUpdateNotificationQueue(),
                 streamingComponents.getPushManagerEventBroadcaster(),
+                factoryHelper.getSplitUpdatesWorker(config,
+                        splitTaskExecutor,
+                        splitTaskFactory,
+                        mSynchronizer,
+                        streamingComponents.getSplitsUpdateNotificationQueue(),
+                        mStorageContainer.getSplitsStorage(),
+                        compressionProvider),
                 streamingComponents.getSyncGuardian());
 
         if (testLifecycleManager == null) {
