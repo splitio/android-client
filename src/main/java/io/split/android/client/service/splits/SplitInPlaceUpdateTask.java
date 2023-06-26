@@ -42,7 +42,6 @@ public class SplitInPlaceUpdateTask implements SplitTask {
             mSplitsStorage.update(processedSplitChange);
 
             mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         } catch (Exception ex) {
             Logger.e("Could not update feature flag");
