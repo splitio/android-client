@@ -148,7 +148,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
         byte[] decode(String data);
     }
 
-    static class Base64DecoderImpl implements Base64Decoder {
+    private static class Base64DecoderImpl implements Base64Decoder {
         @Override
         public byte[] decode(String data) {
             return Base64Util.bytesDecode(data);

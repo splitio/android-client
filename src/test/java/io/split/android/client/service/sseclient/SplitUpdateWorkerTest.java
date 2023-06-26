@@ -127,6 +127,7 @@ public class SplitUpdateWorkerTest {
     public void nullPreviousChangeNumberDoesNothing() {
         when(mSplitsStorage.getTill()).thenReturn(1000L);
         SplitsChangeNotification notification = getNewNotification();
+        when(notification.getPreviousChangeNumber()).thenReturn(null);
         mNotificationsQueue.offer(notification);
 
         verify(mSynchronizer, never())
@@ -137,6 +138,7 @@ public class SplitUpdateWorkerTest {
     public void zeroPreviousChangeNumberDoesNothing() {
         when(mSplitsStorage.getTill()).thenReturn(1000L);
         SplitsChangeNotification notification = getNewNotification();
+        when(notification.getPreviousChangeNumber()).thenReturn(0L);
         mNotificationsQueue.offer(notification);
 
         verify(mSynchronizer, never())

@@ -81,6 +81,7 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     }
 
     private void processSplitUpdate(SplitsChangeNotification notification) {
+        Logger.d("Received split change notification");
         mSplitsUpdateNotificationsQueue.offer(notification);
     }
 
