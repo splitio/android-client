@@ -6,14 +6,18 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEven
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.synchronizer.SyncGuardian;
+import io.split.android.client.service.synchronizer.SyncManager;
 
 public class StreamingComponents {
-    private PushNotificationManager pushNotificationManager;
-    private BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue;
-    private PushManagerEventBroadcaster pushManagerEventBroadcaster;
-    private NotificationParser notificationParser;
-    private NotificationProcessor notificationProcessor;
-    private SseAuthenticator sseAuthenticator;
+
+    private PushNotificationManager mPushNotificationManager;
+    private BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationQueue;
+    private PushManagerEventBroadcaster mPushManagerEventBroadcaster;
+    private NotificationParser mNotificationParser;
+    private NotificationProcessor mNotificationProcessor;
+    private SseAuthenticator mSseAuthenticator;
+    private SyncGuardian mSyncGuardian;
 
     public StreamingComponents() {
     }
@@ -23,36 +27,42 @@ public class StreamingComponents {
                                NotificationParser notificationParser,
                                NotificationProcessor notificationProcessor,
                                SseAuthenticator sseAuthenticator,
-                               PushManagerEventBroadcaster pushManagerEventBroadcaster) {
-        this.pushNotificationManager = pushNotificationManager;
-        this.splitsUpdateNotificationQueue = splitsUpdateNotificationQueue;
-        this.notificationParser = notificationParser;
-        this.notificationProcessor = notificationProcessor;
-        this.sseAuthenticator = sseAuthenticator;
-        this.pushManagerEventBroadcaster = pushManagerEventBroadcaster;
+                               PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                               SyncGuardian syncManager) {
+        mPushNotificationManager = pushNotificationManager;
+        mSplitsUpdateNotificationQueue = splitsUpdateNotificationQueue;
+        mNotificationParser = notificationParser;
+        mNotificationProcessor = notificationProcessor;
+        mSseAuthenticator = sseAuthenticator;
+        mPushManagerEventBroadcaster = pushManagerEventBroadcaster;
+        mSyncGuardian = syncManager;
     }
 
     public PushNotificationManager getPushNotificationManager() {
-        return pushNotificationManager;
+        return mPushNotificationManager;
     }
 
     public BlockingQueue<SplitsChangeNotification> getSplitsUpdateNotificationQueue() {
-        return splitsUpdateNotificationQueue;
+        return mSplitsUpdateNotificationQueue;
     }
 
     public PushManagerEventBroadcaster getPushManagerEventBroadcaster() {
-        return pushManagerEventBroadcaster;
+        return mPushManagerEventBroadcaster;
     }
 
     public NotificationParser getNotificationParser() {
-        return notificationParser;
+        return mNotificationParser;
     }
 
     public NotificationProcessor getNotificationProcessor() {
-        return notificationProcessor;
+        return mNotificationProcessor;
     }
 
     public SseAuthenticator getSseAuthenticator() {
-        return sseAuthenticator;
+        return mSseAuthenticator;
+    }
+
+    public SyncGuardian getSyncGuardian() {
+        return mSyncGuardian;
     }
 }

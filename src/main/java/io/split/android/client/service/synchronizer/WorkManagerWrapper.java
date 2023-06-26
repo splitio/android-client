@@ -36,7 +36,6 @@ import io.split.android.client.service.workmanager.SplitsSyncWorker;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.service.workmanager.UniqueKeysRecorderWorker;
 
-@VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
 public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
     final private WorkManager mWorkManager;
     final private String mDatabaseName;

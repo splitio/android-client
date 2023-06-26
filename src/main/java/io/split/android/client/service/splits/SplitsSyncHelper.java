@@ -78,16 +78,16 @@ public class SplitsSyncHelper {
                 attemptSplitSync(till, clearBeforeUpdate, avoidCache, true, resetChangeNumber);
             }
         } catch (HttpFetcherException e) {
-            logError("Network error while fetching splits" + e.getLocalizedMessage());
+            logError("Network error while fetching feature flags" + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
 
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         } catch (Exception e) {
-            logError("Unexpected while fetching splits" + e.getLocalizedMessage());
+            logError("Unexpected while fetching feature flags" + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         }
 
-        Logger.d("Features have been updated");
+        Logger.d("Feature flags have been updated");
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
