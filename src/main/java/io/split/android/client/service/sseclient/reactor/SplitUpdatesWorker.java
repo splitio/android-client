@@ -75,7 +75,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
 
             long storageChangeNumber = mSplitsStorage.getTill();
             if (notification.getChangeNumber() <= storageChangeNumber) {
-                Logger.v("Notification change number is lower than the current one. Ignoring notification");
+                Logger.d("Notification change number is lower than the current one. Ignoring notification");
                 return;
             }
 
@@ -119,6 +119,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
             mSplitTaskExecutor.submit(
                     mSplitTaskFactory.createSplitsUpdateTask(split, notification.getChangeNumber()),
                     null);
+            Logger.d("Updating split: " + split.name);
         } catch (Exception e) {
             Logger.e("Could not parse split");
         }
