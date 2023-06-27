@@ -30,7 +30,9 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
     public Stats getTelemetryStats() {
         if (pendingStats == null) {
             synchronized (mLock) {
-                pendingStats = buildStats();
+                if (pendingStats == null) {
+                    pendingStats = buildStats();
+                }
             }
         }
 

@@ -27,6 +27,7 @@ import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class SplitInPlaceUpdateTaskTest {
+
     @Mock
     private SplitsStorage mSplitsStorage;
     @Mock
