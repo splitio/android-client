@@ -44,6 +44,8 @@ import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 import io.split.android.client.service.telemetry.TelemetryTaskFactoryImpl;
 import io.split.android.client.storage.common.SplitStorageContainer;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.telemetry.storage.TelemetryStorage;
 
 public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
@@ -55,6 +57,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final ISplitEventsManager mEventsManager;
     private final TelemetryTaskFactory mTelemetryTaskFactory;
     private final SplitChangeProcessor mSplitChangeProcessor;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     @SuppressLint("VisibleForTests")
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
@@ -71,22 +74,24 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mEventsManager = eventsManager;
         mSplitChangeProcessor = new SplitChangeProcessor();
 
+        TelemetryStorage telemetryStorage = mSplitsStorageContainer.getTelemetryStorage();
+        mTelemetryRuntimeProducer = telemetryStorage;
         if (testingConfig != null) {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
-                    mSplitsStorageContainer.getTelemetryStorage(),
+                    mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()));
         } else {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     new SplitChangeProcessor(),
-                    mSplitsStorageContainer.getTelemetryStorage());
+                    mTelemetryRuntimeProducer);
         }
 
         mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
                 mSplitApiFacade.getTelemetryStatsRecorder(),
-                mSplitsStorageContainer.getTelemetryStorage(),
+                telemetryStorage,
                 splitClientConfig,
                 mSplitsStorageContainer.getSplitsStorage(),
                 mSplitsStorageContainer.getMySegmentsStorageContainer());
@@ -190,6 +195,6 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public SplitInPlaceUpdateTask createSplitsUpdateTask(Split featureFlag, long since) {
-        return new SplitInPlaceUpdateTask(mSplitsStorageContainer.getSplitsStorage(), mSplitChangeProcessor, mEventsManager, featureFlag, since);
+        return new SplitInPlaceUpdateTask(mSplitsStorageContainer.getSplitsStorage(), mSplitChangeProcessor, mEventsManager, mTelemetryRuntimeProducer, featureFlag, since);
     }
 }

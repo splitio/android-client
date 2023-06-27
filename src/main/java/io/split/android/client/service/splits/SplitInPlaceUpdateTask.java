@@ -12,6 +12,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
 
 public class SplitInPlaceUpdateTask implements SplitTask {
@@ -21,17 +23,20 @@ public class SplitInPlaceUpdateTask implements SplitTask {
     private final Split mSplit;
     private final SplitChangeProcessor mSplitChangeProcessor;
     private final ISplitEventsManager mEventsManager;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public SplitInPlaceUpdateTask(@NonNull SplitsStorage splitsStorage,
                                   @NonNull SplitChangeProcessor splitChangeProcessor,
                                   @NonNull ISplitEventsManager eventsManager,
+                                  @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                                   @NonNull Split split,
                                   long changeNumber) {
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
         mEventsManager = checkNotNull(eventsManager);
-        mChangeNumber = changeNumber;
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mSplit = checkNotNull(split);
+        mChangeNumber = changeNumber;
     }
 
     @NonNull
@@ -42,6 +47,8 @@ public class SplitInPlaceUpdateTask implements SplitTask {
             mSplitsStorage.update(processedSplitChange);
 
             mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+            mTelemetryRuntimeProducer.recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         } catch (Exception ex) {
             Logger.e("Could not update feature flag");
