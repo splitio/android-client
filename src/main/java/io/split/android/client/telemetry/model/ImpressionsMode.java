@@ -7,7 +7,10 @@ public enum ImpressionsMode {
     OPTIMIZED,
 
     @SerializedName("1")
-    DEBUG;
+    DEBUG,
+
+    @SerializedName("2")
+    NONE;
 
     public int intValue() {
         switch (this) {
@@ -15,6 +18,8 @@ public enum ImpressionsMode {
                 return 0;
             case DEBUG:
                 return 1;
+            case NONE:
+                return 2;
         }
 
         return 0;

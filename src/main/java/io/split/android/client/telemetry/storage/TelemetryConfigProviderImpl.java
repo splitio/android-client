@@ -48,6 +48,8 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
             config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.DEBUG.intValue());
         } else if (mSplitClientConfig.impressionsMode() == ImpressionsMode.OPTIMIZED) {
             config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.OPTIMIZED.intValue());
+        } else {
+            config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.NONE.intValue());
         }
 
         return config;
