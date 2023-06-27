@@ -21,6 +21,8 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -28,6 +30,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 public class MySegmentsUpdateTaskTest {
@@ -40,12 +43,15 @@ public class MySegmentsUpdateTaskTest {
 
     MySegmentsUpdateTask mTask;
 
+    @Mock
+    private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+
     String mSegmentToRemove = "MS_TO_REMOVE";
     String mCustomerSegment = "CUSTOMER_ID";
 
     @Before
     public void setup() {
-        Set oldSegments = new HashSet<>();
+        Set<String> oldSegments = new HashSet<>();
         oldSegments.add(mCustomerSegment);
         oldSegments.add(mSegmentToRemove);
 
@@ -55,7 +61,7 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void correctExecution() throws HttpFetcherException {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer);
 
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
@@ -71,7 +77,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void correctExecutionToEraseNotInSegments() throws HttpFetcherException {
         String otherSegment = "OtherSegment";
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, otherSegment, mEventsManager);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, otherSegment, mEventsManager, mTelemetryRuntimeProducer);
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -84,12 +90,31 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void storageException() {
 
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer);
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(any());
 
         SplitTaskExecutionInfo result = mTask.execute();
 
         Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        verifyNoInteractions(mTelemetryRuntimeProducer);
+    }
+
+    @Test
+    public void successfulAddOperationIsRecordedInTelemetry() {
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer);
+
+        mTask.execute();
+
+        verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.MY_SEGMENTS);
+    }
+
+    @Test
+    public void successfulRemoveOperationIsRecordedInTelemetry() {
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer);
+
+        mTask.execute();
+
+        verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.MY_SEGMENTS);
     }
 
     @After
