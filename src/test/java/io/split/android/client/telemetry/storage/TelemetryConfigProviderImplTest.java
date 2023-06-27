@@ -74,7 +74,7 @@ public class TelemetryConfigProviderImplTest {
         assertEquals(200, configTelemetry.getImpressionsQueueSize());
         assertEquals(300, configTelemetry.getEventsQueueSize());
         assertEquals(3, configTelemetry.getUserConsent());
-        assertEquals(io.split.android.client.telemetry.model.ImpressionsMode.OPTIMIZED, configTelemetry.getImpressionsMode());
+        assertEquals(io.split.android.client.telemetry.model.ImpressionsMode.OPTIMIZED.intValue(), configTelemetry.getImpressionsMode());
         assertTrue(configTelemetry.isImpressionsListenerEnabled());
         assertTrue(configTelemetry.getUrlOverrides().isTelemetry());
         assertTrue(configTelemetry.getUrlOverrides().isSdkUrl());

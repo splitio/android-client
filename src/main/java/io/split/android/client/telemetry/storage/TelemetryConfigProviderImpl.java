@@ -45,9 +45,9 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         config.setEventsQueueSize(mSplitClientConfig.eventsQueueSize());
         config.setUserConsent(mSplitClientConfig.userConsent().intValue());
         if (mSplitClientConfig.impressionsMode() == ImpressionsMode.DEBUG) {
-            config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.DEBUG);
+            config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.DEBUG.intValue());
         } else if (mSplitClientConfig.impressionsMode() == ImpressionsMode.OPTIMIZED) {
-            config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.OPTIMIZED);
+            config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.OPTIMIZED.intValue());
         }
 
         return config;
