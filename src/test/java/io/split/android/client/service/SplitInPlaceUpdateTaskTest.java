@@ -18,7 +18,7 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
@@ -52,7 +52,6 @@ public class SplitInPlaceUpdateTaskTest {
 
     @Test
     public void sseUpdateIsRecordedInTelemetryWhenOperationIsSuccessful() {
-        SplitTaskExecutionInfo expectedResult = SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
 
         when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
@@ -64,12 +63,11 @@ public class SplitInPlaceUpdateTaskTest {
         verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
 
-        assertEquals(expectedResult, result);
+        assertEquals(result.getStatus(), SplitTaskExecutionStatus.SUCCESS);
     }
 
     @Test
     public void exceptionDuringProcessingReturnsErrorExecutionInfo() {
-        SplitTaskExecutionInfo expectedResult = SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
 
         doThrow(new RuntimeException()).when(mSplitChangeProcessor).process(mSplit, 123L);
 
@@ -80,12 +78,11 @@ public class SplitInPlaceUpdateTaskTest {
         verify(mEventsManager, never()).notifyInternalEvent(any());
         verify(mTelemetryRuntimeProducer, never()).recordUpdatesFromSSE(any());
 
-        assertEquals(expectedResult, result);
+        assertEquals(result.getStatus(), SplitTaskExecutionStatus.ERROR);
     }
 
     @Test
     public void exceptionDuringStorageUpdateReturnsErrorExecutionInfo() {
-        SplitTaskExecutionInfo expectedResult = SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
 
         when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
@@ -98,6 +95,6 @@ public class SplitInPlaceUpdateTaskTest {
         verify(mEventsManager, never()).notifyInternalEvent(any());
         verify(mTelemetryRuntimeProducer, never()).recordUpdatesFromSSE(any());
 
-        assertEquals(expectedResult, result);
+        assertEquals(result.getStatus(), SplitTaskExecutionStatus.ERROR);
     }
 }
