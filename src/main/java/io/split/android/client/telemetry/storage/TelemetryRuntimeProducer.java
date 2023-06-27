@@ -4,6 +4,7 @@ import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
+import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
 
 public interface TelemetryRuntimeProducer {
 
@@ -26,4 +27,6 @@ public interface TelemetryRuntimeProducer {
     void recordStreamingEvents(StreamingEvent streamingEvent);
 
     void recordSessionLength(long sessionLength);
+
+    void recordUpdatesFromSSE(UpdatesFromSSEEnum sseUpdate);
 }

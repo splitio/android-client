@@ -23,12 +23,14 @@ import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.model.UpdatesFromSSE;
 import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.ConnectionEstablishedStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.OccupancySecStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
 import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
+import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
 
 public class InMemoryTelemetryStorageTest {
 
@@ -531,9 +533,40 @@ public class InMemoryTelemetryStorageTest {
         assertEquals(300, telemetryStorage.getTimeUntilReadyFromCache());
     }
 
+    @Test
     public void recordSdkReadyFromCacheValueIsStoreCorrectly() {
         telemetryStorage.recordTimeUntilReadyFromCache(500);
 
         assertEquals(500, telemetryStorage.getTimeUntilReadyFromCache());
+    }
+
+    @Test
+    public void updatesSSEEventsForSplitsIsSetCorrectly() {
+        telemetryStorage.recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+        telemetryStorage.recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+        telemetryStorage.recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+        telemetryStorage.recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+
+        UpdatesFromSSE firstPop = telemetryStorage.popUpdatesFromSSE();
+        UpdatesFromSSE secondPop = telemetryStorage.popUpdatesFromSSE();
+
+        assertEquals(4, firstPop.getSplits());
+        assertEquals(0, firstPop.getMySegments());
+        assertEquals(0, secondPop.getSplits());
+        assertEquals(0, secondPop.getMySegments());
+    }
+
+    @Test
+    public void updatesSSEEventsForMySegmentsIsSetCorrectly() {
+        telemetryStorage.recordUpdatesFromSSE(UpdatesFromSSEEnum.MY_SEGMENTS);
+        telemetryStorage.recordUpdatesFromSSE(UpdatesFromSSEEnum.MY_SEGMENTS);
+        telemetryStorage.recordUpdatesFromSSE(UpdatesFromSSEEnum.MY_SEGMENTS);
+
+        UpdatesFromSSE firstPop = telemetryStorage.popUpdatesFromSSE();
+        UpdatesFromSSE secondPop = telemetryStorage.popUpdatesFromSSE();
+        assertEquals(3, firstPop.getMySegments());
+        assertEquals(0, firstPop.getSplits());
+        assertEquals(0, secondPop.getMySegments());
+        assertEquals(0, secondPop.getSplits());
     }
 }

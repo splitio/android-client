@@ -62,6 +62,9 @@ public class Stats {
     @SerializedName("t")
     private List<String> tags;
 
+    @SerializedName("ufs")
+    private UpdatesFromSSE updatesFromSSE;
+
     public void setLastSynchronizations(LastSync lastSynchronizations) {
         this.lastSynchronizations = lastSynchronizations;
     }
@@ -130,7 +133,83 @@ public class Stats {
         this.tags = tags;
     }
 
+    public void setUpdatesFromSSE(UpdatesFromSSE updatesFromSSE) {
+        this.updatesFromSSE = updatesFromSSE;
+    }
+
     public List<String> getTags() {
         return tags;
+    }
+
+    public UpdatesFromSSE getUpdatesFromSSE() {
+        return updatesFromSSE;
+    }
+
+    public LastSync getLastSynchronizations() {
+        return lastSynchronizations;
+    }
+
+    public MethodLatencies getMethodLatencies() {
+        return methodLatencies;
+    }
+
+    public MethodExceptions getMethodExceptions() {
+        return methodExceptions;
+    }
+
+    public HttpErrors getHttpErrors() {
+        return httpErrors;
+    }
+
+    public HttpLatencies getHttpLatencies() {
+        return httpLatencies;
+    }
+
+    public long getTokenRefreshes() {
+        return tokenRefreshes;
+    }
+
+    public long getAuthRejections() {
+        return authRejections;
+    }
+
+    public long getImpressionsQueued() {
+        return impressionsQueued;
+    }
+
+    public long getImpressionsDeduped() {
+        return impressionsDeduped;
+    }
+
+    public long getImpressionsDropped() {
+        return impressionsDropped;
+    }
+
+    public long getSplitCount() {
+        return splitCount;
+    }
+
+    public long getSegmentCount() {
+        return segmentCount;
+    }
+
+    public long getSegmentKeyCount() {
+        return segmentKeyCount;
+    }
+
+    public long getSessionLengthMs() {
+        return sessionLengthMs;
+    }
+
+    public long getEventsQueued() {
+        return eventsQueued;
+    }
+
+    public long getEventsDropped() {
+        return eventsDropped;
+    }
+
+    public List<StreamingEvent> getStreamingEvents() {
+        return streamingEvents;
     }
 }

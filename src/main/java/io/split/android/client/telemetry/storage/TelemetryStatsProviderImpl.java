@@ -15,7 +15,8 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
     private final TelemetryStorageConsumer mTelemetryStorageConsumer;
     private final SplitsStorage mSplitsStorage;
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
-    private Stats pendingStats = null;
+    private volatile Stats pendingStats = null;
+    private final Object mLock = new Object();
 
     public TelemetryStatsProviderImpl(@NonNull TelemetryStorageConsumer telemetryStorageConsumer,
                                       @NonNull SplitsStorage splitsStorage,
@@ -28,7 +29,9 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
     @Override
     public Stats getTelemetryStats() {
         if (pendingStats == null) {
-            pendingStats = buildStats();
+            synchronized (mLock) {
+                pendingStats = buildStats();
+            }
         }
 
         return pendingStats;
@@ -58,7 +61,8 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
         stats.setTokenRefreshes(mTelemetryStorageConsumer.popTokenRefreshes());
         stats.setAuthRejections(mTelemetryStorageConsumer.popAuthRejections());
         stats.setEventsQueued(mTelemetryStorageConsumer.getEventsStats(EventsDataRecordsEnum.EVENTS_QUEUED));
-        stats.setEventsQueued(mTelemetryStorageConsumer.getEventsStats(EventsDataRecordsEnum.EVENTS_DROPPED));
+        stats.setEventsDropped(mTelemetryStorageConsumer.getEventsStats(EventsDataRecordsEnum.EVENTS_DROPPED));
+        stats.setUpdatesFromSSE(mTelemetryStorageConsumer.popUpdatesFromSSE());
 
         return stats;
     }

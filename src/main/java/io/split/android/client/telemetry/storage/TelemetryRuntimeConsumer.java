@@ -7,6 +7,7 @@ import io.split.android.client.telemetry.model.HttpErrors;
 import io.split.android.client.telemetry.model.HttpLatencies;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.LastSync;
+import io.split.android.client.telemetry.model.UpdatesFromSSE;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
 
 public interface TelemetryRuntimeConsumer {
@@ -30,4 +31,6 @@ public interface TelemetryRuntimeConsumer {
     List<String> popTags();
 
     long getSessionLength();
+
+    UpdatesFromSSE popUpdatesFromSSE();
 }

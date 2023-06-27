@@ -21,8 +21,9 @@ import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.model.PushCounterEvent;
+import io.split.android.client.telemetry.model.UpdatesFromSSE;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
-import io.split.android.client.telemetry.util.AtomicLongArray;
+import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
 
 public class InMemoryTelemetryStorage implements TelemetryStorage {
 
@@ -50,10 +51,12 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
 
     private final Object streamingEventsLock = new Object();
     private List<StreamingEvent> streamingEvents = new ArrayList<>();
+    private Map<UpdatesFromSSEEnum, AtomicLong> updatesFromSSE = Maps.newConcurrentMap();
 
     private final Object tagsLock = new Object();
     private final Object httpLatenciesLock = new Object();
     private final Object methodLatenciesLock = new Object();
+    private final Object updatesFromSSELock = new Object();
 
     private final Set<String> tags = new HashSet<>();
 
@@ -249,6 +252,26 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     }
 
     @Override
+    public UpdatesFromSSE popUpdatesFromSSE() {
+        synchronized (updatesFromSSELock) {
+            long sCount = 0L;
+            long mCount = 0L;
+
+            AtomicLong splits = updatesFromSSE.get(UpdatesFromSSEEnum.SPLITS);
+            if (splits != null) {
+                sCount = splits.getAndSet(0L);
+            }
+
+            AtomicLong mySegments = updatesFromSSE.get(UpdatesFromSSEEnum.MY_SEGMENTS);
+            if (mySegments != null) {
+                mCount = mySegments.getAndSet(0L);
+            }
+
+            return new UpdatesFromSSE(sCount, mCount);
+        }
+    }
+
+    @Override
     public void addTag(String tag) {
         synchronized (tagsLock) {
             if (tags.size() < MAX_TAGS) {
@@ -324,6 +347,11 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         this.sessionLength.set(sessionLength);
     }
 
+    @Override
+    public void recordUpdatesFromSSE(UpdatesFromSSEEnum sseUpdate) {
+        updatesFromSSE.get(sseUpdate).incrementAndGet();
+    }
+
     private void initializeProperties() {
         initializeMethodExceptionsCounter();
         initializeHttpLatenciesCounter();
@@ -334,6 +362,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         initializeHttpErrors();
         initializeHttpLatencies();
         initializePushCounters();
+        initializeUpdatesFromSSE();
     }
 
     private void initializeHttpLatenciesCounter() {
@@ -404,6 +433,11 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     private void initializePushCounters() {
         pushCounters.put(PushCounterEvent.AUTH_REJECTIONS, new AtomicLong());
         pushCounters.put(PushCounterEvent.TOKEN_REFRESHES, new AtomicLong());
+    }
+
+    private void initializeUpdatesFromSSE() {
+        updatesFromSSE.put(UpdatesFromSSEEnum.SPLITS, new AtomicLong());
+        updatesFromSSE.put(UpdatesFromSSEEnum.MY_SEGMENTS, new AtomicLong());
     }
 
     private List<Long> popLatencies(OperationType operationType) {
