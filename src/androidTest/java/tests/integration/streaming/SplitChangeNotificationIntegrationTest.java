@@ -32,6 +32,8 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
+import io.split.android.client.telemetry.model.UpdatesFromSSE;
+import io.split.android.client.telemetry.storage.InMemoryTelemetryStorage;
 import io.split.android.client.utils.logger.Logger;
 
 public class SplitChangeNotificationIntegrationTest {
@@ -44,6 +46,7 @@ public class SplitChangeNotificationIntegrationTest {
     private AtomicInteger mSplitsHitsCountHit;
     private AtomicInteger mSseAuthHits;
     private final LifecycleManagerStub mLifecycleManager = new LifecycleManagerStub();
+    private InMemoryTelemetryStorage mTelemetryStorage;
 
     @Before
     public void setup() {
@@ -54,6 +57,7 @@ public class SplitChangeNotificationIntegrationTest {
         mIsStreamingConnected = new CountDownLatch(1);
         mSplitsHitsCountHit = new AtomicInteger(0);
         mSseAuthHits = new AtomicInteger(0);
+        mTelemetryStorage = new InMemoryTelemetryStorage();
     }
 
     @Test
@@ -69,6 +73,41 @@ public class SplitChangeNotificationIntegrationTest {
     @Test
     public void notificationWithCompressionType2IsCorrectlySaved() throws IOException, InterruptedException {
         testSplitNotification(IntegrationHelper.splitChangeV2CompressionType2());
+    }
+
+    @Test
+    public void telemetryForSplitsIsRecorded() throws IOException, InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        Pair<SplitClient, SplitEventTaskHelper> pair = getClient(latch, IntegrationHelper.streamingEnabledToken());
+        SplitClient client = pair.first;
+        SplitEventTaskHelper readyTask = pair.second;
+        client.on(SplitEvent.SDK_UPDATE, new SplitEventTaskHelper(updateLatch));
+        awaitInitialization(latch);
+
+        // wait for SSE to connect
+        boolean sseConnectionAwait = mIsStreamingConnected.await(10, TimeUnit.SECONDS);
+
+        // get first treatment; feature flag is not present
+        String firstTreatment = client.getTreatment("mauro_java");
+
+        // simulate SSE notification
+        pushMessage(IntegrationHelper.splitChangeV2CompressionType0());
+
+        boolean updateLatchAwait = updateLatch.await(10, TimeUnit.SECONDS);
+
+        String secondTreatment = client.getTreatment("mauro_java");
+
+        assertTrue(readyTask.isOnPostExecutionCalled);
+        assertTrue(updateLatchAwait);
+        assertTrue(sseConnectionAwait);
+        assertEquals("control", firstTreatment);
+        assertEquals("off", secondTreatment);
+        UpdatesFromSSE updatesFromSSE = mTelemetryStorage.popUpdatesFromSSE();
+        assertEquals(1, updatesFromSSE.getSplits());
+        assertEquals(0, updatesFromSSE.getMySegments());
+        client.destroy();
     }
 
     private void testSplitNotification(String notificationMessage) throws IOException, InterruptedException {
@@ -117,7 +156,8 @@ public class SplitChangeNotificationIntegrationTest {
                 null,
                 null,
                 null,
-                mLifecycleManager);
+                mLifecycleManager,
+                mTelemetryStorage);
 
         SplitClient client = splitFactory.client();
         SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
