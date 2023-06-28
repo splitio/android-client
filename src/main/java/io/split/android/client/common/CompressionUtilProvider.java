@@ -24,6 +24,13 @@ public class CompressionUtilProvider {
     @Nullable
     private CompressionUtil create(CompressionType type) {
         switch (type) {
+            case NONE:
+                return new CompressionUtil() {
+                    @Override
+                    public byte[] decompress(byte[] compressed) {
+                        return compressed;
+                    }
+                };
             case GZIP:
                 return new Gzip();
             case ZLIB:
