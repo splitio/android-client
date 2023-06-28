@@ -104,6 +104,7 @@ public class SplitChangeNotificationIntegrationTest {
         assertTrue(sseConnectionAwait);
         assertEquals("control", firstTreatment);
         assertEquals("off", secondTreatment);
+        Thread.sleep(500);
         UpdatesFromSSE updatesFromSSE = mTelemetryStorage.popUpdatesFromSSE();
         assertEquals(1, updatesFromSSE.getSplits());
         assertEquals(0, updatesFromSSE.getMySegments());
