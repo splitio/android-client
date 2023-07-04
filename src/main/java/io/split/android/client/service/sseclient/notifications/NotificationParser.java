@@ -30,7 +30,7 @@ public class NotificationParser {
             IncomingNotificationType notificationType
                     = Json.fromJson(rawNotification.getData(), IncomingNotificationType.class);
             type = notificationType.getType();
-            if(type == null) {
+            if (type == null) {
                 type = OCCUPANCY;
             }
         } catch (JsonSyntaxException e) {
@@ -40,6 +40,7 @@ public class NotificationParser {
             Logger.e("Unexpected error while parsing incomming notification: " + e.getLocalizedMessage());
             return null;
         }
+
         return new IncomingNotification(type, rawNotification.getChannel(),
                 rawNotification.getData(), rawNotification.getTimestamp());
     }
