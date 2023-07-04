@@ -28,7 +28,7 @@ public class Config {
     private long eventsQueueSize;
 
     @SerializedName("iM")
-    private ImpressionsMode impressionsMode;
+    private int impressionsMode;
 
     @SerializedName("iL")
     private boolean impressionsListenerEnabled;
@@ -108,11 +108,11 @@ public class Config {
         this.eventsQueueSize = eventsQueueSize;
     }
 
-    public ImpressionsMode getImpressionsMode() {
+    public int getImpressionsMode() {
         return impressionsMode;
     }
 
-    public void setImpressionsMode(ImpressionsMode impressionsMode) {
+    public void setImpressionsMode(int impressionsMode) {
         this.impressionsMode = impressionsMode;
     }
 

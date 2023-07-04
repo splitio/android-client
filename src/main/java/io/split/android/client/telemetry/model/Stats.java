@@ -1,5 +1,7 @@
 package io.split.android.client.telemetry.model;
 
+import androidx.annotation.VisibleForTesting;
+
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
@@ -61,6 +63,9 @@ public class Stats {
 
     @SerializedName("t")
     private List<String> tags;
+
+    @SerializedName("ufs")
+    private UpdatesFromSSE updatesFromSSE;
 
     public void setLastSynchronizations(LastSync lastSynchronizations) {
         this.lastSynchronizations = lastSynchronizations;
@@ -130,7 +135,95 @@ public class Stats {
         this.tags = tags;
     }
 
+    public void setUpdatesFromSSE(UpdatesFromSSE updatesFromSSE) {
+        this.updatesFromSSE = updatesFromSSE;
+    }
+
     public List<String> getTags() {
         return tags;
+    }
+
+    public UpdatesFromSSE getUpdatesFromSSE() {
+        return updatesFromSSE;
+    }
+
+    @VisibleForTesting
+    public LastSync getLastSynchronizations() {
+        return lastSynchronizations;
+    }
+
+    @VisibleForTesting
+    public MethodLatencies getMethodLatencies() {
+        return methodLatencies;
+    }
+
+    @VisibleForTesting
+    public MethodExceptions getMethodExceptions() {
+        return methodExceptions;
+    }
+
+    @VisibleForTesting
+    public HttpErrors getHttpErrors() {
+        return httpErrors;
+    }
+
+    @VisibleForTesting
+    public HttpLatencies getHttpLatencies() {
+        return httpLatencies;
+    }
+
+    @VisibleForTesting
+    public long getTokenRefreshes() {
+        return tokenRefreshes;
+    }
+
+    @VisibleForTesting
+    public long getAuthRejections() {
+        return authRejections;
+    }
+
+    @VisibleForTesting
+    public long getImpressionsQueued() {
+        return impressionsQueued;
+    }
+
+    @VisibleForTesting
+    public long getImpressionsDeduped() {
+        return impressionsDeduped;
+    }
+
+    @VisibleForTesting
+    public long getImpressionsDropped() {
+        return impressionsDropped;
+    }
+
+    @VisibleForTesting
+    public long getSplitCount() {
+        return splitCount;
+    }
+
+    @VisibleForTesting
+    public long getSegmentCount() {
+        return segmentCount;
+    }
+
+    @VisibleForTesting
+    public long getSessionLengthMs() {
+        return sessionLengthMs;
+    }
+
+    @VisibleForTesting
+    public long getEventsQueued() {
+        return eventsQueued;
+    }
+
+    @VisibleForTesting
+    public long getEventsDropped() {
+        return eventsDropped;
+    }
+
+    @VisibleForTesting
+    public List<StreamingEvent> getStreamingEvents() {
+        return streamingEvents;
     }
 }

@@ -11,7 +11,9 @@ import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.model.MethodExceptions;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.model.OperationType;
+import io.split.android.client.telemetry.model.UpdatesFromSSE;
 import io.split.android.client.telemetry.model.streaming.StreamingEvent;
+import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
 
 public class NoOpTelemetryStorage implements TelemetryStorage {
 
@@ -137,6 +139,11 @@ public class NoOpTelemetryStorage implements TelemetryStorage {
     }
 
     @Override
+    public UpdatesFromSSE popUpdatesFromSSE() {
+        return null;
+    }
+
+    @Override
     public void addTag(String tag) {
 
     }
@@ -183,6 +190,11 @@ public class NoOpTelemetryStorage implements TelemetryStorage {
 
     @Override
     public void recordSessionLength(long sessionLength) {
+
+    }
+
+    @Override
+    public void recordUpdatesFromSSE(UpdatesFromSSEEnum sseUpdate) {
 
     }
 }
