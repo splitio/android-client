@@ -183,6 +183,8 @@ public class SplitUpdateWorkerTest {
         Thread.sleep(500);
 
         verify(mSplitTaskExecutor).submit(eq(updateTask), argThat(Objects::nonNull));
+        verify(mSynchronizer, never())
+                .synchronizeSplits(anyLong());
     }
 
     @Test
