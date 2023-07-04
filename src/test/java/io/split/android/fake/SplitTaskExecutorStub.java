@@ -26,7 +26,9 @@ public class SplitTaskExecutorStub implements SplitTaskExecutor {
     public void submit(@NonNull SplitTask task, @Nullable SplitTaskExecutionListener executionListener) {
         SplitTaskExecutionInfo execute = task.execute();
         if (executionListener != null) {
-            executionListener.taskExecuted(execute);
+            if (execute != null) {
+                executionListener.taskExecuted(execute);
+            }
         }
     }
 
