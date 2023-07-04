@@ -16,7 +16,6 @@ public class NotificationParser {
     private final static String EVENT_TYPE_ERROR = "error";
     private static final String EVENT_TYPE_FIELD = "event";
 
-    @NonNull
     public IncomingNotification parseIncoming(String jsonData) throws JsonSyntaxException {
         NotificationType type;
         RawNotification rawNotification = null;

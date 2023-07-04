@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.factory.FactoryMonitor;
@@ -207,6 +208,8 @@ public class SplitFactoryImpl implements SplitFactory {
             mSynchronizer = synchronizerSpy;
         }
 
+        CompressionUtilProvider compressionProvider = new CompressionUtilProvider();
+
         TelemetrySynchronizer telemetrySynchronizer = factoryHelper.getTelemetrySynchronizer(splitTaskExecutor,
                 splitTaskFactory, config.telemetryRefreshRate(), config.shouldRecordTelemetry());
 
@@ -216,8 +219,14 @@ public class SplitFactoryImpl implements SplitFactory {
                 mSynchronizer,
                 telemetrySynchronizer,
                 streamingComponents.getPushNotificationManager(),
-                streamingComponents.getSplitsUpdateNotificationQueue(),
                 streamingComponents.getPushManagerEventBroadcaster(),
+                factoryHelper.getSplitUpdatesWorker(config,
+                        splitTaskExecutor,
+                        splitTaskFactory,
+                        mSynchronizer,
+                        streamingComponents.getSplitsUpdateNotificationQueue(),
+                        mStorageContainer.getSplitsStorage(),
+                        compressionProvider),
                 streamingComponents.getSyncGuardian());
 
         if (testLifecycleManager == null) {
@@ -245,10 +254,11 @@ public class SplitFactoryImpl implements SplitFactory {
                 mStorageContainer.getImpressionsStorage(),
                 mStorageContainer.getEventsStorage(),
                 mSyncManager, eventsTracker, impressionManager, splitTaskExecutor);
+
         ClientComponentsRegister componentsRegister = factoryHelper.getClientComponentsRegister(config, splitTaskExecutor,
                 mEventsManagerCoordinator, mSynchronizer, streamingComponents.getNotificationParser(),
                 streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
-                mStorageContainer, mSyncManager);
+                mStorageContainer, mSyncManager, compressionProvider);
         mClientContainer = new SplitClientContainerImpl(
                 mDefaultClientKey.matchingKey(), this, config, mSyncManager,
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,

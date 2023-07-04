@@ -11,16 +11,17 @@ public class MySegmentChangeV2Notification extends IncomingNotification {
     private static final String FIELD_UPDATE_STRATEGY = "u";
     private static final String FIELD_COMPRESSION = "c";
     private static final String FIELD_DATE = "d";
+    private static final String FIELD_CHANGE_NUMBER = "changeNumber";
+    private static final String FIELD_SEGMENT_NAME = "segmentName";
 
+    @SerializedName(FIELD_CHANGE_NUMBER)
     private Long changeNumber;
+    @SerializedName(FIELD_SEGMENT_NAME)
     private String segmentName;
-
     @SerializedName(FIELD_COMPRESSION)
     private CompressionType compression;
-
     @SerializedName(FIELD_UPDATE_STRATEGY)
     private MySegmentUpdateStrategy updateStrategy;
-
     @SerializedName(FIELD_DATE)
     private String data;
 

@@ -152,6 +152,8 @@ public class SyncGuardianIntegrationTest {
         sendToBackgroundFor(3000);
         int thirdSplitsHit = mSplitsHitsCountHit.get();
 
+        Thread.sleep(5000);
+
         assertTrue(readyTask.isOnPostExecutionCalled);
         assertTrue(sseConnectionAwait);
         assertEquals(1, initialSplitsHit);
