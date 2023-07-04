@@ -10,6 +10,9 @@ import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
@@ -71,7 +74,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
     protected void onWaitForNotificationLoop() throws InterruptedException {
         try {
             SplitsChangeNotification notification = mNotificationsQueue.take();
-            Logger.d("A new notification to update splits has been received");
+            Logger.d("A new notification to update feature flags has been received");
 
             long storageChangeNumber = mSplitsStorage.getTill();
             if (notification.getChangeNumber() <= storageChangeNumber) {
@@ -80,17 +83,17 @@ public class SplitUpdatesWorker extends UpdateWorker {
             }
 
             if (isLegacyNotification(notification) || isInvalidChangeNumber(notification, storageChangeNumber)) {
-                handleLegacyNotification(notification);
+                handleLegacyNotification(notification.getChangeNumber());
             } else {
                 handleNotification(notification);
             }
         } catch (InterruptedException e) {
-            Logger.d("Splits update worker has been interrupted");
+            Logger.d("Feature flags update worker has been interrupted");
             throw (e);
         }
     }
 
-    private boolean isInvalidChangeNumber(SplitsChangeNotification notification, long storageChangeNumber) {
+    private static boolean isInvalidChangeNumber(SplitsChangeNotification notification, long storageChangeNumber) {
         return notification.getPreviousChangeNumber() == null ||
                 notification.getPreviousChangeNumber() == 0 ||
                 storageChangeNumber != notification.getPreviousChangeNumber();
@@ -101,16 +104,19 @@ public class SplitUpdatesWorker extends UpdateWorker {
                 notification.getCompressionType() == null;
     }
 
-    private void handleLegacyNotification(SplitsChangeNotification notification) {
-        mSynchronizer.synchronizeSplits(notification.getChangeNumber());
+    private void handleLegacyNotification(long changeNumber) {
+        mSynchronizer.synchronizeSplits(changeNumber);
         Logger.d("Enqueuing polling task");
     }
 
     private void handleNotification(SplitsChangeNotification notification) {
-        String decompressed = decompressData(notification.getData(), mCompressionUtilProvider.get(notification.getCompressionType()));
+        String decompressed = decompressData(notification.getData(),
+                mCompressionUtilProvider.get(notification.getCompressionType()));
 
         if (decompressed == null) {
             Logger.e("Could not decompress payload");
+            handleLegacyNotification(notification.getChangeNumber());
+            return;
         }
 
         try {
@@ -118,31 +124,43 @@ public class SplitUpdatesWorker extends UpdateWorker {
 
             mSplitTaskExecutor.submit(
                     mSplitTaskFactory.createSplitsUpdateTask(split, notification.getChangeNumber()),
-                    null);
-            Logger.d("Updating split: " + split.name);
+                    new SplitTaskExecutionListener() {
+                        @Override
+                        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                            if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                                handleLegacyNotification(notification.getChangeNumber());
+                            }
+                        }
+                    });
         } catch (Exception e) {
-            Logger.e("Could not parse split");
+            Logger.e("Could not parse feature flag");
+            handleLegacyNotification(notification.getChangeNumber());
         }
     }
 
     @Nullable
     private String decompressData(String data, CompressionUtil compressionUtil) {
-        if (compressionUtil == null) {
-            Logger.e("Compression type not supported");
+        try {
+            if (compressionUtil == null) {
+                Logger.e("Compression type not supported");
+                return null;
+            }
+
+            byte[] decoded = mBase64Decoder.decode(data);
+            if (decoded == null) {
+                Logger.e("Could not decode payload");
+            }
+
+            byte[] decompressed = compressionUtil.decompress(decoded);
+            if (decompressed == null) {
+                Logger.e("Could not decompress payload");
+            }
+
+            return new String(decompressed);
+        } catch (Exception e) {
+            Logger.e("Could not decompress payload");
             return null;
         }
-
-        byte[] decoded = mBase64Decoder.decode(data);
-        if (decoded == null) {
-            Logger.e("Could not decode payload");
-        }
-
-        byte[] decompressed = compressionUtil.decompress(decoded);
-        if (decompressed == null) {
-            Logger.e("Could not decompress payload");
-        }
-
-        return new String(decompressed);
     }
 
     public interface Base64Decoder {
