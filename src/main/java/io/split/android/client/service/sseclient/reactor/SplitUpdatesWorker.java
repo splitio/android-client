@@ -114,7 +114,6 @@ public class SplitUpdatesWorker extends UpdateWorker {
                 mCompressionUtilProvider.get(notification.getCompressionType()));
 
         if (decompressed == null) {
-            Logger.e("Could not decompress payload");
             handleLegacyNotification(notification.getChangeNumber());
             return;
         }
@@ -149,11 +148,13 @@ public class SplitUpdatesWorker extends UpdateWorker {
             byte[] decoded = mBase64Decoder.decode(data);
             if (decoded == null) {
                 Logger.e("Could not decode payload");
+                return null;
             }
 
             byte[] decompressed = compressionUtil.decompress(decoded);
             if (decompressed == null) {
-                Logger.e("Could not decompress payload");
+                Logger.e("Decompressed payload is null");
+                return null;
             }
 
             return new String(decompressed);
