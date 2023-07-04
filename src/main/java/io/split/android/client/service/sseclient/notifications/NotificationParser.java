@@ -16,7 +16,6 @@ public class NotificationParser {
     private final static String EVENT_TYPE_ERROR = "error";
     private static final String EVENT_TYPE_FIELD = "event";
 
-    @NonNull
     public IncomingNotification parseIncoming(String jsonData) throws JsonSyntaxException {
         NotificationType type;
         RawNotification rawNotification = null;
@@ -31,7 +30,7 @@ public class NotificationParser {
             IncomingNotificationType notificationType
                     = Json.fromJson(rawNotification.getData(), IncomingNotificationType.class);
             type = notificationType.getType();
-            if(type == null) {
+            if (type == null) {
                 type = OCCUPANCY;
             }
         } catch (JsonSyntaxException e) {
@@ -41,6 +40,7 @@ public class NotificationParser {
             Logger.e("Unexpected error while parsing incomming notification: " + e.getLocalizedMessage());
             return null;
         }
+
         return new IncomingNotification(type, rawNotification.getChannel(),
                 rawNotification.getData(), rawNotification.getTimestamp());
     }

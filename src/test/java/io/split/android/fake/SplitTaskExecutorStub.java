@@ -7,6 +7,7 @@ import java.util.List;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 
@@ -23,7 +24,12 @@ public class SplitTaskExecutorStub implements SplitTaskExecutor {
 
     @Override
     public void submit(@NonNull SplitTask task, @Nullable SplitTaskExecutionListener executionListener) {
-        task.execute();
+        SplitTaskExecutionInfo execute = task.execute();
+        if (executionListener != null) {
+            if (execute != null) {
+                executionListener.taskExecuted(execute);
+            }
+        }
     }
 
     @Override

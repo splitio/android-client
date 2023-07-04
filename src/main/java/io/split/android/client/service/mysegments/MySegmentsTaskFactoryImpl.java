@@ -40,6 +40,6 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
 
     @Override
     public MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, String segmentName) {
-        return new MySegmentsUpdateTask(mConfiguration.getStorage(), add, segmentName, mConfiguration.getEventsManager());
+        return new MySegmentsUpdateTask(mConfiguration.getStorage(), add, segmentName, mConfiguration.getEventsManager(), mTelemetryRuntimeProducer);
     }
 }

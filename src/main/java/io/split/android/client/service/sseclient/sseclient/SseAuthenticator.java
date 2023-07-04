@@ -62,6 +62,7 @@ public class SseAuthenticator {
 
         try {
             long sseConnectionDelay = authResponse.getSseConnectionDelay() != null ? authResponse.getSseConnectionDelay() : defaultSseConnectionDelaySecs;
+            Logger.d("SSE token parsed successfully");
             return new SseAuthenticationResult(true, true, true,
                     sseConnectionDelay, mJwtParser.parse(authResponse.getToken()));
         } catch (InvalidJwtTokenException e) {
