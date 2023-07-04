@@ -3,6 +3,7 @@ package io.split.android.client.service.sseclient;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -17,19 +18,23 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.common.CompressionType;
 import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.CompressionUtil;
+import io.split.android.fake.SplitTaskExecutorStub;
 
 public class SplitUpdateWorkerTest {
 
@@ -177,7 +182,145 @@ public class SplitUpdateWorkerTest {
         mNotificationsQueue.offer(notification);
         Thread.sleep(500);
 
-        verify(mSplitTaskExecutor).submit(eq(updateTask), eq(null));
+        verify(mSplitTaskExecutor).submit(eq(updateTask), argThat(Objects::nonNull));
+        verify(mSynchronizer, never())
+                .synchronizeSplits(anyLong());
+    }
+
+    @Test
+    public void synchronizeSplitsIsCalledOnSynchronizerWhenTaskFails() throws InterruptedException {
+        initWorkerWithStubExecutor();
+
+        long changeNumber = 1000L;
+        SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
+        SplitsChangeNotification notification = getNewNotification();
+        CompressionUtil mockCompressor = mock(CompressionUtil.class);
+
+        when(updateTask.execute()).thenAnswer(invocation -> SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC));
+        when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
+        when(mSplitsStorage.getTill()).thenReturn(changeNumber);
+        when(notification.getChangeNumber()).thenReturn(changeNumber + 1);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(mockCompressor.decompress(any())).thenReturn(TEST_SPLIT.getBytes());
+        when(mCompressionUtilProvider.get(any())).thenReturn(mockCompressor);
+
+        mNotificationsQueue.offer(notification);
+        Thread.sleep(500);
+
+        verify(mSynchronizer).synchronizeSplits(changeNumber + 1);
+    }
+
+    @Test
+    public void synchronizeSplitsIsCalledOnSynchronizerWhenParsingFails() throws InterruptedException {
+        initWorkerWithStubExecutor();
+
+        long changeNumber = 1000L;
+        SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
+        SplitsChangeNotification notification = getNewNotification();
+        CompressionUtil mockCompressor = mock(CompressionUtil.class);
+
+        when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
+        when(mSplitsStorage.getTill()).thenReturn(changeNumber);
+        when(notification.getChangeNumber()).thenReturn(changeNumber + 1);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(mockCompressor.decompress(any())).thenReturn("malformed_split".getBytes());
+        when(mCompressionUtilProvider.get(any())).thenReturn(mockCompressor);
+
+        mNotificationsQueue.offer(notification);
+        Thread.sleep(800);
+
+        verify(mSynchronizer).synchronizeSplits(changeNumber + 1);
+    }
+
+    @Test
+    public void synchronizeSplitsIsCalledOnSynchronizerWhenDecompressingFailsDueToException() throws InterruptedException {
+        long changeNumber = 1000L;
+        SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
+        SplitsChangeNotification notification = getNewNotification();
+        CompressionUtil mockCompressor = mock(CompressionUtil.class);
+
+        when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
+        when(mSplitsStorage.getTill()).thenReturn(changeNumber);
+        when(notification.getChangeNumber()).thenReturn(changeNumber + 1);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(mockCompressor.decompress(any())).thenThrow(new RuntimeException("test"));
+        when(mCompressionUtilProvider.get(any())).thenReturn(mockCompressor);
+
+        mNotificationsQueue.offer(notification);
+        Thread.sleep(500);
+
+        verify(mSynchronizer).synchronizeSplits(changeNumber + 1);
+    }
+
+    @Test
+    public void synchronizeSplitsIsCalledOnSynchronizerWhenDecompressingFailsDueToNullDecompressor() throws InterruptedException {
+        long changeNumber = 1000L;
+        SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
+        SplitsChangeNotification notification = getNewNotification();
+
+        when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
+        when(mSplitsStorage.getTill()).thenReturn(changeNumber);
+        when(notification.getChangeNumber()).thenReturn(changeNumber + 1);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(mCompressionUtilProvider.get(any())).thenReturn(null);
+
+        mNotificationsQueue.offer(notification);
+        Thread.sleep(500);
+
+        verify(mSynchronizer).synchronizeSplits(changeNumber + 1);
+    }
+
+    @Test
+    public void synchronizeSplitsIsCalledOnSynchronizerWhenDecompressingFailsDueToNullDecompressedBytes() throws InterruptedException {
+        long changeNumber = 1000L;
+        SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
+        SplitsChangeNotification notification = getNewNotification();
+        CompressionUtil mockCompressor = mock(CompressionUtil.class);
+
+        when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
+        when(mSplitsStorage.getTill()).thenReturn(changeNumber);
+        when(notification.getChangeNumber()).thenReturn(changeNumber + 1);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(mockCompressor.decompress(any())).thenReturn(null);
+        when(mCompressionUtilProvider.get(any())).thenReturn(mockCompressor);
+
+        mNotificationsQueue.offer(notification);
+        Thread.sleep(500);
+
+        verify(mSynchronizer).synchronizeSplits(changeNumber + 1);
+    }
+
+    @Test
+    public void synchronizeSplitsIsCalledOnSynchronizerWhenDecompressingFailsDueToFailedBase64Decoding() throws InterruptedException {
+        long changeNumber = 1000L;
+        SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
+        SplitsChangeNotification notification = getNewNotification();
+        CompressionUtil mockCompressor = mock(CompressionUtil.class);
+
+        when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
+        when(mSplitsStorage.getTill()).thenReturn(changeNumber);
+        when(notification.getChangeNumber()).thenReturn(changeNumber + 1);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(mockCompressor.decompress(any())).thenReturn("malformed_split".getBytes());
+        when(mCompressionUtilProvider.get(any())).thenReturn(mockCompressor);
+        when(mBase64Decoder.decode(any())).thenReturn(null);
+
+        mNotificationsQueue.offer(notification);
+        Thread.sleep(500);
+
+        verify(mSynchronizer).synchronizeSplits(changeNumber + 1);
+    }
+
+    private void initWorkerWithStubExecutor() {
+        mWorker.stop();
+        mWorker = new SplitUpdatesWorker(mSynchronizer,
+                mNotificationsQueue,
+                mSplitsStorage,
+                mCompressionUtilProvider,
+                new SplitTaskExecutorStub(),
+                mSplitTaskFactory,
+                mBase64Decoder);
+        mWorker.start();
     }
 
     private static SplitsChangeNotification getLegacyNotification() {
