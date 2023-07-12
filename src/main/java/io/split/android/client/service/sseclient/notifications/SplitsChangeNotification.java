@@ -21,7 +21,7 @@ public class SplitsChangeNotification extends IncomingNotification {
 
     @SerializedName("c")
     @Nullable
-    private CompressionType compressionType;
+    private Integer compressionType;
 
     public SplitsChangeNotification() {
 
@@ -47,6 +47,16 @@ public class SplitsChangeNotification extends IncomingNotification {
 
     @Nullable
     public CompressionType getCompressionType() {
-        return compressionType;
+        if (compressionType != null) {
+            if (compressionType == 0) {
+                return CompressionType.NONE;
+            } else if (compressionType == 1) {
+                return CompressionType.GZIP;
+            } else if (compressionType == 2) {
+                return CompressionType.ZLIB;
+            }
+        }
+
+        return null;
     }
 }
