@@ -11,6 +11,7 @@ import static io.split.android.client.ServiceEndpoints.EndpointValidator.telemet
 import androidx.annotation.NonNull;
 
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.RefreshRates;
 import io.split.android.client.telemetry.model.UrlOverrides;
@@ -43,6 +44,13 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         config.setImpressionsQueueSize(mSplitClientConfig.impressionsQueueSize());
         config.setEventsQueueSize(mSplitClientConfig.eventsQueueSize());
         config.setUserConsent(mSplitClientConfig.userConsent().intValue());
+        if (mSplitClientConfig.impressionsMode() == ImpressionsMode.DEBUG) {
+            config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.DEBUG.intValue());
+        } else if (mSplitClientConfig.impressionsMode() == ImpressionsMode.OPTIMIZED) {
+            config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.OPTIMIZED.intValue());
+        } else {
+            config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.NONE.intValue());
+        }
 
         return config;
     }

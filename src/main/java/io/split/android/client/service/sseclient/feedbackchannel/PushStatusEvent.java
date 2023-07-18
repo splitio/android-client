@@ -5,23 +5,24 @@ public class PushStatusEvent {
      * This class represents a message to be pushed in the feedback channel
      */
 
-    public static enum EventType {
+    public enum EventType {
         /***
          * Types of messages that can be pushed to the
          * Synchronization feedback channel
          */
         PUSH_SUBSYSTEM_UP, PUSH_SUBSYSTEM_DOWN, PUSH_RETRYABLE_ERROR, PUSH_NON_RETRYABLE_ERROR, PUSH_DISABLED,
-        PUSH_RESET
+        PUSH_RESET,
+        SUCCESSFUL_SYNC,
+        PUSH_DELAY_RECEIVED,
     }
 
-    final private EventType message;
+    private final EventType mMessage;
 
     public PushStatusEvent(EventType message) {
-        this.message = message;
+        mMessage = message;
     }
 
     public EventType getMessage() {
-        return message;
+        return mMessage;
     }
-
 }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.api.Key;
+import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.factory.FactoryMonitor;
@@ -30,6 +31,7 @@ import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
+import io.split.android.client.service.synchronizer.FeatureFlagsSynchronizerImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -182,26 +184,31 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
 
         ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
+        final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
+
+        StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
+                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer);
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
                 splitSingleThreadTaskExecutor,
-                mStorageContainer,
                 splitTaskFactory,
-                mEventsManagerCoordinator,
                 workManagerWrapper,
-                new RetryBackoffCounterTimerFactory(),
+                retryBackoffCounterTimerFactory,
                 mStorageContainer.getTelemetryStorage(),
                 new AttributesSynchronizerRegistryImpl(),
                 new MySegmentsSynchronizerRegistryImpl(),
-                impressionManager);
+                impressionManager,
+                mStorageContainer.getEventsStorage(),
+                mEventsManagerCoordinator,
+                streamingComponents.getPushManagerEventBroadcaster());
         // Only available for integration tests
         if (synchronizerSpy != null) {
             synchronizerSpy.setSynchronizer(mSynchronizer);
             mSynchronizer = synchronizerSpy;
         }
-        StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
-                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer);
+
+        CompressionUtilProvider compressionProvider = new CompressionUtilProvider();
 
         TelemetrySynchronizer telemetrySynchronizer = factoryHelper.getTelemetrySynchronizer(splitTaskExecutor,
                 splitTaskFactory, config.telemetryRefreshRate(), config.shouldRecordTelemetry());
@@ -212,9 +219,15 @@ public class SplitFactoryImpl implements SplitFactory {
                 mSynchronizer,
                 telemetrySynchronizer,
                 streamingComponents.getPushNotificationManager(),
-                streamingComponents.getSplitsUpdateNotificationQueue(),
-                streamingComponents.getPushManagerEventBroadcaster()
-        );
+                streamingComponents.getPushManagerEventBroadcaster(),
+                factoryHelper.getSplitUpdatesWorker(config,
+                        splitTaskExecutor,
+                        splitTaskFactory,
+                        mSynchronizer,
+                        streamingComponents.getSplitsUpdateNotificationQueue(),
+                        mStorageContainer.getSplitsStorage(),
+                        compressionProvider),
+                streamingComponents.getSyncGuardian());
 
         if (testLifecycleManager == null) {
             mLifecycleManager = new SplitLifecycleManagerImpl();
@@ -241,10 +254,11 @@ public class SplitFactoryImpl implements SplitFactory {
                 mStorageContainer.getImpressionsStorage(),
                 mStorageContainer.getEventsStorage(),
                 mSyncManager, eventsTracker, impressionManager, splitTaskExecutor);
+
         ClientComponentsRegister componentsRegister = factoryHelper.getClientComponentsRegister(config, splitTaskExecutor,
                 mEventsManagerCoordinator, mSynchronizer, streamingComponents.getNotificationParser(),
                 streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
-                mStorageContainer, mSyncManager);
+                mStorageContainer, mSyncManager, compressionProvider);
         mClientContainer = new SplitClientContainerImpl(
                 mDefaultClientKey.matchingKey(), this, config, mSyncManager,
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,

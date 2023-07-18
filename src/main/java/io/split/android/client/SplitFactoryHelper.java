@@ -3,6 +3,7 @@ package io.split.android.client;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.work.WorkManager;
 
 import java.io.File;
@@ -45,6 +46,8 @@ import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
+import io.split.android.client.service.synchronizer.SyncGuardian;
+import io.split.android.client.service.synchronizer.SyncGuardianImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.SyncManagerImpl;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -56,16 +59,17 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.cipher.SplitEncryptionLevel;
 import io.split.android.client.storage.common.SplitStorageContainer;
-import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
@@ -198,37 +202,42 @@ class SplitFactoryHelper {
                                  SplitTaskExecutor splitTaskExecutor,
                                  Synchronizer synchronizer,
                                  TelemetrySynchronizer telemetrySynchronizer,
-                                 PushNotificationManager pushNotificationManager,
-                                 BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue,
-                                 PushManagerEventBroadcaster pushManagerEventBroadcaster) {
+                                 @Nullable PushNotificationManager pushNotificationManager,
+                                 @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                                 @Nullable SplitUpdatesWorker splitUpdatesWorker,
+                                 @Nullable SyncGuardian syncGuardian) {
 
-        SplitUpdatesWorker updateWorker = null;
+
         BackoffCounterTimer backoffCounterTimer = null;
         if (config.syncEnabled()) {
-            updateWorker = new SplitUpdatesWorker(synchronizer, splitsUpdateNotificationQueue);
             backoffCounterTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
         }
 
         return new SyncManagerImpl(config,
                 synchronizer,
                 pushNotificationManager,
-                updateWorker,
+                splitUpdatesWorker,
                 pushManagerEventBroadcaster,
                 backoffCounterTimer,
+                syncGuardian,
                 telemetrySynchronizer);
     }
 
     @NonNull
-    PushNotificationManager getPushNotificationManager(SplitTaskExecutor _splitTaskExecutor,
+    PushNotificationManager getPushNotificationManager(SplitTaskExecutor splitTaskExecutor,
                                                        SseAuthenticator sseAuthenticator,
                                                        PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                                        SseClient sseClient,
-                                                       TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                                                       TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                                       long defaultSseConnectionDelayInSecs,
+                                                       long sseDisconnectionDelayInSecs) {
         return new PushNotificationManager(pushManagerEventBroadcaster,
                 sseAuthenticator,
                 sseClient,
-                new SseRefreshTokenTimer(_splitTaskExecutor, pushManagerEventBroadcaster),
+                new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
                 telemetryRuntimeProducer,
+                defaultSseConnectionDelayInSecs,
+                sseDisconnectionDelayInSecs,
                 null);
     }
 
@@ -270,7 +279,8 @@ class SplitFactoryHelper {
                                                                     NotificationProcessor notificationProcessor,
                                                                     SseAuthenticator sseAuthenticator,
                                                                     SplitStorageContainer storageContainer,
-                                                                    SyncManager syncManager) {
+                                                                    SyncManager syncManager,
+                                                                    CompressionUtilProvider compressionProvider) {
         MySegmentsV2PayloadDecoder mySegmentsV2PayloadDecoder = new MySegmentsV2PayloadDecoder();
 
         PersistentAttributesStorage attributesStorage = null;
@@ -287,7 +297,7 @@ class SplitFactoryHelper {
             mySegmentsNotificationProcessorFactory = new MySegmentsNotificationProcessorFactoryImpl(notificationParser,
                     taskExecutor,
                     mySegmentsV2PayloadDecoder,
-                    new CompressionUtilProvider());
+                    compressionProvider);
         }
 
         return new ClientComponentsRegisterImpl(
@@ -316,6 +326,7 @@ class SplitFactoryHelper {
         if (!config.syncEnabled()) {
             return new StreamingComponents();
         }
+
         BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue = new LinkedBlockingDeque<>();
         NotificationParser notificationParser = new NotificationParser();
 
@@ -338,14 +349,19 @@ class SplitFactoryHelper {
                 sseAuthenticator,
                 pushManagerEventBroadcaster,
                 sseClient,
-                storageContainer.getTelemetryStorage());
+                storageContainer.getTelemetryStorage(),
+                config.defaultSSEConnectionDelay(),
+                config.sseDisconnectionDelay());
+
+        SyncGuardian syncGuardian = new SyncGuardianImpl(config);
 
         return new StreamingComponents(pushNotificationManager,
                 splitsUpdateNotificationQueue,
                 notificationParser,
                 notificationProcessor,
                 sseAuthenticator,
-                pushManagerEventBroadcaster);
+                pushManagerEventBroadcaster,
+                syncGuardian);
     }
 
     public ProcessStrategy getImpressionStrategy(SplitTaskExecutor splitTaskExecutor,
@@ -379,6 +395,26 @@ class SplitFactoryHelper {
                 executionListener);
 
         return toCipher;
+    }
+
+    @Nullable
+    SplitUpdatesWorker getSplitUpdatesWorker(SplitClientConfig config,
+                                             SplitTaskExecutor splitTaskExecutor,
+                                             SplitTaskFactory splitTaskFactory,
+                                             Synchronizer mSynchronizer,
+                                             BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue,
+                                             SplitsStorage splitsStorage,
+                                             CompressionUtilProvider compressionProvider) {
+        if (config.syncEnabled()) {
+            return new SplitUpdatesWorker(mSynchronizer,
+                    splitsUpdateNotificationQueue,
+                    splitsStorage,
+                    compressionProvider,
+                    splitTaskExecutor,
+                    splitTaskFactory);
+        }
+
+        return null;
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {

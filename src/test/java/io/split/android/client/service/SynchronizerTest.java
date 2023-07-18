@@ -56,7 +56,6 @@ import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
-import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
@@ -65,6 +64,7 @@ import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
+import io.split.android.client.service.synchronizer.FeatureFlagsSynchronizer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
@@ -89,53 +89,53 @@ public class SynchronizerTest {
 
     SplitTaskExecutor mTaskExecutor;
     @Mock
-    SplitTaskExecutor mSingleThreadedTaskExecutor;
+    private SplitTaskExecutor mSingleThreadedTaskExecutor;
     @Mock
-    SplitApiFacade mSplitApiFacade;
+    private SplitApiFacade mSplitApiFacade;
     @Mock
-    SplitStorageContainer mSplitStorageContainer;
+    private SplitStorageContainer mSplitStorageContainer;
     @Mock
-    PersistentSplitsStorage mPersistentSplitsStorageContainer;
+    private PersistentSplitsStorage mPersistentSplitsStorageContainer;
     @Mock
-    EventsStorage mEventsStorage;
+    private EventsStorage mEventsStorage;
     @Mock
-    ImpressionsStorage mImpressionsStorage;
+    private ImpressionsStorage mImpressionsStorage;
     @Mock
-    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     @Mock
-    RetryBackoffCounterTimerFactory mRetryBackoffFactory;
+    private RetryBackoffCounterTimerFactory mRetryBackoffFactory;
 
     @Mock
-    RetryBackoffCounterTimer mRetryTimerSplitsSync;
+    private RetryBackoffCounterTimer mRetryTimerSplitsSync;
 
     @Mock
-    RetryBackoffCounterTimer mRetryTimerSplitsUpdate;
+    private RetryBackoffCounterTimer mRetryTimerSplitsUpdate;
 
     @Mock
-    RetryBackoffCounterTimer mRetryTimerMySegmentsSync;
+    private RetryBackoffCounterTimer mRetryTimerMySegmentsSync;
 
     @Mock
-    RetryBackoffCounterTimer mRetryTimerEventsRecorder;
+    private RetryBackoffCounterTimer mRetryTimerEventsRecorder;
 
     @Mock
-    WorkManager mWorkManager;
+    private WorkManager mWorkManager;
     @Mock
-    SplitTaskFactory mTaskFactory;
+    private SplitTaskFactory mTaskFactory;
     @Mock
-    SplitEventsManager mEventsManager;
+    private SplitEventsManager mEventsManager;
     @Mock
-    WorkManagerWrapper mWorkManagerWrapper;
+    private WorkManagerWrapper mWorkManagerWrapper;
     @Mock
-    MySegmentsTaskFactory mMySegmentsTaskFactory;
+    private MySegmentsTaskFactory mMySegmentsTaskFactory;
     @Mock
-    MySegmentsSynchronizer mMySegmentsSynchronizer;
+    private MySegmentsSynchronizer mMySegmentsSynchronizer;
     @Mock
-    MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
+    private MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
     @Mock
-    AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
+    private AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     @Mock
-    UniqueKeysTracker mUniqueKeysTracker;
+    private FeatureFlagsSynchronizer mFeatureFlagsSynchronizer;
     ImpressionManager mImpressionManager;
 
     private final String mUserKey = "user_key";
@@ -189,7 +189,7 @@ public class SynchronizerTest {
         mImpressionManager = Mockito.mock(ImpressionManager.class);
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor, mSingleThreadedTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager);
+                mTaskFactory, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager, mFeatureFlagsSynchronizer, mSplitStorageContainer.getEventsStorage());
     }
 
     @Test
@@ -201,11 +201,11 @@ public class SynchronizerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
+
         mSynchronizer.startPeriodicFetching();
         mSynchronizer.startPeriodicRecording();
-        verify(mSingleThreadedTaskExecutor).schedule(
-                any(SplitsSyncTask.class), anyLong(), anyLong(),
-                any());
+
+        verify(mFeatureFlagsSynchronizer).startPeriodicFetching();
         verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask();
         verify(mTaskExecutor).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
@@ -515,7 +515,8 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(config, executor, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager);
+                mTaskFactory, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager,
+                mFeatureFlagsSynchronizer, mSplitStorageContainer.getEventsStorage());
 
         LoadMySegmentsTask loadMySegmentsTask = mock(LoadMySegmentsTask.class);
         when(loadMySegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
@@ -528,8 +529,7 @@ public class SynchronizerTest {
         mSynchronizer.loadAttributesFromCache();
         verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache();
         verify(mAttributesSynchronizerRegistry).loadAttributesFromCache();
-        verify(mEventsManager)
-                .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        verify(mFeatureFlagsSynchronizer).loadFromCache();
     }
 
     @Test
@@ -550,11 +550,12 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
 
         mSynchronizer = new SynchronizerImpl(config, executor, executor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager);
+                mTaskFactory, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager,
+                mFeatureFlagsSynchronizer, mSplitStorageContainer.getEventsStorage());
         mSynchronizer.loadAndSynchronizeSplits();
-        verify(mEventsManager, times(1))
-                .notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-        verify(mRetryTimerSplitsSync, times(1)).start();
+
+
+        verify(mFeatureFlagsSynchronizer).loadAndSynchronize();
     }
 
     @Test
@@ -568,14 +569,13 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsSync)
                 .thenReturn(mRetryTimerSplitsUpdate);
         mSynchronizer = new SynchronizerImpl(config, mTaskExecutor, mSingleThreadedTaskExecutor,
-                mSplitStorageContainer, mTaskFactory, mEventsManager, mWorkManagerWrapper,
+                mTaskFactory, mWorkManagerWrapper,
                 mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry,
-                mMySegmentsSynchronizerRegistry, impressionManager);
+                mMySegmentsSynchronizerRegistry, impressionManager, mFeatureFlagsSynchronizer, mSplitStorageContainer.getEventsStorage());
 
         mSynchronizer.destroy();
 
-        verify(mRetryTimerSplitsUpdate).stop();
-        verify(mRetryTimerSplitsSync).stop();
+        verify(mFeatureFlagsSynchronizer).stopSynchronization();
         verify(impressionManager).flush();
         verify(mRetryTimerEventsRecorder).setTask(any(EventsRecorderTask.class));
         verify(mRetryTimerEventsRecorder).start();
@@ -672,7 +672,7 @@ public class SynchronizerTest {
 
         mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
-        verify(mTaskExecutor).submit(task, null);
+        verify(mFeatureFlagsSynchronizer).submitLoadingTask(null);
     }
 
     @Test
@@ -692,8 +692,7 @@ public class SynchronizerTest {
 
         mSynchronizer.synchronizeSplits(1000);
 
-        verify(mRetryTimerSplitsUpdate).setTask(task, null);
-        verify(mRetryTimerSplitsUpdate).start();
+        verify(mFeatureFlagsSynchronizer).synchronize(1000);
     }
 
 

@@ -11,6 +11,8 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -21,15 +23,18 @@ public class MySegmentsUpdateTask implements SplitTask {
     private final MySegmentsStorage mMySegmentsStorage;
     private final SplitEventsManager mEventsManager;
     private final boolean mIsAddOperation;
+    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
     public MySegmentsUpdateTask(@NonNull MySegmentsStorage mySegmentsStorage,
                                 boolean add,
                                 @NonNull String segmentName,
-                                @NonNull SplitEventsManager eventsManager) {
+                                @NonNull SplitEventsManager eventsManager,
+                                @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mSegmentName = checkNotNull(segmentName);
         mIsAddOperation = add;
-        mEventsManager = eventsManager;
+        mEventsManager = checkNotNull(eventsManager);
+        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
     }
 
     @Override
@@ -48,6 +53,7 @@ public class MySegmentsUpdateTask implements SplitTask {
                 segments.add(mSegmentName);
                 updateAndNotify(segments);
             }
+            mTelemetryRuntimeProducer.recordUpdatesFromSSE(UpdatesFromSSEEnum.MY_SEGMENTS);
         } catch (Exception e) {
             logError("Unknown error while adding segment " + mSegmentName + ": " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_UPDATE);
@@ -62,6 +68,7 @@ public class MySegmentsUpdateTask implements SplitTask {
             if(segments.remove(mSegmentName)) {
                 updateAndNotify(segments);
             }
+            mTelemetryRuntimeProducer.recordUpdatesFromSSE(UpdatesFromSSEEnum.MY_SEGMENTS);
         } catch (Exception e) {
             logError("Unknown error while removing segment " + mSegmentName + ": " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_UPDATE);

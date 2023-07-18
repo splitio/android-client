@@ -1,3 +1,7 @@
+3.3.0 (Jul 18, 2023)
+- Improved streaming architecture implementation to apply feature flag updates from the notification received which is now enhanced, improving efficiency and reliability of the whole update system.
+- Added logic to do a full check of feature flags immediately when the app comes back to foreground, limited to once per minute.
+
 3.2.2 (Jun 7, 2023)
 - Refactored cipher creation to avoid NPE scenarios.
 

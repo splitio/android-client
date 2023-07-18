@@ -8,7 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PushManagerEventBroadcaster {
 
-    private List<WeakReference<BroadcastedEventListener>> mListeners;
+    private final List<WeakReference<BroadcastedEventListener>> mListeners;
 
     public PushManagerEventBroadcaster() {
         mListeners = new CopyOnWriteArrayList<>();

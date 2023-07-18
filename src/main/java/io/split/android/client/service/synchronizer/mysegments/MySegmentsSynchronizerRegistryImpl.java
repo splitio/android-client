@@ -59,7 +59,6 @@ public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronize
     }
 
     @Override
-    @VisibleForTesting
     public void forceMySegmentsSync() {
         for (MySegmentsSynchronizer mySegmentsSynchronizer : mMySegmentsSynchronizers.values()) {
             mySegmentsSynchronizer.forceMySegmentsSync();

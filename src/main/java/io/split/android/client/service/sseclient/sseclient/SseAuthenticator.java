@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
@@ -31,7 +30,7 @@ public class SseAuthenticator {
         mJwtParser = checkNotNull(jwtParser);
     }
 
-    public SseAuthenticationResult authenticate() {
+    public SseAuthenticationResult authenticate(long defaultSseConnectionDelaySecs) {
         SseAuthenticationResponse authResponse;
         try {
             Map<String, Object> params = new HashMap<>();
@@ -62,7 +61,8 @@ public class SseAuthenticator {
         }
 
         try {
-            long sseConnectionDelay = authResponse.getSseConnectionDelay() != null ? authResponse.getSseConnectionDelay().longValue() : ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
+            long sseConnectionDelay = authResponse.getSseConnectionDelay() != null ? authResponse.getSseConnectionDelay() : defaultSseConnectionDelaySecs;
+            Logger.d("SSE token parsed successfully");
             return new SseAuthenticationResult(true, true, true,
                     sseConnectionDelay, mJwtParser.parse(authResponse.getToken()));
         } catch (InvalidJwtTokenException e) {

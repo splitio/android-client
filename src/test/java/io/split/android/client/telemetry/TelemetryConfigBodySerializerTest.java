@@ -24,7 +24,7 @@ public class TelemetryConfigBodySerializerTest {
     @Test
     public void jsonIsBuiltAsExpected() {
 
-        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"rR\":{\"sp\":4000,\"ms\":5000,\"im\":3000,\"ev\":2000,\"te\":1000},\"uO\":{\"s\":true,\"e\":true,\"a\":true,\"st\":true,\"t\":true},\"iQ\":4000,\"eQ\":3000,\"iM\":\"1\",\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"uC\":1,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
+        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"rR\":{\"sp\":4000,\"ms\":5000,\"im\":3000,\"ev\":2000,\"te\":1000},\"uO\":{\"s\":true,\"e\":true,\"a\":true,\"st\":true,\"t\":true},\"iQ\":4000,\"eQ\":3000,\"iM\":1,\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"uC\":1,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
         final String serializedConfig = telemetryConfigBodySerializer.serialize(buildMockConfig());
 
         assertEquals(expectedJson, serializedConfig);
@@ -33,7 +33,7 @@ public class TelemetryConfigBodySerializerTest {
     @Test
     public void nullValuesAreIgnoredForJson() {
 
-        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"iQ\":4000,\"eQ\":3000,\"iM\":\"1\",\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"uC\":0,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
+        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"iQ\":4000,\"eQ\":3000,\"iM\":1,\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"uC\":0,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"]}";
         final String serializedConfig = telemetryConfigBodySerializer.serialize(buildMockConfigWithNulls());
 
         assertEquals(expectedJson, serializedConfig);
@@ -61,7 +61,7 @@ public class TelemetryConfigBodySerializerTest {
         config.setUrlOverrides(urlOverrides);
         config.setImpressionsQueueSize(4000);
         config.setEventsQueueSize(3000);
-        config.setImpressionsMode(ImpressionsMode.DEBUG);
+        config.setImpressionsMode(ImpressionsMode.DEBUG.intValue());
         config.setImpressionsListenerEnabled(true);
         config.setHttpProxyDetected(true);
         config.setActiveFactories(1);
@@ -81,7 +81,7 @@ public class TelemetryConfigBodySerializerTest {
         config.setStreamingEnabled(true);
         config.setImpressionsQueueSize(4000);
         config.setEventsQueueSize(3000);
-        config.setImpressionsMode(ImpressionsMode.DEBUG);
+        config.setImpressionsMode(ImpressionsMode.DEBUG.intValue());
         config.setImpressionsListenerEnabled(true);
         config.setHttpProxyDetected(true);
         config.setActiveFactories(1);

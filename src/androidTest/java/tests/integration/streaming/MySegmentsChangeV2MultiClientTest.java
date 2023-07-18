@@ -39,6 +39,7 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentDao;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.telemetry.storage.InMemoryTelemetryStorage;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingData;
 import tests.integration.shared.TestingHelper;
@@ -61,6 +62,7 @@ public class MySegmentsChangeV2MultiClientTest {
     SplitClient mClient;
     SynchronizerSpyImpl mSynchronizerSpy;
     SplitRoomDatabase mDb;
+    private InMemoryTelemetryStorage mTelemetryStorage;
 
     @Before
     public void setup() {
@@ -71,6 +73,7 @@ public class MySegmentsChangeV2MultiClientTest {
         mMySegmentsSyncLatch2 = new CountDownLatch(1);
         mMySegmentsUpdateLatch2 = new CountDownLatch(1);
         mDb = DatabaseHelper.getTestDatabase(mContext);
+        mTelemetryStorage = new InMemoryTelemetryStorage();
     }
 
     @Test
@@ -102,7 +105,8 @@ public class MySegmentsChangeV2MultiClientTest {
 
         mFactory = IntegrationHelper.buildFactory(
                 mApiKey, new Key(userKey),
-                config, mContext, httpClientMock, mDb, mSynchronizerSpy);
+                config, mContext, httpClientMock, mDb, mSynchronizerSpy,
+                null, null, mTelemetryStorage);
 
         mClient = mFactory.client();
         SplitClient client2 = mFactory.client(new Key(userKey2));
@@ -166,8 +170,8 @@ public class MySegmentsChangeV2MultiClientTest {
         Assert.assertTrue(mySegmentEntity.getSegmentList().contains("new_segment_added"));
         Assert.assertFalse(mySegmentEntity.getSegmentList().contains("segment1"));
 
+        Assert.assertEquals(4, mTelemetryStorage.popUpdatesFromSSE().getMySegments());
         Assert.assertEquals("new_segment_added", mySegmentEntity2.getSegmentList());
-
     }
 
     @After
