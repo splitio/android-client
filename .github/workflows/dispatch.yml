@@ -1,0 +1,52 @@
+name: Testing update
+
+on:
+#  pull_request:
+#    types:
+#      - closed
+#    branches:
+#      - development
+  push:
+    branches:
+      - test
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+#    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout target repo
+        uses: actions/checkout@v3
+        with:
+          token: ''
+          submodules: true
+          repository: 'git@github.com:splitio/android-example.git'
+          path: 'android-example'
+
+      - name: Create new branch
+        run: |
+          cd android-example
+          git checkout -b update-submodule
+
+      - name: Add and commit changes
+        run: |
+          cd android-example
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Update submodule"
+
+      - name: Push changes
+        run: |
+          cd android-example
+          git push origin update-submodule
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ''
+          path: 'android-example'
+          title: 'Update submodule'
+          body: 'This PR updates the submodule to the latest commit on development branch.'
+          branch: 'update-submodule'
