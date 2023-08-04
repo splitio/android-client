@@ -168,12 +168,11 @@ afterEvaluate {
 
     publishing {
         publications {
-            project.components.all { print("PRJ NAME: " + name) }
             release(MavenPublication) {
                 from components.release
 
                 groupId = 'io.split.client'
-                version = splitVersion
+                version = splitVersion + (System.getenv('COMMIT_HASH') ? "-" + System.getenv('COMMIT_HASH') : "")
                 artifact sourcesJar
                 artifact javadocJar
 
@@ -213,6 +212,7 @@ afterEvaluate {
 
                 repositories {
                     maven {
+                        name = "ReleaseRepo"
                         def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
                         def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
                         url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
@@ -221,9 +221,28 @@ afterEvaluate {
                             password = ossrhPassword
                         }
                     }
+
+                    maven {
+                        name = "DevelopmentRepo"
+                        url = 'https://splitio.jfrog.io/artifactory/maven-all-virtual'
+                        credentials {
+                            username = System.getenv('ARTIFACTORY_USER')
+                            password = System.getenv('ARTIFACTORY_TOKEN')
+                        }
+                    }
                 }
             }
         }
+    }
+
+    task publishRelease(type: PublishToMavenRepository) {
+        publication = publishing.publications.getByName("release")
+        repository = publishing.repositories.ReleaseRepo
+    }
+
+    task publishDev(type: PublishToMavenRepository) {
+        publication = publishing.publications.getByName("release")
+        repository = publishing.repositories.DevelopmentRepo
     }
 }
 
