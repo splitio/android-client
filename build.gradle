@@ -172,7 +172,7 @@ afterEvaluate {
                 from components.release
 
                 groupId = 'io.split.client'
-                version = splitVersion + (System.getenv('COMMIT_HASH') ? "-" + System.getenv('COMMIT_HASH') : "")
+                version = splitVersion + (System.getenv('COMMIT_HASH') ? "-" + System.getenv('COMMIT_HASH').substring(0, 6) : "")
                 artifact sourcesJar
                 artifact javadocJar
 
