@@ -246,9 +246,9 @@ afterEvaluate {
     }
 }
 
-signing {
-    sign publishing.publications
-}
+//signing {
+//    sign publishing.publications
+//}
 
 task sourcesJar(type: Jar) {
     archiveClassifier.set("sources")
