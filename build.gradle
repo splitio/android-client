@@ -159,6 +159,40 @@ dependencies {
     androidTestImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
 }
 
+def splitPOM = {
+    name = 'Split Android SDK'
+    packaging = 'aar'
+    description = 'Official Split Android SDK'
+    url = 'https://github.com/splitio/android-client'
+
+    licenses {
+        license {
+            name = 'The Apache License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+        }
+    }
+
+    developers {
+        developer {
+            id = 'sarrubia'
+            name = 'Sebastian Arrubia'
+            email = 'sebastian@split.io'
+        }
+
+        developer {
+            id = 'fernando'
+            name = 'Fernando Martin'
+            email = 'fernando@split.io'
+        }
+    }
+
+    scm {
+        connection = 'scm:git:git@github.com:splitio/android-client.git'
+        developerConnection = 'scm:git@github.com:splitio/android-client.git'
+        url = 'https://github.com/splitio/android-client'
+    }
+}
+
 afterEvaluate {
     android.sourceSets.all { sourceSet ->
         if (!sourceSet.name.startsWith("test")) {
@@ -172,43 +206,11 @@ afterEvaluate {
                 from components.release
 
                 groupId = 'io.split.client'
-                version = splitVersion + (System.getenv('COMMIT_HASH') ? "-" + System.getenv('COMMIT_HASH').substring(0, 6) : "")
+                version = splitVersion
                 artifact sourcesJar
                 artifact javadocJar
 
-                pom {
-                    name = 'Split Android SDK'
-                    packaging = 'aar'
-                    description = 'Official Split Android SDK'
-                    url = 'https://github.com/splitio/android-client'
-
-                    licenses {
-                        license {
-                            name = 'The Apache License, Version 2.0'
-                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        }
-                    }
-
-                    developers {
-                        developer {
-                            id = 'sarrubia'
-                            name = 'Sebastian Arrubia'
-                            email = 'sebastian@split.io'
-                        }
-
-                        developer {
-                            id = 'fernando'
-                            name = 'Fernando Martin'
-                            email = 'fernando@split.io'
-                        }
-                    }
-
-                    scm {
-                        connection = 'scm:git:git@github.com:splitio/android-client.git'
-                        developerConnection = 'scm:git@github.com:splitio/android-client.git'
-                        url = 'https://github.com/splitio/android-client'
-                    }
-                }
+                pom splitPOM
 
                 repositories {
                     maven {
@@ -221,7 +223,20 @@ afterEvaluate {
                             password = ossrhPassword
                         }
                     }
+                }
+            }
 
+            development(MavenPublication) {
+                from components.release
+
+                groupId = 'io.split.client'
+                version = splitVersion + "-afa410"// + (System.getenv('COMMIT_HASH') ? "-" + System.getenv('COMMIT_HASH').substring(0, 6) : "")
+                artifact sourcesJar
+                artifact javadocJar
+
+                pom splitPOM
+
+                repositories {
                     maven {
                         name = "DevelopmentRepo"
                         url = 'https://splitio.jfrog.io/artifactory/maven-all-virtual'
@@ -241,14 +256,15 @@ afterEvaluate {
     }
 
     task publishDev(type: PublishToMavenRepository) {
-        publication = publishing.publications.getByName("release")
+        publication = publishing.publications.getByName("development")
         repository = publishing.repositories.DevelopmentRepo
+    }
+
+    signing {
+        sign publishing.publications.getByName("release")
     }
 }
 
-//signing {
-//    sign publishing.publications
-//}
 
 task sourcesJar(type: Jar) {
     archiveClassifier.set("sources")
