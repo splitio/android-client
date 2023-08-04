@@ -193,6 +193,26 @@ def splitPOM = {
     }
 }
 
+def releaseRepo = {
+    name = "ReleaseRepo"
+    def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+    def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+    url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+    credentials {
+        username = ossrhUsername
+        password = ossrhPassword
+    }
+}
+
+def devRepo = {
+    name = "DevelopmentRepo"
+    url = 'https://splitio.jfrog.io/artifactory/maven-all-virtual'
+    credentials {
+        username = System.getenv('ARTIFACTORY_USER')
+        password = System.getenv('ARTIFACTORY_TOKEN')
+    }
+}
+
 afterEvaluate {
     android.sourceSets.all { sourceSet ->
         if (!sourceSet.name.startsWith("test")) {
@@ -213,16 +233,8 @@ afterEvaluate {
                 pom splitPOM
 
                 repositories {
-                    maven {
-                        name = "ReleaseRepo"
-                        def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-                        def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-                        url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-                        credentials {
-                            username = ossrhUsername
-                            password = ossrhPassword
-                        }
-                    }
+                    maven releaseRepo
+                    maven devRepo
                 }
             }
 
@@ -230,22 +242,11 @@ afterEvaluate {
                 from components.release
 
                 groupId = 'io.split.client'
-                version = splitVersion + "-afa410"// + (System.getenv('COMMIT_HASH') ? "-" + System.getenv('COMMIT_HASH').substring(0, 6) : "")
+                version = splitVersion
                 artifact sourcesJar
                 artifact javadocJar
 
                 pom splitPOM
-
-                repositories {
-                    maven {
-                        name = "DevelopmentRepo"
-                        url = 'https://splitio.jfrog.io/artifactory/maven-all-virtual'
-                        credentials {
-                            username = System.getenv('ARTIFACTORY_USER')
-                            password = System.getenv('ARTIFACTORY_TOKEN')
-                        }
-                    }
-                }
             }
         }
     }
