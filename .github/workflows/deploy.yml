@@ -1,14 +1,9 @@
 name: Testing update
 
 on:
-#  pull_request:
-#    types:
-#      - closed
-#    branches:
-#      - development
   push:
     branches:
-      - test_2
+      - development
 
 jobs:
   build-app:

@@ -20,7 +20,7 @@ ext {
 }
 
 android {
-    compileSdkVersion 31
+    compileSdk 33
     targetCompatibility = '1.8'
     sourceCompatibility = '1.8'
 
@@ -31,8 +31,8 @@ android {
 
     defaultConfig {
 
-        minSdkVersion 15
-        targetSdkVersion 30
+        minSdk 15
+        targetSdk 31
         multiDexEnabled true
 
         consumerProguardFiles 'split-proguard-rules.pro'
