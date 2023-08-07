@@ -1,4 +1,4 @@
-name: Testing update
+name: Internal deploy
 
 on:
   push:
@@ -12,7 +12,6 @@ jobs:
     env:
       ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
       ARTIFACTORY_TOKEN: ${{ secrets.ARTIFACTORY_TOKEN }}
-      COMMIT_HASH: ${{ github.sha }}
     steps:
       - name: checkout
         uses: actions/checkout@v3
