@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - development
+      - SDKS-7440
 
 jobs:
   build-app:
