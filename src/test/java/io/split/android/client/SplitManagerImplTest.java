@@ -23,6 +23,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -65,7 +67,6 @@ public class SplitManagerImplTest {
     @Test
     public void splitCallWithExistentSplit() {
         String existent = "existent";
-        SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
 
         Map<String, String> configs = new HashMap<>();
         configs.put("off", "{\"f\":\"v\"}");
@@ -101,7 +102,6 @@ public class SplitManagerImplTest {
 
     @Test
     public void splitsCallWithSplit() {
-        SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
         Map<String, Split> splitsMap = new HashMap<>();
         Split split = SplitHelper.createSplit("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition()), "traffic", 456L, 1, null);
         splitsMap.put(split.name, split);
@@ -128,7 +128,6 @@ public class SplitManagerImplTest {
 
     @Test
     public void splitNamesCallWithSplit() {
-        SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
         Map<String, Split> splitsMap = new HashMap<>();
         Split split = SplitHelper.createSplit("FeatureName", 123, true,
                 "off", Lists.newArrayList(getTestCondition()),
@@ -142,8 +141,24 @@ public class SplitManagerImplTest {
         assertThat(splitNames.get(0), is(equalTo(split.name)));
     }
 
+    @Test
+    public void flagSets() {
+        Map<String, Split> splitsMap = new HashMap<>();
+        Split split = SplitHelper.createSplit("FeatureName", 123, true,
+                "off", Lists.newArrayList(getTestCondition()),
+                "traffic", 456L, 1, null);
+        splitsMap.put(split.name, split);
+        when(mSplitsStorage.getAll()).thenReturn(splitsMap);
+
+        SplitManager splitManager = mSplitManager;
+
+        List<SplitView> splitNames = splitManager.splits();
+        assertEquals(1, splitNames.size());
+        assertEquals(split.name, splitNames.get(0).name);
+        assertEquals(new ArrayList<>(split.sets), splitNames.get(0).sets);
+    }
+
     private Condition getTestCondition() {
         return SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(ConditionsTestUtil.partition("off", 10)));
     }
-
 }

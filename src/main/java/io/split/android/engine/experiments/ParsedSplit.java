@@ -1,30 +1,28 @@
 package io.split.android.engine.experiments;
 
+import androidx.annotation.NonNull;
+
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-/**
- * a value class representing an io.codigo.dtos.Experiment. Why are we not using
- * that class? Because it does not have the logic of matching. ParsedExperiment
- * has the matchers that also encapsulate the logic of matching. We
- * can easily cache this object.
- */
-@SuppressWarnings("RedundantCast")
 public class ParsedSplit {
 
-    private final String _split;
-    private final int _seed;
-    private final boolean _killed;
-    private final String _defaultTreatment;
-    private final ImmutableList<ParsedCondition> _parsedCondition;
-    private final String _trafficTypeName;
-    private final long _changeNumber;
-    private final int _trafficAllocation;
-    private final int _trafficAllocationSeed;
-    private final int _algo;
-    private final Map<String, String> _configurations;
+    private final String mSplit;
+    private final int mSeed;
+    private final boolean mKilled;
+    private final String mDefaultTreatment;
+    private final ImmutableList<ParsedCondition> mParsedCondition;
+    private final String mTrafficTypeName;
+    private final long mChangeNumber;
+    private final int mTrafficAllocation;
+    private final int mTrafficAllocationSeed;
+    private final int mAlgo;
+    private final Map<String, String> mConfigurations;
+    private final Set<String> mSets;
 
     public ParsedSplit(
             String feature,
@@ -37,81 +35,87 @@ public class ParsedSplit {
             int trafficAllocation,
             int trafficAllocationSeed,
             int algo,
-            Map<String, String> configurations
+            Map<String, String> configurations,
+            Set<String> sets
     ) {
-        _split = feature;
-        _seed = seed;
-        _killed = killed;
-        _defaultTreatment = defaultTreatment;
-        _parsedCondition = ImmutableList.copyOf(matcherAndSplits);
-        _trafficTypeName = trafficTypeName;
-        _changeNumber = changeNumber;
-        _algo = algo;
-        _configurations = configurations;
+        mSplit = feature;
+        mSeed = seed;
+        mKilled = killed;
+        mDefaultTreatment = defaultTreatment;
+        mParsedCondition = ImmutableList.copyOf(matcherAndSplits);
+        mTrafficTypeName = trafficTypeName;
+        mChangeNumber = changeNumber;
+        mAlgo = algo;
+        mConfigurations = configurations;
 
-        if (_defaultTreatment == null) {
+        if (mDefaultTreatment == null) {
             throw new IllegalArgumentException("DefaultTreatment is null");
         }
-        this._trafficAllocation = trafficAllocation;
-        this._trafficAllocationSeed = trafficAllocationSeed;
+        mTrafficAllocation = trafficAllocation;
+        mTrafficAllocationSeed = trafficAllocationSeed;
+        mSets = sets;
     }
 
-
     public String feature() {
-        return _split;
+        return mSplit;
     }
 
     public int trafficAllocation() {
-        return _trafficAllocation;
+        return mTrafficAllocation;
     }
 
     public int trafficAllocationSeed() {
-        return _trafficAllocationSeed;
+        return mTrafficAllocationSeed;
     }
 
     public int seed() {
-        return _seed;
+        return mSeed;
     }
 
     public boolean killed() {
-        return _killed;
+        return mKilled;
     }
 
     public String defaultTreatment() {
-        return _defaultTreatment;
+        return mDefaultTreatment;
     }
 
     public List<ParsedCondition> parsedConditions() {
-        return _parsedCondition;
+        return mParsedCondition;
     }
 
     public String trafficTypeName() {
-        return _trafficTypeName;
+        return mTrafficTypeName;
     }
 
     public long changeNumber() {
-        return _changeNumber;
+        return mChangeNumber;
     }
 
     public int algo() {
-        return _algo;
+        return mAlgo;
     }
 
     public Map<String, String> configurations() {
-        return _configurations;
+        return mConfigurations;
+    }
+
+    public Set<String> sets() {
+        return mSets;
     }
 
     @Override
     public int hashCode() {
         int result = 17;
-        result = 31 * result + _split.hashCode();
-        result = 31 * result + (int) (_seed ^ (_seed >>> 32));
-        result = 31 * result + (_killed ? 1 : 0);
-        result = 31 * result + _defaultTreatment.hashCode();
-        result = 31 * result + _parsedCondition.hashCode();
-        result = 31 * result + (_trafficTypeName == null ? 0 : _trafficTypeName.hashCode());
-        result = 31 * result + (int) (_changeNumber ^ (_changeNumber >>> 32));
-        result = 31 * result + (_algo ^ (_algo >>> 32));
+        result = 31 * result + mSplit.hashCode();
+        result = 31 * result + (int) (mSeed ^ (mSeed >>> 32));
+        result = 31 * result + (mKilled ? 1 : 0);
+        result = 31 * result + mDefaultTreatment.hashCode();
+        result = 31 * result + mParsedCondition.hashCode();
+        result = 31 * result + (mTrafficTypeName == null ? 0 : mTrafficTypeName.hashCode());
+        result = 31 * result + (int) (mChangeNumber ^ (mChangeNumber >>> 32));
+        result = 31 * result + (mAlgo ^ (mAlgo >>> 32));
+        result = 31 * result + ((mSets != null) ? mSets.hashCode() : 0);
         return result;
     }
 
@@ -122,25 +126,27 @@ public class ParsedSplit {
         if (!(obj instanceof ParsedSplit)) return false;
 
         ParsedSplit other = (ParsedSplit) obj;
-        return _split.equals(other._split)
-                && _seed == other._seed
-                && _killed == other._killed
-                && _defaultTreatment.equals(other._defaultTreatment)
-                && _parsedCondition.equals(other._parsedCondition)
-                && (_trafficTypeName == null ? other._trafficTypeName == null : _trafficTypeName.equals(other._trafficTypeName))
-                && _changeNumber == other._changeNumber
-                && _algo == other._algo
-                && (_configurations == null ? other._configurations == null : _configurations.equals(other._configurations));
+        return mSplit.equals(other.mSplit)
+                && mSeed == other.mSeed
+                && mKilled == other.mKilled
+                && mDefaultTreatment.equals(other.mDefaultTreatment)
+                && mParsedCondition.equals(other.mParsedCondition)
+                && (Objects.equals(mTrafficTypeName, other.mTrafficTypeName))
+                && mChangeNumber == other.mChangeNumber
+                && mAlgo == other.mAlgo
+                && (Objects.equals(mConfigurations, other.mConfigurations))
+                && (Objects.equals(mSets, other.mSets));
 
     }
 
+    @NonNull
     @Override
     public String toString() {
-        return "name:" + _split + ", seed:" + _seed + ", killed:" + _killed +
-                ", default treatment:" + _defaultTreatment +
-                ", parsedConditions:" + _parsedCondition +
-                ", trafficTypeName:" + _trafficTypeName + ", changeNumber:" + _changeNumber +
-                ", algo:" + _algo + ", config:" + _configurations;
+        return "name:" + mSplit + ", seed:" + mSeed + ", killed:" + mKilled +
+                ", default treatment:" + mDefaultTreatment +
+                ", parsedConditions:" + mParsedCondition +
+                ", trafficTypeName:" + mTrafficTypeName + ", changeNumber:" + mChangeNumber +
+                ", algo:" + mAlgo + ", config:" + mConfigurations + ", sets:" + mSets;
 
     }
 }

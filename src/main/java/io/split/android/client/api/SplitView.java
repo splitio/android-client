@@ -16,4 +16,5 @@ public class SplitView {
     public List<String> treatments;
     public long changeNumber;
     public Map<String, String> configs;
+    public List<String> sets;
 }
