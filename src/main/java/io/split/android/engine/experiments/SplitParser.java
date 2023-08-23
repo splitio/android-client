@@ -62,7 +62,7 @@ public class SplitParser {
         try {
             return parseWithoutExceptionHandling(split, matchingKey);
         } catch (Throwable t) {
-            Logger.e(t, "Could not parse feature flag: %s", split);
+            Logger.e(t, "Could not parse feature flag: %s", (split != null) ? split.name : "null");
             return null;
         }
     }
@@ -90,7 +90,18 @@ public class SplitParser {
             parsedConditionList.add(new ParsedCondition(condition.conditionType, matcher, partitions, condition.label));
         }
 
-        return new ParsedSplit(split.name, split.seed, split.killed, split.defaultTreatment, parsedConditionList, split.trafficTypeName, split.changeNumber, split.trafficAllocation, split.trafficAllocationSeed, split.algo, split.configurations);
+        return new ParsedSplit(split.name,
+                split.seed,
+                split.killed,
+                split.defaultTreatment,
+                parsedConditionList,
+                split.trafficTypeName,
+                split.changeNumber,
+                split.trafficAllocation,
+                split.trafficAllocationSeed,
+                split.algo,
+                split.configurations,
+                split.sets);
     }
 
     private CombiningMatcher toMatcher(MatcherGroup matcherGroup, String matchingKey) {
