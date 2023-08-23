@@ -15,17 +15,17 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
      * Validates the flag sets and returns a list of
      * de-duplicated and alphanumerically ordered valid flag sets.
      *
-     * @param sets list of flag sets
+     * @param values list of flag sets
      * @return list of unique alphanumerically ordered valid flag sets
      */
     @Override
-    public List<String> cleanup(List<String> sets) {
-        if (sets == null || sets.isEmpty()) {
+    public List<String> cleanup(List<String> values) {
+        if (values == null || values.isEmpty()) {
             return Collections.emptyList();
         }
 
         TreeSet<String> cleanedUpSets = new TreeSet<>();
-        for (String set : sets) {
+        for (String set : values) {
             if (set == null || set.isEmpty()) {
                 continue;
             }

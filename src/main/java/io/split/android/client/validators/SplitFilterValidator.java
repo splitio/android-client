@@ -4,5 +4,5 @@ import java.util.List;
 
 public interface SplitFilterValidator {
 
-    List<String> cleanup(List<String> sets);
+    List<String> cleanup(List<String> values);
 }
