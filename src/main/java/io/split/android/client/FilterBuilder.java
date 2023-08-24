@@ -34,6 +34,8 @@ public class FilterBuilder {
             }
 
             if (filter.getType() == SplitFilter.Type.BY_SET) {
+                // BY_SET filter has precedence over other filters, so we remove all other filters
+                // and only add BY_SET filters
                 if (!containsSetsFilter) {
                     mFilters.clear();
                     containsSetsFilter = true;
