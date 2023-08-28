@@ -7,8 +7,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.Split;
@@ -17,6 +19,7 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     private final PersistentSplitsStorage mPersistentStorage;
     private final Map<String, Split> mInMemorySplits;
+    private final Map<String, Set<String>> mFlagSets;
     private long mChangeNumber;
     private long mUpdateTimestamp;
     private String mSplitsFilterQueryString;
@@ -26,6 +29,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         mPersistentStorage = checkNotNull(persistentStorage);
         mInMemorySplits = new ConcurrentHashMap<>();
         mTrafficTypes = new ConcurrentHashMap<>();
+        mFlagSets = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -38,6 +42,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
         for (Split split : splits) {
             mInMemorySplits.put(split.name, split);
+            cacheFlags(split);
             increaseTrafficTypeCount(split.trafficTypeName);
         }
     }
@@ -135,6 +140,25 @@ public class SplitsStorageImpl implements SplitsStorage {
         mInMemorySplits.clear();
         mChangeNumber = -1;
         mPersistentStorage.clear();
+        mFlagSets.clear();
+        mTrafficTypes.clear();
+    }
+
+    @NonNull
+    @Override
+    public Set<String> getNamesByFlagSets(List<String> sets) {
+        Set<String> namesToReturn = new HashSet<>();
+        if (sets == null || sets.isEmpty()) {
+            return namesToReturn;
+        }
+
+        for (String set : sets) {
+            Set<String> splits = mFlagSets.get(set);
+            if (splits != null) {
+                namesToReturn.addAll(splits);
+            }
+        }
+        return namesToReturn;
     }
 
     @Override
@@ -176,5 +200,19 @@ public class SplitsStorageImpl implements SplitsStorage {
             count = countValue;
         }
         return count;
+    }
+
+    private void cacheFlags(Split split) {
+        Set<String> sets = split.sets;
+        if (sets != null) {
+            for (String set : sets) {
+                Set<String> splitsForSet = mFlagSets.get(set);
+                if (splitsForSet == null) {
+                    splitsForSet = new HashSet<>();
+                    mFlagSets.put(set, splitsForSet);
+                }
+                splitsForSet.add(split.name);
+            }
+        }
     }
 }
