@@ -67,7 +67,7 @@ public class FilterSplitsInCacheTask implements SplitTask {
 
             // Since sets filter takes precedence,
             // if setsToKeep is not empty, we only keep splits that belong to the sets in setsToKeep
-            if (setsToKeep.size() > 0) {
+            if (!setsToKeep.isEmpty()) {
                 boolean keepSplit = false;
                 if (split.sets != null) {
                     for (String set : split.sets) {
@@ -80,7 +80,6 @@ public class FilterSplitsInCacheTask implements SplitTask {
 
                 if (!keepSplit) {
                     splitsToDelete.add(splitName);
-                    continue;
                 }
 
                 continue;
@@ -93,7 +92,7 @@ public class FilterSplitsInCacheTask implements SplitTask {
             }
         }
 
-        if (splitsToDelete.size() > 0) {
+        if (!splitsToDelete.isEmpty()) {
             mSplitsStorage.delete(splitsToDelete);
         }
 
