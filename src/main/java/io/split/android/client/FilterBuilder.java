@@ -92,7 +92,6 @@ public class FilterBuilder {
                 mFilters.add(filter);
             }
         }
-
     }
 
     private void validateFilterSize(SplitFilter.Type type, int size) {
