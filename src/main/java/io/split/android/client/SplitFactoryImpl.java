@@ -170,14 +170,21 @@ public class SplitFactoryImpl implements SplitFactory {
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
                 splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
 
-        String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
+        SyncConfig syncConfig = config.syncConfig();
+        String splitsFilterQueryString = null;
+        List<SplitFilter> filters = null;
+        if (syncConfig != null) {
+            FilterBuilder filterBuilder = new FilterBuilder().addFilters(syncConfig.getFilters());
+            filters = filterBuilder.getGroupedFilter();
+            splitsFilterQueryString = filterBuilder.buildQueryString();
+        }
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryString);
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator,
-                testingConfig);
+                filters, testingConfig);
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);

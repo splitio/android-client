@@ -5,8 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FilterGrouper {
-    public List<SplitFilter> group(List<SplitFilter> filters) {
+class FilterGrouper {
+
+    List<SplitFilter> group(List<SplitFilter> filters) {
         Map<SplitFilter.Type, List<String>> groupedValues = new HashMap<>();
         for (SplitFilter filter : filters) {
             List<String> groupValues = groupedValues.get(filter.getType());
