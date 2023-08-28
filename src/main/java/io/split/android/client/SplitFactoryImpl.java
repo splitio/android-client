@@ -174,7 +174,7 @@ public class SplitFactoryImpl implements SplitFactory {
         String splitsFilterQueryString = null;
         List<SplitFilter> filters = null;
         if (syncConfig != null) {
-            FilterBuilder filterBuilder = new FilterBuilder().addFilters(syncConfig.getFilters());
+            FilterBuilder filterBuilder = new FilterBuilder(syncConfig.getFilters());
             filters = filterBuilder.getGroupedFilter();
             splitsFilterQueryString = filterBuilder.buildQueryString();
         }

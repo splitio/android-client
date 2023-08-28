@@ -3,6 +3,7 @@ package io.split.android.client;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,41 +20,13 @@ public class FilterBuilder {
     private final List<SplitFilter> mFilters = new ArrayList<>();
     private final FilterGrouper mFilterGrouper;
 
-    public FilterBuilder() {
-        this(new FilterGrouper());
+    public FilterBuilder(List<SplitFilter> filters) {
+        this(new FilterGrouper(), filters);
     }
 
-    FilterBuilder(@NonNull FilterGrouper filterGrouper) {
+    FilterBuilder(@NonNull FilterGrouper filterGrouper, @Nullable List<SplitFilter> filters) {
         mFilterGrouper = checkNotNull(filterGrouper);
-    }
-
-    public FilterBuilder addFilters(List<SplitFilter> filters) {
-        if (filters == null) {
-            return this;
-        }
-
-        boolean containsSetsFilter = false;
-        for (SplitFilter filter : filters) {
-            if (filter == null) {
-                continue;
-            }
-
-            if (filter.getType() == SplitFilter.Type.BY_SET) {
-                // BY_SET filter has precedence over other filters, so we remove all other filters
-                // and only add BY_SET filters
-                if (!containsSetsFilter) {
-                    mFilters.clear();
-                    containsSetsFilter = true;
-                }
-                mFilters.add(filter);
-            }
-
-            if (!containsSetsFilter) {
-                mFilters.add(filter);
-            }
-        }
-
-        return this;
+        addFilters(filters);
     }
 
     public String buildQueryString() {
@@ -92,6 +65,34 @@ public class FilterBuilder {
     @NonNull
     public ArrayList<SplitFilter> getGroupedFilter() {
         return new ArrayList<>(mFilterGrouper.group(mFilters));
+    }
+
+    private void addFilters(List<SplitFilter> filters) {
+        if (filters == null) {
+            return;
+        }
+
+        boolean containsSetsFilter = false;
+        for (SplitFilter filter : filters) {
+            if (filter == null) {
+                continue;
+            }
+
+            if (filter.getType() == SplitFilter.Type.BY_SET) {
+                // BY_SET filter has precedence over other filters, so we remove all other filters
+                // and only add BY_SET filters
+                if (!containsSetsFilter) {
+                    mFilters.clear();
+                    containsSetsFilter = true;
+                }
+                mFilters.add(filter);
+            }
+
+            if (!containsSetsFilter) {
+                mFilters.add(filter);
+            }
+        }
+
     }
 
     private void validateFilterSize(SplitFilter.Type type, int size) {
