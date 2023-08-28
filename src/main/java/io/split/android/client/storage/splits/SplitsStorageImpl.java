@@ -42,7 +42,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
         for (Split split : splits) {
             mInMemorySplits.put(split.name, split);
-            cacheFlags(split);
+            addOrUpdateFlagSets(split);
             increaseTrafficTypeCount(split.trafficTypeName);
         }
     }
@@ -91,6 +91,7 @@ public class SplitsStorageImpl implements SplitsStorage {
                 }
                 increaseTrafficTypeCount(split.trafficTypeName);
                 mInMemorySplits.put(split.name, split);
+                addOrUpdateFlagSets(split);
             }
         }
 
@@ -98,6 +99,7 @@ public class SplitsStorageImpl implements SplitsStorage {
             for (Split split : archivedSplits) {
                 if (mInMemorySplits.remove(split.name) != null) {
                     decreaseTrafficTypeCount(split.trafficTypeName);
+                    deleteFromFlagSetsIfNecessary(split);
                 }
             }
         }
@@ -112,6 +114,7 @@ public class SplitsStorageImpl implements SplitsStorage {
     public void updateWithoutChecks(Split split) {
         mInMemorySplits.put(split.name, split);
         mPersistentStorage.update(split);
+        deleteFromFlagSets(split);
     }
 
     @Override
@@ -202,16 +205,45 @@ public class SplitsStorageImpl implements SplitsStorage {
         return count;
     }
 
-    private void cacheFlags(Split split) {
-        Set<String> sets = split.sets;
-        if (sets != null) {
-            for (String set : sets) {
-                Set<String> splitsForSet = mFlagSets.get(set);
-                if (splitsForSet == null) {
-                    splitsForSet = new HashSet<>();
-                    mFlagSets.put(set, splitsForSet);
-                }
-                splitsForSet.add(split.name);
+    private void addOrUpdateFlagSets(Split split) {
+        if (split.sets == null) {
+            return;
+        }
+
+        for (String set : split.sets) {
+            Set<String> splitsForSet = mFlagSets.get(set);
+            if (splitsForSet == null) {
+                splitsForSet = new HashSet<>();
+                mFlagSets.put(set, splitsForSet);
+            }
+            splitsForSet.add(split.name);
+        }
+
+        deleteFromFlagSetsIfNecessary(split);
+    }
+
+    private void deleteFromFlagSetsIfNecessary(Split featureFlag) {
+        if (featureFlag.sets == null) {
+            return;
+        }
+
+        for (String set : mFlagSets.keySet()) {
+            if (featureFlag.sets.contains(set)) {
+                continue;
+            }
+
+            Set<String> flagsForSet = mFlagSets.get(set);
+            if (flagsForSet != null) {
+                flagsForSet.remove(featureFlag.name);
+            }
+        }
+    }
+
+    private void deleteFromFlagSets(Split featureFlag) {
+        for (String set : mFlagSets.keySet()) {
+            Set<String> flagsForSet = mFlagSets.get(set);
+            if (flagsForSet != null) {
+                flagsForSet.remove(featureFlag.name);
             }
         }
     }

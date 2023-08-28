@@ -351,7 +351,7 @@ public class SplitsStorageTest {
     }
 
     @Test
-    public void flagSetsAreUpdatedWhenCallingLoadLocal() throws InterruptedException {
+    public void flagSetsAreUpdatedWhenCallingLoadLocal() {
         mRoomDb.clearAllTables();
         mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
 
@@ -361,7 +361,45 @@ public class SplitsStorageTest {
         Assert.assertEquals(Collections.singleton("split_test_2"), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
     }
 
+    @Test
+    public void flagSetsAreRemovedWhenUpdating() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+        mSplitsStorage.loadLocal();
+
+        Set<String> initialSet1 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1"));
+        Set<String> initialSet2 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2"));
+
+        mSplitsStorage.update(new ProcessedSplitChange(
+                Collections.singletonList(newSplit("split_test", Status.ACTIVE, "test_type")), Collections.emptyList(),
+                1L, 0L));
+
+        Assert.assertFalse(initialSet1.isEmpty());
+        Assert.assertEquals(Collections.emptySet(), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
+        Assert.assertEquals(initialSet2, mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
+    }
+
+    @Test
+    public void updateWithoutChecksRemovesFromFlagSet() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+        mSplitsStorage.loadLocal();
+
+        Set<String> initialSet1 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1"));
+        Set<String> initialSet2 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2"));
+
+        mSplitsStorage.updateWithoutChecks(newSplit("split_test", Status.ACTIVE, "test_type"));
+
+        Assert.assertFalse(initialSet1.isEmpty());
+        Assert.assertEquals(Collections.emptySet(), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
+        Assert.assertEquals(initialSet2, mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
+    }
+
     private Split newSplit(String name, Status status, String trafficType) {
+        return newSplit(name, status, trafficType, Collections.emptySet());
+    }
+
+    private Split newSplit(String name, Status status, String trafficType, Set<String> sets) {
         Split split = new Split();
         split.name = name;
         split.status = status;
@@ -370,6 +408,8 @@ public class SplitsStorageTest {
         } else {
             split.trafficTypeName = "custom";
         }
+        split.sets = sets;
+
         return split;
     }
 
