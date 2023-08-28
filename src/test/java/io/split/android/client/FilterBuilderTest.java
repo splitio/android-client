@@ -1,6 +1,8 @@
 package io.split.android.client;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -180,5 +182,15 @@ public class FilterBuilderTest {
         String queryString = new FilterBuilder().addFilters(filters).buildQueryString();
 
         assertEquals("&sets=pf_a,pf_c,pf_d,zz,zzz", queryString);
+    }
+
+    @Test
+    public void getGroupedFiltersUsesFilterGrouper() {
+        FilterGrouper filterGrouper = mock(FilterGrouper.class);
+        FilterBuilder filterBuilder = new FilterBuilder(filterGrouper).addFilters(Collections.emptyList());
+
+        filterBuilder.getGroupedFilter();
+
+        verify(filterGrouper).group(Collections.emptyList());
     }
 }
