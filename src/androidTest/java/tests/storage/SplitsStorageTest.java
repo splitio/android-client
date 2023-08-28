@@ -11,6 +11,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -353,18 +354,25 @@ public class SplitsStorageTest {
     @Test
     public void flagSetsAreUpdatedWhenCallingLoadLocal() {
         mRoomDb.clearAllTables();
-        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+        mRoomDb.splitDao().insert(Arrays.asList(
+                newSplitEntity("split_test", "test_type", Collections.singleton("set_1")),
+                newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2")),
+                newSplitEntity("split_test_3", "test_type_2", Collections.singleton("set_2")),
+                newSplitEntity("split_test_4", "test_type_2", Collections.singleton("set_1"))));
 
         mSplitsStorage.loadLocal();
 
-        Assert.assertEquals(Collections.singleton("split_test"), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
-        Assert.assertEquals(Collections.singleton("split_test_2"), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
+        Assert.assertEquals(new HashSet<>(Arrays.asList("split_test", "split_test_4")), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
+        Assert.assertEquals(new HashSet<>(Arrays.asList("split_test_2", "split_test_3")), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
     }
 
     @Test
     public void flagSetsAreRemovedWhenUpdating() {
         mRoomDb.clearAllTables();
-        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+        mRoomDb.splitDao().insert(Arrays.asList(
+                newSplitEntity("split_test", "test_type", Collections.singleton("set_1")),
+                newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2")),
+                newSplitEntity("split_test_3", "test_type_2", Collections.singleton("set_2"))));
         mSplitsStorage.loadLocal();
 
         Set<String> initialSet1 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1"));
