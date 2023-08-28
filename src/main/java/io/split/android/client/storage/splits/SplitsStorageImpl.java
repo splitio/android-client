@@ -161,6 +161,7 @@ public class SplitsStorageImpl implements SplitsStorage {
                 namesToReturn.addAll(splits);
             }
         }
+
         return namesToReturn;
     }
 
