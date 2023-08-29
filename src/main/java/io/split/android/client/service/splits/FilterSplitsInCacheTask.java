@@ -37,14 +37,18 @@ public class FilterSplitsInCacheTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
 
-        if(!queryStringHasChanged()) {
+        if (!queryStringHasChanged()) {
             return SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE);
         }
 
         Set<String> namesToKeep = new HashSet<>();
         Set<String> prefixesToKeep = new HashSet<>();
+        Set<String> setsToKeep = new HashSet<>();
         for (SplitFilter filter : mSplitsFilter) {
             switch (filter.getType()) {
+                case BY_SET:
+                    setsToKeep.addAll(filter.getValues());
+                    break;
                 case BY_NAME:
                     namesToKeep.addAll(filter.getValues());
                     break;
@@ -60,14 +64,38 @@ public class FilterSplitsInCacheTask implements SplitTask {
         List<Split> splitsInCache = mSplitsStorage.getAll();
         for (Split split : splitsInCache) {
             String splitName = split.name;
+
+            // Since sets filter takes precedence,
+            // if setsToKeep is not empty, we only keep splits that belong to the sets in setsToKeep
+            if (!setsToKeep.isEmpty()) {
+                boolean keepSplit = false;
+                if (split.sets != null) {
+                    for (String set : split.sets) {
+                        if (setsToKeep.contains(set)) {
+                            keepSplit = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!keepSplit) {
+                    splitsToDelete.add(splitName);
+                }
+
+                continue;
+            }
+
+            // legacy behaviour for names and prefix filters
             String splitPrefix = getPrefix(splitName);
             if (!namesToKeep.contains(split.name) && (splitPrefix == null || !prefixesToKeep.contains(splitPrefix))) {
                 splitsToDelete.add(splitName);
             }
         }
-        if (splitsToDelete.size() > 0) {
+
+        if (!splitsToDelete.isEmpty()) {
             mSplitsStorage.delete(splitsToDelete);
         }
+
         return SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE);
     }
 

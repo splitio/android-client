@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.split.android.client.FilterGrouper;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.TestingConfig;
@@ -58,6 +57,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final TelemetryTaskFactory mTelemetryTaskFactory;
     private final SplitChangeProcessor mSplitChangeProcessor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    @Nullable
+    private final List<SplitFilter> mFilters;
 
     @SuppressLint("VisibleForTests")
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
@@ -65,6 +66,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 @NonNull SplitStorageContainer splitStorageContainer,
                                 @Nullable String splitsFilterQueryString,
                                 ISplitEventsManager eventsManager,
+                                @Nullable List<SplitFilter> filters,
                                 @Nullable TestingConfig testingConfig) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
@@ -95,6 +97,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 splitClientConfig,
                 mSplitsStorageContainer.getSplitsStorage(),
                 mSplitsStorageContainer.getMySegmentsStorageContainer());
+
+        mFilters = filters;
     }
 
     @Override
@@ -141,9 +145,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public FilterSplitsInCacheTask createFilterSplitsInCacheTask() {
-        List<SplitFilter> filters = new FilterGrouper().group(mSplitClientConfig.syncConfig().getFilters());
         return new FilterSplitsInCacheTask(mSplitsStorageContainer.getPersistentSplitsStorage(),
-                filters, mSplitsFilterQueryString);
+                mFilters, mSplitsFilterQueryString);
     }
 
     @Override
