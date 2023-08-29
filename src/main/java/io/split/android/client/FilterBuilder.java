@@ -12,9 +12,6 @@ import io.split.android.client.utils.StringHelper;
 
 public class FilterBuilder {
 
-    private final static int MAX_BY_NAME_VALUES = 400;
-    private final static int MAX_BY_PREFIX_VALUES = 50;
-
     private final List<SplitFilter> mFilters = new ArrayList<>();
     private final FilterGrouper mFilterGrouper = new FilterGrouper();
 
@@ -26,19 +23,44 @@ public class FilterBuilder {
     }
 
     public FilterBuilder addFilters(List<SplitFilter> filters) {
-        mFilters.addAll(filters);
+        if (filters == null) {
+            return this;
+        }
+
+        boolean containsSetsFilter = false;
+        for (SplitFilter filter : filters) {
+            if (filter == null) {
+                continue;
+            }
+
+            if (filter.getType() == SplitFilter.Type.BY_SET) {
+                // BY_SET filter has precedence over other filters, so we remove all other filters
+                // and only add BY_SET filters
+                if (!containsSetsFilter) {
+                    mFilters.clear();
+                    containsSetsFilter = true;
+                }
+                mFilters.add(filter);
+            }
+
+            if (!containsSetsFilter) {
+                mFilters.add(filter);
+            }
+        }
+
         return this;
     }
 
-    public String build() {
+    public String buildQueryString() {
 
         if (mFilters.size() == 0) {
             return "";
         }
 
         StringHelper stringHelper = new StringHelper();
-        StringBuilder queryString = new StringBuilder("");
-        List<SplitFilter> sortedFilters = new ArrayList(mFilterGrouper.group(mFilters));
+        StringBuilder queryString = new StringBuilder();
+
+        List<SplitFilter> sortedFilters = new ArrayList<>(mFilterGrouper.group(mFilters));
         Collections.sort(sortedFilters, new SplitFilterComparator());
 
         for (SplitFilter splitFilter : sortedFilters) {
@@ -58,6 +80,7 @@ public class FilterBuilder {
             queryString.append("=");
             queryString.append(stringHelper.join(",", deduptedValues));
         }
+
         return queryString.toString();
     }
 

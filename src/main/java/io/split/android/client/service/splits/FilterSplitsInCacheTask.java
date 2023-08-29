@@ -52,7 +52,7 @@ public class FilterSplitsInCacheTask implements SplitTask {
                     prefixesToKeep.addAll(filter.getValues());
                     break;
                 default:
-                    Logger.e("Unknown filter type" + filter.getType().toString());
+                    Logger.e("Unknown filter type: " + filter.getType().toString());
             }
         }
 

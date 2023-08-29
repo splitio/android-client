@@ -161,7 +161,7 @@ class SplitFactoryHelper {
     String buildSplitsFilterQueryString(SplitClientConfig config) {
         SyncConfig syncConfig = config.syncConfig();
         if (syncConfig != null) {
-            return new FilterBuilder().addFilters(syncConfig.getFilters()).build();
+            return new FilterBuilder().addFilters(syncConfig.getFilters()).buildQueryString();
         }
         return null;
     }

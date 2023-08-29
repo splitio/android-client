@@ -1,10 +1,13 @@
 package io.split.android.client;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class FilterBuilderTest {
@@ -16,9 +19,9 @@ public class FilterBuilderTest {
         SplitFilter byNameFilter = SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b"));
         SplitFilter byPrefixFilter = SplitFilter.byPrefix(Arrays.asList("pf_c", "pf_b", "pf_a"));
 
-        String queryString = new FilterBuilder().addFilters(Arrays.asList(byNameFilter, byPrefixFilter)).build();
+        String queryString = new FilterBuilder().addFilters(Arrays.asList(byNameFilter, byPrefixFilter)).buildQueryString();
 
-        Assert.assertEquals("&names=nf_a,nf_b,nf_c&prefixes=pf_a,pf_b,pf_c", queryString);
+        assertEquals("&names=nf_a,nf_b,nf_c&prefixes=pf_a,pf_b,pf_c", queryString);
     }
 
     @Test
@@ -28,16 +31,16 @@ public class FilterBuilderTest {
         SplitFilter byNameFilter = SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b"));
         SplitFilter byPrefixFilter = SplitFilter.byPrefix(Arrays.asList("pf_c", "pf_b", "pf_a"));
 
-        String onlyByNameQs = new FilterBuilder().addFilters(Arrays.asList(byNameFilter)).build();
-        String onlyByPrefixQs = new FilterBuilder().addFilters(Arrays.asList(byPrefixFilter)).build();
+        String onlyByNameQs = new FilterBuilder().addFilters(Arrays.asList(byNameFilter)).buildQueryString();
+        String onlyByPrefixQs = new FilterBuilder().addFilters(Arrays.asList(byPrefixFilter)).buildQueryString();
 
-        Assert.assertEquals("&names=nf_a,nf_b,nf_c", onlyByNameQs);
-        Assert.assertEquals("&prefixes=pf_a,pf_b,pf_c", onlyByPrefixQs);
+        assertEquals("&names=nf_a,nf_b,nf_c", onlyByNameQs);
+        assertEquals("&prefixes=pf_a,pf_b,pf_c", onlyByPrefixQs);
     }
 
     @Test
     public void filterValuesDeduptedAndGrouped() {
-        // Duplicated filter values should be removed on builing
+        // Duplicated filter values should be removed on building
 
         List<SplitFilter> filters = Arrays.asList(
                 SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b")),
@@ -47,9 +50,9 @@ public class FilterBuilderTest {
 
         String queryString = new FilterBuilder()
                 .addFilters(filters)
-                .build();
+                .buildQueryString();
 
-        Assert.assertEquals("&names=nf_a,nf_b,nf_c,nf_d&prefixes=pf_a,pf_b,pf_c,pf_d", queryString);
+        assertEquals("&names=nf_a,nf_b,nf_c,nf_d&prefixes=pf_a,pf_b,pf_c,pf_d", queryString);
     }
 
     @Test
@@ -65,7 +68,7 @@ public class FilterBuilderTest {
         try {
             String queryString = new FilterBuilder()
                     .addFilters(Arrays.asList(SplitFilter.byName(values)))
-                    .build();
+                    .buildQueryString();
         } catch (Exception e) {
             exceptionThrown = true;
         }
@@ -86,7 +89,7 @@ public class FilterBuilderTest {
         try {
             String queryString = new FilterBuilder()
                     .addFilters(Arrays.asList(SplitFilter.byPrefix(values)))
-                    .build();
+                    .buildQueryString();
         } catch (Exception e) {
             exceptionThrown = true;
         }
@@ -98,9 +101,9 @@ public class FilterBuilderTest {
     public void testNoFilters() {
         // When no filter added, query string has to be empty
 
-        String queryString = new FilterBuilder().build();
+        String queryString = new FilterBuilder().buildQueryString();
 
-        Assert.assertEquals("", queryString);
+        assertEquals("", queryString);
     }
 
     @Test
@@ -110,8 +113,8 @@ public class FilterBuilderTest {
                 .addSplitFilter(SplitFilter.byName(Arrays.asList("ausgefüllt")))
                 .addSplitFilter(SplitFilter.byPrefix(Arrays.asList()))
                 .build();
-        String queryString = new FilterBuilder().addFilters(config.getFilters()).build();
-        Assert.assertEquals("&names=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
+        String queryString = new FilterBuilder().addFilters(config.getFilters()).buildQueryString();
+        assertEquals("&names=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
     }
 
     @Test
@@ -121,8 +124,8 @@ public class FilterBuilderTest {
                 .addSplitFilter(SplitFilter.byPrefix(Arrays.asList("ausgefüllt")))
                 .addSplitFilter(SplitFilter.byName(Arrays.asList()))
                 .build();
-        String queryString = new FilterBuilder().addFilters(config.getFilters()).build();
-        Assert.assertEquals("&prefixes=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
+        String queryString = new FilterBuilder().addFilters(config.getFilters()).buildQueryString();
+        assertEquals("&prefixes=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
     }
     
     @Test
@@ -133,8 +136,8 @@ public class FilterBuilderTest {
                 .addSplitFilter(SplitFilter.byPrefix(Arrays.asList("\u0223abc", "abc\u0223asd", "abc\u0223")))
                 .addSplitFilter(SplitFilter.byPrefix(Arrays.asList("ausgefüllt")))
                 .build();
-        String queryString = new FilterBuilder().addFilters(config.getFilters()).build();
-        Assert.assertEquals("&names=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc&prefixes=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
+        String queryString = new FilterBuilder().addFilters(config.getFilters()).buildQueryString();
+        assertEquals("&names=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc&prefixes=abc\u0223,abc\u0223asd,ausgefüllt,\u0223abc", queryString);
     }
 
     @Test
@@ -142,7 +145,40 @@ public class FilterBuilderTest {
         SyncConfig config = SyncConfig.builder()
                 .addSplitFilter(SplitFilter.byName(Arrays.asList("__ш", "__a", "%", "%25", " __ш ", "%  ")))
                 .build();
-        String queryString = new FilterBuilder().addFilters(config.getFilters()).build();
-        Assert.assertEquals("&names=%,%25,__a,__ш", queryString);
+        String queryString = new FilterBuilder().addFilters(config.getFilters()).buildQueryString();
+        assertEquals("&names=%,%25,__a,__ш", queryString);
+    }
+
+    @Test
+    public void addingBySetFilterAlongsideOtherTypesLeavesOnlyBySet() {
+        List<SplitFilter> filters = Arrays.asList(
+                SplitFilter.byName(Arrays.asList("nf_a", "nf_c", "nf_b")),
+                SplitFilter.byName(Arrays.asList("nf_b", "nf_d")),
+                SplitFilter.bySet(Collections.singletonList("zz")),
+                SplitFilter.byPrefix(Arrays.asList("pf_a", "pf_c", "pf_b")),
+                SplitFilter.bySet(Arrays.asList("pf_d", "pf_a", "_invalid")));
+
+        String queryString = new FilterBuilder().addFilters(filters).buildQueryString();
+
+        assertEquals("&sets=pf_a,pf_d,zz", queryString);
+    }
+
+    @Test
+    public void bySetQueryStringIsBuiltCorrectly() {
+        String queryString = new FilterBuilder().addFilters(Arrays.asList(SplitFilter.bySet(Arrays.asList("pf_d", "pf_a", "_invalid")))).buildQueryString();
+
+        assertEquals("&sets=pf_a,pf_d", queryString);
+    }
+
+    @Test
+    public void addingMultipleBySetFiltersCombinesTheValues() {
+        List<SplitFilter> filters = Arrays.asList(
+                SplitFilter.bySet(Arrays.asList("pf_d", "pf_a", "_invalid")),
+                SplitFilter.bySet(Arrays.asList("pf_d", "pf_c", "_invalid")),
+                SplitFilter.bySet(Arrays.asList("zz", "zzz")));
+
+        String queryString = new FilterBuilder().addFilters(filters).buildQueryString();
+
+        assertEquals("&sets=pf_a,pf_c,pf_d,zz,zzz", queryString);
     }
 }

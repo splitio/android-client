@@ -13,8 +13,8 @@ public class SplitFilter {
         // Filters here has to be defined in the order
         // it will be in querystring
         BY_NAME,
-        BY_SET,
-        BY_PREFIX;
+        BY_PREFIX,
+        BY_SET;
 
         @NonNull
         @Override
@@ -61,15 +61,15 @@ public class SplitFilter {
     private final SplitFilter.Type mType;
     private final List<String> mValues;
 
-    static public SplitFilter byName(@NonNull List<String> values) {
+    public static SplitFilter byName(@NonNull List<String> values) {
         return new SplitFilter(Type.BY_NAME, values);
     }
 
-    static public SplitFilter byPrefix(@NonNull List<String> values) {
+    public static SplitFilter byPrefix(@NonNull List<String> values) {
         return new SplitFilter(Type.BY_PREFIX, values);
     }
 
-    static public SplitFilter bySet(@NonNull List<String> values) {
+    public static SplitFilter bySet(@NonNull List<String> values) {
         return new SplitFilter(Type.BY_SET, values, new FlagSetsValidatorImpl());
     }
 
