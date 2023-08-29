@@ -34,11 +34,12 @@ public class FlagSetsValidatorImplTest {
 
     @Test
     public void valuesAreSortedAlphanumerically() {
-        List<String> result = mValidator.cleanup(Arrays.asList("set2", "set1", "set_1"));
-        assertEquals(3, result.size());
-        assertEquals("set1", result.get(0));
-        assertEquals("set2", result.get(1));
-        assertEquals("set_1", result.get(2));
+        List<String> result = mValidator.cleanup(Arrays.asList("set2", "set1", "set_1", "1set"));
+        assertEquals(4, result.size());
+        assertEquals("1set", result.get(0));
+        assertEquals("set1", result.get(1));
+        assertEquals("set2", result.get(2));
+        assertEquals("set_1", result.get(3));
     }
 
     @Test
@@ -75,10 +76,19 @@ public class FlagSetsValidatorImplTest {
 
     @Test
     public void setWithExtraWhitespaceIsTrimmed() {
-        List<String> result = mValidator.cleanup(Arrays.asList("set1 ", " set2", "set3", "set 4"));
+        List<String> result = mValidator.cleanup(Arrays.asList("set1 ", " set2\r", "set3  ", "set 4\n"));
         assertEquals(3, result.size());
         assertEquals("set1", result.get(0));
         assertEquals("set2", result.get(1));
         assertEquals("set3", result.get(2));
+    }
+
+    @Test
+    public void setsAreLowercase() {
+        List<String> result = mValidator.cleanup(Arrays.asList("SET1", "Set2", "SET_3"));
+        assertEquals(3, result.size());
+        assertEquals("set1", result.get(0));
+        assertEquals("set2", result.get(1));
+        assertEquals("set_3", result.get(2));
     }
 }
