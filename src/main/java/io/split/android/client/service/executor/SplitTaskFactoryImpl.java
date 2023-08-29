@@ -7,6 +7,7 @@ import android.annotation.SuppressLint;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,6 +68,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 @Nullable String splitsFilterQueryString,
                                 ISplitEventsManager eventsManager,
                                 @Nullable List<SplitFilter> filters,
+                                @NonNull Set<String> configuredFlagSets,
                                 @Nullable TestingConfig testingConfig) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
@@ -74,7 +76,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
         mSplitsFilterQueryString = splitsFilterQueryString;
         mEventsManager = eventsManager;
-        mSplitChangeProcessor = new SplitChangeProcessor();
+        mSplitChangeProcessor = new SplitChangeProcessor(configuredFlagSets);
 
         TelemetryStorage telemetryStorage = mSplitsStorageContainer.getTelemetryStorage();
         mTelemetryRuntimeProducer = telemetryStorage;
@@ -87,7 +89,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         } else {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
-                    new SplitChangeProcessor(),
+                    mSplitChangeProcessor,
                     mTelemetryRuntimeProducer);
         }
 
@@ -119,7 +121,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                         mSplitClientConfig.impressionsPerPush(),
                         ServiceConstants.ESTIMATED_IMPRESSION_SIZE_IN_BYTES,
                         mSplitClientConfig.shouldRecordTelemetry()),
-                        mSplitsStorageContainer.getTelemetryStorage());
+                mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override

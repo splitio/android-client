@@ -10,6 +10,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -184,9 +185,9 @@ class SplitFactoryHelper {
     }
 
     WorkManagerWrapper buildWorkManagerWrapper(Context context, SplitClientConfig splitClientConfig,
-                                               String apiKey, String databaseName) {
+                                               String apiKey, String databaseName, Set<String> configuredFlagSets) {
         return new WorkManagerWrapper(
-                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName);
+                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName, configuredFlagSets);
 
     }
 

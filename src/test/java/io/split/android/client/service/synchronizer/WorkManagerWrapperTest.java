@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
@@ -68,7 +69,8 @@ public class WorkManagerWrapperTest {
                 mWorkManager,
                 splitClientConfig,
                 "api_key",
-                "test_database_name"
+                "test_database_name",
+                new HashSet<>(Arrays.asList("set_1", "set_2"))
         );
     }
 
@@ -90,6 +92,7 @@ public class WorkManagerWrapperTest {
                 .putLong("splitCacheExpiration", 864000)
                 .putString("endpoint", "https://test.split.io/api")
                 .putBoolean("shouldRecordTelemetry", true)
+                .putStringArray("configuredSets", new String[]{"set_1", "set_2"})
                 .build();
 
         PeriodicWorkRequest expectedRequest = new PeriodicWorkRequest

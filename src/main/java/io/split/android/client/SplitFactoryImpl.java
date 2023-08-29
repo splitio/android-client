@@ -6,7 +6,9 @@ import androidx.annotation.NonNull;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
@@ -31,7 +33,6 @@ import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
-import io.split.android.client.service.synchronizer.FeatureFlagsSynchronizerImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -182,12 +183,15 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryString);
 
+        Set<String> configuredFlagSets = (filters != null && !filters.isEmpty() && filters.get(0).getType() == SplitFilter.Type.BY_SET) ?
+                new HashSet<>(filters.get(0).getValues()) : new HashSet<>();
+
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator,
-                filters, testingConfig);
+                filters, configuredFlagSets, testingConfig);
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
-        WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
+        WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, configuredFlagSets);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
 
         ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
