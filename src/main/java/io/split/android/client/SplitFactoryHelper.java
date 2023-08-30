@@ -429,10 +429,8 @@ class SplitFactoryHelper {
 
                 // In the case of BY_SET, all filters will be grouped into one with the {@link SplitFilter.Type#BY_SET} type
                 if (splitFilter.getType() == SplitFilter.Type.BY_SET) {
-                    splitsFilterQueryString = splitFilter.getValues().get(0);
+                    configuredFlagSets.addAll(splitFilter.getValues());
                 }
-
-                configuredFlagSets.addAll(splitFilter.getValues());
             }
         }
 
