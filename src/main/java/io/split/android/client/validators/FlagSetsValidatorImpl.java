@@ -9,7 +9,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class FlagSetsValidatorImpl implements SplitFilterValidator {
 
-    private static final String FLAG_SET_REGEX = "^[a-z][_a-z0-9]{0,49}$";
+    private static final String FLAG_SET_REGEX = "^[a-z0-9][_a-z0-9]{0,49}$";
 
     /**
      * Validates the flag sets and returns a list of
@@ -30,9 +30,14 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
                 continue;
             }
 
-            if (set.startsWith(" ") || set.endsWith(" ")) {
+            if (set.trim().length() != set.length()) {
                 Logger.w("SDK config: Flag Set name " + set + " has extra whitespace, trimming");
                 set = set.trim();
+            }
+
+            if (!set.toLowerCase().equals(set)) {
+                Logger.w("SDK config: Flag Set name "+set+" should be all lowercase - converting string to lowercase");
+                set = set.toLowerCase();
             }
 
             if (set.matches(FLAG_SET_REGEX)) {
