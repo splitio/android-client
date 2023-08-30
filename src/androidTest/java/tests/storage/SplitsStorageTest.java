@@ -11,8 +11,10 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -32,15 +34,15 @@ public class SplitsStorageTest {
 
     private static final Long INITIAL_CHANGE_NUMBER = 9999L;
     private static final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d}";
-    private static final String JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d, \"trafficTypeName\":\"%s\"}";
+    private static final String JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d, \"trafficTypeName\":\"%s\", \"sets\":[\"%s\"]}";
+
     private SplitRoomDatabase mRoomDb;
-    private Context mContext;
     private SplitsStorage mSplitsStorage;
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mRoomDb = DatabaseHelper.getTestDatabase(mContext);
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        mRoomDb = DatabaseHelper.getTestDatabase(context);
         mRoomDb.clearAllTables();
         List<SplitEntity> entities = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
@@ -349,7 +351,63 @@ public class SplitsStorageTest {
         Assert.assertTrue(mSplitsStorage.isValidTrafficType("test_type_2"));
     }
 
+    @Test
+    public void flagSetsAreUpdatedWhenCallingLoadLocal() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(
+                newSplitEntity("split_test", "test_type", Collections.singleton("set_1")),
+                newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2")),
+                newSplitEntity("split_test_3", "test_type_2", Collections.singleton("set_2")),
+                newSplitEntity("split_test_4", "test_type_2", Collections.singleton("set_1"))));
+
+        mSplitsStorage.loadLocal();
+
+        Assert.assertEquals(new HashSet<>(Arrays.asList("split_test", "split_test_4")), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
+        Assert.assertEquals(new HashSet<>(Arrays.asList("split_test_2", "split_test_3")), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
+    }
+
+    @Test
+    public void flagSetsAreRemovedWhenUpdating() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(
+                newSplitEntity("split_test", "test_type", Collections.singleton("set_1")),
+                newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2")),
+                newSplitEntity("split_test_3", "test_type_2", Collections.singleton("set_2"))));
+        mSplitsStorage.loadLocal();
+
+        Set<String> initialSet1 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1"));
+        Set<String> initialSet2 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2"));
+
+        mSplitsStorage.update(new ProcessedSplitChange(
+                Collections.singletonList(newSplit("split_test", Status.ACTIVE, "test_type")), Collections.emptyList(),
+                1L, 0L));
+
+        Assert.assertFalse(initialSet1.isEmpty());
+        Assert.assertEquals(Collections.emptySet(), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
+        Assert.assertEquals(initialSet2, mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
+    }
+
+    @Test
+    public void updateWithoutChecksRemovesFromFlagSet() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+        mSplitsStorage.loadLocal();
+
+        Set<String> initialSet1 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1"));
+        Set<String> initialSet2 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2"));
+
+        mSplitsStorage.updateWithoutChecks(newSplit("split_test", Status.ACTIVE, "test_type"));
+
+        Assert.assertFalse(initialSet1.isEmpty());
+        Assert.assertEquals(Collections.emptySet(), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
+        Assert.assertEquals(initialSet2, mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
+    }
+
     private Split newSplit(String name, Status status, String trafficType) {
+        return newSplit(name, status, trafficType, Collections.emptySet());
+    }
+
+    private Split newSplit(String name, Status status, String trafficType, Set<String> sets) {
         Split split = new Split();
         split.name = name;
         split.status = status;
@@ -358,13 +416,20 @@ public class SplitsStorageTest {
         } else {
             split.trafficTypeName = "custom";
         }
+        split.sets = sets;
+
         return split;
     }
 
     private static SplitEntity newSplitEntity(String name, String trafficType) {
+        return newSplitEntity(name, trafficType, Collections.emptySet());
+    }
+
+    private static SplitEntity newSplitEntity(String name, String trafficType, Set<String> sets) {
         SplitEntity entity = new SplitEntity();
+        String setsString = String.join(",", sets);
         entity.setName(name);
-        entity.setBody(String.format(JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType));
+        entity.setBody(String.format(JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType, setsString));
 
         return entity;
     }

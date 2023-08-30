@@ -10,8 +10,10 @@ import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -28,6 +30,7 @@ public class LocalhostSplitsStorage implements SplitsStorage {
     private String mLocalhostFileName;
     private final Context mContext;
     private final Map<String, Split> mInMemorySplits = Maps.newConcurrentMap();
+    private final Map<String, Set<String>> mFlagSets = Maps.newConcurrentMap();
     private final FileStorage mFileStorage;
     private LocalhostFileParser mParser;
     private final EventsManagerCoordinator mEventsManager;
@@ -121,6 +124,23 @@ public class LocalhostSplitsStorage implements SplitsStorage {
         mInMemorySplits.clear();
     }
 
+    @NonNull
+    @Override
+    public Set<String> getNamesByFlagSets(List<String> sets) {
+        Set<String> namesToReturn = new HashSet<>();
+        if (sets == null || sets.isEmpty()) {
+            return namesToReturn;
+        }
+
+        for (String set : sets) {
+            Set<String> splits = mFlagSets.get(set);
+            if (splits != null) {
+                namesToReturn.addAll(splits);
+            }
+        }
+        return namesToReturn;
+    }
+
     private void setup() {
 
         String fileName = mLocalhostFileName;
@@ -164,6 +184,20 @@ public class LocalhostSplitsStorage implements SplitsStorage {
             Map<String, Split> values = mParser.parse(content);
             if (values != null) {
                 mInMemorySplits.putAll(values);
+
+                for (Split split : values.values()) {
+                    Set<String> sets = split.sets;
+                    if (sets != null) {
+                        for (String set : sets) {
+                            Set<String> splitsForSet = mFlagSets.get(set);
+                            if (splitsForSet == null) {
+                                splitsForSet = new HashSet<>();
+                                mFlagSets.put(set, splitsForSet);
+                            }
+                            splitsForSet.add(split.name);
+                        }
+                    }
+                }
             }
             if (!content.equals(mLastContentLoaded)) {
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
