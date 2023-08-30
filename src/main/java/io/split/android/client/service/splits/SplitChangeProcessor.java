@@ -61,9 +61,6 @@ public class SplitChangeProcessor {
 
     /**
      * Process the feature flag according to its status
-     * @param activeFeatureFlags List of feature flags with status {@link Status#ACTIVE}
-     * @param archivedFeatureFlags List of feature flags with status different than {@link Status#ACTIVE}
-     * @param featureFlag Feature flag to process
      */
     private void processAccordingToStatus(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
         if (featureFlag.status == Status.ACTIVE) {
@@ -74,10 +71,7 @@ public class SplitChangeProcessor {
     }
 
     /**
-     * Process the feature flag according to its sets.
-     * @param activeFeatureFlags List of feature flags with sets that match the configured sets
-     * @param archivedFeatureFlags List of feature flags with sets that don't match the configured sets
-     * @param featureFlag Feature flag to process
+     * Process the feature flag according to its sets
      */
     private void processAccordingToSets(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
         if (featureFlag.sets == null || featureFlag.sets.isEmpty()) {
