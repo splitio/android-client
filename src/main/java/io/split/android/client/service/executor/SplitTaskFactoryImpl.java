@@ -130,8 +130,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public LoadSplitsTask createLoadSplitsTask() {
-        return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage());
+    public LoadSplitsTask createLoadSplitsTask(String splitsFilterQueryStringFromConfig) {
+        return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage(), splitsFilterQueryStringFromConfig);
     }
 
     @Override

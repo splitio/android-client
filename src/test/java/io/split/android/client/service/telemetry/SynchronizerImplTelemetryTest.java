@@ -103,7 +103,8 @@ public class SynchronizerImplTelemetryTest {
                         mTaskFactory,
                         mEventsManager,
                         mRetryBackoffCounterFactory,
-                        mPushManagerEventBroadcaster),
+                        mPushManagerEventBroadcaster,
+                        ""),
                 mSplitStorageContainer.getEventsStorage());
     }
 

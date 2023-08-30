@@ -53,9 +53,9 @@ public class LoadSplitTaskTest {
     }
 
     @Test
-    public void execute() {
+    public void executeWithoutQueryString() {
 
-        SplitTask task = new LoadSplitsTask(mSplitsStorage);
+        SplitTask task = new LoadSplitsTask(mSplitsStorage, null);
         SplitTaskExecutionInfo result = task.execute();
 
         Split split0 = mSplitsStorage.get("split-0");
@@ -68,5 +68,26 @@ public class LoadSplitTaskTest {
         Assert.assertNotNull(split2);
         Assert.assertNotNull(split3);
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+        Assert.assertEquals(9999L, mSplitsStorage.getTill());
+        Assert.assertEquals("", mSplitsStorage.getSplitsFilterQueryString());
+    }
+
+    @Test
+    public void executeWithQueryString() {
+
+        SplitTask task = new LoadSplitsTask(mSplitsStorage, "sets=set1");
+        SplitTaskExecutionInfo result = task.execute();
+
+        Split split0 = mSplitsStorage.get("split-0");
+        Split split1 = mSplitsStorage.get("split-1");
+        Split split2 = mSplitsStorage.get("split-2");
+        Split split3 = mSplitsStorage.get("split-3");
+        Assert.assertNull(split0);
+        Assert.assertNull(split1);
+        Assert.assertNull(split2);
+        Assert.assertNull(split3);
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertEquals(-1L, mSplitsStorage.getTill());
+        Assert.assertEquals("sets=set1", mSplitsStorage.getSplitsFilterQueryString());
     }
 }

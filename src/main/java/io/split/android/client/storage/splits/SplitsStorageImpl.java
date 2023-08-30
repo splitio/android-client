@@ -135,6 +135,7 @@ public class SplitsStorageImpl implements SplitsStorage {
     @WorkerThread
     public void updateSplitsFilterQueryString(String queryString) {
         mPersistentStorage.updateFilterQueryString(queryString);
+        mSplitsFilterQueryString = queryString;
     }
 
     @Override

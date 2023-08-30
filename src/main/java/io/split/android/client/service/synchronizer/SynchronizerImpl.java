@@ -63,7 +63,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull ImpressionManager impressionManager,
                             @NonNull StoragePusher<Event> eventsStorage,
                             @NonNull ISplitEventsManager eventsManagerCoordinator,
-                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster) {
+                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                            @NonNull String splitsFilterQueryStringFromConfig) {
         this(splitClientConfig,
                 taskExecutor,
                 splitSingleThreadTaskExecutor,
@@ -79,7 +80,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                         splitTaskFactory,
                         eventsManagerCoordinator,
                         retryBackoffCounterTimerFactory,
-                        pushManagerEventBroadcaster),
+                        pushManagerEventBroadcaster,
+                        splitsFilterQueryStringFromConfig),
                 eventsStorage);
     }
 
@@ -120,11 +122,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         } else {
             workManagerWrapper.removeWork();
         }
-    }
-
-    @Override
-    public void loadSplitsFromCache() {
-        mFeatureFlagsSynchronizer.loadFromCache();
     }
 
     @Override
