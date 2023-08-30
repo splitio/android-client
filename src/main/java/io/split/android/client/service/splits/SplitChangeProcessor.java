@@ -1,5 +1,7 @@
 package io.split.android.client.service.splits;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
@@ -22,8 +24,8 @@ public class SplitChangeProcessor {
         this(Collections.emptySet());
     }
 
-    public SplitChangeProcessor(Set<String> configuredSets) {
-        mConfiguredSets = configuredSets;
+    public SplitChangeProcessor(@NonNull Set<String> configuredSets) {
+        mConfiguredSets = checkNotNull(configuredSets);
     }
 
     public ProcessedSplitChange process(SplitChange splitChange) {
@@ -48,16 +50,22 @@ public class SplitChangeProcessor {
             }
 
             if (mConfiguredSets.isEmpty()) {
-                processWithoutSets(activeFeatureFlags, archivedFeatureFlags, featureFlag);
+                processAccordingToStatus(activeFeatureFlags, archivedFeatureFlags, featureFlag);
             } else {
-                processWithSets(activeFeatureFlags, archivedFeatureFlags, featureFlag);
+                processAccordingToSets(activeFeatureFlags, archivedFeatureFlags, featureFlag);
             }
         }
 
         return new ProcessedSplitChange(activeFeatureFlags, archivedFeatureFlags, changeNumber, System.currentTimeMillis() / 100);
     }
 
-    private void processWithoutSets(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
+    /**
+     * Process the feature flag according to its status
+     * @param activeFeatureFlags List of feature flags with status {@link Status#ACTIVE}
+     * @param archivedFeatureFlags List of feature flags with status different than {@link Status#ACTIVE}
+     * @param featureFlag Feature flag to process
+     */
+    private void processAccordingToStatus(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
         if (featureFlag.status == Status.ACTIVE) {
             activeFeatureFlags.add(featureFlag);
         } else {
@@ -65,7 +73,13 @@ public class SplitChangeProcessor {
         }
     }
 
-    private void processWithSets(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
+    /**
+     * Process the feature flag according to its sets.
+     * @param activeFeatureFlags List of feature flags with sets that match the configured sets
+     * @param archivedFeatureFlags List of feature flags with sets that don't match the configured sets
+     * @param featureFlag Feature flag to process
+     */
+    private void processAccordingToSets(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
         if (featureFlag.sets == null || featureFlag.sets.isEmpty()) {
             archivedFeatureFlags.add(featureFlag);
             return;
@@ -74,7 +88,9 @@ public class SplitChangeProcessor {
         boolean shouldArchive = true;
         for (String set : featureFlag.sets) {
             if (mConfiguredSets.contains(set)) {
-                processWithoutSets(activeFeatureFlags, archivedFeatureFlags, featureFlag);
+                // If the feature flag has at least one set that matches the configured sets,
+                // we process it according to its status
+                processAccordingToStatus(activeFeatureFlags, archivedFeatureFlags, featureFlag);
                 shouldArchive = false;
                 break;
             }
