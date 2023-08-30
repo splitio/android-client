@@ -3,10 +3,10 @@ package io.split.android.client;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.core.util.Pair;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -171,20 +171,13 @@ public class SplitFactoryImpl implements SplitFactory {
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
                 splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
 
-        SyncConfig syncConfig = config.syncConfig();
-        String splitsFilterQueryString = null;
-        List<SplitFilter> filters = null;
-        if (syncConfig != null) {
-            FilterBuilder filterBuilder = new FilterBuilder(syncConfig.getFilters());
-            filters = filterBuilder.getGroupedFilter();
-            splitsFilterQueryString = filterBuilder.buildQueryString();
-        }
+        Pair<Pair<List<SplitFilter>, String>, Set<String>> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
+        List<SplitFilter> filters = filtersConfig.first.first;
+        String splitsFilterQueryString = filtersConfig.first.second;
+        Set<String> configuredFlagSets = filtersConfig.second;
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryString);
-
-        Set<String> configuredFlagSets = (filters != null && !filters.isEmpty() && filters.get(0).getType() == SplitFilter.Type.BY_SET) ?
-                new HashSet<>(filters.get(0).getValues()) : new HashSet<>();
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator,
