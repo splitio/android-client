@@ -23,14 +23,14 @@ public class FilterSplitsInCacheTask implements SplitTask {
     private final static String PREFIX_SEPARATOR = "__";
     private final PersistentSplitsStorage mSplitsStorage;
     private final List<SplitFilter> mSplitsFilter;
-    private final String mSplitsFilterQueryString;
+    private final String mSplitsFilterQueryStringFromConfig;
 
     public FilterSplitsInCacheTask(@NonNull PersistentSplitsStorage splitsStorage,
                                    @NonNull List<SplitFilter> splitsFilter,
                                    @Nullable String splitsFilterQueryString) {
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsFilter = checkNotNull(splitsFilter);
-        mSplitsFilterQueryString = splitsFilterQueryString;
+        mSplitsFilterQueryStringFromConfig = splitsFilterQueryString;
     }
 
     @Override
@@ -108,7 +108,7 @@ public class FilterSplitsInCacheTask implements SplitTask {
     }
 
     private boolean queryStringHasChanged() {
-        return !sanitizeString(mSplitsStorage.getFilterQueryString()).equals(sanitizeString(mSplitsFilterQueryString));
+        return !sanitizeString(mSplitsStorage.getFilterQueryString()).equals(sanitizeString(mSplitsFilterQueryStringFromConfig));
     }
 
     private String sanitizeString(String string) {

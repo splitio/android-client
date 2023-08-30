@@ -17,7 +17,7 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class SplitsSyncTask implements SplitTask {
 
-    private final String mSplitsFilterQueryString;
+    private final String mSplitsFilterQueryStringFromConfig;
 
     private final SplitsStorage mSplitsStorage;
     private final boolean mCheckCacheExpiration;
@@ -59,7 +59,7 @@ public class SplitsSyncTask implements SplitTask {
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
         mCacheExpirationInSeconds = cacheExpirationInSeconds;
         mCheckCacheExpiration = checkCacheExpiration;
-        mSplitsFilterQueryString = splitsFilterQueryString;
+        mSplitsFilterQueryStringFromConfig = splitsFilterQueryString;
         mEventsManager = eventsManager;
         mChangeChecker = new SplitsChangeChecker();
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
@@ -77,7 +77,7 @@ public class SplitsSyncTask implements SplitTask {
         boolean splitsFilterHasChanged = splitsFilterHasChanged(mSplitsStorage.getSplitsFilterQueryString());
 
         if (splitsFilterHasChanged) {
-            mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryString);
+            mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryStringFromConfig);
             storedChangeNumber = -1;
         }
 
@@ -107,7 +107,7 @@ public class SplitsSyncTask implements SplitTask {
     }
 
     private boolean splitsFilterHasChanged(String storedSplitsFilterQueryString) {
-        return !sanitizeString(mSplitsFilterQueryString).equals(sanitizeString(storedSplitsFilterQueryString));
+        return !sanitizeString(mSplitsFilterQueryStringFromConfig).equals(sanitizeString(storedSplitsFilterQueryString));
     }
 
     private String sanitizeString(String string) {
