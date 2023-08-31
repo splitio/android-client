@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public abstract class HttpGeneralException extends Exception {
+
     private final Integer mHttpStatus;
 
     public HttpGeneralException(String path, String message, @Nullable Integer httpStatus) {

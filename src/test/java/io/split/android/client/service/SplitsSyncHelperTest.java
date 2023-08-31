@@ -1,5 +1,6 @@
 package io.split.android.client.service;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,7 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.helpers.FileHelper;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
@@ -56,16 +58,26 @@ public class SplitsSyncHelperTest {
 
     private final Map<String, Object> mDefaultParams = new HashMap<>();
     private final Map<String, Object> mSecondFetchParams = new HashMap<>();
+    private AutoCloseable mAutoCloseable;
 
     @Before
     public void setup() {
-        MockitoAnnotations.openMocks(this);
+        mAutoCloseable = MockitoAnnotations.openMocks(this);
         mDefaultParams.clear();
         mDefaultParams.put("since", -1L);
         mSecondFetchParams.clear();
         mSecondFetchParams.put("since", 1506703262916L);
         mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mTelemetryRuntimeProducer, mBackoffCounter);
         loadSplitChanges();
+    }
+
+    @After
+    public void tearDown() {
+        try {
+            mAutoCloseable.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -330,6 +342,28 @@ public class SplitsSyncHelperTest {
         params.put("since", -1L);
         verify(mSplitsFetcher).execute(eq(params), eq(null));
         verifyNoMoreInteractions(mSplitsFetcher);
+    }
+
+    @Test
+    public void returnTaskInfoToDoNotRetryWhenHttpFetcherExceptionStatusCodeIs414() throws HttpFetcherException {
+        when(mSplitsFetcher.execute(eq(mDefaultParams), any()))
+                .thenThrow(new HttpFetcherException("error", "error", 414));
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1);
+
+        assertEquals(true, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
+    public void doNotRetryFlagIsNullWhenFetcherExceptionStatusCodeIsNot414() throws HttpFetcherException {
+        when(mSplitsFetcher.execute(eq(mDefaultParams), any()))
+                .thenThrow(new HttpFetcherException("error", "error", 500));
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1);
+
+        assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
     }
 
     private void loadSplitChanges() {
