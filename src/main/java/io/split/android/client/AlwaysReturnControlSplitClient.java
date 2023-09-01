@@ -62,22 +62,22 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
 
     @Override
     public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return Collections.singletonMap(flagSet, Treatments.CONTROL); //TODO
+        return Collections.emptyMap(); //TODO
     }
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return Collections.singletonMap(flagSets.get(0), Treatments.CONTROL); //TODO
+        return Collections.emptyMap(); //TODO
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return Collections.singletonMap(flagSet, new SplitResult(Treatments.CONTROL)); //TODO
+        return Collections.emptyMap(); //TODO
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return Collections.singletonMap(flagSets.get(0), new SplitResult(Treatments.CONTROL)); //TODO
+        return Collections.emptyMap(); //TODO
     }
 
     @Override

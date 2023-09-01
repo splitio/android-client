@@ -56,11 +56,12 @@ public class TreatmentManagerTest {
     AttributesManager attributesManager = mock(AttributesManager.class);
     TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
     private Set<String> mConfiguredFlagSets;
-    TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
+    TreatmentManagerImpl treatmentManager;
 
     @Before
     public void loadSplitsFromFile() {
         mConfiguredFlagSets = new HashSet<>();
+        treatmentManager = initializeTreatmentManager();
         if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
             MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);

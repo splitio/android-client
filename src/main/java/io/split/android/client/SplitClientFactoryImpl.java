@@ -83,7 +83,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 new AttributesMergerImpl(),
                 mStorageContainer.getTelemetryStorage(),
                 new EvaluatorImpl(mStorageContainer.getSplitsStorage(), mSplitParser),
-                configuredFlagSets
+                checkNotNull(configuredFlagSets)
         );
     }
 
