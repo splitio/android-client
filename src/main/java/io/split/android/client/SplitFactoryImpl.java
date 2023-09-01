@@ -173,14 +173,14 @@ public class SplitFactoryImpl implements SplitFactory {
 
         Pair<Pair<List<SplitFilter>, String>, Set<String>> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
         List<SplitFilter> filters = filtersConfig.first.first;
-        String splitsFilterQueryString = filtersConfig.first.second;
+        String splitsFilterQueryStringFromConfig = filtersConfig.first.second;
         Set<String> configuredFlagSets = filtersConfig.second;
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
-                config, defaultHttpClient, splitsFilterQueryString);
+                config, defaultHttpClient, splitsFilterQueryStringFromConfig);
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
-                config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator,
+                config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig, mEventsManagerCoordinator,
                 filters, configuredFlagSets, testingConfig);
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
@@ -205,7 +205,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 impressionManager,
                 mStorageContainer.getEventsStorage(),
                 mEventsManagerCoordinator,
-                streamingComponents.getPushManagerEventBroadcaster());
+                streamingComponents.getPushManagerEventBroadcaster(),
+                splitsFilterQueryStringFromConfig);
         // Only available for integration tests
         if (synchronizerSpy != null) {
             synchronizerSpy.setSynchronizer(mSynchronizer);

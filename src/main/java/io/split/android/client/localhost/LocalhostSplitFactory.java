@@ -7,11 +7,13 @@ import androidx.annotation.VisibleForTesting;
 
 import java.io.IOException;
 
+import io.split.android.client.FilterBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitManager;
 import io.split.android.client.SplitManagerImpl;
+import io.split.android.client.SyncConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerFactory;
 import io.split.android.client.attributes.AttributesManagerFactoryImpl;
@@ -77,7 +79,7 @@ public class LocalhostSplitFactory implements SplitFactory {
                 eventsManagerCoordinator,
                 taskExecutor);
 
-        mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage);
+        mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage, buildQueryString(config.syncConfig()));
         mSynchronizer.start();
 
         Logger.i("Android SDK initialized!");
@@ -140,5 +142,14 @@ public class LocalhostSplitFactory implements SplitFactory {
     @Override
     public UserConsent getUserConsent() {
         return UserConsent.GRANTED;
+    }
+
+    private static String buildQueryString(SyncConfig syncConfig) {
+        if (syncConfig != null) {
+            FilterBuilder filterBuilder = new FilterBuilder(syncConfig.getFilters());
+            return filterBuilder.buildQueryString();
+        }
+
+        return "";
     }
 }
