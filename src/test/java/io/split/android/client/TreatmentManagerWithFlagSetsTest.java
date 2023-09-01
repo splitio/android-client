@@ -1,9 +1,10 @@
 package io.split.android.client;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +31,6 @@ import io.split.android.client.validators.TreatmentManagerImpl;
 
 public class TreatmentManagerWithFlagSetsTest {
 
-
     @Mock
     private Evaluator mEvaluator;
     @Mock
@@ -50,7 +50,7 @@ public class TreatmentManagerWithFlagSetsTest {
     @Mock
     private SplitsStorage mSplitsStorage;
 
-    private Set<String> mConfiguredFlagSets = new HashSet<>();
+    private Set<String> mConfiguredFlagSets;
     private TreatmentManagerImpl mTreatmentManager;
     private AutoCloseable mAutoCloseable;
 
@@ -58,6 +58,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void setUp() {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
 
+        mConfiguredFlagSets = new HashSet<>();
         when(mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
         when(mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(true);
 
@@ -90,6 +91,14 @@ public class TreatmentManagerWithFlagSetsTest {
     }
 
     @Test
+    public void getTreatmentByFlagSetDestroyed() {
+        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, true);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
+    }
+
+    @Test
     public void getTreatmentByFlagSetWithNoConfiguredSets() {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
@@ -98,5 +107,38 @@ public class TreatmentManagerWithFlagSetsTest {
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singletonList("set_1"));
         verify(mEvaluator).getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split"), anyMap());
+    }
+
+    @Test
+    public void getTreatmentByFlagSetWithNoConfiguredSetsInvalidSet() {
+        when(mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")))
+                .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
+
+        mTreatmentManager.getTreatmentsByFlagSet("SET!", null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+    }
+
+    @Test
+    public void getTreatmentByFlagSetWithConfiguredSetsExistingSet() {
+        mConfiguredFlagSets.add("set_1");
+        when(mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")))
+                .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
+
+        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, false);
+
+        verify(mSplitsStorage).getNamesByFlagSets(Collections.singletonList("set_1"));
+        verify(mEvaluator).getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split"), anyMap());
+    }
+
+    @Test
+    public void getTreatmentByFlagSetWithConfiguredSetsNonExistingSet() {
+        mConfiguredFlagSets.add("set_1");
+        when(mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")))
+                .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
+
+        mTreatmentManager.getTreatmentsByFlagSet("set_2", null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
     }
 }
