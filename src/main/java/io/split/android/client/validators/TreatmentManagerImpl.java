@@ -186,7 +186,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return new HashMap<>();
         }
 
-        if (mFlagSetsValidator.isValid(flagSet)) {
+        if (!mFlagSetsValidator.isValid(flagSet)) {
             mValidationLogger.e("you passed " + flagSet + " which is not valid.", validationTag);
             return new HashMap<>();
         }

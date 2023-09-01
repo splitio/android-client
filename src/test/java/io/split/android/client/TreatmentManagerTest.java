@@ -7,7 +7,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
 import static io.split.android.client.TreatmentLabels.DEFINITION_NOT_FOUND;
 
 import com.google.common.base.Strings;
@@ -57,10 +56,12 @@ public class TreatmentManagerTest {
     TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
     private Set<String> mConfiguredFlagSets;
     TreatmentManagerImpl treatmentManager;
+    private SplitsStorage mSplitsStorage;
 
     @Before
     public void loadSplitsFromFile() {
         mConfiguredFlagSets = new HashSet<>();
+        mSplitsStorage = mock(SplitsStorage.class);
         treatmentManager = initializeTreatmentManager();
         if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
@@ -322,7 +323,9 @@ public class TreatmentManagerTest {
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
                 new KeyValidatorImpl(), new SplitValidatorImpl(),
-                new ImpressionListenerMock(), config.labelsEnabled(), eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class), mConfiguredFlagSets);
+                new ImpressionListenerMock(), config.labelsEnabled(), eventsManagerStub,
+                mock(AttributesManager.class), mock(AttributesMerger.class),
+                mock(TelemetryStorageProducer.class), mConfiguredFlagSets, mSplitsStorage);
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -350,7 +353,8 @@ public class TreatmentManagerTest {
                 attributesManager,
                 mock(AttributesMerger.class),
                 telemetryStorageProducer,
-                mConfiguredFlagSets);
+                mConfiguredFlagSets,
+                mSplitsStorage);
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {

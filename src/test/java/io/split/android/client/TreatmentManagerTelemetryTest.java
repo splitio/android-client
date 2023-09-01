@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -23,6 +24,7 @@ import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.KeyValidator;
@@ -47,13 +49,16 @@ public class TreatmentManagerTelemetryTest {
     AttributesMerger attributesMerger;
     @Mock
     TelemetryStorageProducer telemetryStorageProducer;
+    @Mock
+    private SplitsStorage mSplitsStorage;
 
     private Set<String> mConfiguredFlagSets = new HashSet<>();
     private TreatmentManagerImpl treatmentManager;
+    private AutoCloseable mAutoCloseable;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
+        mAutoCloseable = MockitoAnnotations.openMocks(this);
 
         treatmentManager = new TreatmentManagerImpl(
                 "test_key",
@@ -67,9 +72,19 @@ public class TreatmentManagerTelemetryTest {
                 attributesManager,
                 attributesMerger,
                 telemetryStorageProducer,
-                mConfiguredFlagSets);
+                mConfiguredFlagSets,
+                mSplitsStorage);
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
+    }
+
+    @After
+    public void tearDown() {
+        try {
+            mAutoCloseable.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
