@@ -3,7 +3,9 @@ package io.split.android.client.validators;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.logger.Logger;
@@ -31,6 +34,10 @@ public class TreatmentManagerImpl implements TreatmentManager {
         public static final String GET_TREATMENTS = "getTreatments";
         public static final String GET_TREATMENT_WITH_CONFIG = "getTreatmentWithConfig";
         public static final String GET_TREATMENTS_WITH_CONFIG = "getTreatmentsWithConfig";
+        public static final String GET_TREATMENTS_BY_FLAG_SET = "getTreatmentsByFlagSet";
+        public static final String GET_TREATMENTS_BY_FLAG_SETS = "getTreatmentsByFlagSets";
+        public static final String GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET = "getTreatmentsWithConfigByFlagSet";
+        public static final String GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS = "getTreatmentsWithConfigByFlagSets";
     }
 
     private final String CLIENT_DESTROYED_MESSAGE = "Client has already been destroyed - no calls possible";
@@ -50,6 +57,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final AttributesMerger mAttributesMerger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final Set<String> mConfiguredFlagSets;
+    private final SplitsStorage mSplitsStorage;
+    private final SplitFilterValidator mFlagSetsValidator;
 
     public TreatmentManagerImpl(String matchingKey,
                                 String bucketingKey,
@@ -62,7 +71,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
                                 @NonNull TelemetryStorageProducer telemetryStorageProducer,
-                                @NonNull Set<String> configuredFlagSets) {
+                                @NonNull Set<String> configuredFlagSets,
+                                @NonNull SplitsStorage splitsStorage) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -76,6 +86,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
         mConfiguredFlagSets = checkNotNull(configuredFlagSets);
+        mSplitsStorage = checkNotNull(splitsStorage);
+        mFlagSetsValidator = new FlagSetsValidatorImpl();
     }
 
     @Override
@@ -164,6 +176,52 @@ public class TreatmentManagerImpl implements TreatmentManager {
         recordLatency(Method.TREATMENTS_WITH_CONFIG, start);
 
         return result;
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SET;
+        if (isClientDestroyed) {
+            mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
+            return new HashMap<>();
+        }
+
+        if (mFlagSetsValidator.isValid(flagSet)) {
+            mValidationLogger.e("you passed " + flagSet + " which is not valid.", validationTag);
+            return new HashMap<>();
+        }
+
+        if (!mConfiguredFlagSets.isEmpty() && !mConfiguredFlagSets.contains(flagSet)) {
+            mValidationLogger.e("you passed " + flagSet + " which is not defined in the configuration.", validationTag);
+            return new HashMap<>();
+        }
+
+        long start = System.currentTimeMillis();
+
+        Map<String, String> result = new HashMap<>();
+        Set<String> featureFlagNamesInSet = mSplitsStorage.getNamesByFlagSets(Collections.singletonList(flagSet));
+        for (String featureFlagName : featureFlagNamesInSet) {
+            result.put(featureFlagName, getTreatmentWithConfigWithoutMetrics(featureFlagName, attributes, validationTag).treatment());
+        }
+
+        recordLatency(Method.TREATMENTS_BY_FLAG_SET, start);
+
+        return result;
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        return null;
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        return null;
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        return null;
     }
 
     private SplitResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> attributes, String validationTag) {

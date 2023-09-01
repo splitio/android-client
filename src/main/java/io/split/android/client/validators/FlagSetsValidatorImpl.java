@@ -49,4 +49,9 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
 
         return new ArrayList<>(cleanedUpSets);
     }
+
+    @Override
+    public boolean isValid(String value) {
+        return value != null && value.trim().matches(FLAG_SET_REGEX);
+    }
 }

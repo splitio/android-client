@@ -38,8 +38,8 @@ public class SplitClientImplFactory {
         TelemetryStorage telemetryStorage = mock(TelemetryStorage.class);
         TreatmentManagerFactory treatmentManagerFactory = new TreatmentManagerFactoryImpl(
                 new KeyValidatorImpl(), new SplitValidatorImpl(), new ImpressionListener.NoopImpressionListener(),
-                false, new AttributesMergerImpl(), telemetryStorage, new EvaluatorImpl(splitsStorage, splitParser),
-                Collections.emptySet());
+                false, new AttributesMergerImpl(), telemetryStorage, splitParser,
+                Collections.emptySet(), splitsStorage);
 
         AttributesManager attributesManager = mock(AttributesManager.class);
         SplitClientImpl c = new SplitClientImpl(

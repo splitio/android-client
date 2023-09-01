@@ -70,7 +70,8 @@ public final class LocalhostSplitClient implements SplitClient {
         mTreatmentManager = new TreatmentManagerImpl(mKey.matchingKey(), mKey.bucketingKey(),
                 mEvaluator, new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
-                splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger, telemetryStorageProducer, configuredFlagSets);
+                splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger,
+                telemetryStorageProducer, configuredFlagSets, splitsStorage);
     }
 
     @Override

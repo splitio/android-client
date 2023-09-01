@@ -5,6 +5,7 @@ public enum Method {
     TREATMENTS("getTreatments"),
     TREATMENT_WITH_CONFIG("getTreatmentWithConfig"),
     TREATMENTS_WITH_CONFIG("getTreatmentsWithConfig"),
+    TREATMENTS_BY_FLAG_SET("getTreatmentsByFlagSet"),
     TRACK("track");
 
     private final String _method;
