@@ -7,6 +7,9 @@ import androidx.annotation.WorkerThread;
 import androidx.work.WorkerParameters;
 
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.ServiceConstants;
@@ -32,6 +35,12 @@ public class SplitsSyncWorker extends SplitWorker {
             String apiKey = workerParams.getInputData().getString(ServiceConstants.WORKER_PARAM_API_KEY);
             boolean encryptionEnabled = workerParams.getInputData().getBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, false);
 
+            String[] configuredFlagSetsArray = workerParams.getInputData().getStringArray(ServiceConstants.WORKER_PARAM_CONFIGURED_SETS);
+            Set<String> configuredFlagSets = new HashSet<>();
+            if (configuredFlagSetsArray != null) {
+                configuredFlagSets = new HashSet<>(Arrays.asList(configuredFlagSetsArray));
+            }
+
             SplitsStorage splitsStorage = StorageFactory.getSplitsStorageForWorker(getDatabase(), apiKey, encryptionEnabled);
             // StorageFactory.getSplitsStorageForWorker creates a new storage instance, so it needs
             // to be populated by calling loadLocal
@@ -41,7 +50,8 @@ public class SplitsSyncWorker extends SplitWorker {
 
             TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(shouldRecordTelemetry);
 
-            SplitsSyncHelper splitsSyncHelper = new SplitsSyncHelper(splitsFetcher, splitsStorage, new SplitChangeProcessor(), telemetryStorage);
+            SplitsSyncHelper splitsSyncHelper = new SplitsSyncHelper(splitsFetcher, splitsStorage,
+                    new SplitChangeProcessor(configuredFlagSets), telemetryStorage);
 
             mSplitTask = buildSplitSyncTask(splitsStorage, telemetryStorage, splitsSyncHelper);
         } catch (URISyntaxException e) {

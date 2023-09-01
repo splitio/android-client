@@ -45,18 +45,21 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
     private WeakReference<SplitTaskExecutionListener> mFetcherExecutionListener;
     // This variable is used to avoid loading data first time
     // we receive enqueued event
-    final private Set<String> mShouldLoadFromLocal;
+    private final Set<String> mShouldLoadFromLocal;
+    private final Set<String> mConfiguredFlagSets;
 
     public WorkManagerWrapper(@NonNull WorkManager workManager,
                               @NonNull SplitClientConfig splitClientConfig,
                               @NonNull String apiKey,
-                              @NonNull String databaseName) {
+                              @NonNull String databaseName,
+                              @NonNull Set<String> configuredFlagSets) {
         mWorkManager = checkNotNull(workManager);
         mDatabaseName = checkNotNull(databaseName);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mApiKey = checkNotNull(apiKey);
         mShouldLoadFromLocal = new HashSet<>();
         mConstraints = buildConstraints();
+        mConfiguredFlagSets = checkNotNull(configuredFlagSets);
     }
 
     public void setFetcherExecutionListener(SplitTaskExecutionListener fetcherExecutionListener) {
@@ -184,6 +187,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         dataBuilder.putLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION, mSplitClientConfig.cacheExpirationInSeconds());
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
         dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
+        dataBuilder.putStringArray(ServiceConstants.WORKER_PARAM_CONFIGURED_SETS, mConfiguredFlagSets.toArray(new String[0]));
         return buildInputData(dataBuilder.build());
     }
 
