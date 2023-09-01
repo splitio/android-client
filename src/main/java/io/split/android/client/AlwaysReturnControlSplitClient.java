@@ -6,6 +6,8 @@ import androidx.annotation.Nullable;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.grammar.Treatments;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +58,26 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
     @Override
     public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes) {
         return new SplitResult(Treatments.CONTROL);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        return Collections.singletonMap(flagSet, Treatments.CONTROL); //TODO
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        return Collections.singletonMap(flagSets.get(0), Treatments.CONTROL); //TODO
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        return Collections.singletonMap(flagSet, new SplitResult(Treatments.CONTROL)); //TODO
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        return Collections.singletonMap(flagSets.get(0), new SplitResult(Treatments.CONTROL)); //TODO
     }
 
     @Override
@@ -149,6 +171,4 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
     public boolean track(String eventType, double value, Map<String, Object> properties) {
         return false;
     }
-
-
 }

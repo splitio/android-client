@@ -9,6 +9,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
@@ -58,7 +59,8 @@ public final class LocalhostSplitClient implements SplitClient {
                                 @NonNull SplitParser splitParser,
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
-                                @NonNull TelemetryStorageProducer telemetryStorageProducer) {
+                                @NonNull TelemetryStorageProducer telemetryStorageProducer,
+                                @NonNull Set<String> configuredFlagSets) {
 
         mFactoryRef = new WeakReference<>(checkNotNull(container));
         mClientContainer = new WeakReference<>(checkNotNull(clientContainer));
@@ -68,7 +70,7 @@ public final class LocalhostSplitClient implements SplitClient {
         mTreatmentManager = new TreatmentManagerImpl(mKey.matchingKey(), mKey.bucketingKey(),
                 mEvaluator, new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
-                splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger, telemetryStorageProducer);
+                splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger, telemetryStorageProducer, configuredFlagSets);
     }
 
     @Override
@@ -136,6 +138,26 @@ public final class LocalhostSplitClient implements SplitClient {
 
             return result;
         }
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        return null;
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        return null;
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        return null;
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        return null;
     }
 
     @Override

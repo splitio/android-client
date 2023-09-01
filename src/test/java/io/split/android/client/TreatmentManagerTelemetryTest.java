@@ -15,6 +15,8 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
@@ -46,6 +48,7 @@ public class TreatmentManagerTelemetryTest {
     @Mock
     TelemetryStorageProducer telemetryStorageProducer;
 
+    private Set<String> mConfiguredFlagSets = new HashSet<>();
     private TreatmentManagerImpl treatmentManager;
 
     @Before
@@ -63,8 +66,8 @@ public class TreatmentManagerTelemetryTest {
                 eventsManager,
                 attributesManager,
                 attributesMerger,
-                telemetryStorageProducer
-        );
+                telemetryStorageProducer,
+                mConfiguredFlagSets);
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
     }

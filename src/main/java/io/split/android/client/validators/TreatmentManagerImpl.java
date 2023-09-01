@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
@@ -48,6 +49,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     @NonNull
     private final AttributesMerger mAttributesMerger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
+    private final Set<String> mConfiguredFlagSets;
 
     public TreatmentManagerImpl(String matchingKey,
                                 String bucketingKey,
@@ -59,7 +61,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 ListenableEventsManager eventsManager,
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
-                                @NonNull TelemetryStorageProducer telemetryStorageProducer) {
+                                @NonNull TelemetryStorageProducer telemetryStorageProducer,
+                                @NonNull Set<String> configuredFlagSets) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -72,6 +75,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mAttributesManager = checkNotNull(attributesManager);
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
+        mConfiguredFlagSets = checkNotNull(configuredFlagSets);
     }
 
     @Override
