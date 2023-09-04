@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -212,7 +213,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
-        String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SET;
+        String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SETS;
         if (isClientDestroyed) {
             mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
             return new HashMap<>();
@@ -224,35 +225,22 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         long start = System.currentTimeMillis();
 
-        List<String> validSets = new ArrayList<>();
+        List<String> setsToEvaluate = new ArrayList<>();
         for (String flagSet : flagSets) {
-            // Avoid duplicated validations
-            if (validSets.contains(flagSet)) {
+            if (setsToEvaluate.contains(flagSet)) {
                 continue;
             }
 
-            if (!mFlagSetsValidator.isValid(flagSet)) {
+            boolean isValid = mFlagSetsValidator.isValid(flagSet);
+            boolean isConfigured = mConfiguredFlagSets.isEmpty() || mConfiguredFlagSets.contains(flagSet);
+
+            if (!isValid) {
                 mValidationLogger.e("you passed " + flagSet + " which is not valid.", validationTag);
+            } else if (!isConfigured) {
+                mValidationLogger.e("you passed " + flagSet + " which is not defined in the configuration.", validationTag);
             } else {
-                validSets.add(flagSet);
+                setsToEvaluate.add(flagSet);
             }
-        }
-
-        if (validSets.isEmpty()) {
-            return new HashMap<>();
-        }
-
-        List<String> setsToEvaluate = new ArrayList<>();
-        if (!mConfiguredFlagSets.isEmpty()) {
-            for (String flagSet : validSets) {
-                if (!mConfiguredFlagSets.contains(flagSet)) {
-                    mValidationLogger.e("you passed " + flagSet + " which is not defined in the configuration.", validationTag);
-                } else {
-                    setsToEvaluate.add(flagSet);
-                }
-            }
-        } else {
-            setsToEvaluate.addAll(validSets);
         }
 
         if (setsToEvaluate.isEmpty()) {
