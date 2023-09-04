@@ -91,7 +91,7 @@ public class TreatmentManagerWithFlagSetsTest {
     }
 
     @Test
-    public void getTreatmentByFlagSetDestroyed() {
+    public void getTreatmentByFlagSetDestroyedDoesNotQueryStorageOrUseEvaluator() {
         mTreatmentManager.getTreatmentsByFlagSet("set_1", null, true);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
@@ -99,7 +99,7 @@ public class TreatmentManagerWithFlagSetsTest {
     }
 
     @Test
-    public void getTreatmentByFlagSetWithNoConfiguredSets() {
+    public void getTreatmentByFlagSetWithNoConfiguredSetsQueriesStorageAndUsesEvaluator() {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
 
@@ -110,17 +110,18 @@ public class TreatmentManagerWithFlagSetsTest {
     }
 
     @Test
-    public void getTreatmentByFlagSetWithNoConfiguredSetsInvalidSet() {
+    public void getTreatmentByFlagSetWithNoConfiguredSetsInvalidSetDoesNotQueryStorageNorUseEvaluator() {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
 
         mTreatmentManager.getTreatmentsByFlagSet("SET!", null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 
     @Test
-    public void getTreatmentByFlagSetWithConfiguredSetsExistingSet() {
+    public void getTreatmentByFlagSetWithConfiguredSetsExistingSetQueriesStorageAndUsesEvaluator() {
         mConfiguredFlagSets.add("set_1");
         when(mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
@@ -132,7 +133,7 @@ public class TreatmentManagerWithFlagSetsTest {
     }
 
     @Test
-    public void getTreatmentByFlagSetWithConfiguredSetsNonExistingSet() {
+    public void getTreatmentByFlagSetWithConfiguredSetsNonExistingSetDoesNotQueryStorageNorUseEvaluator() {
         mConfiguredFlagSets.add("set_1");
         when(mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
@@ -140,5 +141,6 @@ public class TreatmentManagerWithFlagSetsTest {
         mTreatmentManager.getTreatmentsByFlagSet("set_2", null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 }

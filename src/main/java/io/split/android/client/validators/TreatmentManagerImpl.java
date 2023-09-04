@@ -5,8 +5,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -211,7 +213,54 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
-        return null;
+        String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SET;
+        if (isClientDestroyed) {
+            mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
+            return new HashMap<>();
+        }
+
+        if (flagSets == null) {
+            return new HashMap<>();
+        }
+
+        List<String> validSets = new ArrayList<>();
+        for (String flagSet : flagSets) {
+            // Avoid duplicated validations
+            if (validSets.contains(flagSet)) {
+                continue;
+            }
+
+            if (!mFlagSetsValidator.isValid(flagSet)) {
+                mValidationLogger.e("you passed " + flagSet + " which is not valid.", validationTag);
+            } else {
+                validSets.add(flagSet);
+            }
+        }
+
+        if (validSets.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        if (!mConfiguredFlagSets.isEmpty()) {
+            for (String flagSet : validSets) {
+                if (!mConfiguredFlagSets.contains(flagSet)) {
+                    mValidationLogger.e("you passed " + flagSet + " which is not defined in the configuration.", validationTag);
+                    validSets.remove(flagSet);
+                }
+            }
+        }
+
+        long start = System.currentTimeMillis();
+
+        Map<String, String> result = new HashMap<>();
+        Set<String> featureFlagNamesInSet = mSplitsStorage.getNamesByFlagSets(validSets);
+        for (String featureFlagName : featureFlagNamesInSet) {
+            result.put(featureFlagName, getTreatmentWithConfigWithoutMetrics(featureFlagName, attributes, validationTag).treatment());
+        }
+
+        recordLatency(Method.TREATMENTS_BY_FLAG_SET, start);
+
+        return result;
     }
 
     @Override
