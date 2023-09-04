@@ -4,11 +4,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.Set;
+
 import io.split.android.client.Evaluator;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
-import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
@@ -22,6 +23,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
     private final AttributesMerger mAttributesMerger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final Evaluator mEvaluator;
+    private final Set<String> mConfiguredFlagSets;
 
     public TreatmentManagerFactoryImpl(@NonNull KeyValidator keyValidator,
                                        @NonNull SplitValidator splitValidator,
@@ -29,7 +31,8 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                                        boolean labelsEnabled,
                                        @NonNull AttributesMerger attributesMerger,
                                        @NonNull TelemetryStorageProducer telemetryStorageProducer,
-                                       @NonNull Evaluator evaluator) {
+                                       @NonNull Evaluator evaluator,
+                                       @NonNull Set<String> configuredFlagSets) {
         mKeyValidator = checkNotNull(keyValidator);
         mSplitValidator = checkNotNull(splitValidator);
         mCustomerImpressionListener = checkNotNull(customerImpressionListener);
@@ -37,6 +40,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
         mEvaluator = checkNotNull(evaluator);
+        mConfiguredFlagSets = configuredFlagSets;
     }
 
     @Override
@@ -52,7 +56,8 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                 eventsManager,
                 attributesManager,
                 mAttributesMerger,
-                mTelemetryStorageProducer
+                mTelemetryStorageProducer,
+                mConfiguredFlagSets
         );
     }
 }

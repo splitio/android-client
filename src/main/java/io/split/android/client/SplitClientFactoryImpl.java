@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.Set;
+
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerFactory;
 import io.split.android.client.attributes.AttributesManagerFactoryImpl;
@@ -55,7 +57,8 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull ValidationMessageLogger validationLogger,
                                   @NonNull KeyValidator keyValidator,
                                   @NonNull EventsTracker eventsTracker,
-                                  @NonNull ImpressionListener customerImpressionListener) {
+                                  @NonNull ImpressionListener customerImpressionListener,
+                                  @NonNull Set<String> configuredFlagSets) {
         mSplitFactory = checkNotNull(splitFactory);
         mClientContainer = checkNotNull(clientContainer);
         mConfig = checkNotNull(config);
@@ -79,7 +82,8 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 config.labelsEnabled(),
                 new AttributesMergerImpl(),
                 mStorageContainer.getTelemetryStorage(),
-                new EvaluatorImpl(mStorageContainer.getSplitsStorage(), mSplitParser)
+                new EvaluatorImpl(mStorageContainer.getSplitsStorage(), mSplitParser),
+                checkNotNull(configuredFlagSets)
         );
     }
 

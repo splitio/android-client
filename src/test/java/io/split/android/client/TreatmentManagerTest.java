@@ -28,7 +28,6 @@ import java.util.Set;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
@@ -56,10 +55,13 @@ public class TreatmentManagerTest {
     ListenableEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
     TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
-    TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
+    private Set<String> mConfiguredFlagSets;
+    TreatmentManagerImpl treatmentManager;
 
     @Before
     public void loadSplitsFromFile() {
+        mConfiguredFlagSets = new HashSet<>();
+        treatmentManager = initializeTreatmentManager();
         if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
             MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
@@ -320,7 +322,7 @@ public class TreatmentManagerTest {
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
                 new KeyValidatorImpl(), new SplitValidatorImpl(),
-                new ImpressionListenerMock(), config.labelsEnabled(), eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class));
+                new ImpressionListenerMock(), config.labelsEnabled(), eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class), mConfiguredFlagSets);
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -347,8 +349,8 @@ public class TreatmentManagerTest {
                 eventsManager,
                 attributesManager,
                 mock(AttributesMerger.class),
-                telemetryStorageProducer
-        );
+                telemetryStorageProducer,
+                mConfiguredFlagSets);
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {

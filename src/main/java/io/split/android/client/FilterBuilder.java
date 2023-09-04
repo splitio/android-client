@@ -63,7 +63,7 @@ public class FilterBuilder {
     }
 
     @NonNull
-    public ArrayList<SplitFilter> getGroupedFilter() {
+    public List<SplitFilter> getGroupedFilter() {
         return new ArrayList<>(mFilterGrouper.group(mFilters));
     }
 

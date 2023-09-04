@@ -6,11 +6,16 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import io.split.android.client.FilterBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.SplitFilter;
 import io.split.android.client.SplitManager;
 import io.split.android.client.SplitManagerImpl;
 import io.split.android.client.SyncConfig;
@@ -69,6 +74,16 @@ public class LocalhostSplitFactory implements SplitFactory {
 
         mManager = new SplitManagerImpl(splitsStorage, new SplitValidatorImpl(), splitParser);
 
+        Set<String> configuredSets = new HashSet<>();
+        if (config.syncConfig() != null) {
+            List<SplitFilter> groupedFilters = new FilterBuilder(config.syncConfig().getFilters())
+                    .getGroupedFilter();
+
+            if (!groupedFilters.isEmpty() && groupedFilters.get(0).getType() == SplitFilter.Type.BY_SET) {
+                configuredSets.addAll(groupedFilters.get(0).getValues());
+            }
+        }
+
         mClientContainer = new LocalhostSplitClientContainerImpl(this,
                 config,
                 splitsStorage,
@@ -77,7 +92,8 @@ public class LocalhostSplitFactory implements SplitFactory {
                 new AttributesMergerImpl(),
                 new NoOpTelemetryStorage(),
                 eventsManagerCoordinator,
-                taskExecutor);
+                taskExecutor,
+                configuredSets);
 
         mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage, buildQueryString(config.syncConfig()));
         mSynchronizer.start();

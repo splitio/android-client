@@ -269,7 +269,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener,
                 streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper,
-                eventsTracker);
+                eventsTracker, configuredFlagSets);
         mDestroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");

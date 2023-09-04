@@ -16,6 +16,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
@@ -50,12 +52,14 @@ public class LocalhostSplitClientContainerImplTest {
     private SplitClientConfig mConfig;
     @Mock
     private SplitTaskExecutor mTaskExecutor;
+    private Set<String> mConfiguredSets;
     private LocalhostSplitClientContainerImpl mClientContainer;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         when(mAttributesManagerFactory.getManager(any(), any())).thenReturn(mock(AttributesManager.class));
+        mConfiguredSets = new HashSet<>();
         mClientContainer = getClientContainer();
     }
 
@@ -95,6 +99,15 @@ public class LocalhostSplitClientContainerImplTest {
 
     @NonNull
     private LocalhostSplitClientContainerImpl getClientContainer() {
-        return new LocalhostSplitClientContainerImpl(mFactory, mConfig, mSplitsStorage, mSplitParser, mAttributesManagerFactory, mAttributesMerger, mTelemetryStorageProducer, mEventsManagerCoordinator, mTaskExecutor);
+        return new LocalhostSplitClientContainerImpl(mFactory,
+                mConfig,
+                mSplitsStorage,
+                mSplitParser,
+                mAttributesManagerFactory,
+                mAttributesMerger,
+                mTelemetryStorageProducer,
+                mEventsManagerCoordinator,
+                mTaskExecutor,
+                mConfiguredSets);
     }
 }
