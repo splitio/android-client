@@ -17,7 +17,7 @@ import java.util.Map;
  * Useful for testing
  *
  */
-public class AlwaysReturnControlSplitClient implements io.split.android.client.SplitClient {
+public class AlwaysReturnControlSplitClient implements SplitClient {
 
     @Override
     public String getTreatment(String featureFlagName) {
@@ -62,22 +62,22 @@ public class AlwaysReturnControlSplitClient implements io.split.android.client.S
 
     @Override
     public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return Collections.emptyMap(); //TODO
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return Collections.emptyMap(); //TODO
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return Collections.emptyMap(); //TODO
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return Collections.emptyMap(); //TODO
+        return Collections.emptyMap();
     }
 
     @Override
