@@ -98,10 +98,10 @@ public class TreatmentManagerWithFlagSetsTest {
     }
 
     @Test
-    public void getTreatmentsByFlagSetDestroyedDoesNotQueryStorageOrUseEvaluator() {
+    public void getTreatmentsByFlagSetDestroyedDoesNotUseEvaluator() {
         mTreatmentManager.getTreatmentsByFlagSet("set_1", null, true);
 
-        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mSplitsStorage).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 
@@ -177,10 +177,10 @@ public class TreatmentManagerWithFlagSetsTest {
 
     ///
     @Test
-    public void getTreatmentsByFlagSetsDestroyedDoesNotQueryStorageOrUseEvaluator() {
+    public void getTreatmentsByFlagSetsDestroyedDoesNotUseEvaluator() {
         mTreatmentManager.getTreatmentsByFlagSets(Collections.singletonList("set_1"), null, true);
 
-        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mSplitsStorage).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 
@@ -270,10 +270,10 @@ public class TreatmentManagerWithFlagSetsTest {
 
     ///
     @Test
-    public void getTreatmentsWithConfigByFlagSetDestroyedDoesNotQueryStorageOrUseEvaluator() {
+    public void getTreatmentsWithConfigByFlagSetDestroyedDoesNotUseEvaluator() {
         mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, true);
 
-        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mSplitsStorage).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 
@@ -349,10 +349,10 @@ public class TreatmentManagerWithFlagSetsTest {
 
     ///
     @Test
-    public void getTreatmentsWithConfigByFlagSetsDestroyedDoesNotQueryStorageOrUseEvaluator() {
+    public void getTreatmentsWithConfigByFlagSetsDestroyedDoesNotUseEvaluator() {
         mTreatmentManager.getTreatmentsWithConfigByFlagSets(Collections.singletonList("set_1"), null, true);
 
-        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mSplitsStorage).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 

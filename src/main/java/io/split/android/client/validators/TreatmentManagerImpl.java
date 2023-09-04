@@ -182,10 +182,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @Override
     public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SET;
+        Set<String> names = getNamesFromSet(validationTag, Collections.singletonList(flagSet));
+        if (isClientDestroyed) {
+            mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
+            return controlTreatmentsForSplits(new ArrayList<>(names), validationTag);
+        }
+
         long start = System.currentTimeMillis();
         try {
-            Set<String> names = getNamesFromSet(ValidationTag.GET_TREATMENTS_BY_FLAG_SET, Collections.singletonList(flagSet), isClientDestroyed);
-            return evaluateFeatures(names, attributes, ValidationTag.GET_TREATMENTS_BY_FLAG_SET, SplitResult::treatment);
+            return evaluateFeatures(names, attributes, validationTag, SplitResult::treatment);
         } finally {
             recordLatency(Method.TREATMENTS_BY_FLAG_SET, start);
         }
@@ -193,10 +199,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SETS;
+        Set<String> names = getNamesFromSet(validationTag, flagSets);
+        if (isClientDestroyed) {
+            mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
+            return controlTreatmentsForSplits(new ArrayList<>(names), validationTag);
+        }
+
         long start = System.currentTimeMillis();
         try {
-            Set<String> names = getNamesFromSet(ValidationTag.GET_TREATMENTS_BY_FLAG_SETS, flagSets, isClientDestroyed);
-            return evaluateFeatures(names, attributes, ValidationTag.GET_TREATMENTS_BY_FLAG_SETS, SplitResult::treatment);
+            return evaluateFeatures(names, attributes, validationTag, SplitResult::treatment);
         } finally {
             recordLatency(Method.TREATMENTS_BY_FLAG_SETS, start);
         }
@@ -204,10 +216,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        String validationTag = ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET;
+        Set<String> names = getNamesFromSet(validationTag, Collections.singletonList(flagSet));
+        if (isClientDestroyed) {
+            mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
+            return controlTreatmentsForSplitsWithConfig(new ArrayList<>(names), validationTag);
+        }
+
         long start = System.currentTimeMillis();
         try {
-            Set<String> names = getNamesFromSet(ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET, Collections.singletonList(flagSet), isClientDestroyed);
-            return evaluateFeatures(names, attributes, ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET, splitResult -> splitResult);
+            return evaluateFeatures(names, attributes, validationTag, ResultTransformer::identity);
         } finally {
             recordLatency(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET, start);
         }
@@ -215,10 +233,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        String validationTag = ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS;
+        Set<String> names = getNamesFromSet(validationTag, flagSets);
+        if (isClientDestroyed) {
+            mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
+            return controlTreatmentsForSplitsWithConfig(new ArrayList<>(names), validationTag);
+        }
+
         long start = System.currentTimeMillis();
         try {
-            Set<String> names = getNamesFromSet(ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, flagSets, isClientDestroyed);
-            return evaluateFeatures(names, attributes, ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, splitResult -> splitResult);
+            return evaluateFeatures(names, attributes, validationTag, ResultTransformer::identity);
         } finally {
             recordLatency(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, start);
         }
@@ -346,12 +370,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @NonNull
     private Set<String> getNamesFromSet(String validationTag,
-                                        @NonNull List<String> flagSets,
-                                        boolean isClientDestroyed) {
-        if (isClientDestroyed) {
-            mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
-            return new HashSet<>();
-        }
+                                        @NonNull List<String> flagSets) {
 
         if (flagSets == null) {
             return new HashSet<>();
@@ -392,6 +411,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     private interface ResultTransformer<T> {
+
         T transform(SplitResult splitResult);
+
+        static SplitResult identity(SplitResult splitResult) {
+            return splitResult;
+        }
     }
 }
