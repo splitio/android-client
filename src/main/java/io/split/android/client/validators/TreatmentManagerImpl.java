@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -223,6 +222,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return new HashMap<>();
         }
 
+        long start = System.currentTimeMillis();
+
         List<String> validSets = new ArrayList<>();
         for (String flagSet : flagSets) {
             // Avoid duplicated validations
@@ -241,19 +242,25 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return new HashMap<>();
         }
 
+        List<String> setsToEvaluate = new ArrayList<>();
         if (!mConfiguredFlagSets.isEmpty()) {
             for (String flagSet : validSets) {
                 if (!mConfiguredFlagSets.contains(flagSet)) {
                     mValidationLogger.e("you passed " + flagSet + " which is not defined in the configuration.", validationTag);
-                    validSets.remove(flagSet);
+                } else {
+                    setsToEvaluate.add(flagSet);
                 }
             }
+        } else {
+            setsToEvaluate.addAll(validSets);
         }
 
-        long start = System.currentTimeMillis();
+        if (setsToEvaluate.isEmpty()) {
+            return new HashMap<>();
+        }
 
         Map<String, String> result = new HashMap<>();
-        Set<String> featureFlagNamesInSet = mSplitsStorage.getNamesByFlagSets(validSets);
+        Set<String> featureFlagNamesInSet = mSplitsStorage.getNamesByFlagSets(setsToEvaluate);
         for (String featureFlagName : featureFlagNamesInSet) {
             result.put(featureFlagName, getTreatmentWithConfigWithoutMetrics(featureFlagName, attributes, validationTag).treatment());
         }
