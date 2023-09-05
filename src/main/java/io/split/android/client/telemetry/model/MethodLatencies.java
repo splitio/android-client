@@ -24,10 +24,10 @@ public class MethodLatencies {
     @SerializedName("tfs")
     private List<Long> treatmentsByFlagSets;
 
-    @SerializedName("tfc")
+    @SerializedName("tcf")
     private List<Long> treatmentsWithConfigByFlagSet;
 
-    @SerializedName("tfcs")
+    @SerializedName("tcfs")
     private List<Long> treatmentsWithConfigByFlagSets;
 
     @SerializedName("tr")

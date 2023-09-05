@@ -22,10 +22,10 @@ public class MethodExceptions {
     @SerializedName("tfs")
     private long treatmentsByFlagSets;
 
-    @SerializedName("tfc")
+    @SerializedName("tcf")
     private long treatmentsWithConfigByFlagSet;
 
-    @SerializedName("tfcs")
+    @SerializedName("tcfs")
     private long treatmentsWithConfigByFlagSets;
 
     @SerializedName("tr")
