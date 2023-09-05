@@ -439,4 +439,40 @@ public class TreatmentManagerWithFlagSetsTest {
 
         verify(mTelemetryStorageProducer).recordLatency(eq(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS), anyLong());
     }
+
+    @Test
+    public void getTreatmentsByFlagSetExceptionIsRecordedInTelemetry() {
+        when(mSplitsStorage.getNamesByFlagSets(any())).thenThrow(new RuntimeException("test"));
+
+        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, false);
+
+        verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_BY_FLAG_SET));
+    }
+
+    @Test
+    public void getTreatmentsByFlagSetsExceptionIsRecordedInTelemetry() {
+        when(mSplitsStorage.getNamesByFlagSets(any())).thenThrow(new RuntimeException("test"));
+
+        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+
+        verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_BY_FLAG_SETS));
+    }
+
+    @Test
+    public void getTreatmentsWithConfigByFlagSetExceptionIsRecordedInTelemetry() {
+        when(mSplitsStorage.getNamesByFlagSets(any())).thenThrow(new RuntimeException("test"));
+
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, false);
+
+        verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET));
+    }
+
+    @Test
+    public void getTreatmentsWithConfigByFlagSetsExceptionIsRecordedInTelemetry() {
+        when(mSplitsStorage.getNamesByFlagSets(any())).thenThrow(new RuntimeException("test"));
+
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+
+        verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS));
+    }
 }
