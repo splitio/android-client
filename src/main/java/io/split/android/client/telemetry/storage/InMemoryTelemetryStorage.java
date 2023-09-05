@@ -73,6 +73,10 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         methodExceptions.setTreatmentWithConfig(methodExceptionsCounter.get(Method.TREATMENT_WITH_CONFIG).getAndSet(0L));
         methodExceptions.setTreatmentsWithConfig(methodExceptionsCounter.get(Method.TREATMENTS_WITH_CONFIG).getAndSet(0L));
         methodExceptions.setTrack(methodExceptionsCounter.get(Method.TRACK).getAndSet(0L));
+        methodExceptions.setTreatmentsByFlagSet(methodExceptionsCounter.get(Method.TREATMENTS_BY_FLAG_SET).getAndSet(0L));
+        methodExceptions.setTreatmentsByFlagSets(methodExceptionsCounter.get(Method.TREATMENTS_BY_FLAG_SETS).getAndSet(0L));
+        methodExceptions.setTreatmentsWithConfigByFlagSet(methodExceptionsCounter.get(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET).getAndSet(0L));
+        methodExceptions.setTreatmentsWithConfigByFlagSets(methodExceptionsCounter.get(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS).getAndSet(0L));
 
         return methodExceptions;
     }
@@ -86,6 +90,10 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
             latencies.setTreatments(popLatencies(Method.TREATMENTS));
             latencies.setTreatmentWithConfig(popLatencies(Method.TREATMENT_WITH_CONFIG));
             latencies.setTreatmentsWithConfig(popLatencies(Method.TREATMENTS_WITH_CONFIG));
+            latencies.setTreatmentsByFlagSet(popLatencies(Method.TREATMENTS_BY_FLAG_SET));
+            latencies.setTreatmentsByFlagSets(popLatencies(Method.TREATMENTS_BY_FLAG_SETS));
+            latencies.setTreatmentsWithConfigByFlagSet(popLatencies(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET));
+            latencies.setTreatmentsWithConfigByFlagSets(popLatencies(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS));
             latencies.setTrack(popLatencies(Method.TRACK));
 
             return latencies;
@@ -354,7 +362,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
 
     private void initializeProperties() {
         initializeMethodExceptionsCounter();
-        initializeHttpLatenciesCounter();
+        initializeMethodLatenciesCounter();
         initializeFactoryCounters();
         initializeImpressionsData();
         initializeEventsData();
@@ -365,12 +373,16 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         initializeUpdatesFromSSE();
     }
 
-    private void initializeHttpLatenciesCounter() {
+    private void initializeMethodLatenciesCounter() {
         methodLatencies.put(Method.TREATMENT, new BinarySearchLatencyTracker());
         methodLatencies.put(Method.TREATMENTS, new BinarySearchLatencyTracker());
         methodLatencies.put(Method.TREATMENT_WITH_CONFIG, new BinarySearchLatencyTracker());
         methodLatencies.put(Method.TREATMENTS_WITH_CONFIG, new BinarySearchLatencyTracker());
         methodLatencies.put(Method.TRACK, new BinarySearchLatencyTracker());
+        methodLatencies.put(Method.TREATMENTS_BY_FLAG_SET, new BinarySearchLatencyTracker());
+        methodLatencies.put(Method.TREATMENTS_BY_FLAG_SETS, new BinarySearchLatencyTracker());
+        methodLatencies.put(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET, new BinarySearchLatencyTracker());
+        methodLatencies.put(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, new BinarySearchLatencyTracker());
     }
 
     private void initializeMethodExceptionsCounter() {
@@ -379,6 +391,10 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         methodExceptionsCounter.put(Method.TREATMENT_WITH_CONFIG, new AtomicLong());
         methodExceptionsCounter.put(Method.TREATMENTS_WITH_CONFIG, new AtomicLong());
         methodExceptionsCounter.put(Method.TRACK, new AtomicLong());
+        methodExceptionsCounter.put(Method.TREATMENTS_BY_FLAG_SET, new AtomicLong());
+        methodExceptionsCounter.put(Method.TREATMENTS_BY_FLAG_SETS, new AtomicLong());
+        methodExceptionsCounter.put(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET, new AtomicLong());
+        methodExceptionsCounter.put(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, new AtomicLong());
     }
 
     private void initializeFactoryCounters() {

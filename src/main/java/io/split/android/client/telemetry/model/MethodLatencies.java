@@ -18,6 +18,18 @@ public class MethodLatencies {
     @SerializedName("tcs")
     private List<Long> treatmentsWithConfig;
 
+    @SerializedName("tf")
+    private List<Long> treatmentsByFlagSet;
+
+    @SerializedName("tfs")
+    private List<Long> treatmentsByFlagSets;
+
+    @SerializedName("tfc")
+    private List<Long> treatmentsWithConfigByFlagSet;
+
+    @SerializedName("tfcs")
+    private List<Long> treatmentsWithConfigByFlagSets;
+
     @SerializedName("tr")
     private List<Long> track;
 
@@ -51,6 +63,38 @@ public class MethodLatencies {
 
     public void setTreatmentsWithConfig(List<Long> treatmentsWithConfig) {
         this.treatmentsWithConfig = treatmentsWithConfig;
+    }
+
+    public void setTreatmentsByFlagSet(List<Long> treatmentsByFlagSet) {
+        this.treatmentsByFlagSet = treatmentsByFlagSet;
+    }
+
+    public List<Long> getTreatmentsByFlagSet() {
+        return treatmentsByFlagSet;
+    }
+
+    public void setTreatmentsByFlagSets(List<Long> treatmentsByFlagSets) {
+        this.treatmentsByFlagSets = treatmentsByFlagSets;
+    }
+
+    public List<Long> getTreatmentsByFlagSets() {
+        return treatmentsByFlagSets;
+    }
+
+    public void setTreatmentsWithConfigByFlagSet(List<Long> treatmentsWithConfigByFlagSet) {
+        this.treatmentsWithConfigByFlagSet = treatmentsWithConfigByFlagSet;
+    }
+
+    public List<Long> getTreatmentsWithConfigByFlagSet() {
+        return treatmentsWithConfigByFlagSet;
+    }
+
+    public void setTreatmentsWithConfigByFlagSets(List<Long> treatmentsWithConfigByFlagSets) {
+        this.treatmentsWithConfigByFlagSets = treatmentsWithConfigByFlagSets;
+    }
+
+    public List<Long> getTreatmentsWithConfigByFlagSets() {
+        return treatmentsWithConfigByFlagSets;
     }
 
     public List<Long> getTrack() {
