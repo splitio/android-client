@@ -84,6 +84,7 @@ public class SplitsSyncHelper {
             mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
 
             if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.URI_TOO_LONG) {
+                Logger.e("SDK initialization: the amount of flag sets provided is big, causing URI length error");
                 return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC,
                         Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true));
             }
