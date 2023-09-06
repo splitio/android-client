@@ -81,7 +81,7 @@ public class TelemetryConfigProviderImplTest {
         assertTrue(configTelemetry.getUrlOverrides().isEvents());
         assertTrue(configTelemetry.getUrlOverrides().isAuth());
         assertTrue(configTelemetry.getUrlOverrides().isStream());
-        assertEquals(4, configTelemetry.getFlagSetsTotal());
+        assertEquals(6, configTelemetry.getFlagSetsTotal());
         assertEquals(2, configTelemetry.getFlagSetsInvalid());
     }
 }
