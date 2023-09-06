@@ -2,9 +2,11 @@ package io.split.android.client.service.telemetry;
 
 import androidx.annotation.NonNull;
 
+import java.util.List;
+
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.SplitFilter;
 import io.split.android.client.service.http.HttpRecorder;
-import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Config;
@@ -15,7 +17,6 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStatsProvider;
 import io.split.android.client.telemetry.storage.TelemetryStatsProviderImpl;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.telemetry.storage.TelemetryStorageConsumer;
 
 public class TelemetryTaskFactoryImpl implements TelemetryTaskFactory {
 
@@ -30,9 +31,11 @@ public class TelemetryTaskFactoryImpl implements TelemetryTaskFactory {
                                     @NonNull TelemetryStorage telemetryStorage,
                                     @NonNull SplitClientConfig splitClientConfig,
                                     @NonNull SplitsStorage splitsStorage,
-                                    @NonNull MySegmentsStorageContainer mySegmentsStorageContainer) {
+                                    @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
+                                    int flagSetCount,
+                                    int invalidFlagSetCount) {
         mTelemetryConfigRecorder = telemetryConfigRecorder;
-        mTelemetryConfigProvider = new TelemetryConfigProviderImpl(telemetryStorage, splitClientConfig);
+        mTelemetryConfigProvider = new TelemetryConfigProviderImpl(telemetryStorage, splitClientConfig, flagSetCount, invalidFlagSetCount);
         mTelemetryStatsRecorder = telemetryStatsRecorder;
         mTelemetryStatsProvider = new TelemetryStatsProviderImpl(telemetryStorage, splitsStorage, mySegmentsStorageContainer);
         mTelemetryRuntimeProducer = telemetryStorage;

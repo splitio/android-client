@@ -79,7 +79,7 @@ public class LocalhostSplitFactory implements SplitFactory {
             List<SplitFilter> groupedFilters = new FilterBuilder(config.syncConfig().getFilters())
                     .getGroupedFilter();
 
-            if (!groupedFilters.isEmpty() && groupedFilters.get(0).getType() == SplitFilter.Type.BY_SET) {
+            if (!groupedFilters.isEmpty() && groupedFilters.get(0) != null && groupedFilters.get(0).getType() == SplitFilter.Type.BY_SET) {
                 configuredSets.addAll(groupedFilters.get(0).getValues());
             }
         }

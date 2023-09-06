@@ -60,6 +60,12 @@ public class Config {
     @SerializedName("i")
     private List<String> integrations;
 
+    @SerializedName("fsT")
+    private int flagSetsTotal;
+
+    @SerializedName("fsI")
+    private int flagSetsInvalid;
+
     public int getOperationMode() {
         return operationMode;
     }
@@ -194,5 +200,21 @@ public class Config {
 
     public void setIntegrations(List<String> integrations) {
         this.integrations = integrations;
+    }
+
+    public int getFlagSetsTotal() {
+        return flagSetsTotal;
+    }
+
+    public void setFlagSetsTotal(int flagSetsTotal) {
+        this.flagSetsTotal = flagSetsTotal;
+    }
+
+    public int getFlagSetsInvalid() {
+        return flagSetsInvalid;
+    }
+
+    public void setFlagSetsInvalid(int flagSetsInvalid) {
+        this.flagSetsInvalid = flagSetsInvalid;
     }
 }

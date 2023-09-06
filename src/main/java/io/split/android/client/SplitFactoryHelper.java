@@ -428,7 +428,7 @@ class SplitFactoryHelper {
                 SplitFilter splitFilter = groupedFilters.get(0);
 
                 // In the case of BY_SET, all filters will be grouped into one with the {@link SplitFilter.Type#BY_SET} type
-                if (splitFilter.getType() == SplitFilter.Type.BY_SET) {
+                if (splitFilter != null && splitFilter.getType() == SplitFilter.Type.BY_SET) {
                     configuredFlagSets.addAll(splitFilter.getValues());
                 }
             }
