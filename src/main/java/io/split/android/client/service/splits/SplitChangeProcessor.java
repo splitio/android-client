@@ -18,6 +18,8 @@ public class SplitChangeProcessor {
 
     private final SplitFilter mSplitFilter;
 
+    private final StatusProcessStrategy mStatusProcessStrategy;
+
     @VisibleForTesting
     SplitChangeProcessor() {
         this((SplitFilter) null);
@@ -30,10 +32,13 @@ public class SplitChangeProcessor {
         } else {
             mSplitFilter = filters.get(0);
         }
+
+        mStatusProcessStrategy = new StatusProcessStrategy();
     }
 
     public SplitChangeProcessor(@Nullable SplitFilter splitFilter) {
         mSplitFilter = splitFilter;
+        mStatusProcessStrategy = new StatusProcessStrategy();
     }
 
     public ProcessedSplitChange process(SplitChange splitChange) {
@@ -53,68 +58,28 @@ public class SplitChangeProcessor {
         List<Split> activeFeatureFlags = new ArrayList<>();
         List<Split> archivedFeatureFlags = new ArrayList<>();
 
+        SplitFilter.Type filterType = (mSplitFilter != null) ? mSplitFilter.getType() : null;
+        List<String> filterValues = (mSplitFilter != null) ? mSplitFilter.getValues() : null;
+
+        FeatureFlagProcessStrategy processStrategy = getProcessStrategy(filterType, filterValues);
+
         for (Split featureFlag : featureFlags) {
             if (featureFlag.name == null) {
                 continue;
             }
-
-            if (mSplitFilter == null || mSplitFilter.getValues().isEmpty()) {
-                processAccordingToStatus(activeFeatureFlags, archivedFeatureFlags, featureFlag);
-            } else {
-                if (mSplitFilter.getType() == SplitFilter.Type.BY_NAME) {
-                    processAccordingToNames(activeFeatureFlags, archivedFeatureFlags, featureFlag, mSplitFilter.getValues());
-                } else if (mSplitFilter.getType() == SplitFilter.Type.BY_SET) {
-                    processAccordingToSets(activeFeatureFlags, archivedFeatureFlags, featureFlag, mSplitFilter.getValues());
-                }
-            }
+            processStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag, filterValues);
         }
 
         return new ProcessedSplitChange(activeFeatureFlags, archivedFeatureFlags, changeNumber, System.currentTimeMillis() / 100);
     }
 
-    /**
-     * Process the feature flag according to its status
-     */
-    private void processAccordingToStatus(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
-        if (featureFlag.status == Status.ACTIVE) {
-            activeFeatureFlags.add(featureFlag);
+    private FeatureFlagProcessStrategy getProcessStrategy(SplitFilter.Type filterType, List<String> filterValues) {
+        if (filterType == SplitFilter.Type.BY_SET) {
+            return new NamesProcessStrategy(filterValues, mStatusProcessStrategy);
+        } else if (filterType == SplitFilter.Type.BY_NAME) {
+            return new SetsProcessStrategy(filterValues, mStatusProcessStrategy);
         } else {
-            archivedFeatureFlags.add(featureFlag);
-        }
-    }
-
-    /**
-     * Process the feature flag according to its name
-     */
-    private void processAccordingToNames(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag, List<String> configuredValues) {
-        // If the feature flag name is in the filter, we process it according to its status. Otherwise it's ignored
-        if (configuredValues.contains(featureFlag.name)) {
-            processAccordingToStatus(activeFeatureFlags, archivedFeatureFlags, featureFlag);
-        }
-    }
-
-    /**
-     * Process the feature flag according to its sets
-     */
-    private void processAccordingToSets(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag, List<String> configuredValues) {
-        if (featureFlag.sets == null || featureFlag.sets.isEmpty()) {
-            archivedFeatureFlags.add(featureFlag);
-            return;
-        }
-
-        boolean shouldArchive = true;
-        for (String set : featureFlag.sets) {
-            if (configuredValues.contains(set)) {
-                // If the feature flag has at least one set that matches the configured sets,
-                // we process it according to its status
-                processAccordingToStatus(activeFeatureFlags, archivedFeatureFlags, featureFlag);
-                shouldArchive = false;
-                break;
-            }
-        }
-
-        if (shouldArchive) {
-            archivedFeatureFlags.add(featureFlag);
+            return mStatusProcessStrategy;
         }
     }
 }
