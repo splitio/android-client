@@ -1,4 +1,4 @@
-package io.split.android.engine.splits;
+package io.split.android.client.service.splits;
 
 import androidx.annotation.Nullable;
 
@@ -13,11 +13,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
-import io.split.android.client.service.splits.SplitChangeProcessor;
 
 public class SplitChangeProcessorTest {
 
@@ -25,7 +25,7 @@ public class SplitChangeProcessorTest {
 
     @Before
     public void setup() {
-        mProcessor = new SplitChangeProcessor(Collections.emptySet());
+        mProcessor = new SplitChangeProcessor();
     }
 
     @Test
@@ -148,7 +148,8 @@ public class SplitChangeProcessorTest {
         Set<String> configuredSets = new HashSet<>();
         configuredSets.add("set_1");
         configuredSets.add("set_2");
-        mProcessor = new SplitChangeProcessor(configuredSets);
+        SplitFilter filter = SplitFilter.bySet(new ArrayList<>(configuredSets));
+        mProcessor = new SplitChangeProcessor(filter);
 
         Split split1 = newSplit("split_1", Status.ACTIVE, new HashSet<>(Arrays.asList("set_3", "set_1")));
         Split split2 = newSplit("split_2", Status.ACTIVE, Collections.singleton("set_2"));
@@ -168,7 +169,9 @@ public class SplitChangeProcessorTest {
         Set<String> configuredSets = new HashSet<>();
         configuredSets.add("set_1");
         configuredSets.add("set_2");
-        mProcessor = new SplitChangeProcessor(configuredSets);
+        SplitFilter filter = SplitFilter.bySet(new ArrayList<>(configuredSets));
+
+        mProcessor = new SplitChangeProcessor(filter);
 
         Split split1 = newSplit("split_1", Status.ACTIVE, null);
 
@@ -179,6 +182,45 @@ public class SplitChangeProcessorTest {
 
         Assert.assertEquals(0, result.getActiveSplits().size());
         Assert.assertEquals(1, result.getArchivedSplits().size());
+    }
+
+    @Test
+    public void featureFlagsAreFilteredByNameWhenThereIsSplitFilterByName() {
+        SplitFilter filter = SplitFilter.byName(Arrays.asList("split_1", "split_2"));
+
+        mProcessor = new SplitChangeProcessor(filter);
+
+        Split split1 = newSplit("split_1", Status.ACTIVE);
+        Split split2 = newSplit("split_2", Status.ARCHIVED);
+        Split split3 = newSplit("split_3", Status.ACTIVE);
+        Split split4 = newSplit("split_4", Status.ARCHIVED);
+
+        SplitChange splitChange = new SplitChange();
+        splitChange.splits = Arrays.asList(split1, split2, split3, split4);
+
+        ProcessedSplitChange result = mProcessor.process(splitChange);
+
+        Assert.assertEquals(1, result.getActiveSplits().size());
+        Assert.assertEquals(1, result.getArchivedSplits().size());
+    }
+
+    @Test
+    public void creatingWithNullFilterProcessesEverything() {
+        List<SplitFilter> filterList = null;
+        mProcessor = new SplitChangeProcessor(filterList);
+
+        Split split1 = newSplit("split_1", Status.ACTIVE);
+        Split split2 = newSplit("split_2", Status.ARCHIVED);
+        Split split3 = newSplit("split_3", Status.ACTIVE);
+        Split split4 = newSplit("split_4", Status.ARCHIVED);
+
+        SplitChange splitChange = new SplitChange();
+        splitChange.splits = Arrays.asList(split1, split2, split3, split4);
+
+        ProcessedSplitChange result = mProcessor.process(splitChange);
+
+        Assert.assertEquals(2, result.getActiveSplits().size());
+        Assert.assertEquals(2, result.getArchivedSplits().size());
     }
 
     private List<Split> createSplits(int from, int count, Status status) {

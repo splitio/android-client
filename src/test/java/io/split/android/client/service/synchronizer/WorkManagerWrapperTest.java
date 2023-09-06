@@ -19,12 +19,14 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.SplitFilter;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
@@ -70,7 +72,7 @@ public class WorkManagerWrapperTest {
                 splitClientConfig,
                 "api_key",
                 "test_database_name",
-                new HashSet<>(Arrays.asList("set_1", "set_2"))
+                SplitFilter.bySet(Arrays.asList("set_1", "set_2"))
         );
     }
 
@@ -92,7 +94,8 @@ public class WorkManagerWrapperTest {
                 .putLong("splitCacheExpiration", 864000)
                 .putString("endpoint", "https://test.split.io/api")
                 .putBoolean("shouldRecordTelemetry", true)
-                .putStringArray("configuredSets", new String[]{"set_1", "set_2"})
+                .putStringArray("configuredFilterValues", new String[]{"set_1", "set_2"})
+                .putString("configuredFilterType", SplitFilter.Type.BY_SET.queryStringField())
                 .build();
 
         PeriodicWorkRequest expectedRequest = new PeriodicWorkRequest

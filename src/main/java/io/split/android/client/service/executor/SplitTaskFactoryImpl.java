@@ -67,7 +67,6 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 @Nullable String splitsFilterQueryString,
                                 ISplitEventsManager eventsManager,
                                 @Nullable List<SplitFilter> filters,
-                                @NonNull Set<String> configuredFlagSets,
                                 @Nullable TestingConfig testingConfig) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
@@ -75,7 +74,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
         mSplitsFilterQueryStringFromConfig = splitsFilterQueryString;
         mEventsManager = eventsManager;
-        mSplitChangeProcessor = new SplitChangeProcessor(configuredFlagSets);
+        mSplitChangeProcessor = new SplitChangeProcessor(filters);
 
         TelemetryStorage telemetryStorage = mSplitsStorageContainer.getTelemetryStorage();
         mTelemetryRuntimeProducer = telemetryStorage;
