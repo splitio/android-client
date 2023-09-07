@@ -6,14 +6,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import io.split.android.client.utils.logger.Logger;
-import io.split.android.client.utils.StringHelper;
 
 public class FilterBuilder {
 
@@ -30,18 +30,15 @@ public class FilterBuilder {
     }
 
     public String buildQueryString() {
-
-        if (mFilters.size() == 0) {
+        if (mFilters.isEmpty()) {
             return "";
         }
 
-        StringHelper stringHelper = new StringHelper();
         StringBuilder queryString = new StringBuilder();
 
-        List<SplitFilter> sortedFilters = getGroupedFilter();
-        Collections.sort(sortedFilters, new SplitFilterComparator());
+        Map<SplitFilter.Type, SplitFilter> sortedFilters = getGroupedFilter();
 
-        for (SplitFilter splitFilter : sortedFilters) {
+        for (SplitFilter splitFilter : sortedFilters.values()) {
             SplitFilter.Type filterType = splitFilter.getType();
             SortedSet<String> deduptedValues = new TreeSet<>(splitFilter.getValues());
             if (deduptedValues.size() < splitFilter.getValues().size()) {
@@ -56,15 +53,18 @@ public class FilterBuilder {
             queryString.append("&");
             queryString.append(filterType.queryStringField());
             queryString.append("=");
-            queryString.append(stringHelper.join(",", deduptedValues));
+            queryString.append(String.join(",", deduptedValues));
         }
 
         return queryString.toString();
     }
 
     @NonNull
-    public List<SplitFilter> getGroupedFilter() {
-        return new ArrayList<>(mFilterGrouper.group(mFilters));
+    public Map<SplitFilter.Type, SplitFilter> getGroupedFilter() {
+        TreeMap<SplitFilter.Type, SplitFilter> sortedFilters = new TreeMap<>(new SplitFilterTypeComparator());
+        sortedFilters.putAll(mFilterGrouper.group(mFilters));
+
+        return sortedFilters;
     }
 
     private void addFilters(List<SplitFilter> filters) {
@@ -103,10 +103,10 @@ public class FilterBuilder {
         }
     }
 
-    private static class SplitFilterComparator implements Comparator<SplitFilter> {
+    private static class SplitFilterTypeComparator implements Comparator<SplitFilter.Type> {
         @Override
-        public int compare(SplitFilter o1, SplitFilter o2) {
-            return o1.getType().compareTo(o2.getType());
+        public int compare(SplitFilter.Type o1, SplitFilter.Type o2) {
+            return o1.compareTo(o2);
         }
     }
 }

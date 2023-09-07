@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.SplitFilter;
@@ -206,8 +207,8 @@ public class SplitChangeProcessorTest {
 
     @Test
     public void creatingWithNullFilterProcessesEverything() {
-        List<SplitFilter> filterList = null;
-        mProcessor = new SplitChangeProcessor(filterList);
+        Map<SplitFilter.Type, SplitFilter> filterMap = null;
+        mProcessor = new SplitChangeProcessor(filterMap);
 
         Split split1 = newSplit("split_1", Status.ACTIVE);
         Split split2 = newSplit("split_2", Status.ARCHIVED);
