@@ -75,9 +75,9 @@ public class SplitChangeProcessor {
 
     private FeatureFlagProcessStrategy getProcessStrategy(SplitFilter.Type filterType, List<String> filterValues) {
         if (filterType == SplitFilter.Type.BY_SET) {
-            return new NamesProcessStrategy(filterValues, mStatusProcessStrategy);
-        } else if (filterType == SplitFilter.Type.BY_NAME) {
             return new SetsProcessStrategy(filterValues, mStatusProcessStrategy);
+        } else if (filterType == SplitFilter.Type.BY_NAME) {
+            return new NamesProcessStrategy(filterValues, mStatusProcessStrategy);
         } else {
             return mStatusProcessStrategy;
         }
