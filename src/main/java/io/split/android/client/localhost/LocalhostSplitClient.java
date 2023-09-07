@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,9 +47,9 @@ public final class LocalhostSplitClient implements SplitClient {
     private final WeakReference<SplitClientContainer> mClientContainer;
     private final Key mKey;
     private final SplitEventsManager mEventsManager;
-    private final Evaluator mEvaluator;
     private final TreatmentManager mTreatmentManager;
     private boolean mIsClientDestroyed = false;
+    private final SplitsStorage mSplitsStorage;
 
     public LocalhostSplitClient(@NonNull LocalhostSplitFactory container,
                                 @NonNull SplitClientContainer clientContainer,
@@ -66,9 +67,9 @@ public final class LocalhostSplitClient implements SplitClient {
         mClientContainer = new WeakReference<>(checkNotNull(clientContainer));
         mKey = checkNotNull(key);
         mEventsManager = checkNotNull(eventsManager);
-        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
+        mSplitsStorage = splitsStorage;
         mTreatmentManager = new TreatmentManagerImpl(mKey.matchingKey(), mKey.bucketingKey(),
-                mEvaluator, new KeyValidatorImpl(),
+                new EvaluatorImpl(splitsStorage, splitParser), new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
                 splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger,
                 telemetryStorageProducer, configuredFlagSets, splitsStorage);
@@ -143,22 +144,70 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return null;
+        try {
+            return mTreatmentManager.getTreatmentsByFlagSet(flagSet, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            Map<String, String> result = new HashMap<>();
+            Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(Collections.singletonList(flagSet));
+            for (String featureFlagName : namesByFlagSets) {
+                result.put(featureFlagName, Treatments.CONTROL);
+            }
+
+            return result;
+        }
     }
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return null;
+        try {
+            return mTreatmentManager.getTreatmentsByFlagSets(flagSets, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            Map<String, String> result = new HashMap<>();
+            Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(flagSets);
+            for (String featureFlagName : namesByFlagSets) {
+                result.put(featureFlagName, Treatments.CONTROL);
+            }
+
+            return result;
+        }
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return null;
+        try {
+            return mTreatmentManager.getTreatmentsWithConfigByFlagSet(flagSet, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            Map<String, SplitResult> result = new HashMap<>();
+            Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(Collections.singletonList(flagSet));
+            for (String featureFlagName : namesByFlagSets) {
+                result.put(featureFlagName, new SplitResult(Treatments.CONTROL));
+            }
+
+            return result;
+        }
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return null;
+        try {
+            return mTreatmentManager.getTreatmentsWithConfigByFlagSets(flagSets, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            Map<String, SplitResult> result = new HashMap<>();
+            Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(flagSets);
+            for (String featureFlagName : namesByFlagSets) {
+                result.put(featureFlagName, new SplitResult(Treatments.CONTROL));
+            }
+
+            return result;
+        }
     }
 
     @Override
