@@ -60,6 +60,7 @@ public class SplitFilter {
 
     private final SplitFilter.Type mType;
     private final List<String> mValues;
+    private int mInvalidValueCount;
 
     public static SplitFilter byName(@NonNull List<String> values) {
         return new SplitFilter(Type.BY_NAME, values);
@@ -74,7 +75,7 @@ public class SplitFilter {
     }
 
     // This constructor is not private (but default) to allow Split Sync Config builder be agnostic when creating filters
-    // Also is not public to force SDK users to use static functions "byName" and "byPrefix"
+    // Also is not public to force SDK users to use static functions "byName", "byPrefix", "bySet"
     SplitFilter(Type type, List<String> values) {
         if (values == null) {
             throw new IllegalArgumentException("Values can't be null for " + type.toString() + " filter");
@@ -85,7 +86,9 @@ public class SplitFilter {
 
     SplitFilter(Type type, List<String> values, SplitFilterValidator validator) {
         mType = type;
-        mValues = validator.cleanup(values);
+        SplitFilterValidator.ValidationResult validationResult = validator.cleanup(values);
+        mValues = validationResult.getValues();
+        mInvalidValueCount = validationResult.getInvalidValueCount();
     }
 
     public Type getType() {
@@ -94,5 +97,9 @@ public class SplitFilter {
 
     public List<String> getValues() {
         return mValues;
+    }
+
+    public int getInvalidValueCount() {
+        return mInvalidValueCount;
     }
 }

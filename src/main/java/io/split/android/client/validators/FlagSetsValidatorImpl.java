@@ -19,14 +19,17 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
      * @return list of unique alphanumerically ordered valid flag sets
      */
     @Override
-    public List<String> cleanup(List<String> values) {
+    public ValidationResult cleanup(List<String> values) {
         if (values == null || values.isEmpty()) {
-            return Collections.emptyList();
+            return new ValidationResult(Collections.emptyList(), 0);
         }
+
+        int invalidValueCount = 0;
 
         TreeSet<String> cleanedUpSets = new TreeSet<>();
         for (String set : values) {
             if (set == null || set.isEmpty()) {
+                invalidValueCount++;
                 continue;
             }
 
@@ -43,11 +46,12 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
             if (set.matches(FLAG_SET_REGEX)) {
                 cleanedUpSets.add(set);
             } else {
+                invalidValueCount++;
                 Logger.w("SDK config: you passed "+ set +", Flag Set must adhere to the regular expressions "+ FLAG_SET_REGEX +". This means a Flag Set must be start with a letter, be in lowercase, alphanumeric and have a max length of 50 characters. "+ set +" was discarded.");
             }
         }
 
-        return new ArrayList<>(cleanedUpSets);
+        return new ValidationResult(new ArrayList<>(cleanedUpSets), invalidValueCount);
     }
 
     @Override

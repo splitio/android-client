@@ -92,14 +92,23 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mTelemetryRuntimeProducer);
         }
 
+        mFilters = (filters == null) ? new ArrayList<>() : filters;
+
+        int flagSetCount = 0;
+        int invalidFlagSetCount = 0;
+        if (!mFilters.isEmpty() && mFilters.get(0) != null && mFilters.get(0).getType() == SplitFilter.Type.BY_SET) {
+            flagSetCount = mFilters.get(0).getValues().size();
+            invalidFlagSetCount = mFilters.get(0).getInvalidValueCount();
+        }
+
         mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
                 mSplitApiFacade.getTelemetryStatsRecorder(),
                 telemetryStorage,
                 splitClientConfig,
                 mSplitsStorageContainer.getSplitsStorage(),
-                mSplitsStorageContainer.getMySegmentsStorageContainer());
-
-        mFilters = (filters == null) ? new ArrayList<>() : filters;
+                mSplitsStorageContainer.getMySegmentsStorageContainer(),
+                flagSetCount,
+                invalidFlagSetCount);
     }
 
     @Override

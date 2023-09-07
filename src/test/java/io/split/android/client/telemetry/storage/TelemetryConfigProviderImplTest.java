@@ -60,7 +60,7 @@ public class TelemetryConfigProviderImplTest {
                     }
                 })
                 .build();
-        mTelemetryConfigProvider = new TelemetryConfigProviderImpl(mTelemetryStorageConsumer, mSplitClientConfig);
+        mTelemetryConfigProvider = new TelemetryConfigProviderImpl(mTelemetryStorageConsumer, mSplitClientConfig, 4, 2);
 
         Config configTelemetry = mTelemetryConfigProvider.getConfigTelemetry();
 
@@ -81,5 +81,7 @@ public class TelemetryConfigProviderImplTest {
         assertTrue(configTelemetry.getUrlOverrides().isEvents());
         assertTrue(configTelemetry.getUrlOverrides().isAuth());
         assertTrue(configTelemetry.getUrlOverrides().isStream());
+        assertEquals(6, configTelemetry.getFlagSetsTotal());
+        assertEquals(2, configTelemetry.getFlagSetsInvalid());
     }
 }
