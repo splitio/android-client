@@ -46,20 +46,21 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
     // This variable is used to avoid loading data first time
     // we receive enqueued event
     private final Set<String> mShouldLoadFromLocal;
+    @Nullable
     private final SplitFilter mFilter;
 
     public WorkManagerWrapper(@NonNull WorkManager workManager,
                               @NonNull SplitClientConfig splitClientConfig,
                               @NonNull String apiKey,
                               @NonNull String databaseName,
-                              @Nullable SplitFilter filter) {
+                              @Nullable List<SplitFilter> filters) {
         mWorkManager = checkNotNull(workManager);
         mDatabaseName = checkNotNull(databaseName);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mApiKey = checkNotNull(apiKey);
         mShouldLoadFromLocal = new HashSet<>();
         mConstraints = buildConstraints();
-        mFilter = filter;
+        mFilter = (filters != null && filters.size() == 1) ? filters.get(0) : null;
     }
 
     public void setFetcherExecutionListener(SplitTaskExecutionListener fetcherExecutionListener) {

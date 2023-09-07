@@ -191,7 +191,7 @@ class SplitFactoryHelper {
     WorkManagerWrapper buildWorkManagerWrapper(Context context, SplitClientConfig splitClientConfig,
                                                String apiKey, String databaseName, List<SplitFilter> filters) {
         return new WorkManagerWrapper(
-                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName, (filters != null && filters.size() == 1) ? filters.get(0) : null);
+                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName, filters);
 
     }
 
