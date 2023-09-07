@@ -7,11 +7,11 @@ import androidx.annotation.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 
 public class SplitChangeProcessor {
@@ -25,12 +25,12 @@ public class SplitChangeProcessor {
         this((SplitFilter) null);
     }
 
-    public SplitChangeProcessor(@Nullable List<SplitFilter> filters) {
+    public SplitChangeProcessor(@Nullable Map<SplitFilter.Type, SplitFilter> filters) {
         // We're only supporting one filter type
         if (filters == null || filters.isEmpty()) {
             mSplitFilter = null;
         } else {
-            mSplitFilter = filters.get(0);
+            mSplitFilter = filters.values().iterator().next();
         }
 
         mStatusProcessStrategy = new StatusProcessStrategy();

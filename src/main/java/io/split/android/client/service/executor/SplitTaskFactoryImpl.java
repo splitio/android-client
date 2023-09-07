@@ -66,7 +66,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 @NonNull SplitStorageContainer splitStorageContainer,
                                 @Nullable String splitsFilterQueryString,
                                 ISplitEventsManager eventsManager,
-                                @Nullable List<SplitFilter> filters,
+                                @Nullable Map<SplitFilter.Type, SplitFilter> filters,
                                 @Nullable TestingConfig testingConfig) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
@@ -91,13 +91,16 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mTelemetryRuntimeProducer);
         }
 
-        mFilters = (filters == null) ? new ArrayList<>() : filters;
+        mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());
 
         int flagSetCount = 0;
         int invalidFlagSetCount = 0;
-        if (!mFilters.isEmpty() && mFilters.get(0) != null && mFilters.get(0).getType() == SplitFilter.Type.BY_SET) {
-            flagSetCount = mFilters.get(0).getValues().size();
-            invalidFlagSetCount = mFilters.get(0).getInvalidValueCount();
+        if (filters != null && !filters.isEmpty()) {
+            SplitFilter bySetFilter = filters.get(SplitFilter.Type.BY_SET);
+            if (bySetFilter != null) {
+                flagSetCount = bySetFilter.getValues().size();
+                invalidFlagSetCount = bySetFilter.getInvalidValueCount();
+            }
         }
 
         mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
