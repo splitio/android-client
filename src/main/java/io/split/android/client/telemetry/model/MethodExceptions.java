@@ -16,6 +16,18 @@ public class MethodExceptions {
     @SerializedName("tcs")
     private long treatmentsWithConfig;
 
+    @SerializedName("tf")
+    private long treatmentsByFlagSet;
+
+    @SerializedName("tfs")
+    private long treatmentsByFlagSets;
+
+    @SerializedName("tcf")
+    private long treatmentsWithConfigByFlagSet;
+
+    @SerializedName("tcfs")
+    private long treatmentsWithConfigByFlagSets;
+
     @SerializedName("tr")
     private long track;
 
@@ -49,6 +61,38 @@ public class MethodExceptions {
 
     public void setTreatmentsWithConfig(long treatmentsWithConfig) {
         this.treatmentsWithConfig = treatmentsWithConfig;
+    }
+
+    public void setTreatmentsByFlagSet(long treatmentsByFlagSet) {
+        this.treatmentsByFlagSet = treatmentsByFlagSet;
+    }
+
+    public long getTreatmentsByFlagSet() {
+        return treatmentsByFlagSet;
+    }
+
+    public void setTreatmentsByFlagSets(long treatmentsByFlagSets) {
+        this.treatmentsByFlagSets = treatmentsByFlagSets;
+    }
+
+    public long getTreatmentsByFlagSets() {
+        return treatmentsByFlagSets;
+    }
+
+    public void setTreatmentsWithConfigByFlagSet(long treatmentsWithConfigByFlagSet) {
+        this.treatmentsWithConfigByFlagSet = treatmentsWithConfigByFlagSet;
+    }
+
+    public long getTreatmentsWithConfigByFlagSet() {
+        return treatmentsWithConfigByFlagSet;
+    }
+
+    public void setTreatmentsWithConfigByFlagSets(long treatmentsWithConfigByFlagSets) {
+        this.treatmentsWithConfigByFlagSets = treatmentsWithConfigByFlagSets;
+    }
+
+    public long getTreatmentsWithConfigByFlagSets() {
+        return treatmentsWithConfigByFlagSets;
     }
 
     public long getTrack() {
