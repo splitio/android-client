@@ -9,13 +9,13 @@ import io.split.android.client.dtos.Status;
 
 interface FeatureFlagProcessStrategy {
 
-    void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag, List<String> filterValues);
+    void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag);
 }
 
 class StatusProcessStrategy implements FeatureFlagProcessStrategy {
 
     @Override
-    public void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag, List<String> filterValues) {
+    public void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
         if (featureFlag.status == Status.ACTIVE) {
             activeFeatureFlags.add(featureFlag);
         } else {
@@ -35,10 +35,10 @@ class NamesProcessStrategy implements FeatureFlagProcessStrategy {
     }
 
     @Override
-    public void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag, List<String> filterValues) {
+    public void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
         // If the feature flag name is in the filter, we process it according to its status. Otherwise it is ignored
         if (mConfiguredValues.contains(featureFlag.name)) {
-            mStatusProcessStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag, filterValues);
+            mStatusProcessStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag);
         }
     }
 }
@@ -54,7 +54,7 @@ class SetsProcessStrategy implements FeatureFlagProcessStrategy {
     }
 
     @Override
-    public void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag, List<String> filterValues) {
+    public void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
         if (featureFlag.sets == null || featureFlag.sets.isEmpty()) {
             archivedFeatureFlags.add(featureFlag);
             return;
@@ -65,7 +65,7 @@ class SetsProcessStrategy implements FeatureFlagProcessStrategy {
             if (mConfiguredValues.contains(set)) {
                 // If the feature flag has at least one set that matches the configured sets,
                 // we process it according to its status
-                mStatusProcessStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag, filterValues);
+                mStatusProcessStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag);
                 shouldArchive = false;
                 break;
             }

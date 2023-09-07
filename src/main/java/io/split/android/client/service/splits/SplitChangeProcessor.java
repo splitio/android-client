@@ -58,26 +58,28 @@ public class SplitChangeProcessor {
         List<Split> activeFeatureFlags = new ArrayList<>();
         List<Split> archivedFeatureFlags = new ArrayList<>();
 
-        SplitFilter.Type filterType = (mSplitFilter != null) ? mSplitFilter.getType() : null;
-        List<String> filterValues = (mSplitFilter != null) ? mSplitFilter.getValues() : null;
-
-        FeatureFlagProcessStrategy processStrategy = getProcessStrategy(filterType, filterValues);
+        FeatureFlagProcessStrategy processStrategy = getProcessStrategy(mSplitFilter);
 
         for (Split featureFlag : featureFlags) {
             if (featureFlag.name == null) {
                 continue;
             }
-            processStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag, filterValues);
+
+            processStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag);
         }
 
         return new ProcessedSplitChange(activeFeatureFlags, archivedFeatureFlags, changeNumber, System.currentTimeMillis() / 100);
     }
 
-    private FeatureFlagProcessStrategy getProcessStrategy(SplitFilter.Type filterType, List<String> filterValues) {
-        if (filterType == SplitFilter.Type.BY_SET) {
-            return new SetsProcessStrategy(filterValues, mStatusProcessStrategy);
-        } else if (filterType == SplitFilter.Type.BY_NAME) {
-            return new NamesProcessStrategy(filterValues, mStatusProcessStrategy);
+    private FeatureFlagProcessStrategy getProcessStrategy(SplitFilter splitFilter) {
+        if (splitFilter == null) {
+            return mStatusProcessStrategy;
+        }
+
+        if (splitFilter.getType() == SplitFilter.Type.BY_SET) {
+            return new SetsProcessStrategy(splitFilter.getValues(), mStatusProcessStrategy);
+        } else if (splitFilter.getType() == SplitFilter.Type.BY_NAME) {
+            return new NamesProcessStrategy(splitFilter.getValues(), mStatusProcessStrategy);
         } else {
             return mStatusProcessStrategy;
         }
