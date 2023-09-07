@@ -21,6 +21,7 @@ import org.mockito.MockitoAnnotations;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
@@ -72,7 +73,7 @@ public class WorkManagerWrapperTest {
                 splitClientConfig,
                 "api_key",
                 "test_database_name",
-                SplitFilter.bySet(Arrays.asList("set_1", "set_2"))
+                Collections.singletonList(SplitFilter.bySet(Arrays.asList("set_1", "set_2")))
         );
     }
 
