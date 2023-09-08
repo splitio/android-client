@@ -72,7 +72,7 @@ public class SplitChangeProcessor {
     }
 
     private FeatureFlagProcessStrategy getProcessStrategy(SplitFilter splitFilter) {
-        if (splitFilter == null) {
+        if (splitFilter == null || splitFilter.getValues().isEmpty()) {
             return mStatusProcessStrategy;
         }
 
