@@ -92,25 +92,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         }
 
         mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());
-
-        int flagSetCount = 0;
-        int invalidFlagSetCount = 0;
-        if (filters != null && !filters.isEmpty()) {
-            SplitFilter bySetFilter = filters.get(SplitFilter.Type.BY_SET);
-            if (bySetFilter != null) {
-                flagSetCount = bySetFilter.getValues().size();
-                invalidFlagSetCount = bySetFilter.getInvalidValueCount();
-            }
-        }
-
-        mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
-                mSplitApiFacade.getTelemetryStatsRecorder(),
-                telemetryStorage,
-                splitClientConfig,
-                mSplitsStorageContainer.getSplitsStorage(),
-                mSplitsStorageContainer.getMySegmentsStorageContainer(),
-                flagSetCount,
-                invalidFlagSetCount);
+        mTelemetryTaskFactory = initializeTelemetryTaskFactory(splitClientConfig, filters, telemetryStorage);
     }
 
     @Override
@@ -211,5 +193,29 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SplitInPlaceUpdateTask createSplitsUpdateTask(Split featureFlag, long since) {
         return new SplitInPlaceUpdateTask(mSplitsStorageContainer.getSplitsStorage(), mSplitChangeProcessor, mEventsManager, mTelemetryRuntimeProducer, featureFlag, since);
+    }
+
+    @NonNull
+    private TelemetryTaskFactory initializeTelemetryTaskFactory(@NonNull SplitClientConfig splitClientConfig, @Nullable Map<SplitFilter.Type, SplitFilter> filters, TelemetryStorage telemetryStorage) {
+        final TelemetryTaskFactory mTelemetryTaskFactory;
+        int flagSetCount = 0;
+        int invalidFlagSetCount = 0;
+        if (filters != null && !filters.isEmpty()) {
+            SplitFilter bySetFilter = filters.get(SplitFilter.Type.BY_SET);
+            if (bySetFilter != null) {
+                flagSetCount = bySetFilter.getValues().size();
+                invalidFlagSetCount = bySetFilter.getInvalidValueCount();
+            }
+        }
+
+        mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
+                mSplitApiFacade.getTelemetryStatsRecorder(),
+                telemetryStorage,
+                splitClientConfig,
+                mSplitsStorageContainer.getSplitsStorage(),
+                mSplitsStorageContainer.getMySegmentsStorageContainer(),
+                flagSetCount,
+                invalidFlagSetCount);
+        return mTelemetryTaskFactory;
     }
 }
