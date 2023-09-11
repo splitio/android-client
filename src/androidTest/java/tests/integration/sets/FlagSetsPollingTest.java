@@ -3,6 +3,8 @@ package tests.integration.sets;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
+
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -65,13 +67,13 @@ public class FlagSetsPollingTest {
         /*
         This test creates a factory with 2 configured sets.
 
-        The first split change will have 2 splits, one that belongs to set_1 and set_2 and one that belongs to set_3;
+        The first split change will have 2 splits (workm and workm_set_3), one that belongs to set_1 and set_2 and one that belongs to set_3;
             -> it should be added to storage
 
-        The second change will have 1 split that belongs to set_1 only.
+        The second change will have 1 split (workm) that belongs to set_1 only.
             -> it should remain in storage and be updated
 
-        The third change will have 1 split that belongs to set_3 only.
+        The third change will have 1 split (workm) that belongs to set_3 only.
             -> it should be removed from storage
          */
 
@@ -110,27 +112,27 @@ public class FlagSetsPollingTest {
         /*
         This test creates a factory with no sets configured.
 
-        The first split change will have 2 splits, one that belongs to set_1 and set_2 and one that belongs to set_3;
+        The first split change will have 2 splits (workm and workm_set_3), one that belongs to set_1 and set_2 and one that belongs to set_3;
             -> both should be added to storage.
 
-        The second change will have 1 split that belongs to set_1 only.
+        The second change will have 1 split (workm) that belongs to set_1 only.
             -> that split should be updated.
 
-        The third change will have 1 split that belongs to set_3 only.
+        The third change will have 1 split (workm) that belongs to set_3 only.
             -> that split should be updated.
          */
 
         createFactory(mContext, mRoomDb, false);
 
         boolean awaitFirst = firstChangeLatch.await(5, TimeUnit.SECONDS);
-        Thread.sleep(800);
+        Thread.sleep(500);
         int firstSize = mRoomDb.splitDao().getAll().size();
         List<SplitEntity> firstEntities = mRoomDb.splitDao().getAll();
         boolean firstSetsCorrect = firstEntities.get(0).getBody().contains("[\"set_1\",\"set_2\"]") &&
                 firstEntities.get(1).getBody().contains("[\"set_3\"]");
 
         boolean awaitSecond = secondChangeLatch.await(5, TimeUnit.SECONDS);
-        Thread.sleep(1000);
+        Thread.sleep(500);
         int secondSize = mRoomDb.splitDao().getAll().size();
         List<SplitEntity> secondEntities = mRoomDb.splitDao().getAll();
         String body0 = secondEntities.get(0).getBody();
@@ -144,10 +146,15 @@ public class FlagSetsPollingTest {
         Logger.w("body1: " + body1);
 
         boolean awaitThird = thirdChangeLatch.await(5, TimeUnit.SECONDS);
-        Thread.sleep(800);
+        Thread.sleep(500);
         List<SplitEntity> thirdEntities = mRoomDb.splitDao().getAll();
         int thirdSize = thirdEntities.size();
-        boolean thirdSetsCorrect = thirdEntities.get(0).getBody().contains("[\"set_3\"]");
+        String body30 = thirdEntities.get(0).getBody();
+        String body31 = thirdEntities.get(1).getBody();
+        boolean thirdSetsCorrect = body31.contains("[\"set_3\"]") &&
+                body31.contains("\"name\":\"workm\",") &&
+                body30.contains("\"name\":\"workm_set_3\",") &&
+                body30.contains("[\"set_3\"]");
 
         boolean awaitHits = hitsLatch.await(120, TimeUnit.SECONDS);
 
@@ -185,7 +192,7 @@ public class FlagSetsPollingTest {
 
         Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put("splitChanges", (uri, httpMethod, body) -> {
-            String since = uri.getQuery().split("&")[0].split("=")[1];
+            String since = getSinceFromUri(uri);
 
             hitsLatch.countDown();
             if (since.equals("-1")) {

@@ -322,6 +322,10 @@ public class IntegrationHelper {
         HttpResponseMock onResponse(URI uri,
                                     HttpMethod httpMethod,
                                     String body);
+
+        static String getSinceFromUri(URI uri) {
+            return uri.getQuery().split("&")[0].split("=")[1];
+        }
     }
 
     /**
