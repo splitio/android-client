@@ -226,9 +226,9 @@ public class SplitChangeProcessorTest {
 
     @Test
     public void creatingWithFilterWithEmptyConfiguredValuesProcessesEverything() {
-        List<SplitFilter> filterList = Collections.singletonList(SplitFilter.bySet(Collections.emptyList()));
+        Map<SplitFilter.Type, SplitFilter> filterMap = Collections.singletonMap(SplitFilter.Type.BY_SET, SplitFilter.bySet(Collections.emptyList()));
 
-        mProcessor = new SplitChangeProcessor(filterList);
+        mProcessor = new SplitChangeProcessor(filterMap);
 
         Split split1 = newSplit("split_1", Status.ACTIVE);
         Split split2 = newSplit("split_2", Status.ARCHIVED);
