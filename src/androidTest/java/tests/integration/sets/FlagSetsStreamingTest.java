@@ -22,6 +22,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -57,10 +58,12 @@ public class FlagSetsStreamingTest {
     private static final String noSetsSplitChange = splitChangeV2("2", "1", "0", "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTYwMjc5OTYzODM0NCwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJzZXRzIjpbXSwiY29uZGl0aW9ucyI6W3siY29uZGl0aW9uVHlwZSI6IldISVRFTElTVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJtYXRjaGVyVHlwZSI6IldISVRFTElTVCIsIm5lZ2F0ZSI6ZmFsc2UsIndoaXRlbGlzdE1hdGNoZXJEYXRhIjp7IndoaXRlbGlzdCI6WyJhZG1pbiIsIm1hdXJvIiwibmljbyJdfX1dfSwicGFydGl0aW9ucyI6W3sidHJlYXRtZW50Ijoib2ZmIiwic2l6ZSI6MTAwfV0sImxhYmVsIjoid2hpdGVsaXN0ZWQifSx7ImNvbmRpdGlvblR5cGUiOiJST0xMT1VUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7ImtleVNlbGVjdG9yIjp7InRyYWZmaWNUeXBlIjoidXNlciJ9LCJtYXRjaGVyVHlwZSI6IklOX1NFR01FTlQiLCJuZWdhdGUiOmZhbHNlLCJ1c2VyRGVmaW5lZFNlZ21lbnRNYXRjaGVyRGF0YSI6eyJzZWdtZW50TmFtZSI6Im1hdXItMiJ9fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvbiIsInNpemUiOjB9LHsidHJlYXRtZW50Ijoib2ZmIiwic2l6ZSI6MTAwfSx7InRyZWF0bWVudCI6IlY0Iiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJ2NSIsInNpemUiOjB9XSwibGFiZWwiOiJpbiBzZWdtZW50IG1hdXItMiJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiQUxMX0tFWVMiLCJuZWdhdGUiOmZhbHNlfV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvbiIsInNpemUiOjB9LHsidHJlYXRtZW50Ijoib2ZmIiwic2l6ZSI6MTAwfSx7InRyZWF0bWVudCI6IlY0Iiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJ2NSIsInNpemUiOjB9XSwibGFiZWwiOiJkZWZhdWx0IHJ1bGUifV19");
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    private final AtomicInteger mSplitChangesHits = new AtomicInteger(0);
     private SplitRoomDatabase mRoomDb;
 
     @Before
     public void setUp() {
+        mSplitChangesHits.set(0);
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
     }
@@ -203,14 +206,45 @@ public class FlagSetsStreamingTest {
     }
 
     @Test
-    public void sdkWithSetsReceivesSplitKill() {
+    public void sdkWithSetsReceivesSplitKill() throws IOException, InterruptedException {
         /*
          * Initialize a factory with set_1 & set_2 sets configured.
          *
          * 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}. It should process it since is part of the config.Sets
          *
-         * 2. Receive a SPLIT_KILL with {cn:2, name:"test", "defaultTreatment":"off" }. The featureFlag should be removed and a fetch should be performed.
+         * 2. Receive a SPLIT_KILL with {cn:2, name:"test", "defaultTreatment":"off" }. The featureFlag should be killed and a fetch should be performed.
          */
+
+        LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, true, streamingData, "set_1", "set_2");
+
+        // 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}
+        CountDownLatch firstUpdate = new CountDownLatch(1);
+        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(firstUpdate));
+        pushToStreaming(streamingData, splitChange2);
+        boolean firstUpdateAwait = firstUpdate.await(5, TimeUnit.SECONDS);
+        List<SplitEntity> entities = mRoomDb.splitDao().getAll();
+        boolean firstUpdateStored = entities.size() == 1 && entities.get(0).getBody().contains("\"sets\":[\"set_1\",\"set_2\"]") &&
+                entities.get(0).getBody().contains("\"killed\":false") &&
+                entities.get(0).getBody().contains("\"name\":\"workm\"");
+
+        // 2. Receive a SPLIT_KILL with {cn:2, name:"test", "defaultTreatment":"off" }
+        CountDownLatch secondUpdate = new CountDownLatch(1);
+        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(secondUpdate));
+        pushToStreaming(streamingData, IntegrationHelper.splitKill("5", "workm"));
+        boolean secondUpdateAwait = secondUpdate.await(5, TimeUnit.SECONDS);
+        entities = mRoomDb.splitDao().getAll();
+        boolean secondUpdateStored = entities.size() == 1 && entities.get(0).getBody().contains("\"killed\":true") &&
+                entities.get(0).getBody().contains("\"name\":\"workm\"");
+
+        // 3. A fetch is triggered due to the SPLIT_KILL
+        boolean correctAmountOfChanges = mSplitChangesHits.get() == 3;
+
+        assertTrue(firstUpdateAwait);
+        assertTrue(firstUpdateStored);
+        assertTrue(secondUpdateAwait);
+        assertTrue(secondUpdateStored);
+        assertTrue(correctAmountOfChanges);
     }
 
     @Test
@@ -220,6 +254,7 @@ public class FlagSetsStreamingTest {
          *
          * 1. Receive a SPLIT_KILL with {cn:2, name:"test", "defaultTreatment":"off" }. No changes in storage, a fetch should be performed.
          */
+        
     }
 
     @Nullable
@@ -245,8 +280,7 @@ public class FlagSetsStreamingTest {
         CountDownLatch authLatch = new CountDownLatch(1);
         Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put("splitChanges", (uri, httpMethod, body) -> {
-            String since = getSinceFromUri(uri);
-
+            mSplitChangesHits.incrementAndGet();
             return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(-1, 1));
         });
         responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));

@@ -265,6 +265,12 @@ public class IntegrationHelper {
                 "data: {\"id\":\"m2T85LA4fQ:0:0\",\"clientId\":\"pri:NzIyNjY1MzI4\",\"timestamp\":"+System.currentTimeMillis()+",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\":"+changeNumber+",\\\"pcn\\\":"+previousChangeNumber+",\\\"c\\\":"+compressionType+",\\\"d\\\":\\\""+compressedPayload+"\\\"}\"}\n";
     }
 
+    public static String splitKill(String changeNumber, String splitName) {
+        return "id:cf74eb42-f687-48e4-ad18-af2125110aac\n" +
+                "event:message\n" +
+                "data:{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":"+System.currentTimeMillis()+",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"" + splitName + "\\\"}\"}\n";
+    }
+
     /**
      * Builds a dispatcher with the given responses.
      *
