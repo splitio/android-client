@@ -1,8 +1,8 @@
 package tests.integration.sets;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
 import static helper.IntegrationHelper.splitChangeV2;
 
 import android.content.Context;
@@ -78,7 +78,7 @@ public class FlagSetsStreamingTest {
          * Verify that the feature flag is added.
          */
         LinkedBlockingDeque<String> mStreamingData = new LinkedBlockingDeque<>();
-        SplitClient readyClient = getReadyClient(mContext, mRoomDb, true, mStreamingData);
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, mStreamingData);
 
         int initialSplitsSize = mRoomDb.splitDao().getAll().size();
 
@@ -108,7 +108,7 @@ public class FlagSetsStreamingTest {
          *
          */
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
-        SplitClient readyClient = getReadyClient(mContext, mRoomDb, true, streamingData, "set_1", "set_2");
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
 
         // 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}
         CountDownLatch firstUpdate = new CountDownLatch(1);
@@ -159,7 +159,7 @@ public class FlagSetsStreamingTest {
          */
 
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
-        SplitClient readyClient = getReadyClient(mContext, mRoomDb, true, streamingData, "set_1", "set_2");
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
 
         // 1. Receive a SPLIT_UPDATE with "sets":["set_1", "set_2"]
         CountDownLatch firstUpdate = new CountDownLatch(1);
@@ -212,11 +212,11 @@ public class FlagSetsStreamingTest {
          *
          * 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}. It should process it since is part of the config.Sets
          *
-         * 2. Receive a SPLIT_KILL with {cn:2, name:"test", "defaultTreatment":"off" }. The featureFlag should be killed and a fetch should be performed.
+         * 2. Receive a SPLIT_KILL with {cn:2, name:"workm", "defaultTreatment":"off" }. The featureFlag should be killed and a fetch should be performed.
          */
 
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
-        SplitClient readyClient = getReadyClient(mContext, mRoomDb, true, streamingData, "set_1", "set_2");
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
 
         // 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}
         CountDownLatch firstUpdate = new CountDownLatch(1);
@@ -248,20 +248,39 @@ public class FlagSetsStreamingTest {
     }
 
     @Test
-    public void sdkWithSetsReceivesSplitKillForNonExistingFeatureFlag() {
+    public void sdkWithSetsReceivesSplitKillForNonExistingFeatureFlag() throws IOException, InterruptedException {
         /*
-         * Initialize a factory with a & b sets configured.
+         * Initialize a factory with set_1 & set_2 sets configured.
          *
-         * 1. Receive a SPLIT_KILL with {cn:2, name:"test", "defaultTreatment":"off" }. No changes in storage, a fetch should be performed.
+         * 1. Receive a SPLIT_KILL with {cn:2, name:"workm", "defaultTreatment":"off" }. No changes in storage, a fetch should be performed.
          */
-        
+        LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
+
+        int initialEntities = mRoomDb.splitDao().getAll().size();
+
+        // 1. Receive a SPLIT_KILL with {cn:2, name:"test", "defaultTreatment":"off" }
+        CountDownLatch firstUpdate = new CountDownLatch(1);
+        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(firstUpdate));
+        int initialChangesHits = mSplitChangesHits.get();
+        pushToStreaming(streamingData, IntegrationHelper.splitKill("2", "workm"));
+        boolean firstUpdateAwait = firstUpdate.await(5, TimeUnit.SECONDS);
+        List<SplitEntity> entities = mRoomDb.splitDao().getAll();
+        boolean firstUpdateStored = entities.isEmpty();
+
+        // 2. A fetch is triggered due to the SPLIT_KILL
+        int finalChangesHits = mSplitChangesHits.get();
+
+        assertFalse(firstUpdateAwait);
+        assertTrue(firstUpdateStored);
+        assertEquals(initialEntities, 0);
+        assertTrue(finalChangesHits > initialChangesHits);
     }
 
     @Nullable
     private SplitClient getReadyClient(
             Context mContext,
             SplitRoomDatabase splitRoomDatabase,
-            boolean streamingEnabled,
             BlockingQueue<String> streamingData,
             String... sets) throws IOException, InterruptedException {
         SplitClientConfig config = new TestableSplitConfigBuilder()
@@ -274,7 +293,7 @@ public class FlagSetsStreamingTest {
                         .addSplitFilter(SplitFilter.bySet(Arrays.asList(sets)))
                         .build())
                 .featuresRefreshRate(2)
-                .streamingEnabled(streamingEnabled)
+                .streamingEnabled(true)
                 .eventFlushInterval(1000)
                 .build();
         CountDownLatch authLatch = new CountDownLatch(1);
