@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.FilterBuilder;
@@ -76,11 +77,14 @@ public class LocalhostSplitFactory implements SplitFactory {
 
         Set<String> configuredSets = new HashSet<>();
         if (config.syncConfig() != null) {
-            List<SplitFilter> groupedFilters = new FilterBuilder(config.syncConfig().getFilters())
+            Map<SplitFilter.Type, SplitFilter> groupedFilters = new FilterBuilder(config.syncConfig().getFilters())
                     .getGroupedFilter();
 
-            if (!groupedFilters.isEmpty() && groupedFilters.get(0) != null && groupedFilters.get(0).getType() == SplitFilter.Type.BY_SET) {
-                configuredSets.addAll(groupedFilters.get(0).getValues());
+            if (!groupedFilters.isEmpty()) {
+                SplitFilter bySetFilter = groupedFilters.get(SplitFilter.Type.BY_SET);
+                if (bySetFilter != null) {
+                    configuredSets.addAll(bySetFilter.getValues());
+                }
             }
         }
 

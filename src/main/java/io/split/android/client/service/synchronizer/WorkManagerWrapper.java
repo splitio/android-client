@@ -53,14 +53,14 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
                               @NonNull SplitClientConfig splitClientConfig,
                               @NonNull String apiKey,
                               @NonNull String databaseName,
-                              @Nullable List<SplitFilter> filters) {
+                              @Nullable SplitFilter filter) {
         mWorkManager = checkNotNull(workManager);
         mDatabaseName = checkNotNull(databaseName);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mApiKey = checkNotNull(apiKey);
         mShouldLoadFromLocal = new HashSet<>();
         mConstraints = buildConstraints();
-        mFilter = (filters != null && filters.size() == 1) ? filters.get(0) : null;
+        mFilter = filter;
     }
 
     public void setFetcherExecutionListener(SplitTaskExecutionListener fetcherExecutionListener) {

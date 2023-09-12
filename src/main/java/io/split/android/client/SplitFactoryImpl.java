@@ -7,7 +7,9 @@ import androidx.core.util.Pair;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.api.Key;
@@ -171,10 +173,9 @@ public class SplitFactoryImpl implements SplitFactory {
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
                 splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
 
-        Pair<Pair<List<SplitFilter>, String>, Set<String>> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
-        List<SplitFilter> filters = filtersConfig.first.first;
-        String splitsFilterQueryStringFromConfig = filtersConfig.first.second;
-        Set<String> configuredFlagSets = filtersConfig.second;
+        Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
+        Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
+        String splitsFilterQueryStringFromConfig = filtersConfig.second;
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryStringFromConfig);
@@ -269,7 +270,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener,
                 streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper,
-                eventsTracker, configuredFlagSets);
+                eventsTracker, factoryHelper.getConfiguredFlagSets(filters));
         mDestroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");

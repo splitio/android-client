@@ -66,7 +66,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 @NonNull SplitStorageContainer splitStorageContainer,
                                 @Nullable String splitsFilterQueryString,
                                 ISplitEventsManager eventsManager,
-                                @Nullable List<SplitFilter> filters,
+                                @Nullable Map<SplitFilter.Type, SplitFilter> filters,
                                 @Nullable TestingConfig testingConfig) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
@@ -91,23 +91,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mTelemetryRuntimeProducer);
         }
 
-        mFilters = (filters == null) ? new ArrayList<>() : filters;
-
-        int flagSetCount = 0;
-        int invalidFlagSetCount = 0;
-        if (!mFilters.isEmpty() && mFilters.get(0) != null && mFilters.get(0).getType() == SplitFilter.Type.BY_SET) {
-            flagSetCount = mFilters.get(0).getValues().size();
-            invalidFlagSetCount = mFilters.get(0).getInvalidValueCount();
-        }
-
-        mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
-                mSplitApiFacade.getTelemetryStatsRecorder(),
-                telemetryStorage,
-                splitClientConfig,
-                mSplitsStorageContainer.getSplitsStorage(),
-                mSplitsStorageContainer.getMySegmentsStorageContainer(),
-                flagSetCount,
-                invalidFlagSetCount);
+        mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());
+        mTelemetryTaskFactory = initializeTelemetryTaskFactory(splitClientConfig, filters, telemetryStorage);
     }
 
     @Override
@@ -208,5 +193,29 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SplitInPlaceUpdateTask createSplitsUpdateTask(Split featureFlag, long since) {
         return new SplitInPlaceUpdateTask(mSplitsStorageContainer.getSplitsStorage(), mSplitChangeProcessor, mEventsManager, mTelemetryRuntimeProducer, featureFlag, since);
+    }
+
+    @NonNull
+    private TelemetryTaskFactory initializeTelemetryTaskFactory(@NonNull SplitClientConfig splitClientConfig, @Nullable Map<SplitFilter.Type, SplitFilter> filters, TelemetryStorage telemetryStorage) {
+        final TelemetryTaskFactory mTelemetryTaskFactory;
+        int flagSetCount = 0;
+        int invalidFlagSetCount = 0;
+        if (filters != null && !filters.isEmpty()) {
+            SplitFilter bySetFilter = filters.get(SplitFilter.Type.BY_SET);
+            if (bySetFilter != null) {
+                flagSetCount = bySetFilter.getValues().size();
+                invalidFlagSetCount = bySetFilter.getInvalidValueCount();
+            }
+        }
+
+        mTelemetryTaskFactory = new TelemetryTaskFactoryImpl(mSplitApiFacade.getTelemetryConfigRecorder(),
+                mSplitApiFacade.getTelemetryStatsRecorder(),
+                telemetryStorage,
+                splitClientConfig,
+                mSplitsStorageContainer.getSplitsStorage(),
+                mSplitsStorageContainer.getMySegmentsStorageContainer(),
+                flagSetCount,
+                invalidFlagSetCount);
+        return mTelemetryTaskFactory;
     }
 }

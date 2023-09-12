@@ -73,7 +73,7 @@ public class WorkManagerWrapperTest {
                 splitClientConfig,
                 "api_key",
                 "test_database_name",
-                Collections.singletonList(SplitFilter.bySet(Arrays.asList("set_1", "set_2")))
+                SplitFilter.bySet(Arrays.asList("set_1", "set_2"))
         );
     }
 

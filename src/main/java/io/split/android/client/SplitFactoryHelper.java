@@ -10,9 +10,8 @@ import androidx.work.WorkManager;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -189,9 +188,12 @@ class SplitFactoryHelper {
     }
 
     WorkManagerWrapper buildWorkManagerWrapper(Context context, SplitClientConfig splitClientConfig,
-                                               String apiKey, String databaseName, List<SplitFilter> filters) {
+                                               String apiKey, String databaseName, Map<SplitFilter.Type, SplitFilter> filters) {
+        SplitFilter filter = filters.get(SplitFilter.Type.BY_SET) != null ?
+                filters.get(SplitFilter.Type.BY_SET) :
+                filters.get(SplitFilter.Type.BY_NAME);
         return new WorkManagerWrapper(
-                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName, filters);
+                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName, filter);
 
     }
 
@@ -414,27 +416,29 @@ class SplitFactoryHelper {
         return null;
     }
 
-    Pair<Pair<List<SplitFilter>, String>, Set<String>> getFilterConfiguration(SyncConfig syncConfig) {
+    Pair<Map<SplitFilter.Type, SplitFilter>, String> getFilterConfiguration(SyncConfig syncConfig) {
         String splitsFilterQueryString = null;
-        List<SplitFilter> groupedFilters = new ArrayList<>();
-        Set<String> configuredFlagSets = new HashSet<>();
+        Map<SplitFilter.Type, SplitFilter> groupedFilters = new HashMap<>();
 
         if (syncConfig != null) {
             FilterBuilder filterBuilder = new FilterBuilder(syncConfig.getFilters());
             groupedFilters = filterBuilder.getGroupedFilter();
             splitsFilterQueryString = filterBuilder.buildQueryString();
-
-            if (!groupedFilters.isEmpty()) {
-                SplitFilter splitFilter = groupedFilters.get(0);
-
-                // In the case of BY_SET, all filters will be grouped into one with the {@link SplitFilter.Type#BY_SET} type
-                if (splitFilter != null && splitFilter.getType() == SplitFilter.Type.BY_SET) {
-                    configuredFlagSets.addAll(splitFilter.getValues());
-                }
-            }
         }
 
-        return new Pair<>(new Pair<>(groupedFilters, splitsFilterQueryString), configuredFlagSets);
+        return new Pair<>(groupedFilters, splitsFilterQueryString);
+    }
+
+    @NonNull
+    Set<String> getConfiguredFlagSets(Map<SplitFilter.Type, SplitFilter> filters) {
+        Set<String> configuredFlagSets;
+        SplitFilter flagSetSplitFilter = filters.get(SplitFilter.Type.BY_SET);
+        if (flagSetSplitFilter != null) {
+            configuredFlagSets = new HashSet<>(flagSetSplitFilter.getValues());
+        } else {
+            configuredFlagSets = new HashSet<>();
+        }
+        return configuredFlagSets;
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {
