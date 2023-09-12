@@ -79,6 +79,7 @@ public class FlagSetsStreamingTest {
         readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(updateLatch));
 
         // 2. Receive notification with new feature flag with no sets.
+        // 3. Assert that the update is processed and the split is stored.
         pushToStreaming(mStreamingData, noSetsSplitChange);
         boolean updateAwait = updateLatch.await(5, TimeUnit.SECONDS);
 
@@ -93,12 +94,15 @@ public class FlagSetsStreamingTest {
         SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
 
         // 1. Receive a SPLIT_UPDATE with "sets":["set_1", "set_2"]
+        // -> flag is added to the storage
         boolean firstChange = processUpdate(readyClient, streamingData, splitChange2, "\"sets\":[\"set_1\",\"set_2\"]", "\"name\":\"workm\"");
 
         // 2. Receive a SPLIT_UPDATE with "sets":["set_1"]
+        // -> flag is updated in storage
         boolean secondChange = processUpdate(readyClient, streamingData, splitChange3, "\"sets\":[\"set_1\"]", "\"name\":\"workm\"");
 
         // 3. Receive a SPLIT_UPDATE with "sets":[]
+        // -> flag is removed from storage
         boolean thirdChange = processUpdate(readyClient, streamingData, splitChange4None);
 
         assertTrue(firstChange);
@@ -112,15 +116,19 @@ public class FlagSetsStreamingTest {
         SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
 
         // 1. Receive a SPLIT_UPDATE with "sets":["set_1", "set_2"]
+        // -> workm is added to the storage
         boolean firstChange = processUpdate(readyClient, streamingData, splitChange2, "\"sets\":[\"set_1\",\"set_2\"]", "\"name\":\"workm\"");
 
         // 2. Receive a SPLIT_UPDATE with "sets":["set_1"]
+        // -> workm sets are updated to set_1 only
         boolean secondChange = processUpdate(readyClient, streamingData, splitChange3, "\"sets\":[\"set_1\"]", "\"name\":\"workm\"");
 
         // 3. Receive a SPLIT_UPDATE with "sets":["set_3"]
+        // -> workm is removed from the storage
         boolean thirdChange = processUpdate(readyClient, streamingData, splitChange4);
 
         // 4. Receive a SPLIT_UPDATE with "sets":["set_3", "set_4"]
+        // -> workm is not added to the storage
         boolean fourthChange = processUpdate(readyClient, streamingData, splitChange5);
 
         assertTrue(firstChange);
@@ -137,6 +145,7 @@ public class FlagSetsStreamingTest {
         SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
 
         // 2. Receive a SPLIT_UPDATE with "sets":["set_1", "set_2"]
+        // -> flag is added to the storage
         CountDownLatch firstUpdate = new CountDownLatch(1);
         readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(firstUpdate));
         pushToStreaming(streamingData, splitChange2);
@@ -146,7 +155,8 @@ public class FlagSetsStreamingTest {
                 entities.get(0).getBody().contains("\"killed\":false") &&
                 entities.get(0).getBody().contains("\"name\":\"workm\"");
 
-        // 3. Receive a SPLIT_KILL for workm
+        // 3. Receive a SPLIT_KILL for flag
+        // -> flag is updated in storage
         CountDownLatch secondUpdate = new CountDownLatch(1);
         readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(secondUpdate));
         pushToStreaming(streamingData, IntegrationHelper.splitKill("5", "workm"));

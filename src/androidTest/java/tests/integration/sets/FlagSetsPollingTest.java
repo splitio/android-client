@@ -64,31 +64,25 @@ public class FlagSetsPollingTest {
 
     @Test
     public void featureFlagIsUpdatedAccordingToSetsWhenTheyAreConfigured() throws IOException, InterruptedException {
-        /*
-        This test creates a factory with 2 configured sets.
-
-        The first split change will have 2 splits (workm and workm_set_3), one that belongs to set_1 and set_2 and one that belongs to set_3;
-            -> it should be added to storage
-
-        The second change will have 1 split (workm) that belongs to set_1 only.
-            -> it should remain in storage and be updated
-
-        The third change will have 1 split (workm) that belongs to set_3 only.
-            -> it should be removed from storage
-         */
-
+        // 1. Initialize a factory with polling and sets set_1 & set_2 configured.
         createFactory(mContext, mRoomDb, false, "set_1", "set_2");
 
+        // 2. Receive split change with 1 split belonging to set_1 & set_2 and one belonging to set_3
+        // -> only one feature flag should be added
         boolean awaitFirst = firstChangeLatch.await(5, TimeUnit.SECONDS);
         Thread.sleep(200);
         int firstSize = mRoomDb.splitDao().getAll().size();
         boolean firstSetsCorrect = mRoomDb.splitDao().getAll().get(0).getBody().contains("[\"set_1\",\"set_2\"]");
 
+        // 3. Receive split change with 1 split belonging to set_1 only
+        // -> the feature flag should be updated
         boolean awaitSecond = secondChangeLatch.await(5, TimeUnit.SECONDS);
         Thread.sleep(200);
         int secondSize = mRoomDb.splitDao().getAll().size();
         boolean secondSetsCorrect = mRoomDb.splitDao().getAll().get(0).getBody().contains("[\"set_1\"]");
 
+        // 4. Receive split change with 1 split belonging to set_3 only
+        // -> the feature flag should be removed
         boolean awaitThird = thirdChangeLatch.await(5, TimeUnit.SECONDS);
         Thread.sleep(200);
         int thirdSize = mRoomDb.splitDao().getAll().size();
@@ -109,21 +103,11 @@ public class FlagSetsPollingTest {
 
     @Test
     public void featureFlagSetsAreIgnoredWhenSetsAreNotConfigured() throws IOException, InterruptedException {
-        /*
-        This test creates a factory with no sets configured.
-
-        The first split change will have 2 splits (workm and workm_set_3), one that belongs to set_1 and set_2 and one that belongs to set_3;
-            -> both should be added to storage.
-
-        The second change will have 1 split (workm) that belongs to set_1 only.
-            -> that split should be updated.
-
-        The third change will have 1 split (workm) that belongs to set_3 only.
-            -> that split should be updated.
-         */
-
+        // 1. Initialize a factory with polling and sets set_1 & set_2 configured.
         createFactory(mContext, mRoomDb, false);
 
+        // 2. Receive split change with 1 split belonging to set_1 & set_2 and one belonging to set_3
+        // -> only one feature flag should be added
         boolean awaitFirst = firstChangeLatch.await(5, TimeUnit.SECONDS);
         Thread.sleep(500);
         int firstSize = mRoomDb.splitDao().getAll().size();
@@ -131,6 +115,8 @@ public class FlagSetsPollingTest {
         boolean firstSetsCorrect = firstEntities.get(0).getBody().contains("[\"set_1\",\"set_2\"]") &&
                 firstEntities.get(1).getBody().contains("[\"set_3\"]");
 
+        // 3. Receive split change with 1 split belonging to set_1 only
+        // -> the feature flag should be updated
         boolean awaitSecond = secondChangeLatch.await(5, TimeUnit.SECONDS);
         Thread.sleep(500);
         int secondSize = mRoomDb.splitDao().getAll().size();
@@ -145,6 +131,8 @@ public class FlagSetsPollingTest {
         Logger.w("body0: " + body0);
         Logger.w("body1: " + body1);
 
+        // 4. Receive split change with 1 split belonging to set_3 only
+        // -> the feature flag should be removed
         boolean awaitThird = thirdChangeLatch.await(5, TimeUnit.SECONDS);
         Thread.sleep(500);
         List<SplitEntity> thirdEntities = mRoomDb.splitDao().getAll();
