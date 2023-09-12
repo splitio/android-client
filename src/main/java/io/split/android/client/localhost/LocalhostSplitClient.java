@@ -149,13 +149,7 @@ public final class LocalhostSplitClient implements SplitClient {
         } catch (Exception exception) {
             Logger.e(exception);
 
-            Map<String, String> result = new HashMap<>();
-            Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(Collections.singletonList(flagSet));
-            for (String featureFlagName : namesByFlagSets) {
-                result.put(featureFlagName, Treatments.CONTROL);
-            }
-
-            return result;
+            return buildExceptionResult(Collections.singletonList(flagSet));
         }
     }
 
@@ -166,13 +160,7 @@ public final class LocalhostSplitClient implements SplitClient {
         } catch (Exception exception) {
             Logger.e(exception);
 
-            Map<String, String> result = new HashMap<>();
-            Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(flagSets);
-            for (String featureFlagName : namesByFlagSets) {
-                result.put(featureFlagName, Treatments.CONTROL);
-            }
-
-            return result;
+            return buildExceptionResult(flagSets);
         }
     }
 
@@ -183,13 +171,7 @@ public final class LocalhostSplitClient implements SplitClient {
         } catch (Exception exception) {
             Logger.e(exception);
 
-            Map<String, SplitResult> result = new HashMap<>();
-            Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(Collections.singletonList(flagSet));
-            for (String featureFlagName : namesByFlagSets) {
-                result.put(featureFlagName, new SplitResult(Treatments.CONTROL));
-            }
-
-            return result;
+            return buildExceptionResultWithConfig(Collections.singletonList(flagSet));
         }
     }
 
@@ -200,13 +182,7 @@ public final class LocalhostSplitClient implements SplitClient {
         } catch (Exception exception) {
             Logger.e(exception);
 
-            Map<String, SplitResult> result = new HashMap<>();
-            Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(flagSets);
-            for (String featureFlagName : namesByFlagSets) {
-                result.put(featureFlagName, new SplitResult(Treatments.CONTROL));
-            }
-
-            return result;
+            return buildExceptionResultWithConfig(flagSets);
         }
     }
 
@@ -323,5 +299,25 @@ public final class LocalhostSplitClient implements SplitClient {
     @Override
     public boolean clearAttributes() {
         return true;
+    }
+
+    private Map<String, String> buildExceptionResult(List<String> flagSets) {
+        Map<String, String> result = new HashMap<>();
+        Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(flagSets);
+        for (String featureFlagName : namesByFlagSets) {
+            result.put(featureFlagName, Treatments.CONTROL);
+        }
+
+        return result;
+    }
+
+    private Map<String, SplitResult> buildExceptionResultWithConfig(List<String> flagSets) {
+        Map<String, SplitResult> result = new HashMap<>();
+        Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(flagSets);
+        for (String featureFlagName : namesByFlagSets) {
+            result.put(featureFlagName, new SplitResult(Treatments.CONTROL));
+        }
+
+        return result;
     }
 }

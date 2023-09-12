@@ -3,14 +3,16 @@ package io.split.android.client.service.workmanager;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 import androidx.work.WorkerParameters;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
+import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.ServiceFactory;
@@ -35,11 +37,8 @@ public class SplitsSyncWorker extends SplitWorker {
             String apiKey = workerParams.getInputData().getString(ServiceConstants.WORKER_PARAM_API_KEY);
             boolean encryptionEnabled = workerParams.getInputData().getBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, false);
 
-            String[] configuredFlagSetsArray = workerParams.getInputData().getStringArray(ServiceConstants.WORKER_PARAM_CONFIGURED_SETS);
-            Set<String> configuredFlagSets = new HashSet<>();
-            if (configuredFlagSetsArray != null) {
-                configuredFlagSets = new HashSet<>(Arrays.asList(configuredFlagSetsArray));
-            }
+            SplitFilter filter = buildFilter(workerParams.getInputData().getString(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_TYPE),
+                    workerParams.getInputData().getStringArray(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_VALUES));
 
             SplitsStorage splitsStorage = StorageFactory.getSplitsStorageForWorker(getDatabase(), apiKey, encryptionEnabled);
             // StorageFactory.getSplitsStorageForWorker creates a new storage instance, so it needs
@@ -51,12 +50,30 @@ public class SplitsSyncWorker extends SplitWorker {
             TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(shouldRecordTelemetry);
 
             SplitsSyncHelper splitsSyncHelper = new SplitsSyncHelper(splitsFetcher, splitsStorage,
-                    new SplitChangeProcessor(configuredFlagSets), telemetryStorage);
+                    new SplitChangeProcessor(filter), telemetryStorage);
 
             mSplitTask = buildSplitSyncTask(splitsStorage, telemetryStorage, splitsSyncHelper);
         } catch (URISyntaxException e) {
             Logger.e("Error creating Split worker: " + e.getMessage());
         }
+    }
+
+    @Nullable
+    private static SplitFilter buildFilter(String filterType, String[] filterValuesArray) {
+        SplitFilter filter = null;
+        if (filterType != null) {
+            List<String> configuredFilterValues = new ArrayList<>();
+            if (filterValuesArray != null) {
+                configuredFilterValues = Arrays.asList(filterValuesArray);
+            }
+
+            if (SplitFilter.Type.BY_NAME.queryStringField().equals(filterType)) {
+                filter = SplitFilter.byName(configuredFilterValues);
+            } else if (SplitFilter.Type.BY_SET.queryStringField().equals(filterType)) {
+                filter = SplitFilter.bySet(configuredFilterValues);
+            }
+        }
+        return filter;
     }
 
     @NonNull
