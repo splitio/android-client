@@ -224,6 +224,62 @@ public class SplitChangeProcessorTest {
         Assert.assertEquals(2, result.getArchivedSplits().size());
     }
 
+    @Test
+    public void creatingWithFilterWithEmptyConfiguredValuesProcessesEverything() {
+        List<SplitFilter> filterList = Collections.singletonList(SplitFilter.bySet(Collections.emptyList()));
+
+        mProcessor = new SplitChangeProcessor(filterList);
+
+        Split split1 = newSplit("split_1", Status.ACTIVE);
+        Split split2 = newSplit("split_2", Status.ARCHIVED);
+        Split split3 = newSplit("split_3", Status.ACTIVE);
+        Split split4 = newSplit("split_4", Status.ARCHIVED);
+
+        SplitChange splitChange = new SplitChange();
+        splitChange.splits = Arrays.asList(split1, split2, split3, split4);
+
+        ProcessedSplitChange result = mProcessor.process(splitChange);
+
+        Assert.assertEquals(2, result.getActiveSplits().size());
+        Assert.assertEquals(2, result.getArchivedSplits().size());
+    }
+
+    @Test
+    public void nonConfiguredSetsAreRemovedFromSplit() {
+        Set<String> configuredSets = new HashSet<>();
+        configuredSets.add("set_1");
+        configuredSets.add("set_2");
+        SplitFilter filter = SplitFilter.bySet(new ArrayList<>(configuredSets));
+        mProcessor = new SplitChangeProcessor(filter);
+
+        Split split1 = newSplit("split_1", Status.ACTIVE, new HashSet<>(Arrays.asList("set_1", "set_3")));
+        Split split2 = newSplit("split_2", Status.ACTIVE, new HashSet<>(Arrays.asList("set_2", "set_asd")));
+        Split split3 = newSplit("split_3", Status.ACTIVE, new HashSet<>(Collections.singletonList("set_3")));
+        int initialSplit1Sets = split1.sets.size();
+        int initialSplit2Sets = split2.sets.size();
+
+        SplitChange splitChange = new SplitChange();
+        splitChange.splits = Arrays.asList(split1, split2, split3);
+
+        ProcessedSplitChange result = mProcessor.process(splitChange);
+
+        Assert.assertEquals(2, result.getActiveSplits().size());
+        Assert.assertEquals(1, result.getArchivedSplits().size());
+
+        Split processedSplit1 = result.getActiveSplits().get(0);
+        Assert.assertEquals(split1.name, processedSplit1.name);
+        Assert.assertEquals(2, initialSplit1Sets);
+        Assert.assertEquals(1, processedSplit1.sets.size());
+        Assert.assertTrue(processedSplit1.sets.contains("set_1"));
+        Assert.assertFalse(processedSplit1.sets.contains("set_3"));
+
+        Split processedSplit2 = result.getActiveSplits().get(1);
+        Assert.assertEquals(split2.name, processedSplit2.name);
+        Assert.assertEquals(2, initialSplit2Sets);
+        Assert.assertEquals(1, processedSplit2.sets.size());
+        Assert.assertTrue(processedSplit2.sets.contains("set_2"));
+    }
+
     private List<Split> createSplits(int from, int count, Status status) {
         List<Split> splits = new ArrayList<>();
         for (int i = from; i < count + from; i++) {

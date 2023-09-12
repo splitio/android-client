@@ -63,7 +63,8 @@ class SetsProcessStrategy implements FeatureFlagProcessStrategy {
         boolean shouldArchive = true;
         for (String set : featureFlag.sets) {
             if (mConfiguredValues.contains(set)) {
-                // If the feature flag has at least one set that matches the configured sets,
+                featureFlag.sets.retainAll(mConfiguredValues); // Remove all sets that don't match the configured sets
+                // Since the feature flag has at least one set that matches the configured sets,
                 // we process it according to its status
                 mStatusProcessStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag);
                 shouldArchive = false;
