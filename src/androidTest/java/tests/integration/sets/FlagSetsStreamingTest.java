@@ -69,24 +69,17 @@ public class FlagSetsStreamingTest {
     }
 
     @Test
-    public void sdkWithoutSetsConfiguredDoesExcludeUpdates() throws IOException, InterruptedException {
-        /*
-         * Initialize a factory with streaming enabled and no sets.
-         *
-         * Receive notification with new feature flag with no sets.
-         *
-         * Verify that the feature flag is added.
-         */
+    public void sdkWithoutSetsConfiguredDoesNotExcludeUpdates() throws IOException, InterruptedException {
+        // 1. Initialize a factory with streaming enabled and no sets.
         LinkedBlockingDeque<String> mStreamingData = new LinkedBlockingDeque<>();
         SplitClient readyClient = getReadyClient(mContext, mRoomDb, mStreamingData);
 
         int initialSplitsSize = mRoomDb.splitDao().getAll().size();
-
-        // set up update listener
         CountDownLatch updateLatch = new CountDownLatch(1);
         readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(updateLatch));
 
-        // push change
+        // 2. Receive notification with new feature flag with no sets.
+        // 3. Assert that the update is processed and the split is stored.
         pushToStreaming(mStreamingData, noSetsSplitChange);
         boolean updateAwait = updateLatch.await(5, TimeUnit.SECONDS);
 
@@ -97,128 +90,62 @@ public class FlagSetsStreamingTest {
 
     @Test
     public void sdkWithSetsConfiguredDeletedDueToEmptySets() throws IOException, InterruptedException {
-        /*
-         * Initialize a factory with set_1 & set_2 sets configured.
-         *
-         * 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}. It should process it since is part of the config.Sets
-         *
-         * 2. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1"]}. It should process it since is still part of the config.Sets
-         *
-         * 3. Receive a SPLIT_UPDATE with {name:"test", "sets":[]}. The featureFlag should be removed.
-         *
-         */
-        LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
-        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
-
-        // 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}
-        CountDownLatch firstUpdate = new CountDownLatch(1);
-        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(firstUpdate));
-        pushToStreaming(streamingData, splitChange2);
-        boolean firstUpdateAwait = firstUpdate.await(5, TimeUnit.SECONDS);
-        List<SplitEntity> entities = mRoomDb.splitDao().getAll();
-        boolean firstUpdateStored = entities.size() == 1 && entities.get(0).getBody().contains("\"sets\":[\"set_1\",\"set_2\"]") &&
-                entities.get(0).getBody().contains("\"name\":\"workm\"");
-
-        // 2. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1"]}
-        CountDownLatch secondUpdate = new CountDownLatch(1);
-        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(secondUpdate));
-        pushToStreaming(streamingData, splitChange3);
-        boolean secondUpdateAwait = secondUpdate.await(5, TimeUnit.SECONDS);
-        entities = mRoomDb.splitDao().getAll();
-        boolean secondUpdateStored = entities.size() == 1 && entities.get(0).getBody().contains("\"sets\":[\"set_1\"]") &&
-                entities.get(0).getBody().contains("\"name\":\"workm\"");
-
-        // 3. Receive a SPLIT_UPDATE with {name:"test", "sets":[]}
-        CountDownLatch thirdUpdate = new CountDownLatch(1);
-        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(thirdUpdate));
-        pushToStreaming(streamingData, splitChange4None);
-        boolean thirdUpdateAwait = thirdUpdate.await(5, TimeUnit.SECONDS);
-        entities = mRoomDb.splitDao().getAll();
-        boolean thirdUpdateStored = entities.isEmpty();
-
-        assertTrue(firstUpdateAwait);
-        assertTrue(firstUpdateStored);
-        assertTrue(secondUpdateAwait);
-        assertTrue(secondUpdateStored);
-        assertTrue(thirdUpdateAwait);
-        assertTrue(thirdUpdateStored);
-    }
-
-    @Test
-    public void sdkWithSetsConfiguredDeletedDueToNonMatchingSets() throws IOException, InterruptedException {
-        /*
-         * Initialize a factory with set_1 & set_2 sets configured.
-         *
-         * 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}. It should process it since is part of the config.Sets
-         *
-         * 2. Receive a SPLIT_UPDATE with "sets":["set_1"]. The feature flag should be updated.
-         *
-         * 3. Receive a SPLIT_UPDATE with "sets":["set_3"]. The feature flag should be removed.
-         *
-         * 4. Receive a SPLIT_UPDATE with "sets":["set_3", "set_4"] No changes in storage.
-         */
-
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
         SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
 
         // 1. Receive a SPLIT_UPDATE with "sets":["set_1", "set_2"]
-        CountDownLatch firstUpdate = new CountDownLatch(1);
-        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(firstUpdate));
-        pushToStreaming(streamingData, splitChange2);
-        boolean firstUpdateAwait = firstUpdate.await(5, TimeUnit.SECONDS);
-        List<SplitEntity> entities = mRoomDb.splitDao().getAll();
-        boolean firstUpdateStored = entities.size() == 1 && entities.get(0).getBody().contains("\"sets\":[\"set_1\",\"set_2\"]") &&
-                entities.get(0).getBody().contains("\"name\":\"workm\"");
+        // -> flag is added to the storage
+        boolean firstChange = processUpdate(readyClient, streamingData, splitChange2, "\"sets\":[\"set_1\",\"set_2\"]", "\"name\":\"workm\"");
 
         // 2. Receive a SPLIT_UPDATE with "sets":["set_1"]
-        CountDownLatch secondUpdate = new CountDownLatch(1);
-        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(secondUpdate));
-        pushToStreaming(streamingData, splitChange3);
-        boolean secondUpdateAwait = secondUpdate.await(5, TimeUnit.SECONDS);
-        entities = mRoomDb.splitDao().getAll();
-        boolean secondUpdateStored = entities.size() == 1 && entities.get(0).getBody().contains("\"sets\":[\"set_1\"]") &&
-                entities.get(0).getBody().contains("\"name\":\"workm\"");
+        // -> flag is updated in storage
+        boolean secondChange = processUpdate(readyClient, streamingData, splitChange3, "\"sets\":[\"set_1\"]", "\"name\":\"workm\"");
+
+        // 3. Receive a SPLIT_UPDATE with "sets":[]
+        // -> flag is removed from storage
+        boolean thirdChange = processUpdate(readyClient, streamingData, splitChange4None);
+
+        assertTrue(firstChange);
+        assertTrue(secondChange);
+        assertTrue(thirdChange);
+    }
+
+    @Test
+    public void sdkWithSetsConfiguredDeletedDueToNonMatchingSets() throws IOException, InterruptedException {
+        LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
+
+        // 1. Receive a SPLIT_UPDATE with "sets":["set_1", "set_2"]
+        // -> workm is added to the storage
+        boolean firstChange = processUpdate(readyClient, streamingData, splitChange2, "\"sets\":[\"set_1\",\"set_2\"]", "\"name\":\"workm\"");
+
+        // 2. Receive a SPLIT_UPDATE with "sets":["set_1"]
+        // -> workm sets are updated to set_1 only
+        boolean secondChange = processUpdate(readyClient, streamingData, splitChange3, "\"sets\":[\"set_1\"]", "\"name\":\"workm\"");
 
         // 3. Receive a SPLIT_UPDATE with "sets":["set_3"]
-        CountDownLatch thirdUpdate = new CountDownLatch(1);
-        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(thirdUpdate));
-        pushToStreaming(streamingData, splitChange4);
-        boolean thirdUpdateAwait = thirdUpdate.await(5, TimeUnit.SECONDS);
-        entities = mRoomDb.splitDao().getAll();
-        boolean thirdUpdateStored = entities.size() == 0;
+        // -> workm is removed from the storage
+        boolean thirdChange = processUpdate(readyClient, streamingData, splitChange4);
 
         // 4. Receive a SPLIT_UPDATE with "sets":["set_3", "set_4"]
-        CountDownLatch fourthUpdate = new CountDownLatch(1);
-        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(fourthUpdate));
-        pushToStreaming(streamingData, splitChange5);
-        boolean fourthUpdateAwait = fourthUpdate.await(5, TimeUnit.SECONDS);
-        entities = mRoomDb.splitDao().getAll();
-        boolean fourthUpdateStored = entities.size() == 0;
+        // -> workm is not added to the storage
+        boolean fourthChange = processUpdate(readyClient, streamingData, splitChange5);
 
-        assertTrue(firstUpdateAwait);
-        assertTrue(firstUpdateStored);
-        assertTrue(secondUpdateAwait);
-        assertTrue(secondUpdateStored);
-        assertTrue(thirdUpdateAwait);
-        assertTrue(thirdUpdateStored);
-        assertTrue(fourthUpdateAwait);
-        assertTrue(fourthUpdateStored);
+        assertTrue(firstChange);
+        assertTrue(secondChange);
+        assertTrue(thirdChange);
+        assertTrue(fourthChange);
     }
 
     @Test
     public void sdkWithSetsReceivesSplitKill() throws IOException, InterruptedException {
-        /*
-         * Initialize a factory with set_1 & set_2 sets configured.
-         *
-         * 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}. It should process it since is part of the config.Sets
-         *
-         * 2. Receive a SPLIT_KILL with {cn:2, name:"workm", "defaultTreatment":"off" }. The featureFlag should be killed and a fetch should be performed.
-         */
 
+        // 1. Initialize a factory with set_1 & set_2 sets configured.
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
         SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
 
-        // 1. Receive a SPLIT_UPDATE with {name:"test", "sets":["set_1", "set_2"]}
+        // 2. Receive a SPLIT_UPDATE with "sets":["set_1", "set_2"]
+        // -> flag is added to the storage
         CountDownLatch firstUpdate = new CountDownLatch(1);
         readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(firstUpdate));
         pushToStreaming(streamingData, splitChange2);
@@ -228,7 +155,8 @@ public class FlagSetsStreamingTest {
                 entities.get(0).getBody().contains("\"killed\":false") &&
                 entities.get(0).getBody().contains("\"name\":\"workm\"");
 
-        // 2. Receive a SPLIT_KILL with {cn:2, name:"test", "defaultTreatment":"off" }
+        // 3. Receive a SPLIT_KILL for flag
+        // -> flag is updated in storage
         CountDownLatch secondUpdate = new CountDownLatch(1);
         readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(secondUpdate));
         pushToStreaming(streamingData, IntegrationHelper.splitKill("5", "workm"));
@@ -237,7 +165,7 @@ public class FlagSetsStreamingTest {
         boolean secondUpdateStored = entities.size() == 1 && entities.get(0).getBody().contains("\"killed\":true") &&
                 entities.get(0).getBody().contains("\"name\":\"workm\"");
 
-        // 3. A fetch is triggered due to the SPLIT_KILL
+        // 4. A fetch is triggered due to the SPLIT_KILL
         boolean correctAmountOfChanges = mSplitChangesHits.get() == 3;
 
         assertTrue(firstUpdateAwait);
@@ -249,17 +177,14 @@ public class FlagSetsStreamingTest {
 
     @Test
     public void sdkWithSetsReceivesSplitKillForNonExistingFeatureFlag() throws IOException, InterruptedException {
-        /*
-         * Initialize a factory with set_1 & set_2 sets configured.
-         *
-         * 1. Receive a SPLIT_KILL with {cn:2, name:"workm", "defaultTreatment":"off" }. No changes in storage, a fetch should be performed.
-         */
+
+        // 1. Initialize a factory with set_1 & set_2 sets configured.
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
         SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, "set_1", "set_2");
 
         int initialEntities = mRoomDb.splitDao().getAll().size();
 
-        // 1. Receive a SPLIT_KILL with {cn:2, name:"test", "defaultTreatment":"off" }
+        // 2. Receive a SPLIT_KILL; storage is not modified since flag is not present.
         CountDownLatch firstUpdate = new CountDownLatch(1);
         readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(firstUpdate));
         int initialChangesHits = mSplitChangesHits.get();
@@ -268,7 +193,7 @@ public class FlagSetsStreamingTest {
         List<SplitEntity> entities = mRoomDb.splitDao().getAll();
         boolean firstUpdateStored = entities.isEmpty();
 
-        // 2. A fetch is triggered due to the SPLIT_KILL
+        // 3. A fetch is triggered due to the SPLIT_KILL
         int finalChangesHits = mSplitChangesHits.get();
 
         assertFalse(firstUpdateAwait);
@@ -341,5 +266,24 @@ public class FlagSetsStreamingTest {
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException ignored) {
         }
+    }
+
+    private boolean processUpdate(SplitClient client, LinkedBlockingDeque<String> streamingData, String splitChange, String... expectedContents) throws InterruptedException {
+        CountDownLatch updateLatch = new CountDownLatch(1);
+        client.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(updateLatch));
+        pushToStreaming(streamingData, splitChange);
+        boolean updateAwaited = updateLatch.await(5, TimeUnit.SECONDS);
+        List<SplitEntity> entities = mRoomDb.splitDao().getAll();
+
+        if (expectedContents == null || expectedContents.length == 0) {
+            return updateAwaited && entities.isEmpty();
+        }
+
+        boolean contentMatches = true;
+        for (String expected : expectedContents) {
+            contentMatches = contentMatches && entities.size() == 1 && entities.get(0).getBody().contains(expected);
+        }
+
+        return updateAwaited && contentMatches;
     }
 }
