@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -28,14 +27,11 @@ import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
-import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.SyncConfig;
 import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.events.SplitEvent;
-import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
@@ -77,7 +73,7 @@ public class FlagSetsPollingTest {
             -> it should be removed from storage
          */
 
-        createFactory(mContext, mRoomDb, false, "set_1", "set_2");
+        createFactory(mContext, mRoomDb, "set_1", "set_2");
 
         boolean awaitFirst = firstChangeLatch.await(5, TimeUnit.SECONDS);
         Thread.sleep(200);
@@ -122,7 +118,7 @@ public class FlagSetsPollingTest {
             -> that split should be updated.
          */
 
-        createFactory(mContext, mRoomDb, false);
+        createFactory(mContext, mRoomDb);
 
         boolean awaitFirst = firstChangeLatch.await(5, TimeUnit.SECONDS);
         Thread.sleep(500);
@@ -174,7 +170,6 @@ public class FlagSetsPollingTest {
     private SplitFactory createFactory(
             Context mContext,
             SplitRoomDatabase splitRoomDatabase,
-            boolean streamingEnabled,
             String... sets) throws IOException {
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .ready(30000)
@@ -186,7 +181,7 @@ public class FlagSetsPollingTest {
                         .addSplitFilter(SplitFilter.bySet(Arrays.asList(sets)))
                         .build())
                 .featuresRefreshRate(2)
-                .streamingEnabled(streamingEnabled)
+                .streamingEnabled(false)
                 .eventFlushInterval(1000)
                 .build();
 
