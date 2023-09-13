@@ -204,7 +204,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             SplitFilter bySetFilter = filters.get(SplitFilter.Type.BY_SET);
             if (bySetFilter != null) {
                 flagSetCount = bySetFilter.getValues().size();
-                invalidFlagSetCount = bySetFilter.getInvalidValueCount();
+                invalidFlagSetCount = splitClientConfig.syncConfig().getInvalidValueCount();
             }
         }
 
