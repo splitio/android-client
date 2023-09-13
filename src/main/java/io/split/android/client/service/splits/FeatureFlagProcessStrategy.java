@@ -6,7 +6,6 @@ import java.util.List;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.utils.logger.Logger;
 
 interface FeatureFlagProcessStrategy {
 
@@ -37,7 +36,6 @@ class NamesProcessStrategy implements FeatureFlagProcessStrategy {
 
     @Override
     public void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
-        Logger.v("Processing with names");
         // If the feature flag name is in the filter, we process it according to its status. Otherwise it is ignored
         if (mConfiguredValues.contains(featureFlag.name)) {
             mStatusProcessStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag);
@@ -57,7 +55,6 @@ class SetsProcessStrategy implements FeatureFlagProcessStrategy {
 
     @Override
     public void process(List<Split> activeFeatureFlags, List<Split> archivedFeatureFlags, Split featureFlag) {
-        Logger.v("Processing with sets");
         if (featureFlag.sets == null || featureFlag.sets.isEmpty()) {
             archivedFeatureFlags.add(featureFlag);
             return;
