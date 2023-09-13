@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -28,6 +29,8 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.SplitFilter;
+import io.split.android.client.SyncConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
@@ -195,11 +198,54 @@ public class TelemetryIntegrationTest {
         assertTrue(sessionLength > 0);
     }
 
-    private void initializeClient(boolean streamingEnabled) {
+    @Test
+    public void flagSetsAreIncludedInPayload() throws InterruptedException {
+        CountDownLatch sseLatch = new CountDownLatch(1);
+        CountDownLatch metricsLatch = new CountDownLatch(2);
+        AtomicReference<String> metricsPayload = new AtomicReference<>();
+        final Dispatcher dispatcher = new Dispatcher() {
+
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                String path = request.getPath();
+                if (path.contains("/mySegments")) {
+                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                } else if (path.contains("/splitChanges")) {
+                    long changeNumber = -1;
+                    return new MockResponse().setResponseCode(200)
+                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
+                } else if (path.contains("/events/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("metrics/usage")) {
+                    metricsLatch.countDown();
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("metrics")) {
+                    metricsPayload.set(request.getBody().readUtf8());
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("auth")) {
+                    sseLatch.countDown();
+                    return new MockResponse().setResponseCode(401);
+                } else {
+                    return new MockResponse().setResponseCode(404);
+                }
+            }
+        };
+
+        mWebServer.setDispatcher(dispatcher);
+
+        initializeClient(false, "a", "_b", "a", "a", "c", "d", "_d");
+        metricsLatch.await(20, TimeUnit.SECONDS);
+        String s = metricsPayload.get();
+        Logger.w("Metrics payload: " + s);
+        assertTrue(s.contains("\"fsT\":5"));
+        assertTrue(s.contains("\"fsI\":2"));
+    }
+
+    private void initializeClient(boolean streamingEnabled, String ... sets) {
         insertSplitsFromFileIntoDB();
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
-        client = getTelemetrySplitFactory(mWebServer, streamingEnabled).client();
+        client = getTelemetrySplitFactory(mWebServer, streamingEnabled, sets).client();
 
         TestingHelper.TestEventTask readyFromCacheTask = new TestingHelper.TestEventTask(countDownLatch);
         client.on(SplitEvent.SDK_READY, readyFromCacheTask);
@@ -211,7 +257,7 @@ public class TelemetryIntegrationTest {
         }
     }
 
-    private SplitFactory getTelemetrySplitFactory(MockWebServer webServer, boolean streamingEnabled) {
+    private SplitFactory getTelemetrySplitFactory(MockWebServer webServer, boolean streamingEnabled, String... sets) {
         final String url = webServer.url("/").url().toString();
         ServiceEndpoints endpoints = ServiceEndpoints.builder()
                 .eventsEndpoint(url)
@@ -219,7 +265,7 @@ public class TelemetryIntegrationTest {
                 .sseAuthServiceEndpoint(url)
                 .apiEndpoint(url).eventsEndpoint(url).build();
 
-        SplitClientConfig config = new TestableSplitConfigBuilder()
+        TestableSplitConfigBuilder builder = new TestableSplitConfigBuilder()
                 .serviceEndpoints(endpoints)
                 .enableDebug()
                 .telemetryRefreshRate(10)
@@ -228,8 +274,15 @@ public class TelemetryIntegrationTest {
                 .impressionsRefreshRate(9999)
                 .readTimeout(3000)
                 .streamingEnabled(streamingEnabled)
-                .shouldRecordTelemetry(true)
-                .build();
+                .shouldRecordTelemetry(true);
+
+        if (sets != null && sets.length > 0) {
+            builder.syncConfig(SyncConfig.builder()
+                    .addSplitFilter(SplitFilter.bySet(Arrays.asList(sets)))
+                    .build());
+        }
+
+        SplitClientConfig config = builder.build();
         mTelemetryStorage = StorageFactory.getTelemetryStorage(true);
 
         return IntegrationHelper.buildFactory(
