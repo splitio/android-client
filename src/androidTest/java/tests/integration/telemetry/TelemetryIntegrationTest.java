@@ -2,6 +2,7 @@ package tests.integration.telemetry;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
 
 import android.content.Context;
@@ -82,12 +83,16 @@ public class TelemetryIntegrationTest {
 
     @Test
     public void telemetryEvaluationLatencyTest() {
-        initializeClient(false);
+        initializeClient(false, "a", "b");
         client.getTreatment("test_split");
         client.getTreatments(Arrays.asList("test_split", "test_split_2"), null);
         client.getTreatmentWithConfig("test_split", null);
         client.getTreatmentsWithConfig(Arrays.asList("test_split", "test_split_2"), null);
         client.track("test_traffic_type", "test_split");
+        client.getTreatmentsByFlagSet("a", null);
+        client.getTreatmentsByFlagSets(Arrays.asList("a", "b"), null);
+        client.getTreatmentsWithConfigByFlagSet("a", null);
+        client.getTreatmentsWithConfigByFlagSets(Arrays.asList("a", "b"), null);
 
         MethodLatencies methodLatencies = mTelemetryStorage.popLatencies();
         assertFalse(methodLatencies.getTreatment().stream().allMatch(aLong -> aLong == 0L));
@@ -95,6 +100,60 @@ public class TelemetryIntegrationTest {
         assertFalse(methodLatencies.getTreatmentWithConfig().stream().allMatch(aLong -> aLong == 0L));
         assertFalse(methodLatencies.getTreatmentsWithConfig().stream().allMatch(aLong -> aLong == 0L));
         assertFalse(methodLatencies.getTrack().stream().allMatch(aLong -> aLong == 0L));
+        assertFalse(methodLatencies.getTreatmentsByFlagSet().stream().allMatch(aLong -> aLong == 0L));
+        assertFalse(methodLatencies.getTreatmentsByFlagSets().stream().allMatch(aLong -> aLong == 0L));
+        assertFalse(methodLatencies.getTreatmentsWithConfigByFlagSet().stream().allMatch(aLong -> aLong == 0L));
+        assertFalse(methodLatencies.getTreatmentsWithConfigByFlagSets().stream().allMatch(aLong -> aLong == 0L));
+    }
+
+    @Test
+    public void evaluationByFlagsInfoIsInPayload() throws InterruptedException {
+        CountDownLatch metricsLatch = new CountDownLatch(1);
+        AtomicReference<String> metricsPayload = new AtomicReference<>();
+        final Dispatcher dispatcher = new Dispatcher() {
+
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                String path = request.getPath();
+                if (path.contains("/mySegments")) {
+                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                } else if (path.contains("/splitChanges")) {
+                    long changeNumber = -1;
+                    return new MockResponse().setResponseCode(200)
+                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
+                } else if (path.contains("/events/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("metrics/usage")) {
+                    metricsPayload.set(request.getBody().readUtf8());
+                    metricsLatch.countDown();
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("metrics")) {
+                    return new MockResponse().setResponseCode(200);
+                } else if (path.contains("auth")) {
+                    return new MockResponse().setResponseCode(401);
+                } else {
+                    return new MockResponse().setResponseCode(404);
+                }
+            }
+        };
+
+        mWebServer.setDispatcher(dispatcher);
+
+        initializeClient(false, "a", "b");
+        client.getTreatmentsByFlagSet("a", null);
+        client.getTreatmentsByFlagSets(Arrays.asList("a", "b"), null);
+        client.getTreatmentsWithConfigByFlagSet("a", null);
+        client.getTreatmentsWithConfigByFlagSets(Arrays.asList("a", "b"), null);
+
+        boolean await = metricsLatch.await(10, TimeUnit.SECONDS);
+
+        assertTrue(await);
+        assertTrue(metricsPayload.get().contains("\"tf\":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"));
+        assertTrue(metricsPayload.get().contains("\"tfs\":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"));
+        assertTrue(metricsPayload.get().contains("\"tcf\":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"));
+        assertTrue(metricsPayload.get().contains("\"tcfs\":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"));
+        assertTrue(metricsPayload.get().contains("\"tcf\":0,\"tcfs\":0"));
+        assertTrue(metricsPayload.get().contains("\"tf\":0,\"tfs\":0"));
     }
 
     @Test
@@ -236,7 +295,6 @@ public class TelemetryIntegrationTest {
         initializeClient(false, "a", "_b", "a", "a", "c", "d", "_d");
         metricsLatch.await(20, TimeUnit.SECONDS);
         String s = metricsPayload.get();
-        Logger.w("Metrics payload: " + s);
         assertTrue(s.contains("\"fsT\":5"));
         assertTrue(s.contains("\"fsI\":2"));
     }
