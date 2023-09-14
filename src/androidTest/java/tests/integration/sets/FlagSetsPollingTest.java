@@ -14,11 +14,13 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -46,6 +48,7 @@ public class FlagSetsPollingTest {
     private CountDownLatch secondChangeLatch;
     private CountDownLatch thirdChangeLatch;
     private SplitRoomDatabase mRoomDb;
+    private volatile String mSplitChangesUri;
 
     @Before
     public void setUp() throws Exception {
@@ -157,6 +160,19 @@ public class FlagSetsPollingTest {
         assertTrue(awaitHits);
     }
 
+    @Test
+    public void queryStringIsBuiltCorrectlyWhenSetsAreConfigured() throws IOException, InterruptedException {
+        // 1. Initialize a factory with polling and sets set_1 & set_2 configured.
+        createFactory(mContext, mRoomDb, "set_x", "set_x", "set_3", "set_2", "set_3", "set_ww", "invalid+");
+
+        boolean awaitFirst = firstChangeLatch.await(5, TimeUnit.SECONDS);
+
+        String uri = mSplitChangesUri;
+
+        assertTrue(awaitFirst);
+        assertEquals("https://sdk.split.io/api/splitChanges?since=-1&sets=set_2,set_3,set_ww,set_x", uri);
+    }
+
     private SplitFactory createFactory(
             Context mContext,
             SplitRoomDatabase splitRoomDatabase,
@@ -169,6 +185,8 @@ public class FlagSetsPollingTest {
                 .impressionsCountersRefreshRate(1000)
                 .syncConfig(SyncConfig.builder()
                         .addSplitFilter(SplitFilter.bySet(Arrays.asList(sets)))
+                        .addSplitFilter(SplitFilter.byName(Arrays.asList("workm", "workm_set_3"))) // added to test that this filter is ignored
+                        .addSplitFilter(SplitFilter.byPrefix(Collections.singletonList("pref"))) // added to test that this filter is ignored
                         .build())
                 .featuresRefreshRate(2)
                 .streamingEnabled(false)
@@ -177,8 +195,8 @@ public class FlagSetsPollingTest {
 
         Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put("splitChanges", (uri, httpMethod, body) -> {
+            mSplitChangesUri = uri.toString();
             String since = getSinceFromUri(uri);
-
             hitsLatch.countDown();
             if (since.equals("-1")) {
                 firstChangeLatch.countDown();

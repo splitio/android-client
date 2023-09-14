@@ -61,7 +61,7 @@ public class SplitChangeProcessor {
         FeatureFlagProcessStrategy processStrategy = getProcessStrategy(mSplitFilter);
 
         for (Split featureFlag : featureFlags) {
-            if (featureFlag.name == null) {
+            if (featureFlag == null || featureFlag.name == null) {
                 continue;
             }
 
