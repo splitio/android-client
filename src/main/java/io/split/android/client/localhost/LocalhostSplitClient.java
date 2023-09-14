@@ -14,6 +14,7 @@ import java.util.Set;
 
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -61,7 +62,7 @@ public final class LocalhostSplitClient implements SplitClient {
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
                                 @NonNull TelemetryStorageProducer telemetryStorageProducer,
-                                @NonNull Set<String> configuredFlagSets) {
+                                @Nullable FlagSetsFilter flagSetsFilter) {
 
         mFactoryRef = new WeakReference<>(checkNotNull(container));
         mClientContainer = new WeakReference<>(checkNotNull(clientContainer));
@@ -72,7 +73,7 @@ public final class LocalhostSplitClient implements SplitClient {
                 new EvaluatorImpl(splitsStorage, splitParser), new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
                 splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger,
-                telemetryStorageProducer, configuredFlagSets, splitsStorage);
+                telemetryStorageProducer, flagSetsFilter, splitsStorage);
     }
 
     @Override

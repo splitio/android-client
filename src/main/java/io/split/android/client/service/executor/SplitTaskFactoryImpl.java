@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.TestingConfig;
@@ -67,6 +68,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 @Nullable String splitsFilterQueryString,
                                 ISplitEventsManager eventsManager,
                                 @Nullable Map<SplitFilter.Type, SplitFilter> filters,
+                                @Nullable FlagSetsFilter flagSetsFilter,
                                 @Nullable TestingConfig testingConfig) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
@@ -74,7 +76,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
         mSplitsFilterQueryStringFromConfig = splitsFilterQueryString;
         mEventsManager = eventsManager;
-        mSplitChangeProcessor = new SplitChangeProcessor(filters);
+        mSplitChangeProcessor = new SplitChangeProcessor(filters, flagSetsFilter);
 
         TelemetryStorage telemetryStorage = mSplitsStorageContainer.getTelemetryStorage();
         mTelemetryRuntimeProducer = telemetryStorage;

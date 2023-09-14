@@ -15,6 +15,7 @@ import java.util.Set;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitResult;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.attributes.AttributesManager;
@@ -58,7 +59,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     @NonNull
     private final AttributesMerger mAttributesMerger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
-    private final Set<String> mConfiguredFlagSets;
+    private final FlagSetsFilter mFlagSetsFilter;
     private final SplitsStorage mSplitsStorage;
     private final SplitFilterValidator mFlagSetsValidator;
 
@@ -73,7 +74,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
                                 @NonNull TelemetryStorageProducer telemetryStorageProducer,
-                                @NonNull Set<String> configuredFlagSets,
+                                @Nullable FlagSetsFilter flagSetsFilter,
                                 @NonNull SplitsStorage splitsStorage) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
@@ -87,7 +88,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mAttributesManager = checkNotNull(attributesManager);
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
-        mConfiguredFlagSets = checkNotNull(configuredFlagSets);
+        mFlagSetsFilter = flagSetsFilter;
         mSplitsStorage = checkNotNull(splitsStorage);
         mFlagSetsValidator = new FlagSetsValidatorImpl();
     }
@@ -415,7 +416,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             }
 
             boolean isValid = mFlagSetsValidator.isValid(flagSet);
-            boolean isConfigured = mConfiguredFlagSets.isEmpty() || mConfiguredFlagSets.contains(flagSet);
+            boolean isConfigured = mFlagSetsFilter.intersect(flagSet);
 
             if (!isValid) {
                 mValidationLogger.e("you passed " + flagSet + " which is not valid.", validationTag);

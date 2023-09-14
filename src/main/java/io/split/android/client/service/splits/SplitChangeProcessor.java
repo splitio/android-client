@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
@@ -20,12 +21,9 @@ public class SplitChangeProcessor {
 
     private final StatusProcessStrategy mStatusProcessStrategy;
 
-    @VisibleForTesting
-    SplitChangeProcessor() {
-        this((SplitFilter) null);
-    }
+    private final FlagSetsFilter mFlagSetsFilter;
 
-    public SplitChangeProcessor(@Nullable Map<SplitFilter.Type, SplitFilter> filters) {
+    public SplitChangeProcessor(@Nullable Map<SplitFilter.Type, SplitFilter> filters, FlagSetsFilter flagSetsFilter) {
         // We're only supporting one filter type
         if (filters == null || filters.isEmpty()) {
             mSplitFilter = null;
@@ -34,10 +32,12 @@ public class SplitChangeProcessor {
         }
 
         mStatusProcessStrategy = new StatusProcessStrategy();
+        mFlagSetsFilter = flagSetsFilter;
     }
 
-    public SplitChangeProcessor(@Nullable SplitFilter splitFilter) {
+    public SplitChangeProcessor(@Nullable SplitFilter splitFilter, @Nullable FlagSetsFilter flagSetsFilter) {
         mSplitFilter = splitFilter;
+        mFlagSetsFilter = flagSetsFilter;
         mStatusProcessStrategy = new StatusProcessStrategy();
     }
 
@@ -76,8 +76,8 @@ public class SplitChangeProcessor {
             return mStatusProcessStrategy;
         }
 
-        if (splitFilter.getType() == SplitFilter.Type.BY_SET) {
-            return new SetsProcessStrategy(splitFilter.getValues(), mStatusProcessStrategy);
+        if (splitFilter.getType() == SplitFilter.Type.BY_SET && mFlagSetsFilter != null) {
+            return new SetsProcessStrategy(mFlagSetsFilter, mStatusProcessStrategy);
         } else if (splitFilter.getType() == SplitFilter.Type.BY_NAME) {
             return new NamesProcessStrategy(splitFilter.getValues(), mStatusProcessStrategy);
         } else {

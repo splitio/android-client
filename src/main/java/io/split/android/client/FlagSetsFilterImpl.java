@@ -3,12 +3,12 @@ package io.split.android.client;
 import java.util.HashSet;
 import java.util.Set;
 
-class FlagSetsFilterImpl implements FlagSetsFilter {
+public class FlagSetsFilterImpl implements FlagSetsFilter {
 
     private final boolean mShouldFilter;
     private final Set<String> mFlagSets;
 
-    FlagSetsFilterImpl(Set<String> flagSets) {
+    public FlagSetsFilterImpl(Set<String> flagSets) {
         mFlagSets = new HashSet<>(flagSets);
         mShouldFilter = !mFlagSets.isEmpty();
     }

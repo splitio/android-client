@@ -180,9 +180,14 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryStringFromConfig);
 
+        FlagSetsFilter flagSetsFilter = null;
+        if (filters.get(SplitFilter.Type.BY_SET) != null) {
+            flagSetsFilter = new FlagSetsFilterImpl(new HashSet<>(filters.get(SplitFilter.Type.BY_SET).getValues()));
+        }
+
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig, mEventsManagerCoordinator,
-                filters, testingConfig);
+                filters, flagSetsFilter, testingConfig);
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
@@ -270,7 +275,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener,
                 streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper,
-                eventsTracker, factoryHelper.getConfiguredFlagSets(filters));
+                eventsTracker, flagSetsFilter);
         mDestroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");

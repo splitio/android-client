@@ -3,11 +3,13 @@ package io.split.android.client.validators;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.Set;
 
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
@@ -27,7 +29,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
     private final AttributesMerger mAttributesMerger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final Evaluator mEvaluator;
-    private final Set<String> mConfiguredFlagSets;
+    private final FlagSetsFilter mFlagSetsFilter;
     private final SplitsStorage mSplitsStorage;
 
     public TreatmentManagerFactoryImpl(@NonNull KeyValidator keyValidator,
@@ -37,7 +39,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                                        @NonNull AttributesMerger attributesMerger,
                                        @NonNull TelemetryStorageProducer telemetryStorageProducer,
                                        @NonNull SplitParser splitParser,
-                                       @NonNull Set<String> configuredFlagSets,
+                                       @Nullable FlagSetsFilter flagSetsFilter,
                                        @NonNull SplitsStorage splitsStorage) {
         mKeyValidator = checkNotNull(keyValidator);
         mSplitValidator = checkNotNull(splitValidator);
@@ -46,7 +48,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
         mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
-        mConfiguredFlagSets = checkNotNull(configuredFlagSets);
+        mFlagSetsFilter = flagSetsFilter;
         mSplitsStorage = checkNotNull(splitsStorage);
     }
 
@@ -64,7 +66,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                 attributesManager,
                 mAttributesMerger,
                 mTelemetryStorageProducer,
-                mConfiguredFlagSets,
+                mFlagSetsFilter,
                 mSplitsStorage
         );
     }
