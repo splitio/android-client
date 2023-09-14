@@ -23,6 +23,13 @@ public class SplitChangeProcessor {
 
     private final FlagSetsFilter mFlagSetsFilter;
 
+    /** @noinspection unused*/ // Used in tests
+    private SplitChangeProcessor() {
+        mSplitFilter = null;
+        mStatusProcessStrategy = new StatusProcessStrategy();
+        mFlagSetsFilter = null;
+    }
+
     public SplitChangeProcessor(@Nullable Map<SplitFilter.Type, SplitFilter> filters, FlagSetsFilter flagSetsFilter) {
         // We're only supporting one filter type
         if (filters == null || filters.isEmpty()) {
