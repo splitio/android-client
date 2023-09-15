@@ -7,10 +7,8 @@ import androidx.core.util.Pair;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
@@ -180,10 +178,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryStringFromConfig);
 
-        FlagSetsFilter flagSetsFilter = null;
-        if (filters.get(SplitFilter.Type.BY_SET) != null) {
-            flagSetsFilter = new FlagSetsFilterImpl(filters.get(SplitFilter.Type.BY_SET).getValues());
-        }
+        FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig, mEventsManagerCoordinator,

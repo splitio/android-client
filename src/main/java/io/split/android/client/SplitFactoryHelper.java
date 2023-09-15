@@ -427,6 +427,15 @@ class SplitFactoryHelper {
         return new Pair<>(groupedFilters, splitsFilterQueryString);
     }
 
+    @Nullable
+    FlagSetsFilter getFlagSetsFilter(Map<SplitFilter.Type, SplitFilter> filters) {
+        if (filters.get(SplitFilter.Type.BY_SET) != null) {
+            return new FlagSetsFilterImpl(filters.get(SplitFilter.Type.BY_SET).getValues());
+        }
+
+        return null;
+    }
+
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {
         if (telemetryStorage != null) {
             return telemetryStorage;
