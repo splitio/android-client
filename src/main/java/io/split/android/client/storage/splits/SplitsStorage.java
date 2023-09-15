@@ -3,6 +3,7 @@ package io.split.android.client.storage.splits;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,5 +36,5 @@ public interface SplitsStorage {
     void clear();
 
     @NonNull
-    Set<String> getNamesByFlagSets(List<String> flagSets);
+    Set<String> getNamesByFlagSets(Collection<String> flagSets);
 }

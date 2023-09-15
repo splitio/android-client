@@ -86,7 +86,7 @@ public class SplitFilter {
 
     SplitFilter(Type type, List<String> values, SplitFilterValidator validator) {
         mType = type;
-        SplitFilterValidator.ValidationResult validationResult = validator.cleanup(values);
+        SplitFilterValidator.ValidationResult validationResult = validator.cleanup("SDK config", values);
         mValues = validationResult.getValues();
         mInvalidValueCount = validationResult.getInvalidValueCount();
     }

@@ -68,7 +68,7 @@ class SetsProcessStrategy implements FeatureFlagProcessStrategy {
         Set<String> newSets = new HashSet<>();
         for (String set : featureFlag.sets) {
             if (mFlagSetsFilter.intersect(set)) {
-                newSets.add(set); // Remove all sets that don't match the configured sets
+                newSets.add(set); // Add the flag set to the valid group
                 // Since the feature flag has at least one set that matches the configured sets,
                 // we process it according to its status
                 shouldArchive = false;
@@ -78,6 +78,7 @@ class SetsProcessStrategy implements FeatureFlagProcessStrategy {
         if (shouldArchive) {
             archivedFeatureFlags.add(featureFlag);
         } else {
+            // Replace the feature flag sets with the intersection of the configured sets and the feature flag sets
             featureFlag.sets = newSets;
             mStatusProcessStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag);
         }

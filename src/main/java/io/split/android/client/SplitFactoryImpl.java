@@ -182,7 +182,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         FlagSetsFilter flagSetsFilter = null;
         if (filters.get(SplitFilter.Type.BY_SET) != null) {
-            flagSetsFilter = new FlagSetsFilterImpl(new HashSet<>(filters.get(SplitFilter.Type.BY_SET).getValues()));
+            flagSetsFilter = new FlagSetsFilterImpl(filters.get(SplitFilter.Type.BY_SET).getValues());
         }
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(

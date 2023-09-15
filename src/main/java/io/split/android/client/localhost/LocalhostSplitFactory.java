@@ -85,7 +85,7 @@ public class LocalhostSplitFactory implements SplitFactory {
             if (!groupedFilters.isEmpty()) {
                 SplitFilter bySetFilter = groupedFilters.get(SplitFilter.Type.BY_SET);
                 if (bySetFilter != null) {
-                    flagSetsFilter = new FlagSetsFilterImpl(new HashSet<>(bySetFilter.getValues()));
+                    flagSetsFilter = new FlagSetsFilterImpl(bySetFilter.getValues());
                 }
             }
         }

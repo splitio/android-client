@@ -53,7 +53,7 @@ public class SplitsSyncWorker extends SplitWorker {
             TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(shouldRecordTelemetry);
 
             SplitChangeProcessor splitChangeProcessor = new SplitChangeProcessor(filter, (filter != null && filter.getType() == SplitFilter.Type.BY_SET) ?
-                    new FlagSetsFilterImpl(new HashSet<>(filter.getValues())) : null);
+                    new FlagSetsFilterImpl(filter.getValues()) : null);
 
             SplitsSyncHelper splitsSyncHelper = new SplitsSyncHelper(splitsFetcher, splitsStorage,
                     splitChangeProcessor,

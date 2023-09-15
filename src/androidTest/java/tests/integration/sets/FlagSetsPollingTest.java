@@ -162,7 +162,6 @@ public class FlagSetsPollingTest {
 
     @Test
     public void queryStringIsBuiltCorrectlyWhenSetsAreConfigured() throws IOException, InterruptedException {
-        // 1. Initialize a factory with polling and sets set_1 & set_2 configured.
         createFactory(mContext, mRoomDb, "set_x", "set_x", "set_3", "set_2", "set_3", "set_ww", "invalid+");
 
         boolean awaitFirst = firstChangeLatch.await(5, TimeUnit.SECONDS);

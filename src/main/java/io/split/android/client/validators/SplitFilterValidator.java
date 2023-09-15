@@ -1,12 +1,17 @@
 package io.split.android.client.validators;
 
 import java.util.List;
+import java.util.Set;
+
+import io.split.android.client.FlagSetsFilter;
 
 public interface SplitFilterValidator {
 
-    ValidationResult cleanup(List<String> values);
+    ValidationResult cleanup(String method, List<String> values);
 
     boolean isValid(String value);
+
+    Set<String> items(List<String> values, FlagSetsFilter flagSetsFilter);
 
     class ValidationResult {
 

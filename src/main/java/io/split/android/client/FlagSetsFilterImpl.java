@@ -1,5 +1,6 @@
 package io.split.android.client;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -8,7 +9,7 @@ public class FlagSetsFilterImpl implements FlagSetsFilter {
     private final boolean mShouldFilter;
     private final Set<String> mFlagSets;
 
-    public FlagSetsFilterImpl(Set<String> flagSets) {
+    public FlagSetsFilterImpl(Collection<String> flagSets) {
         mFlagSets = new HashSet<>(flagSets);
         mShouldFilter = !mFlagSets.isEmpty();
     }
