@@ -10,8 +10,11 @@ import androidx.work.WorkerParameters;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
+import io.split.android.client.FlagSetsFilter;
+import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.service.ServiceConstants;
@@ -49,8 +52,12 @@ public class SplitsSyncWorker extends SplitWorker {
 
             TelemetryStorage telemetryStorage = StorageFactory.getTelemetryStorage(shouldRecordTelemetry);
 
+            SplitChangeProcessor splitChangeProcessor = new SplitChangeProcessor(filter, (filter != null && filter.getType() == SplitFilter.Type.BY_SET) ?
+                    new FlagSetsFilterImpl(filter.getValues()) : null);
+
             SplitsSyncHelper splitsSyncHelper = new SplitsSyncHelper(splitsFetcher, splitsStorage,
-                    new SplitChangeProcessor(filter), telemetryStorage);
+                    splitChangeProcessor,
+                    telemetryStorage);
 
             mSplitTask = buildSplitSyncTask(splitsStorage, telemetryStorage, splitsSyncHelper);
         } catch (URISyntaxException e) {

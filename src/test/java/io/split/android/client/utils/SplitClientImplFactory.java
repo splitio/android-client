@@ -4,8 +4,8 @@ import static org.mockito.Mockito.mock;
 
 import java.util.Collections;
 
-import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.EventsTracker;
+import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientImpl;
 import io.split.android.client.SplitFactory;
@@ -39,7 +39,7 @@ public class SplitClientImplFactory {
         TreatmentManagerFactory treatmentManagerFactory = new TreatmentManagerFactoryImpl(
                 new KeyValidatorImpl(), new SplitValidatorImpl(), new ImpressionListener.NoopImpressionListener(),
                 false, new AttributesMergerImpl(), telemetryStorage, splitParser,
-                Collections.emptySet(), splitsStorage);
+                new FlagSetsFilterImpl(Collections.emptySet()), splitsStorage);
 
         AttributesManager attributesManager = mock(AttributesManager.class);
         SplitClientImpl c = new SplitClientImpl(

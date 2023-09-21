@@ -54,13 +54,13 @@ public class TreatmentManagerTest {
     ListenableEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
     TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
-    private Set<String> mConfiguredFlagSets;
+    private FlagSetsFilter mFlagSetsFilter;
     TreatmentManagerImpl treatmentManager;
     private SplitsStorage mSplitsStorage;
 
     @Before
     public void loadSplitsFromFile() {
-        mConfiguredFlagSets = new HashSet<>();
+        mFlagSetsFilter = new FlagSetsFilterImpl(new HashSet<>());
         mSplitsStorage = mock(SplitsStorage.class);
         treatmentManager = initializeTreatmentManager();
         if (evaluator == null) {
@@ -325,7 +325,7 @@ public class TreatmentManagerTest {
                 new KeyValidatorImpl(), new SplitValidatorImpl(),
                 new ImpressionListenerMock(), config.labelsEnabled(), eventsManagerStub,
                 mock(AttributesManager.class), mock(AttributesMerger.class),
-                mock(TelemetryStorageProducer.class), mConfiguredFlagSets, mSplitsStorage);
+                mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage);
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -353,7 +353,7 @@ public class TreatmentManagerTest {
                 attributesManager,
                 mock(AttributesMerger.class),
                 telemetryStorageProducer,
-                mConfiguredFlagSets,
+                mFlagSetsFilter,
                 mSplitsStorage);
     }
 

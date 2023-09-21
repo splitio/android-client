@@ -2,8 +2,11 @@ package io.split.android.client.service.splits;
 
 import androidx.annotation.NonNull;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 
@@ -45,12 +48,13 @@ class NamesProcessStrategy implements FeatureFlagProcessStrategy {
 
 class SetsProcessStrategy implements FeatureFlagProcessStrategy {
 
-    private final List<String> mConfiguredValues;
+    private final FlagSetsFilter mFlagSetsFilter;
     private final StatusProcessStrategy mStatusProcessStrategy;
 
-    SetsProcessStrategy(@NonNull List<String> configuredValues, @NonNull StatusProcessStrategy statusProcessStrategy) {
-        mConfiguredValues = configuredValues;
+    SetsProcessStrategy(@NonNull FlagSetsFilter flagSetsFilter, @NonNull StatusProcessStrategy statusProcessStrategy) {
+
         mStatusProcessStrategy = statusProcessStrategy;
+        mFlagSetsFilter = flagSetsFilter;
     }
 
     @Override
@@ -61,19 +65,22 @@ class SetsProcessStrategy implements FeatureFlagProcessStrategy {
         }
 
         boolean shouldArchive = true;
+        Set<String> newSets = new HashSet<>();
         for (String set : featureFlag.sets) {
-            if (mConfiguredValues.contains(set)) {
-                featureFlag.sets.retainAll(mConfiguredValues); // Remove all sets that don't match the configured sets
+            if (mFlagSetsFilter.intersect(set)) {
+                newSets.add(set); // Add the flag set to the valid group
                 // Since the feature flag has at least one set that matches the configured sets,
                 // we process it according to its status
-                mStatusProcessStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag);
                 shouldArchive = false;
-                break;
             }
         }
 
         if (shouldArchive) {
             archivedFeatureFlags.add(featureFlag);
+        } else {
+            // Replace the feature flag sets with the intersection of the configured sets and the feature flag sets
+            featureFlag.sets = newSets;
+            mStatusProcessStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag);
         }
     }
 }

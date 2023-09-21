@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
@@ -26,7 +27,7 @@ public class SplitChangeProcessorTest {
 
     @Before
     public void setup() {
-        mProcessor = new SplitChangeProcessor();
+        mProcessor = new SplitChangeProcessor((SplitFilter) null, null);
     }
 
     @Test
@@ -150,7 +151,7 @@ public class SplitChangeProcessorTest {
         configuredSets.add("set_1");
         configuredSets.add("set_2");
         SplitFilter filter = SplitFilter.bySet(new ArrayList<>(configuredSets));
-        mProcessor = new SplitChangeProcessor(filter);
+        mProcessor = new SplitChangeProcessor(filter, new FlagSetsFilterImpl(configuredSets));
 
         Split split1 = newSplit("split_1", Status.ACTIVE, new HashSet<>(Arrays.asList("set_3", "set_1")));
         Split split2 = newSplit("split_2", Status.ACTIVE, Collections.singleton("set_2"));
@@ -172,7 +173,7 @@ public class SplitChangeProcessorTest {
         configuredSets.add("set_2");
         SplitFilter filter = SplitFilter.bySet(new ArrayList<>(configuredSets));
 
-        mProcessor = new SplitChangeProcessor(filter);
+        mProcessor = new SplitChangeProcessor(filter, new FlagSetsFilterImpl(configuredSets));
 
         Split split1 = newSplit("split_1", Status.ACTIVE, null);
 
@@ -189,7 +190,7 @@ public class SplitChangeProcessorTest {
     public void featureFlagsAreFilteredByNameWhenThereIsSplitFilterByName() {
         SplitFilter filter = SplitFilter.byName(Arrays.asList("split_1", "split_2"));
 
-        mProcessor = new SplitChangeProcessor(filter);
+        mProcessor = new SplitChangeProcessor(filter, null);
 
         Split split1 = newSplit("split_1", Status.ACTIVE);
         Split split2 = newSplit("split_2", Status.ARCHIVED);
@@ -208,7 +209,7 @@ public class SplitChangeProcessorTest {
     @Test
     public void creatingWithNullFilterProcessesEverything() {
         Map<SplitFilter.Type, SplitFilter> filterMap = null;
-        mProcessor = new SplitChangeProcessor(filterMap);
+        mProcessor = new SplitChangeProcessor(filterMap, null);
 
         Split split1 = newSplit("split_1", Status.ACTIVE);
         Split split2 = newSplit("split_2", Status.ARCHIVED);
@@ -228,7 +229,7 @@ public class SplitChangeProcessorTest {
     public void creatingWithFilterWithEmptyConfiguredValuesProcessesEverything() {
         Map<SplitFilter.Type, SplitFilter> filterMap = Collections.singletonMap(SplitFilter.Type.BY_SET, SplitFilter.bySet(Collections.emptyList()));
 
-        mProcessor = new SplitChangeProcessor(filterMap);
+        mProcessor = new SplitChangeProcessor(filterMap, new FlagSetsFilterImpl(Collections.emptySet()));
 
         Split split1 = newSplit("split_1", Status.ACTIVE);
         Split split2 = newSplit("split_2", Status.ARCHIVED);
@@ -250,7 +251,7 @@ public class SplitChangeProcessorTest {
         configuredSets.add("set_1");
         configuredSets.add("set_2");
         SplitFilter filter = SplitFilter.bySet(new ArrayList<>(configuredSets));
-        mProcessor = new SplitChangeProcessor(filter);
+        mProcessor = new SplitChangeProcessor(filter, new FlagSetsFilterImpl(configuredSets));
 
         Split split1 = newSplit("split_1", Status.ACTIVE, new HashSet<>(Arrays.asList("set_1", "set_3")));
         Split split2 = newSplit("split_2", Status.ACTIVE, new HashSet<>(Arrays.asList("set_2", "set_asd")));

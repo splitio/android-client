@@ -11,9 +11,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -429,16 +427,13 @@ class SplitFactoryHelper {
         return new Pair<>(groupedFilters, splitsFilterQueryString);
     }
 
-    @NonNull
-    Set<String> getConfiguredFlagSets(Map<SplitFilter.Type, SplitFilter> filters) {
-        Set<String> configuredFlagSets;
-        SplitFilter flagSetSplitFilter = filters.get(SplitFilter.Type.BY_SET);
-        if (flagSetSplitFilter != null) {
-            configuredFlagSets = new HashSet<>(flagSetSplitFilter.getValues());
-        } else {
-            configuredFlagSets = new HashSet<>();
+    @Nullable
+    FlagSetsFilter getFlagSetsFilter(Map<SplitFilter.Type, SplitFilter> filters) {
+        if (filters.get(SplitFilter.Type.BY_SET) != null) {
+            return new FlagSetsFilterImpl(filters.get(SplitFilter.Type.BY_SET).getValues());
         }
-        return configuredFlagSets;
+
+        return null;
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {

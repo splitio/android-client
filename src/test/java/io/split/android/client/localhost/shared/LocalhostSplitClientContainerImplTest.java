@@ -17,8 +17,9 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
 
+import io.split.android.client.FlagSetsFilter;
+import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
@@ -52,14 +53,14 @@ public class LocalhostSplitClientContainerImplTest {
     private SplitClientConfig mConfig;
     @Mock
     private SplitTaskExecutor mTaskExecutor;
-    private Set<String> mConfiguredSets;
+    private FlagSetsFilter mFlagSetsFilter;
     private LocalhostSplitClientContainerImpl mClientContainer;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         when(mAttributesManagerFactory.getManager(any(), any())).thenReturn(mock(AttributesManager.class));
-        mConfiguredSets = new HashSet<>();
+        mFlagSetsFilter = new FlagSetsFilterImpl(new HashSet<>());
         mClientContainer = getClientContainer();
     }
 
@@ -108,6 +109,6 @@ public class LocalhostSplitClientContainerImplTest {
                 mTelemetryStorageProducer,
                 mEventsManagerCoordinator,
                 mTaskExecutor,
-                mConfiguredSets);
+                mFlagSetsFilter);
     }
 }

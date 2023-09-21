@@ -15,6 +15,7 @@ import java.util.Set;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitResult;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.attributes.AttributesManager;
@@ -58,7 +59,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     @NonNull
     private final AttributesMerger mAttributesMerger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
-    private final Set<String> mConfiguredFlagSets;
+    private final FlagSetsFilter mFlagSetsFilter;
     private final SplitsStorage mSplitsStorage;
     private final SplitFilterValidator mFlagSetsValidator;
 
@@ -73,7 +74,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
                                 @NonNull TelemetryStorageProducer telemetryStorageProducer,
-                                @NonNull Set<String> configuredFlagSets,
+                                @Nullable FlagSetsFilter flagSetsFilter,
                                 @NonNull SplitsStorage splitsStorage) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
@@ -87,7 +88,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mAttributesManager = checkNotNull(attributesManager);
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
-        mConfiguredFlagSets = checkNotNull(configuredFlagSets);
+        mFlagSetsFilter = flagSetsFilter;
         mSplitsStorage = checkNotNull(splitsStorage);
         mFlagSetsValidator = new FlagSetsValidatorImpl();
     }
@@ -185,7 +186,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SET;
         Set<String> names = new HashSet<>();
         try {
-            names = getNamesFromSet(validationTag, Collections.singletonList(flagSet));
+            names = getNamesFromSet(Collections.singletonList(flagSet));
             if (isClientDestroyed) {
                 mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
                 return controlTreatmentsForSplits(new ArrayList<>(names), validationTag);
@@ -210,7 +211,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SETS;
         Set<String> names = new HashSet<>();
         try {
-            names = getNamesFromSet(validationTag, flagSets);
+            names = getNamesFromSet(flagSets);
             if (isClientDestroyed) {
                 mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
                 return controlTreatmentsForSplits(new ArrayList<>(names), validationTag);
@@ -235,7 +236,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         String validationTag = ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET;
         Set<String> names = new HashSet<>();
         try {
-            names = getNamesFromSet(validationTag, Collections.singletonList(flagSet));
+            names = getNamesFromSet(Collections.singletonList(flagSet));
             if (isClientDestroyed) {
                 mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
                 return controlTreatmentsForSplitsWithConfig(new ArrayList<>(names), validationTag);
@@ -260,7 +261,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         String validationTag = ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS;
         Set<String> names = new HashSet<>();
         try {
-            names = getNamesFromSet(validationTag, flagSets);
+            names = getNamesFromSet(flagSets);
             if (isClientDestroyed) {
                 mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
                 return controlTreatmentsForSplitsWithConfig(new ArrayList<>(names), validationTag);
@@ -401,30 +402,9 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     @NonNull
-    private Set<String> getNamesFromSet(String validationTag,
-                                        @NonNull List<String> flagSets) {
+    private Set<String> getNamesFromSet(@NonNull List<String> flagSets) {
 
-        if (flagSets == null) {
-            return new HashSet<>();
-        }
-
-        List<String> setsToEvaluate = new ArrayList<>();
-        for (String flagSet : flagSets) {
-            if (setsToEvaluate.contains(flagSet)) {
-                continue;
-            }
-
-            boolean isValid = mFlagSetsValidator.isValid(flagSet);
-            boolean isConfigured = mConfiguredFlagSets.isEmpty() || mConfiguredFlagSets.contains(flagSet);
-
-            if (!isValid) {
-                mValidationLogger.e("you passed " + flagSet + " which is not valid.", validationTag);
-            } else if (!isConfigured) {
-                mValidationLogger.e("you passed " + flagSet + " which is not defined in the configuration.", validationTag);
-            } else {
-                setsToEvaluate.add(flagSet);
-            }
-        }
+        Set<String> setsToEvaluate = mFlagSetsValidator.items(flagSets, mFlagSetsFilter);
 
         if (setsToEvaluate.isEmpty()) {
             return new HashSet<>();

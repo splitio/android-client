@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
@@ -52,14 +51,14 @@ public class TreatmentManagerTelemetryTest {
     @Mock
     private SplitsStorage mSplitsStorage;
 
-    private Set<String> mConfiguredFlagSets = new HashSet<>();
+    private FlagSetsFilter mFlagSetsFilter;
     private TreatmentManagerImpl treatmentManager;
     private AutoCloseable mAutoCloseable;
 
     @Before
     public void setUp() {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
-
+        mFlagSetsFilter = new FlagSetsFilterImpl(new HashSet<>());
         treatmentManager = new TreatmentManagerImpl(
                 "test_key",
                 "test_key",
@@ -72,7 +71,7 @@ public class TreatmentManagerTelemetryTest {
                 attributesManager,
                 attributesMerger,
                 telemetryStorageProducer,
-                mConfiguredFlagSets,
+                mFlagSetsFilter,
                 mSplitsStorage);
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));

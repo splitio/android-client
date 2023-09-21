@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -150,7 +151,7 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @NonNull
     @Override
-    public Set<String> getNamesByFlagSets(List<String> sets) {
+    public Set<String> getNamesByFlagSets(Collection<String> sets) {
         Set<String> namesToReturn = new HashSet<>();
         if (sets == null || sets.isEmpty()) {
             return namesToReturn;

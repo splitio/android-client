@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.FilterBuilder;
+import io.split.android.client.FlagSetsFilter;
+import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -75,7 +77,7 @@ public class LocalhostSplitFactory implements SplitFactory {
 
         mManager = new SplitManagerImpl(splitsStorage, new SplitValidatorImpl(), splitParser);
 
-        Set<String> configuredSets = new HashSet<>();
+        FlagSetsFilter flagSetsFilter = null;
         if (config.syncConfig() != null) {
             Map<SplitFilter.Type, SplitFilter> groupedFilters = new FilterBuilder(config.syncConfig().getFilters())
                     .getGroupedFilter();
@@ -83,7 +85,7 @@ public class LocalhostSplitFactory implements SplitFactory {
             if (!groupedFilters.isEmpty()) {
                 SplitFilter bySetFilter = groupedFilters.get(SplitFilter.Type.BY_SET);
                 if (bySetFilter != null) {
-                    configuredSets.addAll(bySetFilter.getValues());
+                    flagSetsFilter = new FlagSetsFilterImpl(bySetFilter.getValues());
                 }
             }
         }
@@ -97,7 +99,7 @@ public class LocalhostSplitFactory implements SplitFactory {
                 new NoOpTelemetryStorage(),
                 eventsManagerCoordinator,
                 taskExecutor,
-                configuredSets);
+                flagSetsFilter);
 
         mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage, buildQueryString(config.syncConfig()));
         mSynchronizer.start();

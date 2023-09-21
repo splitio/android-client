@@ -2,9 +2,12 @@ package io.split.android.client.validators;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.utils.logger.Logger;
 
 public class FlagSetsValidatorImpl implements SplitFilterValidator {
@@ -19,7 +22,7 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
      * @return list of unique alphanumerically ordered valid flag sets
      */
     @Override
-    public ValidationResult cleanup(List<String> values) {
+    public ValidationResult cleanup(String method, List<String> values) {
         if (values == null || values.isEmpty()) {
             return new ValidationResult(Collections.emptyList(), 0);
         }
@@ -34,12 +37,12 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
             }
 
             if (set.trim().length() != set.length()) {
-                Logger.w("SDK config: Flag Set name " + set + " has extra whitespace, trimming");
+                Logger.w(method + ": Flag Set name " + set + " has extra whitespace, trimming");
                 set = set.trim();
             }
 
             if (!set.toLowerCase().equals(set)) {
-                Logger.w("SDK config: Flag Set name "+set+" should be all lowercase - converting string to lowercase");
+                Logger.w(method + ": Flag Set name "+set+" should be all lowercase - converting string to lowercase");
                 set = set.toLowerCase();
             }
 
@@ -47,7 +50,7 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
                 cleanedUpSets.add(set);
             } else {
                 invalidValueCount++;
-                Logger.w("SDK config: you passed "+ set +", Flag Set must adhere to the regular expressions "+ FLAG_SET_REGEX +". This means a Flag Set must be start with a letter, be in lowercase, alphanumeric and have a max length of 50 characters. "+ set +" was discarded.");
+                Logger.w(method + ": you passed "+ set +", Flag Set must adhere to the regular expressions "+ FLAG_SET_REGEX +". This means a Flag Set must be start with a letter, be in lowercase, alphanumeric and have a max length of 50 characters. "+ set +" was discarded.");
             }
         }
 
@@ -57,5 +60,28 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
     @Override
     public boolean isValid(String value) {
         return value != null && value.trim().matches(FLAG_SET_REGEX);
+    }
+
+    @Override
+    public Set<String> items(List<String> values, FlagSetsFilter flagSetsFilter) {
+        Set<String> setsToReturn = new HashSet<>();
+
+        if (values == null || values.isEmpty()) {
+            return setsToReturn;
+        }
+
+        for (String flagSet : values) {
+            if (!isValid(flagSet)) {
+                continue;
+            }
+
+            if (flagSetsFilter != null && !flagSetsFilter.intersect(flagSet)) {
+                continue;
+            }
+
+            setsToReturn.add(flagSet);
+        }
+
+        return setsToReturn;
     }
 }

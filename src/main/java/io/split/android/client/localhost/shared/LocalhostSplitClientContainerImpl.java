@@ -2,6 +2,7 @@ package io.split.android.client.localhost.shared;
 
 import java.util.Set;
 
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
@@ -31,7 +32,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
     private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final EventsManagerCoordinator mEventsManagerCoordinator;
     private final SplitTaskExecutor mSplitTaskExecutor;
-    private final Set<String> mConfiguredSets;
+    private final FlagSetsFilter mFlagSetsFilter;
 
     public LocalhostSplitClientContainerImpl(LocalhostSplitFactory splitFactory,
                                              SplitClientConfig config,
@@ -42,7 +43,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
                                              TelemetryStorageProducer telemetryStorageProducer,
                                              EventsManagerCoordinator eventsManagerCoordinator,
                                              SplitTaskExecutor taskExecutor,
-                                             Set<String> configuredSets) {
+                                             FlagSetsFilter flagSetsFilter) {
         mSplitFactory = splitFactory;
         mConfig = config;
         mSplitStorage = splitsStorage;
@@ -52,7 +53,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
         mTelemetryStorageProducer = telemetryStorageProducer;
         mEventsManagerCoordinator = eventsManagerCoordinator;
         mSplitTaskExecutor = taskExecutor;
-        mConfiguredSets = configuredSets;
+        mFlagSetsFilter = flagSetsFilter;
     }
 
     @Override
@@ -76,7 +77,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
                 attributesManager,
                 mAttributesMerger,
                 mTelemetryStorageProducer,
-                mConfiguredSets
+                mFlagSetsFilter
         );
 
         eventsManager.getExecutorResources().setSplitClient(client);
