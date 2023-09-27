@@ -33,7 +33,7 @@ public class SyncConfig {
     }
 
     public static class Builder {
-        private List<SplitFilter> mBuilderFilters = new ArrayList<>();
+        private final List<SplitFilter> mBuilderFilters = new ArrayList<>();
         private int mInvalidValueCount = 0;
         private final SplitValidator mSplitValidator = new SplitValidatorImpl();
 
