@@ -81,6 +81,7 @@ public class FilterBuilder {
             if (filter.getType() == SplitFilter.Type.BY_SET) {
                 // BY_SET filter has precedence over other filters, so we remove all other filters
                 // and only add BY_SET filters
+                Logger.w("SDK Config: The Set filter is exclusive and cannot be used simultaneously with names or prefix filters. Ignoring names and prefixes");
                 if (!containsSetsFilter) {
                     mFilters.clear();
                     containsSetsFilter = true;
@@ -96,9 +97,9 @@ public class FilterBuilder {
 
     private void validateFilterSize(SplitFilter.Type type, int size) {
         if (size > type.maxValuesCount()) {
-            String message = "Error: " + type.maxValuesCount() + " different split " + type.queryStringField() +
+            String message = "Error: " + type.maxValuesCount() + " different feature flag " + type.queryStringField() +
                     " can be specified at most. You passed " + size
-                    + ". Please consider reducing the amount or using prefixes to target specific groups of splits.";
+                    + ". Please consider reducing the amount or using prefixes to target specific groups of feature flags.";
             throw new IllegalArgumentException(message);
         }
     }
