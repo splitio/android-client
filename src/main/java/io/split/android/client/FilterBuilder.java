@@ -97,9 +97,9 @@ public class FilterBuilder {
 
     private void validateFilterSize(SplitFilter.Type type, int size) {
         if (size > type.maxValuesCount()) {
-            String message = "Error: " + type.maxValuesCount() + " different split " + type.queryStringField() +
+            String message = "Error: " + type.maxValuesCount() + " different feature flag " + type.queryStringField() +
                     " can be specified at most. You passed " + size
-                    + ". Please consider reducing the amount or using prefixes to target specific groups of splits.";
+                    + ". Please consider reducing the amount or using prefixes to target specific groups of feature flags.";
             throw new IllegalArgumentException(message);
         }
     }

@@ -51,7 +51,7 @@ public class SplitFilter {
                 case BY_PREFIX:
                     return 50;
                 case BY_SET:
-                    return 1000;
+                    return 999999;
                 default:
                     return 0;
             }
