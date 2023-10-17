@@ -20,4 +20,5 @@ public class SplitView {
     public Map<String, String> configs;
     @NonNull
     public List<String> sets = new ArrayList<>();
+    public String defaultTreatment;
 }

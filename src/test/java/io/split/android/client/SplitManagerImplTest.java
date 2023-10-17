@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -156,6 +157,33 @@ public class SplitManagerImplTest {
         assertEquals(1, splitNames.size());
         assertEquals(split.name, splitNames.get(0).name);
         assertEquals(new ArrayList<>(split.sets), splitNames.get(0).sets);
+    }
+
+    @Test
+    public void defaultTreatmentIsPresent() {
+        Split split = SplitHelper.createSplit("FeatureName", 123, true,
+                "some_treatment", Lists.newArrayList(getTestCondition()),
+                "traffic", 456L, 1, null);
+        when(mSplitsStorage.get("FeatureName")).thenReturn(split);
+
+        SplitView featureFlag = mSplitManager.split("FeatureName");
+
+        assertEquals("some_treatment", featureFlag.defaultTreatment);
+    }
+
+    @Test
+    public void defaultTreatmentIsPresentWhenFetchingMultipleSplits() {
+        Map<String, Split> splitsMap = new HashMap<>();
+        Split split = SplitHelper.createSplit("FeatureName", 123, true,
+                "some_treatment", Lists.newArrayList(getTestCondition()),
+                "traffic", 456L, 1, null);
+        splitsMap.put(split.name, split);
+        when(mSplitsStorage.getAll()).thenReturn(splitsMap);
+
+        List<SplitView> splitNames = mSplitManager.splits();
+
+        assertEquals(1, splitNames.size());
+        assertEquals("some_treatment", splitNames.get(0).defaultTreatment);
     }
 
     private Condition getTestCondition() {
