@@ -33,6 +33,7 @@ import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.grammar.Treatments;
 
@@ -72,7 +73,7 @@ public final class LocalhostSplitClient implements SplitClient {
                 new EvaluatorImpl(splitsStorage, splitParser), new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
                 splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger,
-                telemetryStorageProducer, flagSetsFilter, splitsStorage);
+                telemetryStorageProducer, flagSetsFilter, splitsStorage, new ValidationMessageLoggerImpl());
     }
 
     @Override
