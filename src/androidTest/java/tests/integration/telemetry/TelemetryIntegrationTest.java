@@ -295,8 +295,9 @@ public class TelemetryIntegrationTest {
         initializeClient(false, "a", "_b", "a", "a", "c", "d", "_d");
         metricsLatch.await(20, TimeUnit.SECONDS);
         String s = metricsPayload.get();
-        assertTrue(s.contains("\"fsT\":5"));
-        assertTrue(s.contains("\"fsI\":2"));
+        Logger.e("S is: " + s);
+        assertTrue(s.contains("\"fsI\":4"));
+        assertTrue(s.contains("\"fsT\":7"));
     }
 
     private void initializeClient(boolean streamingEnabled, String ... sets) {

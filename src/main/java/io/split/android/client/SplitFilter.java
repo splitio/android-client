@@ -61,6 +61,7 @@ public class SplitFilter {
     private final SplitFilter.Type mType;
     private final List<String> mValues;
     private int mInvalidValueCount;
+    private int mTotalValueCount;
 
     public static SplitFilter byName(@NonNull List<String> values) {
         return new SplitFilter(Type.BY_NAME, values);
@@ -71,6 +72,9 @@ public class SplitFilter {
     }
 
     public static SplitFilter bySet(@NonNull List<String> values) {
+        if (values == null) {
+            values = new ArrayList<>();
+        }
         return new SplitFilter(Type.BY_SET, values, new FlagSetsValidatorImpl());
     }
 
@@ -89,6 +93,7 @@ public class SplitFilter {
         SplitFilterValidator.ValidationResult validationResult = validator.cleanup("SDK config", values);
         mValues = validationResult.getValues();
         mInvalidValueCount = validationResult.getInvalidValueCount();
+        mTotalValueCount = (values != null) ? values.size() - validationResult.getInvalidValueCount() : 0;
     }
 
     public Type getType() {
@@ -101,5 +106,9 @@ public class SplitFilter {
 
     public int getInvalidValueCount() {
         return mInvalidValueCount;
+    }
+
+    public int getTotalValueCount() {
+        return mTotalValueCount;
     }
 }

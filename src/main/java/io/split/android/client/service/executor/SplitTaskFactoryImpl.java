@@ -200,14 +200,15 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @NonNull
     private TelemetryTaskFactory initializeTelemetryTaskFactory(@NonNull SplitClientConfig splitClientConfig, @Nullable Map<SplitFilter.Type, SplitFilter> filters, TelemetryStorage telemetryStorage) {
         final TelemetryTaskFactory mTelemetryTaskFactory;
-        int flagSetCount = 0;
         int invalidFlagSetCount = 0;
+        int totalFlagSetCount = 0;
         if (filters != null && !filters.isEmpty()) {
             SplitFilter bySetFilter = filters.get(SplitFilter.Type.BY_SET);
             if (bySetFilter != null) {
-                flagSetCount = bySetFilter.getValues().size();
-                invalidFlagSetCount = (splitClientConfig.syncConfig() != null) ?
-                        splitClientConfig.syncConfig().getInvalidValueCount() : 0;
+                if (splitClientConfig.syncConfig() != null) {
+                    invalidFlagSetCount = splitClientConfig.syncConfig().getInvalidValueCount();
+                    totalFlagSetCount = splitClientConfig.syncConfig().getTotalValueCount();
+                }
             }
         }
 
@@ -217,7 +218,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 splitClientConfig,
                 mSplitsStorageContainer.getSplitsStorage(),
                 mSplitsStorageContainer.getMySegmentsStorageContainer(),
-                flagSetCount,
+                totalFlagSetCount,
                 invalidFlagSetCount);
         return mTelemetryTaskFactory;
     }

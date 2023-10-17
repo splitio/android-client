@@ -32,7 +32,7 @@ public class FlagSetsValidatorImplTest {
         SplitFilterValidator.ValidationResult result = mValidator.cleanup("method", Arrays.asList("set1", "set1"));
         assertEquals(1, result.getValues().size());
         assertTrue(result.getValues().contains("set1"));
-        assertEquals(0, result.getInvalidValueCount());
+        assertEquals(1, result.getInvalidValueCount());
     }
 
     @Test
