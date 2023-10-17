@@ -386,16 +386,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
         return TreatmentManagerHelper.controlTreatmentsForSplits(splits, mSplitValidator, validationTag, mValidationLogger);
     }
 
-    private EvaluationResult evaluateIfReady(String splitName,
+    private EvaluationResult evaluateIfReady(String featureFlagName,
                                              Map<String, Object> attributes, String validationTag) {
         if (!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY) &&
                 !mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)) {
-            mValidationLogger.w("the SDK is not ready, results may be incorrect for feature flag " + splitName + ". Make sure to wait for SDK readiness before using this method", validationTag);
+            mValidationLogger.w("the SDK is not ready, results may be incorrect for feature flag " + featureFlagName + ". Make sure to wait for SDK readiness before using this method", validationTag);
             mTelemetryStorageProducer.recordNonReadyUsage();
 
             return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null);
         }
-        return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, splitName, attributes);
+        return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, featureFlagName, attributes);
     }
 
     private void recordLatency(Method treatment, long startTime) {
