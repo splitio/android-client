@@ -47,10 +47,9 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
             }
 
             if (set.matches(FLAG_SET_REGEX)) {
-                if (cleanedUpSets.contains(set)) {
+                if (!cleanedUpSets.add(set)) {
+                    Logger.w(method + ": you passed duplicated Flag Set. " + set + " was deduplicated");
                     invalidValueCount++;
-                } else {
-                    cleanedUpSets.add(set);
                 }
             } else {
                 invalidValueCount++;
