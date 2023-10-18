@@ -47,7 +47,10 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
             }
 
             if (set.matches(FLAG_SET_REGEX)) {
-                cleanedUpSets.add(set);
+                if (!cleanedUpSets.add(set)) {
+                    Logger.w(method + ": you passed duplicated Flag Set. " + set + " was deduplicated");
+                    invalidValueCount++;
+                }
             } else {
                 invalidValueCount++;
                 Logger.w(method + ": you passed "+ set +", Flag Set must adhere to the regular expressions "+ FLAG_SET_REGEX +". This means a Flag Set must be start with a letter, be in lowercase, alphanumeric and have a max length of 50 characters. "+ set +" was discarded.");

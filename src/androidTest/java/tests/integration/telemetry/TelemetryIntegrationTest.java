@@ -45,7 +45,6 @@ import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.MethodLatencies;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.logger.Logger;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -295,8 +294,8 @@ public class TelemetryIntegrationTest {
         initializeClient(false, "a", "_b", "a", "a", "c", "d", "_d");
         metricsLatch.await(20, TimeUnit.SECONDS);
         String s = metricsPayload.get();
-        assertTrue(s.contains("\"fsT\":5"));
-        assertTrue(s.contains("\"fsI\":2"));
+        assertTrue(s.contains("\"fsI\":4"));
+        assertTrue(s.contains("\"fsT\":7"));
     }
 
     private void initializeClient(boolean streamingEnabled, String ... sets) {
