@@ -29,6 +29,7 @@ import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManagerImpl;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 
 public class TreatmentManagerTelemetryTest {
 
@@ -72,7 +73,7 @@ public class TreatmentManagerTelemetryTest {
                 attributesMerger,
                 telemetryStorageProducer,
                 mFlagSetsFilter,
-                mSplitsStorage);
+                mSplitsStorage, new ValidationMessageLoggerImpl());
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
     }

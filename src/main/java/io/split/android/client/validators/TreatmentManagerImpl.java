@@ -75,7 +75,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 @NonNull AttributesMerger attributesMerger,
                                 @NonNull TelemetryStorageProducer telemetryStorageProducer,
                                 @Nullable FlagSetsFilter flagSetsFilter,
-                                @NonNull SplitsStorage splitsStorage) {
+                                @NonNull SplitsStorage splitsStorage,
+                                @NonNull ValidationMessageLogger validationLogger) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -84,7 +85,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mImpressionListener = impressionListener;
         mLabelsEnabled = labelsEnabled;
         mEventsManager = eventsManager;
-        mValidationLogger = new ValidationMessageLoggerImpl();
+        mValidationLogger = checkNotNull(validationLogger);
         mAttributesManager = checkNotNull(attributesManager);
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
@@ -385,16 +386,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
         return TreatmentManagerHelper.controlTreatmentsForSplits(splits, mSplitValidator, validationTag, mValidationLogger);
     }
 
-    private EvaluationResult evaluateIfReady(String splitName,
+    private EvaluationResult evaluateIfReady(String featureFlagName,
                                              Map<String, Object> attributes, String validationTag) {
         if (!mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY) &&
                 !mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)) {
-            mValidationLogger.w("the SDK is not ready, results may be incorrect. Make sure to wait for SDK readiness before using this method", validationTag);
+            mValidationLogger.w("the SDK is not ready, results may be incorrect for feature flag " + featureFlagName + ". Make sure to wait for SDK readiness before using this method", validationTag);
             mTelemetryStorageProducer.recordNonReadyUsage();
 
             return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null);
         }
-        return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, splitName, attributes);
+        return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, featureFlagName, attributes);
     }
 
     private void recordLatency(Method treatment, long startTime) {

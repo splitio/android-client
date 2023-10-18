@@ -5,15 +5,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.Set;
-
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
-import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -31,6 +28,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
     private final Evaluator mEvaluator;
     private final FlagSetsFilter mFlagSetsFilter;
     private final SplitsStorage mSplitsStorage;
+    private final ValidationMessageLogger mValidationMessageLogger;
 
     public TreatmentManagerFactoryImpl(@NonNull KeyValidator keyValidator,
                                        @NonNull SplitValidator splitValidator,
@@ -50,6 +48,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
         mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
         mFlagSetsFilter = flagSetsFilter;
         mSplitsStorage = checkNotNull(splitsStorage);
+        mValidationMessageLogger = new ValidationMessageLoggerImpl();
     }
 
     @Override
@@ -67,7 +66,8 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                 mAttributesMerger,
                 mTelemetryStorageProducer,
                 mFlagSetsFilter,
-                mSplitsStorage
+                mSplitsStorage,
+                mValidationMessageLogger
         );
     }
 }
