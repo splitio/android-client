@@ -187,11 +187,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SET;
         Set<String> names = new HashSet<>();
         try {
-            names = getNamesFromSet(Collections.singletonList(flagSet));
             if (isClientDestroyed) {
                 mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
                 return controlTreatmentsForSplits(new ArrayList<>(names), validationTag);
             }
+            names = getNamesFromSet(Collections.singletonList(flagSet));
 
             long start = System.currentTimeMillis();
             try {
@@ -212,11 +212,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         String validationTag = ValidationTag.GET_TREATMENTS_BY_FLAG_SETS;
         Set<String> names = new HashSet<>();
         try {
-            names = getNamesFromSet(flagSets);
             if (isClientDestroyed) {
                 mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
                 return controlTreatmentsForSplits(new ArrayList<>(names), validationTag);
             }
+            names = getNamesFromSet(flagSets);
 
             long start = System.currentTimeMillis();
             try {
@@ -262,11 +262,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
         String validationTag = ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS;
         Set<String> names = new HashSet<>();
         try {
-            names = getNamesFromSet(flagSets);
             if (isClientDestroyed) {
                 mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
                 return controlTreatmentsForSplitsWithConfig(new ArrayList<>(names), validationTag);
             }
+            names = getNamesFromSet(flagSets);
 
             long start = System.currentTimeMillis();
             try {
