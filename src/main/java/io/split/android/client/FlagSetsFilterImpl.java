@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import com.google.common.collect.Sets;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,13 +26,7 @@ public class FlagSetsFilterImpl implements FlagSetsFilter {
             return false;
         }
 
-        for (String set : sets) {
-            if (mFlagSets.contains(set)) {
-                return true;
-            }
-        }
-
-        return false;
+        return Sets.intersection(mFlagSets, sets).size() > 0;
     }
 
     @Override
