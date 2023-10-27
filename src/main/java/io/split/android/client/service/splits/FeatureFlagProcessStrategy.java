@@ -2,9 +2,7 @@ package io.split.android.client.service.splits;
 
 import androidx.annotation.NonNull;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.dtos.Split;
