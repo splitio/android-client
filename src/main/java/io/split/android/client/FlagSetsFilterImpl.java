@@ -26,7 +26,7 @@ public class FlagSetsFilterImpl implements FlagSetsFilter {
             return false;
         }
 
-        return Sets.intersection(mFlagSets, sets).size() > 0;
+        return !Sets.intersection(mFlagSets, sets).isEmpty();
     }
 
     @Override
