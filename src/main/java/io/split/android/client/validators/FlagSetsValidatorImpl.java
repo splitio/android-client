@@ -66,7 +66,7 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
     }
 
     @Override
-    public Set<String> items(List<String> values, FlagSetsFilter flagSetsFilter) {
+    public Set<String> items(String method, List<String> values, FlagSetsFilter flagSetsFilter) {
         Set<String> setsToReturn = new HashSet<>();
 
         if (values == null || values.isEmpty()) {
@@ -74,11 +74,23 @@ public class FlagSetsValidatorImpl implements SplitFilterValidator {
         }
 
         for (String flagSet : values) {
+            if (flagSet.trim().length() != flagSet.length()) {
+                Logger.w(method + ": Flag Set name " + flagSet + " has extra whitespace, trimming");
+                flagSet = flagSet.trim();
+            }
+
+            if (!flagSet.toLowerCase().equals(flagSet)) {
+                Logger.w(method + ": Flag Set name "+flagSet+" should be all lowercase - converting string to lowercase");
+                flagSet = flagSet.toLowerCase();
+            }
+
             if (!isValid(flagSet)) {
+                Logger.w(method + ": you passed "+ flagSet +", Flag Set must adhere to the regular expressions "+ FLAG_SET_REGEX +". This means a Flag Set must be start with a letter, be in lowercase, alphanumeric and have a max length of 50 characters. "+ flagSet +" was discarded.");
                 continue;
             }
 
             if (flagSetsFilter != null && !flagSetsFilter.intersect(flagSet)) {
+                Logger.w(method + ": you passed Flag Set: "+ flagSet +" and is not part of the configured Flag set list, ignoring the request.");
                 continue;
             }
 

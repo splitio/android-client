@@ -11,7 +11,7 @@ public interface SplitFilterValidator {
 
     boolean isValid(String value);
 
-    Set<String> items(List<String> values, FlagSetsFilter flagSetsFilter);
+    Set<String> items(String method, List<String> values, FlagSetsFilter flagSetsFilter);
 
     class ValidationResult {
 
