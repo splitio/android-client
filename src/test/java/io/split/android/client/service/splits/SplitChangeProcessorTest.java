@@ -246,7 +246,7 @@ public class SplitChangeProcessorTest {
     }
 
     @Test
-    public void nonConfiguredSetsAreRemovedFromSplit() {
+    public void nonConfiguredSetsAreNotRemovedFromSplit() {
         Set<String> configuredSets = new HashSet<>();
         configuredSets.add("set_1");
         configuredSets.add("set_2");
@@ -270,14 +270,14 @@ public class SplitChangeProcessorTest {
         Split processedSplit1 = result.getActiveSplits().get(0);
         Assert.assertEquals(split1.name, processedSplit1.name);
         Assert.assertEquals(2, initialSplit1Sets);
-        Assert.assertEquals(1, processedSplit1.sets.size());
+        Assert.assertEquals(2, processedSplit1.sets.size());
         Assert.assertTrue(processedSplit1.sets.contains("set_1"));
-        Assert.assertFalse(processedSplit1.sets.contains("set_3"));
+        Assert.assertTrue(processedSplit1.sets.contains("set_3"));
 
         Split processedSplit2 = result.getActiveSplits().get(1);
         Assert.assertEquals(split2.name, processedSplit2.name);
         Assert.assertEquals(2, initialSplit2Sets);
-        Assert.assertEquals(1, processedSplit2.sets.size());
+        Assert.assertEquals(2, processedSplit2.sets.size());
         Assert.assertTrue(processedSplit2.sets.contains("set_2"));
     }
 
