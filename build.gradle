@@ -16,7 +16,7 @@ apply plugin: 'signing'
 apply plugin: 'kotlin-android'
 
 ext {
-    splitVersion = '3.3.1-alpha-3'
+    splitVersion = '3.4.0-alpha-1'
 }
 
 android {
