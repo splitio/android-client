@@ -7,7 +7,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-
 import static io.split.android.client.TreatmentLabels.DEFINITION_NOT_FOUND;
 
 import com.google.common.base.Strings;
@@ -28,7 +27,6 @@ import java.util.Set;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
@@ -42,6 +40,8 @@ import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
+import io.split.android.client.validators.ValidationMessageLogger;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.fake.ImpressionListenerMock;
 import io.split.android.fake.SplitEventsManagerStub;
@@ -56,10 +56,17 @@ public class TreatmentManagerTest {
     ListenableEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
     TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
-    TreatmentManagerImpl treatmentManager = initializeTreatmentManager();
+    private FlagSetsFilter mFlagSetsFilter;
+    TreatmentManagerImpl treatmentManager;
+    private SplitsStorage mSplitsStorage;
+    private ValidationMessageLogger mValidationMessageLogger;
 
     @Before
     public void loadSplitsFromFile() {
+        mFlagSetsFilter = new FlagSetsFilterImpl(new HashSet<>());
+        mSplitsStorage = mock(SplitsStorage.class);
+        mValidationMessageLogger = mock(ValidationMessageLogger.class);
+        treatmentManager = initializeTreatmentManager();
         if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
             MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
@@ -165,7 +172,7 @@ public class TreatmentManagerTest {
     }
 
     @Test
-    public void testEmtpySplit() {
+    public void testEmptySplit() {
         String matchingKey = "nico_test";
         String splitName = "";
         List<String> splitList = new ArrayList<>();
@@ -290,6 +297,24 @@ public class TreatmentManagerTest {
         verify(attributesManager).getAllAttributes();
     }
 
+    @Test
+    public void evaluationWhenNotReadyLogsCorrectMessage() {
+        ValidationMessageLogger validationMessageLogger = mock(ValidationMessageLogger.class);
+        SplitValidator splitValidator = mock(SplitValidator.class);
+        Evaluator evaluatorMock = mock(Evaluator.class);
+        ListenableEventsManager eventsManager = mock(ListenableEventsManager.class);
+        when(evaluatorMock.getTreatment(eq("my_key"), eq(null), eq("test_split"), anyMap()))
+                .thenReturn(new EvaluationResult("test", "test"));
+        when(splitValidator.validateName(any())).thenReturn(null);
+        when(splitValidator.splitNotFoundMessage(any())).thenReturn(null);
+        when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(false);
+        when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(false);
+        createTreatmentManager("my_key", null, validationMessageLogger, splitValidator, evaluatorMock, eventsManager)
+                .getTreatment("test_split", null, false);
+
+        verify(validationMessageLogger).w(eq("the SDK is not ready, results may be incorrect for feature flag test_split. Make sure to wait for SDK readiness before using this method"), any());
+    }
+
     private void assertControl(List<String> splitList, String treatment, Map<String, String> treatmentList, SplitResult splitResult, Map<String, SplitResult> splitResultList) {
         Assert.assertNotNull(treatment);
         Assert.assertEquals(Treatments.CONTROL, treatment);
@@ -315,12 +340,18 @@ public class TreatmentManagerTest {
     }
 
     private TreatmentManager createTreatmentManager(String matchingKey, String bucketingKey) {
+        return createTreatmentManager(matchingKey, bucketingKey, new ValidationMessageLoggerImpl(), new SplitValidatorImpl(), evaluator, eventsManagerStub);
+    }
+
+    private TreatmentManager createTreatmentManager(String matchingKey, String bucketingKey, ValidationMessageLogger validationLogger, SplitValidator splitValidator, Evaluator evaluator, ListenableEventsManager eventsManager) {
 
         SplitClientConfig config = SplitClientConfig.builder().build();
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
-                new KeyValidatorImpl(), new SplitValidatorImpl(),
-                new ImpressionListenerMock(), config.labelsEnabled(), eventsManagerStub, mock(AttributesManager.class), mock(AttributesMerger.class), mock(TelemetryStorageProducer.class));
+                new KeyValidatorImpl(), splitValidator,
+                new ImpressionListenerMock(), config.labelsEnabled(), eventsManager,
+                mock(AttributesManager.class), mock(AttributesMerger.class),
+                mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage, validationLogger);
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -347,8 +378,10 @@ public class TreatmentManagerTest {
                 eventsManager,
                 attributesManager,
                 mock(AttributesMerger.class),
-                telemetryStorageProducer
-        );
+                telemetryStorageProducer,
+                mFlagSetsFilter,
+                mSplitsStorage,
+                new ValidationMessageLoggerImpl());
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {

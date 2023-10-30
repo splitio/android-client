@@ -50,6 +50,10 @@ public class InMemoryTelemetryStorageTest {
         telemetryStorage.recordException(Method.TREATMENTS);
         telemetryStorage.recordException(Method.TREATMENTS_WITH_CONFIG);
         telemetryStorage.recordException(Method.TREATMENT_WITH_CONFIG);
+        telemetryStorage.recordException(Method.TREATMENTS_BY_FLAG_SET);
+        telemetryStorage.recordException(Method.TREATMENTS_BY_FLAG_SETS);
+        telemetryStorage.recordException(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET);
+        telemetryStorage.recordException(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS);
 
         MethodExceptions methodExceptions = telemetryStorage.popExceptions();
 
@@ -58,6 +62,10 @@ public class InMemoryTelemetryStorageTest {
         assertEquals(1, methodExceptions.getTreatments());
         assertEquals(1, methodExceptions.getTreatmentsWithConfig());
         assertEquals(1, methodExceptions.getTreatmentWithConfig());
+        assertEquals(1, methodExceptions.getTreatmentsByFlagSet());
+        assertEquals(1, methodExceptions.getTreatmentsByFlagSets());
+        assertEquals(1, methodExceptions.getTreatmentsWithConfigByFlagSet());
+        assertEquals(1, methodExceptions.getTreatmentsWithConfigByFlagSets());
     }
 
     @Test
@@ -68,6 +76,10 @@ public class InMemoryTelemetryStorageTest {
         telemetryStorage.recordException(Method.TREATMENTS);
         telemetryStorage.recordException(Method.TREATMENTS_WITH_CONFIG);
         telemetryStorage.recordException(Method.TREATMENT_WITH_CONFIG);
+        telemetryStorage.recordException(Method.TREATMENTS_BY_FLAG_SET);
+        telemetryStorage.recordException(Method.TREATMENTS_BY_FLAG_SETS);
+        telemetryStorage.recordException(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET);
+        telemetryStorage.recordException(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS);
 
         telemetryStorage.popExceptions();
 
@@ -78,6 +90,10 @@ public class InMemoryTelemetryStorageTest {
         assertEquals(0, secondPop.getTreatments());
         assertEquals(0, secondPop.getTreatmentsWithConfig());
         assertEquals(0, secondPop.getTreatmentWithConfig());
+        assertEquals(0, secondPop.getTreatmentsByFlagSet());
+        assertEquals(0, secondPop.getTreatmentsByFlagSets());
+        assertEquals(0, secondPop.getTreatmentsWithConfigByFlagSet());
+        assertEquals(0, secondPop.getTreatmentsWithConfigByFlagSets());
     }
 
     @Test
@@ -89,6 +105,10 @@ public class InMemoryTelemetryStorageTest {
         telemetryStorage.recordLatency(Method.TREATMENTS, 200);
         telemetryStorage.recordLatency(Method.TREATMENTS_WITH_CONFIG, 10);
         telemetryStorage.recordLatency(Method.TREATMENT_WITH_CONFIG, 2000);
+        telemetryStorage.recordLatency(Method.TREATMENTS_BY_FLAG_SET, 15);
+        telemetryStorage.recordLatency(Method.TREATMENTS_BY_FLAG_SETS, 14);
+        telemetryStorage.recordLatency(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET, 15);
+        telemetryStorage.recordLatency(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, 14);
 
         MethodLatencies methodLatencies = telemetryStorage.popLatencies();
 
@@ -97,12 +117,20 @@ public class InMemoryTelemetryStorageTest {
         assertFalse(methodLatencies.getTreatments().stream().allMatch(l -> l == 0));
         assertFalse(methodLatencies.getTreatmentsWithConfig().stream().allMatch(l -> l == 0));
         assertFalse(methodLatencies.getTreatmentWithConfig().stream().allMatch(l -> l == 0));
+        assertFalse(methodLatencies.getTreatmentsByFlagSet().stream().allMatch(l -> l == 0));
+        assertFalse(methodLatencies.getTreatmentsByFlagSets().stream().allMatch(l -> l == 0));
+        assertFalse(methodLatencies.getTreatmentsWithConfigByFlagSet().stream().allMatch(l -> l == 0));
+        assertFalse(methodLatencies.getTreatmentsWithConfigByFlagSets().stream().allMatch(l -> l == 0));
 
         assertEquals(1, (long) methodLatencies.getTreatment().get(15));
         assertEquals(1, (long) methodLatencies.getTreatments().get(14));
         assertEquals(1, (long) methodLatencies.getTreatmentWithConfig().get(19));
         assertEquals(1, (long) methodLatencies.getTreatmentsWithConfig().get(6));
         assertEquals(1, (long) methodLatencies.getTrack().get(14));
+        assertEquals(1, (long) methodLatencies.getTreatmentsByFlagSet().get(7));
+        assertEquals(1, (long) methodLatencies.getTreatmentsByFlagSets().get(7));
+        assertEquals(1, (long) methodLatencies.getTreatmentsWithConfigByFlagSet().get(7));
+        assertEquals(1, (long) methodLatencies.getTreatmentsWithConfigByFlagSets().get(7));
     }
 
     @Test
@@ -113,6 +141,10 @@ public class InMemoryTelemetryStorageTest {
         telemetryStorage.recordLatency(Method.TREATMENTS, 200);
         telemetryStorage.recordLatency(Method.TREATMENTS_WITH_CONFIG, 10);
         telemetryStorage.recordLatency(Method.TREATMENT_WITH_CONFIG, 2000);
+        telemetryStorage.recordLatency(Method.TREATMENTS_BY_FLAG_SET, 15);
+        telemetryStorage.recordLatency(Method.TREATMENTS_BY_FLAG_SETS, 14);
+        telemetryStorage.recordLatency(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET, 15);
+        telemetryStorage.recordLatency(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS, 14);
 
         telemetryStorage.popLatencies();
 
@@ -123,6 +155,10 @@ public class InMemoryTelemetryStorageTest {
         assertTrue(methodLatencies.getTreatments().stream().allMatch(l -> l == 0));
         assertTrue(methodLatencies.getTreatmentsWithConfig().stream().allMatch(l -> l == 0));
         assertTrue(methodLatencies.getTreatmentWithConfig().stream().allMatch(l -> l == 0));
+        assertTrue(methodLatencies.getTreatmentsByFlagSet().stream().allMatch(l -> l == 0));
+        assertTrue(methodLatencies.getTreatmentsByFlagSets().stream().allMatch(l -> l == 0));
+        assertTrue(methodLatencies.getTreatmentsWithConfigByFlagSet().stream().allMatch(l -> l == 0));
+        assertTrue(methodLatencies.getTreatmentsWithConfigByFlagSets().stream().allMatch(l -> l == 0));
     }
 
     @Test

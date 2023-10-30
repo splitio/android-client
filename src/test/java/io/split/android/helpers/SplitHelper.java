@@ -1,9 +1,11 @@
 package io.split.android.helpers;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.ConditionType;
@@ -43,6 +45,30 @@ public class SplitHelper {
             int algo,
             Map<String, String> configurations
     ) {
+        return createSplit(feature,
+                seed,
+                killed,
+                defaultTreatment,
+                conditions,
+                trafficTypeName,
+                changeNumber,
+                algo,
+                configurations,
+                Collections.emptySet());
+    }
+
+    public static Split createSplit(
+            String feature,
+            int seed,
+            boolean killed,
+            String defaultTreatment,
+            List<Condition> conditions,
+            String trafficTypeName,
+            long changeNumber,
+            int algo,
+            Map<String, String> configurations,
+            Set<String> sets
+    ) {
         Split split = new Split();
         split.name = feature;
         split.seed = seed;
@@ -52,11 +78,11 @@ public class SplitHelper {
         split.trafficTypeName = trafficTypeName;
         split.changeNumber = changeNumber;
         split.trafficAllocation = 100;
-        split.seed = seed;
         split.trafficAllocationSeed = seed;
         split.algo = algo;
         split.status = Status.ACTIVE;
         split.configurations = configurations;
+        split.sets = sets;
         return split;
     }
 
@@ -95,7 +121,8 @@ public class SplitHelper {
                 100,
                 seed,
                 algo,
-                configurations
+                configurations,
+                Collections.emptySet()
         );
     }
 

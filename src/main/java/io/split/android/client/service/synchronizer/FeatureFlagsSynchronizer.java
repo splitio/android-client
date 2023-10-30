@@ -6,8 +6,6 @@ public interface FeatureFlagsSynchronizer {
 
     void loadAndSynchronize();
 
-    void loadFromCache();
-
     void synchronize(long since);
 
     void synchronize();

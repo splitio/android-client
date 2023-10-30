@@ -13,13 +13,25 @@ public class SyncConfig {
 
     private final List<SplitFilter> mFilters;
 
+    private final int mInvalidValueCount;
+    private final int mTotalValueCount;
 
-    private SyncConfig(List<SplitFilter> filters) {
+    private SyncConfig(List<SplitFilter> filters, int invalidValueCount, int totalValueCount) {
         mFilters = filters;
+        mInvalidValueCount = invalidValueCount;
+        mTotalValueCount = totalValueCount;
     }
 
     public List<SplitFilter> getFilters() {
         return mFilters;
+    }
+
+    public int getInvalidValueCount() {
+        return mInvalidValueCount;
+    }
+
+    public int getTotalValueCount() {
+        return mTotalValueCount;
     }
 
     public static Builder builder() {
@@ -27,7 +39,9 @@ public class SyncConfig {
     }
 
     public static class Builder {
-        private List<SplitFilter> mBuilderFilters = new ArrayList<>();
+        private final List<SplitFilter> mBuilderFilters = new ArrayList<>();
+        private int mInvalidValueCount = 0;
+        private int mTotalValueCount = 0;
         private final SplitValidator mSplitValidator = new SplitValidatorImpl();
 
         public SyncConfig build() {
@@ -46,7 +60,7 @@ public class SyncConfig {
                     validatedFilters.add(new SplitFilter(filter.getType(), validatedValues));
                 }
             }
-            return new SyncConfig(validatedFilters);
+            return new SyncConfig(validatedFilters, mInvalidValueCount, mTotalValueCount);
         }
 
         public Builder addSplitFilter(@NonNull SplitFilter filter) {
@@ -54,6 +68,8 @@ public class SyncConfig {
                 throw new IllegalArgumentException("Filter can't be null");
             }
             mBuilderFilters.add(filter);
+            mInvalidValueCount += filter.getInvalidValueCount();
+            mTotalValueCount += filter.getTotalValueCount();
             return this;
         }
     }

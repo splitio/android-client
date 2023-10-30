@@ -49,7 +49,7 @@ public class SplitInPlaceUpdateTask implements SplitTask {
             mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
             mTelemetryRuntimeProducer.recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
 
-            Logger.d("Updated feature flag: " + mSplit.name);
+            Logger.v("Updated feature flag");
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         } catch (Exception ex) {
             Logger.e("Could not update feature flag");

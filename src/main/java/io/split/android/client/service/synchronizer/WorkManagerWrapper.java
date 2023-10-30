@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.work.Constraints;
@@ -23,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.SplitFilter;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -45,18 +45,22 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
     private WeakReference<SplitTaskExecutionListener> mFetcherExecutionListener;
     // This variable is used to avoid loading data first time
     // we receive enqueued event
-    final private Set<String> mShouldLoadFromLocal;
+    private final Set<String> mShouldLoadFromLocal;
+    @Nullable
+    private final SplitFilter mFilter;
 
     public WorkManagerWrapper(@NonNull WorkManager workManager,
                               @NonNull SplitClientConfig splitClientConfig,
                               @NonNull String apiKey,
-                              @NonNull String databaseName) {
+                              @NonNull String databaseName,
+                              @Nullable SplitFilter filter) {
         mWorkManager = checkNotNull(workManager);
         mDatabaseName = checkNotNull(databaseName);
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mApiKey = checkNotNull(apiKey);
         mShouldLoadFromLocal = new HashSet<>();
         mConstraints = buildConstraints();
+        mFilter = filter;
     }
 
     public void setFetcherExecutionListener(SplitTaskExecutionListener fetcherExecutionListener) {
@@ -184,6 +188,8 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         dataBuilder.putLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION, mSplitClientConfig.cacheExpirationInSeconds());
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_ENDPOINT, mSplitClientConfig.endpoint());
         dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_TYPE, (mFilter != null) ? mFilter.getType().queryStringField() : null);
+        dataBuilder.putStringArray(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_VALUES, (mFilter != null) ? mFilter.getValues().toArray(new String[0]) : new String[0]);
         return buildInputData(dataBuilder.build());
     }
 

@@ -5,8 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FilterGrouper {
-    public List<SplitFilter> group(List<SplitFilter> filters) {
+class FilterGrouper {
+
+    /**
+     * Groups filters by type
+     * @param filters list of filters to group
+     * @return map of grouped filters. The key is the filter type, the value is the filter
+     */
+    Map<SplitFilter.Type, SplitFilter> group(List<SplitFilter> filters) {
         Map<SplitFilter.Type, List<String>> groupedValues = new HashMap<>();
         for (SplitFilter filter : filters) {
             List<String> groupValues = groupedValues.get(filter.getType());
@@ -17,12 +23,13 @@ public class FilterGrouper {
             groupValues.addAll(filter.getValues());
         }
 
-        List<SplitFilter> groupedFilters = new ArrayList<>();
+        Map<SplitFilter.Type, SplitFilter> groupedFilters = new HashMap<>();
         for (Map.Entry<SplitFilter.Type, List<String>> filterEntry : groupedValues.entrySet()) {
             if (filterEntry.getValue().size() > 0) {
-                groupedFilters.add(new SplitFilter(filterEntry.getKey(), filterEntry.getValue()));
+                groupedFilters.put(filterEntry.getKey(), new SplitFilter(filterEntry.getKey(), filterEntry.getValue()));
             }
         }
+
         return groupedFilters;
     }
 }

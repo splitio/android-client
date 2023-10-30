@@ -6,12 +6,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import io.split.android.client.FilterBuilder;
+import io.split.android.client.FlagSetsFilter;
+import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.SplitFilter;
 import io.split.android.client.SplitManager;
 import io.split.android.client.SplitManagerImpl;
+import io.split.android.client.SyncConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerFactory;
 import io.split.android.client.attributes.AttributesManagerFactoryImpl;
@@ -67,6 +77,19 @@ public class LocalhostSplitFactory implements SplitFactory {
 
         mManager = new SplitManagerImpl(splitsStorage, new SplitValidatorImpl(), splitParser);
 
+        FlagSetsFilter flagSetsFilter = null;
+        if (config.syncConfig() != null) {
+            Map<SplitFilter.Type, SplitFilter> groupedFilters = new FilterBuilder(config.syncConfig().getFilters())
+                    .getGroupedFilter();
+
+            if (!groupedFilters.isEmpty()) {
+                SplitFilter bySetFilter = groupedFilters.get(SplitFilter.Type.BY_SET);
+                if (bySetFilter != null) {
+                    flagSetsFilter = new FlagSetsFilterImpl(bySetFilter.getValues());
+                }
+            }
+        }
+
         mClientContainer = new LocalhostSplitClientContainerImpl(this,
                 config,
                 splitsStorage,
@@ -75,9 +98,10 @@ public class LocalhostSplitFactory implements SplitFactory {
                 new AttributesMergerImpl(),
                 new NoOpTelemetryStorage(),
                 eventsManagerCoordinator,
-                taskExecutor);
+                taskExecutor,
+                flagSetsFilter);
 
-        mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage);
+        mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage, buildQueryString(config.syncConfig()));
         mSynchronizer.start();
 
         Logger.i("Android SDK initialized!");
@@ -140,5 +164,14 @@ public class LocalhostSplitFactory implements SplitFactory {
     @Override
     public UserConsent getUserConsent() {
         return UserConsent.GRANTED;
+    }
+
+    private static String buildQueryString(SyncConfig syncConfig) {
+        if (syncConfig != null) {
+            FilterBuilder filterBuilder = new FilterBuilder(syncConfig.getFilters());
+            return filterBuilder.buildQueryString();
+        }
+
+        return "";
     }
 }

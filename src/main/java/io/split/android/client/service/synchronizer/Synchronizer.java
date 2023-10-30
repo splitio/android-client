@@ -8,8 +8,6 @@ public interface Synchronizer extends SplitLifecycleAware {
 
     void loadAndSynchronizeSplits();
 
-    void loadSplitsFromCache();
-
     void loadMySegmentsFromCache();
 
     void loadAttributesFromCache();

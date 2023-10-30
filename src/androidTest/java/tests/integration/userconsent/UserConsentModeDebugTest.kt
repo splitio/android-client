@@ -231,7 +231,7 @@ class UserConsentModeDebugTest {
                 } else if (uri.path.contains("/splitChanges")) {
                     if (mChangeHit == 0) {
                         mChangeHit+=1
-                        return getSplitsMockResponse("", "")
+                        return getSplitsMockResponse("")
                     }
                     return HttpResponseMock(200, IntegrationHelper.emptySplitChanges(99999999, 99999999))
                 } else if (uri.path.contains("/testImpressions/bulk")) {
@@ -259,7 +259,7 @@ class UserConsentModeDebugTest {
         }
     }
 
-    private fun getSplitsMockResponse(since: String, till: String): HttpResponseMock {
+    private fun getSplitsMockResponse(since: String): HttpResponseMock {
         return HttpResponseMock(200, loadSplitChanges())
     }
 

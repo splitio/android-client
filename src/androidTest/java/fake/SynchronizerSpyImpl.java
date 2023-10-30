@@ -31,11 +31,6 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
     }
 
     @Override
-    public void loadSplitsFromCache() {
-        mSynchronizer.loadSplitsFromCache();
-    }
-
-    @Override
     public void loadMySegmentsFromCache() {
         mSynchronizer.loadMySegmentsFromCache();
     }

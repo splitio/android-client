@@ -4,11 +4,13 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.util.Pair;
 import androidx.work.WorkManager;
 
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -158,14 +160,6 @@ class SplitFactoryHelper {
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage));
     }
 
-    String buildSplitsFilterQueryString(SplitClientConfig config) {
-        SyncConfig syncConfig = config.syncConfig();
-        if (syncConfig != null) {
-            return new FilterBuilder().addFilters(syncConfig.getFilters()).build();
-        }
-        return null;
-    }
-
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
                                   HttpClient httpClient,
                                   String splitsFilterQueryString) throws URISyntaxException {
@@ -192,9 +186,12 @@ class SplitFactoryHelper {
     }
 
     WorkManagerWrapper buildWorkManagerWrapper(Context context, SplitClientConfig splitClientConfig,
-                                               String apiKey, String databaseName) {
+                                               String apiKey, String databaseName, Map<SplitFilter.Type, SplitFilter> filters) {
+        SplitFilter filter = filters.get(SplitFilter.Type.BY_SET) != null ?
+                filters.get(SplitFilter.Type.BY_SET) :
+                filters.get(SplitFilter.Type.BY_NAME);
         return new WorkManagerWrapper(
-                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName);
+                WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName, filter);
 
     }
 
@@ -412,6 +409,28 @@ class SplitFactoryHelper {
                     compressionProvider,
                     splitTaskExecutor,
                     splitTaskFactory);
+        }
+
+        return null;
+    }
+
+    Pair<Map<SplitFilter.Type, SplitFilter>, String> getFilterConfiguration(SyncConfig syncConfig) {
+        String splitsFilterQueryString = null;
+        Map<SplitFilter.Type, SplitFilter> groupedFilters = new HashMap<>();
+
+        if (syncConfig != null) {
+            FilterBuilder filterBuilder = new FilterBuilder(syncConfig.getFilters());
+            groupedFilters = filterBuilder.getGroupedFilter();
+            splitsFilterQueryString = filterBuilder.buildQueryString();
+        }
+
+        return new Pair<>(groupedFilters, splitsFilterQueryString);
+    }
+
+    @Nullable
+    FlagSetsFilter getFlagSetsFilter(Map<SplitFilter.Type, SplitFilter> filters) {
+        if (filters.get(SplitFilter.Type.BY_SET) != null) {
+            return new FlagSetsFilterImpl(filters.get(SplitFilter.Type.BY_SET).getValues());
         }
 
         return null;

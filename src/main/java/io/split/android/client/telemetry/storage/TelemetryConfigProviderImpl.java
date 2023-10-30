@@ -20,11 +20,17 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
 
     private final TelemetryStorageConsumer mTelemetryConsumer;
     private final SplitClientConfig mSplitClientConfig;
+    private final int mValidFlagSetCount;
+    private final int mInvalidFlagSetCount;
 
     public TelemetryConfigProviderImpl(@NonNull TelemetryStorageConsumer telemetryConsumer,
-                                       @NonNull SplitClientConfig splitClientConfig) {
+                                       @NonNull SplitClientConfig splitClientConfig,
+                                       int validFlagSetCount,
+                                       int invalidFlagSetCount) {
         mTelemetryConsumer = checkNotNull(telemetryConsumer);
         mSplitClientConfig = checkNotNull(splitClientConfig);
+        mValidFlagSetCount = validFlagSetCount;
+        mInvalidFlagSetCount = invalidFlagSetCount;
     }
 
     @Override
@@ -44,6 +50,8 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         config.setImpressionsQueueSize(mSplitClientConfig.impressionsQueueSize());
         config.setEventsQueueSize(mSplitClientConfig.eventsQueueSize());
         config.setUserConsent(mSplitClientConfig.userConsent().intValue());
+        config.setFlagSetsTotal(mValidFlagSetCount + mInvalidFlagSetCount);
+        config.setFlagSetsInvalid(mInvalidFlagSetCount);
         if (mSplitClientConfig.impressionsMode() == ImpressionsMode.DEBUG) {
             config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.DEBUG.intValue());
         } else if (mSplitClientConfig.impressionsMode() == ImpressionsMode.OPTIMIZED) {

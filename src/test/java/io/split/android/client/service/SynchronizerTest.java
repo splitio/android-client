@@ -176,7 +176,7 @@ public class SynchronizerTest {
         when(mMySegmentsTaskFactory.createMySegmentsSyncTask(anyBoolean())).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
-        when(mTaskFactory.createLoadSplitsTask()).thenReturn(Mockito.mock(LoadSplitsTask.class));
+        when(mTaskFactory.createLoadSplitsTask(any())).thenReturn(Mockito.mock(LoadSplitsTask.class));
         when(mTaskFactory.createFilterSplitsInCacheTask()).thenReturn(Mockito.mock(FilterSplitsInCacheTask.class));
         when(mTaskFactory.createImpressionsCountRecorderTask()).thenReturn(Mockito.mock(ImpressionsCountRecorderTask.class));
         when(mTaskFactory.createSaveImpressionsCountTask(any())).thenReturn(Mockito.mock(SaveImpressionsCountTask.class));
@@ -524,12 +524,12 @@ public class SynchronizerTest {
 
         ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMySegmentsSynchronizer("", mMySegmentsSynchronizer);
 
-        mSynchronizer.loadSplitsFromCache();
+        mSynchronizer.loadAndSynchronizeSplits();
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
+        verify(mFeatureFlagsSynchronizer).loadAndSynchronize();
         verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache();
         verify(mAttributesSynchronizerRegistry).loadAttributesFromCache();
-        verify(mFeatureFlagsSynchronizer).loadFromCache();
     }
 
     @Test
@@ -668,7 +668,7 @@ public class SynchronizerTest {
         setup(SplitClientConfig.builder().persistentAttributesEnabled(false).build());
 
         LoadSplitsTask task = mock(LoadSplitsTask.class);
-        when(mTaskFactory.createLoadSplitsTask()).thenReturn(task);
+        when(mTaskFactory.createLoadSplitsTask(any())).thenReturn(task);
 
         mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 

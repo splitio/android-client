@@ -1,5 +1,8 @@
 package io.split.android.client.localhost.shared;
 
+import java.util.Set;
+
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
@@ -29,6 +32,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
     private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final EventsManagerCoordinator mEventsManagerCoordinator;
     private final SplitTaskExecutor mSplitTaskExecutor;
+    private final FlagSetsFilter mFlagSetsFilter;
 
     public LocalhostSplitClientContainerImpl(LocalhostSplitFactory splitFactory,
                                              SplitClientConfig config,
@@ -38,7 +42,8 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
                                              AttributesMerger attributesMerger,
                                              TelemetryStorageProducer telemetryStorageProducer,
                                              EventsManagerCoordinator eventsManagerCoordinator,
-                                             SplitTaskExecutor taskExecutor) {
+                                             SplitTaskExecutor taskExecutor,
+                                             FlagSetsFilter flagSetsFilter) {
         mSplitFactory = splitFactory;
         mConfig = config;
         mSplitStorage = splitsStorage;
@@ -48,6 +53,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
         mTelemetryStorageProducer = telemetryStorageProducer;
         mEventsManagerCoordinator = eventsManagerCoordinator;
         mSplitTaskExecutor = taskExecutor;
+        mFlagSetsFilter = flagSetsFilter;
     }
 
     @Override
@@ -70,7 +76,8 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
                 mSplitParser,
                 attributesManager,
                 mAttributesMerger,
-                mTelemetryStorageProducer
+                mTelemetryStorageProducer,
+                mFlagSetsFilter
         );
 
         eventsManager.getExecutorResources().setSplitClient(client);

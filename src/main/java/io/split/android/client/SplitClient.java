@@ -1,5 +1,8 @@
 package io.split.android.client;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.List;
 import java.util.Map;
 
@@ -50,8 +53,8 @@ public interface SplitClient extends AttributesManager {
      * vs. premium plan. Another example is to show a different treatment
      * to users created after a certain date.
      *
-     * @param featureFlagName    the feature flag we want to evaluate. MUST NOT be null.
-     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
+     * @param featureFlagName the feature flag we want to evaluate. MUST NOT be null.
+     * @param attributes      of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatment, the default treatment of this feature flag, or 'control'.
      */
     String getTreatment(String featureFlagName, Map<String, Object> attributes);
@@ -67,10 +70,10 @@ public interface SplitClient extends AttributesManager {
      * vs. premium plan. Another example is to show a different treatment
      * to users created after a certain date.
      *
-     * @param featureFlagName    the feature flag we want to evaluate. MUST NOT be null.
-     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
+     * @param featureFlagName the feature flag we want to evaluate. MUST NOT be null.
+     * @param attributes      of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatment, the default treatment of this feature flag, or 'control'
-     *  with its corresponding configurations if it has one.
+     * with its corresponding configurations if it has one.
      */
     SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes);
 
@@ -81,8 +84,8 @@ public interface SplitClient extends AttributesManager {
      * <p/>
      * It can be used to cache treatments you know it won't change very often.
      *
-     * @param featureFlagNames    the feature flags you want to evaluate. MUST NOT be null.
-     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
+     * @param featureFlagNames the feature flags you want to evaluate. MUST NOT be null.
+     * @param attributes       of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatments, the default treatment of a feature, or 'control'.
      */
     Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes);
@@ -95,12 +98,52 @@ public interface SplitClient extends AttributesManager {
      * <p/>
      * It can be used to cache treatments you know it won't change very often.
      *
-     * @param featureFlagNames    the feature flags you want to evaluate. MUST NOT be null.
-     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty.
+     * @param featureFlagNames the feature flags you want to evaluate. MUST NOT be null.
+     * @param attributes       of the customer (user, account etc.) to use in evaluation. Can be null or empty.
      * @return the evaluated treatments, the default treatment of a feature flag, or 'control'
      * with its corresponding configurations if it has one.
      */
     Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes);
+
+    /**
+     * This method is useful when you want to determine the treatment of several feature flags
+     * belonging to a specific Flag Set at the same time.
+     *
+     * @param flagSet    the Flag Set name that you want to evaluate. Must not be null or empty
+     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty
+     * @return a {@link Map} containing for each feature flag the evaluated treatment, the default treatment of this feature flag, or 'control'
+     */
+    Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes);
+
+    /**
+     * This method is useful when you want to determine the treatment of several feature flags
+     * belonging to a specific list of Flag Sets at the same time.
+     *
+     * @param flagSets   the Flag Sets names that you want to evaluate. Must not be null or empty
+     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty
+     * @return a {@link Map} containing for each feature flag the evaluated treatment, the default treatment of this feature flag, or 'control'
+     */
+    Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes);
+
+    /**
+     * This method is useful when you want to determine the treatment of several feature flags
+     * belonging to a specific Flag Set
+     *
+     * @param flagSet    the Flag Set name that you want to evaluate. Must not be null or empty
+     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty
+     * @return a {@link Map} containing for each feature flag the evaluated treatment, the default treatment of this feature flag, or 'control'
+     */
+    Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes);
+
+    /**
+     * This method is useful when you want to determine the treatment of several feature flags
+     * belonging to a specific list of Flag Sets
+     *
+     * @param flagSets   the Flag Sets names that you want to evaluate. Must not be null or empty
+     * @param attributes of the customer (user, account etc.) to use in evaluation. Can be null or empty
+     * @return a {@link Map} containing for each feature flag the evaluated treatment, the default treatment of this feature flag, or 'control'
+     */
+    Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes);
 
     /**
      * Destroys the background processes and clears the cache, releasing the resources used by
@@ -115,6 +158,7 @@ public interface SplitClient extends AttributesManager {
 
     /**
      * Checks if cached data is ready to perform treatment evaluations
+     *
      * @return true if the sdk is ready, if false, calls to getTreatment will return control
      */
     boolean isReady();
@@ -123,118 +167,109 @@ public interface SplitClient extends AttributesManager {
 
     /**
      * Enqueue a new event to be sent to Split data collection services.
-     *
+     * <p>
      * The traffic type used is the one set by trafficType() in SplitClientConfig.
-     *
+     * <p>
      * Example:
-     *      client.track(“checkout”)
+     * client.track(“checkout”)
      *
      * @param eventType the type of the event
-     *
      * @return true if the track was successful, false otherwise
      */
     boolean track(String eventType);
 
     /**
      * Enqueue a new event to be sent to Split data collection services
-     *
+     * <p>
      * Example:
-     *      client.track(“account”, “checkout”, 200.00)
+     * client.track(“account”, “checkout”, 200.00)
      *
      * @param trafficType the type of the event
-     * @param eventType the type of the event
-     * @param value the value of the event
-     *
+     * @param eventType   the type of the event
+     * @param value       the value of the event
      * @return true if the track was successful, false otherwise
      */
     boolean track(String trafficType, String eventType, double value);
 
     /**
      * Enqueue a new event to be sent to Split data collection services
-     *
+     * <p>
      * Example:
-     *      client.track(“account”, “checkout”)
+     * client.track(“account”, “checkout”)
      *
      * @param trafficType the type of the event
-     * @param eventType the type of the event
-     *
+     * @param eventType   the type of the event
      * @return true if the track was successful, false otherwise
      */
     boolean track(String trafficType, String eventType);
 
     /**
      * Enqueue a new event to be sent to Split data collection services
-     *
+     * <p>
      * The traffic type used is the one set by trafficType() in SplitClientConfig.
-
+     * <p>
      * Example:
-     *      client.track(“checkout”, 200.00)
+     * client.track(“checkout”, 200.00)
      *
      * @param eventType the type of the event
-     * @param value the value of the event
-     *
+     * @param value     the value of the event
      * @return true if the track was successful, false otherwise
      */
     boolean track(String eventType, double value);
 
     /**
      * Enqueue a new event to be sent to Split data collection services.
-     *
+     * <p>
      * The traffic type used is the one set by trafficType() in SplitClientConfig.
-     *
+     * <p>
      * Example:
-     *      client.track(“checkout”)
+     * client.track(“checkout”)
      *
-     * @param eventType the type of the event
+     * @param eventType  the type of the event
      * @param properties custom user data map
-     *
      * @return true if the track was successful, false otherwise
      */
-    boolean track(String eventType, Map<String,Object> properties);
+    boolean track(String eventType, Map<String, Object> properties);
 
     /**
      * Enqueue a new event to be sent to Split data collection services
-     *
+     * <p>
      * Example:
-     *      client.track(“account”, “checkout”, 200.00)
+     * client.track(“account”, “checkout”, 200.00)
      *
      * @param trafficType the type of the event
-     * @param eventType the type of the event
-     * @param value the value of the event
-     * @param properties custom user data map
-     *
+     * @param eventType   the type of the event
+     * @param value       the value of the event
+     * @param properties  custom user data map
      * @return true if the track was successful, false otherwise
      */
-    boolean track(String trafficType, String eventType, double value, Map<String,Object> properties);
+    boolean track(String trafficType, String eventType, double value, Map<String, Object> properties);
 
     /**
      * Enqueue a new event to be sent to split data collection services
-     *
+     * <p>
      * Example:
-     *      client.track(“account”, “checkout”)
+     * client.track(“account”, “checkout”)
      *
      * @param trafficType the type of the event
-     * @param eventType the type of the event
-     * @param properties custom user data map
-     *
+     * @param eventType   the type of the event
+     * @param properties  custom user data map
      * @return true if the track was successful, false otherwise
      */
-    boolean track(String trafficType, String eventType, Map<String,Object> properties);
+    boolean track(String trafficType, String eventType, Map<String, Object> properties);
 
     /**
      * Enqueue a new event to be sent to Split data collection services
-     *
+     * <p>
      * The traffic type used is the one set by trafficType() in SplitClientConfig.
-
+     * <p>
      * Example:
-     *      client.track(“checkout”, 200.00)
+     * client.track(“checkout”, 200.00)
      *
-     * @param eventType the type of the event
-     * @param value the value of the event
+     * @param eventType  the type of the event
+     * @param value      the value of the event
      * @param properties custom user data map
-     *
      * @return true if the track was successful, false otherwise
      */
-    boolean track(String eventType, double value, Map<String,Object> properties);
-
+    boolean track(String eventType, double value, Map<String, Object> properties);
 }
