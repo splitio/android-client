@@ -89,7 +89,8 @@ public class LocalhostSplitsStorage implements SplitsStorage {
     }
 
     @Override
-    public void update(ProcessedSplitChange splitChange) {
+    public boolean update(ProcessedSplitChange splitChange) {
+        return false;
     }
 
     @Override
