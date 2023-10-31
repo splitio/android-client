@@ -134,7 +134,7 @@ public class FlagSetsStreamingTest {
         assertTrue(firstChange);
         assertTrue(secondChange);
         assertTrue(thirdChange);
-        assertTrue(fourthChange);
+        assertFalse(fourthChange); // SDK_UPDATE should not be triggered since there were no changes to storage
     }
 
     @Test

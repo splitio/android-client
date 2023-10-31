@@ -1,5 +1,8 @@
 package tests.storage;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -282,8 +285,8 @@ public class SplitsStorageTest {
         mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L, 0L));
         mSplitsStorage.update(new ProcessedSplitChange(empty, Arrays.asList(s2ar), 1L, 0L));
 
-        Assert.assertTrue(mSplitsStorage.isValidTrafficType("tt"));
-        Assert.assertFalse(mSplitsStorage.isValidTrafficType("mytt"));
+        assertTrue(mSplitsStorage.isValidTrafficType("tt"));
+        assertFalse(mSplitsStorage.isValidTrafficType("mytt"));
     }
 
     @Test
@@ -300,8 +303,8 @@ public class SplitsStorageTest {
         mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L));
         mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t2), empty, 1L, 0L));
 
-        Assert.assertFalse(mSplitsStorage.isValidTrafficType("tt"));
-        Assert.assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
+        assertFalse(mSplitsStorage.isValidTrafficType("tt"));
+        assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
     }
 
     @Test
@@ -320,8 +323,8 @@ public class SplitsStorageTest {
         mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L));
         mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t2), empty, 1L, 0L));
 
-        Assert.assertTrue(mSplitsStorage.isValidTrafficType("tt"));
-        Assert.assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
+        assertTrue(mSplitsStorage.isValidTrafficType("tt"));
+        assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
     }
 
     @Test
@@ -331,9 +334,9 @@ public class SplitsStorageTest {
 
         mSplitsStorage.loadLocal();
 
-        Assert.assertTrue(mSplitsStorage.isValidTrafficType("test_type"));
-        Assert.assertTrue(mSplitsStorage.isValidTrafficType("test_type_2"));
-        Assert.assertFalse(mSplitsStorage.isValidTrafficType("invalid_type"));
+        assertTrue(mSplitsStorage.isValidTrafficType("test_type"));
+        assertTrue(mSplitsStorage.isValidTrafficType("test_type_2"));
+        assertFalse(mSplitsStorage.isValidTrafficType("invalid_type"));
     }
 
     @Test
@@ -346,9 +349,9 @@ public class SplitsStorageTest {
         Split updatedSplit = newSplit("split_test", Status.ACTIVE, "new_type");
         mSplitsStorage.update(new ProcessedSplitChange(Collections.singletonList(updatedSplit), Collections.emptyList(), 1L, 0L));
 
-        Assert.assertFalse(mSplitsStorage.isValidTrafficType("test_type"));
-        Assert.assertTrue(mSplitsStorage.isValidTrafficType("new_type"));
-        Assert.assertTrue(mSplitsStorage.isValidTrafficType("test_type_2"));
+        assertFalse(mSplitsStorage.isValidTrafficType("test_type"));
+        assertTrue(mSplitsStorage.isValidTrafficType("new_type"));
+        assertTrue(mSplitsStorage.isValidTrafficType("test_type_2"));
     }
 
     @Test
@@ -382,7 +385,7 @@ public class SplitsStorageTest {
                 Collections.singletonList(newSplit("split_test", Status.ACTIVE, "test_type")), Collections.emptyList(),
                 1L, 0L));
 
-        Assert.assertFalse(initialSet1.isEmpty());
+        assertFalse(initialSet1.isEmpty());
         Assert.assertEquals(Collections.emptySet(), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
         Assert.assertEquals(initialSet2, mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
     }
@@ -398,9 +401,61 @@ public class SplitsStorageTest {
 
         mSplitsStorage.updateWithoutChecks(newSplit("split_test", Status.ACTIVE, "test_type"));
 
-        Assert.assertFalse(initialSet1.isEmpty());
+        assertFalse(initialSet1.isEmpty());
         Assert.assertEquals(Collections.emptySet(), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
         Assert.assertEquals(initialSet2, mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_2")));
+    }
+
+    @Test
+    public void updateReturnsTrueWhenFlagsHaveBeenRemovedFromStorage() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+        mSplitsStorage.loadLocal();
+
+        ArrayList<Split> archivedSplits = new ArrayList<>();
+        archivedSplits.add(newSplit("split_test", Status.ARCHIVED, "test_type"));
+        boolean update = mSplitsStorage.update(new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 1L, 0L));
+
+        assertTrue(update);
+    }
+
+    @Test
+    public void updateReturnsTrueWhenFlagsWereAddedToStorage() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+        mSplitsStorage.loadLocal();
+
+        ArrayList<Split> activeSplits = new ArrayList<>();
+        activeSplits.add(newSplit("split_test_3", Status.ACTIVE, "test_type_2", Collections.singleton("set_2")));
+        boolean update = mSplitsStorage.update(new ProcessedSplitChange(activeSplits, new ArrayList<>(), 1L, 0L));
+
+        assertTrue(update);
+    }
+
+    @Test
+    public void updateReturnsTrueWhenFlagsWereUpdatedInStorage() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+        mSplitsStorage.loadLocal();
+
+        ArrayList<Split> activeSplits = new ArrayList<>();
+        activeSplits.add(newSplit("split_test", Status.ACTIVE, "test_type", Collections.singleton("set_2")));
+        boolean update = mSplitsStorage.update(new ProcessedSplitChange(activeSplits, new ArrayList<>(), 1L, 0L));
+
+        assertTrue(update);
+    }
+
+    @Test
+    public void updateReturnsFalseWhenFlagsThatAreNotInStorageAreAttemptedToBeRemoved() {
+        mRoomDb.clearAllTables();
+        mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+        mSplitsStorage.loadLocal();
+
+        ArrayList<Split> archivedSplits = new ArrayList<>();
+        archivedSplits.add(newSplit("split_test_3", Status.ACTIVE, "test_type_2", Collections.singleton("set_2")));
+        boolean update = mSplitsStorage.update(new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 1L, 0L));
+
+        assertFalse(update);
     }
 
     private Split newSplit(String name, Status status, String trafficType) {

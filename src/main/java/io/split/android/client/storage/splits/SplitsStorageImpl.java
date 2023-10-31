@@ -77,14 +77,20 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Override
     @WorkerThread
-    public void update(ProcessedSplitChange splitChange) {
+    public boolean update(ProcessedSplitChange splitChange) {
         if (splitChange == null) {
-            return;
+            return false;
         }
+
+        boolean appliedUpdates = false;
 
         List<Split> activeSplits = splitChange.getActiveSplits();
         List<Split> archivedSplits = splitChange.getArchivedSplits();
         if (activeSplits != null) {
+            if (!activeSplits.isEmpty()) {
+                // There is at least one added or modified feature flag
+                appliedUpdates = true;
+            }
             for (Split split : activeSplits) {
                 Split loadedSplit = mInMemorySplits.get(split.name);
                 if (loadedSplit != null && loadedSplit.trafficTypeName != null) {
@@ -99,6 +105,8 @@ public class SplitsStorageImpl implements SplitsStorage {
         if (archivedSplits != null) {
             for (Split split : archivedSplits) {
                 if (mInMemorySplits.remove(split.name) != null) {
+                    // The flag was in memory, so it will be updated
+                    appliedUpdates = true;
                     decreaseTrafficTypeCount(split.trafficTypeName);
                     deleteFromFlagSetsIfNecessary(split);
                 }
@@ -108,6 +116,8 @@ public class SplitsStorageImpl implements SplitsStorage {
         mChangeNumber = splitChange.getChangeNumber();
         mUpdateTimestamp = splitChange.getUpdateTimestamp();
         mPersistentStorage.update(splitChange);
+
+        return appliedUpdates;
     }
 
     @Override

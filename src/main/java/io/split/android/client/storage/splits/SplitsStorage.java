@@ -19,7 +19,8 @@ public interface SplitsStorage {
 
     Map<String, Split> getAll();
 
-    void update(ProcessedSplitChange splitChange);
+    // Returns true if at least one split was updated
+    boolean update(ProcessedSplitChange splitChange);
 
     void updateWithoutChecks(Split split);
 
