@@ -82,7 +82,7 @@ public class SplitsStorageImpl implements SplitsStorage {
             return false;
         }
 
-        // return true if there is at least one split change; otherwise false
+        // this will be true if there is at least one split change; otherwise false
         boolean result = false;
 
         List<Split> activeSplits = splitChange.getActiveSplits();

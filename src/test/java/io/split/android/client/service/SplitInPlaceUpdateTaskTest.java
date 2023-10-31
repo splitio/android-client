@@ -61,7 +61,6 @@ public class SplitInPlaceUpdateTaskTest {
 
         verify(mSplitChangeProcessor).process(mSplit, 123L);
         verify(mSplitsStorage).update(processedSplitChange);
-        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
 
         assertEquals(result.getStatus(), SplitTaskExecutionStatus.SUCCESS);
@@ -97,5 +96,35 @@ public class SplitInPlaceUpdateTaskTest {
         verify(mTelemetryRuntimeProducer, never()).recordUpdatesFromSSE(any());
 
         assertEquals(result.getStatus(), SplitTaskExecutionStatus.ERROR);
+    }
+
+    @Test
+    public void sdkUpdateIsNotTriggeredWhenStorageUpdateReturnsFalse() {
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+        when(mSplitsStorage.update(processedSplitChange)).thenReturn(false);
+
+        SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
+
+        verify(mSplitChangeProcessor).process(mSplit, 123L);
+        verify(mSplitsStorage).update(processedSplitChange);
+        verify(mEventsManager, never()).notifyInternalEvent(any());
+        verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+    }
+
+    @Test
+    public void sdkUpdateIsTriggeredWhenStorageUpdateReturnsTrue() {
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+        when(mSplitsStorage.update(processedSplitChange)).thenReturn(true);
+
+        SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
+
+        verify(mSplitChangeProcessor).process(mSplit, 123L);
+        verify(mSplitsStorage).update(processedSplitChange);
+        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
     }
 }
