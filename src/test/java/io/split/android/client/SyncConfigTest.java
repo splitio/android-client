@@ -162,4 +162,16 @@ public class SyncConfigTest {
         Assert.assertTrue(exceptionThrown);
         Assert.assertNull(config);
     }
+
+    @Test
+    public void invalidValuesAreTracked() {
+        // Currently only invalid values for {@link SplitFilter#BY_SET} are tracked, for telemetry
+
+        SyncConfig config = SyncConfig.builder()
+                .addSplitFilter(SplitFilter.bySet(Arrays.asList("_f1", "f2", "f3")))
+                .addSplitFilter(SplitFilter.bySet(Arrays.asList("f4", "_f5", "_f6", "_f6")))
+                .build();
+
+        Assert.assertEquals(4, config.getInvalidValueCount());
+    }
 }

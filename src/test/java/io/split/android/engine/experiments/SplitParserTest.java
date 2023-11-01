@@ -16,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -351,6 +352,7 @@ public class SplitParserTest {
         split.changeNumber = changeNumber;
         split.algo = 1;
         split.configurations = configurations;
+        split.sets = Collections.emptySet();
         return split;
     }
 

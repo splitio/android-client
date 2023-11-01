@@ -3,6 +3,7 @@ package io.split.android.client.localhost;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import javax.security.auth.Destroyable;
 
@@ -18,17 +19,20 @@ public class LocalhostSynchronizer implements SplitLifecycleAware, Destroyable {
     private final SplitTaskExecutor mTaskExecutor;
     private final int mRefreshRate;
     private final SplitsStorage mSplitsStorage;
+    private final String mSplitsFilterQueryStringFromConfig;
 
     public LocalhostSynchronizer(@NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull SplitClientConfig splitClientConfig,
-                                 @NonNull SplitsStorage splitsStorage) {
+                                 @NonNull SplitsStorage splitsStorage,
+                                 @Nullable String splitsFilterQueryStringFromConfig) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mRefreshRate = checkNotNull(splitClientConfig).offlineRefreshRate();
         mSplitsStorage = checkNotNull(splitsStorage);
+        mSplitsFilterQueryStringFromConfig = splitsFilterQueryStringFromConfig;
     }
 
     public void start() {
-        SplitTask loadTask = new LoadSplitsTask(mSplitsStorage);
+        SplitTask loadTask = new LoadSplitsTask(mSplitsStorage, mSplitsFilterQueryStringFromConfig);
         if (mRefreshRate > 0) {
             mTaskExecutor.schedule(
                     loadTask, 0,

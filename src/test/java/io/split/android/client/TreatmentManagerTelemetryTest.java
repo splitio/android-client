@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -15,17 +16,20 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManagerImpl;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 
 public class TreatmentManagerTelemetryTest {
 
@@ -45,13 +49,17 @@ public class TreatmentManagerTelemetryTest {
     AttributesMerger attributesMerger;
     @Mock
     TelemetryStorageProducer telemetryStorageProducer;
+    @Mock
+    private SplitsStorage mSplitsStorage;
 
+    private FlagSetsFilter mFlagSetsFilter;
     private TreatmentManagerImpl treatmentManager;
+    private AutoCloseable mAutoCloseable;
 
     @Before
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
-
+        mAutoCloseable = MockitoAnnotations.openMocks(this);
+        mFlagSetsFilter = new FlagSetsFilterImpl(new HashSet<>());
         treatmentManager = new TreatmentManagerImpl(
                 "test_key",
                 "test_key",
@@ -63,10 +71,20 @@ public class TreatmentManagerTelemetryTest {
                 eventsManager,
                 attributesManager,
                 attributesMerger,
-                telemetryStorageProducer
-        );
+                telemetryStorageProducer,
+                mFlagSetsFilter,
+                mSplitsStorage, new ValidationMessageLoggerImpl());
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
+    }
+
+    @After
+    public void tearDown() {
+        try {
+            mAutoCloseable.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test

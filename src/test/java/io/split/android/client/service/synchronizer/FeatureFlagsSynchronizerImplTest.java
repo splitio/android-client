@@ -64,7 +64,7 @@ public class FeatureFlagsSynchronizerImplTest {
 
         mFeatureFlagsSynchronizer = new FeatureFlagsSynchronizerImpl(mConfig,
                 mTaskExecutor, mSingleThreadTaskExecutor, mTaskFactory,
-                mEventsManager, mRetryBackoffCounterFactory, mPushManagerEventBroadcaster);
+                mEventsManager, mRetryBackoffCounterFactory, mPushManagerEventBroadcaster, "");
     }
 
     @Test
@@ -79,24 +79,10 @@ public class FeatureFlagsSynchronizerImplTest {
     }
 
     @Test
-    public void loadLocalData() {
-        LoadSplitsTask mockTask = mock(LoadSplitsTask.class);
-        when(mockTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
-        when(mTaskFactory.createLoadSplitsTask()).thenReturn(mockTask);
-        when(mRetryBackoffCounterFactory.create(any(), anyInt()))
-                .thenReturn(mRetryTimerSplitsSync)
-                .thenReturn(mRetryTimerSplitsUpdate);
-
-        mFeatureFlagsSynchronizer.loadFromCache();
-
-        verify(mTaskExecutor).submit(eq(mockTask), argThat(Objects::nonNull));
-    }
-
-    @Test
     public void loadAndSynchronizeSplits() {
         LoadSplitsTask mockLoadTask = mock(LoadSplitsTask.class);
         when(mockLoadTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
-        when(mTaskFactory.createLoadSplitsTask()).thenReturn(mockLoadTask);
+        when(mTaskFactory.createLoadSplitsTask(any())).thenReturn(mockLoadTask);
 
         FilterSplitsInCacheTask mockFilterTask = mock(FilterSplitsInCacheTask.class);
         when(mockFilterTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE));
@@ -113,7 +99,7 @@ public class FeatureFlagsSynchronizerImplTest {
         mFeatureFlagsSynchronizer.loadAndSynchronize();
 
         verify(mTaskFactory).createFilterSplitsInCacheTask();
-        verify(mTaskFactory).createLoadSplitsTask();
+        verify(mTaskFactory).createLoadSplitsTask(any());
 
         ArgumentCaptor<List<SplitTaskBatchItem>> argument = ArgumentCaptor.forClass(List.class);
         verify(mTaskExecutor).executeSerially(argument.capture());

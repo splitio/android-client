@@ -188,6 +188,26 @@ public final class SplitClientImpl implements SplitClient {
         }
     }
 
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        return mTreatmentManager.getTreatmentsByFlagSet(flagSet, attributes, mIsClientDestroyed);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        return mTreatmentManager.getTreatmentsByFlagSets(flagSets, attributes, mIsClientDestroyed);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        return mTreatmentManager.getTreatmentsWithConfigByFlagSet(flagSet, attributes, mIsClientDestroyed);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        return mTreatmentManager.getTreatmentsWithConfigByFlagSets(flagSets, attributes, mIsClientDestroyed);
+    }
+
     public void on(SplitEvent event, SplitEventTask task) {
         checkNotNull(event);
         checkNotNull(task);

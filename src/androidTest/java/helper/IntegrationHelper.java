@@ -2,6 +2,7 @@ package helper;
 
 import android.content.Context;
 
+import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
 import com.google.common.base.Strings;
@@ -16,6 +17,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -257,10 +259,16 @@ public class IntegrationHelper {
                 "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTY4NDMyOTg1NDM4NSwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJjb25kaXRpb25zIjpbeyJjb25kaXRpb25UeXBlIjoiV0hJVEVMSVNUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7Im1hdGNoZXJUeXBlIjoiV0hJVEVMSVNUIiwibmVnYXRlIjpmYWxzZSwid2hpdGVsaXN0TWF0Y2hlckRhdGEiOnsid2hpdGVsaXN0IjpbImFkbWluIiwibWF1cm8iLCJuaWNvIl19fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9XSwibGFiZWwiOiJ3aGl0ZWxpc3RlZCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiSU5fU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibWF1ci0yIn19XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgbWF1ci0yIn0seyJjb25kaXRpb25UeXBlIjoiUk9MTE9VVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImRlZmF1bHQgcnVsZSJ9XX0=");
     }
 
-    private static String splitChangeV2(String changeNumber, String previousChangeNumber, String compressionType, String compressedPayload) {
+    public static String splitChangeV2(String changeNumber, String previousChangeNumber, String compressionType, String compressedPayload) {
         return "id: vQQ61wzBRO:0:0\n" +
                 "event: message\n" +
                 "data: {\"id\":\"m2T85LA4fQ:0:0\",\"clientId\":\"pri:NzIyNjY1MzI4\",\"timestamp\":"+System.currentTimeMillis()+",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\":"+changeNumber+",\\\"pcn\\\":"+previousChangeNumber+",\\\"c\\\":"+compressionType+",\\\"d\\\":\\\""+compressedPayload+"\\\"}\"}\n";
+    }
+
+    public static String splitKill(String changeNumber, String splitName) {
+        return "id:cf74eb42-f687-48e4-ad18-af2125110aac\n" +
+                "event:message\n" +
+                "data:{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":"+System.currentTimeMillis()+",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"" + splitName + "\\\"}\"}\n";
     }
 
     /**
@@ -270,17 +278,17 @@ public class IntegrationHelper {
      * @return The dispatcher to be used in {@link HttpClientMock}
      */
     public static HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses) {
-        return buildDispatcher(responses, Collections.emptyMap());
+        return buildDispatcher(responses, null);
     }
 
     /**
      * Builds a dispatcher with the given responses.
      *
      * @param responses          The responses to be returned by the dispatcher. The keys are url paths.
-     * @param streamingResponses The streaming responses to be returned by the dispatcher. The keys are url paths.
+     * @param streamingQueue The streaming responses to be returned by the dispatcher.
      * @return The dispatcher to be used in {@link HttpClientMock}
      */
-    public static HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses, Map<String, StreamingResponseClosure> streamingResponses) {
+    public static HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses, @Nullable BlockingQueue<String> streamingQueue) {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
@@ -300,17 +308,11 @@ public class IntegrationHelper {
             @Override
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
-                    String path = uri.getPath().replace("/api/", "");
-                    if (streamingResponses.containsKey(path)) {
-                        return streamingResponses.get(path).onResponse(uri);
-                    } else {
-                        return new HttpStreamResponseMock(200, null);
-                    }
+                    return new HttpStreamResponseMock(200, streamingQueue);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    return null;
                 }
-
-                return null;
             }
         };
     }
@@ -322,6 +324,10 @@ public class IntegrationHelper {
         HttpResponseMock onResponse(URI uri,
                                     HttpMethod httpMethod,
                                     String body);
+
+        static String getSinceFromUri(URI uri) {
+            return uri.getQuery().split("&")[0].split("=")[1];
+        }
     }
 
     /**

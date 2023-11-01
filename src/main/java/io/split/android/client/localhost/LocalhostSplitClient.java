@@ -6,12 +6,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -31,6 +33,7 @@ import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
+import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.grammar.Treatments;
 
@@ -45,9 +48,9 @@ public final class LocalhostSplitClient implements SplitClient {
     private final WeakReference<SplitClientContainer> mClientContainer;
     private final Key mKey;
     private final SplitEventsManager mEventsManager;
-    private final Evaluator mEvaluator;
     private final TreatmentManager mTreatmentManager;
     private boolean mIsClientDestroyed = false;
+    private final SplitsStorage mSplitsStorage;
 
     public LocalhostSplitClient(@NonNull LocalhostSplitFactory container,
                                 @NonNull SplitClientContainer clientContainer,
@@ -58,17 +61,19 @@ public final class LocalhostSplitClient implements SplitClient {
                                 @NonNull SplitParser splitParser,
                                 @NonNull AttributesManager attributesManager,
                                 @NonNull AttributesMerger attributesMerger,
-                                @NonNull TelemetryStorageProducer telemetryStorageProducer) {
+                                @NonNull TelemetryStorageProducer telemetryStorageProducer,
+                                @Nullable FlagSetsFilter flagSetsFilter) {
 
         mFactoryRef = new WeakReference<>(checkNotNull(container));
         mClientContainer = new WeakReference<>(checkNotNull(clientContainer));
         mKey = checkNotNull(key);
         mEventsManager = checkNotNull(eventsManager);
-        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
+        mSplitsStorage = splitsStorage;
         mTreatmentManager = new TreatmentManagerImpl(mKey.matchingKey(), mKey.bucketingKey(),
-                mEvaluator, new KeyValidatorImpl(),
+                new EvaluatorImpl(splitsStorage, splitParser), new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
-                splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger, telemetryStorageProducer);
+                splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger,
+                telemetryStorageProducer, flagSetsFilter, splitsStorage, new ValidationMessageLoggerImpl());
     }
 
     @Override
@@ -135,6 +140,50 @@ public final class LocalhostSplitClient implements SplitClient {
             }
 
             return result;
+        }
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        try {
+            return mTreatmentManager.getTreatmentsByFlagSet(flagSet, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return buildExceptionResult(Collections.singletonList(flagSet));
+        }
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        try {
+            return mTreatmentManager.getTreatmentsByFlagSets(flagSets, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return buildExceptionResult(flagSets);
+        }
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        try {
+            return mTreatmentManager.getTreatmentsWithConfigByFlagSet(flagSet, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return buildExceptionResultWithConfig(Collections.singletonList(flagSet));
+        }
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        try {
+            return mTreatmentManager.getTreatmentsWithConfigByFlagSets(flagSets, attributes, mIsClientDestroyed);
+        } catch (Exception exception) {
+            Logger.e(exception);
+
+            return buildExceptionResultWithConfig(flagSets);
         }
     }
 
@@ -251,5 +300,25 @@ public final class LocalhostSplitClient implements SplitClient {
     @Override
     public boolean clearAttributes() {
         return true;
+    }
+
+    private Map<String, String> buildExceptionResult(List<String> flagSets) {
+        Map<String, String> result = new HashMap<>();
+        Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(flagSets);
+        for (String featureFlagName : namesByFlagSets) {
+            result.put(featureFlagName, Treatments.CONTROL);
+        }
+
+        return result;
+    }
+
+    private Map<String, SplitResult> buildExceptionResultWithConfig(List<String> flagSets) {
+        Map<String, SplitResult> result = new HashMap<>();
+        Set<String> namesByFlagSets = mSplitsStorage.getNamesByFlagSets(flagSets);
+        for (String featureFlagName : namesByFlagSets) {
+            result.put(featureFlagName, new SplitResult(Treatments.CONTROL));
+        }
+
+        return result;
     }
 }

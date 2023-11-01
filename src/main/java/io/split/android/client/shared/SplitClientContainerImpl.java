@@ -6,9 +6,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.EventsTracker;
+import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientFactory;
@@ -70,7 +72,8 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                                     @Nullable PushNotificationManager pushNotificationManager,
                                     @NonNull ClientComponentsRegister clientComponentsRegister,
                                     @NonNull MySegmentsWorkManagerWrapper workManagerWrapper,
-                                    @NonNull EventsTracker eventsTracker) {
+                                    @NonNull EventsTracker eventsTracker,
+                                    @Nullable FlagSetsFilter flagSetsFilter) {
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mPushNotificationManager = pushNotificationManager;
         mStreamingEnabled = config.streamingEnabled();
@@ -88,7 +91,8 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                 validationLogger,
                 keyValidator,
                 eventsTracker,
-                customerImpressionListener
+                customerImpressionListener,
+                flagSetsFilter
         );
         mClientComponentsRegister = checkNotNull(clientComponentsRegister);
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);

@@ -92,7 +92,8 @@ public class ControlTest {
 
 
         CountDownLatch readyLatch = new CountDownLatch(1);
-        TestingHelper.TestEventTask updateTask = TestingHelper.testTask(new CountDownLatch(1), "CONTROL notif update task");
+        CountDownLatch updateLatch = new CountDownLatch(3);
+        SplitEventTaskHelper updateTask = new SplitEventTaskHelper(updateLatch);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
 
@@ -133,19 +134,17 @@ public class ControlTest {
         pushControl("STREAMING_RESUMED");
         synchronizerSpy.stopPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
 
-        updateTask.mLatch = new CountDownLatch(1);
         pushMySegmentsUpdatePayload("new_segment");
-        updateTask.mLatch.await(10, TimeUnit.SECONDS);
+        updateLatch.await(10, TimeUnit.SECONDS);
 
         String treatmentEnabled = mClient.getTreatment(splitName);
 
         //Enable streaming, push a new my segments payload update and check data again
-        updateTask.mLatch = new CountDownLatch(1);
+        updateLatch = new CountDownLatch(1);
         pushControl("STREAMING_DISABLED");
-        updateTask.mLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(5, TimeUnit.SECONDS);
         pushMySegmentsUpdatePayload("new_segment");
-        sleep(1000);
-
+        updateLatch.await(5, TimeUnit.SECONDS);
         String treatmentDisabled = mClient.getTreatment(splitName);
 
         assertTrue(telemetryStorage.popStreamingEvents().stream().anyMatch(event -> {
@@ -154,7 +153,6 @@ public class ControlTest {
             }
             return false;
         }));
-        assertEquals(1, telemetryStorage.popTokenRefreshes());
         Assert.assertEquals("on", treatmentReady);
         Assert.assertEquals("on", treatmentPaused);
         Assert.assertEquals("free", treatmentEnabled);

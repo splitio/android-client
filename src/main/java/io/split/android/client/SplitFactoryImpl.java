@@ -3,10 +3,12 @@ package io.split.android.client;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.core.util.Pair;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
@@ -31,7 +33,6 @@ import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
-import io.split.android.client.service.synchronizer.FeatureFlagsSynchronizerImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -170,17 +171,21 @@ public class SplitFactoryImpl implements SplitFactory {
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
                 splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
 
-        String splitsFilterQueryString = factoryHelper.buildSplitsFilterQueryString(config);
+        Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
+        Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
+        String splitsFilterQueryStringFromConfig = filtersConfig.second;
 
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
-                config, defaultHttpClient, splitsFilterQueryString);
+                config, defaultHttpClient, splitsFilterQueryStringFromConfig);
+
+        FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
-                config, splitApiFacade, mStorageContainer, splitsFilterQueryString, mEventsManagerCoordinator,
-                testingConfig);
+                config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig, mEventsManagerCoordinator,
+                filters, flagSetsFilter, testingConfig);
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
-        WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName);
+        WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
 
         ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
@@ -201,7 +206,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 impressionManager,
                 mStorageContainer.getEventsStorage(),
                 mEventsManagerCoordinator,
-                streamingComponents.getPushManagerEventBroadcaster());
+                streamingComponents.getPushManagerEventBroadcaster(),
+                splitsFilterQueryStringFromConfig);
         // Only available for integration tests
         if (synchronizerSpy != null) {
             synchronizerSpy.setSynchronizer(mSynchronizer);
@@ -264,7 +270,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener,
                 streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper,
-                eventsTracker);
+                eventsTracker, flagSetsFilter);
         mDestroyer = new Runnable() {
             public void run() {
                 Logger.w("Shutdown called for split");

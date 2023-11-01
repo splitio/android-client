@@ -3,6 +3,9 @@ package io.split.android.client;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.util.Set;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerFactory;
@@ -19,6 +22,7 @@ import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryInitProducer;
 import io.split.android.client.validators.AttributesValidatorImpl;
@@ -55,7 +59,8 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull ValidationMessageLogger validationLogger,
                                   @NonNull KeyValidator keyValidator,
                                   @NonNull EventsTracker eventsTracker,
-                                  @NonNull ImpressionListener customerImpressionListener) {
+                                  @NonNull ImpressionListener customerImpressionListener,
+                                  @Nullable FlagSetsFilter flagSetsFilter) {
         mSplitFactory = checkNotNull(splitFactory);
         mClientContainer = checkNotNull(clientContainer);
         mConfig = checkNotNull(config);
@@ -72,6 +77,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mStorageContainer.getPersistentAttributesStorage());
         mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer());
         mSplitValidator = new SplitValidatorImpl();
+        SplitsStorage splitsStorage = mStorageContainer.getSplitsStorage();
         mTreatmentManagerFactory = new TreatmentManagerFactoryImpl(
                 keyValidator,
                 mSplitValidator,
@@ -79,7 +85,9 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 config.labelsEnabled(),
                 new AttributesMergerImpl(),
                 mStorageContainer.getTelemetryStorage(),
-                new EvaluatorImpl(mStorageContainer.getSplitsStorage(), mSplitParser)
+                mSplitParser,
+                flagSetsFilter,
+                splitsStorage
         );
     }
 

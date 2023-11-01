@@ -7,6 +7,7 @@ import androidx.annotation.VisibleForTesting;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +19,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -80,6 +82,12 @@ public class SplitsSyncHelper {
         } catch (HttpFetcherException e) {
             logError("Network error while fetching feature flags" + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
+
+            if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.URI_TOO_LONG) {
+                Logger.e("SDK initialization: the amount of flag sets provided is big, causing URI length error");
+                return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC,
+                        Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true));
+            }
 
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         } catch (Exception e) {

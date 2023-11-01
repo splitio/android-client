@@ -1,47 +1,44 @@
 package io.split.android.client;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import io.split.android.client.utils.logger.Logger;
-import io.split.android.client.utils.StringHelper;
 
 public class FilterBuilder {
 
-    private final static int MAX_BY_NAME_VALUES = 400;
-    private final static int MAX_BY_PREFIX_VALUES = 50;
-
     private final List<SplitFilter> mFilters = new ArrayList<>();
-    private final FilterGrouper mFilterGrouper = new FilterGrouper();
+    private final FilterGrouper mFilterGrouper;
 
-    static private class SplitFilterComparator implements Comparator<SplitFilter> {
-        @Override
-        public int compare(SplitFilter o1, SplitFilter o2) {
-            return o1.getType().compareTo(o2.getType());
-        }
+    public FilterBuilder(List<SplitFilter> filters) {
+        this(new FilterGrouper(), filters);
     }
 
-    public FilterBuilder addFilters(List<SplitFilter> filters) {
-        mFilters.addAll(filters);
-        return this;
+    FilterBuilder(@NonNull FilterGrouper filterGrouper, @Nullable List<SplitFilter> filters) {
+        mFilterGrouper = checkNotNull(filterGrouper);
+        addFilters(filters);
     }
 
-    public String build() {
-
-        if (mFilters.size() == 0) {
+    public String buildQueryString() {
+        if (mFilters.isEmpty()) {
             return "";
         }
 
-        StringHelper stringHelper = new StringHelper();
-        StringBuilder queryString = new StringBuilder("");
-        List<SplitFilter> sortedFilters = new ArrayList(mFilterGrouper.group(mFilters));
-        Collections.sort(sortedFilters, new SplitFilterComparator());
+        StringBuilder queryString = new StringBuilder();
 
-        for (SplitFilter splitFilter : sortedFilters) {
+        Map<SplitFilter.Type, SplitFilter> sortedFilters = getGroupedFilter();
+
+        for (SplitFilter splitFilter : sortedFilters.values()) {
             SplitFilter.Type filterType = splitFilter.getType();
             SortedSet<String> deduptedValues = new TreeSet<>(splitFilter.getValues());
             if (deduptedValues.size() < splitFilter.getValues().size()) {
@@ -56,17 +53,61 @@ public class FilterBuilder {
             queryString.append("&");
             queryString.append(filterType.queryStringField());
             queryString.append("=");
-            queryString.append(stringHelper.join(",", deduptedValues));
+            queryString.append(String.join(",", deduptedValues));
         }
+
         return queryString.toString();
+    }
+
+    @NonNull
+    public Map<SplitFilter.Type, SplitFilter> getGroupedFilter() {
+        TreeMap<SplitFilter.Type, SplitFilter> sortedFilters = new TreeMap<>(new SplitFilterTypeComparator());
+        sortedFilters.putAll(mFilterGrouper.group(mFilters));
+
+        return sortedFilters;
+    }
+
+    private void addFilters(List<SplitFilter> filters) {
+        if (filters == null) {
+            return;
+        }
+
+        boolean containsSetsFilter = false;
+        for (SplitFilter filter : filters) {
+            if (filter == null) {
+                continue;
+            }
+
+            if (filter.getType() == SplitFilter.Type.BY_SET) {
+                // BY_SET filter has precedence over other filters, so we remove all other filters
+                // and only add BY_SET filters
+                Logger.w("SDK Config: The Set filter is exclusive and cannot be used simultaneously with names or prefix filters. Ignoring names and prefixes");
+                if (!containsSetsFilter) {
+                    mFilters.clear();
+                    containsSetsFilter = true;
+                }
+                mFilters.add(filter);
+            }
+
+            if (!containsSetsFilter) {
+                mFilters.add(filter);
+            }
+        }
     }
 
     private void validateFilterSize(SplitFilter.Type type, int size) {
         if (size > type.maxValuesCount()) {
-            String message = "Error: " + type.maxValuesCount() + " different split " + type.queryStringField() +
+            String message = "Error: " + type.maxValuesCount() + " different feature flag " + type.queryStringField() +
                     " can be specified at most. You passed " + size
-                    + ". Please consider reducing the amount or using prefixes to target specific groups of splits.";
+                    + ". Please consider reducing the amount or using prefixes to target specific groups of feature flags.";
             throw new IllegalArgumentException(message);
+        }
+    }
+
+    private static class SplitFilterTypeComparator implements Comparator<SplitFilter.Type> {
+        @Override
+        public int compare(SplitFilter.Type o1, SplitFilter.Type o2) {
+            return o1.compareTo(o2);
         }
     }
 }

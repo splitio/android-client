@@ -13,6 +13,7 @@ public class SplitTaskExecutionInfo {
 
     public static final String NON_SENT_RECORDS = "NON_SENT_RECORDS";
     public static final String NON_SENT_BYTES = "NON_SENT_BYTES";
+    public static final String DO_NOT_RETRY = "DO_NOT_RETRY";
 
     final private SplitTaskType taskType;
     final private SplitTaskExecutionStatus status;

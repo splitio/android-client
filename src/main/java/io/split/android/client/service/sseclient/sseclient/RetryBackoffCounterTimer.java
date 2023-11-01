@@ -30,7 +30,7 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
     /**
      * Creates an instance which retries tasks indefinitely, using the strategy defined by backoffCounter.
      *
-     * @param taskExecutor Implementation of SplitTaskExecutor.
+     * @param taskExecutor   Implementation of SplitTaskExecutor.
      * @param backoffCounter Will determine the retry interval.
      */
     public RetryBackoffCounterTimer(@NonNull SplitTaskExecutor taskExecutor,
@@ -43,8 +43,8 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
     /**
      * Creates an instance which retries tasks up to the number of times specified by retryAttemptsLimit.
      *
-     * @param taskExecutor Implementation of SplitTaskExecutor.
-     * @param backoffCounter Will determine the retry interval.
+     * @param taskExecutor       Implementation of SplitTaskExecutor.
+     * @param backoffCounter     Will determine the retry interval.
      * @param retryAttemptsLimit Maximum number of attempts for task retry.
      */
     public RetryBackoffCounterTimer(@NonNull SplitTaskExecutor taskExecutor,
@@ -65,7 +65,7 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
     }
 
     synchronized public void stop() {
-        if(mTask == null) {
+        if (mTask == null) {
             return;
         }
         mTaskExecutor.stopTask(mTaskId);
@@ -73,7 +73,7 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
     }
 
     synchronized public void start() {
-        if(mTask == null || mTaskId != null) {
+        if (mTask == null || mTaskId != null) {
             return;
         }
         mBackoffCounter.resetCounter();
@@ -94,16 +94,25 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
     @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
         mTaskId = null;
-        if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+        if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR &&
+                (taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY) == null ||
+                        Boolean.FALSE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY)))) {
+
             if (mRetryAttemptsLimit == DEFAULT_MAX_ATTEMPTS || mCurrentAttempts.get() < mRetryAttemptsLimit) {
                 schedule();
             }
+
             return;
         }
 
         mBackoffCounter.resetCounter();
+
         if (mListener != null) {
-            mListener.taskExecuted(SplitTaskExecutionInfo.success(taskInfo.getTaskType()));
+            if (taskInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
+                mListener.taskExecuted(SplitTaskExecutionInfo.success(taskInfo.getTaskType()));
+            } else if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                mListener.taskExecuted(SplitTaskExecutionInfo.error(taskInfo.getTaskType()));
+            }
         }
     }
 }

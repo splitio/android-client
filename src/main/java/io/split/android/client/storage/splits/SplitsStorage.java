@@ -3,8 +3,10 @@ package io.split.android.client.storage.splits;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.dtos.Split;
 
@@ -17,7 +19,8 @@ public interface SplitsStorage {
 
     Map<String, Split> getAll();
 
-    void update(ProcessedSplitChange splitChange);
+    // Returns true if at least one split was updated
+    boolean update(ProcessedSplitChange splitChange);
 
     void updateWithoutChecks(Split split);
 
@@ -32,4 +35,7 @@ public interface SplitsStorage {
     void updateSplitsFilterQueryString(String queryString);
 
     void clear();
+
+    @NonNull
+    Set<String> getNamesByFlagSets(Collection<String> flagSets);
 }
