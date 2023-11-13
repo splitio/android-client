@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
+import org.mockito.Mockito.any
 import org.mockito.Mockito.argThat
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
@@ -65,7 +66,7 @@ class SplitFactoryHelperTest {
     fun generateDatabaseNameWithoutPrefixAndKeyLongerThan4() {
         val path = mock(File::class.java)
         `when`(path.exists()).thenReturn(true)
-        `when`(context.getDatabasePath(Mockito.anyString())).thenReturn(path)
+        `when`(context.getDatabasePath("abcdwxyz")).thenReturn(path)
         val databaseName = helper.getDatabaseName(
             SplitClientConfig.builder().build(),
             "abcdedfghijklmnopqrstuvwxyz",
@@ -79,7 +80,7 @@ class SplitFactoryHelperTest {
     fun generateDatabaseNameWithoutPrefixAndKeyShorterThan4() {
         val path = mock(File::class.java)
         `when`(path.exists()).thenReturn(true)
-        `when`(context.getDatabasePath(Mockito.anyString())).thenReturn(path)
+        `when`(context.getDatabasePath("split_data")).thenReturn(path)
         val databaseName = helper.getDatabaseName(
             SplitClientConfig.builder().build(),
             "abc",
@@ -93,7 +94,7 @@ class SplitFactoryHelperTest {
     fun generateDatabaseNameWithPrefixAndKeyLongerThan4() {
         val path = mock(File::class.java)
         `when`(path.exists()).thenReturn(true)
-        `when`(context.getDatabasePath(Mockito.anyString())).thenReturn(path)
+        `when`(context.getDatabasePath("mydbabcdwxyz")).thenReturn(path)
         val databaseName = helper.getDatabaseName(
             SplitClientConfig.builder().prefix("mydb").build(),
             "abcdedfghijklmnopqrstuvwxyz",
@@ -107,7 +108,7 @@ class SplitFactoryHelperTest {
     fun generateDatabaseNameWithPrefixAndKeyShorterThan4() {
         val path = mock(File::class.java)
         `when`(path.exists()).thenReturn(true)
-        `when`(context.getDatabasePath(Mockito.anyString())).thenReturn(path)
+        `when`(context.getDatabasePath("mydbsplit_data")).thenReturn(path)
         val databaseName = helper.getDatabaseName(
             SplitClientConfig.builder().prefix("mydb").build(),
             "abc",
@@ -132,5 +133,23 @@ class SplitFactoryHelperTest {
         } catch (e: IllegalArgumentException) {
             assertEquals("SDK key cannot be null", e.message)
         }
+    }
+
+    @Test
+    fun legacyDbIsRenamedIfExists() {
+        val nonExistingPath = mock(File::class.java)
+        val existingPath = mock(File::class.java)
+        `when`(nonExistingPath.exists()).thenReturn(false)
+        `when`(existingPath.exists()).thenReturn(true)
+        `when`(context.getDatabasePath(any())).thenReturn(existingPath);
+        `when`(context.getDatabasePath("abcdwxyz")).thenReturn(nonExistingPath)
+        val databaseName = helper.getDatabaseName(
+            SplitClientConfig.builder().build(),
+            "abcdfghijklmnopqrstuvwxyz",
+            context
+        )
+
+        verify(existingPath).renameTo(nonExistingPath)
+        assertEquals("abcdwxyz", databaseName)
     }
 }

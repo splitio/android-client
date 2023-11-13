@@ -1031,6 +1031,11 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Optional prefix for the database name.
+         * @param prefix Prefix for the database name.
+         * @return This builder
+         */
         public Builder prefix(String prefix) {
             mPrefix = (prefix == null) ? "" : prefix.trim();
             return this;
