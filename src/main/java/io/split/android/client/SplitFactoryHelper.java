@@ -99,13 +99,20 @@ class SplitFactoryHelper {
     }
 
     private String buildDatabaseName(SplitClientConfig config, String apiToken) {
-        int apiTokenLength = apiToken.length();
+        if (apiToken == null) {
+            throw new IllegalArgumentException("SDK key cannot be null");
+        }
+
+        final int apiTokenLength = apiToken.length();
+        final String prefix = (config.prefix() == null) ? "" : config.prefix();
+
         if (apiTokenLength > DB_MAGIC_CHARS_COUNT) {
             String begin = apiToken.substring(0, DB_MAGIC_CHARS_COUNT);
             String end = apiToken.substring(apiTokenLength - DB_MAGIC_CHARS_COUNT);
-            return begin + end;
+            return prefix + begin + end;
         }
-        return config.defaultDataFolder();
+
+        return prefix + config.defaultDataFolder();
     }
 
     private String buildLegacyDatabaseName(SplitClientConfig splitClientConfig, String apiToken) {
