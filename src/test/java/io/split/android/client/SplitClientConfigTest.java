@@ -82,7 +82,7 @@ public class SplitClientConfigTest {
                 .build();
 
         assertEquals(2, logMessages.size());
-        assertEquals("Prefix can only contain alphanumeric characters and underscore, and must be 80 characters or less", logMessages.poll());
+        assertEquals("You passed an empty prefix, prefix must be a non-empty string", logMessages.poll());
         assertEquals("Setting prefix to empty string", logMessages.poll());
     }
 
