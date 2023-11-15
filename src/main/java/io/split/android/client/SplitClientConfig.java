@@ -21,6 +21,8 @@ import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.TelemetryHelperImpl;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
+import io.split.android.client.validators.PrefixValidatorImpl;
+import io.split.android.client.validators.ValidationErrorInfo;
 import okhttp3.Authenticator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -229,8 +231,6 @@ public class SplitClientConfig {
         mDefaultSSEConnectionDelayInSecs = defaultSSEConnectionDelayInSecs;
         mSSEDisconnectionDelayInSecs = sseDisconnectionDelayInSecs;
         mPrefix = prefix;
-
-        Logger.instance().setLevel(mLogLevel);
     }
 
     public String trafficType() {
@@ -528,7 +528,7 @@ public class SplitClientConfig {
 
         private final long mSSEDisconnectionDelayInSecs = 60L;
 
-        private String mPrefix = "";
+        private String mPrefix = null;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -1037,12 +1037,12 @@ public class SplitClientConfig {
          * @return This builder
          */
         public Builder prefix(String prefix) {
-            mPrefix = (prefix == null) ? "" : prefix.trim();
+            mPrefix = (prefix == null) ? "" : prefix;
             return this;
         }
 
         public SplitClientConfig build() {
-
+            Logger.instance().setLevel(mLogLevel);
 
             if (mFeaturesRefreshRate < MIN_FEATURES_REFRESH_RATE) {
                 Logger.w("Features refresh rate is lower than allowed. " +
@@ -1096,6 +1096,16 @@ public class SplitClientConfig {
                 Logger.w("Telemetry refresh rate is lower than allowed. " +
                         "Setting to default value.");
                 mTelemetryRefreshRate = DEFAULT_TELEMETRY_REFRESH_RATE;
+            }
+
+            if (mPrefix != null) {
+                ValidationErrorInfo result = new PrefixValidatorImpl().validate(mPrefix);
+                if (result != null) {
+                    Logger.e(result.getErrorMessage());
+                    Logger.w("Setting prefix to empty string");
+
+                    mPrefix = "";
+                }
             }
 
             HttpProxy proxy = parseProxyHost(mProxyHost);

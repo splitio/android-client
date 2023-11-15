@@ -143,6 +143,42 @@ public class DatabaseInitializationTest {
         assertEquals("my_prefixabcdijkl", finalDatabaseList[1]);
     }
 
+    @Test
+    public void usingInvalidPrefixResultsInIgnoredPrefix() {
+        String[] initialDatabaseList = getDbList(mContext);
+
+        SplitFactory factory = IntegrationHelper.buildFactory("abcdefghijkl",
+                new Key("matchingKey"),
+                SplitClientConfig.builder().prefix(":l").build(),
+                mContext,
+                mHttpClientMock);
+
+        String[] finalDatabaseList = getDbList(mContext);
+
+        assertNotNull(factory);
+        assertEquals(0, initialDatabaseList.length);
+        assertEquals(1, finalDatabaseList.length);
+        assertEquals("abcdijkl", finalDatabaseList[0]);
+    }
+
+    @Test
+    public void usingNullPrefixResultsInIgnoredPrefix() {
+        String[] initialDatabaseList = getDbList(mContext);
+
+        SplitFactory factory = IntegrationHelper.buildFactory("abcdefghijkl",
+                new Key("matchingKey"),
+                SplitClientConfig.builder().prefix(null).build(),
+                mContext,
+                mHttpClientMock);
+
+        String[] finalDatabaseList = getDbList(mContext);
+
+        assertNotNull(factory);
+        assertEquals(0, initialDatabaseList.length);
+        assertEquals(1, finalDatabaseList.length);
+        assertEquals("abcdijkl", finalDatabaseList[0]);
+    }
+
     private static String[] getDbList(Context context) {
         // remove -journal dbs since we're not interested in them
         return Arrays.stream(context.databaseList()).filter(db -> !db.endsWith("-journal")).toArray(String[]::new);
