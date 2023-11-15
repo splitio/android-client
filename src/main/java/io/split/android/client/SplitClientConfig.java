@@ -21,6 +21,8 @@ import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.TelemetryHelperImpl;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
+import io.split.android.client.validators.PrefixValidatorImpl;
+import io.split.android.client.validators.ValidationErrorInfo;
 import okhttp3.Authenticator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -117,6 +119,7 @@ public class SplitClientConfig {
     private int mLogLevel = SplitLogLevel.NONE;
     private UserConsent mUserConsent;
     private boolean mEncryptionEnabled = false;
+    private final String mPrefix;
     private final long mDefaultSSEConnectionDelayInSecs;
     private final long mSSEDisconnectionDelayInSecs;
 
@@ -172,7 +175,8 @@ public class SplitClientConfig {
                               UserConsent userConsent,
                               boolean encryptionEnabled,
                               long defaultSSEConnectionDelayInSecs,
-                              long sseDisconnectionDelayInSecs) {
+                              long sseDisconnectionDelayInSecs,
+                              String prefix) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -226,8 +230,7 @@ public class SplitClientConfig {
         mEncryptionEnabled = encryptionEnabled;
         mDefaultSSEConnectionDelayInSecs = defaultSSEConnectionDelayInSecs;
         mSSEDisconnectionDelayInSecs = sseDisconnectionDelayInSecs;
-
-        Logger.instance().setLevel(mLogLevel);
+        mPrefix = prefix;
     }
 
     public String trafficType() {
@@ -348,6 +351,10 @@ public class SplitClientConfig {
      */
     String defaultDataFolder() {
         return DEFAULT_DATA_FOLDER;
+    }
+
+    String prefix() {
+        return mPrefix;
     }
 
     public String ip() {
@@ -520,6 +527,8 @@ public class SplitClientConfig {
         private final long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
 
         private final long mSSEDisconnectionDelayInSecs = 60L;
+
+        private String mPrefix = null;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -1022,8 +1031,18 @@ public class SplitClientConfig {
             return this;
         }
 
-        public SplitClientConfig build() {
+        /**
+         * Optional prefix for the database name.
+         * @param prefix Prefix for the database name.
+         * @return This builder
+         */
+        public Builder prefix(String prefix) {
+            mPrefix = (prefix == null) ? "" : prefix;
+            return this;
+        }
 
+        public SplitClientConfig build() {
+            Logger.instance().setLevel(mLogLevel);
 
             if (mFeaturesRefreshRate < MIN_FEATURES_REFRESH_RATE) {
                 Logger.w("Features refresh rate is lower than allowed. " +
@@ -1079,6 +1098,16 @@ public class SplitClientConfig {
                 mTelemetryRefreshRate = DEFAULT_TELEMETRY_REFRESH_RATE;
             }
 
+            if (mPrefix != null) {
+                ValidationErrorInfo result = new PrefixValidatorImpl().validate(mPrefix);
+                if (result != null) {
+                    Logger.e(result.getErrorMessage());
+                    Logger.w("Setting prefix to empty string");
+
+                    mPrefix = "";
+                }
+            }
+
             HttpProxy proxy = parseProxyHost(mProxyHost);
 
             return new SplitClientConfig(
@@ -1127,7 +1156,8 @@ public class SplitClientConfig {
                     mUserConsent,
                     mEncryptionEnabled,
                     mDefaultSSEConnectionDelayInSecs,
-                    mSSEDisconnectionDelayInSecs);
+                    mSSEDisconnectionDelayInSecs,
+                    mPrefix);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {

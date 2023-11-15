@@ -7,8 +7,10 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -72,16 +74,17 @@ public class FilterBuilder {
             return;
         }
 
+        Set<SplitFilter.Type> presentTypes = new HashSet<>();
         boolean containsSetsFilter = false;
         for (SplitFilter filter : filters) {
             if (filter == null) {
                 continue;
             }
 
+            presentTypes.add(filter.getType());
             if (filter.getType() == SplitFilter.Type.BY_SET) {
                 // BY_SET filter has precedence over other filters, so we remove all other filters
                 // and only add BY_SET filters
-                Logger.w("SDK Config: The Set filter is exclusive and cannot be used simultaneously with names or prefix filters. Ignoring names and prefixes");
                 if (!containsSetsFilter) {
                     mFilters.clear();
                     containsSetsFilter = true;
@@ -92,6 +95,10 @@ public class FilterBuilder {
             if (!containsSetsFilter) {
                 mFilters.add(filter);
             }
+        }
+
+        if (presentTypes.contains(SplitFilter.Type.BY_SET) && presentTypes.size() > 1) {
+            Logger.e("SDK Config: The Set filter is exclusive and cannot be used simultaneously with names or prefix filters. Ignoring names and prefixes");
         }
     }
 

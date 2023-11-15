@@ -60,6 +60,8 @@ public class TestableSplitConfigBuilder {
     private long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
     private long mSSEDisconnectionDelayInSecs = 60L;
 
+    private String mPrefix = "";
+
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
     }
@@ -249,6 +251,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder prefix(String prefix) {
+        this.mPrefix = prefix;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -300,7 +307,8 @@ public class TestableSplitConfigBuilder {
                     mUserConsent,
                     mEncryptionEnabled,
                     mDefaultSSEConnectionDelayInSecs,
-                    mSSEDisconnectionDelayInSecs);
+                    mSSEDisconnectionDelayInSecs,
+                    mPrefix);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

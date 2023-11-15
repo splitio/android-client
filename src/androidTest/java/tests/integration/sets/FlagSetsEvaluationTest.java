@@ -8,7 +8,6 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -39,7 +38,7 @@ import tests.integration.shared.TestingHelper;
 
 public class FlagSetsEvaluationTest {
 
-    private final FileHelper fileHelper = new FileHelper();
+    private final FileHelper mFileHelper = new FileHelper();
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
     @Test
@@ -163,7 +162,7 @@ public class FlagSetsEvaluationTest {
     }
 
     private String loadSplitChangeWithSet(int setsCount) {
-        String change = fileHelper.loadFileContent(mContext, "split_changes_flag_set-" + setsCount + ".json");
+        String change = mFileHelper.loadFileContent(mContext, "split_changes_flag_set-" + setsCount + ".json");
         SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
         parsedChange.since = parsedChange.till;
 
