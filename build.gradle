@@ -295,7 +295,7 @@ artifacts {
 
 task printReleaseDependenciesToFile {
     doLast {
-        def outputFile = new File("$projectDir/release-deps.txt")
+        def outputFile = new File("$projectDir/deps.txt")
         def processBuilder = new ProcessBuilder("./gradlew", ":android-client:dependencies", "--configuration", "releaseRuntimeClasspath", "-q")
 
         outputFile.parentFile.mkdirs()
