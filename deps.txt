@@ -4,14 +4,14 @@ Project ':android-client'
 ------------------------------------------------------------
 
 releaseRuntimeClasspath - Runtime classpath of /release.
-+--- androidx.room:room-runtime:2.3.0
-|    +--- androidx.room:room-common:2.3.0
++--- androidx.room:room-runtime:2.4.3
+|    +--- androidx.room:room-common:2.4.3
 |    |    \--- androidx.annotation:annotation:1.1.0 -> 1.2.0
-|    +--- androidx.sqlite:sqlite-framework:2.1.0
+|    +--- androidx.sqlite:sqlite-framework:2.2.0
 |    |    +--- androidx.annotation:annotation:1.0.0 -> 1.2.0
-|    |    \--- androidx.sqlite:sqlite:2.1.0
+|    |    \--- androidx.sqlite:sqlite:2.2.0
 |    |         \--- androidx.annotation:annotation:1.0.0 -> 1.2.0
-|    +--- androidx.sqlite:sqlite:2.1.0 (*)
+|    +--- androidx.sqlite:sqlite:2.2.0 (*)
 |    +--- androidx.arch.core:core-runtime:2.0.1 -> 2.1.0
 |    |    +--- androidx.annotation:annotation:1.1.0 -> 1.2.0
 |    |    \--- androidx.arch.core:core-common:2.1.0
@@ -45,9 +45,9 @@ releaseRuntimeClasspath - Runtime classpath of /release.
 |    |    |    \--- androidx.collection:collection:1.0.0
 |    |    |         \--- androidx.annotation:annotation:1.0.0 -> 1.2.0
 |    |    \--- androidx.collection:collection:1.0.0 (*)
-|    +--- androidx.room:room-runtime:2.2.5 -> 2.3.0 (*)
-|    +--- androidx.sqlite:sqlite:2.1.0 (*)
-|    +--- androidx.sqlite:sqlite-framework:2.1.0 (*)
+|    +--- androidx.room:room-runtime:2.2.5 -> 2.4.3 (*)
+|    +--- androidx.sqlite:sqlite:2.1.0 -> 2.2.0 (*)
+|    +--- androidx.sqlite:sqlite-framework:2.1.0 -> 2.2.0 (*)
 |    +--- androidx.core:core:1.1.0 -> 1.6.0 (*)
 |    \--- androidx.lifecycle:lifecycle-service:2.1.0
 |         \--- androidx.lifecycle:lifecycle-runtime:2.1.0 -> 2.5.1 (*)

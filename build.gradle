@@ -93,7 +93,7 @@ repositories {
 
 dependencies {
 
-    def roomVersion = '2.3.0'
+    def roomVersion = '2.4.3'
     def workVersion = '2.7.1'
     def lifecycleVersion = '2.5.1'
     def annotationVersion = '1.2.0'
