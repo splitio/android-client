@@ -292,3 +292,31 @@ artifacts {
     archives sourcesJar
     archives javadocJar
 }
+
+task printReleaseDependenciesToFile {
+    doLast {
+        def outputFile = new File("$projectDir/release-deps.txt")
+        def processBuilder = new ProcessBuilder("./gradlew", ":android-client:dependencies", "--configuration", "releaseRuntimeClasspath", "-q")
+
+        outputFile.parentFile.mkdirs()
+        outputFile.text = '' // Clear the file before writing
+        processBuilder.redirectOutput(outputFile)
+        processBuilder.directory(project.rootDir)
+
+        try {
+            Process process = processBuilder.start()
+            process.waitFor()
+
+            def filteredLines = outputFile.readLines().findAll { !it.contains("BUILD SUCCESSFUL") }
+
+            // Write the filtered content back to the file
+            outputFile.withPrintWriter { writer ->
+                filteredLines.each(writer.&println)
+            }
+        } catch (Exception e) {
+            e.printStackTrace()
+        }
+    }
+}
+
+preBuild.dependsOn printReleaseDependenciesToFile
