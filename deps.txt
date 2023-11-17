@@ -67,7 +67,7 @@ releaseRuntimeClasspath - Runtime classpath of /release.
 +--- org.jetbrains:annotations:22.0.0
 +--- com.squareup.okhttp3:okhttp:3.12.13
 |    \--- com.squareup.okio:okio:1.15.0
-+--- com.google.android.gms:play-services-base:17.6.0
++--- com.google.android.gms:play-services-base:18.2.0
 |    +--- androidx.collection:collection:1.0.0 (*)
 |    +--- androidx.core:core:1.2.0 -> 1.6.0 (*)
 |    +--- androidx.fragment:fragment:1.0.0
@@ -124,12 +124,12 @@ releaseRuntimeClasspath - Runtime classpath of /release.
 |    |    +--- androidx.annotation:annotation:1.0.0 -> 1.2.0
 |    |    +--- androidx.loader:loader:1.0.0 (*)
 |    |    \--- androidx.lifecycle:lifecycle-viewmodel:2.0.0 (*)
-|    +--- com.google.android.gms:play-services-basement:17.6.0
+|    +--- com.google.android.gms:play-services-basement:18.1.0
 |    |    +--- androidx.collection:collection:1.0.0 (*)
 |    |    +--- androidx.core:core:1.2.0 -> 1.6.0 (*)
 |    |    \--- androidx.fragment:fragment:1.0.0 (*)
-|    \--- com.google.android.gms:play-services-tasks:17.2.1
-|         \--- com.google.android.gms:play-services-basement:17.6.0 (*)
+|    \--- com.google.android.gms:play-services-tasks:18.0.2
+|         \--- com.google.android.gms:play-services-basement:18.1.0 (*)
 \--- androidx.multidex:multidex:2.0.1
 
 (*) - dependencies omitted (listed previously)

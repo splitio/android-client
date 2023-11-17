@@ -102,7 +102,7 @@ dependencies {
     def snakeYamlVersion = '2.2'
     def jetBrainsAnnotationsVersion = '22.0.0'
     def okHttpVersion = '3.12.13'
-    def playServicesVersion = '17.6.0'
+    def playServicesVersion = '18.2.0'
     def multidexVersion = '2.0.1'
 
     def jUnitVersion = '4.13.2'
