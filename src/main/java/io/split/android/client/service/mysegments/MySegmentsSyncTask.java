@@ -1,8 +1,7 @@
 package io.split.android.client.service.mysegments;
 
 import androidx.annotation.NonNull;
-
-import org.jetbrains.annotations.Nullable;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;

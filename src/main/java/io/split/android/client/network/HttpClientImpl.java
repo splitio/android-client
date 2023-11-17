@@ -2,10 +2,10 @@ package io.split.android.client.network;
 
 import android.content.Context;
 
-import com.google.common.base.Strings;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.google.common.base.Strings;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -204,7 +204,7 @@ public class HttpClientImpl implements HttpClient {
             return new Authenticator() {
                 @Nullable
                 @Override
-                public Request authenticate(@Nullable Route route, @NotNull Response response) throws IOException {
+                public Request authenticate(@Nullable Route route, @NonNull Response response) throws IOException {
                     String credential = Credentials.basic(username, password);
                     return response.request().newBuilder().header(PROXY_AUTHORIZATION_HEADER, credential).build();
                 }

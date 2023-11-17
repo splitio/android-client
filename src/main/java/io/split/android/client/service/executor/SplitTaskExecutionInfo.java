@@ -1,13 +1,12 @@
 package io.split.android.client.service.executor;
 
-import androidx.annotation.NonNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.jetbrains.annotations.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SplitTaskExecutionInfo {
 
