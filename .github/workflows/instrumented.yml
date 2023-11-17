@@ -3,7 +3,9 @@ name: Instrumented tests
 on:
   pull_request:
     branches:
-      - '*'
+      - 'development'
+      - 'master'
+      - '*_baseline'
 
 jobs:
   test:

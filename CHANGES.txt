@@ -1,3 +1,6 @@
+3.5.0 (Nov 16, 2023)
+- Added `prefix` configuration parameter, which allows to use a prefix when naming the SDK storage. Use this when using multiple `SplitFactory` instances with the same SDK key.
+
 3.4.0 (Oct 31, 2023)
 - Added support for Flag Sets on the SDK, which enables grouping feature flags and interacting with the group rather than individually (more details in our documentation):
   - Added new variations of the get treatment methods to support evaluating flags in given flag set/s.
