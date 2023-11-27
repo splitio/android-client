@@ -1,11 +1,10 @@
 package io.split.android.client.service.sseclient.sseclient;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.common.collect.Maps;
 import com.google.gson.JsonSyntaxException;
-
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -127,7 +126,7 @@ public class NotificationManagerKeeper {
         return mPublishers.get(CHANNEL_PRI_KEY).count +  mPublishers.get(CHANNEL_SEC_KEY).count;
     }
 
-    private @Nullable  String getChannelKey(OccupancyNotification notification ) {
+    private @Nullable String getChannelKey(OccupancyNotification notification ) {
         if (notification.isControlPriChannel()) {
             return CHANNEL_PRI_KEY;
         } else if (notification.isControlSecChannel()) {

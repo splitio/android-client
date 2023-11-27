@@ -64,7 +64,6 @@ releaseRuntimeClasspath - Runtime classpath of /release.
 |    +--- org.checkerframework:checker-qual:3.37.0
 |    \--- com.google.errorprone:error_prone_annotations:2.21.1
 +--- org.yaml:snakeyaml:2.2
-+--- org.jetbrains:annotations:22.0.0
 +--- com.squareup.okhttp3:okhttp:3.12.13
 |    \--- com.squareup.okio:okio:1.15.0
 +--- com.google.android.gms:play-services-base:18.2.0
