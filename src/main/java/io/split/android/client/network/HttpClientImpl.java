@@ -15,12 +15,10 @@ import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.utils.logger.Logger;
-import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -214,7 +212,7 @@ public class HttpClientImpl implements HttpClient {
         }
 
         private okhttp3.Authenticator createAuthenticator(SplitAuthenticator authenticator) {
-            return new OkHttp3Authenticator(authenticator);
+            return new OkHttpAuthenticator(authenticator);
         }
 
         private void forceTls12OnOldAndroid(OkHttpClient.Builder okHttpBuilder, Context context) {

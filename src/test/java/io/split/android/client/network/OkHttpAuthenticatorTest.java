@@ -23,13 +23,13 @@ import okhttp3.Route;
 
 public class OkHttpAuthenticatorTest {
 
-    private OkHttp3Authenticator mAuthenticator;
+    private OkHttpAuthenticator mAuthenticator;
     private SplitAuthenticator mSplitAuthenticator;
 
     @Before
     public void setUp() {
         mSplitAuthenticator = mock(SplitAuthenticator.class);
-        mAuthenticator = new OkHttp3Authenticator(mSplitAuthenticator);
+        mAuthenticator = new OkHttpAuthenticator(mSplitAuthenticator);
     }
 
     @Test

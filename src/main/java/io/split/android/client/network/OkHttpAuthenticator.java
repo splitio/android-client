@@ -11,11 +11,11 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
 
-class OkHttp3Authenticator implements okhttp3.Authenticator {
+class OkHttpAuthenticator implements okhttp3.Authenticator {
 
     private final SplitAuthenticator mSplitAuthenticator;
 
-    OkHttp3Authenticator(SplitAuthenticator splitAuthenticator) {
+    OkHttpAuthenticator(SplitAuthenticator splitAuthenticator) {
         mSplitAuthenticator = splitAuthenticator;
     }
 
