@@ -15,6 +15,7 @@ import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -103,12 +104,13 @@ public class HttpClientImpl implements HttpClient {
     }
 
     public static class Builder {
-        private Authenticator mProxyAuthenticator;
+        private SplitAuthenticator mProxyAuthenticator;
         private HttpProxy mProxy;
         private long readTimeout = -1;
         private long connectionTimeout = -1;
         private DevelopmentSslConfig developmentSslConfig = null;
         private Context mHostAppContext;
+        private InternalAuthenticatorFactory<Authenticator> mInternalAuthenticatorFactory = new OkHttpAuthenticatorFactory();
 
         public Builder setContext(Context context) {
             mHostAppContext = context;
@@ -120,7 +122,7 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
-        public Builder setProxyAuthenticator(Authenticator authenticator) {
+        public Builder setProxyAuthenticator(SplitAuthenticator authenticator) {
             mProxyAuthenticator = authenticator;
             return this;
         }
@@ -142,11 +144,11 @@ public class HttpClientImpl implements HttpClient {
 
         public HttpClient build() {
             Proxy proxy = null;
-            Authenticator proxyAuthenticator = null;
+            okhttp3.Authenticator proxyAuthenticator = null;
             if (mProxy != null) {
                 proxy = createProxy(mProxy);
                 if (mProxyAuthenticator != null) {
-                    proxyAuthenticator = mProxyAuthenticator;
+                    proxyAuthenticator = createAuthenticator(mProxyAuthenticator);
                 } else if (!Strings.isNullOrEmpty(mProxy.getUsername())) {
                     proxyAuthenticator = createBasicAuthenticator(mProxy.getUsername(), mProxy.getPassword());
                 }
@@ -161,7 +163,7 @@ public class HttpClientImpl implements HttpClient {
         }
 
         private OkHttpClient createOkHttpClient(Proxy proxy,
-                                                Authenticator proxyAuthenticator,
+                                                okhttp3.Authenticator proxyAuthenticator,
                                                 Long readTimeout,
                                                 Long connectionTimeout,
                                                 DevelopmentSslConfig developmentSslConfig,
@@ -200,8 +202,8 @@ public class HttpClientImpl implements HttpClient {
             return new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(proxy.getHost(), proxy.getPort()));
         }
 
-        private Authenticator createBasicAuthenticator(String username, String password) {
-            return new Authenticator() {
+        private okhttp3.Authenticator createBasicAuthenticator(String username, String password) {
+            return new okhttp3.Authenticator() {
                 @Nullable
                 @Override
                 public Request authenticate(@Nullable Route route, @NonNull Response response) throws IOException {
@@ -209,6 +211,10 @@ public class HttpClientImpl implements HttpClient {
                     return response.request().newBuilder().header(PROXY_AUTHORIZATION_HEADER, credential).build();
                 }
             };
+        }
+
+        private okhttp3.Authenticator createAuthenticator(SplitAuthenticator authenticator) {
+            return mInternalAuthenticatorFactory.getAuthenticator(authenticator);
         }
 
         private void forceTls12OnOldAndroid(OkHttpClient.Builder okHttpBuilder, Context context) {
