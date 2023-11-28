@@ -36,12 +36,6 @@ public class SplitAuthenticatedRequest implements AuthenticatedRequest<Request> 
         return mRequest.headers().toMultimap();
     }
 
-    @Nullable
-    @Override
-    public Request getRequest() {
-        return mRequest;
-    }
-
     @Override
     public int getStatusCode() {
         return mStatusCode;

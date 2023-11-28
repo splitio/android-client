@@ -47,17 +47,6 @@ public class OkHttpAuthenticatorTest {
     }
 
     @Test
-    public void resultIsNullIfSplitAuthenticatorReturnsNullRequest() throws IOException {
-        SplitAuthenticatedRequest mockAuthRequest = mock(SplitAuthenticatedRequest.class);
-        when(mockAuthRequest.getRequest()).thenReturn(null);
-        when(mSplitAuthenticator.authenticate(any())).thenReturn(mockAuthRequest);
-
-        Request authenticate = mAuthenticator.authenticate(mock(Route.class), mock(Response.class));
-
-        assertNull(authenticate);
-    }
-
-    @Test
     public void headersFromAuthenticationAreNotAddedToResultWhenTheyAreNull() throws IOException {
         Response mockResponse = mock(Response.class);
         Request mockRequest = mock(Request.class);
@@ -69,7 +58,6 @@ public class OkHttpAuthenticatorTest {
         when(mockBuilder.build()).thenReturn(mockResult);
 
         SplitAuthenticatedRequest mockAuthRequest = mock(SplitAuthenticatedRequest.class);
-        when(mockAuthRequest.getRequest()).thenReturn(mockRequest);
         when(mockAuthRequest.getHeaders()).thenReturn(null);
         when(mSplitAuthenticator.authenticate(any())).thenReturn(mockAuthRequest);
 
@@ -102,7 +90,6 @@ public class OkHttpAuthenticatorTest {
         when(mockBuilder.build()).thenReturn(mockResult);
 
         SplitAuthenticatedRequest mockAuthRequest = mock(SplitAuthenticatedRequest.class);
-        when(mockAuthRequest.getRequest()).thenReturn(mockRequest);
         when(mockAuthRequest.getHeaders()).thenReturn(Collections.singletonMap("Authorization", Collections.singletonList("Bearer 1234567890")));
         when(mSplitAuthenticator.authenticate(any())).thenReturn(mockAuthRequest);
 

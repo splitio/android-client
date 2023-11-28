@@ -1,7 +1,6 @@
 package io.split.android.client.network;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import androidx.annotation.NonNull;
@@ -29,11 +28,11 @@ public class SplitAuthenticatorTest {
         };
 
         AuthenticatedMockRequest request = new AuthenticatedMockRequest(new MockRequest());
-        Map<String, List<String>> initialHeaders = new HashMap<>(request.getRequest().getHeaders());
+        Map<String, List<String>> initialHeaders = new HashMap<>(request.getHeaders());
 
         splitAuthenticator.authenticate(request);
 
-        Map<String, List<String>> finalHeaders = new HashMap<>(request.getRequest().getHeaders());
+        Map<String, List<String>> finalHeaders = new HashMap<>(request.getHeaders());
 
         assertEquals(2, initialHeaders.size());
         assertTrue(initialHeaders.containsKey("header1"));
@@ -71,11 +70,6 @@ public class SplitAuthenticatorTest {
         @Override
         public Map<String, List<String>> getHeaders() {
             return mRequest.getHeaders();
-        }
-
-        @Override
-        public MockRequest getRequest() {
-            return mRequest;
         }
 
         @Override

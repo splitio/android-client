@@ -25,8 +25,7 @@ public class OkHttp3Authenticator implements okhttp3.Authenticator {
 
         try {
             SplitAuthenticatedRequest authenticatedRequestResult = mSplitAuthenticator.authenticate(new SplitAuthenticatedRequest(response));
-            if (authenticatedRequestResult == null ||
-                    authenticatedRequestResult.getRequest() == null) {
+            if (authenticatedRequestResult == null) {
                 return null;
             }
 

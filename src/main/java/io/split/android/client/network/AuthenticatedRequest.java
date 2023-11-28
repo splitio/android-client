@@ -16,9 +16,6 @@ interface AuthenticatedRequest<T> {
     @Nullable
     Map<String, List<String>> getHeaders();
 
-    @Nullable
-    T getRequest();
-
     int getStatusCode();
 
     String getRequestUrl();
