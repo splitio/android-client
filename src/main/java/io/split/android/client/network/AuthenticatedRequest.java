@@ -18,5 +18,6 @@ interface AuthenticatedRequest<T> {
 
     int getStatusCode();
 
+    @Nullable
     String getRequestUrl();
 }

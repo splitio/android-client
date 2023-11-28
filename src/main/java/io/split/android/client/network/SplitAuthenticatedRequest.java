@@ -21,18 +21,30 @@ public class SplitAuthenticatedRequest implements AuthenticatedRequest<Request> 
 
     @Override
     public void setHeader(@NonNull String name, @NonNull String value) {
+        if (mRequest == null) {
+            return;
+        }
+
         mRequest = mRequest.newBuilder().header(name, value).build();
     }
 
     @Nullable
     @Override
     public String getHeader(@NonNull String name) {
+        if (mRequest == null) {
+            return null;
+        }
+
         return mRequest.header(name);
     }
 
     @Nullable
     @Override
     public Map<String, List<String>> getHeaders() {
+        if (mRequest == null) {
+            return null;
+        }
+
         return mRequest.headers().toMultimap();
     }
 
@@ -41,8 +53,13 @@ public class SplitAuthenticatedRequest implements AuthenticatedRequest<Request> 
         return mStatusCode;
     }
 
+    @Nullable
     @Override
     public String getRequestUrl() {
+        if (mRequest == null) {
+            return null;
+        }
+
         return mRequest.url().toString();
     }
 }

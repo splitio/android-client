@@ -173,7 +173,7 @@ public class HttpClientImpl implements HttpClient {
             }
 
             if (proxyAuthenticator != null) {
-                Logger.d("Setting proxy authenticator");
+                Logger.v("Setting up proxy authenticator");
                 builder.proxyAuthenticator(proxyAuthenticator);
             }
 
