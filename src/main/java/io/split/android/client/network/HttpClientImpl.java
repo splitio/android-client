@@ -110,7 +110,6 @@ public class HttpClientImpl implements HttpClient {
         private long connectionTimeout = -1;
         private DevelopmentSslConfig developmentSslConfig = null;
         private Context mHostAppContext;
-        private InternalAuthenticatorFactory<Authenticator> mInternalAuthenticatorFactory = new OkHttpAuthenticatorFactory();
 
         public Builder setContext(Context context) {
             mHostAppContext = context;
@@ -174,6 +173,7 @@ public class HttpClientImpl implements HttpClient {
             }
 
             if (proxyAuthenticator != null) {
+                Logger.d("Setting proxy authenticator");
                 builder.proxyAuthenticator(proxyAuthenticator);
             }
 
@@ -214,7 +214,7 @@ public class HttpClientImpl implements HttpClient {
         }
 
         private okhttp3.Authenticator createAuthenticator(SplitAuthenticator authenticator) {
-            return mInternalAuthenticatorFactory.getAuthenticator(authenticator);
+            return new OkHttp3Authenticator(authenticator);
         }
 
         private void forceTls12OnOldAndroid(OkHttpClient.Builder okHttpBuilder, Context context) {
