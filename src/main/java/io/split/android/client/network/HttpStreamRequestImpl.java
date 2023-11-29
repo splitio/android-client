@@ -1,9 +1,11 @@
 package io.split.android.client.network;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -14,27 +16,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.utils.logger.Logger;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class HttpStreamRequestImpl implements HttpStreamRequest {
-    private static final MediaType JSON
-            = MediaType.get("application/json; charset=utf-8");
-    private OkHttpClient mOkHttpClient;
-    private URI mUri;
-    private Map<String, String> mHeaders;
-    private Response mOkHttpResponse;
-    private BufferedReader mResponseBufferedReader;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 
-    HttpStreamRequestImpl(@NonNull OkHttpClient okHttpClient, @NonNull URI uri,
-                          @NonNull Map<String, String> headers) {
-        mOkHttpClient = checkNotNull(okHttpClient);
+public class HttpStreamRequestImpl implements HttpStreamRequest {
+
+    private final URI mUri;
+    private final Map<String, String> mHeaders;
+    private final SSLSocketFactory mSslSocketFactory;
+    private HttpURLConnection mConnection;
+    private BufferedReader mResponseBufferedReader;
+    private InputStream mResponseInputStream;
+
+    private HttpStreamRequestImpl(@NonNull URI uri,
+                                  @NonNull Map<String, String> headers,
+                                  @Nullable SSLSocketFactory sslSocketFactory) {
         mUri = checkNotNull(uri);
         mHeaders = new HashMap<>(checkNotNull(headers));
+        mSslSocketFactory = sslSocketFactory;
     }
 
     @Override
@@ -50,25 +52,26 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     @Override
     public void close() {
         Logger.d("Closing streaming connection");
-        if (mOkHttpResponse != null) {
-            if (mOkHttpResponse.body() != null) {
-                try {
-                    mOkHttpResponse.close();
-                    mOkHttpResponse.body().close();
-                } catch (Exception e) {
-                    Logger.d("Unknown error closing streaming connection: " + e.getLocalizedMessage());
-                }
-            }
-            if (mResponseBufferedReader != null) {
-                try {
-                    mResponseBufferedReader.close();
-                } catch (IOException e) {
-                    Logger.d("Buffer already closed");
-                } catch (Exception e) {
-                    Logger.d("Unknown error closing buffer: " + e.getLocalizedMessage());
-                }
+        if (mResponseInputStream != null) {
+            try {
+                mResponseInputStream.close();
+            } catch (IOException e) {
+                Logger.d("Unknown error closing streaming connection: " + e.getLocalizedMessage());
+            } catch (Exception e) {
+                Logger.d("Unknown error closing stream: " + e.getLocalizedMessage());
             }
         }
+        if (mResponseBufferedReader != null) {
+            try {
+                mResponseBufferedReader.close();
+            } catch (IOException e) {
+                Logger.d("Buffer already closed");
+            } catch (Exception e) {
+                Logger.d("Unknown error closing buffer: " + e.getLocalizedMessage());
+            }
+        }
+        mConnection.disconnect();
+        Logger.d("Streaming connection closed");
     }
 
     private HttpStreamResponse getRequest() throws HttpException {
@@ -76,13 +79,20 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         HttpStreamResponse response;
         try {
             url = mUri.toURL();
-            Request.Builder requestBuilder = new Request.Builder()
-                    .url(url);
-            addHeaders(requestBuilder);
-            Request okHttpRequest = requestBuilder.build();
+            mConnection = (HttpURLConnection) url.openConnection();
+            addHeaders(mConnection);
 
-            mOkHttpResponse = mOkHttpClient.newCall(okHttpRequest).execute();
-            response = buildResponse(mOkHttpResponse);
+            if (mSslSocketFactory != null) {
+                Logger.d("Setting  SSL socket factory in stream request");
+                if (mConnection instanceof HttpsURLConnection) {
+                    ((HttpsURLConnection) mConnection).setSSLSocketFactory(mSslSocketFactory);
+                } else {
+                    Logger.d("Failed to set SSL socket factory in stream request. Connection is not SSL");
+                }
+            }
+
+            mConnection.connect();
+            response = buildResponse(mConnection);
 
         } catch (MalformedURLException e) {
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
@@ -94,18 +104,25 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         return response;
     }
 
-    private void addHeaders(Request.Builder request) {
+    private void addHeaders(HttpURLConnection request) {
+        if (mHeaders == null) {
+            return;
+        }
+
         for (Map.Entry<String, String> entry : mHeaders.entrySet()) {
-            request.header(entry.getKey(), entry.getValue());
+            request.setRequestProperty(entry.getKey(), entry.getValue());
         }
     }
 
-    private HttpStreamResponse buildResponse(Response okHttpResponse) throws IOException {
-        int responseCode = okHttpResponse.code();
-        if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < 300 && okHttpResponse.body() != null) {
-            mResponseBufferedReader = new BufferedReader(new InputStreamReader(
-                    okHttpResponse.body().byteStream()));
-            return new HttpStreamResponseImpl(responseCode, mResponseBufferedReader);
+    private HttpStreamResponse buildResponse(HttpURLConnection connection) throws IOException {
+        int responseCode = connection.getResponseCode();
+        if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
+            mResponseInputStream = connection.getInputStream();
+            if (mResponseInputStream != null) {
+                mResponseBufferedReader = new BufferedReader(new InputStreamReader(mResponseInputStream));
+
+                return new HttpStreamResponseImpl(responseCode, mResponseBufferedReader);
+            }
         }
         return new HttpStreamResponseImpl(responseCode);
     }

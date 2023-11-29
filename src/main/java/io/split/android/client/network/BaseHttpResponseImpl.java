@@ -1,7 +1,8 @@
 package io.split.android.client.network;
 
 public abstract class BaseHttpResponseImpl implements BaseHttpResponse {
-private static final int HTTP_OK = 200;
+
+    private static final int HTTP_OK = 200;
     protected static final int HTTP_MULTIPLE_CHOICES = 300;
     protected static final int HTTP_UNAUTHORIZED = 401;
     protected static final int HTTP_BAD_REQUEST = 400;
@@ -15,7 +16,7 @@ private static final int HTTP_OK = 200;
 
     @Override
     public boolean isSuccess() {
-        return mHttpStatus >= HTTP_OK && mHttpStatus< HTTP_MULTIPLE_CHOICES;
+        return mHttpStatus >= HTTP_OK && mHttpStatus < HTTP_MULTIPLE_CHOICES;
     }
 
     @Override
