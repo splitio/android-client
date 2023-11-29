@@ -212,7 +212,7 @@ public class HttpClientImpl implements HttpClient {
         }
 
         private okhttp3.Authenticator createAuthenticator(SplitAuthenticator authenticator) {
-            return new OkHttpAuthenticator(authenticator);
+            return new SplitOkHttpAuthenticator(authenticator);
         }
 
         private void forceTls12OnOldAndroid(OkHttpClient.Builder okHttpBuilder, Context context) {

@@ -21,15 +21,15 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Route;
 
-public class OkHttpAuthenticatorTest {
+public class SplitOkHttpAuthenticatorTest {
 
-    private OkHttpAuthenticator mAuthenticator;
+    private SplitOkHttpAuthenticator mAuthenticator;
     private SplitAuthenticator mSplitAuthenticator;
 
     @Before
     public void setUp() {
         mSplitAuthenticator = mock(SplitAuthenticator.class);
-        mAuthenticator = new OkHttpAuthenticator(mSplitAuthenticator);
+        mAuthenticator = new SplitOkHttpAuthenticator(mSplitAuthenticator);
     }
 
     @Test
