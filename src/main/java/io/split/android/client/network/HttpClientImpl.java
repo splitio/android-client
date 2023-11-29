@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.utils.logger.Logger;
-import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -103,7 +102,7 @@ public class HttpClientImpl implements HttpClient {
     }
 
     public static class Builder {
-        private Authenticator mProxyAuthenticator;
+        private SplitAuthenticator mProxyAuthenticator;
         private HttpProxy mProxy;
         private long readTimeout = -1;
         private long connectionTimeout = -1;
@@ -120,7 +119,7 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
-        public Builder setProxyAuthenticator(Authenticator authenticator) {
+        public Builder setProxyAuthenticator(SplitAuthenticator authenticator) {
             mProxyAuthenticator = authenticator;
             return this;
         }
@@ -142,11 +141,11 @@ public class HttpClientImpl implements HttpClient {
 
         public HttpClient build() {
             Proxy proxy = null;
-            Authenticator proxyAuthenticator = null;
+            okhttp3.Authenticator proxyAuthenticator = null;
             if (mProxy != null) {
                 proxy = createProxy(mProxy);
                 if (mProxyAuthenticator != null) {
-                    proxyAuthenticator = mProxyAuthenticator;
+                    proxyAuthenticator = createAuthenticator(mProxyAuthenticator);
                 } else if (!Strings.isNullOrEmpty(mProxy.getUsername())) {
                     proxyAuthenticator = createBasicAuthenticator(mProxy.getUsername(), mProxy.getPassword());
                 }
@@ -161,7 +160,7 @@ public class HttpClientImpl implements HttpClient {
         }
 
         private OkHttpClient createOkHttpClient(Proxy proxy,
-                                                Authenticator proxyAuthenticator,
+                                                okhttp3.Authenticator proxyAuthenticator,
                                                 Long readTimeout,
                                                 Long connectionTimeout,
                                                 DevelopmentSslConfig developmentSslConfig,
@@ -172,6 +171,7 @@ public class HttpClientImpl implements HttpClient {
             }
 
             if (proxyAuthenticator != null) {
+                Logger.v("Setting up proxy authenticator");
                 builder.proxyAuthenticator(proxyAuthenticator);
             }
 
@@ -200,8 +200,8 @@ public class HttpClientImpl implements HttpClient {
             return new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(proxy.getHost(), proxy.getPort()));
         }
 
-        private Authenticator createBasicAuthenticator(String username, String password) {
-            return new Authenticator() {
+        private okhttp3.Authenticator createBasicAuthenticator(String username, String password) {
+            return new okhttp3.Authenticator() {
                 @Nullable
                 @Override
                 public Request authenticate(@Nullable Route route, @NonNull Response response) throws IOException {
@@ -209,6 +209,10 @@ public class HttpClientImpl implements HttpClient {
                     return response.request().newBuilder().header(PROXY_AUTHORIZATION_HEADER, credential).build();
                 }
             };
+        }
+
+        private okhttp3.Authenticator createAuthenticator(SplitAuthenticator authenticator) {
+            return new OkHttpAuthenticator(authenticator);
         }
 
         private void forceTls12OnOldAndroid(OkHttpClient.Builder okHttpBuilder, Context context) {
