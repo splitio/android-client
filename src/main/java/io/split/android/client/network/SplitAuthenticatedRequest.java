@@ -3,21 +3,18 @@ package io.split.android.client.network;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import okhttp3.Request;
-import okhttp3.Response;
+public class SplitAuthenticatedRequest implements AuthenticatedRequest<HttpURLConnection> {
 
-public class SplitAuthenticatedRequest implements AuthenticatedRequest<Request> {
+    private final HttpURLConnection mRequest;
 
-    private final int mStatusCode;
-    private Request mRequest;
-
-    SplitAuthenticatedRequest(Response response) {
-        mStatusCode = response.code();
-        mRequest = response.request();
+    SplitAuthenticatedRequest(HttpURLConnection request) {
+        mRequest = request;
     }
 
     @Override
@@ -26,7 +23,7 @@ public class SplitAuthenticatedRequest implements AuthenticatedRequest<Request> 
             return;
         }
 
-        mRequest = mRequest.newBuilder().header(name, value).build();
+        mRequest.setRequestProperty(name, value);
     }
 
     @Nullable
@@ -36,7 +33,7 @@ public class SplitAuthenticatedRequest implements AuthenticatedRequest<Request> 
             return null;
         }
 
-        return mRequest.header(name);
+        return mRequest.getRequestProperty(name);
     }
 
     @Nullable
@@ -46,21 +43,29 @@ public class SplitAuthenticatedRequest implements AuthenticatedRequest<Request> 
             return null;
         }
 
-        return new HashMap<>(mRequest.headers().toMultimap());
+        return new HashMap<>(mRequest.getHeaderFields());
     }
 
     @Override
     public int getStatusCode() {
-        return mStatusCode;
+        try {
+            if (mRequest == null) {
+                return -1;
+            }
+
+            return mRequest.getResponseCode();
+        } catch (IOException e) {
+            return -1;
+        }
     }
 
     @Nullable
     @Override
     public String getRequestUrl() {
-        if (mRequest == null) {
+        if (mRequest == null || mRequest.getURL() == null) {
             return null;
         }
 
-        return mRequest.url().toString();
+        return mRequest.getURL().toString();
     }
 }
