@@ -3,6 +3,7 @@ package io.split.android.client.network;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +46,7 @@ public class SplitAuthenticatedRequest implements AuthenticatedRequest<Request> 
             return null;
         }
 
-        return mRequest.headers().toMultimap();
+        return new HashMap<>(mRequest.headers().toMultimap());
     }
 
     @Override
