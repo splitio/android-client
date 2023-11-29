@@ -91,7 +91,6 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                 }
             }
 
-            mConnection.connect();
             response = buildResponse(mConnection);
 
         } catch (MalformedURLException e) {
