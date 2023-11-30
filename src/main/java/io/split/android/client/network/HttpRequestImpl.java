@@ -11,7 +11,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -34,19 +33,21 @@ public class HttpRequestImpl implements HttpRequest {
     private final HttpMethod mHttpMethod;
     private final Map<String, String> mHeaders;
     private final UrlSanitizer mUrlSanitizer;
-    private final HttpProxy mProxy;
+    @Nullable
+    private final Proxy mProxy;
+    @Nullable
+    private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
     private final long mReadTimeout;
     private final long mConnectionTimeout;
     private final DevelopmentSslConfig mDevelopmentSslConfig;
     private final SSLSocketFactory mSslSocketFactory;
-    private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
 
     HttpRequestImpl(@NonNull URI uri,
                     @NonNull HttpMethod httpMethod,
                     @Nullable String body,
                     @NonNull Map<String, String> headers,
-                    @Nullable HttpProxy proxy,
-                    @Nullable SplitAuthenticator proxyAuthenticator,
+                    @Nullable Proxy proxy,
+                    @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
                     long readTimeout,
                     long connectionTimeout,
                     @Nullable DevelopmentSslConfig developmentSslConfig,
@@ -57,11 +58,7 @@ public class HttpRequestImpl implements HttpRequest {
         mHeaders = new HashMap<>(checkNotNull(headers));
         mUrlSanitizer = new UrlSanitizerImpl();
         mProxy = proxy;
-        if (proxyAuthenticator != null) {
-            mProxyAuthenticator = new SplitUrlConnectionAuthenticator(proxyAuthenticator); //TODO do not instantiate in this class
-        } else {
-            mProxyAuthenticator = null;
-        }
+        mProxyAuthenticator = proxyAuthenticator;
         mReadTimeout = readTimeout;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
@@ -112,11 +109,7 @@ public class HttpRequestImpl implements HttpRequest {
 
         HttpURLConnection connection;
         if (mProxy != null) {
-            Proxy proxy = new Proxy(
-                    Proxy.Type.HTTP,
-                    InetSocketAddress.createUnresolved(mProxy.getHost(), mProxy.getPort()));
-
-            connection = (HttpURLConnection) url.openConnection(proxy);
+            connection = (HttpURLConnection) url.openConnection(mProxy);
             if (mProxyAuthenticator != null) {
                 connection = mProxyAuthenticator.authenticate(connection);
             }

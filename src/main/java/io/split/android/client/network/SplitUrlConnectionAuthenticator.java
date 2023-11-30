@@ -1,7 +1,5 @@
 package io.split.android.client.network;
 
-import androidx.annotation.Nullable;
-
 import java.net.HttpURLConnection;
 import java.util.List;
 import java.util.Map;
