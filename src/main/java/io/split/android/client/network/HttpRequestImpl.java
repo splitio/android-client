@@ -106,6 +106,9 @@ public class HttpRequestImpl implements HttpRequest {
     @NonNull
     private HttpURLConnection setUpConnection(HttpMethod method) throws IOException {
         URL url = mUrlSanitizer.getUrl(mUri);
+        if (url == null) {
+            throw new IOException("Error parsing URL");
+        }
 
         HttpURLConnection connection;
         if (mProxy != null) {
