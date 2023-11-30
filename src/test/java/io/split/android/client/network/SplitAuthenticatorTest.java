@@ -68,7 +68,7 @@ public class SplitAuthenticatorTest {
 
         @Nullable
         @Override
-        public Map<String, List<String>> getHeaders() {
+        public Map<String, String> getHeaders() {
             return mRequest.getHeaders();
         }
 

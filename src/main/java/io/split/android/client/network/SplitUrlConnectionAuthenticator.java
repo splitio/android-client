@@ -1,7 +1,7 @@
 package io.split.android.client.network;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.List;
 import java.util.Map;
 
 class SplitUrlConnectionAuthenticator {
@@ -12,21 +12,21 @@ class SplitUrlConnectionAuthenticator {
         mProxyAuthenticator = splitAuthenticator;
     }
 
-    HttpURLConnection authenticate(HttpURLConnection connection) {
+    HttpURLConnection authenticate(HttpURLConnection connection) throws IOException {
         SplitAuthenticatedRequest authenticatedRequest = mProxyAuthenticator.authenticate(new SplitAuthenticatedRequest(connection));
         if (authenticatedRequest != null) {
-            Map<String, List<String>> headers = authenticatedRequest.getHeaders();
+            Map<String, String> headers = authenticatedRequest.getHeaders();
 
             if (headers != null) {
-                for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-                    if (entry == null) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    if (entry == null || entry.getKey() == null || entry.getValue() == null) {
                         continue;
                     }
 
-                    for (String value : entry.getValue()) {
-                        connection.addRequestProperty(entry.getKey(), value);
-                    }
+                    connection.addRequestProperty(entry.getKey(), entry.getValue());
                 }
+
+                return connection;
             }
         }
 
