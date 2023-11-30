@@ -3,7 +3,9 @@ package io.split.android.http;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import android.content.Context;
 
@@ -13,10 +15,14 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +39,7 @@ import io.split.android.client.network.HttpProxy;
 import io.split.android.client.network.HttpRequest;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.HttpStreamRequest;
+import io.split.android.client.network.UrlSanitizer;
 import io.split.android.client.utils.Json;
 import io.split.android.helpers.FileHelper;
 import okhttp3.Headers;
@@ -47,9 +54,19 @@ public class HttpClientTest {
     private MockWebServer mWebServer;
     private MockWebServer mProxyServer;
     private HttpClient client;
+    private UrlSanitizer mUrlSanitizer;
 
     @Before
     public void setup() throws IOException {
+        mUrlSanitizer = mock(UrlSanitizer.class);
+        when(mUrlSanitizer.getUrl(any())).thenAnswer(new Answer<URL>() {
+            @Override
+            public URL answer(InvocationOnMock invocation) throws Throwable {
+                URI argument = invocation.getArgument(0);
+
+                return new URL(argument.toString());
+            }
+        });
         setupServer();
     }
 
@@ -264,6 +281,7 @@ public class HttpClientTest {
 
         HttpClient client = new HttpClientImpl.Builder()
                 .setContext(mock(Context.class))
+                .setUrlSanitizer(mUrlSanitizer)
                 .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
                 .build();
 
@@ -331,7 +349,9 @@ public class HttpClientTest {
         mWebServer.setDispatcher(dispatcher);
         mWebServer.start();
 
-        client = new HttpClientImpl.Builder().build();
+        client = new HttpClientImpl.Builder()
+                .setUrlSanitizer(mUrlSanitizer)
+                .build();
     }
 
     private List<MySegment> parseMySegments(String json) {

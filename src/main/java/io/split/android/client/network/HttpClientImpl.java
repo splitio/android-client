@@ -14,7 +14,6 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLSocketFactory;
 
@@ -38,13 +37,16 @@ public class HttpClientImpl implements HttpClient {
     private final DevelopmentSslConfig mDevelopmentSslConfig;
     @Nullable
     private final SSLSocketFactory mSslSocketFactory;
+    @NonNull
+    private final UrlSanitizer mUrlSanitizer;
 
-    public HttpClientImpl(@Nullable HttpProxy proxy,
+    HttpClientImpl(@Nullable HttpProxy proxy,
                           @Nullable SplitAuthenticator proxyAuthenticator,
                           long readTimeout,
                           long connectionTimeout,
                           @Nullable DevelopmentSslConfig developmentSslConfig,
-                          @Nullable SSLSocketFactory sslSocketFactory) {
+                          @Nullable SSLSocketFactory sslSocketFactory,
+                          @NonNull UrlSanitizer urlSanitizer) {
         if (proxy != null) {
             mProxy = new Proxy(
                     Proxy.Type.HTTP,
@@ -67,6 +69,7 @@ public class HttpClientImpl implements HttpClient {
         mCommonHeaders = new HashMap<>();
         mStreamingHeaders = new HashMap<>();
         mSslSocketFactory = sslSocketFactory;
+        mUrlSanitizer = urlSanitizer;
     }
 
     @Override
@@ -86,7 +89,8 @@ public class HttpClientImpl implements HttpClient {
                 mReadTimeout,
                 mConnectionTimeout,
                 mDevelopmentSslConfig,
-                mSslSocketFactory);
+                mSslSocketFactory,
+                mUrlSanitizer);
     }
 
     public HttpRequest request(URI uri, HttpMethod requestMethod) {
@@ -164,6 +168,7 @@ public class HttpClientImpl implements HttpClient {
         private DevelopmentSslConfig mDevelopmentSslConfig = null;
         private SSLSocketFactory mSslSocketFactory = null;
         private Context mHostAppContext;
+        private UrlSanitizer mUrlSanitizer;
 
         public Builder setContext(Context context) {
             mHostAppContext = context;
@@ -200,6 +205,11 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
+        public Builder setUrlSanitizer(UrlSanitizer urlSanitizer) {
+            mUrlSanitizer = urlSanitizer;
+            return this;
+        }
+
         public HttpClient build() {
             if (mDevelopmentSslConfig == null) {
                 if (LegacyTlsUpdater.couldBeOld()) {
@@ -220,7 +230,8 @@ public class HttpClientImpl implements HttpClient {
                     mReadTimeout,
                     mConnectionTimeout,
                     mDevelopmentSslConfig,
-                    mSslSocketFactory);
+                    mSslSocketFactory,
+                    (mUrlSanitizer == null) ? new UrlSanitizerImpl() : mUrlSanitizer);
         }
     }
 }

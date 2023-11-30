@@ -1,4 +1,4 @@
-package io.split.android.client.network;
+package tests.service;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -6,6 +6,8 @@ import org.junit.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import io.split.android.client.network.UrlSanitizerImpl;
 
 public class UrlSanitizerTest {
 

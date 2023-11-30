@@ -51,12 +51,13 @@ public class HttpRequestImpl implements HttpRequest {
                     long readTimeout,
                     long connectionTimeout,
                     @Nullable DevelopmentSslConfig developmentSslConfig,
-                    SSLSocketFactory sslSocketFactory) {
+                    SSLSocketFactory sslSocketFactory,
+                    @NonNull UrlSanitizer urlSanitizer) {
         mUri = checkNotNull(uri);
         mHttpMethod = checkNotNull(httpMethod);
         mBody = body;
         mHeaders = new HashMap<>(checkNotNull(headers));
-        mUrlSanitizer = new UrlSanitizerImpl();
+        mUrlSanitizer = checkNotNull(urlSanitizer);
         mProxy = proxy;
         mProxyAuthenticator = proxyAuthenticator;
         mReadTimeout = readTimeout;
