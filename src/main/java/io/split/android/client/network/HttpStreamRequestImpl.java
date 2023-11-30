@@ -31,7 +31,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private BufferedReader mResponseBufferedReader;
     private InputStream mResponseInputStream;
 
-    private HttpStreamRequestImpl(@NonNull URI uri,
+    HttpStreamRequestImpl(@NonNull URI uri,
                                   @NonNull Map<String, String> headers,
                                   @Nullable SSLSocketFactory sslSocketFactory) {
         mUri = checkNotNull(uri);
