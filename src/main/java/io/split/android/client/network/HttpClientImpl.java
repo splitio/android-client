@@ -21,8 +21,6 @@ import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.logger.Logger;
 
 public class HttpClientImpl implements HttpClient {
-    private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
-    private static final long STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
 
     private final Map<String, String> mCommonHeaders;
     private final Map<String, String> mStreamingHeaders;
@@ -41,12 +39,12 @@ public class HttpClientImpl implements HttpClient {
     private final UrlSanitizer mUrlSanitizer;
 
     HttpClientImpl(@Nullable HttpProxy proxy,
-                          @Nullable SplitAuthenticator proxyAuthenticator,
-                          long readTimeout,
-                          long connectionTimeout,
-                          @Nullable DevelopmentSslConfig developmentSslConfig,
-                          @Nullable SSLSocketFactory sslSocketFactory,
-                          @NonNull UrlSanitizer urlSanitizer) {
+                   @Nullable SplitAuthenticator proxyAuthenticator,
+                   long readTimeout,
+                   long connectionTimeout,
+                   @Nullable DevelopmentSslConfig developmentSslConfig,
+                   @Nullable SSLSocketFactory sslSocketFactory,
+                   @NonNull UrlSanitizer urlSanitizer) {
         if (proxy != null) {
             mProxy = new Proxy(
                     Proxy.Type.HTTP,
@@ -142,22 +140,13 @@ public class HttpClientImpl implements HttpClient {
 
     }
 
-    private SplitUrlConnectionAuthenticator createBasicAuthenticator(String username, String password) {
-        return new SplitUrlConnectionAuthenticator(new SplitAuthenticator() {
+    private static SplitUrlConnectionAuthenticator createBasicAuthenticator(String username, String password) {
+        return new SplitUrlConnectionAuthenticator(new SplitBasicAuthenticator(username, password, new SplitBasicAuthenticator.Base64Encoder() {
             @Override
-            public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
-                String credential = basic(username, password);
-                request.setHeader(PROXY_AUTHORIZATION_HEADER, credential);
-
-                return request;
+            public String encode(String value) {
+                return Base64Util.encode(value);
             }
-        });
-    }
-
-    private static String basic(String username, String password) {
-        String usernameAndPassword = username + ":" + password;
-        String encoded = Base64Util.encode(usernameAndPassword);
-        return "Basic " + encoded;
+        }));
     }
 
     public static class Builder {

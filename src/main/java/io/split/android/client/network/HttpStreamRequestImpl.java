@@ -24,6 +24,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 public class HttpStreamRequestImpl implements HttpStreamRequest {
 
+    private static final int STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
     private final URI mUri;
     private final Map<String, String> mHeaders;
     private final SSLSocketFactory mSslSocketFactory;
@@ -80,6 +81,9 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         try {
             url = mUri.toURL();
             mConnection = (HttpURLConnection) url.openConnection();
+
+            mConnection.setReadTimeout(STREAMING_READ_TIMEOUT_IN_MILLISECONDS);
+
             addHeaders(mConnection);
 
             if (mSslSocketFactory != null) {

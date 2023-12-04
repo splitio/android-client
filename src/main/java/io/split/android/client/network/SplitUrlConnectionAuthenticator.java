@@ -1,6 +1,5 @@
 package io.split.android.client.network;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Map;
 
@@ -12,7 +11,7 @@ class SplitUrlConnectionAuthenticator {
         mProxyAuthenticator = splitAuthenticator;
     }
 
-    HttpURLConnection authenticate(HttpURLConnection connection) throws IOException {
+    HttpURLConnection authenticate(HttpURLConnection connection) {
         SplitAuthenticatedRequest authenticatedRequest = mProxyAuthenticator.authenticate(new SplitAuthenticatedRequest(connection));
         if (authenticatedRequest != null) {
             Map<String, String> headers = authenticatedRequest.getHeaders();
