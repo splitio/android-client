@@ -122,11 +122,19 @@ public class HttpRequestImpl implements HttpRequest {
         }
 
         if (mReadTimeout > 0) {
-            connection.setReadTimeout((int) mReadTimeout);
+            if (mReadTimeout > Integer.MAX_VALUE) {
+                connection.setReadTimeout(Integer.MAX_VALUE);
+            } else {
+                connection.setReadTimeout((int) mReadTimeout);
+            }
         }
 
         if (mConnectionTimeout > 0) {
-            connection.setConnectTimeout((int) mConnectionTimeout);
+            if (mConnectionTimeout > Integer.MAX_VALUE) {
+                connection.setReadTimeout(Integer.MAX_VALUE);
+            } else {
+                connection.setConnectTimeout((int) mConnectionTimeout);
+            }
         }
 
         if (mSslSocketFactory != null) {
