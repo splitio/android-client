@@ -61,8 +61,9 @@ public class SseClientImpl implements SseClient {
 
     @Override
     public void disconnect() {
-        mIsDisconnectCalled.set(true);
-        close();
+        if (!mIsDisconnectCalled.getAndSet(true)) {
+            close();
+        }
     }
 
     private void close() {
@@ -101,8 +102,8 @@ public class SseClientImpl implements SseClient {
                     Map<String, String> values = new HashMap<>();
                     while ((inputLine = bufferedReader.readLine()) != null) {
                         if (mEventStreamParser.parseLineAndAppendValue(inputLine, values)) {
-                            if(!isConnectionConfirmed) {
-                                if(mEventStreamParser.isKeepAlive(values) || mSseHandler.isConnectionConfirmed(values)) {
+                            if (!isConnectionConfirmed) {
+                                if (mEventStreamParser.isKeepAlive(values) || mSseHandler.isConnectionConfirmed(values)) {
                                     Logger.d("Streaming connection success");
                                     isConnectionConfirmed = true;
                                     connectionListener.onConnectionSuccess();
@@ -130,7 +131,7 @@ public class SseClientImpl implements SseClient {
             logError("An error has occurred while creating stream Url ", e);
             isErrorRetryable = false;
         } catch (IOException e) {
-            logError("An error has occurred while parsing stream from: ", e);
+            Logger.d("An error has occurred while parsing stream: ", e);
             isErrorRetryable = true;
         } catch (Exception e) {
             logError("An unexpected error has occurred while receiving stream events from: ", e);

@@ -1,5 +1,7 @@
 package io.split.android.client.network;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -16,12 +18,10 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.utils.logger.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
+
+import io.split.android.client.utils.logger.Logger;
 
 public class HttpStreamRequestImpl implements HttpStreamRequest {
 
@@ -29,8 +29,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private final URI mUri;
     private final Map<String, String> mHeaders;
     private HttpURLConnection mConnection;
-    private BufferedReader mResponseBufferedReader;
-    private InputStream mResponseInputStream;
+    private BufferedReader mBufferedReader;
     @Nullable
     private final Proxy mProxy;
     @Nullable
@@ -68,26 +67,21 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     @Override
     public void close() {
         Logger.d("Closing streaming connection");
-        if (mResponseInputStream != null) {
-            try {
-                mResponseInputStream.close();
-            } catch (IOException e) {
-                Logger.d("Unknown error closing streaming connection: " + e.getLocalizedMessage());
-            } catch (Exception e) {
-                Logger.d("Unknown error closing stream: " + e.getLocalizedMessage());
-            }
-        }
-        if (mResponseBufferedReader != null) {
-            try {
-                mResponseBufferedReader.close();
-            } catch (IOException e) {
-                Logger.d("Buffer already closed");
-            } catch (Exception e) {
-                Logger.d("Unknown error closing buffer: " + e.getLocalizedMessage());
-            }
+        if (mBufferedReader != null) {
+            closeBufferedReader();
         }
         mConnection.disconnect();
         Logger.d("Streaming connection closed");
+    }
+
+    private void closeBufferedReader() {
+        try {
+            mBufferedReader.close();
+        } catch (IOException e) {
+            Logger.d("Buffer already closed");
+        } catch (Exception e) {
+            Logger.d("Unknown error closing buffer: " + e.getLocalizedMessage());
+        }
     }
 
     private HttpStreamResponse getRequest() throws HttpException {
@@ -162,13 +156,17 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private HttpStreamResponse buildResponse(HttpURLConnection connection) throws IOException {
         int responseCode = connection.getResponseCode();
         if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
-            mResponseInputStream = connection.getInputStream();
-            if (mResponseInputStream != null) {
-                mResponseBufferedReader = new BufferedReader(new InputStreamReader(mResponseInputStream));
+            InputStream inputStream = connection.getInputStream();
+            if (inputStream != null) {
+                if (mBufferedReader != null) {
+                    closeBufferedReader();
+                }
+                mBufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
-                return new HttpStreamResponseImpl(responseCode, mResponseBufferedReader);
+                return new HttpStreamResponseImpl(responseCode, mBufferedReader);
             }
         }
+
         return new HttpStreamResponseImpl(responseCode);
     }
 }
