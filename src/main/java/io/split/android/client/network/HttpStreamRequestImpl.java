@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
+import java.net.Proxy;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
@@ -27,16 +28,30 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private static final int STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
     private final URI mUri;
     private final Map<String, String> mHeaders;
-    private final SSLSocketFactory mSslSocketFactory;
     private HttpURLConnection mConnection;
     private BufferedReader mResponseBufferedReader;
     private InputStream mResponseInputStream;
+    @Nullable
+    private final Proxy mProxy;
+    @Nullable
+    private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
+    private final long mConnectionTimeout;
+    private final DevelopmentSslConfig mDevelopmentSslConfig;
+    private final SSLSocketFactory mSslSocketFactory;
 
     HttpStreamRequestImpl(@NonNull URI uri,
-                                  @NonNull Map<String, String> headers,
-                                  @Nullable SSLSocketFactory sslSocketFactory) {
+                          @NonNull Map<String, String> headers,
+                          @Nullable Proxy proxy,
+                          @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                          long connectionTimeout,
+                          @Nullable DevelopmentSslConfig developmentSslConfig,
+                          @Nullable SSLSocketFactory sslSocketFactory) {
         mUri = checkNotNull(uri);
         mHeaders = new HashMap<>(checkNotNull(headers));
+        mProxy = proxy;
+        mProxyAuthenticator = proxyAuthenticator;
+        mConnectionTimeout = connectionTimeout;
+        mDevelopmentSslConfig = developmentSslConfig;
         mSslSocketFactory = sslSocketFactory;
     }
 
@@ -80,21 +95,48 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         HttpStreamResponse response;
         try {
             url = mUri.toURL();
-            mConnection = (HttpURLConnection) url.openConnection();
+            if (mProxy != null) {
+                mConnection = (HttpURLConnection) url.openConnection(mProxy);
+                if (mProxyAuthenticator != null) {
+                    mConnection = mProxyAuthenticator.authenticate(mConnection);
+                }
+            } else {
+                mConnection = (HttpURLConnection) url.openConnection();
+            }
 
             mConnection.setReadTimeout(STREAMING_READ_TIMEOUT_IN_MILLISECONDS);
 
-            addHeaders(mConnection);
+            if (mConnectionTimeout > 0) {
+                if (mConnectionTimeout > Integer.MAX_VALUE) {
+                    mConnection.setReadTimeout(Integer.MAX_VALUE);
+                } else {
+                    mConnection.setConnectTimeout((int) mConnectionTimeout);
+                }
+            }
 
             if (mSslSocketFactory != null) {
                 Logger.d("Setting  SSL socket factory in stream request");
                 if (mConnection instanceof HttpsURLConnection) {
                     ((HttpsURLConnection) mConnection).setSSLSocketFactory(mSslSocketFactory);
                 } else {
-                    Logger.d("Failed to set SSL socket factory in stream request. Connection is not SSL");
+                    Logger.e("Failed to set SSL socket factory.");
                 }
             }
 
+            if (mDevelopmentSslConfig != null) {
+                try {
+                    if (mConnection instanceof HttpsURLConnection) {
+                        ((HttpsURLConnection) mConnection).setSSLSocketFactory(mDevelopmentSslConfig.getSslSocketFactory());
+                        ((HttpsURLConnection) mConnection).setHostnameVerifier(mDevelopmentSslConfig.getHostnameVerifier());
+                    } else {
+                        Logger.e("Failed to set SSL socket factory in stream request.");
+                    }
+                } catch (Exception ex) {
+                    Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());
+                }
+            }
+
+            addHeaders(mConnection, mHeaders);
             response = buildResponse(mConnection);
 
         } catch (MalformedURLException e) {
@@ -107,13 +149,13 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         return response;
     }
 
-    private void addHeaders(HttpURLConnection request) {
-        if (mHeaders == null) {
-            return;
-        }
+    private static void addHeaders(HttpURLConnection request, Map<String, String> headers) {
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            if (entry == null) {
+                continue;
+            }
 
-        for (Map.Entry<String, String> entry : mHeaders.entrySet()) {
-            request.setRequestProperty(entry.getKey(), entry.getValue());
+            request.addRequestProperty(entry.getKey(), entry.getValue());
         }
     }
 

@@ -141,7 +141,7 @@ public class HttpRequestImpl implements HttpRequest {
             if (connection instanceof HttpsURLConnection) {
                 ((HttpsURLConnection) connection).setSSLSocketFactory(mSslSocketFactory);
             } else {
-                Logger.e("Failed to set SSL socket factory in stream request. Connection is not SSL");
+                Logger.e("Failed to set SSL socket factory.");
             }
         }
 
@@ -151,7 +151,7 @@ public class HttpRequestImpl implements HttpRequest {
                     ((HttpsURLConnection) connection).setSSLSocketFactory(mDevelopmentSslConfig.getSslSocketFactory());
                     ((HttpsURLConnection) connection).setHostnameVerifier(mDevelopmentSslConfig.getHostnameVerifier());
                 } else {
-                    Logger.e("Failed to set SSL socket factory in stream request. Connection is not SSL");
+                    Logger.e("Failed to set SSL socket factory in stream request.");
                 }
             } catch (Exception ex) {
                 Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());

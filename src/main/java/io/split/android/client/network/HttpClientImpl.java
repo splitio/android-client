@@ -102,7 +102,13 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpStreamRequest streamRequest(URI uri) {
-        return new HttpStreamRequestImpl(uri, mStreamingHeaders, mSslSocketFactory);
+        return new HttpStreamRequestImpl(uri,
+                mStreamingHeaders,
+                mProxy,
+                mProxyAuthenticator,
+                mConnectionTimeout,
+                mDevelopmentSslConfig,
+                mSslSocketFactory);
     }
 
     @Override
