@@ -111,45 +111,65 @@ public class HttpRequestImpl implements HttpRequest {
             throw new IOException("Error parsing URL");
         }
 
+        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, method, mHeaders);
+        applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
+        applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
+
+        return connection;
+    }
+
+    private static HttpURLConnection openConnection(@Nullable Proxy proxy,
+                                                    @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                                                    @NonNull URL url,
+                                                    @NonNull HttpMethod method,
+                                                    @NonNull Map<String, String> headers) throws IOException {
         HttpURLConnection connection;
-        if (mProxy != null) {
-            connection = (HttpURLConnection) url.openConnection(mProxy);
-            if (mProxyAuthenticator != null) {
-                connection = mProxyAuthenticator.authenticate(connection);
+        if (proxy != null) {
+            connection = (HttpURLConnection) url.openConnection(proxy);
+            if (proxyAuthenticator != null) {
+                connection = proxyAuthenticator.authenticate(connection);
             }
         } else {
             connection = (HttpURLConnection) url.openConnection();
         }
+        connection.setRequestMethod(method.name());
+        addHeaders(connection, headers);
 
-        if (mReadTimeout > 0) {
-            if (mReadTimeout > Integer.MAX_VALUE) {
+        return connection;
+    }
+
+    private static void applyTimeouts(long readTimeout, long connectionTimeout, HttpURLConnection connection) {
+        if (readTimeout > 0) {
+            if (readTimeout > Integer.MAX_VALUE) {
                 connection.setReadTimeout(Integer.MAX_VALUE);
             } else {
-                connection.setReadTimeout((int) mReadTimeout);
+                connection.setReadTimeout((int) readTimeout);
             }
         }
 
-        if (mConnectionTimeout > 0) {
-            if (mConnectionTimeout > Integer.MAX_VALUE) {
+        if (connectionTimeout > 0) {
+            if (connectionTimeout > Integer.MAX_VALUE) {
                 connection.setReadTimeout(Integer.MAX_VALUE);
             } else {
-                connection.setConnectTimeout((int) mConnectionTimeout);
+                connection.setConnectTimeout((int) connectionTimeout);
             }
         }
+    }
 
-        if (mSslSocketFactory != null) {
+    private static void applySslConfig(SSLSocketFactory sslSocketFactory, DevelopmentSslConfig developmentSslConfig, HttpURLConnection connection) {
+        if (sslSocketFactory != null) {
             if (connection instanceof HttpsURLConnection) {
-                ((HttpsURLConnection) connection).setSSLSocketFactory(mSslSocketFactory);
+                ((HttpsURLConnection) connection).setSSLSocketFactory(sslSocketFactory);
             } else {
                 Logger.e("Failed to set SSL socket factory.");
             }
         }
 
-        if (mDevelopmentSslConfig != null) {
+        if (developmentSslConfig != null) {
             try {
                 if (connection instanceof HttpsURLConnection) {
-                    ((HttpsURLConnection) connection).setSSLSocketFactory(mDevelopmentSslConfig.getSslSocketFactory());
-                    ((HttpsURLConnection) connection).setHostnameVerifier(mDevelopmentSslConfig.getHostnameVerifier());
+                    ((HttpsURLConnection) connection).setSSLSocketFactory(developmentSslConfig.getSslSocketFactory());
+                    ((HttpsURLConnection) connection).setHostnameVerifier(developmentSslConfig.getHostnameVerifier());
                 } else {
                     Logger.e("Failed to set SSL socket factory in stream request.");
                 }
@@ -157,11 +177,6 @@ public class HttpRequestImpl implements HttpRequest {
                 Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());
             }
         }
-
-        connection.setRequestMethod(method.name());
-        addHeaders(connection, mHeaders);
-
-        return connection;
     }
 
     private HttpResponse postRequest() throws IOException {
