@@ -17,6 +17,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
@@ -37,6 +38,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private final long mConnectionTimeout;
     private final DevelopmentSslConfig mDevelopmentSslConfig;
     private final SSLSocketFactory mSslSocketFactory;
+    private final AtomicBoolean mWasRetried = new AtomicBoolean(false);
 
     HttpStreamRequestImpl(@NonNull URI uri,
                           @NonNull Map<String, String> headers,
@@ -84,61 +86,99 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     private HttpStreamResponse getRequest() throws HttpException {
         URL url;
-        HttpStreamResponse response;
+        HttpStreamResponse response = null;
         try {
             url = mUri.toURL();
-            if (mProxy != null) {
-                mConnection = (HttpURLConnection) url.openConnection(mProxy);
-                if (mProxyAuthenticator != null) {
-                    mConnection = mProxyAuthenticator.authenticate(mConnection);
-                }
-            } else {
-                mConnection = (HttpURLConnection) url.openConnection();
-            }
-
-            mConnection.setReadTimeout(STREAMING_READ_TIMEOUT_IN_MILLISECONDS);
-
-            if (mConnectionTimeout > 0) {
-                if (mConnectionTimeout > Integer.MAX_VALUE) {
-                    mConnection.setReadTimeout(Integer.MAX_VALUE);
-                } else {
-                    mConnection.setConnectTimeout((int) mConnectionTimeout);
-                }
-            }
-
-            if (mSslSocketFactory != null) {
-                Logger.d("Setting  SSL socket factory in stream request");
-                if (mConnection instanceof HttpsURLConnection) {
-                    ((HttpsURLConnection) mConnection).setSSLSocketFactory(mSslSocketFactory);
-                } else {
-                    Logger.e("Failed to set SSL socket factory.");
-                }
-            }
-
-            if (mDevelopmentSslConfig != null) {
-                try {
-                    if (mConnection instanceof HttpsURLConnection) {
-                        ((HttpsURLConnection) mConnection).setSSLSocketFactory(mDevelopmentSslConfig.getSslSocketFactory());
-                        ((HttpsURLConnection) mConnection).setHostnameVerifier(mDevelopmentSslConfig.getHostnameVerifier());
-                    } else {
-                        Logger.e("Failed to set SSL socket factory in stream request.");
-                    }
-                } catch (Exception ex) {
-                    Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());
-                }
-            }
-
-            addHeaders(mConnection, mHeaders);
+            mConnection = openConnection(url, mProxy, mProxyAuthenticator, mHeaders, false);
+            applyTimeouts(mConnection, STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout);
+            applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, mConnection);
             response = buildResponse(mConnection);
 
+            if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
+                response = handleAuthentication(response, url);
+            }
         } catch (MalformedURLException e) {
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
         } catch (ProtocolException e) {
             throw new HttpException("Http method not allowed: " + e.getLocalizedMessage());
         } catch (IOException e) {
             throw new HttpException("Something happened while retrieving data: " + e.getLocalizedMessage());
+        } finally {
+            if (mConnection != null) {
+                mConnection.disconnect();
+            }
         }
         return response;
+    }
+
+    private HttpStreamResponse handleAuthentication(HttpStreamResponse response, URL url) throws HttpException {
+        if (!mWasRetried.getAndSet(true)) {
+            try {
+                Logger.d("Retrying with proxy authentication");
+                mConnection = openConnection(url, mProxy, mProxyAuthenticator, mHeaders, true);
+                applyTimeouts(mConnection, STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout);
+                applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, mConnection);
+                response = buildResponse(mConnection);
+            } catch (Exception ex) {
+                throw new HttpException("Something happened while retrieving data: " + ex.getLocalizedMessage());
+            }
+        }
+        return response;
+    }
+
+    private static void applySslConfig(SSLSocketFactory sslSocketFactory, DevelopmentSslConfig developmentSslConfig, HttpURLConnection connection) {
+        if (sslSocketFactory != null) {
+            Logger.d("Setting  SSL socket factory in stream request");
+            if (connection instanceof HttpsURLConnection) {
+                ((HttpsURLConnection) connection).setSSLSocketFactory(sslSocketFactory);
+            } else {
+                Logger.e("Failed to set SSL socket factory.");
+            }
+        }
+
+        if (developmentSslConfig != null) {
+            try {
+                if (connection instanceof HttpsURLConnection) {
+                    ((HttpsURLConnection) connection).setSSLSocketFactory(developmentSslConfig.getSslSocketFactory());
+                    ((HttpsURLConnection) connection).setHostnameVerifier(developmentSslConfig.getHostnameVerifier());
+                } else {
+                    Logger.e("Failed to set SSL socket factory in stream request.");
+                }
+            } catch (Exception ex) {
+                Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());
+            }
+        }
+    }
+
+    private static void applyTimeouts(HttpURLConnection connection, int readTimeout, long connectionTimeout) {
+        connection.setReadTimeout(readTimeout);
+
+        if (connectionTimeout > 0) {
+            if (connectionTimeout > Integer.MAX_VALUE) {
+                connection.setReadTimeout(Integer.MAX_VALUE);
+            } else {
+                connection.setConnectTimeout((int) connectionTimeout);
+            }
+        }
+    }
+
+    private HttpURLConnection openConnection(@NonNull URL url,
+                                             @Nullable Proxy proxy,
+                                             @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                                             @NonNull Map<String, String> headers,
+                                             boolean useProxyAuthenticator) throws IOException {
+        HttpURLConnection connection;
+        if (proxy != null) {
+            connection = (HttpURLConnection) url.openConnection(proxy);
+            if (useProxyAuthenticator && proxyAuthenticator != null) {
+                connection = proxyAuthenticator.authenticate(connection);
+            }
+        } else {
+            connection = (HttpURLConnection) url.openConnection();
+        }
+        addHeaders(connection, headers);
+
+        return connection;
     }
 
     private static void addHeaders(HttpURLConnection request, Map<String, String> headers) {

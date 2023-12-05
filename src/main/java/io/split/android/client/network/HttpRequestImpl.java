@@ -2,6 +2,10 @@ package io.split.android.client.network;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
+import static io.split.android.client.network.HttpRequestHelper.applyTimeouts;
+import static io.split.android.client.network.HttpRequestHelper.openConnection;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -18,8 +22,8 @@ import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.logger.Logger;
@@ -41,6 +45,7 @@ public class HttpRequestImpl implements HttpRequest {
     private final long mConnectionTimeout;
     private final DevelopmentSslConfig mDevelopmentSslConfig;
     private final SSLSocketFactory mSslSocketFactory;
+    private final AtomicBoolean mWasRetried = new AtomicBoolean(false);
 
     HttpRequestImpl(@NonNull URI uri,
                     @NonNull HttpMethod httpMethod,
@@ -73,11 +78,7 @@ public class HttpRequestImpl implements HttpRequest {
             case GET:
                 return getRequest();
             case POST: {
-                try {
-                    return postRequest();
-                } catch (IOException e) {
-                    throw new HttpException("Error while posting data: " + e.getLocalizedMessage());
-                }
+                return postRequest();
             }
             default:
                 throw new IllegalArgumentException("Request HTTP Method not valid: " + mHttpMethod.name());
@@ -88,8 +89,12 @@ public class HttpRequestImpl implements HttpRequest {
         HttpResponse response;
         HttpURLConnection connection = null;
         try {
-            connection = setUpConnection(mHttpMethod);
+            connection = setUpConnection(mHttpMethod, false);
             response = buildResponse(connection);
+
+            if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
+                response = handleProxyAuthentication(response, true);
+            }
         } catch (MalformedURLException e) {
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
         } catch (ProtocolException e) {
@@ -101,121 +106,82 @@ public class HttpRequestImpl implements HttpRequest {
                 connection.disconnect();
             }
         }
+
         return response;
     }
 
-    @NonNull
-    private HttpURLConnection setUpConnection(HttpMethod method) throws IOException {
-        URL url = mUrlSanitizer.getUrl(mUri);
-        if (url == null) {
-            throw new IOException("Error parsing URL");
-        }
-
-        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, method, mHeaders);
-        applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
-        applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
-
-        return connection;
-    }
-
-    private static HttpURLConnection openConnection(@Nullable Proxy proxy,
-                                                    @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
-                                                    @NonNull URL url,
-                                                    @NonNull HttpMethod method,
-                                                    @NonNull Map<String, String> headers) throws IOException {
-        HttpURLConnection connection;
-        if (proxy != null) {
-            connection = (HttpURLConnection) url.openConnection(proxy);
-            if (proxyAuthenticator != null) {
-                connection = proxyAuthenticator.authenticate(connection);
-            }
-        } else {
-            connection = (HttpURLConnection) url.openConnection();
-        }
-        connection.setRequestMethod(method.name());
-        addHeaders(connection, headers);
-
-        return connection;
-    }
-
-    private static void applyTimeouts(long readTimeout, long connectionTimeout, HttpURLConnection connection) {
-        if (readTimeout > 0) {
-            if (readTimeout > Integer.MAX_VALUE) {
-                connection.setReadTimeout(Integer.MAX_VALUE);
-            } else {
-                connection.setReadTimeout((int) readTimeout);
-            }
-        }
-
-        if (connectionTimeout > 0) {
-            if (connectionTimeout > Integer.MAX_VALUE) {
-                connection.setReadTimeout(Integer.MAX_VALUE);
-            } else {
-                connection.setConnectTimeout((int) connectionTimeout);
-            }
-        }
-    }
-
-    private static void applySslConfig(SSLSocketFactory sslSocketFactory, DevelopmentSslConfig developmentSslConfig, HttpURLConnection connection) {
-        if (sslSocketFactory != null) {
-            if (connection instanceof HttpsURLConnection) {
-                ((HttpsURLConnection) connection).setSSLSocketFactory(sslSocketFactory);
-            } else {
-                Logger.e("Failed to set SSL socket factory.");
-            }
-        }
-
-        if (developmentSslConfig != null) {
-            try {
-                if (connection instanceof HttpsURLConnection) {
-                    ((HttpsURLConnection) connection).setSSLSocketFactory(developmentSslConfig.getSslSocketFactory());
-                    ((HttpsURLConnection) connection).setHostnameVerifier(developmentSslConfig.getHostnameVerifier());
-                } else {
-                    Logger.e("Failed to set SSL socket factory in stream request.");
-                }
-            } catch (Exception ex) {
-                Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());
-            }
-        }
-    }
-
-    private HttpResponse postRequest() throws IOException {
-
+    private HttpResponse postRequest() throws HttpException {
         if (mBody == null) {
-            throw new IOException("Json data is null");
+            throw new HttpException("Json data is null");
         }
 
         HttpURLConnection connection = null;
-        HttpResponse httpResponse;
+        HttpResponse response;
         try {
-            connection = setUpConnection(mHttpMethod);
-            connection.setRequestProperty(CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8);
+            connection = buildPostConnection(mHttpMethod, false);
+            response = buildResponse(connection);
 
-            if (!mBody.trim().isEmpty()) {
-                connection.setDoOutput(true);
-                try (OutputStream bodyStream = connection.getOutputStream()) {
-                    bodyStream.write(mBody.getBytes());
-                    bodyStream.flush();
-                }
+            if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
+                response = handleProxyAuthentication(response, false);
             }
-            httpResponse = buildResponse(connection);
+        } catch (IOException e) {
+            throw new HttpException("Something happened while posting data: " + e.getLocalizedMessage());
         } finally {
             if (connection != null) {
                 connection.disconnect();
             }
         }
 
-        return httpResponse;
+        return response;
     }
 
-    private static void addHeaders(HttpURLConnection request, Map<String, String> headers) {
-        for (Map.Entry<String, String> entry : headers.entrySet()) {
-            if (entry == null) {
-                continue;
+    private HttpResponse handleProxyAuthentication(HttpResponse originalResponse, boolean isGet) throws HttpException {
+        HttpURLConnection connection = null;
+        if (!mWasRetried.getAndSet(true)) {
+            try {
+                Logger.d("Retrying with proxy authentication");
+                connection = (isGet) ? setUpConnection(mHttpMethod, true) : buildPostConnection(mHttpMethod, true);
+                return buildResponse(connection);
+            } catch (IOException ex) {
+                throw new HttpException("Something happened while retrieving data: " + ex.getLocalizedMessage());
+            } finally {
+                if (connection != null) {
+                    connection.disconnect();
+                }
             }
-
-            request.addRequestProperty(entry.getKey(), entry.getValue());
         }
+
+        return originalResponse;
+    }
+
+    private HttpURLConnection buildPostConnection(HttpMethod httpMethod, boolean useProxyAuthenticator) throws IOException {
+        HttpURLConnection connection = setUpConnection(httpMethod, useProxyAuthenticator);
+
+        connection.setRequestProperty(CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8);
+
+        if (!mBody.trim().isEmpty()) {
+            connection.setDoOutput(true);
+            try (OutputStream bodyStream = connection.getOutputStream()) {
+                bodyStream.write(mBody.getBytes());
+                bodyStream.flush();
+            }
+        }
+
+        return connection;
+    }
+
+    @NonNull
+    private HttpURLConnection setUpConnection(HttpMethod method, boolean authenticate) throws IOException {
+        URL url = mUrlSanitizer.getUrl(mUri);
+        if (url == null) {
+            throw new IOException("Error parsing URL");
+        }
+
+        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, method, mHeaders, authenticate);
+        applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
+        applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
+
+        return connection;
     }
 
     private static HttpResponse buildResponse(HttpURLConnection connection) throws IOException {
