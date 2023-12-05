@@ -77,8 +77,6 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private void closeBufferedReader() {
         try {
             mBufferedReader.close();
-        } catch (IOException e) {
-            Logger.d("Buffer already closed");
         } catch (Exception e) {
             Logger.d("Unknown error closing buffer: " + e.getLocalizedMessage());
         }

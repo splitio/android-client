@@ -56,8 +56,8 @@ public class HttpRequestImpl implements HttpRequest {
         mUri = checkNotNull(uri);
         mHttpMethod = checkNotNull(httpMethod);
         mBody = body;
-        mHeaders = new HashMap<>(checkNotNull(headers));
         mUrlSanitizer = checkNotNull(urlSanitizer);
+        mHeaders = new HashMap<>(checkNotNull(headers));
         mProxy = proxy;
         mProxyAuthenticator = proxyAuthenticator;
         mReadTimeout = readTimeout;
@@ -173,7 +173,7 @@ public class HttpRequestImpl implements HttpRequest {
         HttpURLConnection connection = null;
         HttpResponse httpResponse;
         try {
-            connection = (HttpURLConnection) setUpConnection(mHttpMethod);
+            connection = setUpConnection(mHttpMethod);
             connection.setRequestProperty(CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8);
 
             if (!mBody.trim().isEmpty()) {

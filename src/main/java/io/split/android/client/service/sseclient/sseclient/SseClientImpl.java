@@ -131,7 +131,7 @@ public class SseClientImpl implements SseClient {
             logError("An error has occurred while creating stream Url ", e);
             isErrorRetryable = false;
         } catch (IOException e) {
-            Logger.d("An error has occurred while parsing stream: ", e);
+            Logger.d("An error has occurred while parsing stream: " + e.getLocalizedMessage());
             isErrorRetryable = true;
         } catch (Exception e) {
             logError("An unexpected error has occurred while receiving stream events from: ", e);
