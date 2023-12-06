@@ -45,22 +45,8 @@ public class HttpClientImpl implements HttpClient {
                    @Nullable DevelopmentSslConfig developmentSslConfig,
                    @Nullable SSLSocketFactory sslSocketFactory,
                    @NonNull UrlSanitizer urlSanitizer) {
-        if (proxy != null) {
-            mProxy = new Proxy(
-                    Proxy.Type.HTTP,
-                    InetSocketAddress.createUnresolved(proxy.getHost(), proxy.getPort()));
-            if (proxyAuthenticator != null) {
-                mProxyAuthenticator = new SplitUrlConnectionAuthenticator(proxyAuthenticator);
-            } else if (!Strings.isNullOrEmpty(proxy.getUsername())) {
-                mProxyAuthenticator = createBasicAuthenticator(proxy.getUsername(), proxy.getPassword());
-            } else {
-                mProxyAuthenticator = null;
-            }
-        } else {
-            mProxy = null;
-            mProxyAuthenticator = null;
-        }
-
+        mProxy = initializeProxy(proxy);
+        mProxyAuthenticator = initializeProxyAuthenticator(proxy, proxyAuthenticator);
         mReadTimeout = readTimeout;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
@@ -145,6 +131,28 @@ public class HttpClientImpl implements HttpClient {
     @Override
     public void close() {
 
+    }
+
+    private Proxy initializeProxy(HttpProxy proxy) {
+        if (proxy != null) {
+            return new Proxy(
+                    Proxy.Type.HTTP,
+                    InetSocketAddress.createUnresolved(proxy.getHost(), proxy.getPort()));
+        }
+
+        return null;
+    }
+
+    private SplitUrlConnectionAuthenticator initializeProxyAuthenticator(HttpProxy proxy, SplitAuthenticator proxyAuthenticator) {
+        if (proxy == null) {
+            return null;
+        } else if (proxyAuthenticator != null) {
+            return new SplitUrlConnectionAuthenticator(proxyAuthenticator);
+        } else if (!Strings.isNullOrEmpty(proxy.getUsername())) {
+            return createBasicAuthenticator(proxy.getUsername(), proxy.getPassword());
+        }
+
+        return null;
     }
 
     private static SplitUrlConnectionAuthenticator createBasicAuthenticator(String username, String password) {
