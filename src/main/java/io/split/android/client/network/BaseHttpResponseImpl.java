@@ -8,7 +8,7 @@ public abstract class BaseHttpResponseImpl implements BaseHttpResponse {
     protected static final int HTTP_BAD_REQUEST = 400;
     protected static final int HTTP_INTERNAL_SERVER_ERROR = 500;
 
-    private int mHttpStatus;
+    private final int mHttpStatus;
 
     protected BaseHttpResponseImpl(int httpStatus) {
         mHttpStatus = httpStatus;

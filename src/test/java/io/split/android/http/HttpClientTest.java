@@ -1,6 +1,9 @@
 package io.split.android.http;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,6 +11,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.content.Context;
+
+import androidx.annotation.NonNull;
 
 import com.google.gson.reflect.TypeToken;
 
@@ -26,6 +31,8 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.MySegment;
@@ -39,6 +46,8 @@ import io.split.android.client.network.HttpProxy;
 import io.split.android.client.network.HttpRequest;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.HttpStreamRequest;
+import io.split.android.client.network.SplitAuthenticatedRequest;
+import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.network.UrlSanitizer;
 import io.split.android.client.utils.Json;
 import io.split.android.helpers.FileHelper;
@@ -291,6 +300,116 @@ public class HttpClientTest {
 
         assertTrue(execute.isSuccess());
         assertEquals("GET", recordedRequest.getMethod());
+        mProxyServer.shutdown();
+    }
+
+    @Test
+    public void getRequestsThatRequireProxyAuthenticationAreRetried() throws IOException, HttpException, InterruptedException {
+        CountDownLatch authLatch = new CountDownLatch(1);
+        CountDownLatch failureLatch = new CountDownLatch(1);
+        CountDownLatch successLatch = new CountDownLatch(1);
+        mProxyServer = new MockWebServer();
+        mProxyServer.setDispatcher(new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                if (request.getHeader("Proxy-Authorization") == null) {
+                    failureLatch.countDown();
+                    return new MockResponse().setResponseCode(407);
+                }
+
+                successLatch.countDown();
+                return new MockResponse().setResponseCode(200);
+            }
+        });
+        mProxyServer.start();
+
+        HttpClient client = new HttpClientImpl.Builder()
+                .setContext(mock(Context.class))
+                .setUrlSanitizer(mUrlSanitizer)
+                .setProxyAuthenticator(new SplitAuthenticator() {
+                    @Override
+                    public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+                        authLatch.countDown();
+                        request.setHeader("Proxy-Authorization", "my-auth");
+
+                        return request;
+                    }
+                })
+                .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
+                .build();
+
+        HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.GET);
+        request.execute();
+        RecordedRequest recordedRequest1 = mProxyServer.takeRequest();
+        RecordedRequest recordedRequest2 = mProxyServer.takeRequest();
+
+        boolean failureAwait = failureLatch.await(5, TimeUnit.SECONDS);
+        boolean authAwait = authLatch.await(5, TimeUnit.SECONDS);
+        boolean successAwait = successLatch.await(5, TimeUnit.SECONDS);
+
+        assertNotSame(recordedRequest1, recordedRequest2);
+        assertNull(recordedRequest1.getHeader("Proxy-Authorization"));
+        assertNotNull(recordedRequest2.getHeader("Proxy-Authorization"));
+        assertEquals("GET", recordedRequest1.getMethod());
+        assertEquals("GET", recordedRequest2.getMethod());
+        assertTrue(failureAwait);
+        assertTrue(authAwait);
+        assertTrue(successAwait);
+        mProxyServer.shutdown();
+    }
+
+    @Test
+    public void postRequestsThatRequireProxyAuthenticationAreRetried() throws IOException, HttpException, InterruptedException {
+        CountDownLatch authLatch = new CountDownLatch(1);
+        CountDownLatch failureLatch = new CountDownLatch(1);
+        CountDownLatch successLatch = new CountDownLatch(1);
+        mProxyServer = new MockWebServer();
+        mProxyServer.setDispatcher(new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                if (request.getHeader("Proxy-Authorization") == null) {
+                    failureLatch.countDown();
+                    return new MockResponse().setResponseCode(407);
+                }
+
+                successLatch.countDown();
+                return new MockResponse().setResponseCode(200);
+            }
+        });
+        mProxyServer.start();
+
+        HttpClient client = new HttpClientImpl.Builder()
+                .setContext(mock(Context.class))
+                .setUrlSanitizer(mUrlSanitizer)
+                .setProxyAuthenticator(new SplitAuthenticator() {
+                    @Override
+                    public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+                        authLatch.countDown();
+                        request.setHeader("Proxy-Authorization", "my-auth");
+
+                        return request;
+                    }
+                })
+                .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
+                .build();
+
+        HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.POST, "{}");
+        request.execute();
+        RecordedRequest recordedRequest1 = mProxyServer.takeRequest();
+        RecordedRequest recordedRequest2 = mProxyServer.takeRequest();
+
+        boolean failureAwait = failureLatch.await(5, TimeUnit.SECONDS);
+        boolean authAwait = authLatch.await(5, TimeUnit.SECONDS);
+        boolean successAwait = successLatch.await(5, TimeUnit.SECONDS);
+
+        assertNotSame(recordedRequest1, recordedRequest2);
+        assertNull(recordedRequest1.getHeader("Proxy-Authorization"));
+        assertNotNull(recordedRequest2.getHeader("Proxy-Authorization"));
+        assertEquals("POST", recordedRequest1.getMethod());
+        assertEquals("POST", recordedRequest2.getMethod());
+        assertTrue(failureAwait);
+        assertTrue(authAwait);
+        assertTrue(successAwait);
         mProxyServer.shutdown();
     }
 
