@@ -58,6 +58,7 @@ class HttpRequestHelper {
 
     static void applySslConfig(SSLSocketFactory sslSocketFactory, DevelopmentSslConfig developmentSslConfig, HttpURLConnection connection) {
         if (sslSocketFactory != null) {
+            Logger.d("Setting SSL socket factory");
             if (connection instanceof HttpsURLConnection) {
                 ((HttpsURLConnection) connection).setSSLSocketFactory(sslSocketFactory);
             } else {

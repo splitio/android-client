@@ -32,6 +32,7 @@ public class HttpRequestImpl implements HttpRequest {
 
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String APPLICATION_JSON_CHARSET_UTF_8 = "application/json; charset=utf-8";
+
     private final URI mUri;
     private final String mBody;
     private final HttpMethod mHttpMethod;
@@ -43,7 +44,9 @@ public class HttpRequestImpl implements HttpRequest {
     private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
     private final long mReadTimeout;
     private final long mConnectionTimeout;
+    @Nullable
     private final DevelopmentSslConfig mDevelopmentSslConfig;
+    @Nullable
     private final SSLSocketFactory mSslSocketFactory;
     private final AtomicBoolean mWasRetried = new AtomicBoolean(false);
 
@@ -89,7 +92,7 @@ public class HttpRequestImpl implements HttpRequest {
         HttpResponse response;
         HttpURLConnection connection = null;
         try {
-            connection = setUpConnection(mHttpMethod, false);
+            connection = setUpConnection(false);
             response = buildResponse(connection);
 
             if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
@@ -118,7 +121,7 @@ public class HttpRequestImpl implements HttpRequest {
         HttpURLConnection connection = null;
         HttpResponse response;
         try {
-            connection = buildPostConnection(mHttpMethod, false);
+            connection = setUpPostConnection(false);
             response = buildResponse(connection);
 
             if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
@@ -140,7 +143,7 @@ public class HttpRequestImpl implements HttpRequest {
         if (!mWasRetried.getAndSet(true)) {
             try {
                 Logger.d("Retrying with proxy authentication");
-                connection = (isGet) ? setUpConnection(mHttpMethod, true) : buildPostConnection(mHttpMethod, true);
+                connection = (isGet) ? setUpConnection(true) : setUpPostConnection(true);
                 return buildResponse(connection);
             } catch (IOException ex) {
                 throw new HttpException("Something happened while retrieving data: " + ex.getLocalizedMessage());
@@ -154,8 +157,8 @@ public class HttpRequestImpl implements HttpRequest {
         return originalResponse;
     }
 
-    private HttpURLConnection buildPostConnection(HttpMethod httpMethod, boolean useProxyAuthenticator) throws IOException {
-        HttpURLConnection connection = setUpConnection(httpMethod, useProxyAuthenticator);
+    private HttpURLConnection setUpPostConnection(boolean useProxyAuthenticator) throws IOException {
+        HttpURLConnection connection = setUpConnection(useProxyAuthenticator);
 
         connection.setRequestProperty(CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8);
 
@@ -171,13 +174,13 @@ public class HttpRequestImpl implements HttpRequest {
     }
 
     @NonNull
-    private HttpURLConnection setUpConnection(HttpMethod method, boolean authenticate) throws IOException {
+    private HttpURLConnection setUpConnection(boolean authenticate) throws IOException {
         URL url = mUrlSanitizer.getUrl(mUri);
         if (url == null) {
             throw new IOException("Error parsing URL");
         }
 
-        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, method, mHeaders, authenticate);
+        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, authenticate);
         applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
 

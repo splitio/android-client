@@ -2,6 +2,10 @@ package io.split.android.client.network;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
+import static io.split.android.client.network.HttpRequestHelper.applyTimeouts;
+import static io.split.android.client.network.HttpRequestHelper.openConnection;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -19,7 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.logger.Logger;
@@ -27,8 +30,11 @@ import io.split.android.client.utils.logger.Logger;
 public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     private static final int STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
+
     private final URI mUri;
+    private final HttpMethod mHttpMethod;
     private final Map<String, String> mHeaders;
+    private final UrlSanitizer mUrlSanitizer;
     private HttpURLConnection mConnection;
     private BufferedReader mBufferedReader;
     @Nullable
@@ -36,7 +42,9 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     @Nullable
     private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
     private final long mConnectionTimeout;
+    @Nullable
     private final DevelopmentSslConfig mDevelopmentSslConfig;
+    @Nullable
     private final SSLSocketFactory mSslSocketFactory;
     private final AtomicBoolean mWasRetried = new AtomicBoolean(false);
 
@@ -46,10 +54,13 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                           @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
                           long connectionTimeout,
                           @Nullable DevelopmentSslConfig developmentSslConfig,
-                          @Nullable SSLSocketFactory sslSocketFactory) {
+                          @Nullable SSLSocketFactory sslSocketFactory,
+                          @NonNull UrlSanitizer urlSanitizer) {
         mUri = checkNotNull(uri);
-        mHeaders = new HashMap<>(checkNotNull(headers));
+        mHttpMethod = HttpMethod.GET;
         mProxy = proxy;
+        mUrlSanitizer = checkNotNull(urlSanitizer);
+        mHeaders = new HashMap<>(checkNotNull(headers));
         mProxyAuthenticator = proxyAuthenticator;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
@@ -68,12 +79,17 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     @Override
     public void close() {
-        Logger.d("Closing streaming connection");
-        if (mBufferedReader != null) {
-            closeBufferedReader();
+        try {
+            Logger.d("Closing streaming connection");
+            mConnection.disconnect();
+        } catch (Exception e) {
+            Logger.d("Unknown error closing connection: " + e.getLocalizedMessage());
+        } finally {
+            if (mBufferedReader != null) {
+                closeBufferedReader();
+            }
+            Logger.d("Streaming connection closed");
         }
-        mConnection.disconnect();
-        Logger.d("Streaming connection closed");
     }
 
     private void closeBufferedReader() {
@@ -85,110 +101,58 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     }
 
     private HttpStreamResponse getRequest() throws HttpException {
-        URL url;
-        HttpStreamResponse response = null;
+        HttpStreamResponse response;
         try {
-            url = mUri.toURL();
-            mConnection = openConnection(url, mProxy, mProxyAuthenticator, mHeaders, false);
-            applyTimeouts(mConnection, STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout);
-            applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, mConnection);
+            mConnection = setUpConnection(false);
             response = buildResponse(mConnection);
 
             if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
-                response = handleAuthentication(response, url);
+                response = handleAuthentication(response);
             }
         } catch (MalformedURLException e) {
-            throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
-        } catch (ProtocolException e) {
-            throw new HttpException("Http method not allowed: " + e.getLocalizedMessage());
-        } catch (IOException e) {
-            throw new HttpException("Something happened while retrieving data: " + e.getLocalizedMessage());
-        } finally {
             if (mConnection != null) {
                 mConnection.disconnect();
             }
+            throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
+        } catch (ProtocolException e) {
+            if (mConnection != null) {
+                mConnection.disconnect();
+            }
+            throw new HttpException("Http method not allowed: " + e.getLocalizedMessage());
+        } catch (IOException e) {
+            if (mConnection != null) {
+                mConnection.disconnect();
+            }
+            throw new HttpException("Something happened while retrieving data: " + e.getLocalizedMessage());
         }
+
         return response;
     }
 
-    private HttpStreamResponse handleAuthentication(HttpStreamResponse response, URL url) throws HttpException {
+    private HttpURLConnection setUpConnection(boolean useProxyAuthenticator) throws IOException {
+        URL url = mUrlSanitizer.getUrl(mUri);
+        if (url == null) {
+            throw new IOException("Error parsing URL");
+        }
+
+        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, useProxyAuthenticator);
+        applyTimeouts(HttpStreamRequestImpl.STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout, connection);
+        applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, mConnection);
+
+        return connection;
+    }
+
+    private HttpStreamResponse handleAuthentication(HttpStreamResponse response) throws HttpException {
         if (!mWasRetried.getAndSet(true)) {
             try {
                 Logger.d("Retrying with proxy authentication");
-                mConnection = openConnection(url, mProxy, mProxyAuthenticator, mHeaders, true);
-                applyTimeouts(mConnection, STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout);
-                applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, mConnection);
+                setUpConnection(true);
                 response = buildResponse(mConnection);
             } catch (Exception ex) {
                 throw new HttpException("Something happened while retrieving data: " + ex.getLocalizedMessage());
             }
         }
         return response;
-    }
-
-    private static void applySslConfig(SSLSocketFactory sslSocketFactory, DevelopmentSslConfig developmentSslConfig, HttpURLConnection connection) {
-        if (sslSocketFactory != null) {
-            Logger.d("Setting  SSL socket factory in stream request");
-            if (connection instanceof HttpsURLConnection) {
-                ((HttpsURLConnection) connection).setSSLSocketFactory(sslSocketFactory);
-            } else {
-                Logger.e("Failed to set SSL socket factory.");
-            }
-        }
-
-        if (developmentSslConfig != null) {
-            try {
-                if (connection instanceof HttpsURLConnection) {
-                    ((HttpsURLConnection) connection).setSSLSocketFactory(developmentSslConfig.getSslSocketFactory());
-                    ((HttpsURLConnection) connection).setHostnameVerifier(developmentSslConfig.getHostnameVerifier());
-                } else {
-                    Logger.e("Failed to set SSL socket factory in stream request.");
-                }
-            } catch (Exception ex) {
-                Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());
-            }
-        }
-    }
-
-    private static void applyTimeouts(HttpURLConnection connection, int readTimeout, long connectionTimeout) {
-        connection.setReadTimeout(readTimeout);
-
-        if (connectionTimeout > 0) {
-            if (connectionTimeout > Integer.MAX_VALUE) {
-                connection.setReadTimeout(Integer.MAX_VALUE);
-            } else {
-                connection.setConnectTimeout((int) connectionTimeout);
-            }
-        }
-    }
-
-    private HttpURLConnection openConnection(@NonNull URL url,
-                                             @Nullable Proxy proxy,
-                                             @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
-                                             @NonNull Map<String, String> headers,
-                                             boolean useProxyAuthenticator) throws IOException {
-        HttpURLConnection connection;
-        if (proxy != null) {
-            connection = (HttpURLConnection) url.openConnection(proxy);
-            if (useProxyAuthenticator && proxyAuthenticator != null) {
-                connection = proxyAuthenticator.authenticate(connection);
-            }
-        } else {
-            connection = (HttpURLConnection) url.openConnection();
-        }
-        addHeaders(connection, headers);
-
-        return connection;
-    }
-
-    private static void addHeaders(HttpURLConnection request, Map<String, String> headers) {
-        for (Map.Entry<String, String> entry : headers.entrySet()) {
-            if (entry == null) {
-                continue;
-            }
-
-            request.addRequestProperty(entry.getKey(), entry.getValue());
-        }
     }
 
     private HttpStreamResponse buildResponse(HttpURLConnection connection) throws IOException {

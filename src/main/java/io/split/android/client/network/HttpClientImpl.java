@@ -108,7 +108,8 @@ public class HttpClientImpl implements HttpClient {
                 mProxyAuthenticator,
                 mConnectionTimeout,
                 mDevelopmentSslConfig,
-                mSslSocketFactory);
+                mSslSocketFactory,
+                mUrlSanitizer);
     }
 
     @Override
