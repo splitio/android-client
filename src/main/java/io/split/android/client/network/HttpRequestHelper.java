@@ -16,7 +16,6 @@ import io.split.android.client.utils.logger.Logger;
 
 class HttpRequestHelper {
 
-
     static HttpURLConnection openConnection(@Nullable Proxy proxy,
                                             @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
                                             @NonNull URL url,
@@ -40,25 +39,16 @@ class HttpRequestHelper {
 
     static void applyTimeouts(long readTimeout, long connectionTimeout, HttpURLConnection connection) {
         if (readTimeout > 0) {
-            if (readTimeout > Integer.MAX_VALUE) {
-                connection.setReadTimeout(Integer.MAX_VALUE);
-            } else {
-                connection.setReadTimeout((int) readTimeout);
-            }
+            connection.setReadTimeout(getAsInt(readTimeout));
         }
 
         if (connectionTimeout > 0) {
-            if (connectionTimeout > Integer.MAX_VALUE) {
-                connection.setReadTimeout(Integer.MAX_VALUE);
-            } else {
-                connection.setConnectTimeout((int) connectionTimeout);
-            }
+            connection.setConnectTimeout(getAsInt(connectionTimeout));
         }
     }
 
     static void applySslConfig(SSLSocketFactory sslSocketFactory, DevelopmentSslConfig developmentSslConfig, HttpURLConnection connection) {
         if (sslSocketFactory != null) {
-            Logger.d("Setting SSL socket factory");
             if (connection instanceof HttpsURLConnection) {
                 ((HttpsURLConnection) connection).setSSLSocketFactory(sslSocketFactory);
             } else {
@@ -72,11 +62,19 @@ class HttpRequestHelper {
                     ((HttpsURLConnection) connection).setSSLSocketFactory(developmentSslConfig.getSslSocketFactory());
                     ((HttpsURLConnection) connection).setHostnameVerifier(developmentSslConfig.getHostnameVerifier());
                 } else {
-                    Logger.e("Failed to set SSL socket factory in stream request.");
+                    Logger.e("Failed to set SSL socket factory.");
                 }
             } catch (Exception ex) {
                 Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());
             }
+        }
+    }
+
+    private static int getAsInt(long value) {
+        if (value > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        } else {
+            return (int) value;
         }
     }
 
