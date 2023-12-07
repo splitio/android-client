@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -207,7 +206,7 @@ public class ProxyFactoryTest {
                     return new MockResponse().setResponseCode((request.getHeader("Proxy-Authorization") != null) ? 200 : 407).setBody(mSplitChanges);
                 } else if (requestLine.contains("auth")) {
                     authLatch.countDown();
-                    return new MockResponse().setResponseCode((request.getHeader("Proxy-Authorization") != null) ? 200 : 407).setBody("{}");
+                    return new MockResponse().setResponseCode((request.getHeader("Proxy-Authorization") != null) ? 200 : 407).setBody(IntegrationHelper.streamingDisabledToken());
                 } else if (requestLine.contains("Impressions")) {
                     eventsLatch.countDown();
                     return new MockResponse().setResponseCode((request.getHeader("Proxy-Authorization") != null) ? 200 : 407).setBody("{}");
