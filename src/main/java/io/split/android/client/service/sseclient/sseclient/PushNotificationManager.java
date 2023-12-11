@@ -1,6 +1,6 @@
 package io.split.android.client.service.sseclient.sseclient;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.Thread.sleep;
 
 import androidx.annotation.NonNull;
