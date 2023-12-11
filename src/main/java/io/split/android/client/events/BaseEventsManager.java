@@ -2,7 +2,7 @@ package io.split.android.client.events;
 
 import androidx.annotation.NonNull;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.split.android.client.service.executor.ThreadFactoryBuilder;
 
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;

@@ -2,8 +2,6 @@ package io.split.android.client.service.executor;
 
 import androidx.annotation.NonNull;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl;
 
