@@ -2,13 +2,13 @@ package io.split.android.client.storage.mysegments;
 
 import androidx.annotation.NonNull;
 
-import com.google.common.collect.Sets;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
+
+import io.split.android.client.utils.ConcurrentSet;
 
 class MySegmentsStorageImpl implements MySegmentsStorage {
 
@@ -19,7 +19,7 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     public MySegmentsStorageImpl(@NonNull String matchingKey, @NonNull PersistentMySegmentsStorage persistentStorage) {
         mPersistentStorage = checkNotNull(persistentStorage);
         mMatchingKey = checkNotNull(matchingKey);
-        mInMemoryMySegments = Sets.newConcurrentHashSet();
+        mInMemoryMySegments = new ConcurrentSet<>();
     }
 
     @Override
