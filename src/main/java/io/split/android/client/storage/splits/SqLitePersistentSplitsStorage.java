@@ -1,12 +1,11 @@
 package io.split.android.client.storage.splits;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
+import static io.split.android.client.utils.Utils.partition;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-
-import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +93,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     @Override
     public void delete(List<String> splitNames) {
         // This is to avoid an sqlite error if there are many split to delete
-        List<List<String>> deleteChunk = Lists.partition(splitNames, SQL_PARAM_BIND_SIZE);
+        List<List<String>> deleteChunk = partition(splitNames, SQL_PARAM_BIND_SIZE);
         for (List<String> splits : deleteChunk) {
             mDatabase.splitDao().delete(splits);
         }

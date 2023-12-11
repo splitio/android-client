@@ -1,10 +1,10 @@
 package io.split.android.client.storage.common;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
+import static io.split.android.client.utils.Utils.partition;
 
 import androidx.annotation.NonNull;
 
-import com.google.common.collect.Lists;
 import com.google.gson.JsonParseException;
 
 import java.util.ArrayList;
@@ -125,7 +125,7 @@ public abstract class SqLitePersistentStorage<E extends Identifiable, M extends 
         for (Identifiable model : models) {
             ids.add(model.getId());
         }
-        return Lists.partition(ids, MAX_ROWS_PER_QUERY);
+        return partition(ids, MAX_ROWS_PER_QUERY);
     }
 
     protected abstract void insert(@NonNull E entity);
