@@ -1,11 +1,10 @@
 package io.split.android.client.utils;
 
+import androidx.annotation.Nullable;
+
 import com.google.common.base.Strings;
 
 import java.util.Objects;
-
-import javax.annotation.CheckForNull;
-
 
 public class Utils {
 
@@ -39,7 +38,7 @@ public class Utils {
         return Objects.requireNonNull(obj);
     }
 
-    public static <T> T checkNotNull(@CheckForNull T reference, @CheckForNull Object errorMessage) {
+    public static <T> T checkNotNull(@Nullable T reference, @Nullable Object errorMessage) {
         if (reference == null) {
             throw new NullPointerException(String.valueOf(errorMessage));
         }
