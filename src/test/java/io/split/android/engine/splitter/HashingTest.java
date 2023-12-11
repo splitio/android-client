@@ -93,7 +93,7 @@ public class HashingTest {
 
 
     private List<String> randomUUIDs(int size) {
-        List<String> bldr = Lists.newArrayList();
+        List<String> bldr = Arrays.asList();
         for (int i = 0; i < size; i++) {
             bldr.add(UUID.randomUUID().toString());
         }
@@ -101,7 +101,7 @@ public class HashingTest {
     }
 
     private List<String> sequentialIds() {
-        List<String> bldr = Lists.newArrayList();
+        List<String> bldr = Arrays.asList();
         for (int i = 0; i < 200000; i++) {
             bldr.add("" + i);
         }
@@ -109,7 +109,7 @@ public class HashingTest {
     }
 
     private List<String> mshIds() {
-        List<String> bldr = Lists.newArrayList();
+        List<String> bldr = Arrays.asList();
         for (int i = 28243; i <= 28273; i++) {
             bldr.add("" + i);
         }
@@ -117,7 +117,7 @@ public class HashingTest {
     }
 
     private List<String> reallyLargeKeys() {
-        List<String> bldr = Lists.newArrayList();
+        List<String> bldr = Arrays.asList();
 
         for (int i = 0; i < 10; i++) {
             bldr.add(RandomStringUtils.randomAlphanumeric(2000000));
@@ -148,7 +148,7 @@ public class HashingTest {
     }
 
     private void bucketTest(int seed, MyHash hash, List<String> keys) {
-        List<Integer> buckets = Lists.newArrayList();
+        List<Integer> buckets = Arrays.asList();
 
         int[] ranges = new int[10];
 

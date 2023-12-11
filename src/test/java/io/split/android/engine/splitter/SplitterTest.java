@@ -1,10 +1,11 @@
 package io.split.android.engine.splitter;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
-import io.split.android.engine.splitter.Splitter;
-import io.split.android.client.dtos.Partition;
+import com.google.common.base.Joiner;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -15,16 +16,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import io.split.android.client.dtos.Partition;
 
 /**
  * Test for Splitter.
- *
  */
 public class SplitterTest {
 
@@ -41,7 +41,7 @@ public class SplitterTest {
                 String key = RandomStringUtils.randomAlphanumeric(keyLength);
                 long hash = Splitter.hash(key, seed, 1);
                 int bucket = Splitter.bucket(hash);
-                System.out.println(Joiner.on(',').join(Lists.newArrayList(seed, key, hash, bucket)));
+                System.out.println(Joiner.on(',').join(Arrays.asList(seed, key, hash, bucket)));
             }
         }
 
@@ -60,7 +60,7 @@ public class SplitterTest {
                 String key = RandomStringUtils.random(keyLength);
                 long hash = Splitter.hash(key, seed, 1);
                 int bucket = Splitter.bucket(hash);
-                System.out.println(Joiner.on(',').join(Lists.newArrayList(seed, key, hash, bucket)));
+                System.out.println(Joiner.on(',').join(Arrays.asList(seed, key, hash, bucket)));
             }
         }
 
@@ -94,7 +94,7 @@ public class SplitterTest {
             String key = parts[1];
             long hash = Splitter.hash(key, seed, 1);
             int bucket = Splitter.bucket(hash);
-            writer.append(Joiner.on(',').join(Lists.newArrayList(seed, key, hash, bucket)));
+            writer.append(Joiner.on(',').join(Arrays.asList(seed, key, hash, bucket)));
             writer.newLine();
         }
         writer.close();
@@ -102,7 +102,7 @@ public class SplitterTest {
 
     @Test
     public void works() {
-        List<Partition> partitions = Lists.newArrayList();
+        List<Partition> partitions = Arrays.asList();
         for (int i = 1; i <= 100; i++) {
             partitions.add(partition("" + i, 1));
         }
@@ -133,7 +133,7 @@ public class SplitterTest {
     public void ifHundredPercentOneTreatmentWeShortcut() {
         Partition partition = partition("on", 100);
 
-        List<Partition> partitions = Lists.newArrayList(partition);
+        List<Partition> partitions = Collections.singletonList(partition);
 
         assertThat(Splitter.getTreatment("13", 15, partitions, 1), is(equalTo("on")));
     }

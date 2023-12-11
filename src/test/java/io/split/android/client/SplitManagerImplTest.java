@@ -1,6 +1,26 @@
 package io.split.android.client;
 
-import com.google.common.collect.Lists;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.Split;
@@ -15,28 +35,6 @@ import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.CombiningMatcher;
 import io.split.android.helpers.SplitHelper;
-
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.core.IsNull.notNullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.when;
 
 public class SplitManagerImplTest {
 
@@ -73,7 +71,7 @@ public class SplitManagerImplTest {
         configs.put("off", "{\"f\":\"v\"}");
         configs.put("on", "{\"f1\":\"v1\"}");
         Split response = SplitHelper.createSplit("existent", 123,
-                true, "off", Lists.newArrayList(getTestCondition()),
+                true, "off", Arrays.asList(getTestCondition()),
                 "traffic", 456L, 1, configs);
         when(mSplitsStorage.get(existent)).thenReturn(response);
 
@@ -96,7 +94,7 @@ public class SplitManagerImplTest {
     @Test
     public void splitsCallWithNoSplit() {
         SplitFetcher splitFetcher = Mockito.mock(SplitFetcher.class);
-        when(splitFetcher.fetchAll()).thenReturn(Lists.newArrayList());
+        when(splitFetcher.fetchAll()).thenReturn(Arrays.asList());
         SplitManager splitManager = mSplitManager;
         assertThat(splitManager.splits(), is(empty()));
     }
@@ -104,7 +102,7 @@ public class SplitManagerImplTest {
     @Test
     public void splitsCallWithSplit() {
         Map<String, Split> splitsMap = new HashMap<>();
-        Split split = SplitHelper.createSplit("FeatureName", 123, true, "off", Lists.newArrayList(getTestCondition()), "traffic", 456L, 1, null);
+        Split split = SplitHelper.createSplit("FeatureName", 123, true, "off", Arrays.asList(getTestCondition()), "traffic", 456L, 1, null);
         splitsMap.put(split.name, split);
 
         when(mSplitsStorage.getAll()).thenReturn(splitsMap);
@@ -131,7 +129,7 @@ public class SplitManagerImplTest {
     public void splitNamesCallWithSplit() {
         Map<String, Split> splitsMap = new HashMap<>();
         Split split = SplitHelper.createSplit("FeatureName", 123, true,
-                "off", Lists.newArrayList(getTestCondition()),
+                "off", Arrays.asList(getTestCondition()),
                 "traffic", 456L, 1, null);
         splitsMap.put(split.name, split);
 
@@ -146,7 +144,7 @@ public class SplitManagerImplTest {
     public void flagSets() {
         Map<String, Split> splitsMap = new HashMap<>();
         Split split = SplitHelper.createSplit("FeatureName", 123, true,
-                "off", Lists.newArrayList(getTestCondition()),
+                "off", Arrays.asList(getTestCondition()),
                 "traffic", 456L, 1, null);
         splitsMap.put(split.name, split);
         when(mSplitsStorage.getAll()).thenReturn(splitsMap);
@@ -162,7 +160,7 @@ public class SplitManagerImplTest {
     @Test
     public void defaultTreatmentIsPresent() {
         Split split = SplitHelper.createSplit("FeatureName", 123, true,
-                "some_treatment", Lists.newArrayList(getTestCondition()),
+                "some_treatment", Arrays.asList(getTestCondition()),
                 "traffic", 456L, 1, null);
         when(mSplitsStorage.get("FeatureName")).thenReturn(split);
 
@@ -175,7 +173,7 @@ public class SplitManagerImplTest {
     public void defaultTreatmentIsPresentWhenFetchingMultipleSplits() {
         Map<String, Split> splitsMap = new HashMap<>();
         Split split = SplitHelper.createSplit("FeatureName", 123, true,
-                "some_treatment", Lists.newArrayList(getTestCondition()),
+                "some_treatment", Arrays.asList(getTestCondition()),
                 "traffic", 456L, 1, null);
         splitsMap.put(split.name, split);
         when(mSplitsStorage.getAll()).thenReturn(splitsMap);
@@ -187,6 +185,6 @@ public class SplitManagerImplTest {
     }
 
     private Condition getTestCondition() {
-        return SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(ConditionsTestUtil.partition("off", 10)));
+        return SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Arrays.asList(ConditionsTestUtil.partition("off", 10)));
     }
 }
