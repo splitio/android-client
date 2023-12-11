@@ -81,4 +81,8 @@ public class Utils {
         result.retainAll(set2);
         return result;
     }
+
+    public static boolean isNullOrEmpty(@Nullable String string) {
+        return string == null || string.isEmpty();
+    }
 }

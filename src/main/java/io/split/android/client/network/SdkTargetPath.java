@@ -1,10 +1,11 @@
 package io.split.android.client.network;
 
-import com.google.common.base.Strings;
 import com.google.common.net.UrlEscapers;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import io.split.android.client.utils.Utils;
 
 public class SdkTargetPath {
     public static final String SPLIT_CHANGES = "/splitChanges";
@@ -63,7 +64,7 @@ public class SdkTargetPath {
             baseUrl = removeLastChar(baseUrl);
         }
         String urlString = baseUrl + path;
-        if (!Strings.isNullOrEmpty(queryString)) {
+        if (!Utils.isNullOrEmpty(queryString)) {
             urlString = urlString + "?" + queryString;
         }
         return new URI(urlString);
