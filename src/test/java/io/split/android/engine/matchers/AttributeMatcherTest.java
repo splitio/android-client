@@ -1,18 +1,18 @@
 package io.split.android.engine.matchers;
 
-import com.google.common.collect.Maps;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
-import io.split.android.client.dtos.DataType;
-import io.split.android.engine.matchers.strings.WhitelistMatcher;
 import org.junit.Test;
 
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import io.split.android.client.dtos.DataType;
+import io.split.android.engine.matchers.strings.WhitelistMatcher;
 
 /**
  * Tests for AllKeysMatcher
@@ -106,7 +106,7 @@ public class AttributeMatcherTest {
     public void when_no_attribute_we_use_the_key() {
         AttributeMatcher matcher = new AttributeMatcher(null, new WhitelistMatcher(Collections.singletonList("trial")), false);
 
-        Map<String, Object> nullMap = Maps.newHashMap();
+        Map<String, Object> nullMap = new HashMap<>();
         //noinspection ConstantConditions
         nullMap.put("planType", null);
 

@@ -1,11 +1,11 @@
 package io.split.android.client.localhost;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
+
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import com.google.common.collect.Maps;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -30,8 +31,8 @@ public class LocalhostSplitsStorage implements SplitsStorage {
 
     private String mLocalhostFileName;
     private final Context mContext;
-    private final Map<String, Split> mInMemorySplits = Maps.newConcurrentMap();
-    private final Map<String, Set<String>> mFlagSets = Maps.newConcurrentMap();
+    private final Map<String, Split> mInMemorySplits = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> mFlagSets = new ConcurrentHashMap<>();
     private final FileStorage mFileStorage;
     private LocalhostFileParser mParser;
     private final EventsManagerCoordinator mEventsManager;
