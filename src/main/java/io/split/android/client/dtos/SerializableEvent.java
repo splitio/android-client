@@ -1,9 +1,9 @@
 package io.split.android.client.dtos;
 
-import com.google.common.base.Objects;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class SerializableEvent {
 
@@ -34,14 +34,14 @@ public class SerializableEvent {
         Event event = (Event) o;
         return Double.compare(event.value, value) == 0 &&
                 timestamp == event.timestamp &&
-                Objects.equal(eventTypeId, event.eventTypeId) &&
-                Objects.equal(trafficTypeName, event.trafficTypeName) &&
-                Objects.equal(key, event.key) &&
-                Objects.equal(properties, event.properties);
+                Objects.equals(eventTypeId, event.eventTypeId) &&
+                Objects.equals(trafficTypeName, event.trafficTypeName) &&
+                Objects.equals(key, event.key) &&
+                Objects.equals(properties, event.properties);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(eventTypeId, trafficTypeName, key, value, timestamp);
+        return Objects.hash(eventTypeId, trafficTypeName, key, value, timestamp);
     }
 }
