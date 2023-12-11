@@ -1,9 +1,8 @@
 package io.split.android.client.service.executor;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.Objects.requireNonNull;
-
-import static io.split.android.client.utils.Utils.checkArgument;
-import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.Nullable;
 
