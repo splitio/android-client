@@ -1,6 +1,6 @@
 package io.split.android.client.service.executor.parallel;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 

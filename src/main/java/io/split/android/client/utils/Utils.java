@@ -2,6 +2,10 @@ package io.split.android.client.utils;
 
 import com.google.common.base.Strings;
 
+import java.util.Objects;
+
+import javax.annotation.CheckForNull;
+
 
 public class Utils {
 
@@ -29,5 +33,30 @@ public class Utils {
         String hash = BCrypt.hashpw(sanitizedApiKey, cleanedSalt);
 
         return (hash != null ? sanitizeForFolderName(hash) : null);
+    }
+
+    public static <T> T checkNotNull(T obj) {
+        return Objects.requireNonNull(obj);
+    }
+
+    public static <T> T checkNotNull(@CheckForNull T reference, @CheckForNull Object errorMessage) {
+        if (reference == null) {
+            throw new NullPointerException(String.valueOf(errorMessage));
+        }
+        return reference;
+    }
+
+    public static void checkArgument(boolean expression) {
+        if (!expression) {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public static int getAsInt(long value) {
+        if (value > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        } else {
+            return (int) value;
+        }
     }
 }

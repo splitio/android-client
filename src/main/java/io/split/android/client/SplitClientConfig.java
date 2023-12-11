@@ -25,7 +25,7 @@ import io.split.android.client.utils.logger.SplitLogLevel;
 import io.split.android.client.validators.PrefixValidatorImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 /**
  * Configurations for the SplitClient.
