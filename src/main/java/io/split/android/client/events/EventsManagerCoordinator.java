@@ -1,6 +1,6 @@
 package io.split.android.client.events;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

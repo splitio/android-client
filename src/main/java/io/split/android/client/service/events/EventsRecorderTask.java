@@ -21,7 +21,7 @@ import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class EventsRecorderTask implements SplitTask {
     public final static int FAILING_CHUNK_SIZE = 20;

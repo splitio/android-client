@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 class MySegmentsStorageImpl implements MySegmentsStorage {
 

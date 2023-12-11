@@ -1,7 +1,7 @@
 package io.split.android.client.service.executor;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import android.os.Handler;
 import android.os.Looper;

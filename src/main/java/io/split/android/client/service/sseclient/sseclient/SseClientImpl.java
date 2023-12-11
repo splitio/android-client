@@ -20,7 +20,7 @@ import io.split.android.client.service.sseclient.SseJwtToken;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.StringHelper;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class SseClientImpl implements SseClient {
 

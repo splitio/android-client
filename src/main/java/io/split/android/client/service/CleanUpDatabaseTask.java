@@ -11,7 +11,7 @@ import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsUniqueStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class CleanUpDatabaseTask implements SplitTask {
 
