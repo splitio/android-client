@@ -1,6 +1,6 @@
 package io.split.android.engine.experiments;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static io.split.android.client.utils.Utils.checkArgument;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.Nullable;
