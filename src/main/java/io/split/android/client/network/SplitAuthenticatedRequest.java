@@ -3,63 +3,40 @@ package io.split.android.client.network;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.List;
+import java.net.HttpURLConnection;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import okhttp3.Request;
-import okhttp3.Response;
+public class SplitAuthenticatedRequest implements AuthenticatedRequest<HttpURLConnection> {
 
-public class SplitAuthenticatedRequest implements AuthenticatedRequest<Request> {
+    private final String mUrl;
+    private final Map<String, String> mHeaders = new ConcurrentHashMap<>();
 
-    private final int mStatusCode;
-    private Request mRequest;
-
-    SplitAuthenticatedRequest(Response response) {
-        mStatusCode = response.code();
-        mRequest = response.request();
+    SplitAuthenticatedRequest(HttpURLConnection connection) {
+        mUrl = (connection != null && connection.getURL() != null) ? connection.getURL().toString() : null;
     }
 
     @Override
     public void setHeader(@NonNull String name, @NonNull String value) {
-        if (mRequest == null) {
-            return;
-        }
-
-        mRequest = mRequest.newBuilder().header(name, value).build();
+        mHeaders.put(name, value);
     }
 
     @Nullable
     @Override
     public String getHeader(@NonNull String name) {
-        if (mRequest == null) {
-            return null;
-        }
-
-        return mRequest.header(name);
+        return mHeaders.get(name);
     }
 
     @Nullable
     @Override
-    public Map<String, List<String>> getHeaders() {
-        if (mRequest == null) {
-            return null;
-        }
-
-        return mRequest.headers().toMultimap();
-    }
-
-    @Override
-    public int getStatusCode() {
-        return mStatusCode;
+    public Map<String, String> getHeaders() {
+        return new HashMap<>(mHeaders);
     }
 
     @Nullable
     @Override
     public String getRequestUrl() {
-        if (mRequest == null) {
-            return null;
-        }
-
-        return mRequest.url().toString();
+        return mUrl;
     }
 }

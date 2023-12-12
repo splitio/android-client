@@ -42,7 +42,7 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             }
             URI builtUri = uriBuilder.build();
             HttpResponse response = mClient.request(builtUri, HttpMethod.GET, null, headers).execute();
-            Logger.d("Received from: " + builtUri.toString() + " -> " + response.getData());
+            Logger.v("Received from: " + builtUri.toString() + " -> " + response.getData());
             if (!response.isSuccess()) {
                 throw new IllegalStateException("http return code " + response.getHttpStatus());
             }

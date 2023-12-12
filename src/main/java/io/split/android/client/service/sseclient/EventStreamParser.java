@@ -22,7 +22,6 @@ public class EventStreamParser {
      *                       if the line contains any.
      * @return Returns true if a blank line meaning the final of an event if found.
      */
-    @VisibleForTesting
     public boolean parseLineAndAppendValue(String streamLine, Map<String, String> messageValues) {
 
         if (streamLine == null) {

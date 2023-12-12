@@ -3,7 +3,6 @@ package io.split.android.client.network;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.List;
 import java.util.Map;
 
 interface AuthenticatedRequest<T> {
@@ -14,9 +13,7 @@ interface AuthenticatedRequest<T> {
     String getHeader(@NonNull String name);
 
     @Nullable
-    Map<String, List<String>> getHeaders();
-
-    int getStatusCode();
+    Map<String, String> getHeaders();
 
     @Nullable
     String getRequestUrl();
