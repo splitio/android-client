@@ -1,11 +1,10 @@
 package io.split.android.client.validators;
 
-import com.google.common.base.Strings;
-
 import org.junit.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import io.split.android.client.utils.Utils;
 
 public class KeyValidatorTest {
 
@@ -61,7 +60,7 @@ public class KeyValidatorTest {
 
     @Test
     public void testInvalidLongMatchingKey() {
-        ValidationErrorInfo errorInfo = validator.validate(Strings.repeat("p", 256), null);
+        ValidationErrorInfo errorInfo = validator.validate(Utils.repeat("p", 256), null);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -88,7 +87,7 @@ public class KeyValidatorTest {
 
     @Test
     public void testInvalidLongBucketingKey() {
-        ValidationErrorInfo errorInfo = validator.validate("key1", Strings.repeat("p", 256));
+        ValidationErrorInfo errorInfo = validator.validate("key1", Utils.repeat("p", 256));
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
