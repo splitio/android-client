@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -102,7 +103,7 @@ public class SplitterTest {
 
     @Test
     public void works() {
-        List<Partition> partitions = Arrays.asList();
+        List<Partition> partitions = new ArrayList<>();
         for (int i = 1; i <= 100; i++) {
             partitions.add(partition("" + i, 1));
         }

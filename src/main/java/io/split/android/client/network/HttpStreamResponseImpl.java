@@ -6,7 +6,7 @@ import java.io.BufferedReader;
 
 public class HttpStreamResponseImpl extends BaseHttpResponseImpl implements HttpStreamResponse {
 
-    private BufferedReader mData;
+    private final BufferedReader mData;
 
     HttpStreamResponseImpl(int httpStatus) {
         this(httpStatus, null);

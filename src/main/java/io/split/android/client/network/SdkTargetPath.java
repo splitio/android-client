@@ -1,7 +1,5 @@
 package io.split.android.client.network;
 
-import com.google.common.net.UrlEscapers;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 
