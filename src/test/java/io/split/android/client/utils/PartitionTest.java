@@ -41,15 +41,20 @@ public class PartitionTest {
         assertEquals(Collections.singletonList(1), result.get(0));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void partitionWithInvalidSizeAsInputThrows() {
+    @Test
+    public void partitionWithInvalidSizeAsInputReturnsListOfOriginalList() {
         List<Integer> list = Arrays.asList(1, 2, 3);
-        Utils.partition(list, 0);
+        List<List<Integer>> partition = Utils.partition(list, 0);
+
+        assertEquals(1, partition.size());
+        assertEquals(list, partition.get(0));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void partitionWithNullListThrows() {
-        Utils.partition(null, 1);
+    @Test
+    public void partitionWithNullListReturnsEmptyList() {
+        List<List<Object>> partition = Utils.partition(null, 1);
+
+        assertTrue(partition.isEmpty());
     }
 
     @Test
