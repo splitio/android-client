@@ -1,15 +1,13 @@
 package io.split.android.engine.matchers.strings;
 
-import com.google.common.collect.Lists;
-import org.junit.Test;
-
-import java.util.Collections;
-import java.util.List;
-
-import io.split.android.engine.matchers.strings.WhitelistMatcher;
-
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Tests for WhitelistMatcher
@@ -19,7 +17,7 @@ public class WhitelistMatcherTest {
 
     @Test
     public void works() {
-        List<String> whitelist = Lists.newArrayList("a", "a\"b");
+        List<String> whitelist = Arrays.asList("a", "a\"b");
 
         WhitelistMatcher matcher = new WhitelistMatcher(whitelist);
 
@@ -33,7 +31,7 @@ public class WhitelistMatcherTest {
 
     @Test
     public void works_with_empty_whitelist() {
-        List<String> whitelist = Lists.newArrayList("a", "a\"b");
+        List<String> whitelist = Arrays.asList("a", "a\"b");
 
         WhitelistMatcher matcher = new WhitelistMatcher(Collections.emptyList());
 

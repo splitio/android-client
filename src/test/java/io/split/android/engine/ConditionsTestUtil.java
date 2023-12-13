@@ -1,9 +1,22 @@
 package io.split.android.engine;
 
-import com.google.common.collect.Lists;
-import io.split.android.client.dtos.*;
-
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import io.split.android.client.dtos.BetweenMatcherData;
+import io.split.android.client.dtos.Condition;
+import io.split.android.client.dtos.ConditionType;
+import io.split.android.client.dtos.DataType;
+import io.split.android.client.dtos.KeySelector;
+import io.split.android.client.dtos.Matcher;
+import io.split.android.client.dtos.MatcherCombiner;
+import io.split.android.client.dtos.MatcherGroup;
+import io.split.android.client.dtos.MatcherType;
+import io.split.android.client.dtos.Partition;
+import io.split.android.client.dtos.UnaryNumericMatcherData;
+import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
+import io.split.android.client.dtos.WhitelistMatcherData;
 
 /**
  * Utility methods for creating conditions for testing purposes.
@@ -14,7 +27,7 @@ public class ConditionsTestUtil {
     public static Condition and(Matcher matcher1, List<Partition> partitions) {
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher1);
+        matcherGroup.matchers = Collections.singletonList(matcher1);
 
         Condition c = new Condition();
         c.matcherGroup = matcherGroup;
@@ -26,7 +39,7 @@ public class ConditionsTestUtil {
     public static Condition and(Matcher matcher1, Matcher matcher2, List<Partition> partitions) {
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher1, matcher2);
+        matcherGroup.matchers = Arrays.asList(matcher1, matcher2);
 
         Condition c = new Condition();
         c.matcherGroup = matcherGroup;
@@ -44,7 +57,7 @@ public class ConditionsTestUtil {
 
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = conditionType;
@@ -85,7 +98,7 @@ public class ConditionsTestUtil {
 
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = conditionType;
@@ -127,7 +140,7 @@ public class ConditionsTestUtil {
 
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = ConditionType.ROLLOUT;
@@ -199,7 +212,7 @@ public class ConditionsTestUtil {
         Matcher matcher = whitelistMatcher(trafficType, attribute, whitelist, negate, MatcherType.CONTAINS_ANY_OF_SET);
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = ConditionType.ROLLOUT;
@@ -218,7 +231,7 @@ public class ConditionsTestUtil {
         Matcher matcher = whitelistMatcher(trafficType, attribute, whitelist, negate, MatcherType.CONTAINS_ALL_OF_SET);
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = ConditionType.ROLLOUT;
@@ -237,7 +250,7 @@ public class ConditionsTestUtil {
         Matcher matcher = whitelistMatcher(trafficType, attribute, whitelist, negate, MatcherType.PART_OF_SET);
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = ConditionType.ROLLOUT;
@@ -256,7 +269,7 @@ public class ConditionsTestUtil {
         Matcher matcher = whitelistMatcher(trafficType, attribute, whitelist, negate, MatcherType.STARTS_WITH);
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = ConditionType.ROLLOUT;
@@ -275,7 +288,7 @@ public class ConditionsTestUtil {
         Matcher matcher = whitelistMatcher(trafficType, attribute, whitelist, negate, MatcherType.ENDS_WITH);
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = ConditionType.ROLLOUT;
@@ -294,7 +307,7 @@ public class ConditionsTestUtil {
         Matcher matcher = whitelistMatcher(trafficType, attribute, whitelist, negate, MatcherType.CONTAINS_STRING);
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = ConditionType.ROLLOUT;
@@ -313,7 +326,7 @@ public class ConditionsTestUtil {
         Matcher matcher = whitelistMatcher(trafficType, attribute, whitelist, negate, MatcherType.EQUAL_TO_SET);
         MatcherGroup matcherGroup = new MatcherGroup();
         matcherGroup.combiner = MatcherCombiner.AND;
-        matcherGroup.matchers = Lists.newArrayList(matcher);
+        matcherGroup.matchers = Collections.singletonList(matcher);
 
         Condition c = new Condition();
         c.conditionType = ConditionType.ROLLOUT;

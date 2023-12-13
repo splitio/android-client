@@ -5,7 +5,6 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 
 import com.google.common.collect.Lists;
-import com.google.gson.JsonParseException;
 
 import java.util.ArrayList;
 import java.util.List;
