@@ -1,5 +1,7 @@
 package io.split.android.client.service.impressions;
 
+import static io.split.android.client.utils.Utils.getAsInt;
+
 import android.util.LruCache;
 
 import androidx.annotation.Nullable;
@@ -11,7 +13,7 @@ public class ImpressionsObserver {
     private final LruCache<Long, Long> mCache;
 
     public ImpressionsObserver(long size) {
-        mCache = new LruCache<Long, Long>((size > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) size);
+        mCache = new LruCache<>(getAsInt(size));
     }
 
     @Nullable
