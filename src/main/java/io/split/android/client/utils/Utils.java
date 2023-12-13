@@ -3,6 +3,7 @@ package io.split.android.client.utils;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -62,8 +63,12 @@ public class Utils {
     }
 
     public static <T> List<List<T>> partition(List<T> list, int size) {
-        if (list == null || size <= 0) {
-            throw new IllegalArgumentException("List must not be null and size must be greater than 0");
+        if (list == null) {
+            return new ArrayList<>();
+        }
+
+        if (size <= 0) {
+            return Collections.singletonList(list);
         }
 
         List<List<T>> partitions = new ArrayList<>();
