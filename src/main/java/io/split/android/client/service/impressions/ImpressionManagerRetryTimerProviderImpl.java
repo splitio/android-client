@@ -17,11 +17,11 @@ public class ImpressionManagerRetryTimerProviderImpl implements ImpressionManage
 
     private final SplitTaskExecutor mTaskExecutor;
 
-    private final Supplier<RetryBackoffCounterTimer> mUniqueKeysRetrySupplier = memoize(buildBackoffTimerDelegate());
+    private final Supplier<RetryBackoffCounterTimer> mUniqueKeysRetrySupplier = new MemoizedSupplier<>(buildBackoffTimerDelegate());
 
-    private final Supplier<RetryBackoffCounterTimer> mImpressionsRetrySupplier = memoize(buildBackoffTimerDelegate());
+    private final Supplier<RetryBackoffCounterTimer> mImpressionsRetrySupplier = new MemoizedSupplier<>(buildBackoffTimerDelegate());
 
-    private final Supplier<RetryBackoffCounterTimer> mImpressionsCountRetrySupplier = memoize(buildBackoffTimerDelegate());
+    private final Supplier<RetryBackoffCounterTimer> mImpressionsCountRetrySupplier = new MemoizedSupplier<>(buildBackoffTimerDelegate());
 
     public ImpressionManagerRetryTimerProviderImpl(SplitTaskExecutor taskExecutor) {
         this(taskExecutor, new RetryBackoffCounterTimerFactory());
@@ -57,22 +57,6 @@ public class ImpressionManagerRetryTimerProviderImpl implements ImpressionManage
                         .createWithFixedInterval(mTaskExecutor,
                                 ServiceConstants.TELEMETRY_CONFIG_RETRY_INTERVAL_SECONDS,
                                 ServiceConstants.UNIQUE_KEYS_MAX_RETRY_ATTEMPTS);
-            }
-        };
-    }
-
-    private static <T> Supplier<T> memoize(Supplier<T> delegate) {
-        return new Supplier<T>() {
-            private T value;
-            private boolean isComputed = false;
-
-            @Override
-            public synchronized T get() {
-                if (!isComputed) {
-                    value = delegate.get();
-                    isComputed = true;
-                }
-                return value;
             }
         };
     }
