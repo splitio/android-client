@@ -1,21 +1,17 @@
 package io.split.android.client.service.impressions;
 
-import androidx.annotation.Nullable;
+import android.util.LruCache;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import androidx.annotation.Nullable;
 
 import io.split.android.client.impressions.Impression;
 
 public class ImpressionsObserver {
 
-    private final Cache<Long, Long> mCache;
+    private final LruCache<Long, Long> mCache;
 
     public ImpressionsObserver(long size) {
-        mCache = CacheBuilder.newBuilder()
-                .maximumSize(size)
-                .concurrencyLevel(4)  // Just setting the default value explicitly
-                .build();
+        mCache = new LruCache<Long, Long>((size > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int) size);
     }
 
     @Nullable
@@ -25,8 +21,10 @@ public class ImpressionsObserver {
         }
 
         Long hash = ImpressionHasher.process(impression);
-        Long previous = mCache.getIfPresent(hash);
+        @Nullable
+        Long previous = mCache.get(hash);
         mCache.put(hash, impression.time());
+
         return (previous == null ? null : Math.min(previous, impression.time()));
     }
 }

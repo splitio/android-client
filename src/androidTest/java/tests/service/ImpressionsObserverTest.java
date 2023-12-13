@@ -1,4 +1,4 @@
-package io.split.android.client.service;
+package tests.service;
 
 import static org.junit.Assert.assertNull;
 
