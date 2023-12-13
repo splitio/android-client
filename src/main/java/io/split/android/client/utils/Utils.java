@@ -4,6 +4,8 @@ import androidx.annotation.Nullable;
 
 import com.google.common.base.Strings;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class Utils {
@@ -57,5 +59,18 @@ public class Utils {
         } else {
             return (int) value;
         }
+    }
+
+    public static <T> List<List<T>> partition(List<T> list, int size) {
+        if (list == null || size <= 0) {
+            throw new IllegalArgumentException("List must not be null and size must be greater than 0");
+        }
+
+        List<List<T>> partitions = new ArrayList<>();
+        for (int i = 0; i < list.size(); i += size) {
+            partitions.add(new ArrayList<>(list.subList(i, Math.min(i + size, list.size()))));
+        }
+
+        return partitions;
     }
 }
