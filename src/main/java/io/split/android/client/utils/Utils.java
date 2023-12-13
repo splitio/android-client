@@ -5,8 +5,10 @@ import androidx.annotation.Nullable;
 import com.google.common.base.Strings;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class Utils {
 
@@ -72,5 +74,11 @@ public class Utils {
         }
 
         return partitions;
+    }
+
+    public static <T> Set<T> intersection(Set<T> set1, Set<T> set2) {
+        Set<T> result = new HashSet<>(set1);
+        result.retainAll(set2);
+        return result;
     }
 }

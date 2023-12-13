@@ -1,13 +1,12 @@
 package io.split.android.engine.splitter;
 
-import com.google.common.collect.Sets;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -131,7 +130,7 @@ public class HashingTest {
         int collisions = 0;
         long durationSum = 0;
 
-        Set<Long> hashes = Sets.newHashSet();
+        Set<Long> hashes = new HashSet<>();
 
         for (int i = 0; i < keys.size(); i++) {
             String key = keys.get(i);
