@@ -8,13 +8,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static io.split.android.engine.ConditionsTestUtil.partition;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,8 +52,8 @@ public class SplitClientImplLegacyTest {
     @Test
     public void null_key_results_in_control() {
         String test = "test1";
-        Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition("on", 100)));
-        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+        Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Collections.singletonList(partition("on", 100)));
+        List<Condition> conditions = Collections.singletonList(rollOutToEveryone);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -73,8 +72,8 @@ public class SplitClientImplLegacyTest {
 
         String test = "test1";
         Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()),
-                Lists.newArrayList(partition("on", 100)));
-        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+                Collections.singletonList(partition("on", 100)));
+        List<Condition> conditions = Collections.singletonList(rollOutToEveryone);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -101,8 +100,8 @@ public class SplitClientImplLegacyTest {
         String test = "test1";
 
         Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()),
-                Lists.newArrayList(partition("on", 100)));
-        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+                Collections.singletonList(partition("on", 100)));
+        List<Condition> conditions = Collections.singletonList(rollOutToEveryone);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -124,9 +123,9 @@ public class SplitClientImplLegacyTest {
         String test = "test1";
 
         Condition rollOutToEveryone = SplitHelper.createCondition(
-                CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))),
-                Lists.newArrayList(partition("on", 100)));
-        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+                CombiningMatcher.of(new WhitelistMatcher(Collections.singletonList("adil@codigo.com"))),
+                Collections.singletonList(partition("on", 100)));
+        List<Condition> conditions = Collections.singletonList(rollOutToEveryone);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, "user", 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -153,11 +152,11 @@ public class SplitClientImplLegacyTest {
     public void multiple_conditions_work() {
         String test = "test1";
 
-        Condition adil_is_always_on = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition("on", 100)));
-        Condition pato_is_never_shown = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("pato@codigo.com"))), Lists.newArrayList(partition("off", 100)));
-        Condition trevor_is_always_shown = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("trevor@codigo.com"))), Lists.newArrayList(partition("on", 100)));
+        Condition adil_is_always_on = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Collections.singletonList("adil@codigo.com"))), Collections.singletonList(partition("on", 100)));
+        Condition pato_is_never_shown = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Collections.singletonList("pato@codigo.com"))), Collections.singletonList(partition("off", 100)));
+        Condition trevor_is_always_shown = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Collections.singletonList("trevor@codigo.com"))), Collections.singletonList(partition("on", 100)));
 
-        List<Condition> conditions = Lists.newArrayList(adil_is_always_on, pato_is_never_shown, trevor_is_always_shown);
+        List<Condition> conditions = Arrays.asList(adil_is_always_on, pato_is_never_shown, trevor_is_always_shown);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -200,8 +199,8 @@ public class SplitClientImplLegacyTest {
     public void killed_test_always_goes_to_default() {
         String test = "test1";
 
-        Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition("on", 100)));
-        List<Condition> conditions = Lists.newArrayList(rollOutToEveryone);
+        Condition rollOutToEveryone = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Collections.singletonList("adil@codigo.com"))), Collections.singletonList(partition("on", 100)));
+        List<Condition> conditions = Collections.singletonList(rollOutToEveryone);
         Split parsedSplit = SplitHelper.createSplit(test, 123, true, Treatments.OFF, conditions, "user", 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -228,12 +227,12 @@ public class SplitClientImplLegacyTest {
         String parent = "parent";
         String dependent = "dependent";
 
-        Condition parent_is_on = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition(Treatments.ON, 100)));
-        List<Condition> parent_conditions = Lists.newArrayList(parent_is_on);
+        Condition parent_is_on = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Collections.singletonList(partition(Treatments.ON, 100)));
+        List<Condition> parent_conditions = Collections.singletonList(parent_is_on);
         Split parentSplit = SplitHelper.createSplit(parent, 123, false, Treatments.OFF, parent_conditions, null, 1, 1, null);
 
-        Condition dependent_needs_parent = SplitHelper.createCondition(CombiningMatcher.of(new DependencyMatcher(parent, Lists.newArrayList(Treatments.ON))), Lists.newArrayList(partition(Treatments.ON, 100)));
-        List<Condition> dependent_conditions = Lists.newArrayList(dependent_needs_parent);
+        Condition dependent_needs_parent = SplitHelper.createCondition(CombiningMatcher.of(new DependencyMatcher(parent, Collections.singletonList(Treatments.ON))), Collections.singletonList(partition(Treatments.ON, 100)));
+        List<Condition> dependent_conditions = Collections.singletonList(dependent_needs_parent);
         Split dependentSplit = SplitHelper.createSplit(dependent, 123, false, Treatments.OFF, dependent_conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -257,12 +256,12 @@ public class SplitClientImplLegacyTest {
         String parent = "parent";
         String dependent = "dependent";
 
-        Condition parent_is_on = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Lists.newArrayList(partition(Treatments.ON, 100)));
-        List<Condition> parent_conditions = Lists.newArrayList(parent_is_on);
+        Condition parent_is_on = SplitHelper.createCondition(CombiningMatcher.of(new AllKeysMatcher()), Collections.singletonList(partition(Treatments.ON, 100)));
+        List<Condition> parent_conditions = Collections.singletonList(parent_is_on);
         Split parentSplit = SplitHelper.createSplit(parent, 123, false, Treatments.OFF, parent_conditions, null, 1, 1, null);
 
-        Condition dependent_needs_parent = SplitHelper.createCondition(CombiningMatcher.of(new DependencyMatcher(parent, Lists.newArrayList(Treatments.OFF))), Lists.newArrayList(partition(Treatments.ON, 100)));
-        List<Condition> dependent_conditions = Lists.newArrayList(dependent_needs_parent);
+        Condition dependent_needs_parent = SplitHelper.createCondition(CombiningMatcher.of(new DependencyMatcher(parent, Collections.singletonList(Treatments.OFF))), Collections.singletonList(partition(Treatments.ON, 100)));
+        List<Condition> dependent_conditions = Collections.singletonList(dependent_needs_parent);
         Split dependentSplit = SplitHelper.createSplit(dependent, 123, false, Treatments.OFF, dependent_conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -285,8 +284,8 @@ public class SplitClientImplLegacyTest {
     public void dependency_matcher_control() {
         String dependent = "dependent";
 
-        Condition dependent_needs_parent = SplitHelper.createCondition(CombiningMatcher.of(new DependencyMatcher("not-exists", Lists.newArrayList(Treatments.OFF))), Lists.newArrayList(partition(Treatments.OFF, 100)));
-        List<Condition> dependent_conditions = Lists.newArrayList(dependent_needs_parent);
+        Condition dependent_needs_parent = SplitHelper.createCondition(CombiningMatcher.of(new DependencyMatcher("not-exists", Collections.singletonList(Treatments.OFF))), Collections.singletonList(partition(Treatments.OFF, 100)));
+        List<Condition> dependent_conditions = Collections.singletonList(dependent_needs_parent);
         Split dependentSplit = SplitHelper.createSplit(dependent, 123, false, Treatments.ON, dependent_conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -308,10 +307,10 @@ public class SplitClientImplLegacyTest {
     public void attributes_work() {
         String test = "test1";
 
-        Condition adil_is_always_on = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@codigo.com"))), Lists.newArrayList(partition(Treatments.ON, 100)));
-        Condition users_with_age_greater_than_10_are_on = SplitHelper.createCondition(CombiningMatcher.of("age", new GreaterThanOrEqualToMatcher(10, DataType.NUMBER)), Lists.newArrayList(partition("on", 100)));
+        Condition adil_is_always_on = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(Collections.singletonList("adil@codigo.com"))), Collections.singletonList(partition(Treatments.ON, 100)));
+        Condition users_with_age_greater_than_10_are_on = SplitHelper.createCondition(CombiningMatcher.of("age", new GreaterThanOrEqualToMatcher(10, DataType.NUMBER)), Collections.singletonList(partition("on", 100)));
 
-        List<Condition> conditions = Lists.newArrayList(adil_is_always_on, users_with_age_greater_than_10_are_on);
+        List<Condition> conditions = Arrays.asList(adil_is_always_on, users_with_age_greater_than_10_are_on);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -325,7 +324,7 @@ public class SplitClientImplLegacyTest {
             public void onPostExecution(SplitClient client) {
                 assertEquals("on", client.getTreatment(test));
                 assertEquals("on", client.getTreatment(test, null));
-                assertEquals("on", client.getTreatment(test, ImmutableMap.of()));
+                assertEquals("on", client.getTreatment(test, Collections.emptyMap()));
             }
         });
 
@@ -335,8 +334,8 @@ public class SplitClientImplLegacyTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertEquals("off",client.getTreatment(test, ImmutableMap.of("age", 10)));
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", 9)));
+                assertEquals("off", client.getTreatment(test, Collections.singletonMap("age", 10)));
+                assertEquals("off", client.getTreatment(test, Collections.singletonMap("age", 9)));
 
             }
         });
@@ -346,9 +345,9 @@ public class SplitClientImplLegacyTest {
     public void attributes_work_2() {
         String test = "test1";
 
-        Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(CombiningMatcher.of("age", new EqualToMatcher(0, DataType.NUMBER)), Lists.newArrayList(partition("on", 100)));
+        Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(CombiningMatcher.of("age", new EqualToMatcher(0, DataType.NUMBER)), Collections.singletonList(partition("on", 100)));
 
-        List<Condition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
+        List<Condition> conditions = Collections.singletonList(age_equal_to_0_should_be_on);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, "user", 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -362,7 +361,7 @@ public class SplitClientImplLegacyTest {
             public void onPostExecution(SplitClient client) {
                 assertEquals("off", client.getTreatment(test));
                 assertEquals("off", client.getTreatment(test, null));
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of()));
+                assertEquals("off", client.getTreatment(test, Collections.emptyMap()));
             }
         });
 
@@ -372,8 +371,8 @@ public class SplitClientImplLegacyTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", 10)));
-                assertEquals("on", client.getTreatment(test, ImmutableMap.of("age", 0)));
+                assertEquals("off", client.getTreatment(test, Collections.singletonMap("age", 10)));
+                assertEquals("on", client.getTreatment(test, Collections.singletonMap("age", 0)));
             }
         });
     }
@@ -382,9 +381,9 @@ public class SplitClientImplLegacyTest {
     public void attributes_greater_than_negative_number() {
         String test = "test1";
 
-        Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(CombiningMatcher.of("age", new EqualToMatcher(-20, DataType.NUMBER)), Lists.newArrayList(partition("on", 100)));
+        Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(CombiningMatcher.of("age", new EqualToMatcher(-20, DataType.NUMBER)), Collections.singletonList(partition("on", 100)));
 
-        List<Condition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
+        List<Condition> conditions = Collections.singletonList(age_equal_to_0_should_be_on);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -413,10 +412,10 @@ public class SplitClientImplLegacyTest {
 
             @Override
             public void onPostExecution(SplitClient client) {
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", 10)));
-                assertEquals("on", client.getTreatment(test, ImmutableMap.of("age", -20)));
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", 20)));
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of("age", -21)));
+                assertEquals("off", client.getTreatment(test, Collections.singletonMap("age", 10)));
+                assertEquals("on", client.getTreatment(test, Collections.singletonMap("age", -20)));
+                assertEquals("off", client.getTreatment(test, Collections.singletonMap("age", 20)));
+                assertEquals("off", client.getTreatment(test, Collections.singletonMap("age", -21)));
             }
         });
     }
@@ -425,9 +424,9 @@ public class SplitClientImplLegacyTest {
     public void attributes_for_sets() {
         String test = "test1";
 
-        Condition any_of_set = SplitHelper.createCondition(CombiningMatcher.of("products", new ContainsAnyOfSetMatcher(Lists.newArrayList("sms", "video"))), Lists.newArrayList(partition("on", 100)));
+        Condition any_of_set = SplitHelper.createCondition(CombiningMatcher.of("products", new ContainsAnyOfSetMatcher(Arrays.asList("sms", "video"))), Collections.singletonList(partition("on", 100)));
 
-        List<Condition> conditions = Lists.newArrayList(any_of_set);
+        List<Condition> conditions = Collections.singletonList(any_of_set);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -441,7 +440,7 @@ public class SplitClientImplLegacyTest {
             public void onPostExecution(SplitClient client) {
                 assertEquals("off", client.getTreatment(test));
                 assertEquals("off", client.getTreatment(test, null));
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of()));
+                assertEquals("off", client.getTreatment(test, Collections.emptyMap()));
             }
         });
 
@@ -450,12 +449,12 @@ public class SplitClientImplLegacyTest {
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList())));
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList(""))));
-                assertEquals("off", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("talk"))));
-                assertEquals("on", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms"))));
-                assertEquals("on", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("sms", "video"))));
-                assertEquals("on", client.getTreatment(test, ImmutableMap.of("products", Lists.newArrayList("video"))));
+                assertEquals("off", client.getTreatment(test, Collections.singletonMap("products", Collections.emptyMap())));
+                assertEquals("off", client.getTreatment(test, Collections.singletonMap("products", Collections.singletonList(""))));
+                assertEquals("off", client.getTreatment(test, Collections.singletonMap("products", Collections.singletonList("talk"))));
+                assertEquals("on", client.getTreatment(test, Collections.singletonMap("products", Collections.singletonList("sms"))));
+                assertEquals("on", client.getTreatment(test, Collections.singletonMap("products", Arrays.asList("sms", "video"))));
+                assertEquals("on", client.getTreatment(test, Collections.singletonMap("products", Collections.singletonList("video"))));
             }
         });
     }
@@ -466,19 +465,20 @@ public class SplitClientImplLegacyTest {
 
         Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(
                 CombiningMatcher.of("age", new EqualToMatcher(-20, DataType.NUMBER)),
-                Lists.newArrayList(partition("on", 100)));
+                Collections.singletonList(partition("on", 100)));
 
         age_equal_to_0_should_be_on.conditionType = ConditionType.ROLLOUT;
         age_equal_to_0_should_be_on.label = "foolabel";
 
-        List<Condition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
+        List<Condition> conditions = Collections.singletonList(age_equal_to_0_should_be_on);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
         when(splitsStorage.get(test)).thenReturn(parsedSplit);
         ImpressionListener impressionListener = mock(ImpressionListener.class);
         SplitClientImpl client = SplitClientImplFactory.get(new Key("pato@codigo.com"), impressionListener);
-        Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
-
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("age", -20);
+        attributes.put("acv", "1000000");
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
@@ -544,18 +544,18 @@ public class SplitClientImplLegacyTest {
         String test = "test1";
 
         Condition whitelistCondition = SplitHelper.createCondition(
-                CombiningMatcher.of(new WhitelistMatcher(Lists.newArrayList("adil@split.io"))),
-                Lists.newArrayList(partition("on", 100), partition("off", 0)));
+                CombiningMatcher.of(new WhitelistMatcher(Collections.singletonList("adil@split.io"))),
+                Arrays.asList(partition("on", 100), partition("off", 0)));
         whitelistCondition.conditionType = ConditionType.WHITELIST;
         whitelistCondition.label = "whitelisted user";
 
         Condition rollOutToEveryone = SplitHelper.createCondition(
                 CombiningMatcher.of(new AllKeysMatcher()),
-                Lists.newArrayList(partition("on", 100), partition("off", 0)));
+                Arrays.asList(partition("on", 100), partition("off", 0)));
         rollOutToEveryone.conditionType = ConditionType.ROLLOUT;
         rollOutToEveryone.label = "in segment all";
 
-        List<Condition> conditions = Lists.newArrayList(whitelistCondition, rollOutToEveryone);
+        List<Condition> conditions = Arrays.asList(whitelistCondition, rollOutToEveryone);
         Split split = new Split();
         split.name = test;
         split.seed = 123;
@@ -596,9 +596,9 @@ public class SplitClientImplLegacyTest {
 
         Set<String> whitelist = new HashSet<>();
         whitelist.add("aijaz");
-        Condition aijaz_should_match = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(whitelist)), Lists.newArrayList(partition("on", 100)));
+        Condition aijaz_should_match = SplitHelper.createCondition(CombiningMatcher.of(new WhitelistMatcher(whitelist)), Collections.singletonList(partition("on", 100)));
 
-        List<Condition> conditions = Lists.newArrayList(aijaz_should_match);
+        List<Condition> conditions = Collections.singletonList(aijaz_should_match);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, "user", 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -632,11 +632,11 @@ public class SplitClientImplLegacyTest {
 
         Condition age_equal_to_0_should_be_on = SplitHelper.createCondition(
                 CombiningMatcher.of("age", new EqualToMatcher(-20, DataType.NUMBER)),
-                Lists.newArrayList(partition("on", 100)));
+                Collections.singletonList(partition("on", 100)));
         age_equal_to_0_should_be_on.conditionType = ConditionType.ROLLOUT;
         age_equal_to_0_should_be_on.label = "foolabel";
 
-        List<Condition> conditions = Lists.newArrayList(age_equal_to_0_should_be_on);
+        List<Condition> conditions = Collections.singletonList(age_equal_to_0_should_be_on);
         Split parsedSplit = SplitHelper.createSplit(test, 123, false, Treatments.OFF, conditions, null, 1, 1, null);
 
         SplitsStorage splitsStorage = mock(SplitsStorage.class);
@@ -647,7 +647,9 @@ public class SplitClientImplLegacyTest {
 
         SplitClientImpl client = SplitClientImplFactory.get(new Key("pato@codigo.com"), impressionListener);
 
-        Map<String, Object> attributes = ImmutableMap.of("age", -20, "acv", "1000000");
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("age", -20);
+        attributes.put("acv", "1000000");
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override

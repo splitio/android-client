@@ -1,9 +1,9 @@
 package io.split.android.client;
 
 
-import androidx.annotation.NonNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
-import com.google.common.base.Strings;
+import androidx.annotation.NonNull;
 
 import java.net.URI;
 
@@ -20,12 +20,11 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.telemetry.TelemetryHelperImpl;
+import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import io.split.android.client.validators.PrefixValidatorImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * Configurations for the SplitClient.
@@ -1162,14 +1161,14 @@ public class SplitClientConfig {
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {
-            if (!Strings.isNullOrEmpty(proxyUri)) {
+            if (!Utils.isNullOrEmpty(proxyUri)) {
                 try {
                     String username = null;
                     String password = null;
                     URI uri = URI.create(proxyUri);
                     int port = uri.getPort() != -1 ? uri.getPort() : PROXY_PORT_DEFAULT;
                     String userInfo = uri.getUserInfo();
-                    if(!Strings.isNullOrEmpty(userInfo)) {
+                    if(!Utils.isNullOrEmpty(userInfo)) {
                         String[] userInfoComponents = userInfo.split(":");
                         if(userInfoComponents.length > 1) {
                             username = userInfoComponents[0];

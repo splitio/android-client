@@ -1,9 +1,9 @@
 package io.split.android.client.validators;
 
-import com.google.common.base.Strings;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.Assert;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -11,9 +11,7 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.splits.SplitsStorage;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import io.split.android.client.utils.Utils;
 
 public class EventValidatorTest {
 
@@ -98,7 +96,7 @@ public class EventValidatorTest {
         Event event = new Event();
         event.eventTypeId = "type1";
         event.trafficTypeName = "traffic1";
-        event.key = Strings.repeat("p", 300);
+        event.key = Utils.repeat("p", 300);
         ValidationErrorInfo errorInfo = validator.validate(event, true);
 
         Assert.assertNotNull(errorInfo);

@@ -1,6 +1,6 @@
 package io.split.android.client.storage.cipher;
 
-import javax.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 public interface SplitCipher {
 

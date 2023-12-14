@@ -2,7 +2,7 @@ package io.split.android.client.impressions;
 
 import io.split.android.client.service.synchronizer.SyncManager;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class SyncImpressionListener implements ImpressionListener {
 

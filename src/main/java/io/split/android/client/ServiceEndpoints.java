@@ -2,7 +2,7 @@ package io.split.android.client;
 
 import androidx.annotation.NonNull;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class ServiceEndpoints {
 

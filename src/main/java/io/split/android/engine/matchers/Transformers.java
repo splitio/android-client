@@ -1,17 +1,23 @@
 package io.split.android.engine.matchers;
 
-import com.google.common.collect.Sets;
-
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 
 public class Transformers {
-    private static Set<String> VALID_BOOLEAN_STRINGS = Sets.newHashSet("true", "false");
-    private static TimeZone UTC = TimeZone.getTimeZone("UTC");
+    private static final Set<String> VALID_BOOLEAN_STRINGS;
+
+    static {
+        Set<String> validStrings = new HashSet<>();
+        Collections.addAll(validStrings, "true", "false");
+        VALID_BOOLEAN_STRINGS = validStrings;
+    }
+
+    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
     public static Long asLong(Object obj) {
         if (obj == null) {

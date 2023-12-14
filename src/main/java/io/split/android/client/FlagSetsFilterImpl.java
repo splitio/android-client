@@ -1,10 +1,10 @@
 package io.split.android.client;
 
-import com.google.common.collect.Sets;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import io.split.android.client.utils.Utils;
 
 public class FlagSetsFilterImpl implements FlagSetsFilter {
 
@@ -26,7 +26,7 @@ public class FlagSetsFilterImpl implements FlagSetsFilter {
             return false;
         }
 
-        return !Sets.intersection(mFlagSets, sets).isEmpty();
+        return !Utils.intersection(mFlagSets, sets).isEmpty();
     }
 
     @Override

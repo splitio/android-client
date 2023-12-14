@@ -1,5 +1,7 @@
 package io.split.android.client.network;
 
+import static io.split.android.client.utils.Utils.getAsInt;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -67,14 +69,6 @@ class HttpRequestHelper {
             } catch (Exception ex) {
                 Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());
             }
-        }
-    }
-
-    private static int getAsInt(long value) {
-        if (value > Integer.MAX_VALUE) {
-            return Integer.MAX_VALUE;
-        } else {
-            return (int) value;
         }
     }
 

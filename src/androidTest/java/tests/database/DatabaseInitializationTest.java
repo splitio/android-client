@@ -119,7 +119,7 @@ public class DatabaseInitializationTest {
     }
 
     @Test
-    public void oneFactoryWithPrefixCreatesNewDatabase() {
+    public void oneFactoryWithPrefixCreatesNewDatabase() throws InterruptedException {
         String[] initialDatabaseList = getDbList(mContext);
         SplitFactory factory1 = IntegrationHelper.buildFactory("abcdefghijkl",
                 new Key("matchingKey"),
@@ -133,6 +133,7 @@ public class DatabaseInitializationTest {
                 mContext,
                 mHttpClientMock);
 
+        Thread.sleep(200);
         String[] finalDatabaseList = getDbList(mContext);
 
         assertNotNull(factory1);

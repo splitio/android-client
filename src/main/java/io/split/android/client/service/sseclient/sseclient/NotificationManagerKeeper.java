@@ -3,10 +3,10 @@ package io.split.android.client.service.sseclient.sseclient;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.common.collect.Maps;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -36,7 +36,7 @@ public class NotificationManagerKeeper {
     private static final String CHANNEL_PRI_KEY = "PRI";
     private static final String CHANNEL_SEC_KEY = "SEC";
 
-    Map<String, Publisher> mPublishers = Maps.newConcurrentMap();
+    Map<String, Publisher> mPublishers = new ConcurrentHashMap<>();
     private final PushManagerEventBroadcaster mBroadcasterChannel;
     private final AtomicLong mLastControlTimestamp = new AtomicLong(0);
     private final AtomicBoolean mIsStreamingActive = new AtomicBoolean(true);

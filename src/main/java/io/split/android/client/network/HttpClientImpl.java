@@ -5,8 +5,6 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.common.base.Strings;
-
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
@@ -18,6 +16,7 @@ import java.util.Map;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.Base64Util;
+import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 
 public class HttpClientImpl implements HttpClient {
@@ -148,7 +147,7 @@ public class HttpClientImpl implements HttpClient {
             return null;
         } else if (proxyAuthenticator != null) {
             return new SplitUrlConnectionAuthenticator(proxyAuthenticator);
-        } else if (!Strings.isNullOrEmpty(proxy.getUsername())) {
+        } else if (!Utils.isNullOrEmpty(proxy.getUsername())) {
             return createBasicAuthenticator(proxy.getUsername(), proxy.getPassword());
         }
 
