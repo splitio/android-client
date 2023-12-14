@@ -2,9 +2,6 @@ package io.split.android.client.utils;
 
 import androidx.annotation.Nullable;
 
-import com.google.common.base.Strings;
-
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -31,7 +28,7 @@ public class Utils {
             salt.append(sanitizedApiKey.substring(0, SALT_LENGTH - SALT_PREFIX.length()));
         } else {
             salt.append(sanitizedApiKey);
-            salt.append(Strings.repeat(CHAR_TO_FILL_SALT, (SALT_LENGTH - SALT_PREFIX.length()) - sanitizedApiKey.length()));
+            salt.append(repeat(CHAR_TO_FILL_SALT, (SALT_LENGTH - SALT_PREFIX.length()) - sanitizedApiKey.length()));
         }
         // Remove last end of strings
         String cleanedSalt = salt.toString().substring(0, 29);
@@ -86,5 +83,26 @@ public class Utils {
         Set<T> result = new HashSet<>(set1);
         result.retainAll(set2);
         return result;
+    }
+
+    public static boolean isNullOrEmpty(@Nullable String string) {
+        return string == null || string.isEmpty();
+    }
+
+    @Nullable
+    public static String repeat(String str, int count) {
+        if (str == null) {
+            return null;
+        }
+
+        if (count < 0) {
+            return str;
+        }
+
+        StringBuilder builder = new StringBuilder(str.length() * count);
+        for (int i = 0; i < count; i++) {
+            builder.append(str);
+        }
+        return builder.toString();
     }
 }

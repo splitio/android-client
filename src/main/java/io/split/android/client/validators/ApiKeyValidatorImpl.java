@@ -1,6 +1,6 @@
 package io.split.android.client.validators;
 
-import com.google.common.base.Strings;
+import io.split.android.client.utils.Utils;
 
 public class ApiKeyValidatorImpl implements ApiKeyValidator {
 
@@ -11,7 +11,7 @@ public class ApiKeyValidatorImpl implements ApiKeyValidator {
             return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed a null sdkKey, the sdkKey must be a non-empty string");
         }
 
-        if (Strings.isNullOrEmpty(sdkKey.trim())) {
+        if (Utils.isNullOrEmpty(sdkKey.trim())) {
             return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed an empty sdkKey, sdkKey must be a non-empty string");
         }
 

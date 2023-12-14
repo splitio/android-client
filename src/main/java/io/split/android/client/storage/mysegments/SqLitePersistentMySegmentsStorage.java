@@ -4,8 +4,6 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import com.google.common.base.Strings;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +12,7 @@ import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.StringHelper;
+import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 
 public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsStorage {
@@ -59,7 +58,7 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
     }
 
     private List<String> getMySegmentsFromEntity(MySegmentEntity entity) {
-        if (entity == null || Strings.isNullOrEmpty(entity.getSegmentList())) {
+        if (entity == null || Utils.isNullOrEmpty(entity.getSegmentList())) {
             return new ArrayList<>();
         }
 

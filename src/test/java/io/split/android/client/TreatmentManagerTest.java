@@ -9,8 +9,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static io.split.android.client.TreatmentLabels.DEFINITION_NOT_FOUND;
 
-import com.google.common.base.Strings;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +32,7 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
+import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
@@ -218,7 +217,7 @@ public class TreatmentManagerTest {
 
     @Test
     public void testLongKey() {
-        String matchingKey = Strings.repeat("a", 251);
+        String matchingKey = Utils.repeat("a", 251);
         String splitName = "FACUNDO_TEST";
         List<String> splitList = new ArrayList<>();
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);

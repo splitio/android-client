@@ -146,10 +146,10 @@ public class SyncGuardianIntegrationTest {
         boolean sseConnectionAwait = mIsStreamingConnected.await(20, TimeUnit.SECONDS);
         int initialSplitsHit = mSplitsHitsCountHit.get();
 
-        sendToBackgroundFor(3000);
+        sendToBackgroundFor(5000);
         int secondSplitsHit = mSplitsHitsCountHit.get();
 
-        sendToBackgroundFor(3000);
+        sendToBackgroundFor(5000);
         int thirdSplitsHit = mSplitsHitsCountHit.get();
 
         Thread.sleep(5000);

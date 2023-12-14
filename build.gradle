@@ -16,7 +16,7 @@ apply plugin: 'signing'
 apply plugin: 'kotlin-android'
 
 ext {
-    splitVersion = '3.5.1-alpha-1'
+    splitVersion = '4.0.0-alpha-1'
 }
 
 android {
@@ -127,7 +127,6 @@ dependencies {
     implementation "androidx.annotation:annotation:$annotationVersion"
 
     implementation "com.google.code.gson:gson:$gsonVersion"
-    implementation "com.google.guava:guava:$guavaVersion"
 
     implementation "org.yaml:snakeyaml:$snakeYamlVersion"
     implementation "com.google.android.gms:play-services-base:$playServicesVersion"
@@ -142,6 +141,7 @@ dependencies {
     testImplementation "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
+    testImplementation "com.google.guava:guava:$guavaVersion"
 
     androidTestImplementation "androidx.test:rules:$testRulesVersion"
     androidTestImplementation "androidx.test.ext:junit:$jUnitExtVersion"
@@ -153,6 +153,7 @@ dependencies {
     androidTestImplementation "androidx.work:work-testing:$workVersion"
     androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
     androidTestImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
+    androidTestImplementation "com.google.guava:guava:$guavaVersion"
 }
 
 def splitPOM = {
