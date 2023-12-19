@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.EventsTracker;

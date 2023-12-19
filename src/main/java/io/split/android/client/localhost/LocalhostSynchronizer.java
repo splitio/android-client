@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import javax.security.auth.Destroyable;
 
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.lifecycle.SplitLifecycleAware;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;

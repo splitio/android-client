@@ -2,10 +2,7 @@ package io.split.android.client.service.telemetry;
 
 import androidx.annotation.NonNull;
 
-import java.util.List;
-
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.SplitFilter;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;

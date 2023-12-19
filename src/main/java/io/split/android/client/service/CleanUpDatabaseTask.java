@@ -9,7 +9,6 @@ import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsUniqueStorage;
-import io.split.android.client.storage.splits.SplitsStorage;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
