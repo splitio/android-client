@@ -23,6 +23,7 @@ public class SplitFactoryBuilder {
      * @return a {@link SplitFactory} implementation
      * @throws SplitInstantiationException
      */
+    @NonNull
     public static SplitFactory build(@NonNull String sdkKey, @NonNull String matchingKey, @NonNull Context context) throws SplitInstantiationException {
         if (matchingKey == null) {
             throw new SplitInstantiationException("Could not instantiate SplitFactory. Matching key cannot be null");
@@ -41,6 +42,7 @@ public class SplitFactoryBuilder {
      * @return a {@link SplitFactory} implementation
      * @throws SplitInstantiationException
      */
+    @NonNull
     public static SplitFactory build(@NonNull String sdkKey, @NonNull Key key, @NonNull Context context) throws SplitInstantiationException {
         return build(sdkKey, key, SplitClientConfig.builder().build(), context);
     }
@@ -54,6 +56,7 @@ public class SplitFactoryBuilder {
      * @return a {@link SplitFactory} implementation
      * @throws SplitInstantiationException
      */
+    @NonNull
     public static synchronized SplitFactory build(@NonNull String sdkKey, @NonNull Key key, @NonNull SplitClientConfig config, @NonNull Context context) throws SplitInstantiationException {
         try {
             checkPreconditions(sdkKey, key, config, context);
@@ -73,6 +76,7 @@ public class SplitFactoryBuilder {
      *
      * @return a {@link SplitFactory} implementation
      */
+    @NonNull
     public static SplitFactory local(@NonNull String key, @NonNull Context context) {
         return new LocalhostSplitFactory(key, context, SplitClientConfig.builder().build());
     }
