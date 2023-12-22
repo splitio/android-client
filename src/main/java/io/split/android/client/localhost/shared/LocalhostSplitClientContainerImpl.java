@@ -1,7 +1,5 @@
 package io.split.android.client.localhost.shared;
 
-import java.util.Set;
-
 import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;

@@ -6,7 +6,6 @@ import java.util.Set;
 
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
-import io.split.android.client.service.impressions.unique.UniqueKey;
 
 public interface ImpressionsTaskFactory {
 

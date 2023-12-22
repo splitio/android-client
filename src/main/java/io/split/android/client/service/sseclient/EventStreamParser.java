@@ -1,7 +1,5 @@
 package io.split.android.client.service.sseclient;
 
-import androidx.annotation.VisibleForTesting;
-
 import java.util.Map;
 
 public class EventStreamParser {
