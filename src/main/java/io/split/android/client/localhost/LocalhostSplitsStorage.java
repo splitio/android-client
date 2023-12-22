@@ -43,11 +43,11 @@ public class LocalhostSplitsStorage implements SplitsStorage {
                                   @NonNull Context context,
                                   @NonNull FileStorage fileStorage,
                                   @NonNull EventsManagerCoordinator eventsManager) {
-        this.mLocalhostFileName = fileName;
-        this.mContext = checkNotNull(context);
-        this.mFileStorage = checkNotNull(fileStorage);
-        this.mEventsManager = checkNotNull(eventsManager);
-        this.setup();
+        mLocalhostFileName = fileName;
+        mContext = checkNotNull(context);
+        mFileStorage = checkNotNull(fileStorage);
+        mEventsManager = checkNotNull(eventsManager);
+        setup();
     }
 
     @Override

@@ -36,6 +36,7 @@ import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.exceptions.SplitInstantiationException;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import okhttp3.mockwebserver.Dispatcher;
@@ -216,7 +217,7 @@ public class TrackTest {
     }
 
     @Test
-    public void largeNumberInPropertiesTest() throws InterruptedException, IOException, URISyntaxException, TimeoutException {
+    public void largeNumberInPropertiesTest() throws InterruptedException, SplitInstantiationException {
         CountDownLatch latch = new CountDownLatch(1);
         String apiKey = IntegrationHelper.dummyApiKey();
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);

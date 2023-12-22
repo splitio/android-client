@@ -58,14 +58,10 @@ public class LocalhostTest {
         SplitManager manager = null;
 
         CountDownLatch readyLatch = new CountDownLatch(1);
-        try {
-            factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig);
-            client = factory.client();
-            manager = factory.manager();
-            client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(readyLatch));
-
-        } catch (IOException e) {
-        }
+        factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig);
+        client = factory.client();
+        manager = factory.manager();
+        client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(readyLatch));
 
         readyLatch.await(5, TimeUnit.SECONDS);
 
@@ -158,14 +154,11 @@ public class LocalhostTest {
         SplitManager manager = null;
 
         CountDownLatch readyLatch = new CountDownLatch(1);
-        try {
-            factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig,"splits_test.properties");
-            client = (LocalhostSplitClient) factory.client();
-            manager = factory.manager();
+        factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig,"splits_test.properties");
+        client = (LocalhostSplitClient) factory.client();
+        manager = factory.manager();
             client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(readyLatch));
 
-        } catch (IOException e) {
-        }
 
         readyLatch.await(5, TimeUnit.SECONDS);
 
@@ -210,14 +203,11 @@ public class LocalhostTest {
         SplitClient client = null;
         SplitManager manager = null;
         CountDownLatch timeoutLatch = new CountDownLatch(1);
-        try {
-            factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig, "splits_test_not_found");
-            client = factory.client();
-            manager = factory.manager();
+        factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig, "splits_test_not_found");
+        client = factory.client();
+        manager = factory.manager();
             client.on(SplitEvent.SDK_READY_TIMED_OUT, new TestingHelper.TestEventTask(timeoutLatch));
 
-        } catch (IOException e) {
-        }
         timeoutLatch.await(5, TimeUnit.SECONDS);
         List<SplitView> splits = manager.splits();
         SplitView sva = manager.split("split_a");
@@ -250,12 +240,9 @@ public class LocalhostTest {
         LocalhostSplitClient client = null;
 
         CountDownLatch readyLatch = new CountDownLatch(1);
-        try {
-            factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig, "splits_yml.yml");
-            client = (LocalhostSplitClient) factory.client();
-            client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(readyLatch));
-        } catch (IOException e) {
-        }
+        factory = new LocalhostSplitFactory("key", mContext, mSplitClientConfig, "splits_yml.yml");
+        client = (LocalhostSplitClient) factory.client();
+        client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(readyLatch));
         readyLatch.await(5, TimeUnit.SECONDS);
 
         Assert.assertNotNull(factory);

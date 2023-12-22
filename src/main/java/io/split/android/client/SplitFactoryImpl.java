@@ -3,6 +3,7 @@ package io.split.android.client;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
 import java.net.URISyntaxException;
@@ -79,21 +80,21 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitClientContainer mClientContainer;
     private final UserConsentManager mUserConsentManager;
 
-    @SuppressWarnings("FieldCanBeLocal")
+    @SuppressWarnings("FieldCanBeLocal") // keeping the reference on purpose
     private final SplitTaskExecutionListener mMigrationExecutionListener;
 
-    public SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config, Context context)
+    public SplitFactoryImpl(@NonNull String apiToken, @NonNull Key key, @NonNull SplitClientConfig config, @NonNull Context context)
             throws URISyntaxException {
         this(apiToken, key, config, context,
                 null, null, null,
                 null, null, null);
     }
 
-    private SplitFactoryImpl(String apiToken, Key key, SplitClientConfig config,
-                             Context context, HttpClient httpClient, SplitRoomDatabase testDatabase,
-                             SynchronizerSpy synchronizerSpy,
-                             TestingConfig testingConfig, SplitLifecycleManager testLifecycleManager,
-                             TelemetryStorage telemetryStorage)
+    private SplitFactoryImpl(@NonNull String apiToken, @NonNull Key key, @NonNull SplitClientConfig config,
+                             @NonNull Context context, @Nullable HttpClient httpClient, @Nullable SplitRoomDatabase testDatabase,
+                             @Nullable SynchronizerSpy synchronizerSpy,
+                             @Nullable TestingConfig testingConfig, @Nullable SplitLifecycleManager testLifecycleManager,
+                             @Nullable TelemetryStorage telemetryStorage)
             throws URISyntaxException {
 
         mDefaultClientKey = key;
