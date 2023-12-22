@@ -73,7 +73,7 @@ public class SplitFactoryBuilder {
      *
      * @return a {@link SplitFactory} implementation
      */
-    public static SplitFactory local(String key, Context context) {
+    public static SplitFactory local(@NonNull String key, @NonNull Context context) {
         return new LocalhostSplitFactory(key, context, SplitClientConfig.builder().build());
     }
 
