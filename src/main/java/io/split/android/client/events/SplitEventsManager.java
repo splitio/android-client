@@ -14,7 +14,6 @@ import io.split.android.client.events.executors.SplitEventExecutor;
 import io.split.android.client.events.executors.SplitEventExecutorFactory;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
-import io.split.android.client.service.executor.SplitClientEventTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.utils.logger.Logger;
 

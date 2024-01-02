@@ -5,8 +5,6 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.Set;
-
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerFactory;
 import io.split.android.client.attributes.AttributesManagerFactoryImpl;

@@ -2,7 +2,6 @@ package io.split.android.client.storage.cipher;
 
 import androidx.annotation.NonNull;
 
-import java.util.Collections;
 import java.util.List;
 
 import io.split.android.client.service.executor.SplitTask;

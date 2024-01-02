@@ -5,12 +5,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.FilterBuilder;
 import io.split.android.client.FlagSetsFilter;
@@ -55,13 +50,13 @@ public class LocalhostSplitFactory implements SplitFactory {
     private final String mDefaultKey;
     private String mLocalhostFileName = null;
 
-    public LocalhostSplitFactory(String key, Context context, SplitClientConfig config) throws IOException {
+    public LocalhostSplitFactory(String key, Context context, SplitClientConfig config) {
         this(key, context, config, null);
     }
 
     public LocalhostSplitFactory(String key, Context context,
                                  SplitClientConfig config,
-                                 String localhostFileName) throws IOException {
+                                 String localhostFileName) {
 
         if (localhostFileName != null) {
             mLocalhostFileName = localhostFileName;
