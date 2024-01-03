@@ -1,11 +1,9 @@
 package io.split.android.engine.matchers;
 
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.Evaluator;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
-import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 
 /**
  * Created by guillermo on 12/12/17.

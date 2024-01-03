@@ -10,10 +10,8 @@ import androidx.work.WorkerParameters;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
-import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.SplitChange;

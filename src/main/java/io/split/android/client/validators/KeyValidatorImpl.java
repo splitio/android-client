@@ -1,6 +1,6 @@
 package io.split.android.client.validators;
 
-import com.google.common.base.Strings;
+import io.split.android.client.utils.Utils;
 
 /**
  * Validates an instance of Key class.
@@ -17,7 +17,7 @@ public class KeyValidatorImpl implements KeyValidator {
             return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed a null key, matching key must be a non-empty string");
         }
 
-        if (Strings.isNullOrEmpty(matchingKey.trim())) {
+        if (Utils.isNullOrEmpty(matchingKey.trim())) {
             return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME,"you passed an empty string, matching key must be a non-empty string");
         }
 
@@ -26,7 +26,7 @@ public class KeyValidatorImpl implements KeyValidator {
         }
 
         if (bucketingKey != null) {
-            if (Strings.isNullOrEmpty(bucketingKey.trim())) {
+            if (Utils.isNullOrEmpty(bucketingKey.trim())) {
                 return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed an empty string, bucketing key must be null or a non-empty string");
             }
 

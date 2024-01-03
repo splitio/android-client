@@ -1,6 +1,6 @@
 package io.split.android.client.storage.legacy;
 
-import org.jetbrains.annotations.NotNull;
+import androidx.annotation.NonNull;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,7 +20,7 @@ public class FileStorage implements IStorage {
 
     protected final File mDataFolder;
 
-    public FileStorage(@NotNull File rootFolder, @NotNull String folderName) {
+    public FileStorage(@NonNull File rootFolder, @NonNull String folderName) {
         mDataFolder = new File(rootFolder, folderName);
         if(!mDataFolder.exists()) {
             if(!mDataFolder.mkdir()) {

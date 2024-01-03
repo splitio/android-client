@@ -15,7 +15,7 @@ import io.split.android.client.service.synchronizer.MySegmentsChangeChecker;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.utils.logger.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class MySegmentsOverwriteTask implements SplitTask {
 

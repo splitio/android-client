@@ -1,12 +1,10 @@
 package io.split.android.client.service.impressions;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
-
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import androidx.core.util.Supplier;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.service.ServiceConstants;
@@ -19,11 +17,11 @@ public class ImpressionManagerRetryTimerProviderImpl implements ImpressionManage
 
     private final SplitTaskExecutor mTaskExecutor;
 
-    private final Supplier<RetryBackoffCounterTimer> mUniqueKeysRetrySupplier = Suppliers.memoize(buildBackoffTimerDelegate());
+    private final Supplier<RetryBackoffCounterTimer> mUniqueKeysRetrySupplier = new MemoizedSupplier<>(buildBackoffTimerDelegate());
 
-    private final Supplier<RetryBackoffCounterTimer> mImpressionsRetrySupplier = Suppliers.memoize(buildBackoffTimerDelegate());
+    private final Supplier<RetryBackoffCounterTimer> mImpressionsRetrySupplier = new MemoizedSupplier<>(buildBackoffTimerDelegate());
 
-    private final Supplier<RetryBackoffCounterTimer> mImpressionsCountRetrySupplier = Suppliers.memoize(buildBackoffTimerDelegate());
+    private final Supplier<RetryBackoffCounterTimer> mImpressionsCountRetrySupplier = new MemoizedSupplier<>(buildBackoffTimerDelegate());
 
     public ImpressionManagerRetryTimerProviderImpl(SplitTaskExecutor taskExecutor) {
         this(taskExecutor, new RetryBackoffCounterTimerFactory());

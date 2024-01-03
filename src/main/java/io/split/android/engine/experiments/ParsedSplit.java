@@ -2,8 +2,8 @@ package io.split.android.engine.experiments;
 
 import androidx.annotation.NonNull;
 
-import com.google.common.collect.ImmutableList;
-
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -15,7 +15,7 @@ public class ParsedSplit {
     private final int mSeed;
     private final boolean mKilled;
     private final String mDefaultTreatment;
-    private final ImmutableList<ParsedCondition> mParsedCondition;
+    private final List<ParsedCondition> mParsedCondition;
     private final String mTrafficTypeName;
     private final long mChangeNumber;
     private final int mTrafficAllocation;
@@ -42,7 +42,7 @@ public class ParsedSplit {
         mSeed = seed;
         mKilled = killed;
         mDefaultTreatment = defaultTreatment;
-        mParsedCondition = ImmutableList.copyOf(matcherAndSplits);
+        mParsedCondition = Collections.unmodifiableList(new ArrayList<>(matcherAndSplits));
         mTrafficTypeName = trafficTypeName;
         mChangeNumber = changeNumber;
         mAlgo = algo;

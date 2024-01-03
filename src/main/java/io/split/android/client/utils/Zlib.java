@@ -1,6 +1,5 @@
 package io.split.android.client.utils;
 
-import java.io.Closeable;
 import java.util.Arrays;
 import java.util.zip.Inflater;
 

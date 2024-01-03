@@ -5,7 +5,6 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
-import com.google.common.base.Strings;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,6 +21,7 @@ import java.util.concurrent.BlockingQueue;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import fake.HttpStreamResponseMock;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryImpl;
@@ -35,9 +35,9 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-import io.split.android.client.utils.logger.SplitLogLevel;
+import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
-import fake.HttpStreamResponseMock;
+import io.split.android.client.utils.logger.SplitLogLevel;
 
 public class IntegrationHelper {
     public static final int NEVER_REFRESH_RATE = 999999;
@@ -77,7 +77,7 @@ public class IntegrationHelper {
     }
 
     public static void logSeparator(String tag) {
-        Logger.i(tag, Strings.repeat("-", 200));
+        Logger.i(tag, Utils.repeat("-", 200));
     }
 
     public static String emptySplitChanges(long since, long till) {

@@ -4,8 +4,6 @@ import androidx.annotation.NonNull;
 
 import com.google.gson.JsonParseException;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
 
 import io.split.android.client.service.impressions.ImpressionsCountPerFeature;
@@ -18,7 +16,7 @@ import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class SqLitePersistentImpressionsCountStorage
         extends SqLitePersistentStorage<ImpressionsCountEntity, ImpressionsCountPerFeature>
@@ -79,7 +77,7 @@ public class SqLitePersistentImpressionsCountStorage
     }
 
     @Override
-    protected void updateStatus(@NonNull @NotNull List<Long> ids, int status) {
+    protected void updateStatus(@NonNull List<Long> ids, int status) {
         mDao.updateStatus(ids, status);
     }
 

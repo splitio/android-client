@@ -16,7 +16,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.utils.logger.Logger;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class FilterSplitsInCacheTask implements SplitTask {
 

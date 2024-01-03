@@ -1,6 +1,5 @@
 package io.split.android.client.storage.legacy;
 
-import com.google.common.base.Strings;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.File;
@@ -15,9 +14,10 @@ import java.util.UUID;
 import io.split.android.client.dtos.ChunkHeader;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.MemoryUtils;
 import io.split.android.client.utils.MemoryUtilsImpl;
+import io.split.android.client.utils.Utils;
+import io.split.android.client.utils.logger.Logger;
 
 public class FileStorageHelper {
 
@@ -56,7 +56,7 @@ public class FileStorageHelper {
 
     public ChunkHeader chunkFromLine(String jsonChunk) {
 
-        if (Strings.isNullOrEmpty(jsonChunk)) {
+        if (Utils.isNullOrEmpty(jsonChunk)) {
             return newHeaderChunk();
         }
 

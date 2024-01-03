@@ -1,8 +1,9 @@
 package io.split.android.client.service.events;
 
-import androidx.annotation.NonNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
+import static io.split.android.client.utils.Utils.partition;
 
-import com.google.common.collect.Lists;
+import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,8 +21,6 @@ import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class EventsRecorderTask implements SplitTask {
     public final static int FAILING_CHUNK_SIZE = 20;
@@ -81,7 +80,7 @@ public class EventsRecorderTask implements SplitTask {
         } while (events.size() == mConfig.getEventsPerPush());
 
         // Update events by chunks to avoid sqlite errors
-        List<List<Event>> failingChunks = Lists.partition(failingEvents, FAILING_CHUNK_SIZE);
+        List<List<Event>> failingChunks = partition(failingEvents, FAILING_CHUNK_SIZE);
         for(List<Event> chunk : failingChunks) {
             mPersistentEventsStorage.setActive(chunk);
         }

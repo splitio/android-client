@@ -1,6 +1,6 @@
 package io.split.android.client.service.http;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -42,7 +42,7 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             }
             URI builtUri = uriBuilder.build();
             HttpResponse response = mClient.request(builtUri, HttpMethod.GET, null, headers).execute();
-            Logger.d("Received from: " + builtUri.toString() + " -> " + response.getData());
+            Logger.v("Received from: " + builtUri.toString() + " -> " + response.getData());
             if (!response.isSuccess()) {
                 throw new IllegalStateException("http return code " + response.getHttpStatus());
             }

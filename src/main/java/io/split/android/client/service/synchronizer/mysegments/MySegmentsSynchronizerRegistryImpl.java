@@ -1,7 +1,5 @@
 package io.split.android.client.service.synchronizer.mysegments;
 
-import androidx.annotation.VisibleForTesting;
-
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;

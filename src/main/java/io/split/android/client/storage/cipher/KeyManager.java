@@ -1,8 +1,8 @@
 package io.split.android.client.storage.cipher;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import javax.annotation.Nullable;
 import javax.crypto.SecretKey;
 
 import io.split.android.client.storage.cipher.provider.SecureKeyStorageProvider;

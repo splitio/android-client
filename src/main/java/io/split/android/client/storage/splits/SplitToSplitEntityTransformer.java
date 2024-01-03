@@ -1,11 +1,9 @@
 package io.split.android.client.storage.splits;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
+import static io.split.android.client.utils.Utils.partition;
 
 import androidx.annotation.NonNull;
-
-import com.google.common.collect.Lists;
-import com.google.gson.JsonParseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +76,7 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
     private List<SplitDeferredTaskItem<List<SplitEntity>>> getSplitEntityTasks(List<Split> splits, int splitsSize) {
         int availableThreads = mTaskExecutor.getAvailableThreads();
         int partitionSize = splitsSize / availableThreads;
-        List<List<Split>> partitions = Lists.partition(splits, partitionSize);
+        List<List<Split>> partitions = partition(splits, partitionSize);
         List<SplitDeferredTaskItem<List<SplitEntity>>> taskList = new ArrayList<>(partitions.size());
 
         for (List<Split> partition : partitions) {

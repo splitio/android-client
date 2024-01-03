@@ -1,7 +1,5 @@
 package io.split.android.client.service.sseclient;
 
-import androidx.annotation.VisibleForTesting;
-
 import java.util.Map;
 
 public class EventStreamParser {
@@ -22,7 +20,6 @@ public class EventStreamParser {
      *                       if the line contains any.
      * @return Returns true if a blank line meaning the final of an event if found.
      */
-    @VisibleForTesting
     public boolean parseLineAndAppendValue(String streamLine, Map<String, String> messageValues) {
 
         if (streamLine == null) {

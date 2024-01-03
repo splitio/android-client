@@ -7,12 +7,12 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SyncConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.DevelopmentSslConfig;
+import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
-import okhttp3.Authenticator;
 
 public class TestableSplitConfigBuilder {
 
@@ -32,7 +32,7 @@ public class TestableSplitConfigBuilder {
     private String mHostname;
     private String mIp;
     private String mProxy = null;
-    private Authenticator mAuthenticator = null;
+    private SplitAuthenticator mAuthenticator = null;
     private int mEventsQueueSize = 10000;
     private int mEventsPerPush = 2000;
     private long mEventFlushInterval = 1800;

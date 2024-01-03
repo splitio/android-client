@@ -1,13 +1,13 @@
 package io.split.android.engine.matchers;
 
-import com.google.common.collect.Lists;
-
-import io.split.android.engine.matchers.strings.WhitelistMatcher;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
 
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import java.util.Arrays;
+
+import io.split.android.engine.matchers.strings.WhitelistMatcher;
 
 /**
  * Tests for NegatableMatcher.
@@ -25,7 +25,7 @@ public class NegatableMatcherTest {
 
     @Test
     public void works_whitelist() {
-        WhitelistMatcher delegate = new WhitelistMatcher(Lists.newArrayList("a", "b"));
+        WhitelistMatcher delegate = new WhitelistMatcher(Arrays.asList("a", "b"));
         AttributeMatcher.NegatableMatcher matcher = new AttributeMatcher.NegatableMatcher(delegate, true);
 
         test(matcher, "a", false);
