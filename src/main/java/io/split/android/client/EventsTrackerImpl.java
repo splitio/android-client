@@ -1,6 +1,6 @@
 package io.split.android.client;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.Event;
-import io.split.android.client.events.SplitEvent;
-import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;

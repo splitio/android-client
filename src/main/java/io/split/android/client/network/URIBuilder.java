@@ -1,16 +1,16 @@
 package io.split.android.client.network;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.core.util.Pair;
-
-import com.google.common.base.Strings;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
+
+import io.split.android.client.utils.Utils;
 
 public class URIBuilder {
     private final URI mRootURI;
@@ -46,7 +46,7 @@ public class URIBuilder {
     }
 
     public URIBuilder defaultQueryString(@NonNull String queryString) {
-        if (!Strings.isNullOrEmpty(queryString)) {
+        if (!Utils.isNullOrEmpty(queryString)) {
             mQueryString = queryString;
         }
         return this;
@@ -63,8 +63,8 @@ public class URIBuilder {
             params = query.substring(0, query.length() - 1);
         }
 
-        if (!Strings.isNullOrEmpty(mQueryString)) {
-            if (!Strings.isNullOrEmpty(params)) {
+        if (!Utils.isNullOrEmpty(mQueryString)) {
+            if (!Utils.isNullOrEmpty(params)) {
                 if (!"&".equals(mQueryString.substring(0, 1))) {
                     params = params + "&";
                 }

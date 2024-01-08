@@ -1,9 +1,8 @@
 package io.split.android.client.validators;
 
-import com.google.common.base.Strings;
-
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.utils.Utils;
 
 /**
  * Contains func an instance of Event class.
@@ -35,7 +34,7 @@ public class EventValidatorImpl implements EventValidator {
             return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed a null or undefined traffic_type_name, traffic_type_name must be a non-empty string");
         }
 
-        if (Strings.isNullOrEmpty(event.trafficTypeName.trim())) {
+        if (Utils.isNullOrEmpty(event.trafficTypeName.trim())) {
             return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed an empty traffic_type_name, traffic_type_name must be a non-empty string");
         }
 
@@ -43,7 +42,7 @@ public class EventValidatorImpl implements EventValidator {
             return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed a null or undefined event_type, event_type must be a non-empty String");
         }
 
-        if (Strings.isNullOrEmpty(event.eventTypeId.trim())) {
+        if (Utils.isNullOrEmpty(event.eventTypeId.trim())) {
             return new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "you passed an empty event_type, event_type must be a non-empty String");
         }
 

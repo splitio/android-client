@@ -1,12 +1,11 @@
 package io.split.android.client.telemetry.storage;
 
-import com.google.common.collect.Maps;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -30,28 +29,28 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     private static final int MAX_STREAMING_EVENTS = 20;
     private static final int MAX_TAGS = 10;
 
-    private final Map<Method, AtomicLong> methodExceptionsCounter = Maps.newConcurrentMap();
-    private final ConcurrentMap<Method, ILatencyTracker> methodLatencies = Maps.newConcurrentMap();
+    private final Map<Method, AtomicLong> methodExceptionsCounter = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Method, ILatencyTracker> methodLatencies = new ConcurrentHashMap<>();
 
-    private final Map<FactoryCounter, AtomicLong> factoryCounters = Maps.newConcurrentMap();
+    private final Map<FactoryCounter, AtomicLong> factoryCounters = new ConcurrentHashMap<>();
 
-    private final Map<ImpressionsDataType, AtomicLong> impressionsData = Maps.newConcurrentMap();
-    private final Map<EventsDataRecordsEnum, AtomicLong> eventsData = Maps.newConcurrentMap();
+    private final Map<ImpressionsDataType, AtomicLong> impressionsData = new ConcurrentHashMap<>();
+    private final Map<EventsDataRecordsEnum, AtomicLong> eventsData = new ConcurrentHashMap<>();
 
-    private final Map<OperationType, AtomicLong> lastSynchronizationData = Maps.newConcurrentMap();
+    private final Map<OperationType, AtomicLong> lastSynchronizationData = new ConcurrentHashMap<>();
 
     private final AtomicLong sessionLength = new AtomicLong();
 
     private final Object httpErrorsLock = new Object();
-    private final Map<OperationType, Map<Long, Long>> httpErrors = Maps.newConcurrentMap();
+    private final Map<OperationType, Map<Long, Long>> httpErrors = new ConcurrentHashMap<>();
 
-    private final Map<OperationType, ILatencyTracker> httpLatencies = Maps.newConcurrentMap();
+    private final Map<OperationType, ILatencyTracker> httpLatencies = new ConcurrentHashMap<>();
 
-    private final Map<PushCounterEvent, AtomicLong> pushCounters = Maps.newConcurrentMap();
+    private final Map<PushCounterEvent, AtomicLong> pushCounters = new ConcurrentHashMap<>();
 
     private final Object streamingEventsLock = new Object();
     private List<StreamingEvent> streamingEvents = new ArrayList<>();
-    private Map<UpdatesFromSSEEnum, AtomicLong> updatesFromSSE = Maps.newConcurrentMap();
+    private Map<UpdatesFromSSEEnum, AtomicLong> updatesFromSSE = new ConcurrentHashMap<>();
 
     private final Object tagsLock = new Object();
     private final Object httpLatenciesLock = new Object();
@@ -427,13 +426,13 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     }
 
     private void initializeHttpErrors() {
-        httpErrors.put(OperationType.EVENTS, Maps.newConcurrentMap());
-        httpErrors.put(OperationType.SPLITS, Maps.newConcurrentMap());
-        httpErrors.put(OperationType.TELEMETRY, Maps.newConcurrentMap());
-        httpErrors.put(OperationType.MY_SEGMENT, Maps.newConcurrentMap());
-        httpErrors.put(OperationType.IMPRESSIONS_COUNT, Maps.newConcurrentMap());
-        httpErrors.put(OperationType.IMPRESSIONS, Maps.newConcurrentMap());
-        httpErrors.put(OperationType.TOKEN, Maps.newConcurrentMap());
+        httpErrors.put(OperationType.EVENTS, new ConcurrentHashMap<>());
+        httpErrors.put(OperationType.SPLITS, new ConcurrentHashMap<>());
+        httpErrors.put(OperationType.TELEMETRY, new ConcurrentHashMap<>());
+        httpErrors.put(OperationType.MY_SEGMENT, new ConcurrentHashMap<>());
+        httpErrors.put(OperationType.IMPRESSIONS_COUNT, new ConcurrentHashMap<>());
+        httpErrors.put(OperationType.IMPRESSIONS, new ConcurrentHashMap<>());
+        httpErrors.put(OperationType.TOKEN, new ConcurrentHashMap<>());
     }
 
     private void initializeHttpLatencies() {

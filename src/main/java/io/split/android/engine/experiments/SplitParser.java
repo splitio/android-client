@@ -1,12 +1,11 @@
 package io.split.android.engine.experiments;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkArgument;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.Nullable;
 
-import com.google.common.collect.Lists;
-
+import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Condition;
@@ -82,7 +81,7 @@ public class SplitParser {
             return null;
         }
 
-        List<ParsedCondition> parsedConditionList = Lists.newArrayList();
+        List<ParsedCondition> parsedConditionList = new ArrayList<>();
 
         for (Condition condition : split.conditions) {
             List<Partition> partitions = condition.partitions;
@@ -108,7 +107,7 @@ public class SplitParser {
         List<Matcher> matchers = matcherGroup.matchers;
         checkArgument(!matchers.isEmpty());
 
-        List<AttributeMatcher> toCombine = Lists.newArrayList();
+        List<AttributeMatcher> toCombine = new ArrayList<>();
 
         for (Matcher matcher : matchers) {
             toCombine.add(toMatcher(matcher, matchingKey));

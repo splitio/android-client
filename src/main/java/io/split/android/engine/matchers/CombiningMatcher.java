@@ -1,15 +1,14 @@
 package io.split.android.engine.matchers;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import static io.split.android.client.utils.Utils.checkArgument;
 
-import io.split.android.client.Evaluator;
-import io.split.android.client.dtos.MatcherCombiner;
-
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import io.split.android.client.Evaluator;
+import io.split.android.client.dtos.MatcherCombiner;
 
 /**
  * Combines the results of multiple matchers using the logical OR or AND.
@@ -17,21 +16,21 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class CombiningMatcher {
 
-    private final ImmutableList<AttributeMatcher> _delegates;
+    private final List<AttributeMatcher> _delegates;
     private final MatcherCombiner _combiner;
 
     public static CombiningMatcher of(Matcher matcher) {
         return new CombiningMatcher(MatcherCombiner.AND,
-                Lists.newArrayList(AttributeMatcher.vanilla(matcher)));
+                Collections.singletonList(AttributeMatcher.vanilla(matcher)));
     }
 
     public static CombiningMatcher of(String attribute, Matcher matcher) {
         return new CombiningMatcher(MatcherCombiner.AND,
-                Lists.newArrayList(new AttributeMatcher(attribute, matcher, false)));
+                Collections.singletonList(new AttributeMatcher(attribute, matcher, false)));
     }
 
     public CombiningMatcher(MatcherCombiner combiner, List<AttributeMatcher> delegates) {
-        _delegates = ImmutableList.copyOf(delegates);
+        _delegates = Collections.unmodifiableList(new ArrayList<>(delegates));
         _combiner = combiner;
 
         checkArgument(_delegates.size() > 0);
@@ -57,7 +56,7 @@ public class CombiningMatcher {
         return result;
     }
 
-    public ImmutableList<AttributeMatcher> attributeMatchers() {
+    public List<AttributeMatcher> attributeMatchers() {
         return _delegates;
     }
 

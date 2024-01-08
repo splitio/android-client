@@ -2,13 +2,13 @@ package io.split.android.client.events;
 
 import androidx.annotation.NonNull;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 
-import io.split.android.client.utils.ConcurrentSet;
+import io.split.android.client.service.executor.ThreadFactoryBuilder;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutorImpl;
@@ -24,7 +24,7 @@ public abstract class BaseEventsManager implements Runnable {
     public BaseEventsManager() {
 
         mQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-        mTriggered = new ConcurrentSet<>();
+        mTriggered = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setDaemon(true)

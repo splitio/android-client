@@ -2,44 +2,57 @@ package io.split.android.client.network;
 
 import android.content.Context;
 
-import com.google.common.base.Strings;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
-import java.security.GeneralSecurityException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.SSLSocketFactory;
+
+import io.split.android.client.utils.Base64Util;
+import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
-import okhttp3.Authenticator;
-import okhttp3.Credentials;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.Route;
 
 public class HttpClientImpl implements HttpClient {
-    private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
-    private static final long STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
 
-    private final OkHttpClient mOkHttpClient;
-    private final OkHttpClient mOkHttpClientStreaming;
     private final Map<String, String> mCommonHeaders;
     private final Map<String, String> mStreamingHeaders;
 
-    private HttpClientImpl(OkHttpClient okHttpClient, OkHttpClient okHttpClientStreaming) {
+    @Nullable
+    private final Proxy mProxy;
+    @Nullable
+    private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
+    private final long mReadTimeout;
+    private final long mConnectionTimeout;
+    @Nullable
+    private final DevelopmentSslConfig mDevelopmentSslConfig;
+    @Nullable
+    private final SSLSocketFactory mSslSocketFactory;
+    @NonNull
+    private final UrlSanitizer mUrlSanitizer;
+
+    HttpClientImpl(@Nullable HttpProxy proxy,
+                   @Nullable SplitAuthenticator proxyAuthenticator,
+                   long readTimeout,
+                   long connectionTimeout,
+                   @Nullable DevelopmentSslConfig developmentSslConfig,
+                   @Nullable SSLSocketFactory sslSocketFactory,
+                   @NonNull UrlSanitizer urlSanitizer) {
+        mProxy = initializeProxy(proxy);
+        mProxyAuthenticator = initializeProxyAuthenticator(proxy, proxyAuthenticator);
+        mReadTimeout = readTimeout;
+        mConnectionTimeout = connectionTimeout;
+        mDevelopmentSslConfig = developmentSslConfig;
         mCommonHeaders = new HashMap<>();
         mStreamingHeaders = new HashMap<>();
-        mOkHttpClient = okHttpClient;
-        mOkHttpClientStreaming = okHttpClientStreaming;
+        mSslSocketFactory = sslSocketFactory;
+        mUrlSanitizer = urlSanitizer;
     }
 
     @Override
@@ -49,7 +62,18 @@ public class HttpClientImpl implements HttpClient {
             newHeaders.putAll(headers);
         }
 
-        return new HttpRequestImpl(mOkHttpClient, uri, requestMethod, body, newHeaders);
+        return new HttpRequestImpl(
+                uri,
+                requestMethod,
+                body,
+                newHeaders,
+                mProxy,
+                mProxyAuthenticator,
+                mReadTimeout,
+                mConnectionTimeout,
+                mDevelopmentSslConfig,
+                mSslSocketFactory,
+                mUrlSanitizer);
     }
 
     public HttpRequest request(URI uri, HttpMethod requestMethod) {
@@ -63,7 +87,14 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public HttpStreamRequest streamRequest(URI uri) {
-        return new HttpStreamRequestImpl(mOkHttpClientStreaming, uri, mStreamingHeaders);
+        return new HttpStreamRequestImpl(uri,
+                mStreamingHeaders,
+                mProxy,
+                mProxyAuthenticator,
+                mConnectionTimeout,
+                mDevelopmentSslConfig,
+                mSslSocketFactory,
+                mUrlSanitizer);
     }
 
     @Override
@@ -98,17 +129,49 @@ public class HttpClientImpl implements HttpClient {
 
     @Override
     public void close() {
-        mOkHttpClient.connectionPool().evictAll();
-        mOkHttpClientStreaming.connectionPool().evictAll();
+
+    }
+
+    private Proxy initializeProxy(HttpProxy proxy) {
+        if (proxy != null) {
+            return new Proxy(
+                    Proxy.Type.HTTP,
+                    InetSocketAddress.createUnresolved(proxy.getHost(), proxy.getPort()));
+        }
+
+        return null;
+    }
+
+    private SplitUrlConnectionAuthenticator initializeProxyAuthenticator(HttpProxy proxy, SplitAuthenticator proxyAuthenticator) {
+        if (proxy == null) {
+            return null;
+        } else if (proxyAuthenticator != null) {
+            return new SplitUrlConnectionAuthenticator(proxyAuthenticator);
+        } else if (!Utils.isNullOrEmpty(proxy.getUsername())) {
+            return createBasicAuthenticator(proxy.getUsername(), proxy.getPassword());
+        }
+
+        return null;
+    }
+
+    private static SplitUrlConnectionAuthenticator createBasicAuthenticator(String username, String password) {
+        return new SplitUrlConnectionAuthenticator(new SplitBasicAuthenticator(username, password, new SplitBasicAuthenticator.Base64Encoder() {
+            @Override
+            public String encode(String value) {
+                return Base64Util.encode(value);
+            }
+        }));
     }
 
     public static class Builder {
-        private Authenticator mProxyAuthenticator;
+        private SplitAuthenticator mProxyAuthenticator;
         private HttpProxy mProxy;
-        private long readTimeout = -1;
-        private long connectionTimeout = -1;
-        private DevelopmentSslConfig developmentSslConfig = null;
+        private long mReadTimeout = -1;
+        private long mConnectionTimeout = -1;
+        private DevelopmentSslConfig mDevelopmentSslConfig = null;
+        private SSLSocketFactory mSslSocketFactory = null;
         private Context mHostAppContext;
+        private UrlSanitizer mUrlSanitizer;
 
         public Builder setContext(Context context) {
             mHostAppContext = context;
@@ -120,110 +183,58 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
-        public Builder setProxyAuthenticator(Authenticator authenticator) {
+        public Builder setProxyAuthenticator(SplitAuthenticator authenticator) {
+            Logger.v("Setting up proxy authenticator");
             mProxyAuthenticator = authenticator;
             return this;
         }
 
         public Builder setReadTimeout(long readTimeout) {
-            this.readTimeout = readTimeout;
+            if (readTimeout > 0) {
+                mReadTimeout = readTimeout;
+            }
             return this;
         }
 
         public Builder setConnectionTimeout(long connectionTimeout) {
-            this.connectionTimeout = connectionTimeout;
+            if (connectionTimeout > 0) {
+                mConnectionTimeout = connectionTimeout;
+            }
             return this;
         }
 
         public Builder setDevelopmentSslConfig(DevelopmentSslConfig developmentSslConfig) {
-            this.developmentSslConfig = developmentSslConfig;
+            mDevelopmentSslConfig = developmentSslConfig;
+            return this;
+        }
+
+        public Builder setUrlSanitizer(UrlSanitizer urlSanitizer) {
+            mUrlSanitizer = urlSanitizer;
             return this;
         }
 
         public HttpClient build() {
-            Proxy proxy = null;
-            Authenticator proxyAuthenticator = null;
-            if (mProxy != null) {
-                proxy = createProxy(mProxy);
-                if (mProxyAuthenticator != null) {
-                    proxyAuthenticator = mProxyAuthenticator;
-                } else if (!Strings.isNullOrEmpty(mProxy.getUsername())) {
-                    proxyAuthenticator = createBasicAuthenticator(mProxy.getUsername(), mProxy.getPassword());
+            if (mDevelopmentSslConfig == null) {
+                if (LegacyTlsUpdater.couldBeOld()) {
+                    LegacyTlsUpdater.update(mHostAppContext);
+                    try {
+                        mSslSocketFactory = new Tls12OnlySocketFactory();
+                    } catch (NoSuchAlgorithmException | KeyManagementException e) {
+                        Logger.e("TLS v12 algorithm not available: " + e.getLocalizedMessage());
+                    } catch (Exception e) {
+                        Logger.e("Unknown TLS v12 error: " + e.getLocalizedMessage());
+                    }
                 }
             }
 
-            // Avoiding newBuilder on purpose to use different thread pool and resources
             return new HttpClientImpl(
-                    createOkHttpClient(proxy, proxyAuthenticator, readTimeout, connectionTimeout, developmentSslConfig, mHostAppContext),
-                    createOkHttpClient(proxy, proxyAuthenticator, STREAMING_READ_TIMEOUT_IN_MILLISECONDS,
-                            connectionTimeout, developmentSslConfig, mHostAppContext)
-            );
-        }
-
-        private OkHttpClient createOkHttpClient(Proxy proxy,
-                                                Authenticator proxyAuthenticator,
-                                                Long readTimeout,
-                                                Long connectionTimeout,
-                                                DevelopmentSslConfig developmentSslConfig,
-                                                Context context) {
-            OkHttpClient.Builder builder = new OkHttpClient.Builder();
-            if (proxy != null) {
-                builder.proxy(proxy);
-            }
-
-            if (proxyAuthenticator != null) {
-                builder.proxyAuthenticator(proxyAuthenticator);
-            }
-
-            if (readTimeout != null && readTimeout > 0) {
-                builder.readTimeout(readTimeout, TimeUnit.MILLISECONDS);
-            }
-
-            if (connectionTimeout != null && connectionTimeout > 0) {
-                builder.connectTimeout(connectionTimeout, TimeUnit.MILLISECONDS);
-            }
-
-            // Both options overrides SSLSocketFactory
-            if (developmentSslConfig != null) {
-                builder.sslSocketFactory(developmentSslConfig.getSslSocketFactory(), developmentSslConfig.getTrustManager());
-                builder.hostnameVerifier(developmentSslConfig.getHostnameVerifier());
-            } else if (LegacyTlsUpdater.couldBeOld()) {
-                forceTls12OnOldAndroid(builder, context);
-            }
-            return builder.build();
-        }
-
-        private Proxy createProxy(HttpProxy proxy) {
-            if (proxy == null) {
-                return null;
-            }
-            return new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(proxy.getHost(), proxy.getPort()));
-        }
-
-        private Authenticator createBasicAuthenticator(String username, String password) {
-            return new Authenticator() {
-                @Nullable
-                @Override
-                public Request authenticate(@Nullable Route route, @NotNull Response response) throws IOException {
-                    String credential = Credentials.basic(username, password);
-                    return response.request().newBuilder().header(PROXY_AUTHORIZATION_HEADER, credential).build();
-                }
-            };
-        }
-
-        private void forceTls12OnOldAndroid(OkHttpClient.Builder okHttpBuilder, Context context) {
-
-            LegacyTlsUpdater.update(context);
-            try {
-                Tls12OnlySocketFactory factory = new Tls12OnlySocketFactory();
-                okHttpBuilder.sslSocketFactory(factory, factory.defaultTrustManager());
-            } catch (NoSuchAlgorithmException | KeyManagementException e) {
-                Logger.e("TLS v12 algorithm not available: " + e.getLocalizedMessage());
-            } catch (GeneralSecurityException e) {
-                Logger.e("TLS v12 security error: " + e.getLocalizedMessage());
-            } catch (Exception e) {
-                Logger.e("Unknown TLS v12 error: " + e.getLocalizedMessage());
-            }
+                    mProxy,
+                    mProxyAuthenticator,
+                    mReadTimeout,
+                    mConnectionTimeout,
+                    mDevelopmentSslConfig,
+                    mSslSocketFactory,
+                    (mUrlSanitizer == null) ? new UrlSanitizerImpl() : mUrlSanitizer);
         }
     }
 }

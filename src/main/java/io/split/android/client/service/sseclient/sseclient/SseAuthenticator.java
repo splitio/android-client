@@ -1,19 +1,20 @@
 package io.split.android.client.service.sseclient.sseclient;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.service.sseclient.SseJwtParser;
-import io.split.android.client.utils.ConcurrentSet;
 import io.split.android.client.utils.logger.Logger;
 
 public class SseAuthenticator {
@@ -26,7 +27,7 @@ public class SseAuthenticator {
     public SseAuthenticator(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
                             @NonNull SseJwtParser jwtParser) {
         mAuthFetcher = checkNotNull(authFetcher);
-        mUserKeys = new ConcurrentSet<>();
+        mUserKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
         mJwtParser = checkNotNull(jwtParser);
     }
 

@@ -1,6 +1,6 @@
 package io.split.android.client.storage.events;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
@@ -10,7 +10,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.Event;
-import io.split.android.client.storage.common.PersistentStorage;
 import io.split.android.client.storage.common.Storage;
 import io.split.android.client.storage.common.StoragePusher;
 import io.split.android.client.utils.logger.Logger;

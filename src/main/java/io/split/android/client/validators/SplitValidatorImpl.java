@@ -1,10 +1,6 @@
 package io.split.android.client.validators;
 
-import com.google.common.base.Strings;
-
-
-import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.engine.experiments.SplitFetcher;
+import io.split.android.client.utils.Utils;
 
 /**
  * Implementation of split validation interface
@@ -21,7 +17,7 @@ public class SplitValidatorImpl implements SplitValidator {
                             "be a non-empty string");
         }
 
-        if (Strings.isNullOrEmpty(name.trim())) {
+        if (Utils.isNullOrEmpty(name.trim())) {
             return new ValidationErrorInfo(
                     ValidationErrorInfo.ERROR_SOME,
                     "you passed an empty feature flag name, " +

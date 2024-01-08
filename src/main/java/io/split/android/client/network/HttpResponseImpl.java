@@ -2,7 +2,7 @@ package io.split.android.client.network;
 
 public class HttpResponseImpl extends BaseHttpResponseImpl implements  HttpResponse {
 
-    private String mData;
+    private final String mData;
 
     HttpResponseImpl(int httpStatus) {
         this(httpStatus, null);

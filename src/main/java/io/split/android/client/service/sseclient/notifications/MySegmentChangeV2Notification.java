@@ -1,8 +1,8 @@
 package io.split.android.client.service.sseclient.notifications;
 
-import com.google.gson.annotations.SerializedName;
+import androidx.annotation.Nullable;
 
-import org.jetbrains.annotations.Nullable;
+import com.google.gson.annotations.SerializedName;
 
 import io.split.android.client.common.CompressionType;
 

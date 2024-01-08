@@ -1,7 +1,5 @@
 package io.split.android.client.events;
 
-import com.google.common.base.Strings;
-
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,6 +11,7 @@ import io.split.android.client.EventPropertiesProcessor;
 import io.split.android.client.EventPropertiesProcessorImpl;
 import io.split.android.client.ProcessedEventProperties;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.ValidationConfig;
 
 public class EventPropertiesProcessorTest {
@@ -31,7 +30,7 @@ public class EventPropertiesProcessorTest {
         int maxCount = (int) (MAX_BYTES / 1024);
         int count = 1;
         while (count <= maxCount) {
-            properties.put("key" + count, Strings.repeat("a", 1021)); // 1025 bytes
+            properties.put("key" + count, Utils.repeat("a", 1021)); // 1025 bytes
             count++;
         }
         ProcessedEventProperties result = processor.process(properties);

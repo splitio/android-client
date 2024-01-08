@@ -1,11 +1,9 @@
 package io.split.android.client;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import java.util.Set;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManagerFactory;

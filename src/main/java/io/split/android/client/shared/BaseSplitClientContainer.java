@@ -2,8 +2,6 @@ package io.split.android.client.shared;
 
 import androidx.annotation.NonNull;
 
-import com.google.errorprone.annotations.ForOverride;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -59,6 +57,5 @@ public abstract class BaseSplitClientContainer implements SplitClientContainer {
         mClientInstances.put(key, client);
     }
 
-    @ForOverride
     protected abstract void createNewClient(Key key);
 }
