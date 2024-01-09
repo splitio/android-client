@@ -125,4 +125,40 @@ public class TreatmentManagerTelemetryTest {
 
         verify(telemetryStorageProducer).recordNonReadyUsage();
     }
+
+    @Test
+    public void getTreatmentRecordsException() {
+        when(keyValidator.validate(anyString(), anyString())).thenThrow(new RuntimeException("test"));
+
+        treatmentManager.getTreatment("test", Collections.emptyMap(), false);
+
+        verify(telemetryStorageProducer).recordException(Method.TREATMENT);
+    }
+
+    @Test
+    public void getTreatmentsRecordsException() {
+        when(keyValidator.validate(anyString(), anyString())).thenThrow(new RuntimeException("test"));
+
+        treatmentManager.getTreatments(Arrays.asList("test", "test2"), Collections.emptyMap(), false);
+
+        verify(telemetryStorageProducer).recordException(Method.TREATMENTS);
+    }
+
+    @Test
+    public void getTreatmentWithConfigRecordsException() {
+        when(keyValidator.validate(anyString(), anyString())).thenThrow(new RuntimeException("test"));
+
+        treatmentManager.getTreatmentWithConfig("test", Collections.emptyMap(), false);
+
+        verify(telemetryStorageProducer).recordException(Method.TREATMENT_WITH_CONFIG);
+    }
+
+    @Test
+    public void getTreatmentsWithConfigRecordsException() {
+        when(keyValidator.validate(anyString(), anyString())).thenThrow(new RuntimeException("test"));
+
+        treatmentManager.getTreatmentsWithConfig(Arrays.asList("test", "test2"), Collections.emptyMap(), false);
+
+        verify(telemetryStorageProducer).recordException(Method.TREATMENTS_WITH_CONFIG);
+    }
 }
