@@ -1,3 +1,14 @@
+4.0.0 (Jan 4, 2024)
+- BREAKING: Updated minSdk version to 19.
+- BREAKING: Changed proxyAuthenticator configuration type from okhttp3.Authenticator to SplitAuthenticator.
+- BREAKING: build methods in SplitFactoryBuilder now throw a unified checked exception: SplitInstantiationException.
+- Removed OkHttp.
+- Updated Room to 2.4.3
+- Updated Gson to 2.10.1
+- Updated Snake YAML to 2.2
+- Updated Play Services Base to 18.2.0
+- Updated Guava to 32.1.3-android and now it's only used in test & androidTest configurations.
+
 3.5.0 (Nov 16, 2023)
 - Added `prefix` configuration parameter, which allows to use a prefix when naming the SDK storage. Use this when using multiple `SplitFactory` instances with the same SDK key.
 

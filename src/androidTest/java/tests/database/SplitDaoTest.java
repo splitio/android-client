@@ -73,7 +73,7 @@ public class SplitDaoTest extends GenericDaoTest {
         performance(1000);
     }
 
-    @Ignore("Ignored due to OOO error in CI")
+    @Ignore("Ignored due to OOM error in CI")
     @Test
     public void performance10000() {
         performance(10000);
