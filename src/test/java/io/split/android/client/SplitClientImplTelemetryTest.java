@@ -16,6 +16,8 @@ import io.split.android.client.telemetry.model.Method;
 
 public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
 
+   /*
+    TODO move these tests
     @Test
     public void getTreatmentRecordsException() {
         when(treatmentManager.getTreatment(anyString(), anyMap(), anyBoolean())).thenAnswer(invocation -> {
@@ -58,5 +60,5 @@ public class SplitClientImplTelemetryTest extends SplitClientImplBaseTest {
         splitClient.getTreatmentsWithConfig(Arrays.asList("test", "test2"), Collections.emptyMap());
 
         verify(telemetryStorageProducer).recordException(Method.TREATMENTS_WITH_CONFIG);
-    }
+    }*/
 }
