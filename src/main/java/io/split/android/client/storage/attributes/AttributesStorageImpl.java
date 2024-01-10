@@ -20,7 +20,7 @@ public class AttributesStorageImpl implements AttributesStorage {
     @NonNull
     @Override
     public Map<String, Object> getAll() {
-        return new HashMap<>(mInMemoryAttributes);
+        return new ConcurrentHashMap<>(mInMemoryAttributes);
     }
 
     @Override

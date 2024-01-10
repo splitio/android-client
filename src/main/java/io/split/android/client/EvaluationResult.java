@@ -1,39 +1,39 @@
 package io.split.android.client;
 
 public final class EvaluationResult {
-    private final String _treatment;
-    private final String _label;
-    private final Long _changeNumber;
-    private final String _configurations;
+    private final String mTreatment;
+    private final String mLabel;
+    private final Long mChangeNumber;
+    private final String mConfigurations;
 
     public EvaluationResult(String treatment, String label) {
         this(treatment, label, null);
     }
 
-    private EvaluationResult(String treatment, String label, Long changeNumber) {
+    EvaluationResult(String treatment, String label, Long changeNumber) {
         this(treatment, label, changeNumber, null);
     }
 
     public EvaluationResult(String treatment, String label, Long changeNumber, String configurations) {
-        _treatment = treatment;
-        _label = label;
-        _changeNumber = changeNumber;
-        _configurations = configurations;
+        mTreatment = treatment;
+        mLabel = label;
+        mChangeNumber = changeNumber;
+        mConfigurations = configurations;
     }
 
     public String getTreatment() {
-        return _treatment;
+        return mTreatment;
     }
 
     public String getLabel() {
-        return _label;
+        return mLabel;
     }
 
     public Long getChangeNumber() {
-        return _changeNumber;
+        return mChangeNumber;
     }
 
     public String getConfigurations() {
-        return _configurations;
+        return mConfigurations;
     }
 }
