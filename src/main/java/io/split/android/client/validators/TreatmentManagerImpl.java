@@ -93,114 +93,132 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
-        return getTreatmentsWithConfigGeneric(attributes,
-                isClientDestroyed,
-                ValidationTag.GET_TREATMENT,
-                Collections.singletonList(split),
-                SplitResult::treatment,
-                "getTreatment",
-                Method.TREATMENT,
-                null).get(split);
+        try {
+            return getTreatmentsWithConfigGeneric(
+                    Collections.singletonList(split),
+                    null,
+                    attributes,
+                    isClientDestroyed,
+                    ValidationTag.GET_TREATMENT,
+                    SplitResult::treatment,
+                    Method.TREATMENT
+            ).get(split);
+        } catch (Exception ex) {
+            // In case get fails for some reason
+            Logger.e("Client " + ValidationTag.GET_TREATMENT + " exception", ex);
+            mTelemetryStorageProducer.recordException(Method.TREATMENT);
+
+            return Treatments.CONTROL;
+        }
     }
 
     @Override
     public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
-        return getTreatmentsWithConfigGeneric(attributes,
-                isClientDestroyed,
-                ValidationTag.GET_TREATMENT_WITH_CONFIG,
-                Collections.singletonList(split),
-                ResultTransformer::identity,
-                "getTreatmentWithConfig",
-                Method.TREATMENT_WITH_CONFIG,
-                null).get(split);
+        try {
+            return getTreatmentsWithConfigGeneric(
+                    Collections.singletonList(split),
+                    null,
+                    attributes,
+                    isClientDestroyed,
+                    ValidationTag.GET_TREATMENT_WITH_CONFIG,
+                    ResultTransformer::identity,
+                    Method.TREATMENT_WITH_CONFIG
+            ).get(split);
+        } catch (Exception ex) {
+            // In case get fails for some reason
+            Logger.e("Client " + ValidationTag.GET_TREATMENT_WITH_CONFIG + " exception", ex);
+            mTelemetryStorageProducer.recordException(Method.TREATMENT_WITH_CONFIG);
+
+            return new SplitResult(Treatments.CONTROL);
+        }
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
-        return getTreatmentsWithConfigGeneric(attributes,
+        return getTreatmentsWithConfigGeneric(
+                splits,
+                null,
+                attributes,
                 isClientDestroyed,
                 ValidationTag.GET_TREATMENTS,
-                splits,
                 SplitResult::treatment,
-                "getTreatments",
-                Method.TREATMENTS,
-                null);
+                Method.TREATMENTS);
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
-        return getTreatmentsWithConfigGeneric(attributes,
+        return getTreatmentsWithConfigGeneric(
+                splits,
+                null,
+                attributes,
                 isClientDestroyed,
                 ValidationTag.GET_TREATMENTS_WITH_CONFIG,
-                splits,
                 ResultTransformer::identity,
-                "getTreatmentsWithConfig",
-                Method.TREATMENTS_WITH_CONFIG,
-                null);
+                Method.TREATMENTS_WITH_CONFIG);
     }
 
     @Override
     public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
-        return getTreatmentsWithConfigGeneric(attributes,
+        return getTreatmentsWithConfigGeneric(
+                null,
+                Collections.singletonList(flagSet),
+                attributes,
                 isClientDestroyed,
                 ValidationTag.GET_TREATMENTS_BY_FLAG_SET,
-                null,
                 SplitResult::treatment,
-                "getTreatmentsByFlagSet",
-                Method.TREATMENTS_BY_FLAG_SET,
-                Collections.singletonList(flagSet));
+                Method.TREATMENTS_BY_FLAG_SET);
     }
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
-        return getTreatmentsWithConfigGeneric(attributes,
+        return getTreatmentsWithConfigGeneric(
+                null,
+                flagSets,
+                attributes,
                 isClientDestroyed,
                 ValidationTag.GET_TREATMENTS_BY_FLAG_SETS,
-                null,
                 SplitResult::treatment,
-                "getTreatmentsByFlagSets",
-                Method.TREATMENTS_BY_FLAG_SETS,
-                flagSets);
+                Method.TREATMENTS_BY_FLAG_SETS);
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
-        return getTreatmentsWithConfigGeneric(attributes,
+        return getTreatmentsWithConfigGeneric(
+                null,
+                Collections.singletonList(flagSet),
+                attributes,
                 isClientDestroyed,
                 ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET,
-                null,
                 ResultTransformer::identity,
-                "getTreatmentsWithConfigByFlagSet",
-                Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET,
-                Collections.singletonList(flagSet));
+                Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET);
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
-        return getTreatmentsWithConfigGeneric(attributes,
+        return getTreatmentsWithConfigGeneric(
+                null,
+                flagSets,
+                attributes,
                 isClientDestroyed,
                 ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS,
-                null,
                 ResultTransformer::identity,
-                "getTreatmentsWithConfigByFlagSets",
-                Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS,
-                flagSets);
+                Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS);
     }
 
-    private <T> Map<String, T> getTreatmentsWithConfigGeneric(@Nullable Map<String, Object> attributes,
+    private <T> Map<String, T> getTreatmentsWithConfigGeneric(@Nullable List<String> names,
+                                                              @Nullable List<String> flagSets,
+                                                              @Nullable Map<String, Object> attributes,
                                                               boolean isClientDestroyed,
                                                               String validationTag,
-                                                              @Nullable List<String> names,
                                                               ResultTransformer<T> resultTransformer,
-                                                              String loggerMethodName,
-                                                              Method telemetryMethodName,
-                                                              @Nullable List<String> flagSets) {
+                                                              Method telemetryMethodName) {
         try {
             // Check if client is destroyed. If so, return control treatments or empty map in the case of flag sets
             if (isClientDestroyed) {
                 mValidationLogger.e("Client has already been destroyed - no calls possible", validationTag);
 
-                return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(mSplitValidator,
+                return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(
+                        mSplitValidator,
                         mValidationLogger,
                         (names != null) ? names : new ArrayList<>(),
                         validationTag,
@@ -210,7 +228,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             // If there are no names but we have flag sets, get the names from the flag sets
             if (names == null) {
                 if (flagSets != null) {
-                    names = getNamesFromSet(loggerMethodName, new ArrayList<>(flagSets));
+                    names = getNamesFromSet(validationTag, new ArrayList<>(flagSets));
                 } else {
                     names = new ArrayList<>();
                 }
@@ -234,10 +252,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 recordLatency(telemetryMethodName, start);
             }
         } catch (Exception exception) {
-            Logger.e("Client " + loggerMethodName + " exception", exception);
+            Logger.e("Client " + validationTag + " exception", exception);
             mTelemetryStorageProducer.recordException(telemetryMethodName);
 
-            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(mSplitValidator,
+            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(
+                    mSplitValidator,
                     mValidationLogger,
                     (names != null) ? names : new ArrayList<>(),
                     validationTag,
