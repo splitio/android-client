@@ -40,8 +40,6 @@ public abstract class SplitClientImplBaseTest {
     @Mock
     protected SyncManager syncManager;
     @Mock
-    protected TelemetryStorageProducer telemetryStorageProducer;
-    @Mock
     protected TreatmentManager treatmentManager;
     @Mock
     protected SplitValidator splitValidator;
@@ -64,9 +62,8 @@ public abstract class SplitClientImplBaseTest {
                 new SplitEventsManager(splitClientConfig, new SplitTaskExecutorStub()),
                 eventsTracker,
                 attributesManager,
-                telemetryStorageProducer,
-                treatmentManager,
-                splitValidator
+                splitValidator,
+                treatmentManager
         );
     }
 }

@@ -52,7 +52,6 @@ public class SplitClientImplFactory {
                 eventsManager,
                 mock(EventsTracker.class),
                 attributesManager,
-                telemetryStorage,
                 mock(SplitValidator.class),
                 treatmentManagerFactory.getTreatmentManager(key, eventsManager, attributesManager)
         );
@@ -74,7 +73,6 @@ public class SplitClientImplFactory {
                 new SplitEventsManager(cfg, new SplitTaskExecutorStub()),
                 mock(EventsTracker.class),
                 mock(AttributesManager.class),
-                mock(TelemetryStorage.class),
                 mock(SplitValidator.class),
                 mock(TreatmentManager.class)
         );
@@ -92,7 +90,6 @@ public class SplitClientImplFactory {
                 eventsManager,
                 mock(EventsTracker.class),
                 mock(AttributesManager.class),
-                mock(TelemetryStorage.class),
                 mock(SplitValidator.class),
                 mock(TreatmentManager.class)
         );
