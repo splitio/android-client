@@ -212,23 +212,20 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                                               String validationTag,
                                                               ResultTransformer<T> resultTransformer,
                                                               Method telemetryMethodName) {
+        // This flag will be modified if there are any exceptions caught in getTreatmentWithConfigWithoutMetrics.
+        boolean exceptionsOccurred = false;
         try {
             // Check if client is destroyed. If so, return control treatments or empty map in the case of flag sets
             if (isClientDestroyed) {
                 mValidationLogger.e("Client has already been destroyed - no calls possible", validationTag);
 
-                return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(
-                        mSplitValidator,
-                        mValidationLogger,
-                        (names != null) ? names : new ArrayList<>(),
-                        validationTag,
-                        resultTransformer);
+                return getControlTreatmentsForSplitsWithConfig(names, validationTag, resultTransformer);
             }
 
             // If there are no names but we have flag sets, get the names from the flag sets
             if (names == null) {
                 if (flagSets != null) {
-                    names = getNamesFromSet(validationTag, new ArrayList<>(flagSets));
+                    names = getNamesFromSet(validationTag, flagSets);
                 } else {
                     names = new ArrayList<>();
                 }
@@ -243,68 +240,87 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 // Perform evaluations for every feature flag
                 Map<String, T> result = new HashMap<>();
                 for (String featureFlagName : names) {
-                    SplitResult splitResult = getTreatmentWithConfigWithoutMetrics(featureFlagName, mergedAttributes, validationTag);
-                    result.put(featureFlagName, resultTransformer.transform(splitResult));
+                    TreatmentResult evaluationResult = getTreatmentWithConfigWithoutMetrics(featureFlagName, mergedAttributes, validationTag, telemetryMethodName);
+
+                    result.put(featureFlagName, resultTransformer.transform(evaluationResult.getSplitResult()));
+                    if (evaluationResult.isException()) {
+                        exceptionsOccurred = true;
+                    }
                 }
 
                 return result;
             } finally {
                 recordLatency(telemetryMethodName, start);
+                if (exceptionsOccurred) {
+                    mTelemetryStorageProducer.recordException(telemetryMethodName);
+                }
             }
         } catch (Exception exception) {
             Logger.e("Client " + validationTag + " exception", exception);
             mTelemetryStorageProducer.recordException(telemetryMethodName);
 
-            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(
-                    mSplitValidator,
-                    mValidationLogger,
-                    (names != null) ? names : new ArrayList<>(),
-                    validationTag,
-                    resultTransformer);
+            return getControlTreatmentsForSplitsWithConfig(names, validationTag, resultTransformer);
         }
     }
 
-    private SplitResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> mergedAttributes, String validationTag) {
-        // Validate Key
-        ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
-        if (errorInfo != null) {
-            mValidationLogger.e(errorInfo, validationTag);
-            return new SplitResult(Treatments.CONTROL);
-        }
-
-        // Validate feature flag name
-        String splitName = split;
-        errorInfo = mSplitValidator.validateName(split);
-        if (errorInfo != null) {
-            if (errorInfo.isError()) {
+    private TreatmentResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> mergedAttributes, String validationTag, Method telemetryMethodName) {
+        EvaluationResult evaluationResult = null;
+        try {
+            // Validate Key
+            ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
+            if (errorInfo != null) {
                 mValidationLogger.e(errorInfo, validationTag);
-                return new SplitResult(Treatments.CONTROL);
+                return new TreatmentResult(new SplitResult(Treatments.CONTROL), false);
             }
-            mValidationLogger.w(errorInfo, validationTag);
-            splitName = split.trim();
+
+            // Validate feature flag name
+            String splitName = split;
+            errorInfo = mSplitValidator.validateName(split);
+            if (errorInfo != null) {
+                if (errorInfo.isError()) {
+                    mValidationLogger.e(errorInfo, validationTag);
+                    return new TreatmentResult(new SplitResult(Treatments.CONTROL), false);
+                }
+                mValidationLogger.w(errorInfo, validationTag);
+                splitName = split.trim();
+            }
+
+            // Perform evaluation and create SplitResult object
+            evaluationResult = evaluateIfReady(splitName, mergedAttributes, validationTag);
+            SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
+
+            // If the feature flag was not found, log the message and return the result
+            if (evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
+                mValidationLogger.w(mSplitValidator.splitNotFoundMessage(splitName), validationTag);
+                return new TreatmentResult(splitResult, false);
+            }
+
+            // Log impression
+            logImpression(
+                    mMatchingKey,
+                    mBucketingKey,
+                    splitName,
+                    evaluationResult.getTreatment(),
+                    mLabelsEnabled ? evaluationResult.getLabel() : null,
+                    evaluationResult.getChangeNumber(),
+                    mergedAttributes);
+
+            return new TreatmentResult(splitResult, false);
+        } catch (Exception ex) {
+            // Since this only logs an impression with EXCEPTION label, we don't log anything if labels are disabled
+            if (mLabelsEnabled) {
+                logImpression(
+                        mMatchingKey,
+                        mBucketingKey,
+                        split,
+                        Treatments.CONTROL,
+                        TreatmentLabels.EXCEPTION,
+                        (evaluationResult != null) ? evaluationResult.getChangeNumber() : null,
+                        mergedAttributes);
+            }
+
+            return new TreatmentResult(new SplitResult(Treatments.CONTROL), true);
         }
-
-        // Perform evaluation and create SplitResult object
-        EvaluationResult evaluationResult = evaluateIfReady(splitName, mergedAttributes, validationTag);
-        SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
-
-        // If the feature flag was not found, log the message and return the result
-        if (evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
-            mValidationLogger.w(mSplitValidator.splitNotFoundMessage(splitName), validationTag);
-            return splitResult;
-        }
-
-        // Log impression
-        logImpression(
-                mMatchingKey,
-                mBucketingKey,
-                splitName,
-                evaluationResult.getTreatment(),
-                (mLabelsEnabled ? evaluationResult.getLabel() : null),
-                evaluationResult.getChangeNumber(),
-                mergedAttributes);
-
-        return splitResult;
     }
 
     private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes) {
@@ -313,6 +329,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
         } catch (Throwable t) {
             Logger.e("An error occurred logging impression: " + t.getLocalizedMessage());
         }
+    }
+
+    @NonNull
+    private <T> Map<String, T> getControlTreatmentsForSplitsWithConfig(@Nullable List<String> names, String validationTag, ResultTransformer<T> resultTransformer) {
+        return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(
+                mSplitValidator,
+                mValidationLogger,
+                (names != null) ? names : new ArrayList<>(),
+                validationTag,
+                resultTransformer);
     }
 
     private EvaluationResult evaluateIfReady(String featureFlagName,
@@ -348,6 +374,24 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
         static SplitResult identity(SplitResult splitResult) {
             return splitResult;
+        }
+    }
+
+    private static class TreatmentResult {
+        private final SplitResult mSplitResult;
+        private final boolean mException;
+
+        TreatmentResult(SplitResult splitResult, boolean exception) {
+            mSplitResult = splitResult;
+            mException = exception;
+        }
+
+        SplitResult getSplitResult() {
+            return mSplitResult;
+        }
+
+        boolean isException() {
+            return mException;
         }
     }
 }
