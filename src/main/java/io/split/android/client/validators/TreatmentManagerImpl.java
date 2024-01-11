@@ -240,7 +240,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 // Perform evaluations for every feature flag
                 Map<String, T> result = new HashMap<>();
                 for (String featureFlagName : names) {
-                    TreatmentResult evaluationResult = getTreatmentWithConfigWithoutMetrics(featureFlagName, mergedAttributes, validationTag, telemetryMethodName);
+                    TreatmentResult evaluationResult = getTreatmentWithConfigWithoutMetrics(featureFlagName, mergedAttributes, validationTag);
 
                     result.put(featureFlagName, resultTransformer.transform(evaluationResult.getSplitResult()));
                     if (evaluationResult.isException()) {
@@ -263,7 +263,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         }
     }
 
-    private TreatmentResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> mergedAttributes, String validationTag, Method telemetryMethodName) {
+    private TreatmentResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> mergedAttributes, String validationTag) {
         EvaluationResult evaluationResult = null;
         try {
             // Validate Key
