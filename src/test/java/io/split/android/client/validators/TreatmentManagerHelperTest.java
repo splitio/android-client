@@ -9,11 +9,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 import io.split.android.client.SplitResult;
-import io.split.android.grammar.Treatments;
 
 public class TreatmentManagerHelperTest {
 
@@ -24,19 +22,11 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"), validator, "tag", logger);
+        TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", SplitResult::treatment);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");
         verify(logger, atMostOnce()).e("message", "tag");
-    }
-
-    @Test
-    public void controlTreatmentsForSplitsDoesNotValidateSplitsWhenValidatorOrLoggerAreNull() {
-
-        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"), mock(SplitValidator.class));
-
-        Assert.assertEquals(2, result.size());
     }
 
     @Test
@@ -46,35 +36,11 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"), validator, "tag", logger);
+        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", TreatmentManagerImpl.ResultTransformer::identity);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");
         verify(logger, atMostOnce()).e("message", "tag");
-    }
-
-    @Test
-    public void controlTreatmentsForSplitsWithConfigDoesNotValidateSplitsWhenValidatorOrLoggerAreNull() {
-
-        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"), mock(SplitValidator.class));
-
-        Assert.assertEquals(2, result.size());
-    }
-
-    @Test
-    public void controlTreatmentsForSplitsReturnsControlTreatments() {
-
-        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"), mock(SplitValidator.class));
-
-        Assert.assertTrue(result.values().stream().allMatch(Treatments.CONTROL::equals));
-    }
-
-    @Test
-    public void controlTreatmentsForSplitsWithConfigReturnsControlTreatments() {
-
-        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"), mock(SplitValidator.class));
-
-        Assert.assertTrue(result.values().stream().allMatch(splitResult -> Treatments.CONTROL.equals(splitResult.treatment())));
     }
 
     @Test
@@ -84,7 +50,7 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(Arrays.asList("split1", "split2"), validator,"tag", logger);
+        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", TreatmentManagerImpl.ResultTransformer::identity);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");
@@ -101,7 +67,7 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplits(Arrays.asList("split1", "split2"), validator, "tag", logger);
+        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", SplitResult::treatment);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");

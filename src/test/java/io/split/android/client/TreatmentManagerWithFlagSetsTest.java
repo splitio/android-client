@@ -281,7 +281,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsWithConfigByFlagSetDestroyedDoesNotUseEvaluator() {
         mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, true);
 
-        verify(mSplitsStorage).getNamesByFlagSets(any());
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 
@@ -486,5 +486,37 @@ public class TreatmentManagerWithFlagSetsTest {
         mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
 
         verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS));
+    }
+
+    @Test
+    public void getTreatmentsByFlagSetWithNullFlagSet() {
+        mTreatmentManager.getTreatmentsByFlagSet(null, null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
+    }
+
+    @Test
+    public void getTreatmentsByFlagSetsWithNullFlagSets() {
+        mTreatmentManager.getTreatmentsByFlagSets(null, null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
+    }
+
+    @Test
+    public void getTreatmentsWithConfigByFlagSetWithNullFlagSet() {
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet(null, null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
+    }
+
+    @Test
+    public void getTreatmentsWithConfigByFlagSetsWithNullFlagSets() {
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(null, null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 }
