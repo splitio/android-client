@@ -125,7 +125,8 @@ public class TreatmentManagerExceptionsTest {
 
     @Test
     public void getTreatmentWithConfigLogsImpressionWithExceptionLabelWhenExceptionOccurs() {
-        when(keyValidator.validate(anyString(), anyString())).thenThrow(new RuntimeException("test"));
+        when(evaluator.getTreatment(anyString(), anyString(), eq("test"), anyMap())).thenThrow(new RuntimeException("test"));
+        when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
 
         treatmentManager.getTreatmentWithConfig("test", Collections.emptyMap(), false);
         ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);

@@ -14,7 +14,7 @@ class TreatmentManagerHelper {
     static <T> Map<String, T> controlTreatmentsForSplitsWithConfig(SplitValidator splitValidator, ValidationMessageLogger validationLogger, List<String> splits, String validationTag, TreatmentManagerImpl.ResultTransformer<T> resultTransformer) {
         Map<String, T> results = new HashMap<>();
         for (String split : splits) {
-            if (TreatmentManagerHelper.isInvalidSplit(splitValidator, validationTag, validationLogger, split)) {
+            if (isInvalidSplit(splitValidator, validationTag, validationLogger, split)) {
                 continue;
             }
 

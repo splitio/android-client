@@ -83,7 +83,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     @Override
     public String getTreatment(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
         try {
-            return getTreatmentsWithConfigGeneric(
+            String treatment = getTreatmentsWithConfigGeneric(
                     Collections.singletonList(split),
                     null,
                     attributes,
@@ -91,6 +91,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     SplitResult::treatment,
                     Method.TREATMENT
             ).get(split);
+
+            return (treatment == null) ? Treatments.CONTROL : treatment;
         } catch (Exception ex) {
             // In case get fails for some reason
             Logger.e("Client " + Method.TREATMENT.getMethod() + " exception", ex);
@@ -104,7 +106,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     @Override
     public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
         try {
-            return getTreatmentsWithConfigGeneric(
+            SplitResult splitResult = getTreatmentsWithConfigGeneric(
                     Collections.singletonList(split),
                     null,
                     attributes,
@@ -112,6 +114,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     ResultTransformer::identity,
                     Method.TREATMENT_WITH_CONFIG
             ).get(split);
+
+            return (splitResult == null) ? new SplitResult(Treatments.CONTROL) : splitResult;
         } catch (Exception ex) {
             // In case get fails for some reason
             Logger.e("Client " + Method.TREATMENT_WITH_CONFIG.getMethod() + " exception", ex);
@@ -193,7 +197,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                                               boolean isClientDestroyed,
                                                               ResultTransformer<T> resultTransformer,
                                                               Method telemetryMethodName) {
-        // This flag will be modified if there are any exceptions caught in getTreatmentWithConfigWithoutMetrics.
+        // This flag will be modified if there are any exceptions caught in getTreatmentWithConfigWithoutMetrics,
+        // in which case an exception will be recorded in telemetry
         boolean exceptionsOccurred = false;
         String validationTag = telemetryMethodName.getMethod();
         try {
@@ -201,6 +206,13 @@ public class TreatmentManagerImpl implements TreatmentManager {
             if (isClientDestroyed) {
                 mValidationLogger.e("Client has already been destroyed - no calls possible", validationTag);
 
+                return getControlTreatmentsForSplitsWithConfig(names, validationTag, resultTransformer);
+            }
+
+            // Validate Key
+            ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
+            if (errorInfo != null) {
+                mValidationLogger.e(errorInfo, validationTag);
                 return getControlTreatmentsForSplitsWithConfig(names, validationTag, resultTransformer);
             }
 
@@ -219,8 +231,10 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 // Merge the stored attributes with the attributes passed in for this evaluation
                 final Map<String, Object> mergedAttributes = mAttributesMerger.merge(mAttributesManager.getAllAttributes(), attributes);
 
-                // Perform evaluations for every feature flag
+                // Create the result map
                 Map<String, T> result = new HashMap<>();
+
+                // Perform evaluations for every feature flag
                 for (String featureFlagName : names) {
                     TreatmentResult evaluationResult = getTreatmentWithConfigWithoutMetrics(featureFlagName, mergedAttributes, validationTag);
 
@@ -248,16 +262,10 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private TreatmentResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> mergedAttributes, String validationTag) {
         EvaluationResult evaluationResult = null;
         try {
-            // Validate Key
-            ValidationErrorInfo errorInfo = mKeyValidator.validate(mMatchingKey, mBucketingKey);
-            if (errorInfo != null) {
-                mValidationLogger.e(errorInfo, validationTag);
-                return new TreatmentResult(new SplitResult(Treatments.CONTROL), false);
-            }
 
             // Validate feature flag name
             String splitName = split;
-            errorInfo = mSplitValidator.validateName(split);
+            ValidationErrorInfo errorInfo = mSplitValidator.validateName(split);
             if (errorInfo != null) {
                 if (errorInfo.isError()) {
                     mValidationLogger.e(errorInfo, validationTag);
