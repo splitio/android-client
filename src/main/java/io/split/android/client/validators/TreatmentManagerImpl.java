@@ -106,6 +106,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         } catch (Exception ex) {
             // In case get fails for some reason
             Logger.e("Client " + ValidationTag.GET_TREATMENT + " exception", ex);
+
             mTelemetryStorageProducer.recordException(Method.TREATMENT);
 
             return Treatments.CONTROL;
