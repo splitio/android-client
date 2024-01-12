@@ -31,17 +31,6 @@ import io.split.android.grammar.Treatments;
 
 public class TreatmentManagerImpl implements TreatmentManager {
 
-    private static class ValidationTag {
-        public static final String GET_TREATMENT = "getTreatment";
-        public static final String GET_TREATMENTS = "getTreatments";
-        public static final String GET_TREATMENT_WITH_CONFIG = "getTreatmentWithConfig";
-        public static final String GET_TREATMENTS_WITH_CONFIG = "getTreatmentsWithConfig";
-        public static final String GET_TREATMENTS_BY_FLAG_SET = "getTreatmentsByFlagSet";
-        public static final String GET_TREATMENTS_BY_FLAG_SETS = "getTreatmentsByFlagSets";
-        public static final String GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET = "getTreatmentsWithConfigByFlagSet";
-        public static final String GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS = "getTreatmentsWithConfigByFlagSets";
-    }
-
     private final Evaluator mEvaluator;
     private final KeyValidator mKeyValidator;
     private final SplitValidator mSplitValidator;
@@ -99,13 +88,12 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     null,
                     attributes,
                     isClientDestroyed,
-                    ValidationTag.GET_TREATMENT,
                     SplitResult::treatment,
                     Method.TREATMENT
             ).get(split);
         } catch (Exception ex) {
             // In case get fails for some reason
-            Logger.e("Client " + ValidationTag.GET_TREATMENT + " exception", ex);
+            Logger.e("Client " + Method.TREATMENT.getMethod() + " exception", ex);
 
             mTelemetryStorageProducer.recordException(Method.TREATMENT);
 
@@ -121,13 +109,12 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     null,
                     attributes,
                     isClientDestroyed,
-                    ValidationTag.GET_TREATMENT_WITH_CONFIG,
                     ResultTransformer::identity,
                     Method.TREATMENT_WITH_CONFIG
             ).get(split);
         } catch (Exception ex) {
             // In case get fails for some reason
-            Logger.e("Client " + ValidationTag.GET_TREATMENT_WITH_CONFIG + " exception", ex);
+            Logger.e("Client " + Method.TREATMENT_WITH_CONFIG.getMethod() + " exception", ex);
             mTelemetryStorageProducer.recordException(Method.TREATMENT_WITH_CONFIG);
 
             return new SplitResult(Treatments.CONTROL);
@@ -141,7 +128,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 null,
                 attributes,
                 isClientDestroyed,
-                ValidationTag.GET_TREATMENTS,
                 SplitResult::treatment,
                 Method.TREATMENTS);
     }
@@ -153,7 +139,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 null,
                 attributes,
                 isClientDestroyed,
-                ValidationTag.GET_TREATMENTS_WITH_CONFIG,
                 ResultTransformer::identity,
                 Method.TREATMENTS_WITH_CONFIG);
     }
@@ -165,7 +150,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 Collections.singletonList(flagSet),
                 attributes,
                 isClientDestroyed,
-                ValidationTag.GET_TREATMENTS_BY_FLAG_SET,
                 SplitResult::treatment,
                 Method.TREATMENTS_BY_FLAG_SET);
     }
@@ -177,7 +161,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 flagSets,
                 attributes,
                 isClientDestroyed,
-                ValidationTag.GET_TREATMENTS_BY_FLAG_SETS,
                 SplitResult::treatment,
                 Method.TREATMENTS_BY_FLAG_SETS);
     }
@@ -189,7 +172,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 Collections.singletonList(flagSet),
                 attributes,
                 isClientDestroyed,
-                ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SET,
                 ResultTransformer::identity,
                 Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET);
     }
@@ -201,7 +183,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 flagSets,
                 attributes,
                 isClientDestroyed,
-                ValidationTag.GET_TREATMENTS_WITH_CONFIG_BY_FLAG_SETS,
                 ResultTransformer::identity,
                 Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS);
     }
@@ -210,11 +191,11 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                                               @Nullable List<String> flagSets,
                                                               @Nullable Map<String, Object> attributes,
                                                               boolean isClientDestroyed,
-                                                              String validationTag,
                                                               ResultTransformer<T> resultTransformer,
                                                               Method telemetryMethodName) {
         // This flag will be modified if there are any exceptions caught in getTreatmentWithConfigWithoutMetrics.
         boolean exceptionsOccurred = false;
+        String validationTag = telemetryMethodName.getMethod();
         try {
             // Check if client is destroyed. If so, return control treatments or empty map in the case of flag sets
             if (isClientDestroyed) {
