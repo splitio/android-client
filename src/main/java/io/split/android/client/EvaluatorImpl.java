@@ -34,10 +34,11 @@ public class EvaluatorImpl implements Evaluator {
             return getTreatment(matchingKey, bucketingKey, parsedSplit, attributes);
         } catch (ChangeNumberExceptionWrapper ex) {
             Logger.e(ex, "Catch Change Number Exception");
+            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION, ex.changeNumber());
         } catch (Exception e) {
             Logger.e(e, "Catch All Exception");
+            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
         }
-        return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
     }
 
     /**

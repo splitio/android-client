@@ -108,7 +108,6 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 eventsManager,
                 mEventsTracker,
                 mAttributesManagerFactory.getManager(key.matchingKey(), attributesStorage),
-                mStorageContainer.getTelemetryStorage(),
                 mSplitValidator,
                 mTreatmentManagerFactory.getTreatmentManager(key,
                         eventsManager,

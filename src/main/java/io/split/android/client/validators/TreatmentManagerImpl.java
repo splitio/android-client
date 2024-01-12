@@ -96,90 +96,119 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
+        try {
+            final String validationTag = ValidationTag.GET_TREATMENT;
+            if (isClientDestroyed) {
+                Logger.e(validationTag + CLIENT_DESTROYED_MESSAGE);
+                return Treatments.CONTROL;
+            }
 
-        final String validationTag = ValidationTag.GET_TREATMENT;
-        if (isClientDestroyed) {
-            Logger.e(validationTag + CLIENT_DESTROYED_MESSAGE);
+            long start = System.currentTimeMillis();
+
+            String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag).treatment();
+
+            recordLatency(Method.TREATMENT, start);
+
+            return treatment;
+        } catch (Exception exception) {
+            Logger.e("Client getTreatment exception", exception);
+
+            mTelemetryStorageProducer.recordException(Method.TREATMENT);
+
             return Treatments.CONTROL;
         }
-
-        long start = System.currentTimeMillis();
-
-        String treatment = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag).treatment();
-
-        recordLatency(Method.TREATMENT, start);
-
-        return treatment;
     }
 
     @Override
     public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
-        final String validationTag = ValidationTag.GET_TREATMENT_WITH_CONFIG;
-        if (isClientDestroyed) {
-            Logger.e(validationTag + CLIENT_DESTROYED_MESSAGE);
-            return new SplitResult(Treatments.CONTROL);
+        try {
+            final String validationTag = ValidationTag.GET_TREATMENT_WITH_CONFIG;
+            if (isClientDestroyed) {
+                Logger.e(validationTag + CLIENT_DESTROYED_MESSAGE);
+                return new SplitResult(Treatments.CONTROL);
+            }
+
+            long start = System.currentTimeMillis();
+
+            SplitResult result = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag);
+
+            recordLatency(Method.TREATMENT_WITH_CONFIG, start);
+
+            return result;
+        } catch (Exception exception) {
+            Logger.e("Client getTreatmentWithConfig exception", exception);
+
+            mTelemetryStorageProducer.recordException(Method.TREATMENT_WITH_CONFIG);
+
+            return new SplitResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
         }
-
-        long start = System.currentTimeMillis();
-
-        SplitResult result = getTreatmentWithConfigWithoutMetrics(split, attributes, validationTag);
-
-        recordLatency(Method.TREATMENT_WITH_CONFIG, start);
-
-        return result;
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
+        try {
+            final String validationTag = ValidationTag.GET_TREATMENTS;
 
-        final String validationTag = ValidationTag.GET_TREATMENTS;
+            if (splits == null) {
+                mValidationLogger.e("split_names must be a non-empty array", validationTag);
+                return new HashMap<>();
+            }
 
-        if (splits == null) {
-            mValidationLogger.e("split_names must be a non-empty array", validationTag);
-            return new HashMap<>();
+            if (isClientDestroyed) {
+                mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
+                return controlTreatmentsForSplits(splits, validationTag);
+            }
+
+            long start = System.currentTimeMillis();
+
+            Map<String, SplitResult> resultWithConfig = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
+            Map<String, String> result = new HashMap<>();
+
+            for (Map.Entry<String, SplitResult> entry : resultWithConfig.entrySet()) {
+                result.put(entry.getKey(), entry.getValue().treatment());
+            }
+
+            recordLatency(Method.TREATMENTS, start);
+
+            return result;
+        } catch (Exception exception) {
+            Logger.e("Client getTreatments exception", exception);
+
+            mTelemetryStorageProducer.recordException(Method.TREATMENTS);
+
+            return TreatmentManagerHelper.controlTreatmentsForSplits(splits, mSplitValidator);
         }
-
-        if (isClientDestroyed) {
-            mValidationLogger.e(CLIENT_DESTROYED_MESSAGE, validationTag);
-            return controlTreatmentsForSplits(splits, validationTag);
-        }
-
-        long start = System.currentTimeMillis();
-
-        Map<String, SplitResult> resultWithConfig = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
-        Map<String, String> result = new HashMap<>();
-
-        for (Map.Entry<String, SplitResult> entry : resultWithConfig.entrySet()) {
-            result.put(entry.getKey(), entry.getValue().treatment());
-        }
-
-        recordLatency(Method.TREATMENTS, start);
-
-        return result;
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
+        try {
+            final String validationTag = ValidationTag.GET_TREATMENTS_WITH_CONFIG;
 
-        final String validationTag = ValidationTag.GET_TREATMENTS_WITH_CONFIG;
+            if (splits == null) {
+                mValidationLogger.e("split_names must be a non-empty array", validationTag);
+                return new HashMap<>();
+            }
 
-        if (splits == null) {
-            mValidationLogger.e("split_names must be a non-empty array", validationTag);
-            return new HashMap<>();
+            if (isClientDestroyed) {
+                Logger.e(validationTag + CLIENT_DESTROYED_MESSAGE);
+                return controlTreatmentsForSplitsWithConfig(splits, validationTag);
+            }
+
+            long start = System.currentTimeMillis();
+
+            Map<String, SplitResult> result = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
+
+            recordLatency(Method.TREATMENTS_WITH_CONFIG, start);
+
+            return result;
+        } catch (Exception exception) {
+            Logger.e("Client getTreatmentsWithConfig exception", exception);
+
+            mTelemetryStorageProducer.recordException(Method.TREATMENTS_WITH_CONFIG);
+
+            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(splits, mSplitValidator);
         }
-
-        if (isClientDestroyed) {
-            Logger.e(validationTag + CLIENT_DESTROYED_MESSAGE);
-            return controlTreatmentsForSplitsWithConfig(splits, validationTag);
-        }
-
-        long start = System.currentTimeMillis();
-
-        Map<String, SplitResult> result = getTreatmentsWithConfigWithoutMetrics(splits, attributes, validationTag);
-
-        recordLatency(Method.TREATMENTS_WITH_CONFIG, start);
-
-        return result;
     }
 
     @Override
@@ -201,6 +230,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             }
         } catch (Exception exception) {
             Logger.e("Client getTreatmentsByFlagSet exception", exception);
+
             mTelemetryStorageProducer.recordException(Method.TREATMENTS_BY_FLAG_SET);
 
             return controlTreatmentsForSplits(new ArrayList<>(names), validationTag);
@@ -373,7 +403,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         try {
             mImpressionListener.log(new Impression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes));
         } catch (Throwable t) {
-            Logger.e(t);
+            Logger.e("An error occurred logging impression: " + t.getLocalizedMessage());
         }
     }
 
