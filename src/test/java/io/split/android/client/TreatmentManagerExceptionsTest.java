@@ -1,6 +1,7 @@
 package io.split.android.client;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -30,6 +31,7 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.KeyValidator;
+import io.split.android.client.validators.SplitFilterValidator;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
@@ -54,6 +56,8 @@ public class TreatmentManagerExceptionsTest {
     TelemetryStorageProducer telemetryStorageProducer;
     @Mock
     private SplitsStorage mSplitsStorage;
+    @Mock
+    private SplitFilterValidator mFlagSetsValidator;
 
     private FlagSetsFilter mFlagSetsFilter;
     private TreatmentManagerImpl treatmentManager;
@@ -76,7 +80,9 @@ public class TreatmentManagerExceptionsTest {
                 attributesMerger,
                 telemetryStorageProducer,
                 mFlagSetsFilter,
-                mSplitsStorage, new ValidationMessageLoggerImpl());
+                mSplitsStorage,
+                new ValidationMessageLoggerImpl(),
+                mFlagSetsValidator);
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
     }
@@ -154,5 +160,91 @@ public class TreatmentManagerExceptionsTest {
         assertEquals(2, treatments.size());
         assertEquals("control", treatments.get("test").treatment());
         assertEquals("on", treatments.get("test2").treatment());
+    }
+
+    @Test
+    public void getTreatmentsByFlagSetLogsImpressionWithExceptionLabelWhenExceptionOccurs() {
+        when(evaluator.getTreatment(anyString(), anyString(), eq("test"), anyMap())).thenThrow(new RuntimeException("test"));
+        when(evaluator.getTreatment(anyString(), anyString(), eq("test2"), anyMap())).thenReturn(new EvaluationResult("on", "default"));
+        when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
+        when(mSplitsStorage.getNamesByFlagSets(any())).thenReturn(new HashSet<>(Arrays.asList("test", "test2")));
+        when(mFlagSetsValidator.items(any(), any(), any())).thenReturn(Collections.singleton("set"));
+
+        Map<String, String> treatments = treatmentManager.getTreatmentsByFlagSet("set", null, false);
+        ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
+
+        verify(impressionListener, times(2)).log(argumentCaptor.capture());
+        List<Impression> allValues = argumentCaptor.getAllValues();
+        assertEquals("exception", allValues.get(1).appliedRule());
+        assertEquals("control", allValues.get(1).treatment());
+        assertEquals("default", allValues.get(0).appliedRule());
+        assertEquals("on", allValues.get(0).treatment());
+        assertEquals(2, treatments.size());
+        assertEquals("control", treatments.get("test"));
+        assertEquals("on", treatments.get("test2"));
+    }
+
+    @Test
+    public void getTreatmentsByFlagSetsLogsImpressionWithExceptionLabelWhenExceptionOccurs() {
+        when(evaluator.getTreatment(anyString(), anyString(), eq("test"), anyMap())).thenThrow(new RuntimeException("test"));
+        when(evaluator.getTreatment(anyString(), anyString(), eq("test2"), anyMap())).thenReturn(new EvaluationResult("on", "default"));
+        when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
+        when(mSplitsStorage.getNamesByFlagSets(any())).thenReturn(new HashSet<>(Arrays.asList("test", "test2")));
+        when(mFlagSetsValidator.items(any(), any(), any())).thenReturn(Collections.singleton("set"));
+
+        Map<String, String> treatments = treatmentManager.getTreatmentsByFlagSets(Collections.singletonList("set"), null, false);
+        ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
+
+        verify(impressionListener, times(2)).log(argumentCaptor.capture());
+        List<Impression> allValues = argumentCaptor.getAllValues();
+        assertEquals("exception", allValues.get(1).appliedRule());
+        assertEquals("control", allValues.get(1).treatment());
+        assertEquals("default", allValues.get(0).appliedRule());
+        assertEquals("on", allValues.get(0).treatment());
+        assertEquals(2, treatments.size());
+        assertEquals("control", treatments.get("test"));
+        assertEquals("on", treatments.get("test2"));
+    }
+
+    @Test
+    public void getTreatmentsWithConfigByFlagSetLogsImpressionWithExceptionLabelWhenExceptionOccurs() {
+        when(evaluator.getTreatment(anyString(), anyString(), eq("test"), anyMap())).thenThrow(new RuntimeException("test"));
+        when(evaluator.getTreatment(anyString(), anyString(), eq("test2"), anyMap())).thenReturn(new EvaluationResult("on", "default"));
+        when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
+        when(mSplitsStorage.getNamesByFlagSets(any())).thenReturn(new HashSet<>(Arrays.asList("test", "test2")));
+        when(mFlagSetsValidator.items(any(), any(), any())).thenReturn(Collections.singleton("set"));
+
+        Map<String, SplitResult> treatments = treatmentManager.getTreatmentsWithConfigByFlagSet("set", null, false);
+        ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
+
+        verify(impressionListener, times(2)).log(argumentCaptor.capture());
+        List<Impression> allValues = argumentCaptor.getAllValues();
+        assertEquals("exception", allValues.get(1).appliedRule());
+        assertEquals("control", allValues.get(1).treatment());
+        assertEquals("default", allValues.get(0).appliedRule());
+        assertEquals("on", allValues.get(0).treatment());
+        assertEquals(2, treatments.size());
+        assertEquals("control", treatments.get("test").treatment());
+        assertEquals("on", treatments.get("test2").treatment());
+    }
+
+    @Test
+    public void getTreatmentsWithConfigByFlagSetsLogsImpressionWithExceptionLabelWhenExceptionOccurs() {
+        when(evaluator.getTreatment(anyString(), anyString(), eq("test"), anyMap())).thenThrow(new RuntimeException("test"));
+        when(evaluator.getTreatment(anyString(), anyString(), eq("test2"), anyMap())).thenReturn(new EvaluationResult("on", "default"));
+        when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
+        when(mSplitsStorage.getNamesByFlagSets(any())).thenReturn(new HashSet<>(Arrays.asList("test", "test2")));
+        when(mFlagSetsValidator.items(any(), any(), any())).thenReturn(Collections.singleton("set"));
+
+        Map<String, SplitResult> treatments = treatmentManager.getTreatmentsWithConfigByFlagSets(Collections.singletonList("set"), null, false);
+        ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
+
+        verify(impressionListener, times(2)).log(argumentCaptor.capture());
+        List<Impression> allValues = argumentCaptor.getAllValues();
+        assertEquals("exception", allValues.get(1).appliedRule());
+        assertEquals("control", allValues.get(1).treatment());
+        assertEquals("default", allValues.get(0).appliedRule());
+        assertEquals("on", allValues.get(0).treatment());
+        assertEquals(2, treatments.size());
     }
 }

@@ -62,7 +62,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 @NonNull TelemetryStorageProducer telemetryStorageProducer,
                                 @Nullable FlagSetsFilter flagSetsFilter,
                                 @NonNull SplitsStorage splitsStorage,
-                                @NonNull ValidationMessageLogger validationLogger) {
+                                @NonNull ValidationMessageLogger validationLogger,
+                                @NonNull SplitFilterValidator flagSetsValidator) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -77,7 +78,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
         mFlagSetsFilter = flagSetsFilter;
         mSplitsStorage = checkNotNull(splitsStorage);
-        mFlagSetsValidator = new FlagSetsValidatorImpl();
+        mFlagSetsValidator = checkNotNull(flagSetsValidator);
     }
 
     @Override

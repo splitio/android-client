@@ -33,6 +33,7 @@ import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.Utils;
+import io.split.android.client.validators.FlagSetsValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
@@ -350,7 +351,7 @@ public class TreatmentManagerTest {
                 new KeyValidatorImpl(), splitValidator,
                 new ImpressionListenerMock(), config.labelsEnabled(), eventsManager,
                 mock(AttributesManager.class), mock(AttributesMerger.class),
-                mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage, validationLogger);
+                mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage, validationLogger, new FlagSetsValidatorImpl());
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -380,7 +381,7 @@ public class TreatmentManagerTest {
                 telemetryStorageProducer,
                 mFlagSetsFilter,
                 mSplitsStorage,
-                new ValidationMessageLoggerImpl());
+                new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl());
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {
