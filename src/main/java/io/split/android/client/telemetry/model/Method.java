@@ -11,13 +11,13 @@ public enum Method {
     TREATMENTS_WITH_CONFIG_BY_FLAG_SETS("getTreatmentsWithConfigByFlagSets"),
     TRACK("track");
 
-    private final String _method;
+    private final String mMethod;
 
     Method(String method) {
-        _method = method;
+        mMethod = method;
     }
 
     public String getMethod() {
-        return _method;
+        return mMethod;
     }
 }

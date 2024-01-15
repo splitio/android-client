@@ -1,6 +1,5 @@
 package io.split.android.client.validators;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.HashMap;
@@ -10,29 +9,18 @@ import java.util.Map;
 import io.split.android.client.SplitResult;
 import io.split.android.grammar.Treatments;
 
-public class TreatmentManagerHelper {
+class TreatmentManagerHelper {
 
-    public static Map<String, SplitResult> controlTreatmentsForSplitsWithConfig(@NonNull List<String> splits, @Nullable SplitValidator validator, @Nullable String validationTag, @Nullable ValidationMessageLogger logger) {
-        Map<String, SplitResult> results = new HashMap<>();
+    static <T> Map<String, T> controlTreatmentsForSplitsWithConfig(SplitValidator splitValidator, ValidationMessageLogger validationLogger, List<String> splits, String validationTag, TreatmentManagerImpl.ResultTransformer<T> resultTransformer) {
+        Map<String, T> results = new HashMap<>();
         for (String split : splits) {
-            if (isInvalidSplit(validator, validationTag, logger, split)) {
+            if (isInvalidSplit(splitValidator, validationTag, validationLogger, split)) {
                 continue;
             }
 
-            results.put(split.trim(), new SplitResult(Treatments.CONTROL));
+            results.put(split.trim(), resultTransformer.transform(new SplitResult(Treatments.CONTROL)));
         }
-        return results;
-    }
 
-    public static Map<String, String> controlTreatmentsForSplits(@NonNull List<String> splits, @Nullable SplitValidator validator, @Nullable String validationTag, @Nullable ValidationMessageLogger logger) {
-        Map<String, String> results = new HashMap<>();
-        for (String split : splits) {
-            if (isInvalidSplit(validator, validationTag, logger, split)) {
-                continue;
-            }
-
-            results.put(split.trim(), Treatments.CONTROL);
-        }
         return results;
     }
 
@@ -54,13 +42,4 @@ public class TreatmentManagerHelper {
         }
         return false;
     }
-
-    public static Map<String, String> controlTreatmentsForSplits(@NonNull List<String> splits, SplitValidator validator) {
-        return controlTreatmentsForSplits(splits, validator, null, null);
-    }
-
-    public static Map<String, SplitResult> controlTreatmentsForSplitsWithConfig(@NonNull List<String> splits, SplitValidator validator) {
-        return controlTreatmentsForSplitsWithConfig(splits, validator, null, null);
-    }
-
 }
