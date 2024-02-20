@@ -10,12 +10,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionsCounter;
+import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 
 /**
- * {@link ProcessStrategy} that corresponds to NONE Impressions mode.
+ * {@link ProcessStrategy} that corresponds to {@link ImpressionsMode#NONE} Impressions mode.
  */
 class NoneStrategy implements ProcessStrategy {
 

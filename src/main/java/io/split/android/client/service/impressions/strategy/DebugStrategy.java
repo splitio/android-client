@@ -12,10 +12,11 @@ import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
+import io.split.android.client.telemetry.model.ImpressionsMode;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 /**
- * {@link ProcessStrategy} that corresponds to DEBUG Impressions mode.
+ * {@link ProcessStrategy} that corresponds to {@link ImpressionsMode#DEBUG} Impressions mode.
  */
 class DebugStrategy implements ProcessStrategy {
 

@@ -76,7 +76,6 @@ public class OptimizedTracker implements PeriodicTracker {
         mTrackingIsEnabled.set(enable);
     }
 
-
     private void flushImpressions() {
         mRetryTimer.setTask(
                 mImpressionsTaskFactory.createImpressionsRecorderTask(),

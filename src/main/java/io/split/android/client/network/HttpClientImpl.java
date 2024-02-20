@@ -146,8 +146,10 @@ public class HttpClientImpl implements HttpClient {
         if (proxy == null) {
             return null;
         } else if (proxyAuthenticator != null) {
+            Logger.v("Setting up proxy authenticator");
             return new SplitUrlConnectionAuthenticator(proxyAuthenticator);
         } else if (!Utils.isNullOrEmpty(proxy.getUsername())) {
+            Logger.v("Setting up proxy authenticator");
             return createBasicAuthenticator(proxy.getUsername(), proxy.getPassword());
         }
 
@@ -184,7 +186,6 @@ public class HttpClientImpl implements HttpClient {
         }
 
         public Builder setProxyAuthenticator(SplitAuthenticator authenticator) {
-            Logger.v("Setting up proxy authenticator");
             mProxyAuthenticator = authenticator;
             return this;
         }

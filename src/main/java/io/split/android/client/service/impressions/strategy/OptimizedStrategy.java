@@ -12,6 +12,7 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionUtils;
 import io.split.android.client.service.impressions.ImpressionsCounter;
+import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
@@ -20,7 +21,7 @@ import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 /**
- * {@link ProcessStrategy} that corresponds to OPTIMIZED Impressions mode.
+ * {@link ProcessStrategy} that corresponds to {@link ImpressionsMode#OPTIMIZED} Impressions mode.
  */
 class OptimizedStrategy implements ProcessStrategy {
 
