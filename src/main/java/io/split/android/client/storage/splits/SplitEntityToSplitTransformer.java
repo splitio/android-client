@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import io.split.android.client.TimeChecker;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
@@ -32,6 +33,7 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
 
     @Override
     public List<Split> transform(List<SplitEntity> entities) {
+        long start = TimeChecker.now();
         if (entities == null) {
             return new ArrayList<>();
         }
@@ -44,9 +46,10 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
             for (List<Split> subList : result) {
                 splits.addAll(subList);
             }
-
+            TimeChecker.timeCheckerLog("Time to parse loaded splits", start);
             return splits;
         } else {
+            TimeChecker.timeCheckerLog("Time to parse loaded splits", start);
             return convertEntitiesToSplitList(entities, mSplitCipher);
         }
     }

@@ -20,7 +20,7 @@ public class SplitEventExecutorFactory {
             case SDK_READY_FROM_CACHE:
             case SDK_UPDATE:
             case SDK_READY_TIMED_OUT:
-                executor = new SplitEventExecutorWithClient(taskExecutor, task, resources.getSplitClient());
+                executor = new SplitEventExecutorWithClient(taskExecutor, task, resources.getSplitClient(), event);
                 break;
 
             default:

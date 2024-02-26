@@ -96,7 +96,7 @@ public class SplitFactoryImpl implements SplitFactory {
                              @Nullable TestingConfig testingConfig, @Nullable SplitLifecycleManager testLifecycleManager,
                              @Nullable TelemetryStorage telemetryStorage)
             throws URISyntaxException {
-
+        TimeChecker.getElapsedTime();
         mDefaultClientKey = key;
         final long initializationStartTime = System.currentTimeMillis();
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();

@@ -10,6 +10,7 @@ import java.util.List;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.TimeChecker;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
@@ -30,7 +31,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     private final SplitClientConfig mSplitClientConfig;
     private final SplitTaskFactory mSplitTaskFactory;
 
-    private final LoadLocalDataListener mLoadLocalSplitsListener;
+    private final FeatureFlagLoadLocalDataListener mLoadLocalSplitsListener;
 
     private String mSplitsFetcherTaskId;
     private final RetryBackoffCounterTimer mSplitsSyncRetryTimer;
@@ -69,13 +70,14 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
         }
 
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncListener);
-        mLoadLocalSplitsListener = new LoadLocalDataListener(
+        mLoadLocalSplitsListener = new FeatureFlagLoadLocalDataListener(
                 splitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         mSplitsFilterQueryStringFromConfig = splitsFilterQueryStringFromConfig;
     }
 
     @Override
     public void loadAndSynchronize() {
+        mLoadLocalSplitsListener.setStartTime(TimeChecker.now());
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createFilterSplitsInCacheTask(), null));
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(mSplitsFilterQueryStringFromConfig), mLoadLocalSplitsListener));

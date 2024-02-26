@@ -5,6 +5,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import io.split.android.client.TimeChecker;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
@@ -68,6 +69,7 @@ public class SplitsSyncTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
+        long now = TimeChecker.now();
         long storedChangeNumber = mSplitsStorage.getTill();
         long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
 
@@ -91,7 +93,7 @@ public class SplitsSyncTask implements SplitTask {
             mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.SPLITS, System.currentTimeMillis());
             notifyInternalEvent(storedChangeNumber);
         }
-
+        TimeChecker.timeCheckerLog("Time to fetch feature flags", now);
         return result;
     }
 

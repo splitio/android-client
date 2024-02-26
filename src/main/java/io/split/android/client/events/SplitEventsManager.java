@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.TimeChecker;
 import io.split.android.client.events.executors.SplitEventExecutor;
 import io.split.android.client.events.executors.SplitEventExecutorFactory;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
@@ -146,7 +147,13 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
                 case SPLITS_LOADED_FROM_STORAGE:
                 case MY_SEGMENTS_LOADED_FROM_STORAGE:
+                    if (event == SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE) {
+                        TimeChecker.timeSinceStartLog("Time until my segments loaded from cache");
+                    }
                 case ATTRIBUTES_LOADED_FROM_STORAGE:
+                    if (event == SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE) {
+                        TimeChecker.timeSinceStartLog("Time until attributes loaded from cache");
+                    }
                 case ENCRYPTION_MIGRATION_DONE:
                     if (wasTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE) &&
@@ -194,7 +201,10 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
         if (mExecutionTimes.get(event) == 0) {
             return;
             // If executionTimes is grater than zero, maximum executions decrease 1
-        } else if (mExecutionTimes.get(event) > 0) {
+        }
+
+        TimeChecker.timeSinceStartLog("Triggering event: " + event.name());
+        if (mExecutionTimes.get(event) > 0) {
             mExecutionTimes.put(event, mExecutionTimes.get(event) - 1);
         } //If executionTimes is lower than zero, execute it without limitation
         if (mSubscriptions.containsKey(event)) {

@@ -10,6 +10,7 @@ import androidx.annotation.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.split.android.client.TimeChecker;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactory;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactoryImpl;
@@ -72,10 +73,13 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public SplitsSnapshot getSnapshot() {
+        long now = TimeChecker.now();
         SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase);
         mDatabase.runInTransaction(loader);
-        return new SplitsSnapshot(loadSplits(), loader.getChangeNumber(),
+        SplitsSnapshot splitsSnapshot = new SplitsSnapshot(loadSplits(), loader.getChangeNumber(),
                 loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString());
+        TimeChecker.timeCheckerLog("Time to load feature flags", now);
+        return splitsSnapshot;
     }
 
     @Override
