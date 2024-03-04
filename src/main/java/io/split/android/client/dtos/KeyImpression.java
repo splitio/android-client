@@ -10,13 +10,13 @@ import io.split.android.client.impressions.Impression;
 public class KeyImpression implements InBytesSizable, Identifiable {
 
     public transient long storageId;
-    /* package private */ static final String FIELD_KEY_NAME = "k";
-    /* package private */ static final String FIELD_BUCKETING_KEY = "b";
-    /* package private */ static final String FIELD_TREATMENT = "t";
-    /* package private */ static final String FIELD_LABEL = "r";
-    /* package private */ static final String FIELD_TIME = "m";
-    /* package private */ static final String FIELD_CHANGE_NUMBER = "c";
-    /* package private */ static final String FIELD_PREVIOUS_TIME = "pt";
+    private static final String FIELD_KEY_NAME = "k";
+    private static final String FIELD_BUCKETING_KEY = "b";
+    private static final String FIELD_TREATMENT = "t";
+    private static final String FIELD_LABEL = "r";
+    private static final String FIELD_TIME = "m";
+    private static final String FIELD_CHANGE_NUMBER = "c";
+    private static final String FIELD_PREVIOUS_TIME = "pt";
 
     public transient String feature; // Non-serializable
 
@@ -42,17 +42,6 @@ public class KeyImpression implements InBytesSizable, Identifiable {
     public Long previousTime;
 
     public KeyImpression() {
-    }
-
-    public KeyImpression(Impression impression) {
-        this.feature = impression.split();
-        this.keyName = impression.key();
-        this.bucketingKey = impression.bucketingKey();
-        this.label = impression.appliedRule();
-        this.treatment = impression.treatment();
-        this.time = impression.time();
-        this.changeNumber = impression.changeNumber();
-        this.previousTime = impression.previousTime();
     }
 
     @Override

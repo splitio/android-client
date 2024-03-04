@@ -98,7 +98,6 @@ class OptimizedStrategy implements ProcessStrategy {
                         mImpressionsTaskFactory.createImpressionsRecorderTask(),
                         mImpressionsSyncHelper);
             }
-
             mTelemetryRuntimeProducer.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_QUEUED, 1);
         } else {
             mTelemetryRuntimeProducer.recordImpressionStats(ImpressionsDataType.IMPRESSIONS_DEDUPED, 1);
@@ -106,6 +105,11 @@ class OptimizedStrategy implements ProcessStrategy {
     }
 
     private static boolean shouldPushImpression(KeyImpression impression) {
+        // Previous time would be null if the impression is not in the cache. In that case we should
+        // push the impression.
+        //
+        // If the previous time is not null, we should push the impression if the previous time is
+        // not in the same timeframe as the current impression.
         return impression.previousTime == null ||
                 ImpressionUtils.truncateTimeframe(impression.previousTime) != ImpressionUtils.truncateTimeframe(impression.time);
     }

@@ -22,4 +22,11 @@ public class DatabaseHelper {
                 .allowMainThreadQueries()
                 .build();
     }
+
+    public static SplitRoomDatabase getDiskTestDatabase(Context context) {
+        return Room.databaseBuilder(context, SplitRoomDatabase.class, "split_test.db")
+                .fallbackToDestructiveMigration()
+                .allowMainThreadQueries()
+                .build();
+    }
 }

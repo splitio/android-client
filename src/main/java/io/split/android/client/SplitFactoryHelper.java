@@ -67,6 +67,7 @@ import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.cipher.SplitEncryptionLevel;
 import io.split.android.client.storage.common.SplitStorageContainer;
+import io.split.android.client.storage.db.ImpressionsObserverDao;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.events.PersistentEventsStorage;
@@ -164,7 +165,8 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistentImpressionsUniqueStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getAttributesStorage(),
                 StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, splitCipher),
-                getTelemetryStorage(shouldRecordTelemetry, telemetryStorage));
+                getTelemetryStorage(shouldRecordTelemetry, telemetryStorage),
+                splitRoomDatabase.impressionsDedupeDao()); //TODO
     }
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
@@ -376,6 +378,7 @@ class SplitFactoryHelper {
                 splitStorageContainer,
                 splitTaskFactory,
                 splitStorageContainer.getTelemetryStorage(),
+                splitStorageContainer.getImpressionsObserverDao(),
                 config.impressionsQueueSize(),
                 config.impressionsChunkSize(),
                 config.impressionsRefreshRate(),

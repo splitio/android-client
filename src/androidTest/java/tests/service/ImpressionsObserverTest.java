@@ -1,6 +1,12 @@
 package tests.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+
+import android.os.SystemClock;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -10,8 +16,12 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import helper.DatabaseHelper;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.impressions.ImpressionsObserver;
+import io.split.android.client.service.impressions.ImpressionsObserverContract;
+import io.split.android.client.storage.db.ImpressionsObserverDao;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 
 public class ImpressionsObserverTest {
 
@@ -51,6 +61,97 @@ public class ImpressionsObserverTest {
         }
         assertNull(observer.testAndSet(imp));
         Assert.assertEquals(observer.testAndSet(imp).longValue(), imp.time());
+    }
+
+    @Test
+    public void testBasicFunctionality2() {
+        SplitRoomDatabase db = DatabaseHelper.getDiskTestDatabase(InstrumentationRegistry.getInstrumentation().getContext());
+        ImpressionsObserverDao impressionsObserverDao = db.impressionsDedupeDao();
+
+        ImpressionsObserverContract observer = new ImpressionsObserver(2, impressionsObserverDao);
+        Impression imp = new Impression("someKey",
+                null, "someFeature",
+                "on", System.currentTimeMillis(),
+                "in segment all",
+                1234L,
+                null);
+        Impression imp2 = new Impression("someKey_2",
+                null, "someFeature",
+                "on", System.currentTimeMillis(),
+                "in segment all",
+                1234L,
+                null);
+
+        // These are not in the cache, so they should return null
+        Long firstImp = observer.testAndSet(imp);
+        Long firstImp2 = observer.testAndSet(imp2);
+
+        // These are in the cache, so they should return a value
+        Long secondImp = observer.testAndSet(imp);
+        Long secondImp2 = observer.testAndSet(imp2);
+
+        // We recreate the observer
+        observer = new ImpressionsObserver(2, impressionsObserverDao);
+
+        // These should not be null because the cache is persisted
+        Long thirdImp = observer.testAndSet(imp);
+        Long thirdImp2 = observer.testAndSet(imp2);
+
+        assertNull(firstImp);
+        assertNull(firstImp2);
+        assertNotNull(secondImp);
+        assertNotNull(secondImp2);
+        assertEquals(imp.time(), secondImp.longValue());
+        assertEquals(imp2.time(), secondImp2.longValue());
+        assertNotNull(thirdImp);
+        assertNotNull(thirdImp2);
+        assertEquals(imp.time(), thirdImp.longValue());
+        assertEquals(imp2.time(), thirdImp2.longValue());
+    }
+
+    @Test
+    public void testPerformances() throws InterruptedException {
+        int iterations = 10;
+        SplitRoomDatabase db = DatabaseHelper.getDiskTestDatabase(InstrumentationRegistry.getInstrumentation().getContext());
+        ImpressionsObserverDao impressionsObserverDao = db.impressionsDedupeDao();
+
+        ImpressionsObserverContract observer = new ImpressionsObserver(2, impressionsObserverDao);
+        Impression imp = new Impression("someKey",
+                null, "someFeature",
+                "on", System.currentTimeMillis(),
+                "in segment all",
+                1234L,
+                null);
+
+        long start = System.nanoTime();
+
+        for (int i = 0; i < iterations; i++) {
+            observer.testAndSet(imp);
+        }
+
+        long end = System.nanoTime();
+        long l = end - start;
+        System.out.println("Time with DB: " + l + " ns, or " + (l / 1000000d) + " ms");
+
+        ImpressionsObserverContract observer2 = new ImpressionsObserver(2);
+
+        long start2 = System.nanoTime();
+
+        for (int i = 0; i < iterations; i++) {
+            observer2.testAndSet(imp);
+        }
+
+        long end2 = System.nanoTime();
+        long l2 = end2 - start2;
+        System.out.println("Time 2: " + l2 + " ns, or " + (l2 / 1000000d) + " ms");
+
+        // print out which time was slower and by what percentage
+
+        if (l > l2) {
+            System.out.println("Time with DB was slower by: " + ((l - l2) / (double) l) * 100 + "%");
+        } else {
+            System.out.println("Time without DB was slower by: " + ((l2 - l) / (double) l2) * 100 + "%");
+        }
     }
 
     @Test

@@ -1,5 +1,7 @@
 package io.split.android.client.service;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +18,37 @@ public class ImpressionHasherTest {
     public void setup() {
         baseImpression = baseImpression();
         baseHash = ImpressionHasher.process(baseImpression);
+    }
+
+    @Test
+    public void baseHashIsCorrect() {
+        assertEquals(Long.valueOf(1086472680), baseHash);
+    }
+
+    @Test
+    public void sameImpression() {
+        long testTime = System.currentTimeMillis();
+        Impression imp1 = new Impression("someKey",
+                null,
+                "someOtherFeature",
+                "someTreatment",
+                testTime,
+                "someLabel",
+                123L,
+                null);
+        Impression imp2 = new Impression("someKey",
+                null,
+                "someOtherFeature",
+                "someTreatment",
+                testTime,
+                "someLabel",
+                123L,
+                null);
+
+        Long hash1 = ImpressionHasher.process(imp1);
+        Long hash2 = ImpressionHasher.process(imp2);
+
+        assertEquals(hash1, hash2);
     }
 
     @Test

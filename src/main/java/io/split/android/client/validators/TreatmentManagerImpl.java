@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
@@ -48,6 +50,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final FlagSetsFilter mFlagSetsFilter;
     private final SplitsStorage mSplitsStorage;
     private final SplitFilterValidator mFlagSetsValidator;
+    private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
 
     public TreatmentManagerImpl(String matchingKey,
                                 String bucketingKey,
@@ -315,11 +318,16 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes) {
-        try {
-            mImpressionListener.log(new Impression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes));
-        } catch (Throwable t) {
-            Logger.e("An error occurred logging impression: " + t.getLocalizedMessage());
-        }
+        mExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mImpressionListener.log(new Impression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes));
+                } catch (Throwable t) {
+                    Logger.e("An error occurred logging impression: " + t.getLocalizedMessage());
+                }
+            }
+        });
     }
 
     @NonNull

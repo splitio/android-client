@@ -21,9 +21,9 @@ import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
         entities = {
                 MySegmentEntity.class, SplitEntity.class, EventEntity.class,
                 ImpressionEntity.class, GeneralInfoEntity.class, ImpressionsCountEntity.class,
-                AttributesEntity.class, UniqueKeyEntity.class
+                AttributesEntity.class, UniqueKeyEntity.class, ImpressionsObserverEntity.class
         },
-        version = 4
+        version = 5
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 
@@ -42,6 +42,8 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
     public abstract AttributesDao attributesDao();
 
     public abstract UniqueKeysDao uniqueKeysDao();
+
+    public abstract ImpressionsObserverDao impressionsDedupeDao();
 
     private volatile SplitQueryDao mSplitQueryDao;
 

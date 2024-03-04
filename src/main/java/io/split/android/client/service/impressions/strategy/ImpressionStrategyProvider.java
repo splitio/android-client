@@ -11,6 +11,7 @@ import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
 import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
 import io.split.android.client.storage.common.SplitStorageContainer;
+import io.split.android.client.storage.db.ImpressionsObserverDao;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class ImpressionStrategyProvider {
@@ -25,11 +26,13 @@ public class ImpressionStrategyProvider {
     private final int mImpressionsCounterRefreshRate;
     private final int mUniqueKeysRefreshRate;
     private final boolean mUserConsentIsGranted;
+    private final ImpressionsObserverDao mImpressionsObserverDao;
 
     public ImpressionStrategyProvider(SplitTaskExecutor splitTaskExecutor,
                                       SplitStorageContainer storageContainer,
                                       ImpressionsTaskFactory splitTaskFactory,
                                       TelemetryRuntimeProducer telemetryStorage,
+                                      ImpressionsObserverDao impressionsObserverDao,
                                       int impressionsQueueSize,
                                       long impressionsChunkSize,
                                       int impressionsRefreshRate,
@@ -46,6 +49,7 @@ public class ImpressionStrategyProvider {
         mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
         mUniqueKeysRefreshRate = uniqueKeysRefreshRate;
         mUserConsentIsGranted = userConsentIsGranted;
+        mImpressionsObserverDao = impressionsObserverDao;
     }
 
     public ProcessStrategy getStrategy(ImpressionsMode mode) {
@@ -79,7 +83,7 @@ public class ImpressionStrategyProvider {
                 );
             default:
                 return new OptimizedStrategy(
-                        new ImpressionsObserver(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE),
+                        new ImpressionsObserver(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE, mImpressionsObserverDao),
                         new ImpressionsCounter(),
                         new RecorderSyncHelperImpl<>(
                                 SplitTaskType.IMPRESSIONS_RECORDER,
