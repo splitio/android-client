@@ -11,7 +11,8 @@ import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.impressions.ImpressionsObserver;
+import io.split.android.client.service.impressions.observer.ImpressionsObserver;
+import io.split.android.client.service.impressions.observer.ImpressionsObserverImpl;
 
 public class ImpressionsObserverTest {
 
@@ -37,7 +38,7 @@ public class ImpressionsObserverTest {
 
     @Test
     public void testBasicFunctionality() {
-        ImpressionsObserver observer = new ImpressionsObserver(5);
+        ImpressionsObserver observer = new ImpressionsObserverImpl(5);
         Impression imp = new Impression("someKey",
                 null, "someFeature",
                 "on", System.currentTimeMillis(),
@@ -55,7 +56,7 @@ public class ImpressionsObserverTest {
 
     @Test
     public void testConcurrencyVsAccuracy() throws InterruptedException {
-        ImpressionsObserver observer = new ImpressionsObserver(5000);
+        ImpressionsObserver observer = new ImpressionsObserverImpl(5000);
         ConcurrentLinkedQueue<Impression> imps = new ConcurrentLinkedQueue<>();
         Thread t1 = new Thread(() -> caller(observer, 1000, imps));
         Thread t2 = new Thread(() -> caller(observer, 1000, imps));
@@ -88,7 +89,7 @@ public class ImpressionsObserverTest {
 
     @Test
     public void testAndSetWithNullImpressionReturnsNullPreviousTime() {
-        ImpressionsObserver observer = new ImpressionsObserver(1);
+        ImpressionsObserver observer = new ImpressionsObserverImpl(1);
 
         assertNull(observer.testAndSet(null));
     }

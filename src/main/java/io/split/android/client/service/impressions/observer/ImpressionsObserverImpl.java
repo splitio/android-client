@@ -1,4 +1,4 @@
-package io.split.android.client.service.impressions;
+package io.split.android.client.service.impressions.observer;
 
 import static io.split.android.client.utils.Utils.getAsInt;
 
@@ -7,15 +7,17 @@ import android.util.LruCache;
 import androidx.annotation.Nullable;
 
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.service.impressions.ImpressionHasher;
 
-public class ImpressionsObserver {
+public class ImpressionsObserverImpl implements ImpressionsObserver {
 
     private final LruCache<Long, Long> mCache;
 
-    public ImpressionsObserver(long size) {
+    public ImpressionsObserverImpl(long size) {
         mCache = new LruCache<>(getAsInt(size));
     }
 
+    @Override
     @Nullable
     public Long testAndSet(Impression impression) {
         if (null == impression) {
