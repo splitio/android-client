@@ -6,8 +6,8 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionManagerRetryTimerProviderImpl;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsMode;
-import io.split.android.client.service.impressions.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
+import io.split.android.client.service.impressions.observer.ImpressionsObserverImpl;
 import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
 import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
 import io.split.android.client.storage.common.SplitStorageContainer;
@@ -79,7 +79,7 @@ public class ImpressionStrategyProvider {
                 );
             default:
                 return new OptimizedStrategy(
-                        new ImpressionsObserver(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE),
+                        new ImpressionsObserverImpl(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE),
                         new ImpressionsCounter(),
                         new RecorderSyncHelperImpl<>(
                                 SplitTaskType.IMPRESSIONS_RECORDER,
