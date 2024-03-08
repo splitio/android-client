@@ -12,7 +12,7 @@ import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionUtils;
 import io.split.android.client.service.impressions.ImpressionsCounter;
-import io.split.android.client.service.impressions.ImpressionsObserver;
+import io.split.android.client.service.impressions.observer.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
