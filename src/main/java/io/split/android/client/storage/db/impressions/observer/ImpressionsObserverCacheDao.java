@@ -6,7 +6,7 @@ import androidx.room.Query;
 import java.util.List;
 
 @Dao
-public interface ImpressionsObserverDao {
+public interface ImpressionsObserverCacheDao {
 
     @Query("INSERT OR REPLACE INTO impressions_observer_cache (hash, time, created_at) VALUES (:hash, :time, :createdAt)")
     void insert(Long hash, Long time, Long createdAt);

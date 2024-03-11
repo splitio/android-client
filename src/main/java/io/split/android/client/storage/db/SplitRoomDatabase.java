@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
-import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverDao;
+import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
@@ -45,7 +45,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
 
     public abstract UniqueKeysDao uniqueKeysDao();
 
-    public abstract ImpressionsObserverDao impressionsObserverDao();
+    public abstract ImpressionsObserverCacheDao impressionsObserverDao();
 
     private volatile SplitQueryDao mSplitQueryDao;
 
