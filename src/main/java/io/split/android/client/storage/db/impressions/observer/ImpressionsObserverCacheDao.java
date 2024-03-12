@@ -14,6 +14,9 @@ public interface ImpressionsObserverCacheDao {
     @Query("SELECT hash, time, created_at FROM impressions_observer_cache ORDER BY created_at ASC LIMIT :limit")
     List<ImpressionsObserverCacheEntity> getAll(int limit);
 
+    @Query("SELECT hash, time, created_at FROM impressions_observer_cache WHERE hash = :hash")
+    ImpressionsObserverCacheEntity get(Long hash);
+
     @Query("DELETE FROM impressions_observer_cache WHERE hash = :hash")
     void delete(Long hash);
 

@@ -126,4 +126,15 @@ public class ImpressionsObserverCacheDaoTest {
         assertEquals(12L, all.get(1).getHash());
         assertEquals(21L, all.get(2).getHash());
     }
+
+    @Test
+    public void getSingleValueReturnsCorrectValue() {
+        mImpressionsObserverCacheDao.insert(3L, 2L, 3L);
+        mImpressionsObserverCacheDao.insert(4L, 6L, 5L);
+
+        ImpressionsObserverCacheEntity entity = mImpressionsObserverCacheDao.get(3L);
+
+        assertEquals(3L, entity.getHash());
+        assertEquals(2L, entity.getTime());
+    }
 }
