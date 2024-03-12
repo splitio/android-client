@@ -13,7 +13,7 @@ import java.util.List;
 import helper.DatabaseHelper;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
-import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverEntity;
+import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
 public class ImpressionsObserverCacheDaoTest {
 
@@ -37,14 +37,14 @@ public class ImpressionsObserverCacheDaoTest {
         mImpressionsObserverCacheDao.insert(1L, 2L, 3L);
         mImpressionsObserverCacheDao.insert(3L, 2L, 5L);
 
-        List<ImpressionsObserverEntity> all = mImpressionsObserverCacheDao.getAll(3);
+        List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(3);
 
         assertEquals(2, all.size());
-        ImpressionsObserverEntity firstEntity = all.get(0);
+        ImpressionsObserverCacheEntity firstEntity = all.get(0);
         assertEquals(firstEntity.getHash(), 1L);
         assertEquals(firstEntity.getTime(), 2L);
         assertEquals(firstEntity.getCreatedAt(), 3L);
-        ImpressionsObserverEntity secondEntity = all.get(1);
+        ImpressionsObserverCacheEntity secondEntity = all.get(1);
         assertEquals(secondEntity.getHash(), 3L);
         assertEquals(secondEntity.getTime(), 2L);
         assertEquals(secondEntity.getCreatedAt(), 5L);
@@ -55,10 +55,10 @@ public class ImpressionsObserverCacheDaoTest {
         mImpressionsObserverCacheDao.insert(1L, 2L, 3L);
         mImpressionsObserverCacheDao.insert(1L, 4L, 5L);
 
-        List<ImpressionsObserverEntity> all = mImpressionsObserverCacheDao.getAll(3);
+        List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(3);
 
         assertEquals(1, all.size());
-        ImpressionsObserverEntity firstEntity = all.get(0);
+        ImpressionsObserverCacheEntity firstEntity = all.get(0);
         assertEquals(firstEntity.getHash(), 1L);
         assertEquals(firstEntity.getTime(), 4L);
         assertEquals(firstEntity.getCreatedAt(), 5L);
@@ -70,10 +70,10 @@ public class ImpressionsObserverCacheDaoTest {
         mImpressionsObserverCacheDao.insert(3L, 2L, 5L);
         mImpressionsObserverCacheDao.delete(1L);
 
-        List<ImpressionsObserverEntity> all = mImpressionsObserverCacheDao.getAll(3);
+        List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(3);
 
         assertEquals(1, all.size());
-        ImpressionsObserverEntity firstEntity = all.get(0);
+        ImpressionsObserverCacheEntity firstEntity = all.get(0);
         assertEquals(firstEntity.getHash(), 3L);
         assertEquals(firstEntity.getTime(), 2L);
         assertEquals(firstEntity.getCreatedAt(), 5L);
@@ -86,7 +86,7 @@ public class ImpressionsObserverCacheDaoTest {
         mImpressionsObserverCacheDao.insert(4L, 2L, 6L);
         mImpressionsObserverCacheDao.insert(5L, 2L, 7L);
 
-        List<ImpressionsObserverEntity> all = mImpressionsObserverCacheDao.getAll(2);
+        List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(2);
 
         assertEquals(2, all.size());
     }
@@ -98,7 +98,7 @@ public class ImpressionsObserverCacheDaoTest {
         mImpressionsObserverCacheDao.insert(5L, 4L, 6L);
         mImpressionsObserverCacheDao.insert(1L, 1L, 7L);
 
-        List<ImpressionsObserverEntity> all = mImpressionsObserverCacheDao.getAll(4);
+        List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(4);
 
         assertEquals(4, all.size());
         assertEquals(3L, all.get(0).getHash());
@@ -119,7 +119,7 @@ public class ImpressionsObserverCacheDaoTest {
 
         mImpressionsObserverCacheDao.deleteOldest(6);
 
-        List<ImpressionsObserverEntity> all = mImpressionsObserverCacheDao.getAll(5);
+        List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(5);
 
         assertEquals(3, all.size());
         assertEquals(5L, all.get(0).getHash());

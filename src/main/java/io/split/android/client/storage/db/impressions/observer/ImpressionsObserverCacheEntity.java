@@ -6,7 +6,7 @@ import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "impressions_observer_cache")
-public class ImpressionsObserverEntity {
+public class ImpressionsObserverCacheEntity {
 
     @PrimaryKey
     @ColumnInfo(name = "hash")
@@ -16,12 +16,12 @@ public class ImpressionsObserverEntity {
     @ColumnInfo(name = "created_at")
     private long createdAt;
 
-    public ImpressionsObserverEntity() {
+    public ImpressionsObserverCacheEntity() {
         // Room constructor
     }
 
     @Ignore
-    public ImpressionsObserverEntity(long hash, long time, long createdAt) {
+    public ImpressionsObserverCacheEntity(long hash, long time, long createdAt) {
         this.hash = hash;
         this.time = time;
         this.createdAt = createdAt;

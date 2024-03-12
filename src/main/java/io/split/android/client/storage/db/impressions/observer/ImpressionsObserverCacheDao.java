@@ -12,7 +12,7 @@ public interface ImpressionsObserverCacheDao {
     void insert(Long hash, Long time, Long createdAt);
 
     @Query("SELECT hash, time, created_at FROM impressions_observer_cache ORDER BY created_at ASC LIMIT :limit")
-    List<ImpressionsObserverEntity> getAll(int limit);
+    List<ImpressionsObserverCacheEntity> getAll(int limit);
 
     @Query("DELETE FROM impressions_observer_cache WHERE hash = :hash")
     void delete(Long hash);

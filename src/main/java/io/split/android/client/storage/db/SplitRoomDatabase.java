@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
-import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverEntity;
+import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
 
@@ -23,7 +23,7 @@ import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
         entities = {
                 MySegmentEntity.class, SplitEntity.class, EventEntity.class,
                 ImpressionEntity.class, GeneralInfoEntity.class, ImpressionsCountEntity.class,
-                AttributesEntity.class, UniqueKeyEntity.class, ImpressionsObserverEntity.class
+                AttributesEntity.class, UniqueKeyEntity.class, ImpressionsObserverCacheEntity.class
         },
         version = 5
 )
