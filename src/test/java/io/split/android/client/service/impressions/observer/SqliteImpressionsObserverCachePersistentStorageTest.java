@@ -1,4 +1,4 @@
-package io.split.android.client.service.impressions.observer.persistence;
+package io.split.android.client.service.impressions.observer;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 
+import io.split.android.client.service.impressions.observer.SqliteImpressionsObserverCachePersistentStorage;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
@@ -62,5 +63,12 @@ public class SqliteImpressionsObserverCachePersistentStorageTest {
         mStorage.deleteOutdated(1);
 
         verify(mImpressionsObserverCacheDao).deleteOldest(1);
+    }
+
+    @Test
+    public void onRemovalCallsDeleteOnDao() {
+        mStorage.onRemoval(1L);
+
+        verify(mImpressionsObserverCacheDao).delete(1L);
     }
 }

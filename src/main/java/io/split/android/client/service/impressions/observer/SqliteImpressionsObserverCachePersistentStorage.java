@@ -1,4 +1,4 @@
-package io.split.android.client.service.impressions.observer.persistence;
+package io.split.android.client.service.impressions.observer;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
@@ -9,7 +9,7 @@ import androidx.annotation.WorkerThread;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
-class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObserverCachePersistentStorage {
+class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObserverCachePersistentStorage, ListenableLruCache.RemovalListener<Long> {
 
     private final ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
 
@@ -32,7 +32,6 @@ class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObse
             return null;
         }
 
-
         return entity.getTime();
     }
 
@@ -40,5 +39,10 @@ class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObse
     @WorkerThread
     public void deleteOutdated(long timestamp) {
         mImpressionsObserverCacheDao.deleteOldest(timestamp);
+    }
+
+    @Override
+    public void onRemoval(Long key) {
+        mImpressionsObserverCacheDao.delete(key);
     }
 }

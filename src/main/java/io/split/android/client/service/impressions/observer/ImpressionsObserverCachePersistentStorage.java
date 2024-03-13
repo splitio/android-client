@@ -1,4 +1,4 @@
-package io.split.android.client.service.impressions.observer.persistence;
+package io.split.android.client.service.impressions.observer;
 
 import androidx.annotation.Nullable;
 
