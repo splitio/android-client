@@ -9,7 +9,7 @@ import androidx.annotation.WorkerThread;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
-class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObserverCachePersistentStorage, ListenableLruCache.RemovalListener<Long> {
+class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObserverCachePersistentStorage {
 
     private final ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
 

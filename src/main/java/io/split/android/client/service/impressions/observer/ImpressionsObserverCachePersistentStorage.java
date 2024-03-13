@@ -2,7 +2,7 @@ package io.split.android.client.service.impressions.observer;
 
 import androidx.annotation.Nullable;
 
-interface ImpressionsObserverCachePersistentStorage {
+interface ImpressionsObserverCachePersistentStorage extends ListenableLruCache.RemovalListener<Long> {
 
     void insert(long hash, long time);
 

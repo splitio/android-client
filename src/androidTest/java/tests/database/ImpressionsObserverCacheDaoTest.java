@@ -23,7 +23,7 @@ public class ImpressionsObserverCacheDaoTest {
     @Before
     public void setUp() {
         mTestDatabase = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext());
-        mImpressionsObserverCacheDao = ImpressionsObserverCacheDaoTest.this.mTestDatabase.impressionsObserverDao();
+        mImpressionsObserverCacheDao = mTestDatabase.impressionsObserverCacheDao();
         mTestDatabase.clearAllTables();
     }
 
