@@ -9,6 +9,8 @@ import androidx.annotation.VisibleForTesting;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import io.split.android.client.utils.logger.Logger;
+
 class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
 
     private final ImpressionsObserverCachePersistentStorage mPersistentStorage;
@@ -38,6 +40,8 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
             if (cachedValue != null) {
                 return cachedValue;
             }
+        } catch (Exception e) {
+            logError("Error while getting value from cache: ", e);
         } finally {
             mLock.readLock().unlock();
         }
@@ -57,6 +61,8 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
 
                 return persistedValue;
             }
+        } catch (Exception e) {
+            logError("Error while getting value from persistent storage: ", e);
         } finally {
             mLock.writeLock().unlock();
         }
@@ -68,10 +74,22 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
     public void put(long hash, long time) {
         mLock.writeLock().lock();
         try {
-            mCache.put(hash, time);
-            mPersistentStorage.insert(hash, time);
+            try {
+                mCache.put(hash, time);
+            } catch (Exception e) {
+                logError("Error while putting value in cache: ", e);
+            }
+            try {
+                mPersistentStorage.insert(hash, time);
+            } catch (Exception e) {
+                logError("Error while putting value in persistent storage: ", e);
+            }
         } finally {
             mLock.writeLock().unlock();
         }
+    }
+
+    private static void logError(String message, Exception e) {
+        Logger.w("ImpressionsObserverCache: " + message + e.getLocalizedMessage());
     }
 }
