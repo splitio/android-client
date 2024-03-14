@@ -1,8 +1,13 @@
-package tests.service;
+package io.split.android.client.service.impressions.observer;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -10,15 +15,23 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import helper.DatabaseHelper;
 import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.impressions.observer.ImpressionsObserver;
-import io.split.android.client.service.impressions.observer.ImpressionsObserverImpl;
+import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 
 public class ImpressionsObserverTest {
 
     // We allow the cache implementation to have a 0.01% drift in size when elements change, given that it's internal
     // structure/references might vary, and the ObjectSizeCalculator is not 100% accurate
     private final Random mRandom = new Random();
+
+    private ImpressionsObserverCachePersistentStorage mStorage;
+
+    @Before
+    public void setUp() {
+        ImpressionsObserverCacheDao dao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
+        mStorage = new SqliteImpressionsObserverCachePersistentStorage(dao);
+    }
 
     private List<Impression> generateImpressions(long count) {
         ArrayList<Impression> imps = new ArrayList<>();
@@ -38,7 +51,7 @@ public class ImpressionsObserverTest {
 
     @Test
     public void testBasicFunctionality() {
-        ImpressionsObserver observer = new ImpressionsObserverImpl(5);
+        ImpressionsObserver observer = new ImpressionsObserverImpl(mStorage, 5);
         Impression imp = new Impression("someKey",
                 null, "someFeature",
                 "on", System.currentTimeMillis(),
@@ -51,12 +64,56 @@ public class ImpressionsObserverTest {
             observer.testAndSet(i);
         }
         assertNull(observer.testAndSet(imp));
-        Assert.assertEquals(observer.testAndSet(imp).longValue(), imp.time());
+        assertEquals(observer.testAndSet(imp).longValue(), imp.time());
+    }
+
+    @Test
+    public void testValuesArePersistedAcrossInstances() {
+        ImpressionsObserver observer = new ImpressionsObserverImpl(mStorage, 2);
+
+        Impression imp = new Impression("someKey",
+                null, "someFeature",
+                "on", System.currentTimeMillis(),
+                "in segment all",
+                1234L,
+                null);
+        Impression imp2 = new Impression("someOtherKey",
+                null, "someOtherFeature",
+                "on", System.currentTimeMillis(),
+                "in segment all",
+                1234L,
+                null);
+
+        // These are not in the cache, so they should return null
+        Long firstImp = observer.testAndSet(imp);
+        Long firstImp2 = observer.testAndSet(imp2);
+
+        // These are in the cache, so they should return a value
+        Long secondImp = observer.testAndSet(imp);
+        Long secondImp2 = observer.testAndSet(imp2);
+
+        // We recreate the observer
+        observer = new ImpressionsObserverImpl(mStorage, 2);
+
+        // These should not be null because the cache is persisted
+        Long thirdImp = observer.testAndSet(imp);
+        Long thirdImp2 = observer.testAndSet(imp2);
+
+        assertNull(firstImp);
+        assertNull(firstImp2);
+        assertNotNull(secondImp);
+        assertNotNull(secondImp2);
+        assertEquals(imp.time(), secondImp.longValue());
+        assertEquals(imp2.time(), secondImp2.longValue());
+        assertNotNull(thirdImp);
+        assertNotNull(thirdImp2);
+        assertEquals(imp.time(), thirdImp.longValue());
+        assertEquals(imp2.time(), thirdImp2.longValue());
     }
 
     @Test
     public void testConcurrencyVsAccuracy() throws InterruptedException {
-        ImpressionsObserver observer = new ImpressionsObserverImpl(5000);
+        ImpressionsObserver observer = new ImpressionsObserverImpl(mStorage, 5000);
         ConcurrentLinkedQueue<Impression> imps = new ConcurrentLinkedQueue<>();
         Thread t1 = new Thread(() -> caller(observer, 1000, imps));
         Thread t2 = new Thread(() -> caller(observer, 1000, imps));
@@ -81,7 +138,7 @@ public class ImpressionsObserverTest {
         t4.join();
         t5.join();
 
-        Assert.assertEquals(imps.size(), 5000);
+        assertEquals(imps.size(), 5000);
         for (Impression i : imps) {
             Assert.assertTrue(i.previousTime() == null || i.previousTime() <= i.time());
         }
@@ -89,7 +146,7 @@ public class ImpressionsObserverTest {
 
     @Test
     public void testAndSetWithNullImpressionReturnsNullPreviousTime() {
-        ImpressionsObserver observer = new ImpressionsObserverImpl(1);
+        ImpressionsObserver observer = new ImpressionsObserverImpl(mStorage, 1);
 
         assertNull(observer.testAndSet(null));
     }

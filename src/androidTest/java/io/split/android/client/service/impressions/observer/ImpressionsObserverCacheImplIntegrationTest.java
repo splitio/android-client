@@ -40,7 +40,7 @@ public class ImpressionsObserverCacheImplIntegrationTest {
 
     @Test
     public void getReturnsValueFromPersistentStorageIfNotPresentInCache() {
-        mPersistentStorage.insert(1L, 2L);
+        mPersistentStorage.put(1L, 2L);
 
         Long result = mImpressionsObserverCacheImpl.get(1L);
 
@@ -72,7 +72,7 @@ public class ImpressionsObserverCacheImplIntegrationTest {
 
     @Test
     public void getPutsValueInCacheWhenRetrievedFromPersistentStorage() {
-        mPersistentStorage.insert(1L, 2L);
+        mPersistentStorage.put(1L, 2L);
 
         Long result = mImpressionsObserverCacheImpl.get(1L);
 

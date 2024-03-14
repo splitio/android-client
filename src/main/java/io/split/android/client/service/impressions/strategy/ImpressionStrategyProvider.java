@@ -79,7 +79,7 @@ public class ImpressionStrategyProvider {
                 );
             default:
                 return new OptimizedStrategy(
-                        new ImpressionsObserverImpl(ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE),
+                        new ImpressionsObserverImpl(mStorageContainer.getImpressionsObserverCachePersistentStorage(), ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE),
                         new ImpressionsCounter(),
                         new RecorderSyncHelperImpl<>(
                                 SplitTaskType.IMPRESSIONS_RECORDER,
