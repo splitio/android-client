@@ -55,6 +55,8 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
 
             Long persistedValue = getFromPersistentStorage(hash);
             if (persistedValue != null) {
+                putInCache(hash, persistedValue);
+
                 return persistedValue;
             }
         } finally {
@@ -91,12 +93,7 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
     @Nullable
     private Long getFromPersistentStorage(long hash) {
         try {
-            Long persistedValue = mPersistentStorage.get(hash);
-            if (persistedValue != null) {
-                putInCache(hash, persistedValue);
-
-                return persistedValue;
-            }
+            return mPersistentStorage.get(hash);
         } catch (Exception e) {
             logWarning("Error while getting value from persistent storage", e);
         }
