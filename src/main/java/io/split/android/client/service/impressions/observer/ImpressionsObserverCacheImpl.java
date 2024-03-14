@@ -36,12 +36,10 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
         // check in cache
         mLock.readLock().lock();
         try {
-            Long cachedValue = mCache.get(hash);
+            Long cachedValue = getFromCache(hash);
             if (cachedValue != null) {
                 return cachedValue;
             }
-        } catch (Exception e) {
-            logWarning("Error while getting value from cache", e);
         } finally {
             mLock.readLock().unlock();
         }
@@ -50,23 +48,15 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
         mLock.writeLock().lock();
         try {
             // check in case another thread has already inserted the value
-            try {
-                Long cachedValue = mCache.get(hash);
-                if (cachedValue != null) {
-                    return cachedValue;
-                }
-            } catch (Exception e) {
-                logWarning("Error while getting value from cache", e);
+            Long cachedValue = getFromCache(hash);
+            if (cachedValue != null) {
+                return cachedValue;
             }
 
-            Long persistedValue = mPersistentStorage.get(hash);
+            Long persistedValue = getFromPersistentStorage(hash);
             if (persistedValue != null) {
-                mCache.put(hash, persistedValue);
-
                 return persistedValue;
             }
-        } catch (Exception e) {
-            logWarning("Error while getting value from persistent storage", e);
         } finally {
             mLock.writeLock().unlock();
         }
@@ -78,18 +68,54 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
     public void put(long hash, long time) {
         mLock.writeLock().lock();
         try {
-            try {
-                mCache.put(hash, time);
-            } catch (Exception e) {
-                logWarning("Error while putting value in cache", e);
-            }
-            try {
-                mPersistentStorage.insert(hash, time);
-            } catch (Exception e) {
-                logWarning("Error while putting value in persistent storage", e);
-            }
+            putInCache(hash, time);
+            putInPersistentStorage(hash, time);
         } finally {
             mLock.writeLock().unlock();
+        }
+    }
+
+    @Nullable
+    private Long getFromCache(long hash) {
+        try {
+            Long cachedValue = mCache.get(hash);
+            if (cachedValue != null) {
+                return cachedValue;
+            }
+        } catch (Exception e) {
+            logWarning("Error while getting value from cache", e);
+        }
+        return null;
+    }
+
+    @Nullable
+    private Long getFromPersistentStorage(long hash) {
+        try {
+            Long persistedValue = mPersistentStorage.get(hash);
+            if (persistedValue != null) {
+                putInCache(hash, persistedValue);
+
+                return persistedValue;
+            }
+        } catch (Exception e) {
+            logWarning("Error while getting value from persistent storage", e);
+        }
+        return null;
+    }
+
+    private void putInCache(long hash, long time) {
+        try {
+            mCache.put(hash, time);
+        } catch (Exception e) {
+            logWarning("Error while putting value in cache", e);
+        }
+    }
+
+    private void putInPersistentStorage(long hash, long time) {
+        try {
+            mPersistentStorage.insert(hash, time);
+        } catch (Exception e) {
+            logWarning("Error while putting value in persistent storage", e);
         }
     }
 
