@@ -133,7 +133,7 @@ public class ImpressionsObserverCacheImplTest {
         mImpressionsObserverCacheImpl.put(1L, 2L);
 
         verify(mCache).put(1L, 2L);
-        verify(mPersistentStorage).insert(1L, 2L);
+        verify(mPersistentStorage).put(1L, 2L);
     }
 
     @Test
@@ -142,12 +142,12 @@ public class ImpressionsObserverCacheImplTest {
 
         mImpressionsObserverCacheImpl.put(1L, 2L);
 
-        verify(mPersistentStorage).insert(1L, 2L);
+        verify(mPersistentStorage).put(1L, 2L);
     }
 
     @Test
     public void putStillPutsValueInCacheIfPutInPersistentStorageFails() {
-        doThrow(new RuntimeException()).when(mPersistentStorage).insert(1L, 2L);
+        doThrow(new RuntimeException()).when(mPersistentStorage).put(1L, 2L);
 
         mImpressionsObserverCacheImpl.put(1L, 2L);
 
