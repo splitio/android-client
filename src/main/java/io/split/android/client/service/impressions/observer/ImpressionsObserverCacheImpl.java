@@ -41,7 +41,7 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
                 return cachedValue;
             }
         } catch (Exception e) {
-            logError("Error while getting value from cache: ", e);
+            logWarning("Error while getting value from cache", e);
         } finally {
             mLock.readLock().unlock();
         }
@@ -50,9 +50,13 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
         mLock.writeLock().lock();
         try {
             // check in case another thread has already inserted the value
-            Long cachedValue = mCache.get(hash);
-            if (cachedValue != null) {
-                return cachedValue;
+            try {
+                Long cachedValue = mCache.get(hash);
+                if (cachedValue != null) {
+                    return cachedValue;
+                }
+            } catch (Exception e) {
+                logWarning("Error while getting value from cache", e);
             }
 
             Long persistedValue = mPersistentStorage.get(hash);
@@ -62,7 +66,7 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
                 return persistedValue;
             }
         } catch (Exception e) {
-            logError("Error while getting value from persistent storage: ", e);
+            logWarning("Error while getting value from persistent storage", e);
         } finally {
             mLock.writeLock().unlock();
         }
@@ -77,19 +81,19 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
             try {
                 mCache.put(hash, time);
             } catch (Exception e) {
-                logError("Error while putting value in cache: ", e);
+                logWarning("Error while putting value in cache", e);
             }
             try {
                 mPersistentStorage.insert(hash, time);
             } catch (Exception e) {
-                logError("Error while putting value in persistent storage: ", e);
+                logWarning("Error while putting value in persistent storage", e);
             }
         } finally {
             mLock.writeLock().unlock();
         }
     }
 
-    private static void logError(String message, Exception e) {
-        Logger.w("ImpressionsObserverCache: " + message + e.getLocalizedMessage());
+    private static void logWarning(String message, Exception e) {
+        Logger.w("ImpressionsObserverCache: " + message + ": " + e.getLocalizedMessage());
     }
 }
