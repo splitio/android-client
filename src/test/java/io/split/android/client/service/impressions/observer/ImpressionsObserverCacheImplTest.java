@@ -1,8 +1,8 @@
 package io.split.android.client.service.impressions.observer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -133,7 +133,7 @@ public class ImpressionsObserverCacheImplTest {
         mImpressionsObserverCacheImpl.put(1L, 2L);
 
         verify(mCache).put(1L, 2L);
-        verify(mPersistentStorage).insert(1L, 2L);
+        verify(mPersistentStorage).put(1L, 2L);
     }
 
     @Test
@@ -142,12 +142,12 @@ public class ImpressionsObserverCacheImplTest {
 
         mImpressionsObserverCacheImpl.put(1L, 2L);
 
-        verify(mPersistentStorage).insert(1L, 2L);
+        verify(mPersistentStorage).put(1L, 2L);
     }
 
     @Test
     public void putStillPutsValueInCacheIfPutInPersistentStorageFails() {
-        doThrow(new RuntimeException()).when(mPersistentStorage).insert(1L, 2L);
+        doThrow(new RuntimeException()).when(mPersistentStorage).put(1L, 2L);
 
         mImpressionsObserverCacheImpl.put(1L, 2L);
 

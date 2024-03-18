@@ -110,7 +110,7 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
 
     private void putInPersistentStorage(long hash, long time) {
         try {
-            mPersistentStorage.insert(hash, time);
+            mPersistentStorage.put(hash, time);
         } catch (Exception e) {
             logWarning("Error while putting value in persistent storage", e);
         }

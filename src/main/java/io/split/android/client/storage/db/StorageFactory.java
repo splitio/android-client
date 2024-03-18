@@ -5,6 +5,8 @@ import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 import androidx.annotation.RestrictTo;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.impressions.observer.ImpressionsObserverCachePersistentStorage;
+import io.split.android.client.service.impressions.observer.SqliteImpressionsObserverCachePersistentStorage;
 import io.split.android.client.storage.attributes.AttributesStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorageContainerImpl;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
@@ -127,5 +129,9 @@ public class StorageFactory {
 
     private static AttributesStorageContainer getAttributesStorageContainerInstance() {
         return new AttributesStorageContainerImpl();
+    }
+
+    public static ImpressionsObserverCachePersistentStorage getImpressionsObserverCachePersistentStorage(SplitRoomDatabase splitRoomDatabase) {
+        return new SqliteImpressionsObserverCachePersistentStorage(splitRoomDatabase.impressionsObserverCacheDao());
     }
 }

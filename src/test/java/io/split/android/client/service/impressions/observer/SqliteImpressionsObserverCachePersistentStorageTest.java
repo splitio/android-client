@@ -26,7 +26,7 @@ public class SqliteImpressionsObserverCachePersistentStorageTest {
 
     @Test
     public void insertInsertsInDao() {
-        mStorage.insert(1, 2);
+        mStorage.put(1, 2);
 
         verify(mImpressionsObserverCacheDao).insert(eq(1L), eq(2L), argThat(argument -> argument > 0));
     }

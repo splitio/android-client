@@ -164,7 +164,8 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistentImpressionsUniqueStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getAttributesStorage(),
                 StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, splitCipher),
-                getTelemetryStorage(shouldRecordTelemetry, telemetryStorage));
+                getTelemetryStorage(shouldRecordTelemetry, telemetryStorage),
+                StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase));
     }
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,

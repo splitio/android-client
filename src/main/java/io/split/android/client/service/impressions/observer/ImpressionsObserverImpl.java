@@ -11,10 +11,10 @@ import io.split.android.client.service.impressions.ImpressionHasher;
 
 public class ImpressionsObserverImpl implements ImpressionsObserver {
 
-    private final LruCache<Long, Long> mCache;
+    private final ImpressionsObserverCache mCache;
 
-    public ImpressionsObserverImpl(long size) {
-        mCache = new LruCache<>(getAsInt(size));
+    public ImpressionsObserverImpl(ImpressionsObserverCachePersistentStorage persistentStorage, int size) {
+        mCache = new ImpressionsObserverCacheImpl(persistentStorage, size);
     }
 
     @Override

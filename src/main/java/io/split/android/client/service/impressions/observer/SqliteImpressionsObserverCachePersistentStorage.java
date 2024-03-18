@@ -9,7 +9,7 @@ import androidx.annotation.WorkerThread;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
-class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObserverCachePersistentStorage {
+public class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObserverCachePersistentStorage {
 
     private final ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
 
@@ -19,7 +19,7 @@ class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObse
 
     @Override
     @WorkerThread
-    public void insert(long hash, long time) {
+    public void put(long hash, long time) {
         mImpressionsObserverCacheDao.insert(hash, time, System.currentTimeMillis());
     }
 
