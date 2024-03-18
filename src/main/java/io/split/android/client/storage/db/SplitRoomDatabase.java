@@ -45,7 +45,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
 
     public abstract UniqueKeysDao uniqueKeysDao();
 
-    public abstract ImpressionsObserverCacheDao impressionsObserverDao();
+    public abstract ImpressionsObserverCacheDao impressionsObserverCacheDao();
 
     private volatile SplitQueryDao mSplitQueryDao;
 
