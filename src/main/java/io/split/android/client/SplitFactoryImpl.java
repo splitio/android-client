@@ -246,7 +246,7 @@ public class SplitFactoryImpl implements SplitFactory {
         mLifecycleManager.register(mSyncManager);
 
         final ImpressionListener splitImpressionListener
-                = new SyncImpressionListener(mSyncManager);
+                = new SyncImpressionListener(mSyncManager, splitTaskExecutor);
         final ImpressionListener customerImpressionListener;
 
         if (config.impressionListener() != null) {
