@@ -93,6 +93,7 @@ public class UniqueKeysIntegrationTest {
 
         client2.getTreatment("android_test_2");
 
+        Thread.sleep(200);
         mMtkEndpointHitCount.set(2);
         client.flush();
         boolean await = mMtkLatch.await(10, TimeUnit.SECONDS);
