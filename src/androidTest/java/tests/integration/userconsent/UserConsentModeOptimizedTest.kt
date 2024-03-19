@@ -65,6 +65,7 @@ class UserConsentModeOptimizedTest {
             client.getTreatment("FACUNDO_TEST")
             client.track("ev", i.toDouble())
         }
+        sleep(150)
         mLifecycleManager.simulateOnPause()
         mLifecycleManager.simulateOnResume()
         mImpLatch?.await(20, TimeUnit.SECONDS)
