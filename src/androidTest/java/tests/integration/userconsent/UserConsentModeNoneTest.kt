@@ -53,7 +53,7 @@ class UserConsentModeNoneTest {
         mCountLatch = CountDownLatch(1)
 
         val client = factory.client()
-        client.on(SplitEvent.SDK_READY, object: SplitEventTask(){
+        client.on(SplitEvent.SDK_READY, object : SplitEventTask() {
             override fun onPostExecution(client: SplitClient?) {}
 
             override fun onPostExecutionView(client: SplitClient?) = readyExp.countDown()
@@ -65,6 +65,7 @@ class UserConsentModeNoneTest {
             client.getTreatment("FACUNDO_TEST")
             client.track("ev", i.toDouble())
         }
+        Thread.sleep(200)
         mLifecycleManager.simulateOnPause()
         mLifecycleManager.simulateOnResume()
         client.flush()
@@ -81,7 +82,7 @@ class UserConsentModeNoneTest {
         val readyExp = CountDownLatch(1)
 
         val client = factory.client()
-        client.on(SplitEvent.SDK_READY, object: SplitEventTask(){
+        client.on(SplitEvent.SDK_READY, object : SplitEventTask() {
             override fun onPostExecution(client: SplitClient?) {}
 
             override fun onPostExecutionView(client: SplitClient?) = readyExp.countDown()
@@ -112,7 +113,7 @@ class UserConsentModeNoneTest {
         mCountLatch = CountDownLatch(1)
 
         val client = factory.client()
-        client.on(SplitEvent.SDK_READY, object: SplitEventTask(){
+        client.on(SplitEvent.SDK_READY, object : SplitEventTask() {
             override fun onPostExecution(client: SplitClient?) {}
             override fun onPostExecutionView(client: SplitClient?) = readyExp.countDown()
         })
@@ -123,6 +124,8 @@ class UserConsentModeNoneTest {
             client.getTreatment("FACUNDO_TEST")
         }
 
+
+        Thread.sleep(200)
         client.flush()
         sleep(2000)
         val keysPostedBefore = mKeysPosted
@@ -154,7 +157,7 @@ class UserConsentModeNoneTest {
         mCountLatch = CountDownLatch(1)
 
         val client = factory.client()
-        client.on(SplitEvent.SDK_READY, object: SplitEventTask(){
+        client.on(SplitEvent.SDK_READY, object : SplitEventTask() {
             override fun onPostExecution(client: SplitClient?) {}
             override fun onPostExecutionView(client: SplitClient?) = readyExp.countDown()
         })
@@ -164,7 +167,7 @@ class UserConsentModeNoneTest {
         for (i in 1..20) {
             client.getTreatment("FACUNDO_TEST")
         }
-
+        Thread.sleep(200)
         client.flush()
         sleep(2000)
         val impPostedBefore = mKeysPosted
@@ -231,10 +234,13 @@ class UserConsentModeNoneTest {
                     HttpResponseMock(200, IntegrationHelper.emptyMySegments())
                 } else if (uri.path.contains("/splitChanges")) {
                     if (mChangeHit == 0) {
-                        mChangeHit+=1
+                        mChangeHit += 1
                         return getSplitsMockResponse("")
                     }
-                    return HttpResponseMock(200, IntegrationHelper.emptySplitChanges(99999999, 99999999))
+                    return HttpResponseMock(
+                        200,
+                        IntegrationHelper.emptySplitChanges(99999999, 99999999)
+                    )
                 } else if (uri.path.contains("/testImpressions/bulk")) {
                     HttpResponseMock(200)
                 } else if (uri.path.contains("/testImpressions/count")) {
