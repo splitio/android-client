@@ -1,9 +1,5 @@
 package io.split.android.client.service.impressions.observer;
 
-import static io.split.android.client.utils.Utils.getAsInt;
-
-import android.util.LruCache;
-
 import androidx.annotation.Nullable;
 
 import io.split.android.client.impressions.Impression;
@@ -13,7 +9,7 @@ public class ImpressionsObserverImpl implements ImpressionsObserver {
 
     private final ImpressionsObserverCache mCache;
 
-    public ImpressionsObserverImpl(ImpressionsObserverCachePersistentStorage persistentStorage, int size) {
+    public ImpressionsObserverImpl(PersistentImpressionsObserverCacheStorage persistentStorage, int size) {
         mCache = new ImpressionsObserverCacheImpl(persistentStorage, size);
     }
 

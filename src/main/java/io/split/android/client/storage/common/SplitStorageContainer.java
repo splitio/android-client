@@ -2,7 +2,7 @@ package io.split.android.client.storage.common;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.service.impressions.observer.ImpressionsObserverCachePersistentStorage;
+import io.split.android.client.service.impressions.observer.PersistentImpressionsObserverCacheStorage;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.AttributesStorageContainer;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
@@ -34,7 +34,7 @@ public class SplitStorageContainer {
     private final PersistentAttributesStorage mPersistentAttributesStorage;
     private final TelemetryStorage mTelemetryStorage;
     private final PersistentImpressionsUniqueStorage mPersistentImpressionsUniqueStorage;
-    private final ImpressionsObserverCachePersistentStorage mImpressionsObserverCachePersistentStorage;
+    private final PersistentImpressionsObserverCacheStorage mPersistentImpressionsObserverCacheStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
@@ -48,7 +48,7 @@ public class SplitStorageContainer {
                                  @NonNull AttributesStorageContainer attributesStorageContainer,
                                  @NonNull PersistentAttributesStorage persistentAttributesStorage,
                                  @NonNull TelemetryStorage telemetryStorage,
-                                 @NonNull ImpressionsObserverCachePersistentStorage impressionsObserverCachePersistentStorage) {
+                                 @NonNull PersistentImpressionsObserverCacheStorage persistentImpressionsObserverCacheStorage) {
 
         mSplitStorage = checkNotNull(splitStorage);
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
@@ -62,7 +62,7 @@ public class SplitStorageContainer {
         mPersistentAttributesStorage = checkNotNull(persistentAttributesStorage);
         mTelemetryStorage = checkNotNull(telemetryStorage);
         mPersistentImpressionsUniqueStorage = checkNotNull(persistentImpressionsUniqueStorage);
-        mImpressionsObserverCachePersistentStorage = checkNotNull(impressionsObserverCachePersistentStorage);
+        mPersistentImpressionsObserverCacheStorage = checkNotNull(persistentImpressionsObserverCacheStorage);
     }
 
     public SplitsStorage getSplitsStorage() {
@@ -121,7 +121,7 @@ public class SplitStorageContainer {
         return mPersistentImpressionsUniqueStorage;
     }
 
-    public ImpressionsObserverCachePersistentStorage getImpressionsObserverCachePersistentStorage() {
-        return mImpressionsObserverCachePersistentStorage;
+    public PersistentImpressionsObserverCacheStorage getImpressionsObserverCachePersistentStorage() {
+        return mPersistentImpressionsObserverCacheStorage;
     }
 }
