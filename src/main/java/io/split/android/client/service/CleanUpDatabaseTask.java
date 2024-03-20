@@ -13,6 +13,8 @@ import io.split.android.client.storage.impressions.PersistentImpressionsUniqueSt
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
+import java.util.concurrent.TimeUnit;
+
 public class CleanUpDatabaseTask implements SplitTask {
 
     private final PersistentEventsStorage mEventsStorage;
@@ -43,7 +45,7 @@ public class CleanUpDatabaseTask implements SplitTask {
         mImpressionsStorage.deleteInvalid(mMaxTimestamp);
         mImpressionsCountStorage.deleteInvalid(mMaxTimestamp);
         mImpressionsUniqueStorage.deleteInvalid(mMaxTimestamp);
-        mImpressionsObserverCacheStorage.deleteOutdated(mMaxTimestamp);
+        mImpressionsObserverCacheStorage.deleteOutdated(TimeUnit.SECONDS.toMillis(mMaxTimestamp));
         return SplitTaskExecutionInfo.success(SplitTaskType.CLEAN_UP_DATABASE);
     }
 }

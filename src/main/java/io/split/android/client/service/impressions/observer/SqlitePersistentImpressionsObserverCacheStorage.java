@@ -6,8 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import java.util.concurrent.TimeUnit;
-
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
@@ -43,7 +41,7 @@ public class SqlitePersistentImpressionsObserverCacheStorage implements Persiste
     @Override
     @WorkerThread
     public void deleteOutdated(long timestamp) {
-        long oldestTimestamp = TimeUnit.SECONDS.toMillis(timestamp) - mExpirationPeriod;
+        long oldestTimestamp = timestamp - mExpirationPeriod;
         mImpressionsObserverCacheDao.deleteOldest(oldestTimestamp);
     }
 

@@ -62,10 +62,9 @@ public class SqlitePersistentImpressionsObserverCacheStorageTest {
 
     @Test
     public void deleteOutdatedDeletesFromDao() {
-        int timestampSeconds = 3;
-        mStorage.deleteOutdated(timestampSeconds);
+        mStorage.deleteOutdated(3000);
 
-        verify(mImpressionsObserverCacheDao).deleteOldest(TimeUnit.SECONDS.toMillis(timestampSeconds) - EXPIRATION_PERIOD);
+        verify(mImpressionsObserverCacheDao).deleteOldest(3000 - EXPIRATION_PERIOD);
     }
 
     @Test
