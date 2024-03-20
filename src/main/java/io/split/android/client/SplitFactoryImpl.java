@@ -189,6 +189,7 @@ public class SplitFactoryImpl implements SplitFactory {
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
+        SplitSingleThreadTaskExecutor impressionsLoggingTaskExecutor = new SplitSingleThreadTaskExecutor();
 
         ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
@@ -246,7 +247,7 @@ public class SplitFactoryImpl implements SplitFactory {
         mLifecycleManager.register(mSyncManager);
 
         final ImpressionListener splitImpressionListener
-                = new SyncImpressionListener(mSyncManager);
+                = new SyncImpressionListener(mSyncManager, impressionsLoggingTaskExecutor);
         final ImpressionListener customerImpressionListener;
 
         if (config.impressionListener() != null) {
@@ -281,6 +282,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     telemetrySynchronizer.flush();
                     telemetrySynchronizer.destroy();
                     Logger.d("Successful shutdown of telemetry");
+                    impressionsLoggingTaskExecutor.stop();
                     mSyncManager.stop();
                     Logger.d("Flushing impressions and events");
                     mLifecycleManager.destroy();

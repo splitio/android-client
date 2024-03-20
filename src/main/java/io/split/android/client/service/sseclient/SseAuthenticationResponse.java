@@ -8,6 +8,7 @@ public class SseAuthenticationResponse {
 
     @SerializedName("pushEnabled")
     private boolean isStreamingEnabled;
+    @SerializedName("token")
     private String token;
 
     @SerializedName("connDelay")
