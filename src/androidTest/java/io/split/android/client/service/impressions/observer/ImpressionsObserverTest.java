@@ -25,12 +25,12 @@ public class ImpressionsObserverTest {
     // structure/references might vary, and the ObjectSizeCalculator is not 100% accurate
     private final Random mRandom = new Random();
 
-    private ImpressionsObserverCachePersistentStorage mStorage;
+    private PersistentImpressionsObserverCacheStorage mStorage;
 
     @Before
     public void setUp() {
         ImpressionsObserverCacheDao dao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
-        mStorage = new SqliteImpressionsObserverCachePersistentStorage(dao);
+        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(dao);
     }
 
     private List<Impression> generateImpressions(long count) {

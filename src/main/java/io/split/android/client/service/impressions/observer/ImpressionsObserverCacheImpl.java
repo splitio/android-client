@@ -13,17 +13,17 @@ import io.split.android.client.utils.logger.Logger;
 
 class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
 
-    private final ImpressionsObserverCachePersistentStorage mPersistentStorage;
+    private final PersistentImpressionsObserverCacheStorage mPersistentStorage;
     private final ListenableLruCache<Long, Long> mCache;
     private final ReadWriteLock mLock;
 
-    ImpressionsObserverCacheImpl(@NonNull ImpressionsObserverCachePersistentStorage persistentStorage,
+    ImpressionsObserverCacheImpl(@NonNull PersistentImpressionsObserverCacheStorage persistentStorage,
                                  int cacheSize) {
         this(persistentStorage, new ListenableLruCache<>(cacheSize, persistentStorage));
     }
 
     @VisibleForTesting
-    ImpressionsObserverCacheImpl(@NonNull ImpressionsObserverCachePersistentStorage persistentStorage,
+    ImpressionsObserverCacheImpl(@NonNull PersistentImpressionsObserverCacheStorage persistentStorage,
                                  @NonNull ListenableLruCache<Long, Long> cache) {
         mPersistentStorage = checkNotNull(persistentStorage);
         mCache = checkNotNull(cache);

@@ -13,15 +13,15 @@ import org.junit.Test;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
-public class SqliteImpressionsObserverCachePersistentStorageTest {
+public class SqlitePersistentImpressionsObserverCacheStorageTest {
 
     private ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
-    private SqliteImpressionsObserverCachePersistentStorage mStorage;
+    private SqlitePersistentImpressionsObserverCacheStorage mStorage;
 
     @Before
     public void setUp() {
         mImpressionsObserverCacheDao = mock(ImpressionsObserverCacheDao.class);
-        mStorage = new SqliteImpressionsObserverCachePersistentStorage(mImpressionsObserverCacheDao);
+        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(mImpressionsObserverCacheDao);
     }
 
     @Test

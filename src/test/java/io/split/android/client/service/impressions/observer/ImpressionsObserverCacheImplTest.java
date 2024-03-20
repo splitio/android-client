@@ -16,13 +16,13 @@ import org.mockito.Mockito;
 
 public class ImpressionsObserverCacheImplTest {
 
-    private ImpressionsObserverCachePersistentStorage mPersistentStorage;
+    private PersistentImpressionsObserverCacheStorage mPersistentStorage;
     private ListenableLruCache<Long, Long> mCache;
     private ImpressionsObserverCacheImpl mImpressionsObserverCacheImpl;
 
     @Before
     public void setUp() {
-        mPersistentStorage = mock(ImpressionsObserverCachePersistentStorage.class);
+        mPersistentStorage = mock(PersistentImpressionsObserverCacheStorage.class);
         mCache = mock(ListenableLruCache.class);
         mImpressionsObserverCacheImpl = new ImpressionsObserverCacheImpl(mPersistentStorage, mCache);
     }

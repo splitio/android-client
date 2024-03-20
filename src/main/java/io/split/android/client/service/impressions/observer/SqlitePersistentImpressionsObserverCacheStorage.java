@@ -9,11 +9,11 @@ import androidx.annotation.WorkerThread;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
-public class SqliteImpressionsObserverCachePersistentStorage implements ImpressionsObserverCachePersistentStorage {
+public class SqlitePersistentImpressionsObserverCacheStorage implements PersistentImpressionsObserverCacheStorage {
 
     private final ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
 
-    public SqliteImpressionsObserverCachePersistentStorage(@NonNull ImpressionsObserverCacheDao impressionsObserverCacheDao) {
+    public SqlitePersistentImpressionsObserverCacheStorage(@NonNull ImpressionsObserverCacheDao impressionsObserverCacheDao) {
         mImpressionsObserverCacheDao = checkNotNull(impressionsObserverCacheDao);
     }
 
