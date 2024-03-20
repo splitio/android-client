@@ -237,12 +237,22 @@ public class SingleSyncTest {
                 @Override
                 public void onPostExecution(SplitClient client) {
                     client.getTreatment("TEST");
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                     readyLatch.countDown();
                 }
 
                 @Override
                 public void onPostExecutionView(SplitClient client) {
                     client.getTreatment("TEST");
+                    try {
+                        Thread.sleep(200);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                     readyLatch.countDown();
                 }
             });

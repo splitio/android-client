@@ -131,7 +131,7 @@ public class StorageFactory {
         return new AttributesStorageContainerImpl();
     }
 
-    public static PersistentImpressionsObserverCacheStorage getImpressionsObserverCachePersistentStorage(SplitRoomDatabase splitRoomDatabase) {
-        return new SqlitePersistentImpressionsObserverCacheStorage(splitRoomDatabase.impressionsObserverCacheDao());
+    public static PersistentImpressionsObserverCacheStorage getImpressionsObserverCachePersistentStorage(SplitRoomDatabase splitRoomDatabase, long expirationPeriod) {
+        return new SqlitePersistentImpressionsObserverCacheStorage(splitRoomDatabase.impressionsObserverCacheDao(), expirationPeriod);
     }
 }

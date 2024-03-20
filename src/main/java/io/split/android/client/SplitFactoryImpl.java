@@ -171,7 +171,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 mMigrationExecutionListener);
 
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
-                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage);
+                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod());
 
         Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
         Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;

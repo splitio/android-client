@@ -30,7 +30,7 @@ public class ImpressionsObserverTest {
     @Before
     public void setUp() {
         ImpressionsObserverCacheDao dao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
-        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(dao);
+        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(dao, 2000);
     }
 
     private List<Impression> generateImpressions(long count) {

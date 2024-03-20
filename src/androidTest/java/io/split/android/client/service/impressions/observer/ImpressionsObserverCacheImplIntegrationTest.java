@@ -24,7 +24,7 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     @Before
     public void setUp() {
         ImpressionsObserverCacheDao impressionsObserverCacheDao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
-        mPersistentStorage = new SqlitePersistentImpressionsObserverCacheStorage(impressionsObserverCacheDao);
+        mPersistentStorage = new SqlitePersistentImpressionsObserverCacheStorage(impressionsObserverCacheDao, 2000);
         mCache = new ListenableLruCache<>(5, mPersistentStorage);
         mImpressionsObserverCacheImpl = new ImpressionsObserverCacheImpl(mPersistentStorage, mCache);
     }
