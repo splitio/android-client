@@ -41,11 +41,15 @@ public class CleanUpDatabaseTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
-        mEventsStorage.deleteInvalid(mMaxTimestamp);
-        mImpressionsStorage.deleteInvalid(mMaxTimestamp);
-        mImpressionsCountStorage.deleteInvalid(mMaxTimestamp);
-        mImpressionsUniqueStorage.deleteInvalid(mMaxTimestamp);
-        mImpressionsObserverCacheStorage.deleteOutdated(TimeUnit.SECONDS.toMillis(mMaxTimestamp));
-        return SplitTaskExecutionInfo.success(SplitTaskType.CLEAN_UP_DATABASE);
+        try {
+            mEventsStorage.deleteInvalid(mMaxTimestamp);
+            mImpressionsStorage.deleteInvalid(mMaxTimestamp);
+            mImpressionsCountStorage.deleteInvalid(mMaxTimestamp);
+            mImpressionsUniqueStorage.deleteInvalid(mMaxTimestamp);
+            mImpressionsObserverCacheStorage.deleteOutdated(TimeUnit.SECONDS.toMillis(mMaxTimestamp));
+            return SplitTaskExecutionInfo.success(SplitTaskType.CLEAN_UP_DATABASE);
+        } catch (Throwable t) {
+            return SplitTaskExecutionInfo.error(SplitTaskType.CLEAN_UP_DATABASE);
+        }
     }
 }
