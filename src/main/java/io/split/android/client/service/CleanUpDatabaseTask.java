@@ -26,7 +26,7 @@ public class CleanUpDatabaseTask implements SplitTask {
                                PersistentImpressionsStorage impressionsStorage,
                                PersistentImpressionsCountStorage persistentImpressionsCountStorage,
                                PersistentImpressionsUniqueStorage persistentImpressionsUniqueStorage,
-                                 PersistentImpressionsObserverCacheStorage persistentImpressionsObserverCacheStorage,
+                               PersistentImpressionsObserverCacheStorage persistentImpressionsObserverCacheStorage,
                                long maxTimestamp) {
         mEventsStorage = checkNotNull(eventsStorage);
         mImpressionsStorage = checkNotNull(impressionsStorage);
