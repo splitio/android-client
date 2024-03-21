@@ -1,6 +1,8 @@
 package io.split.android.client.service.impressions.observer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
 
@@ -28,6 +30,7 @@ import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
@@ -145,6 +148,35 @@ public class DedupeIntegrationTest {
 
         assertEquals(20, mImpressionsListenerCount.get());
         assertEquals(2, all.size());
+    }
+
+    @Test
+    public void impressionsGeneratedInDebugModeHavePreviousTime() throws InterruptedException {
+        SplitClient client = initSplitFactory(new TestableSplitConfigBuilder()
+                .impressionsMode(ImpressionsMode.DEBUG)
+                .enableDebug()
+                .impressionListener(new ImpressionListener() {
+                    @Override
+                    public void log(Impression impression) {
+                        mImpressionsListenerCount.incrementAndGet();
+                    }
+
+                    @Override
+                    public void close() {
+
+                    }
+                }), mHttpClient).client();
+
+        for (int i = 0; i < 2; i++) {
+            client.getTreatment("FACUNDO_TEST");
+        }
+        Thread.sleep(200);
+
+        List<ImpressionEntity> all = mDatabase.impressionDao().getAll();
+        assertEquals(2, all.size());
+        assertNull(Json.fromJson(all.get(0).getBody(), KeyImpression.class).previousTime);
+        assertNotNull(Json.fromJson(all.get(1).getBody(), KeyImpression.class).previousTime);
+        assertEquals(2, mImpressionsListenerCount.get());
     }
 
     private HttpResponseMockDispatcher getDispatcher() {
