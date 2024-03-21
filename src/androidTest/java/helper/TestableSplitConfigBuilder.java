@@ -59,6 +59,7 @@ public class TestableSplitConfigBuilder {
     private boolean mEncryptionEnabled;
     private long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
     private long mSSEDisconnectionDelayInSecs = 60L;
+    private long mObserverCacheExpirationPeriod = ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS;
 
     private String mPrefix = "";
 
@@ -256,6 +257,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder observerCacheExpirationPeriod(long observerCacheExpirationPeriod) {
+        this.mObserverCacheExpirationPeriod = observerCacheExpirationPeriod;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -308,7 +314,8 @@ public class TestableSplitConfigBuilder {
                     mEncryptionEnabled,
                     mDefaultSSEConnectionDelayInSecs,
                     mSSEDisconnectionDelayInSecs,
-                    mPrefix);
+                    mPrefix,
+                    mObserverCacheExpirationPeriod);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "

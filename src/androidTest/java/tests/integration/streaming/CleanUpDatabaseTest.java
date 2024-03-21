@@ -111,7 +111,7 @@ public class CleanUpDatabaseTest {
 
         mImpressionsObserverCacheDao.insert(1L, 2L, now());
         mImpressionsObserverCacheDao.insert(5L, 6L, now());
-        mImpressionsObserverCacheDao.insert(3L, 4L, TimeUnit.SECONDS.toMillis(now()) - ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD);
+        mImpressionsObserverCacheDao.insert(3L, 4L, TimeUnit.SECONDS.toMillis(now()) - ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS);
 
         // Load records to check if inserted correctly on assert stage
         List<EventEntity> insertedEvents = mEventDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
