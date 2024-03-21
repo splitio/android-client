@@ -316,6 +316,8 @@ public class TestableSplitConfigBuilder {
                     mSSEDisconnectionDelayInSecs,
                     mPrefix,
                     mObserverCacheExpirationPeriod);
+
+            Logger.instance().setLevel(mLogLevel);
             return config;
         } catch (Exception e) {
             Logger.e("Error creating Testable Split client builder: "
