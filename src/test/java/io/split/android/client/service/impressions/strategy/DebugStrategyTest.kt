@@ -1,9 +1,11 @@
 package io.split.android.client.service.impressions.strategy
 
 import io.split.android.client.dtos.KeyImpression
+import io.split.android.client.impressions.Impression
 import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
+import io.split.android.client.service.impressions.observer.ImpressionsObserver
 import io.split.android.client.service.synchronizer.RecorderSyncHelper
 import io.split.android.client.telemetry.model.ImpressionsDataType
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer
@@ -31,12 +33,16 @@ class DebugStrategyTest {
     @Mock
     private lateinit var tracker: PeriodicTracker
 
+    @Mock
+    private lateinit var impressionsObserver: ImpressionsObserver
+
     private lateinit var strategy: DebugStrategy
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         strategy = DebugStrategy(
+            impressionsObserver,
             impressionsSyncHelper,
             taskExecutor,
             taskFactory,
@@ -100,5 +106,22 @@ class DebugStrategyTest {
         strategy.enableTracking(true)
 
         verify(tracker).enableTracking(true)
+    }
+
+    @Test
+    fun `apply calls testAndSet on observer`() {
+        val impression = createUniqueImpression()
+        strategy.apply(impression)
+
+        verify(impressionsObserver).testAndSet(impression)
+    }
+
+    @Test
+    fun `withPreviousTime is called on impression`() {
+        val impression = createUniqueImpression()
+        `when`(impressionsObserver.testAndSet(impression)).thenReturn(20421)
+        strategy.apply(impression)
+
+        spy(impression).withPreviousTime(20421)
     }
 }

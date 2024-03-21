@@ -53,6 +53,7 @@ public class ImpressionStrategyProvider {
         switch (mode) {
             case DEBUG:
                 return new DebugStrategy(
+                        new ImpressionsObserverImpl(mStorageContainer.getImpressionsObserverCachePersistentStorage(), ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE),
                         new RecorderSyncHelperImpl<>(
                                 SplitTaskType.IMPRESSIONS_RECORDER,
                                 mStorageContainer.getImpressionsStorage(),
