@@ -145,7 +145,8 @@ class SplitFactoryHelper {
                                                 SplitRoomDatabase splitRoomDatabase,
                                                 boolean shouldRecordTelemetry,
                                                 SplitCipher splitCipher,
-                                                TelemetryStorage telemetryStorage) {
+                                                TelemetryStorage telemetryStorage,
+                                                long observerCacheExpirationPeriod) {
 
         boolean isPersistenceEnabled = userConsentStatus == UserConsent.GRANTED;
         PersistentEventsStorage persistentEventsStorage =
@@ -165,7 +166,7 @@ class SplitFactoryHelper {
                 StorageFactory.getAttributesStorage(),
                 StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, splitCipher),
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage),
-                StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase));
+                StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase, observerCacheExpirationPeriod));
     }
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,

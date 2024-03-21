@@ -10,18 +10,21 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
+
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
 public class SqlitePersistentImpressionsObserverCacheStorageTest {
 
+    private static final int EXPIRATION_PERIOD = 2000;
     private ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
     private SqlitePersistentImpressionsObserverCacheStorage mStorage;
 
     @Before
     public void setUp() {
         mImpressionsObserverCacheDao = mock(ImpressionsObserverCacheDao.class);
-        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(mImpressionsObserverCacheDao);
+        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(mImpressionsObserverCacheDao, EXPIRATION_PERIOD);
     }
 
     @Test
@@ -59,9 +62,9 @@ public class SqlitePersistentImpressionsObserverCacheStorageTest {
 
     @Test
     public void deleteOutdatedDeletesFromDao() {
-        mStorage.deleteOutdated(1);
+        mStorage.deleteOutdated(3000);
 
-        verify(mImpressionsObserverCacheDao).deleteOldest(1);
+        verify(mImpressionsObserverCacheDao).deleteOldest(3000 - EXPIRATION_PERIOD);
     }
 
     @Test

@@ -12,9 +12,12 @@ import io.split.android.client.storage.db.impressions.observer.ImpressionsObserv
 public class SqlitePersistentImpressionsObserverCacheStorage implements PersistentImpressionsObserverCacheStorage {
 
     private final ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
+    private final long mExpirationPeriod;
 
-    public SqlitePersistentImpressionsObserverCacheStorage(@NonNull ImpressionsObserverCacheDao impressionsObserverCacheDao) {
+    public SqlitePersistentImpressionsObserverCacheStorage(@NonNull ImpressionsObserverCacheDao impressionsObserverCacheDao,
+                                                           long expirationPeriod) {
         mImpressionsObserverCacheDao = checkNotNull(impressionsObserverCacheDao);
+        mExpirationPeriod = expirationPeriod;
     }
 
     @Override
@@ -38,7 +41,8 @@ public class SqlitePersistentImpressionsObserverCacheStorage implements Persiste
     @Override
     @WorkerThread
     public void deleteOutdated(long timestamp) {
-        mImpressionsObserverCacheDao.deleteOldest(timestamp);
+        long oldestTimestamp = timestamp - mExpirationPeriod;
+        mImpressionsObserverCacheDao.deleteOldest(oldestTimestamp);
     }
 
     @Override

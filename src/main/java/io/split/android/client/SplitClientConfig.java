@@ -62,7 +62,8 @@ public class SplitClientConfig {
     // Data folder
     private static final String DEFAULT_DATA_FOLDER = "split_data";
 
-    private static final long SPLITS_CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS; // 10 días
+    private static final long SPLITS_CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS;
+    private static final long OBSERVER_CACHE_EXPIRATION_PERIOD = ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD;
 
     private final String mEndpoint;
     private final String mEventsEndpoint;
@@ -459,6 +460,10 @@ public class SplitClientConfig {
     }
 
     private void enableTelemetry() { mShouldRecordTelemetry = true; }
+
+    public long observerCacheExpirationPeriod() {
+        return OBSERVER_CACHE_EXPIRATION_PERIOD;
+    }
 
     public static final class Builder {
 
