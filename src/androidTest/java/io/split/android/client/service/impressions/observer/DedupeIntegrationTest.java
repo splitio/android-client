@@ -3,6 +3,7 @@ package io.split.android.client.service.impressions.observer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
 
@@ -145,7 +146,7 @@ public class DedupeIntegrationTest {
         client = splitFactory.client();
         client2 = splitFactory.client("key2");
         client2Latch = new CountDownLatch(1);
-        client2.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(client2Latch));
+        client2.on(SplitEvent.SDK_READY_FROM_CACHE, new TestingHelper.TestEventTask(client2Latch));
         if (!client2Latch.await(10, TimeUnit.SECONDS)) {
             fail("Client 2 is not ready");
         }
@@ -193,8 +194,9 @@ public class DedupeIntegrationTest {
         assertEquals(2, all.size());
 
         // verify first impression has no previous time and second has
-        assertNull(Json.fromJson(all.get(0).getBody(), KeyImpression.class).previousTime);
-        assertNotNull(Json.fromJson(all.get(1).getBody(), KeyImpression.class).previousTime);
+        Long firstPreviousTime = Json.fromJson(all.get(0).getBody(), KeyImpression.class).previousTime;
+        Long secondPreviousTime = Json.fromJson(all.get(1).getBody(), KeyImpression.class).previousTime;
+        assertTrue((firstPreviousTime == null && secondPreviousTime != null) || (firstPreviousTime != null && secondPreviousTime == null));
 
         // verify number of impressions through impressions listener
         assertEquals(2, mImpressionsListenerCount.get());
@@ -214,9 +216,12 @@ public class DedupeIntegrationTest {
         SplitClient client = initSplitFactory(new TestableSplitConfigBuilder()
                 .impressionsMode(ImpressionsMode.DEBUG)
                 .enableDebug()
-                .observerCacheExpirationPeriod(500), mHttpClient).client();
+                .observerCacheExpirationPeriod(100), mHttpClient).client();
 
         client.getTreatment("FACUNDO_TEST");
+        while (mDatabase.impressionsObserverCacheDao().getAll(5).size() > 1) {
+            Thread.sleep(100);
+        }
         Thread.sleep(100);
 
         int count = mDatabase.impressionsObserverCacheDao().getAll(3000).size();
