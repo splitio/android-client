@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -86,6 +87,7 @@ public class DedupeIntegrationTest {
 
     @Test
     public void impressionsAreDedupedWhenRecreatingInstance() throws InterruptedException {
+        // create factory
         SplitFactory splitFactory = initSplitFactory(new TestableSplitConfigBuilder()
                 .impressionsMode(ImpressionsMode.OPTIMIZED)
                 .enableDebug()
@@ -100,6 +102,8 @@ public class DedupeIntegrationTest {
 
                     }
                 }), mHttpClient);
+
+        // get the ready clients
         SplitClient client = splitFactory.client();
         SplitClient client2 = splitFactory.client("key2");
         CountDownLatch client2Latch = new CountDownLatch(1);
@@ -108,6 +112,7 @@ public class DedupeIntegrationTest {
             fail("Client 2 is not ready");
         }
 
+        // perform evaluations with both clients
         for (int i = 0; i < 5; i++) {
             client.getTreatment("FACUNDO_TEST");
             client2.getTreatment("FACUNDO_TEST");
@@ -115,10 +120,12 @@ public class DedupeIntegrationTest {
 
         Thread.sleep(200);
 
+        // fetch impressions from database and destroy factory
         List<ImpressionEntity> all = mDatabase.impressionDao().getAll();
         splitFactory.destroy();
         Thread.sleep(200);
 
+        // recreate factory
         splitFactory = initSplitFactory(new TestableSplitConfigBuilder()
                 .impressionsMode(ImpressionsMode.OPTIMIZED)
                 .enableDebug()
@@ -133,6 +140,8 @@ public class DedupeIntegrationTest {
 
                     }
                 }), mHttpClient);
+
+        // get ready clients again
         client = splitFactory.client();
         client2 = splitFactory.client("key2");
         client2Latch = new CountDownLatch(1);
@@ -140,18 +149,24 @@ public class DedupeIntegrationTest {
         if (!client2Latch.await(10, TimeUnit.SECONDS)) {
             fail("Client 2 is not ready");
         }
+
+        // perform same evaluations
         for (int i = 0; i < 5; i++) {
             client.getTreatment("FACUNDO_TEST");
             client2.getTreatment("FACUNDO_TEST");
         }
         Thread.sleep(200);
 
+        // verify impressions from impression listener are ok
         assertEquals(20, mImpressionsListenerCount.get());
+
+        // verify impressions in DB are only 2
         assertEquals(2, all.size());
     }
 
     @Test
     public void impressionsGeneratedInDebugModeHavePreviousTime() throws InterruptedException {
+        // initialize SDK
         SplitClient client = initSplitFactory(new TestableSplitConfigBuilder()
                 .impressionsMode(ImpressionsMode.DEBUG)
                 .enableDebug()
@@ -167,16 +182,70 @@ public class DedupeIntegrationTest {
                     }
                 }), mHttpClient).client();
 
+        // perform evaluations
         for (int i = 0; i < 2; i++) {
             client.getTreatment("FACUNDO_TEST");
         }
         Thread.sleep(200);
 
+        // verify impressions in DB are only 2
         List<ImpressionEntity> all = mDatabase.impressionDao().getAll();
         assertEquals(2, all.size());
+
+        // verify first impression has no previous time and second has
         assertNull(Json.fromJson(all.get(0).getBody(), KeyImpression.class).previousTime);
         assertNotNull(Json.fromJson(all.get(1).getBody(), KeyImpression.class).previousTime);
+
+        // verify number of impressions through impressions listener
         assertEquals(2, mImpressionsListenerCount.get());
+    }
+
+    @Test
+    public void expiredObserverCacheValuesExistingInDatabaseAreRemovedOnStartup() throws InterruptedException {
+        // prepopulate DB with 2000 entries
+        for (int i = 0; i < 2000; i++) {
+            mDatabase.impressionsObserverCacheDao().insert((long) i, (long) i, System.currentTimeMillis());
+        }
+
+        // wait for them to expire
+        Thread.sleep(1000);
+
+        // initialize SDK
+        SplitClient client = initSplitFactory(new TestableSplitConfigBuilder()
+                .impressionsMode(ImpressionsMode.DEBUG)
+                .enableDebug()
+                .observerCacheExpirationPeriod(500), mHttpClient).client();
+
+        client.getTreatment("FACUNDO_TEST");
+        Thread.sleep(100);
+
+        int count = mDatabase.impressionsObserverCacheDao().getAll(3000).size();
+        assertEquals(1, count);
+    }
+
+    @Test
+    public void customImpressionsListenerIsExecutedInTheSameThreadThatFactoryIsInstantiated() throws InterruptedException {
+        long threadId = Thread.currentThread().getId();
+        final AtomicLong listenerThreadId = new AtomicLong();
+        SplitClient client = initSplitFactory(new TestableSplitConfigBuilder()
+                .impressionsMode(ImpressionsMode.DEBUG)
+                .enableDebug()
+                .impressionListener(new ImpressionListener() {
+                    @Override
+                    public void log(Impression impression) {
+                        mImpressionsListenerCount.incrementAndGet();
+                        listenerThreadId.set(Thread.currentThread().getId());
+                    }
+
+                    @Override
+                    public void close() {
+
+                    }
+                }), mHttpClient).client();
+
+        client.getTreatment("FACUNDO_TEST");
+
+        assertEquals(threadId, listenerThreadId.get());
     }
 
     private HttpResponseMockDispatcher getDispatcher() {
