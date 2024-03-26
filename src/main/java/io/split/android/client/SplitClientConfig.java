@@ -63,7 +63,7 @@ public class SplitClientConfig {
     private static final String DEFAULT_DATA_FOLDER = "split_data";
 
     private static final long SPLITS_CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS;
-    private static final long OBSERVER_CACHE_EXPIRATION_PERIOD = ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD;
+    private static final long OBSERVER_CACHE_EXPIRATION_PERIOD = ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS;
 
     private final String mEndpoint;
     private final String mEventsEndpoint;
@@ -125,6 +125,7 @@ public class SplitClientConfig {
 
     // To be set during startup
     public static String splitSdkVersion;
+    private long mObserverCacheExpirationPeriod;
 
     public static Builder builder() {
         return new Builder();
@@ -176,7 +177,8 @@ public class SplitClientConfig {
                               boolean encryptionEnabled,
                               long defaultSSEConnectionDelayInSecs,
                               long sseDisconnectionDelayInSecs,
-                              String prefix) {
+                              String prefix,
+                              long observerCacheExpirationPeriod) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -231,6 +233,7 @@ public class SplitClientConfig {
         mDefaultSSEConnectionDelayInSecs = defaultSSEConnectionDelayInSecs;
         mSSEDisconnectionDelayInSecs = sseDisconnectionDelayInSecs;
         mPrefix = prefix;
+        mObserverCacheExpirationPeriod = observerCacheExpirationPeriod;
     }
 
     public String trafficType() {
@@ -462,7 +465,7 @@ public class SplitClientConfig {
     private void enableTelemetry() { mShouldRecordTelemetry = true; }
 
     public long observerCacheExpirationPeriod() {
-        return OBSERVER_CACHE_EXPIRATION_PERIOD;
+        return mObserverCacheExpirationPeriod;
     }
 
     public static final class Builder {
@@ -532,6 +535,8 @@ public class SplitClientConfig {
         private final long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
 
         private final long mSSEDisconnectionDelayInSecs = 60L;
+
+        private final long mObserverCacheExpirationPeriod = OBSERVER_CACHE_EXPIRATION_PERIOD;
 
         private String mPrefix = null;
 
@@ -1162,7 +1167,8 @@ public class SplitClientConfig {
                     mEncryptionEnabled,
                     mDefaultSSEConnectionDelayInSecs,
                     mSSEDisconnectionDelayInSecs,
-                    mPrefix);
+                    mPrefix,
+                    mObserverCacheExpirationPeriod);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {

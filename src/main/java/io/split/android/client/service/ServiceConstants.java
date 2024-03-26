@@ -54,5 +54,5 @@ public class ServiceConstants {
     public static final long TEN_DAYS_EXPIRATION_PERIOD = TimeUnit.DAYS.toSeconds(10);
     public static final int MAX_UNIQUE_KEYS_IN_MEMORY = 30000;
     public static final int UNIQUE_KEYS_MAX_RETRY_ATTEMPTS = 3;
-    public static final long DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD = TimeUnit.HOURS.toMillis(24);
+    public static final long DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS = TimeUnit.HOURS.toMillis(24);
 }
