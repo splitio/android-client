@@ -113,6 +113,7 @@ public class ImpressionsCountTest {
                 }
             }
         }
+        Thread.sleep(500);
         client.flush();
 
         mImpressionsLatch.await(10, TimeUnit.SECONDS);
@@ -278,7 +279,7 @@ public class ImpressionsCountTest {
             ImpressionsCountPerFeature theNew = new ImpressionsCountPerFeature(count.feature, count.timeframe, old.count + count.count);
             mCounts.put(count.feature, theNew);
         }
-        if(mCounts.size() == 3) {
+        if (mCounts.size() == 3) {
             mImpCountLatch.countDown();
         }
     }

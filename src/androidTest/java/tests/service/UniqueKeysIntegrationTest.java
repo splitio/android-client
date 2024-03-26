@@ -93,6 +93,7 @@ public class UniqueKeysIntegrationTest {
 
         client2.getTreatment("android_test_2");
 
+        Thread.sleep(200);
         mMtkEndpointHitCount.set(2);
         client.flush();
         boolean await = mMtkLatch.await(10, TimeUnit.SECONDS);
@@ -139,7 +140,7 @@ public class UniqueKeysIntegrationTest {
         for (int i = 0; i < 8; i++) {
             client.getTreatment("android_test_2");
         }
-
+        Thread.sleep(150);
         client.flush();
         boolean await = mMtkLatch.await(50, TimeUnit.SECONDS);
 
@@ -164,6 +165,7 @@ public class UniqueKeysIntegrationTest {
         }
 
         mMtkEndpointHitCount.set(2);
+        Thread.sleep(150);
         client.flush();
         boolean await = mMtkLatch.await(10, TimeUnit.SECONDS);
 

@@ -156,13 +156,14 @@ public class TelemetryIntegrationTest {
     }
 
     @Test
-    public void recordImpressionStats() {
+    public void recordImpressionStats() throws InterruptedException {
         initializeClient(false);
         client.getTreatment("test_feature");
 
         client.getTreatment("test_feature");
 
         client.getTreatment("test_feature");
+        Thread.sleep(200);
 
         assertEquals(1, mTelemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_QUEUED));
         assertEquals(2, mTelemetryStorage.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_DEDUPED));

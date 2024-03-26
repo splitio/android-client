@@ -5,7 +5,6 @@ import io.split.android.client.utils.MurmurHash3;
 
 public class ImpressionHasher {
 
-    private static final String HASHABLE_FORMAT = "%s:%s:%s:%s:%d";
     private static final String UNKNOWN = "UNKNOWN";
     private static final int SEED = 0;
     private static final int OFFSET = 0;
@@ -22,12 +21,11 @@ public class ImpressionHasher {
         if (null == impression) {
             return null;
         }
-        String data = String.format(HASHABLE_FORMAT,
-                unknownIfNull(impression.key()),
-                unknownIfNull(impression.split()),
-                unknownIfNull(impression.treatment()),
-                unknownIfNull(impression.appliedRule()),
-                zeroIfNull(impression.changeNumber()));
+        String data = unknownIfNull(impression.key()) + ":" +
+                unknownIfNull(impression.split()) + ":" +
+                unknownIfNull(impression.treatment()) + ":" +
+                unknownIfNull(impression.appliedRule()) + ":" +
+                zeroIfNull(impression.changeNumber());
 
         return MurmurHash3.murmurhash3_x86_32(data, OFFSET, data.length(), SEED);
     }
