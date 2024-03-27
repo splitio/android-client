@@ -1,4 +1,4 @@
-package tests.database.attributes;
+package tests.database;
 
 import org.junit.Assert;
 import org.junit.Test;

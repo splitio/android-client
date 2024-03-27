@@ -4,7 +4,6 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 
 import java.lang.ref.WeakReference;
 import java.util.Collections;
@@ -18,16 +17,12 @@ import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.shared.SplitClientContainer;
-import io.split.android.client.telemetry.model.Method;
-import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
-import io.split.android.client.validators.TreatmentManagerHelper;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.grammar.Treatments;
 
 public final class SplitClientImpl implements SplitClient {
 
@@ -39,7 +34,6 @@ public final class SplitClientImpl implements SplitClient {
     private final TreatmentManager mTreatmentManager;
     private final ValidationMessageLogger mValidationLogger;
     private final AttributesManager mAttributesManager;
-    private final TelemetryStorageProducer mTelemetryStorageProducer;
     private final SplitValidator mSplitValidator;
     private final EventsTracker mEventsTracker;
 
@@ -56,36 +50,8 @@ public final class SplitClientImpl implements SplitClient {
                            SplitEventsManager eventsManager,
                            EventsTracker eventsTracker,
                            AttributesManager attributesManager,
-                           TelemetryStorageProducer telemetryStorageProducer,
                            SplitValidator splitValidator,
                            TreatmentManager treatmentManager) {
-        this(container,
-                clientContainer,
-                key,
-                splitParser,
-                impressionListener,
-                config,
-                eventsManager,
-                eventsTracker,
-                attributesManager,
-                telemetryStorageProducer,
-                treatmentManager,
-                splitValidator);
-    }
-
-    @VisibleForTesting
-    public SplitClientImpl(SplitFactory container,
-                           SplitClientContainer clientContainer,
-                           Key key,
-                           SplitParser splitParser,
-                           ImpressionListener impressionListener,
-                           SplitClientConfig config,
-                           SplitEventsManager eventsManager,
-                           EventsTracker eventsTracker,
-                           AttributesManager attributesManager,
-                           TelemetryStorageProducer telemetryStorageProducer,
-                           TreatmentManager treatmentManager,
-                           SplitValidator splitValidator) {
         checkNotNull(splitParser);
         checkNotNull(impressionListener);
 
@@ -96,7 +62,6 @@ public final class SplitClientImpl implements SplitClient {
         mEventsManager = checkNotNull(eventsManager);
         mEventsTracker = checkNotNull(eventsTracker);
         mValidationLogger = new ValidationMessageLoggerImpl();
-        mTelemetryStorageProducer = telemetryStorageProducer;
         mTreatmentManager = treatmentManager;
         mAttributesManager = checkNotNull(attributesManager);
         mSplitValidator = checkNotNull(splitValidator);
@@ -138,54 +103,22 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public String getTreatment(String featureFlagName, Map<String, Object> attributes) {
-        try {
-            return mTreatmentManager.getTreatment(featureFlagName, attributes, mIsClientDestroyed);
-        } catch (Exception exception) {
-            Logger.e("Client getTreatment exception", exception);
-
-            mTelemetryStorageProducer.recordException(Method.TREATMENT);
-
-            return Treatments.CONTROL;
-        }
+        return mTreatmentManager.getTreatment(featureFlagName, attributes, mIsClientDestroyed);
     }
 
     @Override
     public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes) {
-        try {
-            return mTreatmentManager.getTreatmentWithConfig(featureFlagName, attributes, mIsClientDestroyed);
-        } catch (Exception exception) {
-            Logger.e("Client getTreatmentWithConfig exception", exception);
-
-            mTelemetryStorageProducer.recordException(Method.TREATMENT_WITH_CONFIG);
-
-            return new SplitResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
-        }
+        return mTreatmentManager.getTreatmentWithConfig(featureFlagName, attributes, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes) {
-        try {
-            return mTreatmentManager.getTreatments(featureFlagNames, attributes, mIsClientDestroyed);
-        } catch (Exception exception) {
-            Logger.e("Client getTreatments exception", exception);
-
-            mTelemetryStorageProducer.recordException(Method.TREATMENTS);
-
-            return TreatmentManagerHelper.controlTreatmentsForSplits(featureFlagNames, mSplitValidator);
-        }
+        return mTreatmentManager.getTreatments(featureFlagNames, attributes, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes) {
-        try {
-            return mTreatmentManager.getTreatmentsWithConfig(featureFlagNames, attributes, mIsClientDestroyed);
-        } catch (Exception exception) {
-            Logger.e("Client getTreatmentsWithConfig exception", exception);
-
-            mTelemetryStorageProducer.recordException(Method.TREATMENTS_WITH_CONFIG);
-
-            return TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(featureFlagNames, mSplitValidator);
-        }
+        return mTreatmentManager.getTreatmentsWithConfig(featureFlagNames, attributes, mIsClientDestroyed);
     }
 
     @Override

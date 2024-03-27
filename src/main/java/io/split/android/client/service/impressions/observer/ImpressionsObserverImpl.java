@@ -1,21 +1,19 @@
-package io.split.android.client.service.impressions;
-
-import static io.split.android.client.utils.Utils.getAsInt;
-
-import android.util.LruCache;
+package io.split.android.client.service.impressions.observer;
 
 import androidx.annotation.Nullable;
 
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.service.impressions.ImpressionHasher;
 
-public class ImpressionsObserver {
+public class ImpressionsObserverImpl implements ImpressionsObserver {
 
-    private final LruCache<Long, Long> mCache;
+    private final ImpressionsObserverCache mCache;
 
-    public ImpressionsObserver(long size) {
-        mCache = new LruCache<>(getAsInt(size));
+    public ImpressionsObserverImpl(PersistentImpressionsObserverCacheStorage persistentStorage, int size) {
+        mCache = new ImpressionsObserverCacheImpl(persistentStorage, size);
     }
 
+    @Override
     @Nullable
     public Long testAndSet(Impression impression) {
         if (null == impression) {

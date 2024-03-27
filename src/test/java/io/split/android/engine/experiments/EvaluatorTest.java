@@ -20,6 +20,7 @@ import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -129,6 +130,46 @@ public class EvaluatorTest {
         Assert.assertEquals(Treatments.CONTROL, result.getTreatment());
         Assert.assertNull(result.getConfigurations());
         Assert.assertEquals(TreatmentLabels.DEFINITION_NOT_FOUND, result.getLabel());
+    }
+
+    @Test
+    public void exceptionInParsingReturnsResultWithExceptionLabelAndNoChangeNumber() {
+        SplitParser splitParser = mock(SplitParser.class);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitParser.parse(any(), any())).thenThrow(new RuntimeException("test"));
+        Evaluator evaluator = new EvaluatorImpl(splitsStorage, splitParser);
+
+        String matchingKey = "anyKey";
+        String splitName = "a_new_split_2";
+
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Treatments.CONTROL, result.getTreatment());
+        Assert.assertNull(result.getConfigurations());
+        Assert.assertEquals("exception", result.getLabel());
+        Assert.assertNull(result.getChangeNumber());
+    }
+
+    @Test
+    public void changeNumberExceptionReturnsResultWithExceptionLabelAndChangeNumber() {
+        SplitParser splitParser = mock(SplitParser.class);
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        ParsedSplit parsedSplit = mock(ParsedSplit.class);
+        when(parsedSplit.killed()).thenThrow(new RuntimeException("test"));
+        when(parsedSplit.changeNumber()).thenReturn(123L);
+        when(splitParser.parse(any(), any())).thenReturn(parsedSplit);
+
+        Evaluator evaluator = new EvaluatorImpl(splitsStorage, splitParser);
+
+        String matchingKye = "anyKey";
+        String splitName = "a_new_split_2";
+
+        EvaluationResult result = evaluator.getTreatment(matchingKye, matchingKye, splitName, null);
+        Assert.assertNotNull(result);
+        Assert.assertEquals(Treatments.CONTROL, result.getTreatment());
+        Assert.assertNull(result.getConfigurations());
+        Assert.assertEquals("exception", result.getLabel());
+        Assert.assertEquals(Long.valueOf(123), result.getChangeNumber());
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {

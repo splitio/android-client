@@ -151,6 +151,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 mSplitsStorageContainer.getPersistentImpressionsStorage(),
                 mSplitsStorageContainer.getImpressionsCountStorage(),
                 mSplitsStorageContainer.getPersistentImpressionsUniqueStorage(),
+                mSplitsStorageContainer.getImpressionsObserverCachePersistentStorage(),
                 maxTimestamp);
     }
 

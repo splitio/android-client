@@ -30,6 +30,7 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
+import io.split.android.client.validators.FlagSetsValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManagerImpl;
@@ -154,7 +155,7 @@ public class TreatmentManagerWithFlagSetsTest {
                 mAttributesMerger,
                 mTelemetryStorageProducer,
                 mFlagSetsFilter,
-                mSplitsStorage, new ValidationMessageLoggerImpl());
+                mSplitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl());
     }
 
     @Test
@@ -281,7 +282,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsWithConfigByFlagSetDestroyedDoesNotUseEvaluator() {
         mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, true);
 
-        verify(mSplitsStorage).getNamesByFlagSets(any());
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 
@@ -486,5 +487,37 @@ public class TreatmentManagerWithFlagSetsTest {
         mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
 
         verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS));
+    }
+
+    @Test
+    public void getTreatmentsByFlagSetWithNullFlagSet() {
+        mTreatmentManager.getTreatmentsByFlagSet(null, null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
+    }
+
+    @Test
+    public void getTreatmentsByFlagSetsWithNullFlagSets() {
+        mTreatmentManager.getTreatmentsByFlagSets(null, null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
+    }
+
+    @Test
+    public void getTreatmentsWithConfigByFlagSetWithNullFlagSet() {
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet(null, null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
+    }
+
+    @Test
+    public void getTreatmentsWithConfigByFlagSetsWithNullFlagSets() {
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(null, null, false);
+
+        verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
+        verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
     }
 }

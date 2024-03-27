@@ -187,6 +187,7 @@ public class MySegmentUpdatedTest {
             }
             treatments.add(client.getTreatment("test_feature"));
         }
+        Thread.sleep(100);
         boolean impAwait = mImpLatch.await(10, TimeUnit.SECONDS);
         if (!impAwait) {
             Assert.fail("Impressions not received");

@@ -3,7 +3,7 @@
 Project ':android-client'
 ------------------------------------------------------------
 
-releaseRuntimeClasspath - Runtime classpath of /release.
+releaseRuntimeClasspath - Runtime classpath of compilation 'release' (target  (androidJvm)).
 +--- androidx.room:room-runtime:2.4.3
 |    +--- androidx.room:room-common:2.4.3
 |    |    \--- androidx.annotation:annotation:1.1.0 -> 1.2.0

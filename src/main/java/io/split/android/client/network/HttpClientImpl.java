@@ -184,7 +184,9 @@ public class HttpClientImpl implements HttpClient {
         }
 
         public Builder setProxyAuthenticator(SplitAuthenticator authenticator) {
-            Logger.v("Setting up proxy authenticator");
+            if (authenticator != null) {
+                Logger.v("Setting up proxy authenticator");
+            }
             mProxyAuthenticator = authenticator;
             return this;
         }
