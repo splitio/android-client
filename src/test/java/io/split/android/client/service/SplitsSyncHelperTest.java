@@ -4,12 +4,14 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
@@ -31,6 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
@@ -364,6 +367,20 @@ public class SplitsSyncHelperTest {
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1);
 
         assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
+    public void defaultQueryParamOrderIsCorrect() throws HttpFetcherException {
+        mSplitsSyncHelper.sync(100);
+
+        verify(mSplitsFetcher).execute(argThat(new ArgumentMatcher<Map<String, Object>>() {
+            @Override
+            public boolean matches(Map<String, Object> argument) {
+                List<String> keys = new ArrayList<>(argument.keySet());
+                return keys.get(0).equals("s") &&
+                        keys.get(1).equals("since");
+            }
+        }), any());
     }
 
     private void loadSplitChanges() {
