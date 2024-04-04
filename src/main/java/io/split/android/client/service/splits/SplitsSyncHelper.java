@@ -7,7 +7,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +31,7 @@ public class SplitsSyncHelper {
 
     private static final String SINCE_PARAM = "since";
     private static final String TILL_PARAM = "till";
-    private static final String SPEC_PARAM = "s";
+    private static final String FLAGS_SPEC_PARAM = "s";
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10;
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_WAIT;
 
@@ -157,7 +156,7 @@ public class SplitsSyncHelper {
 
     private SplitChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
         Map<String, Object> params = new LinkedHashMap<>();
-        params.put(SPEC_PARAM, BuildConfig.FLAGS_SPEC);
+        params.put(FLAGS_SPEC_PARAM, BuildConfig.FLAGS_SPEC);
         params.put(SINCE_PARAM, till);
 
         if (withCdnByPass) {

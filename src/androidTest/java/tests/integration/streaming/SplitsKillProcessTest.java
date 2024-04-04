@@ -42,6 +42,7 @@ import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingHelper;
 
 import static java.lang.Thread.sleep;
+import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
 
 public class SplitsKillProcessTest {
     Context mContext;
@@ -175,7 +176,7 @@ public class SplitsKillProcessTest {
                 } else if (uri.getPath().contains("/splitChanges")) {
 
                     mSplitChangesHitCount++;
-                    mLastChangeNumber = new Integer(uri.getQuery().split("=")[1]);
+                    mLastChangeNumber = Long.parseLong(getSinceFromUri(uri));
                     Logger.i("** Split Changes hit p: " + mLastChangeNumber);
                     mSplitsSyncLatch.countDown();
                     if (mSplitChangesHitCount > 2) {
