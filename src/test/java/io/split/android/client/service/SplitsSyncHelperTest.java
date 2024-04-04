@@ -1,5 +1,18 @@
 package io.split.android.client.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,6 +24,7 @@ import org.mockito.Spy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,20 +42,6 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.helpers.FileHelper;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 public class SplitsSyncHelperTest {
 
@@ -67,6 +67,7 @@ public class SplitsSyncHelperTest {
     public void setup() {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
         mDefaultParams.clear();
+        mDefaultParams.put("s", "1.1");
         mDefaultParams.put("since", -1L);
         mSecondFetchParams.clear();
         mSecondFetchParams.put("since", 1506703262916L);
@@ -342,6 +343,7 @@ public class SplitsSyncHelperTest {
         mSplitsSyncHelper.sync(14829471, true, true);
 
         Map<String, Object> params = new HashMap<>();
+        params.put("s", "1.1");
         params.put("since", -1L);
         verify(mSplitsFetcher).execute(eq(params), eq(null));
         verifyNoMoreInteractions(mSplitsFetcher);
@@ -391,7 +393,8 @@ public class SplitsSyncHelperTest {
     }
 
     private Map<String, Object> getSinceParams(long since) {
-        Map<String, Object> params = new HashMap<>();
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("s", "1.1");
         params.put("since", since);
 
         return params;
