@@ -135,6 +135,12 @@ public class SplitParser {
 
     private AttributeMatcher toMatcher(Matcher matcher, String matchingKey) throws UnsupportedMatcherException {
         io.split.android.engine.matchers.Matcher delegate;
+
+        // Values not present in {@link io.split.android.client.dtos.MatcherType} are deserialized as null
+        if (matcher.matcherType == null) {
+            throw new UnsupportedMatcherException("Unable to create matcher for matcher type");
+        }
+
         switch (matcher.matcherType) {
             case ALL_KEYS:
                 delegate = new AllKeysMatcher();
@@ -208,6 +214,8 @@ public class SplitParser {
                 delegate = new BooleanMatcher(matcher.booleanMatcherData);
                 break;
             default:
+                // since values not present in {@link io.split.android.client.dtos.MatcherType}
+                // are deserialized as null, this would most likely not be reached. Adding it for completeness
                 throw new UnsupportedMatcherException("Unable to create matcher for matcher type: " + matcher.matcherType);
         }
 
