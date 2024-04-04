@@ -7,7 +7,7 @@ import androidx.core.util.Pair;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import io.split.android.client.utils.Utils;
@@ -31,7 +31,7 @@ public class URIBuilder {
         } else {
             mPath = path;
         }
-        mParams = new HashSet<>();
+        mParams = new LinkedHashSet<>();
     }
 
     public URIBuilder(@NonNull URI rootURI) {
