@@ -7,10 +7,11 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.android_client.BuildConfig;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
@@ -30,6 +31,7 @@ public class SplitsSyncHelper {
 
     private static final String SINCE_PARAM = "since";
     private static final String TILL_PARAM = "till";
+    private static final String FLAGS_SPEC_PARAM = "s";
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10;
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_WAIT;
 
@@ -153,7 +155,11 @@ public class SplitsSyncHelper {
     }
 
     private SplitChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
-        Map<String, Object> params = new HashMap<>();
+        Map<String, Object> params = new LinkedHashMap<>();
+        String flagsSpec = BuildConfig.FLAGS_SPEC;
+        if (flagsSpec != null) {
+            params.put(FLAGS_SPEC_PARAM, flagsSpec);
+        }
         params.put(SINCE_PARAM, till);
 
         if (withCdnByPass) {

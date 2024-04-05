@@ -326,7 +326,7 @@ public class IntegrationHelper {
                                     String body);
 
         static String getSinceFromUri(URI uri) {
-            return uri.getQuery().split("&")[0].split("=")[1];
+            return uri.getQuery().split("&")[1].split("=")[1];
         }
     }
 

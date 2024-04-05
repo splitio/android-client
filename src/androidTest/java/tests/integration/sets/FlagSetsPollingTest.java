@@ -169,7 +169,7 @@ public class FlagSetsPollingTest {
         String uri = mSplitChangesUri;
 
         assertTrue(awaitFirst);
-        assertEquals("https://sdk.split.io/api/splitChanges?since=-1&sets=set_2,set_3,set_ww,set_x", uri);
+        assertEquals("https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_2,set_3,set_ww,set_x", uri);
     }
 
     private SplitFactory createFactory(
