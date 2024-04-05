@@ -54,10 +54,9 @@ public class FlagsSpecInRequestTest {
 
     @Test
     public void queryStringContainsFlagsSpec() throws InterruptedException {
-        String expectedFlagsSpec = BuildConfig.FLAGS_SPEC;
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient);
 
-        assertEquals("s="+expectedFlagsSpec+"&since=-1", mQueryString.get());
+        assertEquals("s=1.1&since=-1", mQueryString.get());
     }
 
     private HttpResponseMockDispatcher getDispatcher() {

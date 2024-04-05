@@ -1,5 +1,8 @@
 package io.split.android.client.storage.splits;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.storage.db.GeneralInfoDao;
+import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitDao;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -44,6 +49,27 @@ public class SqLitePersistentSplitsStorageTest {
         mStorage.getAll();
 
         verify(mEntityToSplitTransformer).transform(mockEntities);
+    }
+
+    @Test
+    public void updateFlagsSpecUsesGeneralInfoDao() {
+        GeneralInfoDao generalInfoDao = mock(GeneralInfoDao.class);
+        when(mDatabase.generalInfoDao()).thenReturn(generalInfoDao);
+        mStorage.updateFlagsSpec("2.5");
+
+        verify(generalInfoDao).update(argThat(entity -> entity.getName().equals("flagsSpec") &&
+                entity.getStringValue().equals("2.5")));
+    }
+
+    @Test
+    public void getFlagsSpecFetchesValueFromGeneralInfoDao() {
+        GeneralInfoDao generalInfoDao = mock(GeneralInfoDao.class);
+        when(mDatabase.generalInfoDao()).thenReturn(generalInfoDao);
+        when(generalInfoDao.getByName("flagsSpec")).thenReturn(new GeneralInfoEntity("flagsSpec", "2.5"));
+
+        String flagsSpec = mStorage.getFlagsSpec();
+
+        assertEquals("2.5", flagsSpec);
     }
 
     private List<SplitEntity> getMockEntities() {

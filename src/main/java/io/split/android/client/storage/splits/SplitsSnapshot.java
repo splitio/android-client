@@ -9,31 +9,37 @@ import io.split.android.client.dtos.Split;
 
 public class SplitsSnapshot {
 
-    final private long changeNumber;
-    final private List<Split> splits;
-    final private long updateTimestamp;
-    final private String splitsFilterQueryString;
+    private final long mChangeNumber;
+    private final List<Split> mSplits;
+    private final long mUpdateTimestamp;
+    private final String mSplitsFilterQueryString;
+    private final String mFlagsSpec;
 
-    public SplitsSnapshot(List<Split> splits, long changeNumber, long updateTimestamp, String splitsFilterQueryString) {
-        this.changeNumber = changeNumber;
-        this.splits = splits;
-        this.updateTimestamp = updateTimestamp;
-        this.splitsFilterQueryString = splitsFilterQueryString;
+    public SplitsSnapshot(List<Split> splits, long changeNumber, long updateTimestamp, String splitsFilterQueryString, String flagsSpec) {
+        mChangeNumber = changeNumber;
+        mSplits = splits;
+        mUpdateTimestamp = updateTimestamp;
+        mSplitsFilterQueryString = splitsFilterQueryString;
+        mFlagsSpec = flagsSpec;
     }
 
     public long getChangeNumber() {
-        return changeNumber;
+        return mChangeNumber;
     }
 
     public long getUpdateTimestamp() {
-        return updateTimestamp;
+        return mUpdateTimestamp;
     }
 
     public String getSplitsFilterQueryString() {
-        return splitsFilterQueryString;
+        return mSplitsFilterQueryString;
     }
 
     public @NonNull List<Split> getSplits() {
-        return (splits != null ? splits : new ArrayList<>());
+        return (mSplits != null ? mSplits : new ArrayList<>());
+    }
+
+    public String getFlagsSpec() {
+        return mFlagsSpec;
     }
 }

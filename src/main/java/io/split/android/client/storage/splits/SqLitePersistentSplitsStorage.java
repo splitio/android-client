@@ -75,7 +75,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase);
         mDatabase.runInTransaction(loader);
         return new SplitsSnapshot(loadSplits(), loader.getChangeNumber(),
-                loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString());
+                loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString(), loader.getFlagsSpec());
     }
 
     @Override
@@ -88,6 +88,18 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     @Override
     public void updateFilterQueryString(String queryString) {
         mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING, queryString));
+    }
+
+    @Nullable
+    @Override
+    public String getFlagsSpec() {
+        GeneralInfoEntity generalInfoEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAGS_SPEC);
+        return generalInfoEntity != null ? generalInfoEntity.getStringValue() : null;
+    }
+
+    @Override
+    public void updateFlagsSpec(String flagsSpec) {
+        mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAGS_SPEC, flagsSpec));
     }
 
     @Override
@@ -150,6 +162,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         private Long mChangeNumber = -1L;
         private Long mUpdateTimestamp = 0L;
         private String mSplitsFilterQueryString = "";
+        private String mFlagsSpec = "";
 
         public SplitsSnapshotLoader(SplitRoomDatabase database) {
             mDatabase = database;
@@ -160,6 +173,8 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
             GeneralInfoEntity changeNumberEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
             GeneralInfoEntity filterQueryStringEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
+            GeneralInfoEntity flagsSpecEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAGS_SPEC);
+
             if (changeNumberEntity != null) {
                 mChangeNumber = changeNumberEntity.getLongValue();
             }
@@ -167,9 +182,13 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             if (timestampEntity != null) {
                 mUpdateTimestamp = timestampEntity.getLongValue();
             }
+
             if (filterQueryStringEntity != null) {
                 mSplitsFilterQueryString = filterQueryStringEntity.getStringValue();
+            }
 
+            if (flagsSpecEntity != null) {
+                mFlagsSpec = flagsSpecEntity.getStringValue();
             }
         }
 
@@ -183,6 +202,10 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
         public String getSplitsFilterQueryString() {
             return mSplitsFilterQueryString;
+        }
+
+        public String getFlagsSpec() {
+            return mFlagsSpec;
         }
     }
 }
