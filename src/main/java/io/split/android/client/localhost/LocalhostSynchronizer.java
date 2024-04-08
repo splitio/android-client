@@ -19,22 +19,19 @@ public class LocalhostSynchronizer implements SplitLifecycleAware, Destroyable {
     private final int mRefreshRate;
     private final SplitsStorage mSplitsStorage;
     private final String mSplitsFilterQueryStringFromConfig;
-    private final String mFlagsSpecFromConfig;
 
     public LocalhostSynchronizer(@NonNull SplitTaskExecutor taskExecutor,
                                  @NonNull SplitClientConfig splitClientConfig,
                                  @NonNull SplitsStorage splitsStorage,
-                                 @Nullable String splitsFilterQueryStringFromConfig,
-                                 @Nullable String flagsSpecFromConfig) {
+                                 @Nullable String splitsFilterQueryStringFromConfig) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mRefreshRate = checkNotNull(splitClientConfig).offlineRefreshRate();
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsFilterQueryStringFromConfig = splitsFilterQueryStringFromConfig;
-        mFlagsSpecFromConfig = flagsSpecFromConfig;
     }
 
     public void start() {
-        SplitTask loadTask = new LoadSplitsTask(mSplitsStorage, mSplitsFilterQueryStringFromConfig, mFlagsSpecFromConfig);
+        SplitTask loadTask = new LoadSplitsTask(mSplitsStorage, mSplitsFilterQueryStringFromConfig, null);
         if (mRefreshRate > 0) {
             mTaskExecutor.schedule(
                     loadTask, 0,

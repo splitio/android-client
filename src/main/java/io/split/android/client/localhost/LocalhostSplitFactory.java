@@ -7,7 +7,6 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.Map;
 
-import io.split.android.android_client.BuildConfig;
 import io.split.android.client.FilterBuilder;
 import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.FlagSetsFilterImpl;
@@ -97,7 +96,7 @@ public class LocalhostSplitFactory implements SplitFactory {
                 taskExecutor,
                 flagSetsFilter);
 
-        mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage, buildQueryString(config.syncConfig()), BuildConfig.FLAGS_SPEC);
+        mSynchronizer = new LocalhostSynchronizer(taskExecutor, config, splitsStorage, buildQueryString(config.syncConfig()));
         mSynchronizer.start();
 
         Logger.i("Android SDK initialized!");
