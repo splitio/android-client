@@ -108,10 +108,13 @@ public class FilterSplitsInCacheTask implements SplitTask {
     }
 
     private boolean queryStringHasChanged() {
-        return !sanitizeString(mSplitsStorage.getFilterQueryString()).equals(sanitizeString(mSplitsFilterQueryStringFromConfig));
+        String sanitizedString = sanitizeString(mSplitsStorage.getFilterQueryString());
+
+        return !sanitizedString.equals(sanitizeString(mSplitsFilterQueryStringFromConfig));
     }
 
-    private String sanitizeString(String string) {
+    @NonNull
+    private static String sanitizeString(String string) {
         return string != null ? string : "";
     }
 }

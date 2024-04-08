@@ -30,7 +30,6 @@ import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
-import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 
 public class FeatureFlagsSynchronizerImplTest {
@@ -64,7 +63,7 @@ public class FeatureFlagsSynchronizerImplTest {
 
         mFeatureFlagsSynchronizer = new FeatureFlagsSynchronizerImpl(mConfig,
                 mTaskExecutor, mSingleThreadTaskExecutor, mTaskFactory,
-                mEventsManager, mRetryBackoffCounterFactory, mPushManagerEventBroadcaster, "");
+                mEventsManager, mRetryBackoffCounterFactory, mPushManagerEventBroadcaster);
     }
 
     @Test
@@ -82,7 +81,7 @@ public class FeatureFlagsSynchronizerImplTest {
     public void loadAndSynchronizeSplits() {
         LoadSplitsTask mockLoadTask = mock(LoadSplitsTask.class);
         when(mockLoadTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
-        when(mTaskFactory.createLoadSplitsTask(any())).thenReturn(mockLoadTask);
+        when(mTaskFactory.createLoadSplitsTask()).thenReturn(mockLoadTask);
 
         FilterSplitsInCacheTask mockFilterTask = mock(FilterSplitsInCacheTask.class);
         when(mockFilterTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE));
@@ -99,7 +98,7 @@ public class FeatureFlagsSynchronizerImplTest {
         mFeatureFlagsSynchronizer.loadAndSynchronize();
 
         verify(mTaskFactory).createFilterSplitsInCacheTask();
-        verify(mTaskFactory).createLoadSplitsTask(any());
+        verify(mTaskFactory).createLoadSplitsTask();
 
         ArgumentCaptor<List<SplitTaskBatchItem>> argument = ArgumentCaptor.forClass(List.class);
         verify(mTaskExecutor).executeSerially(argument.capture());

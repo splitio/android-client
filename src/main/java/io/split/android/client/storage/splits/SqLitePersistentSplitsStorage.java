@@ -158,7 +158,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     private static class SplitsSnapshotLoader implements Runnable {
-        private SplitRoomDatabase mDatabase;
+        private final SplitRoomDatabase mDatabase;
         private Long mChangeNumber = -1L;
         private Long mUpdateTimestamp = 0L;
         private String mSplitsFilterQueryString = "";

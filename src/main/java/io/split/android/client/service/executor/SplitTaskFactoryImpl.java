@@ -55,6 +55,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitClientConfig mSplitClientConfig;
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final String mSplitsFilterQueryStringFromConfig;
+    private final String mFlagsSpecFromConfig;
     private final ISplitEventsManager mEventsManager;
     private final TelemetryTaskFactory mTelemetryTaskFactory;
     private final SplitChangeProcessor mSplitChangeProcessor;
@@ -66,6 +67,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 @NonNull SplitApiFacade splitApiFacade,
                                 @NonNull SplitStorageContainer splitStorageContainer,
                                 @Nullable String splitsFilterQueryString,
+                                @Nullable String flagsSpecFromConfig,
                                 ISplitEventsManager eventsManager,
                                 @Nullable Map<SplitFilter.Type, SplitFilter> filters,
                                 @Nullable FlagSetsFilter flagSetsFilter,
@@ -75,6 +77,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mSplitApiFacade = checkNotNull(splitApiFacade);
         mSplitsStorageContainer = checkNotNull(splitStorageContainer);
         mSplitsFilterQueryStringFromConfig = splitsFilterQueryString;
+        mFlagsSpecFromConfig = flagsSpecFromConfig;
         mEventsManager = eventsManager;
         mSplitChangeProcessor = new SplitChangeProcessor(filters, flagSetsFilter);
 
@@ -125,8 +128,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public LoadSplitsTask createLoadSplitsTask(String splitsFilterQueryStringFromConfig) {
-        return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage(), splitsFilterQueryStringFromConfig);
+    public LoadSplitsTask createLoadSplitsTask() {
+        return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage(), mSplitsFilterQueryStringFromConfig, mFlagsSpecFromConfig);
     }
 
     @Override

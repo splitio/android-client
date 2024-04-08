@@ -37,7 +37,6 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     private final RetryBackoffCounterTimer mSplitsUpdateRetryTimer;
     @Nullable
     private final SplitTaskExecutionListener mSplitsSyncListener;
-    private final String mSplitsFilterQueryStringFromConfig;
 
     public FeatureFlagsSynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                                         @NonNull SplitTaskExecutor taskExecutor,
@@ -45,8 +44,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                                         @NonNull SplitTaskFactory splitTaskFactory,
                                         @NonNull ISplitEventsManager splitEventsManager,
                                         @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
-                                        @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
-                                        @NonNull String splitsFilterQueryStringFromConfig) {
+                                        @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsTaskExecutor = splitSingleThreadTaskExecutor;
@@ -71,14 +69,13 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncListener);
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 splitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-        mSplitsFilterQueryStringFromConfig = splitsFilterQueryStringFromConfig;
     }
 
     @Override
     public void loadAndSynchronize() {
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createFilterSplitsInCacheTask(), null));
-        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(mSplitsFilterQueryStringFromConfig), mLoadLocalSplitsListener));
+        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(), mLoadLocalSplitsListener));
         enqueued.add(new SplitTaskBatchItem(() -> {
             synchronize();
             return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
@@ -115,7 +112,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
 
     @Override
     public void submitLoadingTask(SplitTaskExecutionListener listener) {
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(mSplitsFilterQueryStringFromConfig),
+        mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
                 listener);
     }
 

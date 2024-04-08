@@ -157,7 +157,7 @@ public class SplitsSyncHelper {
     private SplitChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
         Map<String, Object> params = new LinkedHashMap<>();
         String flagsSpec = BuildConfig.FLAGS_SPEC;
-        if (flagsSpec != null) {
+        if (flagsSpec != null && !flagsSpec.trim().isEmpty()) {
             params.put(FLAGS_SPEC_PARAM, flagsSpec);
         }
         params.put(SINCE_PARAM, till);
