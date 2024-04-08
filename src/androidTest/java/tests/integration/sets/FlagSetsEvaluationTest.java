@@ -30,6 +30,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.SplitResult;
 import io.split.android.client.SyncConfig;
+import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;

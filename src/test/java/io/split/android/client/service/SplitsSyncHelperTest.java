@@ -71,7 +71,7 @@ public class SplitsSyncHelperTest {
         mDefaultParams.put("since", -1L);
         mSecondFetchParams.clear();
         mSecondFetchParams.put("since", 1506703262916L);
-        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mTelemetryRuntimeProducer, mBackoffCounter);
+        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mTelemetryRuntimeProducer, mBackoffCounter, "1.1");
         loadSplitChanges();
     }
 

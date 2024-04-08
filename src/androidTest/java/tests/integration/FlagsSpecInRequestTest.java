@@ -26,9 +26,9 @@ import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
-import io.split.android.android_client.test.BuildConfig;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -54,7 +54,18 @@ public class FlagsSpecInRequestTest {
 
     @Test
     public void queryStringContainsFlagsSpec() throws InterruptedException {
-        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient);
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setFlagsSpec("1.1");
+        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
+
+        assertEquals("s=1.1&since=-1", mQueryString.get());
+    }
+
+    @Test
+    public void nullFlagsSpecValueOmitsQueryParam() throws InterruptedException {
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setFlagsSpec(null);
+        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
         assertEquals("s=1.1&since=-1", mQueryString.get());
     }
@@ -77,7 +88,7 @@ public class FlagsSpecInRequestTest {
         return IntegrationHelper.buildDispatcher(responses);
     }
 
-    private void initSplitFactory(TestableSplitConfigBuilder builder, HttpClientMock httpClient) throws InterruptedException {
+    private void initSplitFactory(TestableSplitConfigBuilder builder, HttpClientMock httpClient, TestingConfig testingConfig) throws InterruptedException {
         CountDownLatch innerLatch = new CountDownLatch(1);
         SplitFactory factory = IntegrationHelper.buildFactory(
                 "sdk_key_1",
@@ -85,7 +96,9 @@ public class FlagsSpecInRequestTest {
                 builder.build(),
                 mContext,
                 httpClient,
-                mDatabase);
+                mDatabase,
+                null,
+                testingConfig);
 
         SplitClient client = factory.client();
         client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(innerLatch));

@@ -185,7 +185,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
-                BuildConfig.FLAGS_SPEC, mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
+                getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
@@ -331,6 +331,14 @@ public class SplitFactoryImpl implements SplitFactory {
         }
 
         Logger.i("Android SDK initialized!");
+    }
+
+    private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {
+        if (testingConfig == null) {
+            return BuildConfig.FLAGS_SPEC;
+        } else {
+            return testingConfig.getFlagsSpec();
+        }
     }
 
     @Override

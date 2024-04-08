@@ -88,12 +88,14 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
                     mTelemetryRuntimeProducer,
-                    new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()));
+                    new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
+                    flagsSpecFromConfig);
         } else {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
-                    mTelemetryRuntimeProducer);
+                    mTelemetryRuntimeProducer,
+                    flagsSpecFromConfig);
         }
 
         mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());
