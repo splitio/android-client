@@ -1,6 +1,8 @@
 package tests.storage;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -257,16 +259,16 @@ public class SplitsStorageTest {
         Assert.assertNotNull(mSplitsStorage.get("split-test-1000"));
         Assert.assertNotNull(mSplitsStorage.get("split-test-1100"));
         Assert.assertNotNull(mSplitsStorage.get("split-test-1198"));
-        Assert.assertNull(mSplitsStorage.get("split-test-1001"));
-        Assert.assertNull(mSplitsStorage.get("split-test-1101"));
-        Assert.assertNull(mSplitsStorage.get("split-test-1199"));
+        assertNull(mSplitsStorage.get("split-test-1001"));
+        assertNull(mSplitsStorage.get("split-test-1101"));
+        assertNull(mSplitsStorage.get("split-test-1199"));
 
         Assert.assertNotNull(mSplitsStorage.get("split-test-1"));
         Assert.assertNotNull(mSplitsStorage.get("split-test-101"));
         Assert.assertNotNull(mSplitsStorage.get("split-test-199"));
-        Assert.assertNull(mSplitsStorage.get("split-test-0"));
-        Assert.assertNull(mSplitsStorage.get("split-test-100"));
-        Assert.assertNull(mSplitsStorage.get("split-test-198"));
+        assertNull(mSplitsStorage.get("split-test-0"));
+        assertNull(mSplitsStorage.get("split-test-100"));
+        assertNull(mSplitsStorage.get("split-test-198"));
 
     }
 
@@ -456,6 +458,48 @@ public class SplitsStorageTest {
         boolean update = mSplitsStorage.update(new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 1L, 0L));
 
         assertFalse(update);
+    }
+
+    @Test
+    public void loadLocalLoadsFlagsSpecValue() {
+        mRoomDb.clearAllTables();
+        String initialFlagsSpec = mSplitsStorage.getFlagsSpec();
+
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity("flagsSpec", "2.5"));
+
+        mSplitsStorage.loadLocal();
+
+        String finalFlagsSpec = mSplitsStorage.getFlagsSpec();
+
+        assertNull(initialFlagsSpec);
+        assertEquals("2.5", finalFlagsSpec);
+    }
+
+    @Test
+    public void updateFlagsSpecValuePersistsValueInDatabase() {
+        mRoomDb.clearAllTables();
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity("flagsSpec", "2.0"));
+        mSplitsStorage.loadLocal();
+        String initialFlagsSpec = mSplitsStorage.getFlagsSpec();
+
+        mSplitsStorage.updateFlagsSpec("2.5");
+
+        String dbFlagsSpec = mRoomDb.generalInfoDao().getByName("flagsSpec").getStringValue();
+        String finalFlagsSpec = mSplitsStorage.getFlagsSpec();
+
+        assertEquals("2.0", initialFlagsSpec);
+        assertEquals("2.5", finalFlagsSpec);
+        assertEquals("2.5", dbFlagsSpec);
+    }
+
+    @Test
+    public void nullFlagsSpecValueIsValid() {
+        mRoomDb.clearAllTables();
+        mSplitsStorage.loadLocal();
+
+        String flagsSpec = mSplitsStorage.getFlagsSpec();
+
+        assertEquals("", flagsSpec);
     }
 
     private Split newSplit(String name, Status status, String trafficType) {

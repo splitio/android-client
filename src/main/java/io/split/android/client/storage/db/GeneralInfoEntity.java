@@ -15,7 +15,7 @@ public class GeneralInfoEntity {
     public static final String DATBASE_MIGRATION_STATUS = "databaseMigrationStatus";
     public static final int DATBASE_MIGRATION_STATUS_DONE = 1;
     public static final String DATABASE_ENCRYPTION_MODE = "databaseEncryptionMode";
-
+    public static final String FLAGS_SPEC = "flagsSpec";
 
     @PrimaryKey()
     @NonNull
