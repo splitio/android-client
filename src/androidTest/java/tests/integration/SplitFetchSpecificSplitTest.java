@@ -144,7 +144,7 @@ public class SplitFetchSpecificSplitTest {
 
         latch.await(10, TimeUnit.SECONDS);
 
-        Assert.assertEquals("since=2" + expectedQs, mReceivedQueryString);
+        Assert.assertEquals("s=1.1&since=2" + expectedQs, mReceivedQueryString);
 
         splitFactory.destroy();
     }
