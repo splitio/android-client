@@ -1,6 +1,9 @@
 package tests.integration;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
 
@@ -102,11 +105,13 @@ public class FlagsSpecInRequestTest {
         testingConfig.setFlagsSpec("1.2");
         int initialFlagsSize = mDatabase.splitDao().getAll().size();
 
-        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
+        SplitFactory splitFactory = initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
         assertEquals("1.2", mDatabase.generalInfoDao().getByName("flagsSpec").getStringValue());
         assertEquals(2, initialFlagsSize);
-        assertEquals(30, mDatabase.splitDao().getAll().size());
+        assertEquals(29, splitFactory.manager().splits().size());
+        assertNull(splitFactory.manager().split("split_1"));
+        assertNull(splitFactory.manager().split("split_2"));
     }
 
     private HttpResponseMockDispatcher getDispatcher() {
@@ -127,7 +132,7 @@ public class FlagsSpecInRequestTest {
         return IntegrationHelper.buildDispatcher(responses);
     }
 
-    private void initSplitFactory(TestableSplitConfigBuilder builder, HttpClientMock httpClient, TestingConfig testingConfig) throws InterruptedException {
+    private SplitFactory initSplitFactory(TestableSplitConfigBuilder builder, HttpClientMock httpClient, TestingConfig testingConfig) throws InterruptedException {
         CountDownLatch innerLatch = new CountDownLatch(1);
         SplitFactory factory = IntegrationHelper.buildFactory(
                 "sdk_key_1",
@@ -145,6 +150,8 @@ public class FlagsSpecInRequestTest {
         if (!await) {
             fail("Client is not ready");
         }
+
+        return factory;
     }
 
     private String loadSplitChanges() {
