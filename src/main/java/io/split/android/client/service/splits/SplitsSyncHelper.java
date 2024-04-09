@@ -40,16 +40,19 @@ public class SplitsSyncHelper {
     private final SplitChangeProcessor mSplitChangeProcessor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final BackoffCounter mBackoffCounter;
+    private final String mFlagsSpec;
 
     public SplitsSyncHelper(@NonNull HttpFetcher<SplitChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
                             @NonNull SplitChangeProcessor splitChangeProcessor,
-                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                            @Nullable String flagsSpec) {
         this(splitFetcher,
                 splitsStorage,
                 splitChangeProcessor,
                 telemetryRuntimeProducer,
-                new ReconnectBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT));
+                new ReconnectBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT),
+                flagsSpec);
     }
 
     @VisibleForTesting
@@ -57,12 +60,14 @@ public class SplitsSyncHelper {
                             @NonNull SplitsStorage splitsStorage,
                             @NonNull SplitChangeProcessor splitChangeProcessor,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                            @NonNull BackoffCounter backoffCounter) {
+                            @NonNull BackoffCounter backoffCounter,
+                            @Nullable String flagsSpec) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mBackoffCounter = checkNotNull(backoffCounter);
+        mFlagsSpec = flagsSpec;
     }
 
     public SplitTaskExecutionInfo sync(long till) {
@@ -156,9 +161,8 @@ public class SplitsSyncHelper {
 
     private SplitChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
         Map<String, Object> params = new LinkedHashMap<>();
-        String flagsSpec = BuildConfig.FLAGS_SPEC;
-        if (flagsSpec != null) {
-            params.put(FLAGS_SPEC_PARAM, flagsSpec);
+        if (mFlagsSpec != null && !mFlagsSpec.trim().isEmpty()) {
+            params.put(FLAGS_SPEC_PARAM, mFlagsSpec);
         }
         params.put(SINCE_PARAM, till);
 

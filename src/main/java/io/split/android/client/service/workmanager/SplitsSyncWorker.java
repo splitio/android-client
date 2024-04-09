@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import io.split.android.android_client.BuildConfig;
 import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.SplitChange;
@@ -55,7 +56,8 @@ public class SplitsSyncWorker extends SplitWorker {
 
             SplitsSyncHelper splitsSyncHelper = new SplitsSyncHelper(splitsFetcher, splitsStorage,
                     splitChangeProcessor,
-                    telemetryStorage);
+                    telemetryStorage,
+                    BuildConfig.FLAGS_SPEC);
 
             mSplitTask = buildSplitSyncTask(splitsStorage, telemetryStorage, splitsSyncHelper);
         } catch (URISyntaxException e) {

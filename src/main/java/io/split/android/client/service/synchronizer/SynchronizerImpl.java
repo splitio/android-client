@@ -63,8 +63,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull ImpressionManager impressionManager,
                             @NonNull StoragePusher<Event> eventsStorage,
                             @NonNull ISplitEventsManager eventsManagerCoordinator,
-                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
-                            @NonNull String splitsFilterQueryStringFromConfig) {
+                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster) {
         this(splitClientConfig,
                 taskExecutor,
                 splitSingleThreadTaskExecutor,
@@ -80,8 +79,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                         splitTaskFactory,
                         eventsManagerCoordinator,
                         retryBackoffCounterTimerFactory,
-                        pushManagerEventBroadcaster,
-                        splitsFilterQueryStringFromConfig),
+                        pushManagerEventBroadcaster
+                ),
                 eventsStorage);
     }
 
