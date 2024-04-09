@@ -12,11 +12,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import fake.HttpClientMock;
@@ -31,6 +32,8 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.storage.db.GeneralInfoEntity;
+import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import tests.integration.shared.TestingHelper;
@@ -38,14 +41,12 @@ import tests.integration.shared.TestingHelper;
 public class FlagsSpecInRequestTest {
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
-    private AtomicInteger mImpressionsListenerCount;
     private HttpClientMock mHttpClient;
     private SplitRoomDatabase mDatabase;
     private AtomicReference<String> mQueryString;
 
     @Before
     public void setUp() throws IOException {
-        mImpressionsListenerCount = new AtomicInteger(0);
         mDatabase = DatabaseHelper.getTestDatabase(mContext);
         mDatabase.clearAllTables();
         mQueryString = new AtomicReference<>();
@@ -68,6 +69,44 @@ public class FlagsSpecInRequestTest {
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
         assertEquals("since=-1", mQueryString.get());
+    }
+
+    @Test
+    public void newFlagsSpecIsUpdatedInDatabase() throws InterruptedException {
+        mDatabase.generalInfoDao().update(new GeneralInfoEntity("flagsSpec", "1.1"));
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setFlagsSpec("1.2");
+        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
+
+        assertEquals("1.2", mDatabase.generalInfoDao().getByName("flagsSpec").getStringValue());
+    }
+
+    @Test
+    public void newFlagsSpecIsUsedInRequest() throws InterruptedException {
+        mDatabase.generalInfoDao().update(new GeneralInfoEntity("flagsSpec", "1.1"));
+
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setFlagsSpec("1.2");
+        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
+
+        assertEquals("s=1.2&since=-1", mQueryString.get());
+    }
+
+    @Test
+    public void featureFlagsAreRemovedWhenFlagsSpecChanges() throws InterruptedException {
+        mDatabase.generalInfoDao().update(new GeneralInfoEntity("flagsSpec", "1.1"));
+        mDatabase.splitDao().insert(newSplitEntity("split_1", "traffic_type", Collections.emptySet()));
+        mDatabase.splitDao().insert(newSplitEntity("split_2", "traffic_type", Collections.emptySet()));
+
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setFlagsSpec("1.2");
+        int initialFlagsSize = mDatabase.splitDao().getAll().size();
+
+        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
+
+        assertEquals("1.2", mDatabase.generalInfoDao().getByName("flagsSpec").getStringValue());
+        assertEquals(2, initialFlagsSize);
+        assertEquals(30, mDatabase.splitDao().getAll().size());
     }
 
     private HttpResponseMockDispatcher getDispatcher() {
@@ -114,5 +153,14 @@ public class FlagsSpecInRequestTest {
         SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
         parsedChange.since = parsedChange.till;
         return Json.toJson(parsedChange);
+    }
+
+    private static SplitEntity newSplitEntity(String name, String trafficType, Set<String> sets) {
+        SplitEntity entity = new SplitEntity();
+        String setsString = String.join(",", sets);
+        entity.setName(name);
+        entity.setBody(String.format(IntegrationHelper.JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, 9999L, trafficType, setsString));
+
+        return entity;
     }
 }
