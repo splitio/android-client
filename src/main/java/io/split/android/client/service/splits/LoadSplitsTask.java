@@ -60,8 +60,14 @@ public class LoadSplitsTask implements SplitTask {
         boolean shouldClearCache = filterHasChanged || flagsSpecHasChanged;
         if (shouldClearCache) {
             mSplitsStorage.clear();
-            mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryStringFromConfig);
-            mSplitsStorage.updateFlagsSpec(mFlagsSpecFromConfig);
+
+            if (filterHasChanged) {
+                mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryStringFromConfig);
+            }
+
+            if (flagsSpecHasChanged) {
+                mSplitsStorage.updateFlagsSpec(mFlagsSpecFromConfig);
+            }
         }
 
         // Since change number is -1 or the storage has been cleared,

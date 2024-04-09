@@ -124,4 +124,26 @@ public class LoadSplitsTaskTest {
 
         verify(mSplitsStorage).updateFlagsSpec("newSpec");
     }
+
+    @Test
+    public void storageQueryStringIsNotUpdatedWhenOnlySpecHasChanged() {
+        when(mSplitsStorage.getFlagsSpec()).thenReturn("spec");
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn("filter");
+
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "filter", "newSpec");
+        mLoadSplitsTask.execute();
+
+        verify(mSplitsStorage, times(0)).updateSplitsFilterQueryString("filter");
+    }
+
+    @Test
+    public void storageSpecIsNotUpdatedWhenOnlyFilterHasChanged() {
+        when(mSplitsStorage.getFlagsSpec()).thenReturn("spec");
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn("filter");
+
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "newFilter", "spec");
+        mLoadSplitsTask.execute();
+
+        verify(mSplitsStorage, times(0)).updateFlagsSpec("spec");
+    }
 }
