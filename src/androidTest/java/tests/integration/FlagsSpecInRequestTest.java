@@ -67,7 +67,7 @@ public class FlagsSpecInRequestTest {
         testingConfig.setFlagsSpec(null);
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
-        assertEquals("s=1.1&since=-1", mQueryString.get());
+        assertEquals("since=-1", mQueryString.get());
     }
 
     private HttpResponseMockDispatcher getDispatcher() {
