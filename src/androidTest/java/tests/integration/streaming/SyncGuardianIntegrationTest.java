@@ -133,15 +133,13 @@ public class SyncGuardianIntegrationTest {
     public void changeInStreamingDelayAffectsSyncBehaviour() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
 
-        TestingConfig testingConfig = new TestingConfig();
-        testingConfig.setCdnBackoffTime(2000);
         Pair<SplitClient, SplitEventTaskHelper> pair = getClient(latch,
                 true,
                 false,
                 IntegrationHelper.streamingEnabledToken(6),
                 1L,
-                0L,
-                testingConfig);
+                1L,
+                null);
         SplitClient client = pair.first;
         SplitEventTaskHelper readyTask = pair.second;
 
@@ -156,7 +154,7 @@ public class SyncGuardianIntegrationTest {
         sendToBackgroundFor(3000);
         int thirdSplitsHit = mSplitsHitsCountHit.get();
 
-        Thread.sleep(5000);
+        Thread.sleep(6000);
 
         assertTrue(readyTask.isOnPostExecutionCalled);
         assertTrue(sseConnectionAwait);
