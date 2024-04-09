@@ -178,6 +178,7 @@ public class SplitFactoryImpl implements SplitFactory {
         Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
         String splitsFilterQueryStringFromConfig = filtersConfig.second;
 
+        String flagsSpec = getFlagsSpec(testingConfig);
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryStringFromConfig);
 
@@ -185,7 +186,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
-                getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
+                flagsSpec, mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
@@ -196,7 +197,7 @@ public class SplitFactoryImpl implements SplitFactory {
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
 
         StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
-                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer);
+                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer, flagsSpec);
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,

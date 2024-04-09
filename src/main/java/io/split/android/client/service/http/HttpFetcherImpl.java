@@ -34,6 +34,7 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                      @Nullable Map<String, String> headers) throws HttpFetcherException {
         checkNotNull(params);
         T responseData;
+
         try {
             URIBuilder uriBuilder = new URIBuilder(mTarget);
             for (Map.Entry<String, Object> param : params.entrySet()) {
@@ -42,7 +43,9 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             }
             URI builtUri = uriBuilder.build();
             HttpResponse response = mClient.request(builtUri, HttpMethod.GET, null, headers).execute();
-            Logger.v("Received from: " + builtUri.toString() + " -> " + response.getData());
+            if (builtUri != null && response != null) {
+                Logger.v("Received from: " + builtUri + " -> " + response.getData());
+            }
             if (!response.isSuccess()) {
                 throw new IllegalStateException("http return code " + response.getHttpStatus());
             }

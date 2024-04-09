@@ -2,6 +2,8 @@ package io.split.android.client.service.sseclient;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -11,6 +13,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpSseAuthTokenFetcher;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticationResult;
@@ -53,7 +55,7 @@ public class SseAuthenticatorTest {
 
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
 
         SseJwtToken respToken = result.getJwtToken();
@@ -73,7 +75,7 @@ public class SseAuthenticatorTest {
 
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
@@ -89,7 +91,7 @@ public class SseAuthenticatorTest {
 
         when(mFetcher.execute(any(), any())).thenThrow(HttpFetcherException.class);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
@@ -106,7 +108,7 @@ public class SseAuthenticatorTest {
 
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
@@ -120,7 +122,7 @@ public class SseAuthenticatorTest {
         when(mResponse.isClientError()).thenReturn(false);
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         authenticator.registerKey("user1");
         authenticator.registerKey("user2");
         Map<String, Object> map = new HashMap<>();
@@ -139,7 +141,7 @@ public class SseAuthenticatorTest {
         when(mResponse.isClientError()).thenReturn(false);
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         authenticator.registerKey("user1");
         authenticator.registerKey("user2");
         authenticator.registerKey("user3");
@@ -153,5 +155,49 @@ public class SseAuthenticatorTest {
         authenticator.authenticate(60L);
 
         verify(mFetcher).execute(map, null);
+    }
+
+    @Test
+    public void flagsSpecIsUsedInFetcher() throws HttpFetcherException {
+        when(mResponse.isClientError()).thenReturn(false);
+        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, "1.1");
+
+        authenticator.authenticate(60L);
+
+        verify(mFetcher).execute(argThat(argument -> {
+            List<String> keys = new ArrayList<>(argument.keySet());
+            return keys.get(0).equals("s") &&
+                    keys.get(1).equals("users");
+        }), eq(null));
+    }
+
+    @Test
+    public void flagsSpecIsNotUsedInFetcherWhenNull() throws HttpFetcherException {
+        when(mResponse.isClientError()).thenReturn(false);
+        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+
+        authenticator.authenticate(60L);
+
+        verify(mFetcher).execute(argThat(argument -> {
+            List<String> keys = new ArrayList<>(argument.keySet());
+            return keys.get(0).equals("users");
+        }), eq(null));
+    }
+
+    @Test
+    public void flagsSpecIsNotUsedInFetcherWhenEmpty() throws HttpFetcherException {
+        when(mResponse.isClientError()).thenReturn(false);
+        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, "");
+
+        authenticator.authenticate(60L);
+
+        verify(mFetcher).execute(argThat(argument -> {
+            List<String> keys = new ArrayList<>(argument.keySet());
+            return keys.get(0).equals("users");
+        }), eq(null));
     }
 }

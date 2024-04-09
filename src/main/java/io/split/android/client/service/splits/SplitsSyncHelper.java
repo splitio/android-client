@@ -1,5 +1,6 @@
 package io.split.android.client.service.splits;
 
+import static io.split.android.client.service.ServiceConstants.FLAGS_SPEC_PARAM;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
@@ -31,7 +32,6 @@ public class SplitsSyncHelper {
 
     private static final String SINCE_PARAM = "since";
     private static final String TILL_PARAM = "till";
-    private static final String FLAGS_SPEC_PARAM = "s";
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10;
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_WAIT;
 

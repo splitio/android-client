@@ -1,11 +1,14 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static io.split.android.client.service.ServiceConstants.FLAGS_SPEC_PARAM;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,18 +26,24 @@ public class SseAuthenticator {
     private final HttpFetcher<SseAuthenticationResponse> mAuthFetcher;
     private final Set<String> mUserKeys;
     private final SseJwtParser mJwtParser;
+    private final String mFlagsSpec;
 
     public SseAuthenticator(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
-                            @NonNull SseJwtParser jwtParser) {
+                            @NonNull SseJwtParser jwtParser,
+                            @Nullable String flagsSpec) {
         mAuthFetcher = checkNotNull(authFetcher);
         mUserKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
         mJwtParser = checkNotNull(jwtParser);
+        mFlagsSpec = flagsSpec;
     }
 
     public SseAuthenticationResult authenticate(long defaultSseConnectionDelaySecs) {
         SseAuthenticationResponse authResponse;
         try {
-            Map<String, Object> params = new HashMap<>();
+            Map<String, Object> params = new LinkedHashMap<>();
+            if (mFlagsSpec != null && !mFlagsSpec.trim().isEmpty()) {
+                params.put(FLAGS_SPEC_PARAM, mFlagsSpec);
+            }
             params.put(USER_KEY_PARAM, mUserKeys);
             authResponse = mAuthFetcher.execute(params, null);
 
@@ -51,12 +60,12 @@ public class SseAuthenticator {
         }
         Logger.d("SSE Authentication done, now parsing token");
 
-        if(authResponse.isClientError()) {
+        if (authResponse.isClientError()) {
             Logger.d("Error while authenticating to streaming. Check your SDK key is correct.");
             return new SseAuthenticationResult(false, false, false, 0, null);
         }
 
-        if(!authResponse.isStreamingEnabled()) {
+        if (!authResponse.isStreamingEnabled()) {
             Logger.d("Streaming disabled for SDK key");
             return new SseAuthenticationResult(true, true, false, 0, null);
         }
