@@ -24,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import helper.DatabaseHelper;
+import helper.IntegrationHelper;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
@@ -39,7 +40,6 @@ public class SplitsStorageTest {
 
     private static final Long INITIAL_CHANGE_NUMBER = 9999L;
     private static final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d}";
-    private static final String JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d, \"trafficTypeName\":\"%s\", \"sets\":[\"%s\"]}";
 
     private SplitRoomDatabase mRoomDb;
     private SplitsStorage mSplitsStorage;
@@ -528,7 +528,7 @@ public class SplitsStorageTest {
         SplitEntity entity = new SplitEntity();
         String setsString = String.join(",", sets);
         entity.setName(name);
-        entity.setBody(String.format(JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType, setsString));
+        entity.setBody(String.format(IntegrationHelper.JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType, setsString));
 
         return entity;
     }

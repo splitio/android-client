@@ -50,6 +50,7 @@ public class IntegrationHelper {
     private final static Type IMPRESSIONS_LIST_TYPE = new TypeToken<List<TestImpressions>>() {
     }.getType();
     private final static Gson mGson = new GsonBuilder().create();
+    public static final String JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d, \"trafficTypeName\":\"%s\", \"sets\":[\"%s\"]}";
 
     public static List<Event> buildEventsFromJson(String attributesJson) {
 
