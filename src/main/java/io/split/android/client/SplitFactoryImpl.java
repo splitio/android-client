@@ -186,7 +186,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
-                flagsSpec, mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
+                getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
