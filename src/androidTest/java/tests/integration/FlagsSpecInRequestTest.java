@@ -1,9 +1,7 @@
 package tests.integration;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
 
@@ -15,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,9 +46,13 @@ public class FlagsSpecInRequestTest {
     private HttpClientMock mHttpClient;
     private SplitRoomDatabase mDatabase;
     private AtomicReference<String> mQueryString;
+    private CountDownLatch mAuthLatch;
+    private AtomicReference<URI> mAuthUrl;
 
     @Before
     public void setUp() throws IOException {
+        mAuthLatch = new CountDownLatch(1);
+        mAuthUrl = new AtomicReference<>(null);
         mDatabase = DatabaseHelper.getTestDatabase(mContext);
         mDatabase.clearAllTables();
         mQueryString = new AtomicReference<>();
@@ -114,6 +117,32 @@ public class FlagsSpecInRequestTest {
         assertNull(splitFactory.manager().split("split_2"));
     }
 
+    @Test
+    public void authContainsFlagsSpec() throws InterruptedException {
+        TestingConfig testingConfig = new TestingConfig();
+        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
+
+        assertEquals("s=1.1&users=CUSTOMER_ID", mAuthUrl.get().getQuery());
+    }
+
+    @Test
+    public void authDoesNotContainFlagsSpecWhenItIsNull() throws InterruptedException {
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setFlagsSpec(null);
+        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
+
+        assertEquals("users=CUSTOMER_ID", mAuthUrl.get().getQuery());
+    }
+
+    @Test
+    public void authDoesNotContainFlagsSpecWhenItIsEmpty() throws InterruptedException {
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setFlagsSpec("");
+        initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
+
+        assertEquals("users=CUSTOMER_ID", mAuthUrl.get().getQuery());
+    }
+
     private HttpResponseMockDispatcher getDispatcher() {
         Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put("splitChanges", (uri, httpMethod, body) -> {
@@ -129,6 +158,12 @@ public class FlagsSpecInRequestTest {
 
         responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
 
+        responses.put("v2/auth", (uri, httpMethod, body) -> {
+            mAuthUrl.set(uri);
+            mAuthLatch.countDown();
+            return new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken());
+        });
+
         return IntegrationHelper.buildDispatcher(responses);
     }
 
@@ -137,7 +172,9 @@ public class FlagsSpecInRequestTest {
         SplitFactory factory = IntegrationHelper.buildFactory(
                 "sdk_key_1",
                 IntegrationHelper.dummyUserKey(),
-                builder.build(),
+                builder
+                        .enableDebug()
+                        .build(),
                 mContext,
                 httpClient,
                 mDatabase,
@@ -147,8 +184,13 @@ public class FlagsSpecInRequestTest {
         SplitClient client = factory.client();
         client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(innerLatch));
         boolean await = innerLatch.await(5, TimeUnit.SECONDS);
+        boolean authAwait = mAuthLatch.await(15, TimeUnit.SECONDS);
         if (!await) {
             fail("Client is not ready");
+        }
+
+        if (!authAwait) {
+            fail("Auth request not sent");
         }
 
         return factory;
