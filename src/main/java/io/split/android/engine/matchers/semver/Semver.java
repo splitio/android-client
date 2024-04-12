@@ -144,15 +144,11 @@ class Semver {
                 return Integer.compare(Integer.parseInt(mPreRelease[i]), Integer.parseInt(toCompare.mPreRelease[i]));
             }
 
-            return compareString(mPreRelease[i], toCompare.mPreRelease[i]);//mPreRelease[i].compareTo(toCompare.mPreRelease[i]);
+            return mPreRelease[i].compareTo(toCompare.mPreRelease[i]);
         }
 
         // Compare lengths of pre-release versions
         return Integer.compare(mPreRelease.length, toCompare.mPreRelease.length);
-    }
-
-    private int compareString(String value1, String value2) {
-        return value1.compareTo(value2);
     }
 
     public String getVersion() {
