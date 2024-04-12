@@ -307,7 +307,7 @@ public class SplitParserTest {
         set_matcher_test(c, m);
     }
 
-    public void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
+    private void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
 
         SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
 
