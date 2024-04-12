@@ -37,67 +37,6 @@ class Semver {
         setMajorMinorAndPatch(vWithoutPreRelease);
         mVersion = setVersion();
     }
-    private String setAndRemoveMetadataIfExists(String version) throws SemverParseException {
-        int index = version.indexOf(METADATA_DELIMITER);
-        if (index == -1) {
-            return version;
-        }
-
-        mMetadata = version.substring(index + 1);
-        if (mMetadata == null || mMetadata.isEmpty()) {
-            throw new SemverParseException("Unable to convert to Semver, incorrect metadata");
-        }
-
-        return version.substring(0, index);
-    }
-
-    private String setAndRemovePreReleaseIfExists(String vWithoutMetadata) throws SemverParseException {
-        int index = vWithoutMetadata.indexOf(PRE_RELEASE_DELIMITER);
-        if (index == -1) {
-            mIsStable = true;
-            return vWithoutMetadata;
-        }
-        String preReleaseData = vWithoutMetadata.substring(index + 1);
-        mPreRelease = preReleaseData.split(VALUE_DELIMITER);
-
-        if (mPreRelease == null || containsNullOrEmpty(mPreRelease)) {
-            throw new SemverParseException("Unable to convert to Semver, incorrect pre release data");
-        }
-        return vWithoutMetadata.substring(0, index);
-    }
-
-    private static boolean containsNullOrEmpty(String[] preRelease) {
-        for (String pr : preRelease) {
-            if (pr == null || pr.isEmpty()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void setMajorMinorAndPatch(String version) throws SemverParseException {
-        String[] vParts = version.split(VALUE_DELIMITER);
-        if (vParts.length != 3) {
-            Logger.e("Unable to convert to Semver, incorrect format: " + version);
-            throw new SemverParseException("Unable to convert to Semver, incorrect format: " + version);
-        }
-        mMajor = Long.parseLong(vParts[0]);
-        mMinor = Long.parseLong(vParts[1]);
-        mPatch = Long.parseLong(vParts[2]);
-    }
-
-    private String setVersion() {
-        String toReturn = mMajor + VALUE_DELIMITER + mMinor + VALUE_DELIMITER + mPatch;
-        if (mPreRelease != null && mPreRelease.length != 0) {
-            toReturn = toReturn + PRE_RELEASE_DELIMITER + String.join(VALUE_DELIMITER, mPreRelease);
-        }
-
-        if (mMetadata != null && !mMetadata.isEmpty()) {
-            toReturn = toReturn + METADATA_DELIMITER + mMetadata;
-        }
-
-        return toReturn;
-    }
 
     /**
      * Precedence comparison between 2 Semver objects.
@@ -163,6 +102,68 @@ class Semver {
         return mVersion.equals(((Semver) obj).getVersion());
     }
 
+    private String setAndRemoveMetadataIfExists(String version) throws SemverParseException {
+        int index = version.indexOf(METADATA_DELIMITER);
+        if (index == -1) {
+            return version;
+        }
+
+        mMetadata = version.substring(index + 1);
+        if (mMetadata == null || mMetadata.isEmpty()) {
+            throw new SemverParseException("Unable to convert to Semver, incorrect metadata");
+        }
+
+        return version.substring(0, index);
+    }
+
+    private String setAndRemovePreReleaseIfExists(String vWithoutMetadata) throws SemverParseException {
+        int index = vWithoutMetadata.indexOf(PRE_RELEASE_DELIMITER);
+        if (index == -1) {
+            mIsStable = true;
+            return vWithoutMetadata;
+        }
+        String preReleaseData = vWithoutMetadata.substring(index + 1);
+        mPreRelease = preReleaseData.split(VALUE_DELIMITER);
+
+        if (mPreRelease == null || containsNullOrEmpty(mPreRelease)) {
+            throw new SemverParseException("Unable to convert to Semver, incorrect pre release data");
+        }
+        return vWithoutMetadata.substring(0, index);
+    }
+
+    private static boolean containsNullOrEmpty(String[] preRelease) {
+        for (String pr : preRelease) {
+            if (pr == null || pr.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void setMajorMinorAndPatch(String version) throws SemverParseException {
+        String[] vParts = version.split(VALUE_DELIMITER);
+        if (vParts.length != 3) {
+            Logger.e("Unable to convert to Semver, incorrect format: " + version);
+            throw new SemverParseException("Unable to convert to Semver, incorrect format: " + version);
+        }
+        mMajor = Long.parseLong(vParts[0]);
+        mMinor = Long.parseLong(vParts[1]);
+        mPatch = Long.parseLong(vParts[2]);
+    }
+
+    private String setVersion() {
+        String toReturn = mMajor + VALUE_DELIMITER + mMinor + VALUE_DELIMITER + mPatch;
+        if (mPreRelease != null && mPreRelease.length != 0) {
+            toReturn = toReturn + PRE_RELEASE_DELIMITER + String.join(VALUE_DELIMITER, mPreRelease);
+        }
+
+        if (mMetadata != null && !mMetadata.isEmpty()) {
+            toReturn = toReturn + METADATA_DELIMITER + mMetadata;
+        }
+
+        return toReturn;
+    }
+
     private static boolean isNumeric(String strNum) {
         if (strNum == null) {
             return false;
@@ -170,7 +171,7 @@ class Semver {
 
         try {
             Double.parseDouble(strNum);
-        } catch (NumberFormatException nfe) {
+        } catch (NumberFormatException e) {
             return false;
         }
 
