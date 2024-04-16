@@ -2,6 +2,7 @@ package io.split.android.engine.experiments;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -16,9 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.Condition;
+import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.DataType;
 import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherCombiner;
+import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.MatcherType;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
@@ -307,7 +310,34 @@ public class SplitParserTest {
         set_matcher_test(c, m);
     }
 
-    public void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
+    @Test
+    public void equalToSemverParsing() {
+        Condition condition = new Condition();
+        condition.conditionType = ConditionType.ROLLOUT;
+        condition.label = "new label";
+        condition.partitions = Arrays.asList(
+                ConditionsTestUtil.partition("on", 50),
+                ConditionsTestUtil.partition("0ff", 50));
+        Matcher matcher = new Matcher();
+        matcher.matcherType = MatcherType.EQUAL_TO_SEMVER;
+        matcher.stringMatcherData = "2.2.2";
+        condition.matcherGroup = new MatcherGroup();
+        condition.matcherGroup.matchers = Collections.singletonList(matcher);
+        Split split = makeSplit("test1", Collections.singletonList(condition));
+
+        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+
+        ParsedSplit parsedSplit = parser.parse(split);
+        assertEquals("test1", parsedSplit.feature());
+        assertEquals("off", parsedSplit.defaultTreatment());
+        assertEquals(1, parsedSplit.parsedConditions().size());
+        ParsedCondition parsedCondition = parsedSplit.parsedConditions().get(0);
+        assertEquals("new label", parsedCondition.label());
+        assertEquals(ConditionType.ROLLOUT, parsedCondition.conditionType());
+        assertEquals(2, parsedCondition.partitions().size());
+    }
+
+    private void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
 
         SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
 

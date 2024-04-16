@@ -27,5 +27,8 @@ public enum MatcherType {
     EQUAL_TO_BOOLEAN,
 
     /* Dependency Matcher */
-    IN_SPLIT_TREATMENT
+    IN_SPLIT_TREATMENT,
+
+    /* Semver */
+    EQUAL_TO_SEMVER,
 }

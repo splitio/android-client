@@ -1,5 +1,6 @@
 package io.split.android.engine.matchers.semver;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Arrays;
@@ -90,6 +91,7 @@ class Semver {
         return Integer.compare(mPreRelease.length, toCompare.mPreRelease.length);
     }
 
+    @NonNull
     public String getVersion() {
         return mVersion;
     }
@@ -151,6 +153,7 @@ class Semver {
         mPatch = Long.parseLong(vParts[2]);
     }
 
+    @NonNull
     private String setVersion() {
         String toReturn = mMajor + VALUE_DELIMITER + mMinor + VALUE_DELIMITER + mPatch;
         if (mPreRelease != null && mPreRelease.length != 0) {
