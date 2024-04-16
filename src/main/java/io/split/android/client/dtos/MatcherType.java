@@ -1,5 +1,7 @@
 package io.split.android.client.dtos;
 
+import com.google.gson.annotations.SerializedName;
+
 public enum MatcherType {
     ALL_KEYS,
     IN_SEGMENT,
@@ -27,5 +29,17 @@ public enum MatcherType {
     EQUAL_TO_BOOLEAN,
 
     /* Dependency Matcher */
-    IN_SPLIT_TREATMENT
+    IN_SPLIT_TREATMENT,
+
+    /* Semver */
+    @SerializedName("EQUAL_TO_SEMVER")
+    EQUAL_TO_SEMVER,
+    @SerializedName("GREATER_THAN_OR_EQUAL_TO_SEMVER")
+    GREATER_THAN_OR_EQUAL_TO_SEMVER,
+    @SerializedName("LESS_THAN_OR_EQUAL_TO_SEMVER")
+    LESS_THAN_OR_EQUAL_TO_SEMVER,
+    @SerializedName("BETWEEN_SEMVER")
+    BETWEEN_SEMVER,
+    @SerializedName("IN_LIST_SEMVER")
+    IN_LIST_SEMVER,
 }
