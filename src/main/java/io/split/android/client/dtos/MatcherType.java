@@ -38,4 +38,6 @@ public enum MatcherType {
     GREATER_THAN_OR_EQUAL_TO_SEMVER,
     @SerializedName("LESS_THAN_OR_EQUAL_TO_SEMVER")
     LESS_THAN_OR_EQUAL_TO_SEMVER,
+    @SerializedName("BETWEEN_SEMVER")
+    BETWEEN_SEMVER
 }

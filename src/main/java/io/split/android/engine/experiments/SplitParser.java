@@ -31,6 +31,7 @@ import io.split.android.engine.matchers.collections.ContainsAllOfSetMatcher;
 import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
 import io.split.android.engine.matchers.collections.EqualToSetMatcher;
 import io.split.android.engine.matchers.collections.PartOfSetMatcher;
+import io.split.android.engine.matchers.semver.BetweenSemverMatcher;
 import io.split.android.engine.matchers.semver.EqualToSemverMatcher;
 import io.split.android.engine.matchers.semver.GreaterThanOrEqualToSemverMatcher;
 import io.split.android.engine.matchers.semver.LessThanOrEqualToSemverMatcher;
@@ -201,6 +202,9 @@ public class SplitParser {
                 break;
             case LESS_THAN_OR_EQUAL_TO_SEMVER:
                 delegate = new LessThanOrEqualToSemverMatcher(matcher.stringMatcherData);
+                break;
+            case BETWEEN_SEMVER:
+                delegate = new BetweenSemverMatcher(matcher.betweenStringMatcherData.start, matcher.betweenStringMatcherData.end);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown matcher type: " + matcher.matcherType);

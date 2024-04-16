@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.dtos.BetweenStringMatcherData;
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.DataType;
@@ -375,6 +376,36 @@ public class SplitParserTest {
         Matcher matcher = new Matcher();
         matcher.matcherType = MatcherType.LESS_THAN_OR_EQUAL_TO_SEMVER;
         matcher.stringMatcherData = "2.2.2";
+        condition.matcherGroup = new MatcherGroup();
+        condition.matcherGroup.matchers = Collections.singletonList(matcher);
+        Split split = makeSplit("test1", Collections.singletonList(condition));
+
+        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+
+        ParsedSplit parsedSplit = parser.parse(split);
+        assertEquals("test1", parsedSplit.feature());
+        assertEquals("off", parsedSplit.defaultTreatment());
+        assertEquals(1, parsedSplit.parsedConditions().size());
+        ParsedCondition parsedCondition = parsedSplit.parsedConditions().get(0);
+        assertEquals("new label", parsedCondition.label());
+        assertEquals(ConditionType.ROLLOUT, parsedCondition.conditionType());
+        assertEquals(2, parsedCondition.partitions().size());
+    }
+
+    @Test
+    public void betweenSemverParsing() {
+        Condition condition = new Condition();
+        condition.conditionType = ConditionType.ROLLOUT;
+        condition.label = "new label";
+        condition.partitions = Arrays.asList(
+                ConditionsTestUtil.partition("on", 50),
+                ConditionsTestUtil.partition("0ff", 50));
+        Matcher matcher = new Matcher();
+        matcher.matcherType = MatcherType.BETWEEN_SEMVER;
+        BetweenStringMatcherData betweenStringMatcherData = new BetweenStringMatcherData();
+        betweenStringMatcherData.start = "2.2.2";
+        betweenStringMatcherData.end = "2.2.3";
+        matcher.betweenStringMatcherData = betweenStringMatcherData;
         condition.matcherGroup = new MatcherGroup();
         condition.matcherGroup.matchers = Collections.singletonList(matcher);
         Split split = makeSplit("test1", Collections.singletonList(condition));
