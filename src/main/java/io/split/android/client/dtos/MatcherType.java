@@ -31,4 +31,5 @@ public enum MatcherType {
 
     /* Semver */
     EQUAL_TO_SEMVER,
+    GREATER_THAN_OR_EQUAL_TO_SEMVER,
 }
