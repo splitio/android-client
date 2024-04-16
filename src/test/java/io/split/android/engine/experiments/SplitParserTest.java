@@ -27,6 +27,7 @@ import io.split.android.client.dtos.MatcherType;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.dtos.WhitelistMatcherData;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.engine.ConditionsTestUtil;
@@ -406,6 +407,35 @@ public class SplitParserTest {
         betweenStringMatcherData.start = "2.2.2";
         betweenStringMatcherData.end = "2.2.3";
         matcher.betweenStringMatcherData = betweenStringMatcherData;
+        condition.matcherGroup = new MatcherGroup();
+        condition.matcherGroup.matchers = Collections.singletonList(matcher);
+        Split split = makeSplit("test1", Collections.singletonList(condition));
+
+        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+
+        ParsedSplit parsedSplit = parser.parse(split);
+        assertEquals("test1", parsedSplit.feature());
+        assertEquals("off", parsedSplit.defaultTreatment());
+        assertEquals(1, parsedSplit.parsedConditions().size());
+        ParsedCondition parsedCondition = parsedSplit.parsedConditions().get(0);
+        assertEquals("new label", parsedCondition.label());
+        assertEquals(ConditionType.ROLLOUT, parsedCondition.conditionType());
+        assertEquals(2, parsedCondition.partitions().size());
+    }
+
+    @Test
+    public void inListSemverParsing() {
+        Condition condition = new Condition();
+        condition.conditionType = ConditionType.ROLLOUT;
+        condition.label = "new label";
+        condition.partitions = Arrays.asList(
+                ConditionsTestUtil.partition("on", 50),
+                ConditionsTestUtil.partition("0ff", 50));
+        Matcher matcher = new Matcher();
+        matcher.matcherType = MatcherType.IN_LIST_SEMVER;
+        WhitelistMatcherData whitelistMatcherData = new WhitelistMatcherData();
+        whitelistMatcherData.whitelist = Arrays.asList("2.2.2", "2.2.3");
+        matcher.whitelistMatcherData = whitelistMatcherData;
         condition.matcherGroup = new MatcherGroup();
         condition.matcherGroup.matchers = Collections.singletonList(matcher);
         Split split = makeSplit("test1", Collections.singletonList(condition));
