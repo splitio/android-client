@@ -16,7 +16,7 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
-import io.split.android.client.service.workmanager.SplitsSyncWorker;
+import io.split.android.client.service.workmanager.splits.SplitsSyncWorker;
 import io.split.android.client.service.workmanager.UniqueKeysRecorderWorker;
 
 public class WMWorkersSetupTest {

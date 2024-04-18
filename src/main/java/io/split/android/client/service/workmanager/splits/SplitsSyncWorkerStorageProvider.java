@@ -1,4 +1,4 @@
-package io.split.android.client.service.workmanager;
+package io.split.android.client.service.workmanager.splits;
 
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;

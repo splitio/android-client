@@ -19,9 +19,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +30,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
-import io.split.android.client.service.workmanager.SplitsSyncWorker;
+import io.split.android.client.service.workmanager.splits.SplitsSyncWorker;
 
 public class WorkManagerWrapperTest {
 

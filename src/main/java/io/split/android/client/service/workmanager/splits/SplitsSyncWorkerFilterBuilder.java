@@ -1,4 +1,4 @@
-package io.split.android.client.service.workmanager;
+package io.split.android.client.service.workmanager.splits;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -10,13 +10,11 @@ import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ListenableWorker;
-import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import java.lang.ref.WeakReference;
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,7 +32,7 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkMan
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
-import io.split.android.client.service.workmanager.SplitsSyncWorker;
+import io.split.android.client.service.workmanager.splits.SplitsSyncWorker;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.service.workmanager.UniqueKeysRecorderWorker;
 

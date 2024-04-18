@@ -1,4 +1,4 @@
-package io.split.android.client.service.workmanager;
+package io.split.android.client.service.workmanager.splits;
 
 import androidx.annotation.NonNull;
 

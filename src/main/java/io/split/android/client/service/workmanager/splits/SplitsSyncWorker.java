@@ -1,4 +1,4 @@
-package io.split.android.client.service.workmanager;
+package io.split.android.client.service.workmanager.splits;
 
 import android.content.Context;
 
@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters;
 import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.service.workmanager.SplitWorker;
 
 public class SplitsSyncWorker extends SplitWorker {
 
