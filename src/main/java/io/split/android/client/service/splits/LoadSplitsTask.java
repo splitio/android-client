@@ -7,6 +7,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.utils.logger.Logger;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
@@ -61,6 +62,8 @@ public class LoadSplitsTask implements SplitTask {
         if (shouldClearCache) {
             mSplitsStorage.clear();
 
+            logClearingMessage(filterHasChanged, flagsSpecHasChanged);
+
             if (filterHasChanged) {
                 mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryStringFromConfig);
             }
@@ -73,5 +76,15 @@ public class LoadSplitsTask implements SplitTask {
         // Since change number is -1 or the storage has been cleared,
         // we don't consider the flags to be loaded, so the task status is error
         return SplitTaskExecutionInfo.error(SplitTaskType.LOAD_LOCAL_SPLITS);
+    }
+
+    private static void logClearingMessage(boolean filterHasChanged, boolean flagsSpecHasChanged) {
+        if (filterHasChanged && flagsSpecHasChanged) {
+            Logger.v("Cleared storage due to filter & spec change");
+        } else if (filterHasChanged) {
+            Logger.v("Cleared storage due to filter change");
+        } else if (flagsSpecHasChanged) {
+            Logger.v("Cleared storage due to spec change");
+        }
     }
 }
