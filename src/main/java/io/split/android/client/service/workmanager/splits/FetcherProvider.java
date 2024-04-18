@@ -18,6 +18,6 @@ class FetcherProvider {
     }
 
     public HttpFetcher<SplitChange> provideFetcher(String splitsFilterQueryString) throws URISyntaxException {
-        return ServiceFactory.getSplitsFetcher(mHttpClient,mEndpoint, splitsFilterQueryString);
+        return ServiceFactory.getSplitsFetcher(mHttpClient, mEndpoint, splitsFilterQueryString);
     }
 }

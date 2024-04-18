@@ -10,6 +10,7 @@ import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ListenableWorker;
+import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
@@ -108,7 +109,6 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
                 .Builder(workerClass, mSplitClientConfig.backgroundSyncPeriod(), TimeUnit.MINUTES)
                 .setInputData(buildInputData(inputData))
                 .setConstraints(mConstraints)
-                .setInitialDelay(5, TimeUnit.SECONDS) // TODO
                 .build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.REPLACE, request);
         observeWorkState(workerClass.getCanonicalName());
@@ -242,11 +242,11 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
 
     private Constraints buildConstraints() {
         Constraints.Builder constraintsBuilder = new Constraints.Builder();
-//        constraintsBuilder.setRequiredNetworkType(
-//                mSplitClientConfig.backgroundSyncWhenBatteryWifiOnly() ?
-//                        NetworkType.UNMETERED : NetworkType.CONNECTED);
-//        constraintsBuilder.setRequiresBatteryNotLow(
-//                mSplitClientConfig.backgroundSyncWhenBatteryNotLow());
+        constraintsBuilder.setRequiredNetworkType(
+                mSplitClientConfig.backgroundSyncWhenBatteryWifiOnly() ?
+                        NetworkType.UNMETERED : NetworkType.CONNECTED);
+        constraintsBuilder.setRequiresBatteryNotLow(
+                mSplitClientConfig.backgroundSyncWhenBatteryNotLow());
         return constraintsBuilder.build();
     }
 
