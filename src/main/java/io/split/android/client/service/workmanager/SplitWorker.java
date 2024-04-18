@@ -1,7 +1,5 @@
 package io.split.android.client.service.workmanager;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 import android.content.Context;
 
 import androidx.annotation.NonNull;
@@ -48,9 +46,12 @@ public abstract class SplitWorker extends Worker {
     @NonNull
     @Override
     public Result doWork() {
-        checkNotNull(mSplitTask);
-        mSplitTask.execute();
-        return Result.success();
+        if (mSplitTask != null) {
+            mSplitTask.execute();
+            return Result.success();
+        } else {
+            return Result.failure();
+        }
     }
 
     protected SplitRoomDatabase getDatabase() {

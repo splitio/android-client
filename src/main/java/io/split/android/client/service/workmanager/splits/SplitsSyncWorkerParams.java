@@ -23,12 +23,12 @@ class SplitsSyncWorkerParams {
         );
     }
 
-    public SplitsSyncWorkerParams(boolean shouldRecordTelemetry,
-                                  String apiKey,
-                                  boolean encryptionEnabled,
-                                  String configuredFilterType,
-                                  String[] configuredFilterValues,
-                                  String flagsSpec) {
+    SplitsSyncWorkerParams(boolean shouldRecordTelemetry,
+                           String apiKey,
+                           boolean encryptionEnabled,
+                           String configuredFilterType,
+                           String[] configuredFilterValues,
+                           String flagsSpec) {
         mShouldRecordTelemetry = shouldRecordTelemetry;
         mApiKey = apiKey;
         mEncryptionEnabled = encryptionEnabled;

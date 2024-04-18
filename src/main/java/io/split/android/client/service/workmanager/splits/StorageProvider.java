@@ -5,27 +5,28 @@ import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 
-public class SplitsSyncWorkerStorageProvider implements SplitsSyncWorkerTaskBuilder.StorageProvider {
+class StorageProvider {
 
     private final SplitRoomDatabase mDatabase;
     private final String mApiKey;
     private final boolean mEncryptionEnabled;
     private final boolean mShouldRecordTelemetry;
 
-    SplitsSyncWorkerStorageProvider(SplitRoomDatabase database, String apiKey, boolean encryptionEnabled, boolean shouldRecordTelemetry) {
+    StorageProvider(SplitRoomDatabase database, String apiKey, boolean encryptionEnabled, boolean shouldRecordTelemetry) {
         mDatabase = database;
         mApiKey = apiKey;
         mEncryptionEnabled = encryptionEnabled;
         mShouldRecordTelemetry = shouldRecordTelemetry;
     }
 
-    @Override
-    public SplitsStorage provideSplitsStorage() {
-        return StorageFactory.getSplitsStorageForWorker(mDatabase, mApiKey, mEncryptionEnabled);
+    SplitsStorage provideSplitsStorage() {
+        SplitsStorage splitsStorageForWorker = StorageFactory.getSplitsStorageForWorker(mDatabase, mApiKey, mEncryptionEnabled);
+        splitsStorageForWorker.loadLocal(); // call loadLocal to populate storage with DB data
+
+        return splitsStorageForWorker;
     }
 
-    @Override
-    public TelemetryStorage provideTelemetryStorage() {
+    TelemetryStorage provideTelemetryStorage() {
         return StorageFactory.getTelemetryStorage(mShouldRecordTelemetry);
     }
 }

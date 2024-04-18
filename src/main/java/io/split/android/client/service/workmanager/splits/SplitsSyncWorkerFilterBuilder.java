@@ -1,5 +1,7 @@
 package io.split.android.client.service.workmanager.splits;
 
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,12 +10,13 @@ import io.split.android.client.SplitFilter;
 
 class SplitsSyncWorkerFilterBuilder {
 
-    static SplitFilter buildFilter(String filterType, String[] filterValuesArray) {
+    @Nullable
+    static SplitFilter buildFilter(@Nullable String filterType, String[] filterValues) {
         SplitFilter filter = null;
         if (filterType != null) {
             List<String> configuredFilterValues = new ArrayList<>();
-            if (filterValuesArray != null) {
-                configuredFilterValues = Arrays.asList(filterValuesArray);
+            if (filterValues != null) {
+                configuredFilterValues = Arrays.asList(filterValues);
             }
 
             if (SplitFilter.Type.BY_NAME.queryStringField().equals(filterType)) {

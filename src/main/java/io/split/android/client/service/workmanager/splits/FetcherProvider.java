@@ -7,19 +7,17 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.http.HttpFetcher;
 
-public class SplitsSyncWorkerFetcherProvider implements SplitsSyncWorkerTaskBuilder.FetcherProvider {
+class FetcherProvider {
 
     private final HttpClient mHttpClient;
     private final String mEndpoint;
 
-    SplitsSyncWorkerFetcherProvider(HttpClient httpClient, String endpoint) {
+    FetcherProvider(HttpClient httpClient, String endpoint) {
         mHttpClient = httpClient;
         mEndpoint = endpoint;
     }
 
-    @Override
     public HttpFetcher<SplitChange> provideFetcher(String splitsFilterQueryString) throws URISyntaxException {
-        return ServiceFactory.getSplitsFetcher(mHttpClient,
-                mEndpoint, splitsFilterQueryString);
+        return ServiceFactory.getSplitsFetcher(mHttpClient,mEndpoint, splitsFilterQueryString);
     }
 }
