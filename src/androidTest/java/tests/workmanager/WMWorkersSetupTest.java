@@ -33,7 +33,11 @@ public class WMWorkersSetupTest {
     public void splitSyncWorker() throws Exception {
         ListenableWorker worker =
                 TestListenableWorkerBuilder.from(mContext, SplitsSyncWorker.class)
-                        .setInputData(buildInputData(null))
+                        .setInputData(buildInputData(new Data.Builder()
+                                .putString(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_TYPE, "sets")
+                                .putString(ServiceConstants.WORKER_PARAM_FLAGS_SPEC, "1.2")
+                                .putStringArray(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_VALUES, new String[]{"value1", "value2"})
+                                .build()))
                         .build();
 
         ListenableWorker.Result result = worker.startWork().get();

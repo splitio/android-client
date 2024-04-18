@@ -195,6 +195,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
             return;
             // If executionTimes is grater than zero, maximum executions decrease 1
         } else if (mExecutionTimes.get(event) > 0) {
+            Logger.d("Event " + event.name() + " triggered");
             mExecutionTimes.put(event, mExecutionTimes.get(event) - 1);
         } //If executionTimes is lower than zero, execute it without limitation
         if (mSubscriptions.containsKey(event)) {

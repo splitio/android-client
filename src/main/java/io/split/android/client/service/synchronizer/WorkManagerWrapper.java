@@ -16,11 +16,13 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import java.lang.ref.WeakReference;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.android_client.BuildConfig;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.service.ServiceConstants;
@@ -108,7 +110,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
                 .Builder(workerClass, mSplitClientConfig.backgroundSyncPeriod(), TimeUnit.MINUTES)
                 .setInputData(buildInputData(inputData))
                 .setConstraints(mConstraints)
-                .setInitialDelay(ServiceConstants.DEFAULT_INITIAL_DELAY, TimeUnit.MINUTES)
+                .setInitialDelay(5, TimeUnit.SECONDS) // TODO
                 .build();
         mWorkManager.enqueueUniquePeriodicWork(requestType, ExistingPeriodicWorkPolicy.REPLACE, request);
         observeWorkState(workerClass.getCanonicalName());
@@ -190,6 +192,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_TYPE, (mFilter != null) ? mFilter.getType().queryStringField() : null);
         dataBuilder.putStringArray(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_VALUES, (mFilter != null) ? mFilter.getValues().toArray(new String[0]) : new String[0]);
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_FLAGS_SPEC, BuildConfig.FLAGS_SPEC);
         return buildInputData(dataBuilder.build());
     }
 
@@ -241,11 +244,11 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
 
     private Constraints buildConstraints() {
         Constraints.Builder constraintsBuilder = new Constraints.Builder();
-        constraintsBuilder.setRequiredNetworkType(
-                mSplitClientConfig.backgroundSyncWhenBatteryWifiOnly() ?
-                        NetworkType.UNMETERED : NetworkType.CONNECTED);
-        constraintsBuilder.setRequiresBatteryNotLow(
-                mSplitClientConfig.backgroundSyncWhenBatteryNotLow());
+//        constraintsBuilder.setRequiredNetworkType(
+//                mSplitClientConfig.backgroundSyncWhenBatteryWifiOnly() ?
+//                        NetworkType.UNMETERED : NetworkType.CONNECTED);
+//        constraintsBuilder.setRequiresBatteryNotLow(
+//                mSplitClientConfig.backgroundSyncWhenBatteryNotLow());
         return constraintsBuilder.build();
     }
 

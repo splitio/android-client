@@ -33,6 +33,7 @@ public class ServiceConstants {
     public static final String WORKER_PARAM_ENCRYPTION_ENABLED = "encryptionEnabled";
     public static final String WORKER_PARAM_CONFIGURED_FILTER_VALUES = "configuredFilterValues";
     public static final String WORKER_PARAM_CONFIGURED_FILTER_TYPE = "configuredFilterType";
+    public static final String WORKER_PARAM_FLAGS_SPEC = "flagsSpec";
 
     public static final int LAST_SEEN_IMPRESSION_CACHE_SIZE = 2000;
     public static final int MY_SEGMENT_V2_DATA_SIZE = 1024 * 10;// bytes
