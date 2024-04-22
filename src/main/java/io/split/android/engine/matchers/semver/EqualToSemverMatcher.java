@@ -29,7 +29,7 @@ public class EqualToSemverMatcher implements Matcher {
             return false;
         }
 
-        boolean result = keySemver.getVersion().equals(mTarget.getVersion());
+        boolean result = keySemver.equals(mTarget);
 
         Logger.d(keySemver.getVersion() + " == " + mTarget.getVersion() + " | Result: " + result);
 

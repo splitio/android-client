@@ -3,9 +3,6 @@ package io.split.android.engine.matchers.semver;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-
 import io.split.android.client.utils.logger.Logger;
 
 class Semver {
@@ -81,7 +78,7 @@ class Semver {
             }
 
             if (isNumeric(mPreRelease[i]) && isNumeric(toCompare.mPreRelease[i])) {
-                return Integer.compare(Integer.parseInt(mPreRelease[i]), Integer.parseInt(toCompare.mPreRelease[i]));
+                return Long.compare(Long.parseLong(mPreRelease[i]), Long.parseLong(toCompare.mPreRelease[i]));
             }
 
             return mPreRelease[i].compareTo(toCompare.mPreRelease[i]);
@@ -130,6 +127,7 @@ class Semver {
         if (mPreRelease == null || containsNullOrEmpty(mPreRelease)) {
             throw new SemverParseException("Unable to convert to Semver, incorrect pre release data");
         }
+
         return vWithoutMetadata.substring(0, index);
     }
 
@@ -157,6 +155,12 @@ class Semver {
     private String setVersion() {
         String toReturn = mMajor + VALUE_DELIMITER + mMinor + VALUE_DELIMITER + mPatch;
         if (mPreRelease != null && mPreRelease.length != 0) {
+            for (int i = 0; i < mPreRelease.length; i++) {
+                if (isNumeric(mPreRelease[i])) {
+                    mPreRelease[i] = String.valueOf(Long.parseLong(mPreRelease[i]));
+                }
+            }
+
             toReturn = toReturn + PRE_RELEASE_DELIMITER + String.join(VALUE_DELIMITER, mPreRelease);
         }
 
