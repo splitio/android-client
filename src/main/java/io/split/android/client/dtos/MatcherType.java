@@ -31,7 +31,7 @@ public enum MatcherType {
     PART_OF_SET,
 
     /* String Matcher */
-    @SerializedName("EQUAL_TO_STRING")
+    @SerializedName("STARTS_WITH")
     STARTS_WITH,
     @SerializedName("ENDS_WITH")
     ENDS_WITH,
