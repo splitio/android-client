@@ -28,6 +28,7 @@ import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.TestingConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.network.HttpClient;
@@ -35,6 +36,7 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
@@ -269,6 +271,14 @@ public class IntegrationHelper {
         return "id:cf74eb42-f687-48e4-ad18-af2125110aac\n" +
                 "event:message\n" +
                 "data:{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":"+System.currentTimeMillis()+",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"" + splitName + "\\\"}\"}\n";
+    }
+
+    public static String loadSplitChanges(Context context, String fileName) {
+        FileHelper fileHelper = new FileHelper();
+        String change = fileHelper.loadFileContent(context, fileName);
+        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
+        parsedChange.since = parsedChange.till;
+        return Json.toJson(parsedChange);
     }
 
     /**
