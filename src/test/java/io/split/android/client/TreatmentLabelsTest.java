@@ -14,6 +14,6 @@ public class TreatmentLabelsTest {
         assertEquals("exception", TreatmentLabels.EXCEPTION);
         assertEquals("killed", TreatmentLabels.KILLED);
         assertEquals("not ready", TreatmentLabels.NOT_READY);
-        assertEquals("unsupported matcher type", TreatmentLabels.UNSUPPORTED_MATCHER_TYPE);
+        assertEquals("targeting rule type unsupported by sdk", TreatmentLabels.UNSUPPORTED_MATCHER_TYPE);
     }
 }

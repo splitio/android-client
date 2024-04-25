@@ -94,7 +94,7 @@ public class UnsupportedMatcherTest {
         List<ImpressionEntity> storedImpressions = mDatabase.impressionDao().getAll();
 
         assertEquals(1, storedImpressions.size());
-        assertTrue(storedImpressions.get(0).getBody().contains("unsupported matcher type"));
+        assertTrue(storedImpressions.get(0).getBody().contains("targeting rule type unsupported by sdk"));
     }
 
     @Test
@@ -114,7 +114,7 @@ public class UnsupportedMatcherTest {
 
         splitFactory.client().getTreatmentWithConfig("feature_flag_for_test", null);
 
-        assertEquals("unsupported matcher type", impression.get().appliedRule());
+        assertEquals("targeting rule type unsupported by sdk", impression.get().appliedRule());
     }
 
     private HttpResponseMockDispatcher getDispatcher() {

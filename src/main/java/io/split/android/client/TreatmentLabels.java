@@ -7,5 +7,5 @@ public class TreatmentLabels {
     public static final String EXCEPTION = "exception";
     public static final String KILLED = "killed";
     public static final String NOT_READY = "not ready";
-    public static final String UNSUPPORTED_MATCHER_TYPE = "unsupported matcher type";
+    public static final String UNSUPPORTED_MATCHER_TYPE = "targeting rule type unsupported by sdk";
 }

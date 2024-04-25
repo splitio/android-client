@@ -34,7 +34,7 @@ public class DefaultConditionsProviderTest {
     @Test
     public void defaultConditionHasUnsupportedMatcherTypeLabel() {
         List<ParsedCondition> defaultConditions = mDefaultConditionsProvider.getDefaultConditions();
-        assertEquals("unsupported matcher type", defaultConditions.get(0).label());
+        assertEquals("targeting rule type unsupported by sdk", defaultConditions.get(0).label());
     }
 
     @Test
