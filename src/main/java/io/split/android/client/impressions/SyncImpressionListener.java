@@ -32,17 +32,4 @@ public class SyncImpressionListener implements ImpressionListener {
     @Override
     public void close() {
     }
-
-    static class ImpressionLoggingTaskFactory {
-
-        private final SyncManager mSyncManager;
-
-        ImpressionLoggingTaskFactory(@NonNull SyncManager syncManager) {
-            mSyncManager = checkNotNull(syncManager);
-        }
-
-        ImpressionLoggingTask create(Impression impression) {
-            return new ImpressionLoggingTask(mSyncManager, impression);
-        }
-    }
 }
