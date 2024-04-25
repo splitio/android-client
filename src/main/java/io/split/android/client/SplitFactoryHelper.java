@@ -13,7 +13,11 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -443,6 +447,15 @@ class SplitFactoryHelper {
         }
 
         return null;
+    }
+
+    ExecutorService getImpressionsLoggingTaskExecutor() {
+        return new ThreadPoolExecutor(1,
+                1,
+                0L,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<Runnable>(1000),
+                new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {

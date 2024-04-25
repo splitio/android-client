@@ -10,6 +10,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
@@ -189,7 +193,6 @@ public class SplitFactoryImpl implements SplitFactory {
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
-        SplitSingleThreadTaskExecutor impressionsLoggingTaskExecutor = new SplitSingleThreadTaskExecutor();
 
         ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
@@ -246,6 +249,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         mLifecycleManager.register(mSyncManager);
 
+        ExecutorService impressionsLoggingTaskExecutor = factoryHelper.getImpressionsLoggingTaskExecutor();
         final ImpressionListener splitImpressionListener
                 = new SyncImpressionListener(mSyncManager, impressionsLoggingTaskExecutor);
         final ImpressionListener customerImpressionListener;
@@ -282,7 +286,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     telemetrySynchronizer.flush();
                     telemetrySynchronizer.destroy();
                     Logger.d("Successful shutdown of telemetry");
-                    impressionsLoggingTaskExecutor.stop();
+                    impressionsLoggingTaskExecutor.shutdown();
                     mSyncManager.stop();
                     Logger.d("Flushing impressions and events");
                     mLifecycleManager.destroy();

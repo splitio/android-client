@@ -30,7 +30,7 @@ public class ImpressionsObserverTest {
     @Before
     public void setUp() {
         ImpressionsObserverCacheDao dao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
-        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(dao, 2000);
+        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(dao, 2000, 1);
     }
 
     private List<Impression> generateImpressions(long count) {
@@ -68,7 +68,7 @@ public class ImpressionsObserverTest {
     }
 
     @Test
-    public void testValuesArePersistedAcrossInstances() {
+    public void testValuesArePersistedAcrossInstances() throws InterruptedException {
         ImpressionsObserver observer = new ImpressionsObserverImpl(mStorage, 2);
 
         Impression imp = new Impression("someKey",
@@ -91,6 +91,7 @@ public class ImpressionsObserverTest {
         // These are in the cache, so they should return a value
         Long secondImp = observer.testAndSet(imp);
         Long secondImp2 = observer.testAndSet(imp2);
+        Thread.sleep(500);
 
         // We recreate the observer
         observer = new ImpressionsObserverImpl(mStorage, 2);

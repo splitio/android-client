@@ -1,6 +1,5 @@
 package io.split.android.client.impressions;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -11,9 +10,6 @@ import org.junit.Test;
 
 import java.util.HashMap;
 
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionStatus;
-import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.synchronizer.SyncManager;
 
 public class ImpressionLoggingTaskTest {
@@ -31,7 +27,7 @@ public class ImpressionLoggingTaskTest {
         Impression impression = createImpression();
         mImpressionsLoggingTask = new ImpressionLoggingTask(mSyncManager, impression);
 
-        mImpressionsLoggingTask.execute();
+        mImpressionsLoggingTask.run();
 
         verify(mSyncManager).pushImpression(impression);
     }
@@ -41,22 +37,16 @@ public class ImpressionLoggingTaskTest {
         Impression impression = createImpression();
         mImpressionsLoggingTask = new ImpressionLoggingTask(mSyncManager, impression);
 
-        SplitTaskExecutionInfo result = mImpressionsLoggingTask.execute();
-
-        assertEquals(result.getStatus(), SplitTaskExecutionStatus.SUCCESS);
-        assertEquals(result.getTaskType(), SplitTaskType.GENERIC_TASK);
+        mImpressionsLoggingTask.run();
     }
 
     @Test
-    public void unsuccessfulExecutionReturnsFailureInfo() {
+    public void unsuccessfulExecutionDoesNotCrash() {
         doThrow(new RuntimeException("test")).when(mSyncManager).pushImpression(any(Impression.class));
         Impression impression = createImpression();
         mImpressionsLoggingTask = new ImpressionLoggingTask(mSyncManager, impression);
 
-        SplitTaskExecutionInfo result = mImpressionsLoggingTask.execute();
-
-        assertEquals(result.getStatus(), SplitTaskExecutionStatus.ERROR);
-        assertEquals(result.getTaskType(), SplitTaskType.GENERIC_TASK);
+        mImpressionsLoggingTask.run();
     }
 
     private static Impression createImpression() {

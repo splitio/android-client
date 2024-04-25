@@ -4,25 +4,26 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.service.executor.SplitTaskExecutor;
+import java.util.concurrent.ExecutorService;
+
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.utils.logger.Logger;
 
 public class SyncImpressionListener implements ImpressionListener {
 
     private final SyncManager mSyncManager;
-    private final SplitTaskExecutor mSplitTaskExecutor;
+    private final ExecutorService mExecutorService;
 
     public SyncImpressionListener(@NonNull SyncManager syncManager,
-                                  @NonNull SplitTaskExecutor splitTaskExecutor) {
+                                  @NonNull ExecutorService executorService) {
         mSyncManager = checkNotNull(syncManager);
-        mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
+        mExecutorService = checkNotNull(executorService);
     }
 
     @Override
     public void log(Impression impression) {
         try {
-            mSplitTaskExecutor.submit(new ImpressionLoggingTask(mSyncManager, impression), null);
+            mExecutorService.submit(new ImpressionLoggingTask(mSyncManager, impression));
         } catch (Exception ex) {
             Logger.w("Error submitting impression logging task: " + ex.getLocalizedMessage());
         }
@@ -30,5 +31,18 @@ public class SyncImpressionListener implements ImpressionListener {
 
     @Override
     public void close() {
+    }
+
+    static class ImpressionLoggingTaskFactory {
+
+        private final SyncManager mSyncManager;
+
+        ImpressionLoggingTaskFactory(@NonNull SyncManager syncManager) {
+            mSyncManager = checkNotNull(syncManager);
+        }
+
+        ImpressionLoggingTask create(Impression impression) {
+            return new ImpressionLoggingTask(mSyncManager, impression);
+        }
     }
 }

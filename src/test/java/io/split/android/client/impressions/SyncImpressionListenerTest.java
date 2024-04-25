@@ -9,36 +9,36 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
 
-import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.synchronizer.SyncManager;
 
 public class SyncImpressionListenerTest {
 
     private SyncManager mSyncManager;
-    private SplitTaskExecutor mSplitTaskExecutor;
+    private ExecutorService mExecutorService;
 
     @Before
     public void setUp() {
         mSyncManager = mock(SyncManager.class);
-        mSplitTaskExecutor = mock(SplitTaskExecutor.class);
+        mExecutorService = mock(ExecutorService.class);
     }
 
     @Test
     public void logSubmitsImpressionLoggingTaskInExecutor() {
-        SyncImpressionListener syncImpressionListener = new SyncImpressionListener(mSyncManager, mSplitTaskExecutor);
+        SyncImpressionListener syncImpressionListener = new SyncImpressionListener(mSyncManager, mExecutorService);
         Impression impression = createImpression();
 
         syncImpressionListener.log(impression);
 
-        verify(mSplitTaskExecutor).submit(any(ImpressionLoggingTask.class), any());
+        verify(mExecutorService).submit(any(ImpressionLoggingTask.class));
     }
 
     @Test
     public void errorWhileSubmittingTaskIsHandled() {
-        SyncImpressionListener syncImpressionListener = new SyncImpressionListener(mSyncManager, mSplitTaskExecutor);
+        SyncImpressionListener syncImpressionListener = new SyncImpressionListener(mSyncManager, mExecutorService);
         Impression impression = createImpression();
-        doThrow(new RuntimeException("test")).when(mSplitTaskExecutor).submit(any(ImpressionLoggingTask.class), any());
+        doThrow(new RuntimeException("test")).when(mExecutorService).submit(any(ImpressionLoggingTask.class), any());
 
         syncImpressionListener.log(impression);
     }

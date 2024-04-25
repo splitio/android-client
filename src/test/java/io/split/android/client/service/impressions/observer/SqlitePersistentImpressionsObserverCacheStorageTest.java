@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
@@ -24,12 +26,14 @@ public class SqlitePersistentImpressionsObserverCacheStorageTest {
     @Before
     public void setUp() {
         mImpressionsObserverCacheDao = mock(ImpressionsObserverCacheDao.class);
-        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(mImpressionsObserverCacheDao, EXPIRATION_PERIOD);
+        ScheduledExecutorService mExecutorService = mock(ScheduledExecutorService.class);
+        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(mImpressionsObserverCacheDao, EXPIRATION_PERIOD, 1, Executors.newSingleThreadScheduledExecutor());
     }
 
     @Test
-    public void insertInsertsInDao() {
+    public void insertInsertsInDao() throws InterruptedException {
         mStorage.put(1, 2);
+        Thread.sleep(100);
 
         verify(mImpressionsObserverCacheDao).insert(eq(1L), eq(2L), argThat(argument -> argument > 0));
     }
