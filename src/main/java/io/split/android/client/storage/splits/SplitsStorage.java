@@ -34,6 +34,10 @@ public interface SplitsStorage {
 
     void updateSplitsFilterQueryString(String queryString);
 
+    String getFlagsSpec();
+
+    void updateFlagsSpec(String flagsSpec);
+
     void clear();
 
     @NonNull

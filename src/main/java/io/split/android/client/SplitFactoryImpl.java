@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.android_client.BuildConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -177,14 +178,15 @@ public class SplitFactoryImpl implements SplitFactory {
         Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
         String splitsFilterQueryStringFromConfig = filtersConfig.second;
 
+        String flagsSpec = getFlagsSpec(testingConfig);
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryStringFromConfig);
 
         FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
-                config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig, mEventsManagerCoordinator,
-                filters, flagSetsFilter, testingConfig);
+                config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
+                getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
 
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
@@ -195,7 +197,7 @@ public class SplitFactoryImpl implements SplitFactory {
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
 
         StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
-                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer);
+                splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer, flagsSpec);
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
@@ -209,8 +211,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 impressionManager,
                 mStorageContainer.getEventsStorage(),
                 mEventsManagerCoordinator,
-                streamingComponents.getPushManagerEventBroadcaster(),
-                splitsFilterQueryStringFromConfig);
+                streamingComponents.getPushManagerEventBroadcaster()
+        );
         // Only available for integration tests
         if (synchronizerSpy != null) {
             synchronizerSpy.setSynchronizer(mSynchronizer);
@@ -330,6 +332,14 @@ public class SplitFactoryImpl implements SplitFactory {
         }
 
         Logger.i("Android SDK initialized!");
+    }
+
+    private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {
+        if (testingConfig == null) {
+            return BuildConfig.FLAGS_SPEC;
+        } else {
+            return testingConfig.getFlagsSpec();
+        }
     }
 
     @Override

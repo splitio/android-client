@@ -30,7 +30,7 @@ public class LoadSplitsTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(123456677L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn("previous");
 
-        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "new");
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "new", null);
 
         SplitTaskExecutionInfo info = mLoadSplitsTask.execute();
 
@@ -43,7 +43,7 @@ public class LoadSplitsTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(123456677L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn("previous");
 
-        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "previous");
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "previous", null);
 
         SplitTaskExecutionInfo info = mLoadSplitsTask.execute();
 
@@ -55,7 +55,7 @@ public class LoadSplitsTaskTest {
     public void loadLocalIsCalledOnStorageWhenExecutingTask() {
         when(mSplitsStorage.getTill()).thenReturn(123456677L);
 
-        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, null);
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, null, null);
 
         mLoadSplitsTask.execute();
 
@@ -66,7 +66,7 @@ public class LoadSplitsTaskTest {
     public void resultIsErrorWhenTillIsNegativeOne() {
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, null);
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, null, null);
 
         SplitTaskExecutionInfo info = mLoadSplitsTask.execute();
 
@@ -78,7 +78,7 @@ public class LoadSplitsTaskTest {
     public void clearIsNotCalledWhenTillIsNegativeOne() {
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, null);
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, null, null);
 
         mLoadSplitsTask.execute();
 
@@ -90,7 +90,7 @@ public class LoadSplitsTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(123456677L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn("previous");
 
-        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "new");
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "new", null);
 
         mLoadSplitsTask.execute();
 
@@ -102,7 +102,7 @@ public class LoadSplitsTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(123456677L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(null);
 
-        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, null);
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, null, null);
 
         mLoadSplitsTask.execute();
 
@@ -114,7 +114,7 @@ public class LoadSplitsTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(123456677L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn("");
 
-        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "");
+        mLoadSplitsTask = new LoadSplitsTask(mSplitsStorage, "", null);
 
         mLoadSplitsTask.execute();
 

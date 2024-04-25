@@ -30,6 +30,7 @@ import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.TestingConfig;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.logger.Logger;
@@ -137,7 +138,8 @@ public class SyncGuardianIntegrationTest {
                 false,
                 IntegrationHelper.streamingEnabledToken(6),
                 1L,
-                0L);
+                1L,
+                null);
         SplitClient client = pair.first;
         SplitEventTaskHelper readyTask = pair.second;
 
@@ -152,7 +154,7 @@ public class SyncGuardianIntegrationTest {
         sendToBackgroundFor(3000);
         int thirdSplitsHit = mSplitsHitsCountHit.get();
 
-        Thread.sleep(5000);
+        Thread.sleep(6000);
 
         assertTrue(readyTask.isOnPostExecutionCalled);
         assertTrue(sseConnectionAwait);
@@ -231,10 +233,10 @@ public class SyncGuardianIntegrationTest {
     }
 
     private Pair<SplitClient, SplitEventTaskHelper> getClient(CountDownLatch latch, boolean streamingEnabled, boolean singleSync, String sseResponse) throws IOException {
-        return getClient(latch, streamingEnabled, singleSync, sseResponse, 2L, 2L);
+        return getClient(latch, streamingEnabled, singleSync, sseResponse, 2L, 2L, null);
     }
 
-    private Pair<SplitClient, SplitEventTaskHelper> getClient(CountDownLatch latch, boolean streamingEnabled, boolean singleSync, String sseResponse, long defaultConnectionDelay, long disconnectionDelay) throws IOException {
+    private Pair<SplitClient, SplitEventTaskHelper> getClient(CountDownLatch latch, boolean streamingEnabled, boolean singleSync, String sseResponse, long defaultConnectionDelay, long disconnectionDelay, TestingConfig testingConfig) throws IOException {
         HttpClientMock httpClientMock = new HttpClientMock(createStreamingResponseDispatcher(sseResponse));
 
         SplitClientConfig config = (singleSync) ? IntegrationHelper.syncDisabledConfig() : IntegrationHelper.customSseConnectionDelayConfig(streamingEnabled, defaultConnectionDelay, disconnectionDelay);
@@ -247,7 +249,7 @@ public class SyncGuardianIntegrationTest {
                 httpClientMock,
                 null,
                 null,
-                null,
+                testingConfig,
                 mLifecycleManager);
 
         SplitClient client = splitFactory.client();

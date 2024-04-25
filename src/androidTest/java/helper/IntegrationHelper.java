@@ -10,10 +10,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -49,6 +52,7 @@ public class IntegrationHelper {
     private final static Type IMPRESSIONS_LIST_TYPE = new TypeToken<List<TestImpressions>>() {
     }.getType();
     private final static Gson mGson = new GsonBuilder().create();
+    public static final String JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d, \"trafficTypeName\":\"%s\", \"sets\":[\"%s\"]}";
 
     public static List<Event> buildEventsFromJson(String attributesJson) {
 
@@ -126,6 +130,11 @@ public class IntegrationHelper {
                                             SynchronizerSpy synchronizerSpy,
                                             TestingConfig testingConfig, SplitLifecycleManager lifecycleManager,
                                             TelemetryStorage telemetryStorage) {
+        if (testingConfig == null) {
+            testingConfig = new TestingConfig();
+            testingConfig.setFlagsSpec(null);
+        }
+
         Constructor[] c = SplitFactoryImpl.class.getDeclaredConstructors();
         Constructor constructor = c[1];
         constructor.setAccessible(true);
@@ -336,7 +345,30 @@ public class IntegrationHelper {
                                     String body);
 
         static String getSinceFromUri(URI uri) {
-            return uri.getQuery().split("&")[0].split("=")[1];
+            try {
+                return parse(uri.getQuery()).get("since");
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static Map<String, String> parse(String query) throws UnsupportedEncodingException {
+            Map<String, String> queryPairs = new HashMap<>();
+            String[] pairs = query.split("&");
+
+            for (String pair : pairs) {
+                int idx = pair.indexOf("=");
+                try {
+                    String key = URLDecoder.decode(pair.substring(0, idx), "UTF-8");
+                    String value = URLDecoder.decode(pair.substring(idx + 1), "UTF-8");
+
+                    queryPairs.put(key, value);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return queryPairs;
         }
     }
 

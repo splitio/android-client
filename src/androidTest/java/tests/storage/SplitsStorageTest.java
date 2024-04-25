@@ -1,6 +1,8 @@
 package tests.storage;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -22,6 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import helper.DatabaseHelper;
+import helper.IntegrationHelper;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
@@ -37,7 +40,6 @@ public class SplitsStorageTest {
 
     private static final Long INITIAL_CHANGE_NUMBER = 9999L;
     private static final String JSON_SPLIT_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d}";
-    private static final String JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE = "{\"name\":\"%s\", \"changeNumber\": %d, \"trafficTypeName\":\"%s\", \"sets\":[\"%s\"]}";
 
     private SplitRoomDatabase mRoomDb;
     private SplitsStorage mSplitsStorage;
@@ -257,16 +259,16 @@ public class SplitsStorageTest {
         Assert.assertNotNull(mSplitsStorage.get("split-test-1000"));
         Assert.assertNotNull(mSplitsStorage.get("split-test-1100"));
         Assert.assertNotNull(mSplitsStorage.get("split-test-1198"));
-        Assert.assertNull(mSplitsStorage.get("split-test-1001"));
-        Assert.assertNull(mSplitsStorage.get("split-test-1101"));
-        Assert.assertNull(mSplitsStorage.get("split-test-1199"));
+        assertNull(mSplitsStorage.get("split-test-1001"));
+        assertNull(mSplitsStorage.get("split-test-1101"));
+        assertNull(mSplitsStorage.get("split-test-1199"));
 
         Assert.assertNotNull(mSplitsStorage.get("split-test-1"));
         Assert.assertNotNull(mSplitsStorage.get("split-test-101"));
         Assert.assertNotNull(mSplitsStorage.get("split-test-199"));
-        Assert.assertNull(mSplitsStorage.get("split-test-0"));
-        Assert.assertNull(mSplitsStorage.get("split-test-100"));
-        Assert.assertNull(mSplitsStorage.get("split-test-198"));
+        assertNull(mSplitsStorage.get("split-test-0"));
+        assertNull(mSplitsStorage.get("split-test-100"));
+        assertNull(mSplitsStorage.get("split-test-198"));
 
     }
 
@@ -458,6 +460,48 @@ public class SplitsStorageTest {
         assertFalse(update);
     }
 
+    @Test
+    public void loadLocalLoadsFlagsSpecValue() {
+        mRoomDb.clearAllTables();
+        String initialFlagsSpec = mSplitsStorage.getFlagsSpec();
+
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity("flagsSpec", "2.5"));
+
+        mSplitsStorage.loadLocal();
+
+        String finalFlagsSpec = mSplitsStorage.getFlagsSpec();
+
+        assertNull(initialFlagsSpec);
+        assertEquals("2.5", finalFlagsSpec);
+    }
+
+    @Test
+    public void updateFlagsSpecValuePersistsValueInDatabase() {
+        mRoomDb.clearAllTables();
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity("flagsSpec", "2.0"));
+        mSplitsStorage.loadLocal();
+        String initialFlagsSpec = mSplitsStorage.getFlagsSpec();
+
+        mSplitsStorage.updateFlagsSpec("2.5");
+
+        String dbFlagsSpec = mRoomDb.generalInfoDao().getByName("flagsSpec").getStringValue();
+        String finalFlagsSpec = mSplitsStorage.getFlagsSpec();
+
+        assertEquals("2.0", initialFlagsSpec);
+        assertEquals("2.5", finalFlagsSpec);
+        assertEquals("2.5", dbFlagsSpec);
+    }
+
+    @Test
+    public void nullFlagsSpecValueIsValid() {
+        mRoomDb.clearAllTables();
+        mSplitsStorage.loadLocal();
+
+        String flagsSpec = mSplitsStorage.getFlagsSpec();
+
+        assertEquals("", flagsSpec);
+    }
+
     private Split newSplit(String name, Status status, String trafficType) {
         return newSplit(name, status, trafficType, Collections.emptySet());
     }
@@ -484,7 +528,7 @@ public class SplitsStorageTest {
         SplitEntity entity = new SplitEntity();
         String setsString = String.join(",", sets);
         entity.setName(name);
-        entity.setBody(String.format(JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType, setsString));
+        entity.setBody(String.format(IntegrationHelper.JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType, setsString));
 
         return entity;
     }

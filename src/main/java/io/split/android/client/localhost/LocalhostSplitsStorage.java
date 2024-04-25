@@ -120,6 +120,17 @@ public class LocalhostSplitsStorage implements SplitsStorage {
 
     @Override
     public void updateSplitsFilterQueryString(String queryString) {
+        // no-op
+    }
+
+    @Override
+    public String getFlagsSpec() {
+        return "";
+    }
+
+    @Override
+    public void updateFlagsSpec(String flagsSpec) {
+        // no-op
     }
 
     @Override
