@@ -454,7 +454,7 @@ class SplitFactoryHelper {
                 1,
                 0L,
                 TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(1000),
+                new LinkedBlockingQueue<Runnable>(3000),
                 new ThreadPoolExecutor.CallerRunsPolicy());
     }
 

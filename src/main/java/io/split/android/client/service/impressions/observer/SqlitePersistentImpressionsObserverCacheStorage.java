@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
-import io.split.android.client.utils.logger.Logger;
 
 public class SqlitePersistentImpressionsObserverCacheStorage implements PersistentImpressionsObserverCacheStorage {
 
@@ -55,7 +54,7 @@ public class SqlitePersistentImpressionsObserverCacheStorage implements Persiste
         mCache.put(hash, time);
         if (mRunPeriodicSync.compareAndSet(false, true)) {
             if (mScheduledTask == null) {
-                mScheduledTask = mExecutorsService.scheduleWithFixedDelay(buildPersistenceTask(),
+                mScheduledTask = mExecutorsService.scheduleWithFixedDelay(new PeriodicPersistenceTask(mCache, mImpressionsObserverCacheDao, mRunPeriodicSync),
                         0,
                         mPersistenceDelay,
                         TimeUnit.MILLISECONDS);
@@ -86,29 +85,5 @@ public class SqlitePersistentImpressionsObserverCacheStorage implements Persiste
     public void onRemoval(Long key) {
         mCache.remove(key);
         mImpressionsObserverCacheDao.delete(key);
-    }
-
-    @NonNull
-    private Runnable buildPersistenceTask() {
-        return new Runnable() {
-            @Override
-            public void run() {
-                if (mRunPeriodicSync.get()) {
-                    try {
-                        for (Map.Entry<Long, Long> entry : mCache.entrySet()) {
-                            try {
-                                mImpressionsObserverCacheDao.insert(entry.getKey(), entry.getValue(), System.currentTimeMillis());
-                            } catch (Exception ex) {
-                                Logger.e("Error while persisting impression: " + ex.getLocalizedMessage());
-                            }
-                        }
-                    } catch (Exception ex) {
-                        Logger.e("Error while persisting impressions: " + ex.getLocalizedMessage());
-                    }
-                    mCache.clear();
-                    mRunPeriodicSync.compareAndSet(true, false);
-                }
-            }
-        };
     }
 }
