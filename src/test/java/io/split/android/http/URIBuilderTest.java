@@ -141,4 +141,15 @@ public class URIBuilderTest {
 
         Assert.assertEquals("users=user1&users=user2", uri.getQuery());
     }
+
+    @Test
+    public void addParamsPreservesOrder() throws URISyntaxException {
+        URI root = URI.create("https://api.split.io/");
+        URIBuilder uriBuilder = new URIBuilder(root);
+        uriBuilder.addParameter("param1", "user1");
+        uriBuilder.addParameter("param2", "user2");
+        uriBuilder.addParameter("param3", "user3");
+        URI uri = uriBuilder.build();
+        Assert.assertEquals("param1=user1&param2=user2&param3=user3", uri.getQuery());
+    }
 }

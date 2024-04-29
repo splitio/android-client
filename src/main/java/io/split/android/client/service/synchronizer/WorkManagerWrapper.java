@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.android_client.BuildConfig;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.service.ServiceConstants;
@@ -32,7 +33,7 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkMan
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
-import io.split.android.client.service.workmanager.SplitsSyncWorker;
+import io.split.android.client.service.workmanager.splits.SplitsSyncWorker;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.service.workmanager.UniqueKeysRecorderWorker;
 
@@ -190,6 +191,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         dataBuilder.putBoolean(ServiceConstants.SHOULD_RECORD_TELEMETRY, mSplitClientConfig.shouldRecordTelemetry());
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_TYPE, (mFilter != null) ? mFilter.getType().queryStringField() : null);
         dataBuilder.putStringArray(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_VALUES, (mFilter != null) ? mFilter.getValues().toArray(new String[0]) : new String[0]);
+        dataBuilder.putString(ServiceConstants.WORKER_PARAM_FLAGS_SPEC, BuildConfig.FLAGS_SPEC);
         return buildInputData(dataBuilder.build());
     }
 

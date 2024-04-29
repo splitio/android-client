@@ -330,7 +330,8 @@ class SplitFactoryHelper {
                                                         @NonNull SplitClientConfig config,
                                                         @NonNull HttpClient defaultHttpClient,
                                                         @NonNull SplitApiFacade splitApiFacade,
-                                                        @NonNull SplitStorageContainer storageContainer) {
+                                                        @NonNull SplitStorageContainer storageContainer,
+                                                        @Nullable String flagsSpec) {
 
         // Avoid creating unnecessary components if single sync enabled
         if (!config.syncEnabled()) {
@@ -353,7 +354,7 @@ class SplitFactoryHelper {
                 defaultHttpClient);
 
         SseAuthenticator sseAuthenticator = new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(),
-                new SseJwtParser());
+                new SseJwtParser(), flagsSpec);
 
         PushNotificationManager pushNotificationManager = getPushNotificationManager(splitTaskExecutor,
                 sseAuthenticator,

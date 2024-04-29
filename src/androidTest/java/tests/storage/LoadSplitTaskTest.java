@@ -55,7 +55,7 @@ public class LoadSplitTaskTest {
     @Test
     public void executeWithoutQueryString() {
 
-        SplitTask task = new LoadSplitsTask(mSplitsStorage, null);
+        SplitTask task = new LoadSplitsTask(mSplitsStorage, null, null);
         SplitTaskExecutionInfo result = task.execute();
 
         Split split0 = mSplitsStorage.get("split-0");
@@ -75,7 +75,7 @@ public class LoadSplitTaskTest {
     @Test
     public void executeWithQueryString() {
 
-        SplitTask task = new LoadSplitsTask(mSplitsStorage, "sets=set1");
+        SplitTask task = new LoadSplitsTask(mSplitsStorage, "sets=set1", null);
         SplitTaskExecutionInfo result = task.execute();
 
         Split split0 = mSplitsStorage.get("split-0");

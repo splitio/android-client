@@ -1,5 +1,7 @@
 package tests.integration;
 
+import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
+
 import android.content.Context;
 
 import androidx.core.util.Pair;
@@ -21,7 +23,6 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.GeneralInfoEntity;
@@ -68,7 +69,7 @@ public class InitialChangeNumberTest {
                     long changeNumber = -1;
                     if (mIsFirstChangeNumber) {
                         String path = request.getPath();
-                        changeNumber = Long.valueOf(path.substring(path.indexOf("=") + 1));
+                        changeNumber = Long.parseLong(getSinceFromUri(request.getRequestUrl().uri()));
                         mFirstChangeNumberReceived = changeNumber;
                         mIsFirstChangeNumber = false;
                     }

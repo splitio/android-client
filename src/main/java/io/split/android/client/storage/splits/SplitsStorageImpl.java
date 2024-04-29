@@ -24,6 +24,7 @@ public class SplitsStorageImpl implements SplitsStorage {
     private long mChangeNumber;
     private long mUpdateTimestamp;
     private String mSplitsFilterQueryString;
+    private String mFlagsSpec;
     private final Map<String, Integer> mTrafficTypes;
 
     public SplitsStorageImpl(@NonNull PersistentSplitsStorage persistentStorage) {
@@ -41,6 +42,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         mChangeNumber = snapshot.getChangeNumber();
         mUpdateTimestamp = snapshot.getUpdateTimestamp();
         mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
+        mFlagsSpec = snapshot.getFlagsSpec();
         for (Split split : splits) {
             mInMemorySplits.put(split.name, split);
             addOrUpdateFlagSets(split);
@@ -147,6 +149,17 @@ public class SplitsStorageImpl implements SplitsStorage {
     public void updateSplitsFilterQueryString(String queryString) {
         mPersistentStorage.updateFilterQueryString(queryString);
         mSplitsFilterQueryString = queryString;
+    }
+
+    @Override
+    public String getFlagsSpec() {
+        return mFlagsSpec;
+    }
+
+    @Override
+    public void updateFlagsSpec(String flagsSpec) {
+        mPersistentStorage.updateFlagsSpec(flagsSpec);
+        mFlagsSpec = flagsSpec;
     }
 
     @Override

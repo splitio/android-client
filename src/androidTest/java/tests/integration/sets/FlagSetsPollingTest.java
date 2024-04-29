@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -33,6 +32,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.SyncConfig;
+import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -65,7 +65,7 @@ public class FlagSetsPollingTest {
     public void featureFlagIsUpdatedAccordingToSetsWhenTheyAreConfigured() throws IOException, InterruptedException {
 
         // 1. Initialize a factory with polling and sets set_1 & set_2 configured.
-        createFactory(mContext, mRoomDb, "set_1", "set_2");
+        createFactory(mContext, mRoomDb, null, "set_1", "set_2");
 
         // 2. Receive split change with 1 split belonging to set_1 & set_2 and one belonging to set_3
         // -> only one feature flag should be added
@@ -105,7 +105,7 @@ public class FlagSetsPollingTest {
     public void featureFlagSetsAreIgnoredWhenSetsAreNotConfigured() throws IOException, InterruptedException {
 
         // 1. Initialize a factory with polling and sets set_1 & set_2 configured.
-        createFactory(mContext, mRoomDb);
+        createFactory(mContext, mRoomDb, null);
 
         // 2. Receive split change with 1 split belonging to set_1 & set_2 and one belonging to set_3
         // -> only one feature flag should be added
@@ -162,19 +162,21 @@ public class FlagSetsPollingTest {
 
     @Test
     public void queryStringIsBuiltCorrectlyWhenSetsAreConfigured() throws IOException, InterruptedException {
-        createFactory(mContext, mRoomDb, "set_x", "set_x", "set_3", "set_2", "set_3", "set_ww", "invalid+");
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setFlagsSpec("1.1");
+        createFactory(mContext, mRoomDb, testingConfig, "set_x", "set_x", "set_3", "set_2", "set_3", "set_ww", "invalid+");
 
         boolean awaitFirst = firstChangeLatch.await(5, TimeUnit.SECONDS);
 
         String uri = mSplitChangesUri;
 
         assertTrue(awaitFirst);
-        assertEquals("https://sdk.split.io/api/splitChanges?since=-1&sets=set_2,set_3,set_ww,set_x", uri);
+        assertEquals("https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_2,set_3,set_ww,set_x", uri);
     }
 
     private SplitFactory createFactory(
             Context mContext,
-            SplitRoomDatabase splitRoomDatabase,
+            SplitRoomDatabase splitRoomDatabase, TestingConfig testingConfig,
             String... sets) throws IOException {
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .ready(30000)
@@ -219,7 +221,7 @@ public class FlagSetsPollingTest {
                 config,
                 mContext,
                 new HttpClientMock(httpResponseMockDispatcher),
-                splitRoomDatabase, null, null, null);
+                splitRoomDatabase, null, testingConfig, null);
     }
 
     private String loadSplitChangeWithSet(int setsCount) {
