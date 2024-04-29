@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import helper.DatabaseHelper;
 import io.split.android.client.impressions.Impression;
@@ -30,7 +32,7 @@ public class ImpressionsObserverTest {
     @Before
     public void setUp() {
         ImpressionsObserverCacheDao dao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
-        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(dao, 2000, 1);
+        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(dao, 2000, 1, Executors.newSingleThreadScheduledExecutor(), new AtomicBoolean(false));
     }
 
     private List<Impression> generateImpressions(long count) {
@@ -87,11 +89,12 @@ public class ImpressionsObserverTest {
         // These are not in the cache, so they should return null
         Long firstImp = observer.testAndSet(imp);
         Long firstImp2 = observer.testAndSet(imp2);
+        Thread.sleep(2);
 
         // These are in the cache, so they should return a value
         Long secondImp = observer.testAndSet(imp);
         Long secondImp2 = observer.testAndSet(imp2);
-        Thread.sleep(500);
+        Thread.sleep(2);
 
         // We recreate the observer
         observer = new ImpressionsObserverImpl(mStorage, 2);

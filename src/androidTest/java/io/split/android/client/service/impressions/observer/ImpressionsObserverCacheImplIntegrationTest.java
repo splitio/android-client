@@ -11,6 +11,8 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import helper.DatabaseHelper;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
@@ -24,7 +26,7 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     @Before
     public void setUp() {
         ImpressionsObserverCacheDao impressionsObserverCacheDao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
-        mPersistentStorage = new SqlitePersistentImpressionsObserverCacheStorage(impressionsObserverCacheDao, 2000, 1);
+        mPersistentStorage = new SqlitePersistentImpressionsObserverCacheStorage(impressionsObserverCacheDao, 2000, 1, Executors.newSingleThreadScheduledExecutor(), new AtomicBoolean(false));
         mCache = new ListenableLruCache<>(5, mPersistentStorage);
         mImpressionsObserverCacheImpl = new ImpressionsObserverCacheImpl(mPersistentStorage, mCache);
     }

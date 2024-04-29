@@ -287,6 +287,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     telemetrySynchronizer.destroy();
                     Logger.d("Successful shutdown of telemetry");
                     impressionsLoggingTaskExecutor.shutdown();
+                    Logger.d("Successful shutdown of impressions logging executor");
                     mSyncManager.stop();
                     Logger.d("Flushing impressions and events");
                     mLifecycleManager.destroy();
