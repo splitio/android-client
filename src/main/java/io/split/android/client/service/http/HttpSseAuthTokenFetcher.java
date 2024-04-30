@@ -63,6 +63,7 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
 
     private static URI getUri(Map<String, Object> params, URI target) throws URISyntaxException {
         URIBuilder uriBuilder = new URIBuilder(target);
+
         for (Map.Entry<String, Object> param : params.entrySet()) {
             if (param.getValue() instanceof Iterable) {
                 for (Object paramValue : ((Iterable<Object>) param.getValue())) {

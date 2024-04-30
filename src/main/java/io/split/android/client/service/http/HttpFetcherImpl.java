@@ -16,6 +16,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class HttpFetcherImpl<T> implements HttpFetcher<T> {
 
+    public static final String TILL_PARAM = "till";
     private final HttpClient mClient;
     private final URI mTarget;
     private final HttpResponseParser<T> mResponseParser;
@@ -37,6 +38,11 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
 
         try {
             URIBuilder uriBuilder = new URIBuilder(mTarget);
+            if (params.containsKey(TILL_PARAM)) {
+                Object till = params.remove(TILL_PARAM);
+                params.put(TILL_PARAM, till);
+            }
+
             for (Map.Entry<String, Object> param : params.entrySet()) {
                 Object value = param.getValue();
                 uriBuilder.addParameter(param.getKey(), value != null ? value.toString() : "");
