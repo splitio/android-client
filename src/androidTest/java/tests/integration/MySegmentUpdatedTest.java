@@ -199,6 +199,7 @@ public class MySegmentUpdatedTest {
         Assert.assertEquals("on_s2", treatments.get(2));
         Assert.assertEquals("no", treatments.get(3));
 
+        Thread.sleep(500);
         List<KeyImpression> impressions = allImpressions();
         Assert.assertEquals(4, impressions.size());
         KeyImpression imp0 = findImpression("no");
