@@ -65,7 +65,7 @@ class UserConsentModeNoneTest {
             client.getTreatment("FACUNDO_TEST")
             client.track("ev", i.toDouble())
         }
-        Thread.sleep(200)
+        sleep(200)
         mLifecycleManager.simulateOnPause()
         mLifecycleManager.simulateOnResume()
         client.flush()
@@ -125,7 +125,7 @@ class UserConsentModeNoneTest {
         }
 
 
-        Thread.sleep(200)
+        sleep(200)
         client.flush()
         sleep(2000)
         val keysPostedBefore = mKeysPosted
@@ -167,7 +167,7 @@ class UserConsentModeNoneTest {
         for (i in 1..20) {
             client.getTreatment("FACUNDO_TEST")
         }
-        Thread.sleep(200)
+        sleep(200)
         client.flush()
         sleep(2000)
         val impPostedBefore = mKeysPosted

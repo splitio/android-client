@@ -47,7 +47,7 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
 
         String taskId = null;
         if (!mScheduler.isShutdown()) {
-            ScheduledFuture taskFuture = mScheduler.scheduleAtFixedRate(
+            ScheduledFuture<?> taskFuture = mScheduler.scheduleWithFixedDelay(
                     new TaskWrapper(task, executionListener),
                     initialDelayInSecs, periodInSecs, TimeUnit.SECONDS);
             taskId = UUID.randomUUID().toString();
@@ -65,7 +65,7 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
         checkNotNull(task);
         String taskId = null;
         if (!mScheduler.isShutdown()) {
-            ScheduledFuture taskFuture = mScheduler.schedule(
+            ScheduledFuture<?> taskFuture = mScheduler.schedule(
                     new TaskWrapper(task, executionListener),
                     initialDelayInSecs, TimeUnit.SECONDS);
             taskId = UUID.randomUUID().toString();

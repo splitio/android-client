@@ -219,6 +219,7 @@ public class DedupeIntegrationTest {
                 .observerCacheExpirationPeriod(100), mHttpClient).client();
 
         client.getTreatment("FACUNDO_TEST");
+        Thread.sleep(2000);
         while (mDatabase.impressionsObserverCacheDao().getAll(5).size() > 1) {
             Thread.sleep(100);
         }

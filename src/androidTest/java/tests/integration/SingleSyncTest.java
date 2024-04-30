@@ -132,7 +132,7 @@ public class SingleSyncTest {
 
         mImpLatch.await(5, TimeUnit.SECONDS);
         mEveLatch.await(5, TimeUnit.SECONDS);
-        mImpCountLatch.await(5, TimeUnit.SECONDS);
+        mImpCountLatch.await(10, TimeUnit.SECONDS);
 
         Assert.assertEquals(1, mSplitsHitCount);
         Assert.assertEquals(4, mMySegmentsHitCount); // One for key

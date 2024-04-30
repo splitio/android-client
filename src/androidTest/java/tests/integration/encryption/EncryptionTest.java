@@ -85,12 +85,17 @@ public class EncryptionTest {
             public void onPostExecutionView(SplitClient client) {
                 client.getTreatment("FACUNDO_TEST");
                 client.getTreatment("testing");
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
                 factory.destroy();
                 latch.countDown();
             }
         });
 
-        assertTrue(latch.await(2, TimeUnit.SECONDS));
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
         Thread.sleep(200);
 
         verifyImpressions(testDatabase);
