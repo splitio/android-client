@@ -2,6 +2,8 @@ package tests.integration;
 
 import static java.lang.Thread.sleep;
 
+import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
+
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -173,7 +175,7 @@ public class SplitsTwoDifferentApiKeyTest {
                     return createResponse(200, IntegrationHelper.dummyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     int hit = 0;
-                    long changeNumber = new Integer(uri.getQuery().split("=")[1]);
+                    long changeNumber = Long.parseLong(getSinceFromUri(uri));//new Integer(uri.getQuery().split("&")[1].split("=")[1]);
                     if (factoryNumber == 1) {
                         System.out.println("hit 1 cn: " + changeNumber);
                         f1ChangeNumbers.add(changeNumber);

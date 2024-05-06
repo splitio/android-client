@@ -31,7 +31,7 @@ public class LocalhostSynchronizer implements SplitLifecycleAware, Destroyable {
     }
 
     public void start() {
-        SplitTask loadTask = new LoadSplitsTask(mSplitsStorage, mSplitsFilterQueryStringFromConfig);
+        SplitTask loadTask = new LoadSplitsTask(mSplitsStorage, mSplitsFilterQueryStringFromConfig, null);
         if (mRefreshRate > 0) {
             mTaskExecutor.schedule(
                     loadTask, 0,

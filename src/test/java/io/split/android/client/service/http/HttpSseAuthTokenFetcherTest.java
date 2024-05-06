@@ -15,6 +15,7 @@ import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -95,5 +96,17 @@ public class HttpSseAuthTokenFetcherTest {
         fetcher.execute(map, Collections.emptyMap());
 
         verify(mHttpClient).request(new URI("target?another_parameter=null&users=user1&users=user2"), HttpMethod.GET);
+    }
+
+    @Test
+    public void parameterOrderIsHonored() throws HttpFetcherException, URISyntaxException {
+        Map<String, Object> params = new LinkedHashMap<>();
+
+        params.put("param1", "value1");
+        params.put("param2", "value2");
+
+        fetcher.execute(params, Collections.emptyMap());
+
+        verify(mHttpClient).request(new URI("target?param1=value1&param2=value2"), HttpMethod.GET);
     }
 }

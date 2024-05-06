@@ -230,6 +230,34 @@ public class PersistentSplitsStorageTest {
         Assert.assertEquals(1L, changeNumber);
     }
 
+    @Test
+    public void flagsSpecValueIsSavedInDatabase() throws InterruptedException {
+        final String initialFlagsSpec = mPersistentSplitsStorage.getFlagsSpec();
+        final String initialDbFlagsSpec = mRoomDb.generalInfoDao().getByName("flagsSpec") == null ? null : mRoomDb.generalInfoDao().getByName("flagsSpec").getStringValue();
+
+        mPersistentSplitsStorage.updateFlagsSpec("2.5");
+        Thread.sleep(100);
+
+        final String finalFlagsSpec = mPersistentSplitsStorage.getFlagsSpec();
+        final String finalDbFlagsSpec = mRoomDb.generalInfoDao().getByName("flagsSpec") == null ? null : mRoomDb.generalInfoDao().getByName("flagsSpec").getStringValue();
+
+        Assert.assertEquals("2.5", finalFlagsSpec);
+        Assert.assertEquals("2.5", finalDbFlagsSpec);
+        Assert.assertNull(initialFlagsSpec);
+        Assert.assertNull(initialDbFlagsSpec);
+    }
+
+    @Test
+    public void getSnapshotLoadsFlagsSpec() throws InterruptedException {
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity("flagsSpec", "2.5"));
+        Thread.sleep(100);
+        SplitsSnapshot snapshot = mPersistentSplitsStorage.getSnapshot();
+
+        String flagsSpec = snapshot.getFlagsSpec();
+
+        Assert.assertEquals("2.5", flagsSpec);
+    }
+
     private Split newSplit(String name, Status status, String trafficType) {
         Split split = new Split();
         split.name = name;
@@ -249,5 +277,4 @@ public class PersistentSplitsStorageTest {
         }
         return map;
     }
-
 }

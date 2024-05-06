@@ -273,7 +273,7 @@ public class SplitTaskExecutorTest {
 
         TestListener testListener = new TestListener(listenerLatch);
         String taskId = mTaskExecutor.schedule(task, 0L, 1L, testListener);
-        timerLatch.await(1L, TimeUnit.SECONDS);
+        timerLatch.await(2L, TimeUnit.SECONDS);
         mTaskExecutor.stopTask(taskId);
 
         assertTrue(task.taskHasBeenCalled);

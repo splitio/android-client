@@ -64,8 +64,7 @@ public class SplitChangesCdnBypassTest {
                 .trafficType("account")
                 .build();
 
-        TestingConfig testingConfig = new TestingConfig();
-        testingConfig.setCdnBackoffTime(1);
+        TestingConfig testingConfig = IntegrationHelper.testingConfig(1);
         mSplitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),
                 IntegrationHelper.dummyUserKey(),

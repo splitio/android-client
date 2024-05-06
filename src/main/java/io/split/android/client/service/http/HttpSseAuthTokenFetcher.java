@@ -14,6 +14,7 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
+import io.split.android.client.utils.logger.Logger;
 
 public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationResponse> {
 
@@ -39,7 +40,9 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
         try {
             URI build = getUri(params, mTarget);
             HttpResponse response = mClient.request(build, HttpMethod.GET).execute();
-
+            if (build != null && response != null) {
+                Logger.v("Received from: " + build.toString() + " -> " + response.getData());
+            }
             if (!response.isSuccess()) {
                 if (response.isClientRelatedError()) {
                     return new SseAuthenticationResponse(true);
@@ -60,6 +63,7 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
 
     private static URI getUri(Map<String, Object> params, URI target) throws URISyntaxException {
         URIBuilder uriBuilder = new URIBuilder(target);
+
         for (Map.Entry<String, Object> param : params.entrySet()) {
             if (param.getValue() instanceof Iterable) {
                 for (Object paramValue : ((Iterable<Object>) param.getValue())) {

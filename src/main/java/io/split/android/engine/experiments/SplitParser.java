@@ -3,7 +3,9 @@ package io.split.android.engine.experiments;
 import static io.split.android.client.utils.Utils.checkArgument;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,11 @@ import io.split.android.engine.matchers.collections.ContainsAllOfSetMatcher;
 import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
 import io.split.android.engine.matchers.collections.EqualToSetMatcher;
 import io.split.android.engine.matchers.collections.PartOfSetMatcher;
+import io.split.android.engine.matchers.semver.BetweenSemverMatcher;
+import io.split.android.engine.matchers.semver.EqualToSemverMatcher;
+import io.split.android.engine.matchers.semver.GreaterThanOrEqualToSemverMatcher;
+import io.split.android.engine.matchers.semver.InListSemverMatcher;
+import io.split.android.engine.matchers.semver.LessThanOrEqualToSemverMatcher;
 import io.split.android.engine.matchers.strings.ContainsAnyOfMatcher;
 import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
 import io.split.android.engine.matchers.strings.RegularExpressionMatcher;
@@ -42,13 +49,21 @@ public class SplitParser {
     public static final int CONDITIONS_UPPER_LIMIT = 50;
 
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
+    private final DefaultConditionsProvider mDefaultConditionsProvider;
 
-    public static SplitParser get(MySegmentsStorageContainer mySegmentsStorageContainer) {
+    public SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer) {
+        this(mySegmentsStorageContainer, new DefaultConditionsProvider());
+    }
+
+    @VisibleForTesting
+    static SplitParser get(MySegmentsStorageContainer mySegmentsStorageContainer) {
         return new SplitParser(mySegmentsStorageContainer);
     }
 
-    public SplitParser(MySegmentsStorageContainer mySegmentsStorageContainer) {
+    @VisibleForTesting
+    SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, @NonNull DefaultConditionsProvider defaultConditionsProvider) {
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
+        mDefaultConditionsProvider = checkNotNull(defaultConditionsProvider);
     }
 
     @Nullable
@@ -83,10 +98,15 @@ public class SplitParser {
 
         List<ParsedCondition> parsedConditionList = new ArrayList<>();
 
-        for (Condition condition : split.conditions) {
-            List<Partition> partitions = condition.partitions;
-            CombiningMatcher matcher = toMatcher(condition.matcherGroup, matchingKey);
-            parsedConditionList.add(new ParsedCondition(condition.conditionType, matcher, partitions, condition.label));
+        try {
+            for (Condition condition : split.conditions) {
+                List<Partition> partitions = condition.partitions;
+                CombiningMatcher matcher = toMatcher(condition.matcherGroup, matchingKey);
+                parsedConditionList.add(new ParsedCondition(condition.conditionType, matcher, partitions, condition.label));
+            }
+        } catch (UnsupportedMatcherException e) {
+            Logger.w(e.getMessage());
+            parsedConditionList = mDefaultConditionsProvider.getDefaultConditions();
         }
 
         return new ParsedSplit(split.name,
@@ -103,21 +123,29 @@ public class SplitParser {
                 split.sets);
     }
 
-    private CombiningMatcher toMatcher(MatcherGroup matcherGroup, String matchingKey) {
+    private CombiningMatcher toMatcher(MatcherGroup matcherGroup, String matchingKey) throws UnsupportedMatcherException {
         List<Matcher> matchers = matcherGroup.matchers;
         checkArgument(!matchers.isEmpty());
 
         List<AttributeMatcher> toCombine = new ArrayList<>();
 
         for (Matcher matcher : matchers) {
-            toCombine.add(toMatcher(matcher, matchingKey));
+            AttributeMatcher attributeMatcher = toMatcher(matcher, matchingKey);
+
+            toCombine.add(attributeMatcher);
         }
 
         return new CombiningMatcher(matcherGroup.combiner, toCombine);
     }
 
-    private AttributeMatcher toMatcher(Matcher matcher, String matchingKey) {
+    private AttributeMatcher toMatcher(Matcher matcher, String matchingKey) throws UnsupportedMatcherException {
         io.split.android.engine.matchers.Matcher delegate;
+
+        // Values not present in {@link io.split.android.client.dtos.MatcherType} are deserialized as null
+        if (matcher.matcherType == null) {
+            throw new UnsupportedMatcherException("Unable to create matcher for matcher type");
+        }
+
         switch (matcher.matcherType) {
             case ALL_KEYS:
                 delegate = new AllKeysMatcher();
@@ -190,11 +218,26 @@ public class SplitParser {
                                 + ". matcher.booleanMatcherData() MUST NOT BE null");
                 delegate = new BooleanMatcher(matcher.booleanMatcherData);
                 break;
+            case EQUAL_TO_SEMVER:
+                delegate = new EqualToSemverMatcher(matcher.stringMatcherData);
+                break;
+            case GREATER_THAN_OR_EQUAL_TO_SEMVER:
+                delegate = new GreaterThanOrEqualToSemverMatcher(matcher.stringMatcherData);
+                break;
+            case LESS_THAN_OR_EQUAL_TO_SEMVER:
+                delegate = new LessThanOrEqualToSemverMatcher(matcher.stringMatcherData);
+                break;
+            case BETWEEN_SEMVER:
+                delegate = new BetweenSemverMatcher(matcher.betweenStringMatcherData.start, matcher.betweenStringMatcherData.end);
+                break;
+            case IN_LIST_SEMVER:
+                delegate = new InListSemverMatcher(matcher.whitelistMatcherData.whitelist);
+                break;
             default:
-                throw new IllegalArgumentException("Unknown matcher type: " + matcher.matcherType);
+                // since values not present in {@link io.split.android.client.dtos.MatcherType}
+                // are deserialized as null, this would most likely not be reached. Adding it for completeness
+                throw new UnsupportedMatcherException("Unable to create matcher for matcher type: " + matcher.matcherType);
         }
-
-        checkNotNull(delegate, "We were not able to create a matcher for: " + matcher.matcherType);
 
         String attribute = null;
         if (matcher.keySelector != null && matcher.keySelector.attribute != null) {

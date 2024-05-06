@@ -1,19 +1,24 @@
 package io.split.android.client.service;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import androidx.annotation.NonNull;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -251,6 +256,87 @@ public class HttpFetcherTest {
 
 
         Assert.assertTrue(exceptionWasThrown);
+    }
+
+    @Test
+    public void paramOrderIsCorrect() throws HttpFetcherException, HttpException {
+        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("s", "1.1");
+        params.put("till", "100");
+        params.put("since", "-1");
+        params.put("sets", "flag_set1,flagset2");
+
+        fetcher.execute(params, null);
+
+        verifyQuery("s=1.1&since=-1&sets=flag_set1,flagset2&till=100");
+    }
+
+    @Test
+    public void paramOrderWithoutTillIsCorrect() throws HttpException, HttpFetcherException {
+        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("s", "1.1");
+        params.put("since", "-1");
+        params.put("sets", "flag_set1,flagset2");
+
+            fetcher.execute(params, null);
+
+        verifyQuery("s=1.1&since=-1&sets=flag_set1,flagset2");
+    }
+
+    @Test
+    public void paramOrderWithoutSpecIsCorrect() throws HttpException, HttpFetcherException {
+        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("since", "-1");
+        params.put("till", "100");
+        params.put("sets", "flag_set1,flagset2");
+
+        fetcher.execute(params, null);
+
+        verifyQuery("since=-1&sets=flag_set1,flagset2&till=100");
+    }
+
+    @Test
+    public void paramOrderWithoutSetsIsCorrect() throws HttpException {
+        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("till", "100");
+        params.put("s", "1.1");
+        params.put("since", "-1");
+
+        try {
+            fetcher.execute(params, null);
+        } catch (HttpFetcherException e) {
+            e.printStackTrace();
+        }
+
+        verifyQuery("s=1.1&since=-1&till=100");
+    }
+
+    @NonNull
+    private HttpFetcher<SplitChange> getSplitChangeHttpFetcher() throws HttpException {
+        HttpRequest mockRequest = mock(HttpRequest.class);
+        when(mockRequest.execute()).thenReturn(new HttpResponseImpl(200, dummySplitChangeResponse()));
+        when(mClientMock.request(any(), any(), any(), any())).thenReturn(mockRequest);
+
+        HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
+        return fetcher;
+    }
+
+    private void verifyQuery(String anObject) {
+        verify(mClientMock).request(argThat(new ArgumentMatcher<URI>() {
+            @Override
+            public boolean matches(URI argument) {
+                String query = argument.getQuery();
+                return query.equals(anObject);
+            }
+        }), eq(HttpMethod.GET), any(), any());
     }
 
     private String dummySplitChangeResponse() {

@@ -11,6 +11,8 @@ import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import helper.DatabaseHelper;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
@@ -24,7 +26,7 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     @Before
     public void setUp() {
         ImpressionsObserverCacheDao impressionsObserverCacheDao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
-        mPersistentStorage = new SqlitePersistentImpressionsObserverCacheStorage(impressionsObserverCacheDao, 2000);
+        mPersistentStorage = new SqlitePersistentImpressionsObserverCacheStorage(impressionsObserverCacheDao, 2000, 1, Executors.newSingleThreadScheduledExecutor(), new AtomicBoolean(false));
         mCache = new ListenableLruCache<>(5, mPersistentStorage);
         mImpressionsObserverCacheImpl = new ImpressionsObserverCacheImpl(mPersistentStorage, mCache);
     }
@@ -39,8 +41,8 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     }
 
     @Test
-    public void getReturnsValueFromPersistentStorageIfNotPresentInCache() {
-        mPersistentStorage.put(1L, 2L);
+    public void getReturnsValueFromPersistentStorageIfNotPresentInCache() throws InterruptedException {
+        putInStorageAndWait();
 
         Long result = mImpressionsObserverCacheImpl.get(1L);
 
@@ -48,11 +50,12 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     }
 
     @Test
-    public void leastRecentlyUsedValueIsRemovedFromDatabaseWhenLimitIsReached() {
+    public void leastRecentlyUsedValueIsRemovedFromDatabaseWhenLimitIsReached() throws InterruptedException {
         for (int i = 0; i < 6; i++) {
             mImpressionsObserverCacheImpl.put(i, i);
         }
 
+        Thread.sleep(500);
         Map<Long, Long> values = new HashMap<>();
         for (int i = 0; i < 6; i++) {
             Long value = mImpressionsObserverCacheImpl.get(i);
@@ -60,6 +63,8 @@ public class ImpressionsObserverCacheImplIntegrationTest {
                 values.put((long) i, value);
             }
         }
+
+//        Thread.sleep(1000);
 
         assertEquals(5, values.size());
         assertFalse(values.containsKey(0L));
@@ -71,8 +76,8 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     }
 
     @Test
-    public void getPutsValueInCacheWhenRetrievedFromPersistentStorage() {
-        mPersistentStorage.put(1L, 2L);
+    public void getPutsValueInCacheWhenRetrievedFromPersistentStorage() throws InterruptedException {
+        putInStorageAndWait();
 
         Long result = mImpressionsObserverCacheImpl.get(1L);
 
@@ -81,19 +86,26 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     }
 
     @Test
-    public void putPutsValueInCacheAndPersistentStorage() {
+    public void putPutsValueInCacheAndPersistentStorage() throws InterruptedException {
         mImpressionsObserverCacheImpl.put(1L, 2L);
+        Thread.sleep(100);
 
         assertEquals(2L, mPersistentStorage.get(1L).longValue());
         assertEquals(2L, mCache.get(1L).longValue());
     }
 
     @Test
-    public void putUpdatesValueInCacheAndPersistentStorage() {
+    public void putUpdatesValueInCacheAndPersistentStorage() throws InterruptedException {
         mImpressionsObserverCacheImpl.put(1L, 2L);
         mImpressionsObserverCacheImpl.put(1L, 3L);
+        Thread.sleep(100);
 
         assertEquals(3L, mPersistentStorage.get(1L).longValue());
         assertEquals(3L, mCache.get(1L).longValue());
+    }
+
+    private void putInStorageAndWait() throws InterruptedException {
+        mPersistentStorage.put(1L, 2L);
+        Thread.sleep(100);
     }
 }

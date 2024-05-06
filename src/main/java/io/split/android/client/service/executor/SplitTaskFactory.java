@@ -18,7 +18,7 @@ public interface SplitTaskFactory extends TelemetryTaskFactory, ImpressionsTaskF
 
     SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration);
 
-    LoadSplitsTask createLoadSplitsTask(String splitsFilterQueryStringFromConfig);
+    LoadSplitsTask createLoadSplitsTask();
 
     SplitKillTask createSplitKillTask(Split split);
 
