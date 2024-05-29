@@ -1,3 +1,8 @@
+4.1.0 (Apr 30, 2024)
+- Added support for targeting rules based on semantic versions (https://semver.org/).
+- Added special impression label "targeting rule type unsupported by sdk" when the matcher type is not supported by the SDK, which returns 'control' treatment.
+- Added memory improvements to impressions deduplication logic.
+
 4.0.1 (Mar 27, 2024)
 - Updated impressions deduplication to apply across sessions.
 
