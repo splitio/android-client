@@ -155,10 +155,16 @@ public class HttpClientImpl implements HttpClient {
     }
 
     private static SplitUrlConnectionAuthenticator createBasicAuthenticator(String username, String password) {
-        return new SplitUrlConnectionAuthenticator(new SplitBasicAuthenticator(username, password, new SplitBasicAuthenticator.Base64Encoder() {
+        return new SplitUrlConnectionAuthenticator(new SplitBasicAuthenticator(username, password, new Base64Encoder() {
+
             @Override
             public String encode(String value) {
                 return Base64Util.encode(value);
+            }
+
+            @Override
+            public String encode(byte[] bytes) {
+                return Base64Util.encode(bytes);
             }
         }));
     }

@@ -31,8 +31,4 @@ class SplitBasicAuthenticator extends SplitAuthenticator {
         String encoded = mBase64Encoder.encode(usernameAndPassword);
         return "Basic " + encoded;
     }
-
-    interface Base64Encoder {
-        String encode(String value);
-    }
 }
