@@ -122,7 +122,7 @@ public class CertificateCheckerImplTest {
     }
 
     @Test
-    public void pinEncoderIsCalledForThePublicKeyOfEachCleanCertificate() throws SSLPeerUnverifiedException {
+    public void pinEncoderIsCalledForThePublicKeyOfEachCleanCertificateWhenMatchingHost() {
         PublicKey mockedPublicKey = mock(PublicKey.class);
         byte[] bytes1 = {0, 1, 2, 3};
         when(mockedPublicKey.getEncoded()).thenReturn(bytes1);
@@ -142,16 +142,21 @@ public class CertificateCheckerImplTest {
         when(mockedX509Cert2.getPublicKey()).thenReturn(mockedPublicKey2);
         when(mockedX509Cert2.getSubjectDN()).thenReturn(mockedPrincipal2);
 
-        CertificatePin pin = new CertificatePin(bytes2, "sha256");
+        CertificatePin pin = new CertificatePin(bytes2, "sha1");
         when(mChainCleaner.clean(any(), any())).thenReturn(Arrays.asList(mockedX509Cert, mockedX509Cert2));
-        when(mPinEncoder.encodeCertPin(any(), any())).thenReturn(bytes1);
+        when(mPinEncoder.encodeCertPin("sha1", bytes1)).thenReturn(bytes1);
+        when(mPinEncoder.encodeCertPin("sha1", bytes2)).thenReturn(bytes2);
 
         mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singletonList(pin)));
 
-        mChecker.checkPins(mMockConnection);
+        try {
+            mChecker.checkPins(mMockConnection);
+        } catch (SSLPeerUnverifiedException e) {
+            // ignore
+        }
 
-        verify(mPinEncoder).encodeCertPin("sha256", bytes1);
-        verify(mPinEncoder).encodeCertPin("sha256", bytes2);
+        verify(mPinEncoder).encodeCertPin("sha1", bytes1);
+        verify(mPinEncoder).encodeCertPin("sha1", bytes2);
     }
 
     @Test
@@ -196,8 +201,12 @@ public class CertificateCheckerImplTest {
         byte[] bytes1 = {0, 1, 2, 3};
         when(mockedPublicKey.getEncoded()).thenReturn(bytes1);
 
+        Principal mockedPrincipal = mock(Principal.class);
+        when(mockedPrincipal.getName()).thenReturn("CN=cert1");
+
         X509Certificate mockedX509Cert = mock(X509Certificate.class);
         when(mockedX509Cert.getPublicKey()).thenReturn(mockedPublicKey);
+        when(mockedX509Cert.getSubjectDN()).thenReturn(mockedPrincipal);
 
         CertificatePin pin = new CertificatePin(new byte[]{1, 2, 2, 3}, "sha256");
         when(mChainCleaner.clean(any(), any())).thenReturn(Collections.singletonList(mockedX509Cert));

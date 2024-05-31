@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -50,7 +51,12 @@ class CertificateCheckerImpl implements CertificateChecker {
             return;
         }
 
-        List<X509Certificate> cleanCertificates = mChainCleaner.clean(host, httpsConnection.getServerCertificates());
+        List<X509Certificate> cleanCertificates;
+        try {
+            cleanCertificates = mChainCleaner.clean(host, httpsConnection.getServerCertificates());
+        } catch (Exception e) {
+            throw new SSLPeerUnverifiedException("Error cleaning certificate chain for host: " + host);
+        }
 
         for (X509Certificate certificate : cleanCertificates) {
             for (CertificatePin pinnedCertificate : pinsForHost) {
