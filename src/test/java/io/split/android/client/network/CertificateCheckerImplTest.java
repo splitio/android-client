@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import androidx.annotation.NonNull;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 
 import java.net.URL;
 import java.security.Principal;
@@ -25,6 +27,8 @@ import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
+
+import io.split.android.client.utils.logger.Logger;
 
 public class CertificateCheckerImplTest {
 
@@ -76,7 +80,7 @@ public class CertificateCheckerImplTest {
     }
 
     @Test
-    public void noMatchingPintsDoesNotInteractWithComponents() throws SSLPeerUnverifiedException {
+    public void noMatchingPinsDoesNotInteractWithComponents() throws SSLPeerUnverifiedException {
         mChecker = getChecker(Collections.singletonMap("not-my-host.com", Collections.singletonList(new CertificatePin(new byte[]{0, 1, 2, 3}, "sha256"))));
 
         mChecker.checkPins(mMockConnection);
@@ -85,6 +89,17 @@ public class CertificateCheckerImplTest {
         verify(mChainCleaner, times(0)).clean(any(), any());
         verify(mBase64Encoder, times(0)).encode((byte[]) any());
         verify(mPinEncoder, times(0)).encodeCertPin(any(), any());
+    }
+
+    @Test
+    public void noMatchingPinsLogsDebugMessage() throws SSLPeerUnverifiedException {
+        mChecker = getChecker(Collections.singletonMap("not-my-host.com", Collections.singletonList(new CertificatePin(new byte[]{0, 1, 2, 3}, "sha256"))));
+
+        try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
+            mChecker.checkPins(mMockConnection);
+
+            logger.verify(() -> Logger.d("No certificate pins configured for my-url.com. Skipping pinning verification."));
+        }
     }
 
     @Test
@@ -115,10 +130,17 @@ public class CertificateCheckerImplTest {
         byte[] bytes2 = {4, 5, 6, 7};
         when(mockedPublicKey2.getEncoded()).thenReturn(bytes2);
 
+        Principal mockedPrincipal = mock(Principal.class);
+        when(mockedPrincipal.getName()).thenReturn("CN=cert1");
+        Principal mockedPrincipal2 = mock(Principal.class);
+        when(mockedPrincipal2.getName()).thenReturn("CN=cert2");
+
         X509Certificate mockedX509Cert = mock(X509Certificate.class);
         when(mockedX509Cert.getPublicKey()).thenReturn(mockedPublicKey);
+        when(mockedX509Cert.getSubjectDN()).thenReturn(mockedPrincipal);
         X509Certificate mockedX509Cert2 = mock(X509Certificate.class);
         when(mockedX509Cert2.getPublicKey()).thenReturn(mockedPublicKey2);
+        when(mockedX509Cert2.getSubjectDN()).thenReturn(mockedPrincipal2);
 
         CertificatePin pin = new CertificatePin(bytes2, "sha256");
         when(mChainCleaner.clean(any(), any())).thenReturn(Arrays.asList(mockedX509Cert, mockedX509Cert2));
@@ -133,7 +155,7 @@ public class CertificateCheckerImplTest {
     }
 
     @Test
-    public void failureListenerIsCalledWhenThereAreHostsButNoMatchingCerts() throws SSLPeerUnverifiedException {
+    public void failureListenerIsCalledWhenThereAreHostsButNoMatchingCerts() {
         PublicKey mockedPublicKey = mock(PublicKey.class);
         byte[] bytes1 = {0, 1, 2, 3};
         when(mockedPublicKey.getEncoded()).thenReturn(bytes1);
@@ -141,10 +163,17 @@ public class CertificateCheckerImplTest {
         byte[] bytes2 = {4, 5, 6, 7};
         when(mockedPublicKey2.getEncoded()).thenReturn(bytes2);
 
+        Principal mockedPrincipal = mock(Principal.class);
+        when(mockedPrincipal.getName()).thenReturn("CN=cert1");
+        Principal mockedPrincipal2 = mock(Principal.class);
+        when(mockedPrincipal2.getName()).thenReturn("CN=cert2");
+
         X509Certificate mockedX509Cert = mock(X509Certificate.class);
         when(mockedX509Cert.getPublicKey()).thenReturn(mockedPublicKey);
+        when(mockedX509Cert.getSubjectDN()).thenReturn(mockedPrincipal);
         X509Certificate mockedX509Cert2 = mock(X509Certificate.class);
         when(mockedX509Cert2.getPublicKey()).thenReturn(mockedPublicKey2);
+        when(mockedX509Cert2.getSubjectDN()).thenReturn(mockedPrincipal2);
 
         CertificatePin pin = new CertificatePin(new byte[]{1, 2, 2, 3}, "sha256");
         when(mChainCleaner.clean(any(), any())).thenReturn(Arrays.asList(mockedX509Cert, mockedX509Cert2));
@@ -152,7 +181,11 @@ public class CertificateCheckerImplTest {
 
         mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singletonList(pin)));
 
-        mChecker.checkPins(mMockConnection);
+        try {
+            mChecker.checkPins(mMockConnection);
+        } catch (SSLPeerUnverifiedException e) {
+            // ignore
+        }
 
         verify(mFailureListener).onCertificatePinningFailure(any(), any());
     }
