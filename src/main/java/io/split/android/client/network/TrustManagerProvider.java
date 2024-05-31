@@ -24,9 +24,9 @@ class TrustManagerProvider {
         }
 
         TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-        for (TrustManager tm : trustManagers) {
-            if (tm instanceof X509TrustManager) {
-                return (X509TrustManager) tm;
+        for (TrustManager trustManager : trustManagers) {
+            if (trustManager instanceof X509TrustManager) {
+                return (X509TrustManager) trustManager;
             }
         }
 
