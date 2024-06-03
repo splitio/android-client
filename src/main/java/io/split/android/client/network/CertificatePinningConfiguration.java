@@ -29,6 +29,7 @@ public class CertificatePinningConfiguration {
         this(builder.mPins, builder.mFailureListener);
     }
 
+    @NonNull
     public Map<String, Set<CertificatePin>> getPins() {
         return mPins;
     }

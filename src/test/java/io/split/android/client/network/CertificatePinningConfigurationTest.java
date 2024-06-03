@@ -156,4 +156,12 @@ public class CertificatePinningConfigurationTest {
             logger.verify(() -> Logger.e("Pin cannot be null or empty. Ignoring entry for host host"), times(3));
         }
     }
+
+    @Test
+    public void defaultPinsMapIsEmpty() {
+        CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder)
+                .build();
+
+        assertEquals(0, config.getPins().size());
+    }
 }
