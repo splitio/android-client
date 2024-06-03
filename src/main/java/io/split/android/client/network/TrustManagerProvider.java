@@ -12,7 +12,7 @@ import io.split.android.client.utils.logger.Logger;
 
 class TrustManagerProvider {
 
-    static X509TrustManager getDefaultTrustManager() {
+    static X509TrustManager getDefaultX509TrustManager() {
         TrustManagerFactory trustManagerFactory;
         try {
             trustManagerFactory = TrustManagerFactory.getInstance(

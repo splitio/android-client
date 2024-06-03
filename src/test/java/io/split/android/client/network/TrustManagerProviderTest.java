@@ -29,7 +29,7 @@ public class TrustManagerProviderTest {
             when(mockedTrustManagerFactory.getTrustManagers()).thenReturn(new TrustManager[]{mock(TrustManager.class)});
             when(TrustManagerFactory.getInstance("DefaultAlgo")).thenReturn(mockedTrustManagerFactory);
 
-            TrustManagerProvider.getDefaultTrustManager();
+            TrustManagerProvider.getDefaultX509TrustManager();
 
             verify(mockedTrustManagerFactory).init((KeyStore) null);
         }
@@ -44,7 +44,7 @@ public class TrustManagerProviderTest {
             when(mockedTrustManagerFactory.getTrustManagers()).thenReturn(new TrustManager[]{mock(TrustManager.class), mockX509TrustManager});
             when(TrustManagerFactory.getInstance("DefaultAlgo")).thenReturn(mockedTrustManagerFactory);
 
-            X509TrustManager defaultTrustManager = TrustManagerProvider.getDefaultTrustManager();
+            X509TrustManager defaultTrustManager = TrustManagerProvider.getDefaultX509TrustManager();
             assertEquals(mockX509TrustManager, defaultTrustManager);
         }
     }
@@ -57,7 +57,7 @@ public class TrustManagerProviderTest {
             when(mockedTrustManagerFactory.getTrustManagers()).thenReturn(new TrustManager[]{mock(TrustManager.class), mock(TrustManager.class)});
             when(TrustManagerFactory.getInstance("DefaultAlgo")).thenReturn(mockedTrustManagerFactory);
 
-            X509TrustManager defaultTrustManager = TrustManagerProvider.getDefaultTrustManager();
+            X509TrustManager defaultTrustManager = TrustManagerProvider.getDefaultX509TrustManager();
             assertNull(defaultTrustManager);
         }
     }
@@ -67,7 +67,7 @@ public class TrustManagerProviderTest {
         try (MockedStatic<TrustManagerFactory> ignored = mockStatic(TrustManagerFactory.class)) {
             when(TrustManagerFactory.getInstance(any())).thenThrow(new NoSuchAlgorithmException());
 
-            X509TrustManager defaultTrustManager = TrustManagerProvider.getDefaultTrustManager();
+            X509TrustManager defaultTrustManager = TrustManagerProvider.getDefaultX509TrustManager();
             assertNull(defaultTrustManager);
         }
     }

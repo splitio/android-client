@@ -21,7 +21,7 @@ class ChainCleanerImpl implements ChainCleaner {
     private final X509TrustManagerExtensions mTrustManagerExtensions;
 
     ChainCleanerImpl() {
-        this(new X509TrustManagerExtensions(TrustManagerProvider.getDefaultTrustManager()));
+        this(new X509TrustManagerExtensions(TrustManagerProvider.getDefaultX509TrustManager()));
     }
 
     @VisibleForTesting
