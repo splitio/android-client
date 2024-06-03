@@ -37,23 +37,23 @@ class ChainCleanerImpl implements ChainCleaner {
     @Override
     @NonNull
     public List<X509Certificate> clean(String hostname, Certificate[] chain) {
-        try {
-            if (chain != null) {
-                List<X509Certificate> x509Certificates = new ArrayList<>();
-                for (Certificate certificate : chain) {
-                    try {
-                        x509Certificates.add((X509Certificate) certificate);
-                    } catch (ClassCastException e) {
-                        Logger.v("Ignored non-X.509 certificate in chain cleaning");
-                    }
-                }
-
-                return mTrustManagerExtensions.checkServerTrusted(x509Certificates.toArray(new X509Certificate[0]), "RSA", hostname);
-            }
-        } catch (CertificateException e) {
+        if (chain == null) {
             return Collections.emptyList();
         }
 
-        return Collections.emptyList();
+        try {
+            List<X509Certificate> x509Certificates = new ArrayList<>();
+            for (Certificate certificate : chain) {
+                try {
+                    x509Certificates.add((X509Certificate) certificate);
+                } catch (ClassCastException e) {
+                    Logger.v("Ignored non-X.509 certificate in chain cleaning");
+                }
+            }
+
+            return mTrustManagerExtensions.checkServerTrusted(x509Certificates.toArray(new X509Certificate[0]), "RSA", hostname);
+        } catch (CertificateException e) {
+            return Collections.emptyList();
+        }
     }
 }
