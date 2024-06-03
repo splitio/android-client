@@ -1138,8 +1138,8 @@ public class SplitClientConfig {
                 }
             }
 
-            if (mCertificatePinningConfiguration == null || mCertificatePinningConfiguration.getPins() == null ||
-                mCertificatePinningConfiguration.getPins().isEmpty()) {
+            if (mCertificatePinningConfiguration != null && (mCertificatePinningConfiguration.getPins() == null ||
+                mCertificatePinningConfiguration.getPins().isEmpty())) {
                 Logger.w("Certificate pinning configuration is empty. Disabling certificate pinning.");
                 mCertificatePinningConfiguration = null;
             }
