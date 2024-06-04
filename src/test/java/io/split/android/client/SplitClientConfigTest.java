@@ -2,6 +2,7 @@ package io.split.android.client;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNull;
 
 import androidx.annotation.NonNull;
 
@@ -10,6 +11,7 @@ import org.junit.Test;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.utils.logger.LogPrinter;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
@@ -124,6 +126,20 @@ public class SplitClientConfigTest {
                 .build();
 
         assertEquals(0, logMessages.size());
+    }
+
+    @Test
+    public void certificatePinningConfigWithoutPinsIsIgnored() {
+        Queue<String> logMessages = getLogMessagesQueue();
+
+        SplitClientConfig config = SplitClientConfig.builder()
+                .logLevel(SplitLogLevel.WARNING)
+                .certificatePinningConfiguration(CertificatePinningConfiguration.builder().build())
+                .build();
+
+        assertNull(config.certificatePinningConfiguration());
+        assertEquals(1, logMessages.size());
+        assertEquals("Certificate pinning configuration is empty. Disabling certificate pinning.", logMessages.poll());
     }
 
     @NonNull
