@@ -9,16 +9,18 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 
+import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.logger.Logger;
 
 class CertificateCheckerImpl implements CertificateChecker {
 
     @NonNull
-    private final Map<String, List<CertificatePin>> mConfiguredPins;
+    private final Map<String, Set<CertificatePin>> mConfiguredPins;
     @Nullable
     private final CertificatePinningFailureListener mFailureListener;
     @NonNull
@@ -28,14 +30,18 @@ class CertificateCheckerImpl implements CertificateChecker {
     @NonNull
     private final PinEncoder mPinEncoder;
 
+    CertificateCheckerImpl(CertificatePinningConfiguration certificatePinningConfiguration) {
+        this(certificatePinningConfiguration.getPins(), certificatePinningConfiguration.getFailureListener(), new ChainCleanerImpl(), new DefaultBase64Encoder(), new PinEncoderImpl());
+    }
+
     @VisibleForTesting
-    CertificateCheckerImpl(@Nullable Map<String, List<CertificatePin>> configuredPins,
-                           @Nullable CertificatePinningFailureListener failureStrategy,
+    CertificateCheckerImpl(@Nullable Map<String, Set<CertificatePin>> configuredPins,
+                           @Nullable CertificatePinningFailureListener failureListener,
                            @NonNull ChainCleaner chainCleaner,
                            @NonNull Base64Encoder base64Encoder,
                            @NonNull PinEncoder pinEncoder) {
         mConfiguredPins = configuredPins != null ? configuredPins : new HashMap<>();
-        mFailureListener = failureStrategy;
+        mFailureListener = failureListener;
         mChainCleaner = chainCleaner;
         mBase64Encoder = base64Encoder;
         mPinEncoder = pinEncoder;
@@ -44,7 +50,7 @@ class CertificateCheckerImpl implements CertificateChecker {
     @Override
     public void checkPins(HttpsURLConnection httpsConnection) throws SSLPeerUnverifiedException {
         String host = httpsConnection.getURL().getHost();
-        List<CertificatePin> pinsForHost = mConfiguredPins.get(host);
+        Set<CertificatePin> pinsForHost = mConfiguredPins.get(host);
         if (pinsForHost == null || pinsForHost.isEmpty()) {
             Logger.d("No certificate pins configured for " + host + ". Skipping pinning verification.");
             return;
@@ -87,5 +93,18 @@ class CertificateCheckerImpl implements CertificateChecker {
         }
 
         return builder.toString();
+    }
+
+    private static class DefaultBase64Encoder implements Base64Encoder {
+
+        @Override
+        public String encode(String value) {
+            return Base64Util.encode(value);
+        }
+
+        @Override
+        public String encode(byte[] bytes) {
+            return Base64Util.encode(bytes);
+        }
     }
 }

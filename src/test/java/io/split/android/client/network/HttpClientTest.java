@@ -1,4 +1,4 @@
-package io.split.android.http;
+package io.split.android.client.network;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -38,17 +38,6 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
-import io.split.android.client.network.HttpClient;
-import io.split.android.client.network.HttpClientImpl;
-import io.split.android.client.network.HttpException;
-import io.split.android.client.network.HttpMethod;
-import io.split.android.client.network.HttpProxy;
-import io.split.android.client.network.HttpRequest;
-import io.split.android.client.network.HttpResponse;
-import io.split.android.client.network.HttpStreamRequest;
-import io.split.android.client.network.SplitAuthenticatedRequest;
-import io.split.android.client.network.SplitAuthenticator;
-import io.split.android.client.network.UrlSanitizer;
 import io.split.android.client.utils.Json;
 import io.split.android.helpers.FileHelper;
 import okhttp3.Headers;
