@@ -5,7 +5,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -74,10 +73,10 @@ class CertificateCheckerImpl implements CertificateChecker {
             mFailureListener.onCertificatePinningFailure(host, cleanCertificates);
         }
 
-        throw new SSLPeerUnverifiedException("Certificate pinning verification failed for host: " + host + ". Chain:\n" + certificateChainInfo(host, cleanCertificates));
+        throw new SSLPeerUnverifiedException("Certificate pinning verification failed for host: " + host + ". Chain:\n" + certificateChainInfo(cleanCertificates));
     }
 
-    private String certificateChainInfo(String host, List<X509Certificate> cleanCertificates) {
+    private String certificateChainInfo(List<X509Certificate> cleanCertificates) {
         StringBuilder builder = new StringBuilder();
         for (X509Certificate certificate : cleanCertificates) {
             builder.append(certificate.getSubjectDN().getName()).append(" - ")
