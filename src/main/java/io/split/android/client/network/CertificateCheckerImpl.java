@@ -88,8 +88,7 @@ class CertificateCheckerImpl implements CertificateChecker {
             builder.append(certificate.getSubjectDN().getName()).append(" - ")
                     .append("sha256/")
                     .append(mBase64Encoder.encode(mPinEncoder.encodeCertPin("sha256",
-                            certificate.getPublicKey().getEncoded())))
-                    .append("\n");
+                            certificate.getPublicKey().getEncoded())));
         }
 
         return builder.toString();

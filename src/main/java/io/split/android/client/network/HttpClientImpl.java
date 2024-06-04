@@ -78,7 +78,8 @@ public class HttpClientImpl implements HttpClient {
                 mConnectionTimeout,
                 mDevelopmentSslConfig,
                 mSslSocketFactory,
-                mUrlSanitizer);
+                mUrlSanitizer,
+                mCertificateChecker);
     }
 
     public HttpRequest request(URI uri, HttpMethod requestMethod) {
@@ -99,7 +100,8 @@ public class HttpClientImpl implements HttpClient {
                 mConnectionTimeout,
                 mDevelopmentSslConfig,
                 mSslSocketFactory,
-                mUrlSanitizer);
+                mUrlSanitizer,
+                mCertificateChecker);
     }
 
     @Override

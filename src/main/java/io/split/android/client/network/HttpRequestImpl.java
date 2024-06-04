@@ -48,6 +48,8 @@ public class HttpRequestImpl implements HttpRequest {
     private final DevelopmentSslConfig mDevelopmentSslConfig;
     @Nullable
     private final SSLSocketFactory mSslSocketFactory;
+    @Nullable
+    private final CertificateChecker mCertificateChecker;
     private final AtomicBoolean mWasRetried = new AtomicBoolean(false);
 
     HttpRequestImpl(@NonNull URI uri,
@@ -59,8 +61,9 @@ public class HttpRequestImpl implements HttpRequest {
                     long readTimeout,
                     long connectionTimeout,
                     @Nullable DevelopmentSslConfig developmentSslConfig,
-                    SSLSocketFactory sslSocketFactory,
-                    @NonNull UrlSanitizer urlSanitizer) {
+                    @Nullable SSLSocketFactory sslSocketFactory,
+                    @NonNull UrlSanitizer urlSanitizer,
+                    @Nullable CertificateChecker certificateChecker) {
         mUri = checkNotNull(uri);
         mHttpMethod = checkNotNull(httpMethod);
         mBody = body;
@@ -72,6 +75,7 @@ public class HttpRequestImpl implements HttpRequest {
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
         mSslSocketFactory = sslSocketFactory;
+        mCertificateChecker = certificateChecker;
     }
 
     @Override
@@ -183,6 +187,8 @@ public class HttpRequestImpl implements HttpRequest {
         HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, authenticate);
         applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
+        connection.connect();
+        HttpRequestHelper.checkPins(connection, mCertificateChecker);
 
         return connection;
     }
