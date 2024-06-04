@@ -18,13 +18,12 @@ public class Base64Util {
 
     @Nullable
     public static byte[] bytesDecode(String string) {
-        String decoded = null;
         try {
             return Base64.decode(string, Base64.DEFAULT);
         } catch (IllegalArgumentException e) {
             Logger.e("Received bytes didn't correspond to a valid Base64 encoded string." + e.getLocalizedMessage());
         } catch (Exception e) {
-            Logger.e("An unknown error has ocurred " + e.getLocalizedMessage());
+            Logger.e("An unknown error has occurred " + e.getLocalizedMessage());
         }
         return null;
     }
@@ -37,7 +36,7 @@ public class Base64Util {
         } catch (IllegalArgumentException e) {
             Logger.e("Received bytes didn't correspond to a valid Base64 encoded string." + e.getLocalizedMessage());
         } catch (Exception e) {
-            Logger.e("An unknown error has ocurred " + e.getLocalizedMessage());
+            Logger.e("An unknown error has occurred " + e.getLocalizedMessage());
         }
         return null;
     }

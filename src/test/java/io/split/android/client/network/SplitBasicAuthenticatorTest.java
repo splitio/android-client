@@ -10,12 +10,12 @@ import org.junit.Test;
 
 public class SplitBasicAuthenticatorTest {
 
-    private SplitBasicAuthenticator.Base64Encoder mBase64Encoder;
+    private Base64Encoder mBase64Encoder;
 
     @Before
     public void setUp() {
-        mBase64Encoder = mock(SplitBasicAuthenticator.Base64Encoder.class);
-        when(mBase64Encoder.encode(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        mBase64Encoder = mock(Base64Encoder.class);
+        when(mBase64Encoder.encode((String) any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
