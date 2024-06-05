@@ -6,6 +6,7 @@ import static io.split.android.client.utils.Utils.partition;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
+import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -47,6 +49,7 @@ public class EventsRecorderTask implements SplitTask {
         long nonSentBytes = 0;
         List<Event> events;
         List<Event> failingEvents = new ArrayList<>();
+        boolean doNotRetry = false;
         do {
             events = mPersistentEventsStorage.pop(mConfig.getEventsPerPush());
             if (events.size() > 0) {
@@ -69,10 +72,14 @@ public class EventsRecorderTask implements SplitTask {
                     Logger.e("Event recorder task: Some events couldn't be sent" +
                             "Saving to send them in a new iteration: " +
                             e.getLocalizedMessage());
-                    e.printStackTrace();
                     failingEvents.addAll(events);
 
                     mTelemetryRuntimeProducer.recordSyncError(OperationType.EVENTS, e.getHttpStatus());
+
+                    if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.INTERNAL_NON_RETRYABLE) {
+                        doNotRetry = true;
+                        break;
+                    }
                 } finally {
                     mTelemetryRuntimeProducer.recordSyncLatency(OperationType.EVENTS, latency);
                 }
@@ -81,7 +88,7 @@ public class EventsRecorderTask implements SplitTask {
 
         // Update events by chunks to avoid sqlite errors
         List<List<Event>> failingChunks = partition(failingEvents, FAILING_CHUNK_SIZE);
-        for(List<Event> chunk : failingChunks) {
+        for (List<Event> chunk : failingChunks) {
             mPersistentEventsStorage.setActive(chunk);
         }
 
@@ -89,6 +96,9 @@ public class EventsRecorderTask implements SplitTask {
             Map<String, Object> data = new HashMap<>();
             data.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, nonSentRecords);
             data.put(SplitTaskExecutionInfo.NON_SENT_BYTES, nonSentBytes);
+            if (doNotRetry) {
+                data.put(SplitTaskExecutionInfo.DO_NOT_RETRY, true);
+            }
 
             return SplitTaskExecutionInfo.error(
                     SplitTaskType.EVENTS_RECORDER, data);
