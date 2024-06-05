@@ -1,5 +1,7 @@
 package io.split.android.client.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -180,7 +182,23 @@ public class HttpRecorderTest {
         Assert.assertFalse(exceptionWasThrown);
         verify(mClientMock, times(1)).request(mImpressionsUrl, HttpMethod.POST, jsonImpressions);
         verify(request, times(1)).execute();
+    }
 
+    @Test
+    public void httpExceptionThrowsHttpRecorderExceptionWithStatusCode() throws HttpException {
+        HttpRequest httpRequest = mock(HttpRequest.class);
+        when(mClientMock.request(any(), eq(HttpMethod.POST), any())).thenReturn(httpRequest);
+        when(httpRequest.execute()).thenThrow(new HttpException("Not found", 404));
+        HttpRecorder<List<Event>> recorder = new HttpRecorderImpl<>(mClientMock, mUrl,
+                mEventsRequestSerializer);
+
+        HttpRecorderException exception = null;
+        try {
+            recorder.execute(new ArrayList<>());
+        } catch (HttpRecorderException ex) {
+            exception = ex;
+        }
+        Assert.assertEquals(404, exception.getHttpStatus().intValue());
     }
 
     private List<KeyImpression> createImpressions(String feature) {
