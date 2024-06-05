@@ -50,7 +50,6 @@ public class HttpRequestImpl implements HttpRequest {
     private final SSLSocketFactory mSslSocketFactory;
     @Nullable
     private final CertificateChecker mCertificateChecker;
-    private final AtomicBoolean mWasRetried = new AtomicBoolean(false);
 
     HttpRequestImpl(@NonNull URI uri,
                     @NonNull HttpMethod httpMethod,
@@ -80,19 +79,20 @@ public class HttpRequestImpl implements HttpRequest {
 
     @Override
     public HttpResponse execute() throws HttpException {
+        AtomicBoolean wasRetried = new AtomicBoolean(false);
 
         switch (mHttpMethod) {
             case GET:
-                return getRequest();
+                return getRequest(wasRetried);
             case POST: {
-                return postRequest();
+                return postRequest(wasRetried);
             }
             default:
                 throw new IllegalArgumentException("Request HTTP Method not valid: " + mHttpMethod.name());
         }
     }
 
-    private HttpResponse getRequest() throws HttpException {
+    private HttpResponse getRequest(AtomicBoolean wasRetried) throws HttpException {
         HttpResponse response;
         HttpURLConnection connection = null;
         try {
@@ -100,7 +100,7 @@ public class HttpRequestImpl implements HttpRequest {
             response = buildResponse(connection);
 
             if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
-                response = handleProxyAuthentication(response, true);
+                response = handleProxyAuthentication(response, true, wasRetried);
             }
         } catch (MalformedURLException e) {
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
@@ -117,7 +117,7 @@ public class HttpRequestImpl implements HttpRequest {
         return response;
     }
 
-    private HttpResponse postRequest() throws HttpException {
+    private HttpResponse postRequest(AtomicBoolean wasRetried) throws HttpException {
         if (mBody == null) {
             throw new HttpException("Json data is null");
         }
@@ -129,7 +129,7 @@ public class HttpRequestImpl implements HttpRequest {
             response = buildResponse(connection);
 
             if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
-                response = handleProxyAuthentication(response, false);
+                response = handleProxyAuthentication(response, false, wasRetried);
             }
         } catch (IOException e) {
             throw new HttpException("Something happened while posting data: " + e.getLocalizedMessage());
@@ -142,9 +142,9 @@ public class HttpRequestImpl implements HttpRequest {
         return response;
     }
 
-    private HttpResponse handleProxyAuthentication(HttpResponse originalResponse, boolean isGet) throws HttpException {
+    private HttpResponse handleProxyAuthentication(HttpResponse originalResponse, boolean isGet, AtomicBoolean wasRetried) throws HttpException {
         HttpURLConnection connection = null;
-        if (!mWasRetried.getAndSet(true)) {
+        if (!wasRetried.getAndSet(true)) {
             try {
                 Logger.d("Retrying with proxy authentication");
                 connection = (isGet) ? setUpConnection(true) : setUpPostConnection(true);
@@ -162,19 +162,7 @@ public class HttpRequestImpl implements HttpRequest {
     }
 
     private HttpURLConnection setUpPostConnection(boolean useProxyAuthenticator) throws IOException {
-        HttpURLConnection connection = setUpConnection(useProxyAuthenticator);
-
-        connection.setRequestProperty(CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8);
-
-        if (!mBody.trim().isEmpty()) {
-            connection.setDoOutput(true);
-            try (OutputStream bodyStream = connection.getOutputStream()) {
-                bodyStream.write(mBody.getBytes());
-                bodyStream.flush();
-            }
-        }
-
-        return connection;
+        return setUpConnection(useProxyAuthenticator);
     }
 
     @NonNull
@@ -187,6 +175,16 @@ public class HttpRequestImpl implements HttpRequest {
         HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, authenticate);
         applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
+
+        if (mBody != null && !mBody.trim().isEmpty()) {
+            connection.setRequestProperty(CONTENT_TYPE, APPLICATION_JSON_CHARSET_UTF_8);
+            connection.setDoOutput(true);
+            try (OutputStream bodyStream = connection.getOutputStream()) {
+                bodyStream.write(mBody.getBytes());
+                bodyStream.flush();
+            }
+        }
+
         connection.connect();
         HttpRequestHelper.checkPins(connection, mCertificateChecker);
 
