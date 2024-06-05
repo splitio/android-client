@@ -1,29 +1,31 @@
 package io.split.android.client.service.mysegments;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.MySegment;
-import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.synchronizer.MySegmentsChangeChecker;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
-
-import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class MySegmentsSyncTask implements SplitTask {
 
@@ -57,7 +59,7 @@ public class MySegmentsSyncTask implements SplitTask {
 
             long now = System.currentTimeMillis();
             latency = now - startTime;
-            List<String> oldSegments = new ArrayList(mMySegmentsStorage.getAll());
+            List<String> oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
             List<String> mySegments = getNameList(segments);
             mMySegmentsStorage.set(mySegments);
 
@@ -66,6 +68,11 @@ public class MySegmentsSyncTask implements SplitTask {
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(OperationType.MY_SEGMENT, e.getHttpStatus());
+
+            if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.INTERNAL_NON_RETRYABLE) {
+                return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC,
+                        Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true));
+            }
 
             return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
         } catch (Exception e) {
@@ -98,7 +105,7 @@ public class MySegmentsSyncTask implements SplitTask {
     }
 
     private void fireMySegmentsUpdatedIfNeeded(List<String> oldSegments, List<String> newSegments) {
-        if(mEventsManager == null) {
+        if (mEventsManager == null) {
             return;
         }
         mEventsManager.notifyInternalEvent(getInternalEvent(oldSegments, newSegments));
@@ -106,7 +113,7 @@ public class MySegmentsSyncTask implements SplitTask {
 
     private SplitInternalEvent getInternalEvent(List<String> oldSegments, List<String> newSegments) {
         boolean haveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments);
-        if(haveChanged) {
+        if (haveChanged) {
             return SplitInternalEvent.MY_SEGMENTS_UPDATED;
         }
         return SplitInternalEvent.MY_SEGMENTS_FETCHED;

@@ -372,6 +372,28 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
+    public void returnTaskInfoToDoNotRetryWhenHttpFetcherExceptionStatusCodeIs9009() throws HttpFetcherException {
+        when(mSplitsFetcher.execute(eq(mDefaultParams), any()))
+                .thenThrow(new HttpFetcherException("error", "error", 9009));
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1);
+
+        assertEquals(true, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
+    public void doNotRetryFlagIsNullWhenFetcherExceptionStatusCodeIsNot9009() throws HttpFetcherException {
+        when(mSplitsFetcher.execute(eq(mDefaultParams), any()))
+                .thenThrow(new HttpFetcherException("error", "error", 500));
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1);
+
+        assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
     public void defaultQueryParamOrderIsCorrect() throws HttpFetcherException {
         mSplitsSyncHelper.sync(100);
 

@@ -9,6 +9,7 @@ import java.net.URI;
 import java.util.Map;
 
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
@@ -53,7 +54,8 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                 Logger.v("Received from: " + builtUri + " -> " + response.getData());
             }
             if (!response.isSuccess()) {
-                throw new IllegalStateException("http return code " + response.getHttpStatus());
+                int httpStatus = response.getHttpStatus();
+                throw new HttpFetcherException(mTarget.toString(), "http return code " + httpStatus, httpStatus);
             }
 
             responseData = mResponseParser.parse(response.getData());
@@ -61,6 +63,10 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             if (responseData == null) {
                 throw new IllegalStateException("Wrong data received from split changes server");
             }
+        } catch (HttpFetcherException httpFetcherException) {
+            throw httpFetcherException;
+        } catch (HttpException e) {
+            throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage(), e.getStatusCode());
         } catch (Exception e) {
             throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage());
         }
