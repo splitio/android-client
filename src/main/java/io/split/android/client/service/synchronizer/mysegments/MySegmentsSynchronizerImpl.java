@@ -68,7 +68,6 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
         mMySegmentsSyncRetryTimer.start();
     }
 
-
     @Override
     public void destroy() {
         mMySegmentsSyncRetryTimer.stop();

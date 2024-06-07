@@ -63,15 +63,19 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                     if (taskInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
                         pushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PushStatusEvent.EventType.SUCCESSFUL_SYNC));
                     } else {
-                        if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
-                            mIsSynchronizing.compareAndSet(true, false);
-                            stopPeriodicFetching();
-                        }
+                        avoidRetries(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
                     }
                 }
             };
         } else {
-            mSplitsSyncListener = null;
+            mSplitsSyncListener = new SplitTaskExecutionListener() {
+                @Override
+                public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                    if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                        avoidRetries(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+                    }
+                }
+            };
         }
 
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncListener);
@@ -136,5 +140,12 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitsSyncListener);
+    }
+
+    private void avoidRetries(Boolean doNotRetry) {
+        if (Boolean.TRUE.equals(doNotRetry)) {
+            mIsSynchronizing.compareAndSet(true, false);
+            stopPeriodicFetching();
+        }
     }
 }
