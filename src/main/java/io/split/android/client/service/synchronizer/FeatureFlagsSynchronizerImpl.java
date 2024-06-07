@@ -64,8 +64,8 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                         pushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PushStatusEvent.EventType.SUCCESSFUL_SYNC));
                     } else {
                         if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
-                            stopPeriodicFetching();
                             mIsSynchronizing.compareAndSet(true, false);
+                            stopPeriodicFetching();
                         }
                     }
                 }
@@ -128,7 +128,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
 
     private void scheduleSplitsFetcherTask() {
         if (mSplitsFetcherTaskId != null) {
-            stopPeriodicFetching();
+            mSplitsTaskExecutor.stopTask(mSplitsFetcherTaskId);
         }
 
         mSplitsFetcherTaskId = mSplitsTaskExecutor.schedule(
