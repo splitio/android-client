@@ -111,7 +111,7 @@ class OptimizedStrategy implements ProcessStrategy {
 
         KeyImpression keyImpression = KeyImpression.fromImpression(impression);
         if (shouldPushImpression(keyImpression)) {
-            if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression)) {
+            if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression) && mIsSynchronizing.get()) {
                 mTaskExecutor.submit(
                         mImpressionsTaskFactory.createImpressionsRecorderTask(),
                         mImpressionsSyncHelper);

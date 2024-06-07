@@ -40,6 +40,7 @@ public class RecorderSyncHelperImpl<T extends InBytesSizable> implements Recorde
         mTotalPushedSizeInBytes = new AtomicLong(0);
         mMaxQueueSize = maxQueueSize;
         mMaxQueueSizeInBytes = maxQueueSizeInBytes;
+        mTaskExecutionListener = new WeakReference<>(null);
     }
 
     @Override

@@ -91,6 +91,9 @@ class OptimizedTracker implements PeriodicTracker {
     }
 
     private void scheduleImpressionsRecorderTask() {
+        if (mImpressionsRecorderTaskId != null) {
+            mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
+        }
         mImpressionsRecorderTaskId = mTaskExecutor.schedule(
                 mImpressionsTaskFactory.createImpressionsRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
@@ -99,6 +102,9 @@ class OptimizedTracker implements PeriodicTracker {
     }
 
     private void scheduleImpressionsCountRecorderTask() {
+        if (mImpressionsRecorderCountTaskId != null) {
+            mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
+        }
         mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
                 mImpressionsTaskFactory.createImpressionsCountRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
