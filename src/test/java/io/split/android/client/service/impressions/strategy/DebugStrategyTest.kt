@@ -2,7 +2,10 @@ package io.split.android.client.service.impressions.strategy
 
 import io.split.android.client.dtos.KeyImpression
 import io.split.android.client.impressions.Impression
+import io.split.android.client.service.executor.SplitTaskExecutionInfo
+import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
+import io.split.android.client.service.executor.SplitTaskType
 import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
 import io.split.android.client.service.impressions.observer.ImpressionsObserver
@@ -11,6 +14,7 @@ import io.split.android.client.telemetry.model.ImpressionsDataType
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mock
 import org.mockito.Mockito.*
@@ -123,5 +127,47 @@ class DebugStrategyTest {
         strategy.apply(impression)
 
         spy(impression).withPreviousTime(20421)
+    }
+
+    @Test
+    fun `call stop periodic tracking when sync listener returns do not retry`() {
+        val listenerCaptor = ArgumentCaptor.forClass(SplitTaskExecutionListener::class.java)
+
+        `when`(impressionsSyncHelper.addListener(listenerCaptor.capture())).thenAnswer { it }
+        `when`(impressionsSyncHelper.taskExecuted(argThat {
+            it.taskType == SplitTaskType.IMPRESSIONS_RECORDER
+        })).thenAnswer {
+            listenerCaptor.value.taskExecuted(
+                SplitTaskExecutionInfo.error(
+                    SplitTaskType.IMPRESSIONS_RECORDER,
+                    mapOf(SplitTaskExecutionInfo.DO_NOT_RETRY to true)
+                )
+            )
+            it
+        }
+
+        strategy = DebugStrategy(
+            impressionsObserver,
+            impressionsSyncHelper,
+            taskExecutor,
+            taskFactory,
+            telemetryRuntimeProducer,
+            tracker
+        )
+
+        strategy.startPeriodicRecording()
+        // simulate sync helper trigger
+        impressionsSyncHelper.taskExecuted(
+            SplitTaskExecutionInfo.error(
+                SplitTaskType.IMPRESSIONS_RECORDER,
+                mapOf(SplitTaskExecutionInfo.DO_NOT_RETRY to true)
+            )
+        )
+
+        // start periodic recording again to verify it is not working anymore
+        strategy.startPeriodicRecording()
+
+        verify(tracker, times(1)).startPeriodicRecording()
+        verify(tracker).stopPeriodicRecording()
     }
 }
