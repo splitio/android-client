@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -92,18 +93,18 @@ public class MySegmentsSynchronizerImplTest {
     public void scheduleSegmentsSyncTaskSchedulesSyncTaskInTaskExecutor() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
         when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false)).thenReturn(mockTask);
-        when(mSplitTaskExecutor.schedule(mockTask, 1, 1, null)).thenReturn("TaskID");
+        when(mSplitTaskExecutor.schedule(eq(mockTask), eq(1L), eq(1L), notNull())).thenReturn("TaskID");
 
         mMySegmentsSynchronizer.scheduleSegmentsSyncTask();
 
-        verify(mSplitTaskExecutor).schedule(mockTask, 1, 1, null);
+        verify(mSplitTaskExecutor).schedule(eq(mockTask), eq(1L), eq(1L), notNull());
     }
 
     @Test
     public void stopPeriodicFetchingCallsStopTaskOnExecutor() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
         when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false)).thenReturn(mockTask);
-        when(mSplitTaskExecutor.schedule(mockTask, 1, 1, null)).thenReturn("TaskID");
+        when(mSplitTaskExecutor.schedule(eq(mockTask), eq(1L), eq(1L), notNull())).thenReturn("TaskID");
 
         mMySegmentsSynchronizer.scheduleSegmentsSyncTask();
         mMySegmentsSynchronizer.stopPeriodicFetching();
@@ -120,15 +121,15 @@ public class MySegmentsSynchronizerImplTest {
         when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false))
                 .thenReturn(mockTask)
                 .thenReturn(mockTask2);
-        when(mSplitTaskExecutor.schedule(mockTask, 1, 1, null)).thenReturn("TaskID");
-        when(mSplitTaskExecutor.schedule(mockTask2, 1, 1, null)).thenReturn("TaskID2");
+        when(mSplitTaskExecutor.schedule(eq(mockTask), eq(1L), eq(1L), notNull())).thenReturn("TaskID");
+        when(mSplitTaskExecutor.schedule(eq(mockTask2), eq(1L), eq(1L), notNull())).thenReturn("TaskID2");
 
         mMySegmentsSynchronizer.scheduleSegmentsSyncTask();
         mMySegmentsSynchronizer.scheduleSegmentsSyncTask();
 
-        verify(mSplitTaskExecutor).schedule(mockTask, 1, 1, null);
+        verify(mSplitTaskExecutor).schedule(eq(mockTask), eq(1L), eq(1L), notNull());
         verify(mSplitTaskExecutor).stopTask("TaskID");
-        verify(mSplitTaskExecutor).schedule(mockTask2, 1, 1, null);
+        verify(mSplitTaskExecutor).schedule(eq(mockTask2), eq(1L), eq(1L), notNull());
         verify(mSplitTaskExecutor, times(0)).stopTask("TaskID2");
     }
 
