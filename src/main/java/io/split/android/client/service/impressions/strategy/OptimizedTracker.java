@@ -15,7 +15,7 @@ import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 
-public class OptimizedTracker implements PeriodicTracker {
+class OptimizedTracker implements PeriodicTracker {
 
     private final ImpressionsCounter mImpressionsCounter;
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
@@ -75,7 +75,6 @@ public class OptimizedTracker implements PeriodicTracker {
     public void enableTracking(boolean enable) {
         mTrackingIsEnabled.set(enable);
     }
-
 
     private void flushImpressions() {
         mRetryTimer.setTask(
