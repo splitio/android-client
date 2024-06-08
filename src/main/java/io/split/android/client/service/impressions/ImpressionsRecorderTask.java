@@ -67,8 +67,8 @@ public class ImpressionsRecorderTask implements SplitTask {
                     status = SplitTaskExecutionStatus.ERROR;
                     nonSentRecords += mConfig.getImpressionsPerPush();
                     nonSentBytes += sumImpressionsBytes(impressions);
-                    Logger.e("Impressions recorder task: Some impressions couldn't be sent." +
-                            "Saving to send them in a new iteration" +
+                    Logger.e("Impressions recorder task: Some impressions couldn't be sent. " +
+                            "Saving to send them in a new iteration\n" +
                             e.getLocalizedMessage());
                     failingImpressions.addAll(impressions);
 

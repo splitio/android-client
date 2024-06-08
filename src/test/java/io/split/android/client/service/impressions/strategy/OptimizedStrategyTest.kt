@@ -29,6 +29,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
+import org.mockito.invocation.InvocationOnMock
 
 class OptimizedStrategyTest {
 
@@ -220,5 +221,59 @@ class OptimizedStrategyTest {
 
         verify(tracker, times(1)).startPeriodicRecording()
         verify(tracker).stopPeriodicRecording()
+    }
+
+    @Test
+    fun `do not submit recording task when push fails with do not retry`() {
+        val listenerCaptor = ArgumentCaptor.forClass(SplitTaskExecutionListener::class.java)
+
+        val listenerInvocation: (invocation: InvocationOnMock) -> Any = { invocationOnMock ->
+            listenerCaptor.value.taskExecuted(
+                SplitTaskExecutionInfo.error(
+                    SplitTaskType.IMPRESSIONS_RECORDER,
+                    mapOf(DO_NOT_RETRY to true)
+                )
+            )
+            invocationOnMock
+        }
+        val impressionsRecorderTask = mock(ImpressionsRecorderTask::class.java)
+        `when`(impressionsRecorderTask.execute()).thenReturn(
+            SplitTaskExecutionInfo.error(
+                SplitTaskType.IMPRESSIONS_RECORDER,
+                mapOf(DO_NOT_RETRY to true)
+            )
+        )
+        `when`(
+            taskExecutor.submit(
+                any(ImpressionsRecorderTask::class.java),
+                eq<SplitTaskExecutionListener?>(impressionsSyncHelper)
+            )
+        ).thenAnswer(listenerInvocation)
+        `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(impressionsRecorderTask)
+        `when`(impressionsSyncHelper.addListener(listenerCaptor.capture())).thenAnswer { it }
+        `when`(impressionsSyncHelper.taskExecuted(argThat {
+            it.taskType == SplitTaskType.IMPRESSIONS_RECORDER
+        })).thenAnswer(listenerInvocation)
+        `when`(impressionsSyncHelper.pushAndCheckIfFlushNeeded(any())).thenReturn(true)
+
+        strategy = OptimizedStrategy(
+            impressionsObserver,
+            impressionsCounter,
+            impressionsSyncHelper,
+            taskExecutor,
+            taskFactory,
+            telemetryRuntimeProducer,
+            true,
+            tracker
+        )
+
+        // call apply two times; first one will trigger the recording task and second one should not
+        strategy.apply(createUniqueImpression(time = 1000000000L))
+        strategy.apply(createUniqueImpression(time = 2000000000L))
+
+        verify(taskExecutor, times(1)).submit(
+            any(ImpressionsRecorderTask::class.java),
+            eq<SplitTaskExecutionListener?>(impressionsSyncHelper)
+        )
     }
 }
