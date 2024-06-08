@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
@@ -50,6 +52,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     private final MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
+    private final AtomicBoolean mIsSynchronizingEvents = new AtomicBoolean(true);
+    private final SplitTaskExecutionListener mEventsTaskExecutionListener;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -112,6 +116,15 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mMySegmentsSynchronizerRegistry = checkNotNull(mySegmentsSynchronizerRegistry);
         mImpressionManager = checkNotNull(impressionManager);
+        mEventsTaskExecutionListener = new SplitTaskExecutionListener() {
+            @Override
+            public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
+                    mIsSynchronizingEvents.compareAndSet(true, false);
+                    stopEventsPeriodicRecording();
+                }
+            }
+        };
 
         setupListeners();
 
@@ -181,9 +194,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void stopPeriodicRecording() {
-        mTaskExecutor.stopTask(mEventsRecorderTaskId);
+        stopEventsPeriodicRecording();
         mImpressionManager.stopPeriodicRecording();
         mEventsRecorderTaskId = null;
+    }
+
+    private void stopEventsPeriodicRecording() {
+        mTaskExecutor.stopTask(mEventsRecorderTaskId);
     }
 
     private void setupListeners() {
@@ -192,9 +209,9 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 mEventsStorage,
                 mSplitClientConfig.eventsQueueSize(),
                 ServiceConstants.MAX_EVENTS_SIZE_BYTES,
-                mTaskExecutor
-        );
+                mTaskExecutor);
 
+        mEventsSyncHelper.addListener(mEventsTaskExecutionListener);
     }
 
     public void pause() {
@@ -231,9 +248,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void pushEvent(Event event) {
         if (mEventsSyncHelper.pushAndCheckIfFlushNeeded(event)) {
-            mTaskExecutor.submit(
-                    mSplitTaskFactory.createEventsRecorderTask(),
-                    mEventsSyncHelper);
+            if (mIsSynchronizingEvents.get()) {
+                mTaskExecutor.submit(
+                        mSplitTaskFactory.createEventsRecorderTask(),
+                        mEventsSyncHelper);
+            }
         }
         mTelemetryRuntimeProducer.recordEventStats(EventsDataRecordsEnum.EVENTS_QUEUED, 1);
     }
@@ -268,10 +287,15 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void scheduleEventsRecorderTask() {
-        mEventsRecorderTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createEventsRecorderTask(),
-                ServiceConstants.NO_INITIAL_DELAY,
-                mSplitClientConfig.eventFlushInterval(), mEventsSyncHelper);
+        if (mIsSynchronizingEvents.get()) {
+            if (mEventsRecorderTaskId != null) {
+                stopEventsPeriodicRecording();
+            }
+            mEventsRecorderTaskId = mTaskExecutor.schedule(
+                    mSplitTaskFactory.createEventsRecorderTask(),
+                    ServiceConstants.NO_INITIAL_DELAY,
+                    mSplitClientConfig.eventFlushInterval(), mEventsSyncHelper);
+        }
     }
 
     @Override
