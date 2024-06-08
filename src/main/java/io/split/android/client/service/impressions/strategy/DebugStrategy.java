@@ -84,7 +84,7 @@ class DebugStrategy implements ProcessStrategy {
         @Nullable Long previousTime = mImpressionsObserver.testAndSet(impression);
         impression = impression.withPreviousTime(previousTime);
         KeyImpression keyImpression = KeyImpression.fromImpression(impression);
-        if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression)) {
+        if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression) && mIsSynchronizing.get()) {
             mTaskExecutor.submit(
                     mImpressionsTaskFactory.createImpressionsRecorderTask(),
                     mImpressionsSyncHelper);

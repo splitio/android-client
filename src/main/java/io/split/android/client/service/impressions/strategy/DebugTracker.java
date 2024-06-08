@@ -50,6 +50,9 @@ class DebugTracker implements PeriodicTracker {
     }
 
     private void scheduleImpressionsRecorderTask() {
+        if (mImpressionsRecorderTaskId != null) {
+            mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
+        }
         mImpressionsRecorderTaskId = mTaskExecutor.schedule(
                 mImpressionsTaskFactory.createImpressionsRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
