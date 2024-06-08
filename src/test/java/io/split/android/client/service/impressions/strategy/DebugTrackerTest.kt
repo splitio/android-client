@@ -71,4 +71,22 @@ class DebugTrackerTest {
 
         verify(taskExecutor).stopTask("250")
     }
+
+    @Test
+    fun `periodic recording is task is cancelled before being rescheduled`() {
+        val task = mock(ImpressionsRecorderTask::class.java)
+        val task2 = mock(ImpressionsRecorderTask::class.java)
+        `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(task).thenReturn(task2)
+        `when`(taskExecutor.schedule(task, 0L, 30L, syncHelper)).thenReturn("250")
+        `when`(taskExecutor.schedule(task2, 0L, 30L, syncHelper)).thenReturn("251")
+
+        tracker.run {
+            startPeriodicRecording()
+            startPeriodicRecording()
+        }
+
+        verify(taskExecutor).schedule(task, 0L, 30L, syncHelper)
+        verify(taskExecutor).stopTask("250")
+        verify(taskExecutor).schedule(task2, 0L, 30L, syncHelper)
+    }
 }
