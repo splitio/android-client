@@ -1,5 +1,6 @@
 package io.split.android.client.service.http;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -108,5 +109,19 @@ public class HttpSseAuthTokenFetcherTest {
         fetcher.execute(params, Collections.emptyMap());
 
         verify(mHttpClient).request(new URI("target?param1=value1&param2=value2"), HttpMethod.GET);
+    }
+
+    @Test
+    public void httpExceptionWithStatusReturnsHttpFetcherExceptionWithStatus() throws HttpException {
+        HttpException httpException = new HttpException("Bad request", 400);
+        HttpRequest mockRequest = mock(HttpRequest.class);
+        when(mockRequest.execute()).thenThrow(httpException);
+        when(mHttpClient.request(any(), any())).thenReturn(mockRequest);
+
+        try {
+            fetcher.execute(Collections.emptyMap(), Collections.emptyMap());
+        } catch (HttpFetcherException e) {
+            assertEquals(400, e.getHttpStatus().intValue());
+        }
     }
 }
