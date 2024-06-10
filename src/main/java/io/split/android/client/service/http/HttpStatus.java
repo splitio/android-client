@@ -4,7 +4,8 @@ import androidx.annotation.Nullable;
 
 public enum HttpStatus {
 
-    URI_TOO_LONG(414, "URI Too Long");
+    URI_TOO_LONG(414, "URI Too Long"),
+    INTERNAL_NON_RETRYABLE(9009, "Non retryable");
 
     private final int mCode;
     private final String mDescription;
