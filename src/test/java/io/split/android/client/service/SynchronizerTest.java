@@ -1,6 +1,5 @@
 package io.split.android.client.service;
 
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -162,7 +161,7 @@ public class SynchronizerTest {
         MockitoAnnotations.openMocks(this);
 
         mTaskExecutor = taskExecutor;
-        mSingleThreadedTaskExecutor = taskExecutor;
+        mSingleThreadedTaskExecutor = spy(new SplitTaskExecutorStub());
         HttpFetcher<SplitChange> splitsFetcher = Mockito.mock(HttpFetcher.class);
         HttpFetcher<List<MySegment>> mySegmentsFetcher = Mockito.mock(HttpFetcher.class);
         HttpRecorder<List<Event>> eventsRecorder = Mockito.mock(HttpRecorder.class);
