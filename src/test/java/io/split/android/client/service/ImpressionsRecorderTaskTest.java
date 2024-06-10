@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -81,6 +82,7 @@ public class ImpressionsRecorderTaskTest {
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
         Assert.assertNull(result.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS));
         Assert.assertNull(result.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES));
+        Assert.assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
     }
 
     @Test
@@ -188,6 +190,68 @@ public class ImpressionsRecorderTaskTest {
         task.execute();
 
         verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSuccessfulSync(eq(OperationType.IMPRESSIONS), longThat(arg -> arg > 0));
+    }
+
+    @Test
+    public void statusCode9009InHttpExceptionReturnsDoNotRetry() throws HttpRecorderException {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 9009)).when(mImpressionsRecorder).execute(mDefaultParams);
+
+        ImpressionsRecorderTask task = new ImpressionsRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        SplitTaskExecutionInfo result = task.execute();
+
+        Assert.assertEquals(SplitTaskType.IMPRESSIONS_RECORDER, result.getTaskType());
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertEquals(100, result.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS).intValue());
+        Assert.assertEquals(true, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
+    public void nullStatusCodeInExceptionReturnsNullDoNotRetry() throws HttpRecorderException {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "")).when(mImpressionsRecorder).execute(mDefaultParams);
+
+        ImpressionsRecorderTask task = new ImpressionsRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer
+        );
+
+        SplitTaskExecutionInfo result = task.execute();
+
+        Assert.assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
+    public void statusCode9009InHttpExceptionBreaksLoop() throws HttpRecorderException {
+        when(mPersistentImpressionsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 9009)).when(mImpressionsRecorder).execute(mDefaultParams);
+
+        ImpressionsRecorderTask task = new ImpressionsRecorderTask(
+                mImpressionsRecorder,
+                mPersistentImpressionsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer
+        );
+
+        SplitTaskExecutionInfo result = task.execute();
+
+        verify(mPersistentImpressionsStorage, times(1)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentImpressionsStorage, times(0)).delete(any());
+        verify(mPersistentImpressionsStorage, times(1)).setActive(any());
     }
 
     private List<KeyImpression> createImpressions() {

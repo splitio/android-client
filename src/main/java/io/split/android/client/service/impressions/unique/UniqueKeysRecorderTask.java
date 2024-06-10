@@ -17,6 +17,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
+import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.storage.impressions.PersistentImpressionsUniqueStorage;
 import io.split.android.client.utils.logger.Logger;
 
@@ -42,6 +43,7 @@ public class UniqueKeysRecorderTask implements SplitTask {
         long nonSentBytes = 0;
         List<UniqueKey> keys;
         List<UniqueKey> failingKeys = new ArrayList<>();
+        boolean doNotRetry = false;
         do {
             keys = mStorage.pop(mConfig.getElementsPerPush());
             if (keys.size() > 0) {
@@ -59,6 +61,11 @@ public class UniqueKeysRecorderTask implements SplitTask {
                             "Saving to send them in a new iteration" +
                             e.getLocalizedMessage());
                     failingKeys.addAll(keys);
+
+                    if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.INTERNAL_NON_RETRYABLE) {
+                        doNotRetry = true;
+                        break;
+                    }
                 }
             }
         } while (keys.size() == mConfig.getElementsPerPush());
@@ -71,6 +78,9 @@ public class UniqueKeysRecorderTask implements SplitTask {
             Map<String, Object> data = new HashMap<>();
             data.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, nonSentRecords);
             data.put(SplitTaskExecutionInfo.NON_SENT_BYTES, nonSentBytes);
+            if (doNotRetry) {
+                data.put(SplitTaskExecutionInfo.DO_NOT_RETRY, true);
+            }
 
             return SplitTaskExecutionInfo.error(
                     SplitTaskType.UNIQUE_KEYS_RECORDER_TASK, data);
