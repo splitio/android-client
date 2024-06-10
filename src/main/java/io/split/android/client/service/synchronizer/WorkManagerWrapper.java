@@ -145,6 +145,13 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_DATABASE_NAME, mDatabaseName);
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_API_KEY, mApiKey);
         dataBuilder.putBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, mSplitClientConfig.encryptionEnabled());
+        try {
+            String pinsJson = Json.toJson(mSplitClientConfig.certificatePinningConfiguration().getPins());
+            dataBuilder.putString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS, pinsJson);
+        } catch (Exception e) {
+            Logger.e("Error converting pins to JSON for BG sync", e.getLocalizedMessage());
+        }
+
         if (customData != null) {
             dataBuilder.putAll(customData);
         }
@@ -193,14 +200,6 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_TYPE, (mFilter != null) ? mFilter.getType().queryStringField() : null);
         dataBuilder.putStringArray(ServiceConstants.WORKER_PARAM_CONFIGURED_FILTER_VALUES, (mFilter != null) ? mFilter.getValues().toArray(new String[0]) : new String[0]);
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_FLAGS_SPEC, BuildConfig.FLAGS_SPEC);
-
-        try {
-            String pinsJson = Json.toJson(mSplitClientConfig.certificatePinningConfiguration().getPins());
-            dataBuilder.putString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS, pinsJson);
-        } catch (Exception e) {
-            Logger.e("Error converting pins to JSON for BG sync", e.getLocalizedMessage());
-        }
-
         return buildInputData(dataBuilder.build());
     }
 
