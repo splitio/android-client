@@ -134,7 +134,7 @@ public class SseClientImpl implements SseClient {
             isErrorRetryable = false;
         } catch (HttpException e) {
             logError("An error has occurred while creating stream Url ", e);
-            isErrorRetryable = HttpStatus.fromCode(e.getStatusCode()) != HttpStatus.INTERNAL_NON_RETRYABLE;
+            isErrorRetryable = !HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getStatusCode()));
         } catch (IOException e) {
             Logger.d("An error has occurred while parsing stream: " + e.getLocalizedMessage());
             isErrorRetryable = true;

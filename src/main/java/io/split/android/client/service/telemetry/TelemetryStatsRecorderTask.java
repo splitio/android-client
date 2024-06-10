@@ -50,7 +50,7 @@ public class TelemetryStatsRecorderTask implements SplitTask {
             Logger.e(e);
             mTelemetryRuntimeProducer.recordSyncError(OperationType.TELEMETRY, e.getHttpStatus());
 
-            if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.INTERNAL_NON_RETRYABLE) {
+            if (HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getHttpStatus()))) {
                 return SplitTaskExecutionInfo.error(SplitTaskType.TELEMETRY_STATS_TASK, Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true));
             }
 

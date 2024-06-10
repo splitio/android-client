@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 public enum HttpStatus {
 
     URI_TOO_LONG(414, "URI Too Long"),
+
     INTERNAL_NON_RETRYABLE(9009, "Non retryable");
 
     private final int mCode;
@@ -35,5 +36,11 @@ public enum HttpStatus {
             }
         }
         return null;
+    }
+
+    public static boolean isNotRetryable(HttpStatus httpStatus) {
+        // these are values that internally indicate that the request should not be retried
+        return httpStatus == HttpStatus.URI_TOO_LONG ||
+                httpStatus == HttpStatus.INTERNAL_NON_RETRYABLE;
     }
 }
