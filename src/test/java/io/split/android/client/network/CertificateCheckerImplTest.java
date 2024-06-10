@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -81,7 +82,7 @@ public class CertificateCheckerImplTest {
 
     @Test
     public void noMatchingPinsDoesNotInteractWithComponents() throws SSLPeerUnverifiedException {
-        mChecker = getChecker(Collections.singletonMap("not-my-host.com", Collections.singletonList(new CertificatePin(new byte[]{0, 1, 2, 3}, "sha256"))));
+        mChecker = getChecker(Collections.singletonMap("not-my-host.com", Collections.singleton(new CertificatePin(new byte[]{0, 1, 2, 3}, "sha256"))));
 
         mChecker.checkPins(mMockConnection);
 
@@ -93,7 +94,7 @@ public class CertificateCheckerImplTest {
 
     @Test
     public void noMatchingPinsLogsDebugMessage() throws SSLPeerUnverifiedException {
-        mChecker = getChecker(Collections.singletonMap("not-my-host.com", Collections.singletonList(new CertificatePin(new byte[]{0, 1, 2, 3}, "sha256"))));
+        mChecker = getChecker(Collections.singletonMap("not-my-host.com", Collections.singleton(new CertificatePin(new byte[]{0, 1, 2, 3}, "sha256"))));
 
         try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
             mChecker.checkPins(mMockConnection);
@@ -112,7 +113,7 @@ public class CertificateCheckerImplTest {
 
         CertificatePin pin = new CertificatePin(new byte[]{0, 1, 2, 3}, "sha256");
 
-        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singletonList(pin)));
+        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singleton(pin)));
         when(mChainCleaner.clean(any(), any())).thenReturn(Collections.singletonList(mockedX509Cert));
         when(mPinEncoder.encodeCertPin(any(), any())).thenReturn(new byte[]{0, 1, 2, 3});
 
@@ -147,7 +148,7 @@ public class CertificateCheckerImplTest {
         when(mPinEncoder.encodeCertPin("sha1", bytes1)).thenReturn(bytes1);
         when(mPinEncoder.encodeCertPin("sha1", bytes2)).thenReturn(bytes2);
 
-        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singletonList(pin)));
+        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singleton(pin)));
 
         try {
             mChecker.checkPins(mMockConnection);
@@ -184,7 +185,7 @@ public class CertificateCheckerImplTest {
         when(mChainCleaner.clean(any(), any())).thenReturn(Arrays.asList(mockedX509Cert, mockedX509Cert2));
         when(mPinEncoder.encodeCertPin(any(), any())).thenReturn(new byte[]{3, 2, 2, 3});
 
-        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singletonList(pin)));
+        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singleton(pin)));
 
         try {
             mChecker.checkPins(mMockConnection);
@@ -212,7 +213,7 @@ public class CertificateCheckerImplTest {
         when(mChainCleaner.clean(any(), any())).thenReturn(Collections.singletonList(mockedX509Cert));
         when(mPinEncoder.encodeCertPin(any(), any())).thenReturn(new byte[]{3, 2, 2, 3});
 
-        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singletonList(pin)));
+        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singleton(pin)));
 
         try {
             mChecker.checkPins(mMockConnection);
@@ -226,7 +227,7 @@ public class CertificateCheckerImplTest {
     public void failingToCleanChainThrowsSSLPeerUnverifiedException() {
         when(mChainCleaner.clean(any(), any())).thenThrow(new RuntimeException("Error cleaning chain"));
 
-        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singletonList(new CertificatePin(new byte[]{0, 1, 2, 3}, "sha256"))));
+        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singleton(new CertificatePin(new byte[]{0, 1, 2, 3}, "sha256"))));
 
         try {
             mChecker.checkPins(mMockConnection);
@@ -265,7 +266,7 @@ public class CertificateCheckerImplTest {
         when(mBase64Encoder.encode(eq(new byte[]{0, 1, 2, 3}))).thenReturn("base64-0-1-2-3");
         when(mBase64Encoder.encode(eq(new byte[]{4, 5, 6, 7}))).thenReturn("base64-4-5-6-7");
 
-        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singletonList(pin)));
+        mChecker = getChecker(Collections.singletonMap("my-url.com", Collections.singleton(pin)));
 
         try {
             mChecker.checkPins(mMockConnection);
@@ -273,15 +274,15 @@ public class CertificateCheckerImplTest {
             verify(mBase64Encoder).encode(eq(new byte[]{0, 1, 2, 3}));
             verify(mBase64Encoder).encode(eq(new byte[]{4, 5, 6, 7}));
             assertEquals("Certificate pinning verification failed for host: my-url.com. Chain:\n" +
-                    "CN=cert1 - sha256/base64-0-1-2-3\n" +
-                    "CN=cert2 - sha256/base64-4-5-6-7\n", e.getMessage());
+                    "CN=cert1 - sha256/base64-0-1-2-3" +
+                    "CN=cert2 - sha256/base64-4-5-6-7", e.getMessage());
             return;
         }
         fail();
     }
 
     @NonNull
-    private CertificateCheckerImpl getChecker(Map<String, List<CertificatePin>> pins) {
+    private CertificateCheckerImpl getChecker(Map<String, Set<CertificatePin>> pins) {
         return new CertificateCheckerImpl(pins, mFailureListener, mChainCleaner, mBase64Encoder, mPinEncoder);
     }
 }

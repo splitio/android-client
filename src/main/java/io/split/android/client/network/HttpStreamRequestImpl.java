@@ -1,5 +1,6 @@
 package io.split.android.client.network;
 
+import static io.split.android.client.network.HttpRequestHelper.checkPins;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
@@ -46,6 +47,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private final DevelopmentSslConfig mDevelopmentSslConfig;
     @Nullable
     private final SSLSocketFactory mSslSocketFactory;
+    @Nullable
+    private final CertificateChecker mCertificateChecker;
     private final AtomicBoolean mWasRetried = new AtomicBoolean(false);
 
     HttpStreamRequestImpl(@NonNull URI uri,
@@ -55,7 +58,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                           long connectionTimeout,
                           @Nullable DevelopmentSslConfig developmentSslConfig,
                           @Nullable SSLSocketFactory sslSocketFactory,
-                          @NonNull UrlSanitizer urlSanitizer) {
+                          @NonNull UrlSanitizer urlSanitizer,
+                          @Nullable CertificateChecker certificateChecker) {
         mUri = checkNotNull(uri);
         mHttpMethod = HttpMethod.GET;
         mProxy = proxy;
@@ -65,6 +69,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
         mSslSocketFactory = sslSocketFactory;
+        mCertificateChecker = certificateChecker;
     }
 
     @Override
@@ -137,7 +142,9 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
         HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, useProxyAuthenticator);
         applyTimeouts(HttpStreamRequestImpl.STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout, connection);
-        applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, mConnection);
+        applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
+        connection.connect();
+        checkPins(connection, mCertificateChecker);
 
         return connection;
     }

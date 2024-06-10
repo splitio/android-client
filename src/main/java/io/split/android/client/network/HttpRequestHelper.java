@@ -12,6 +12,7 @@ import java.net.URL;
 import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.logger.Logger;
@@ -70,6 +71,15 @@ class HttpRequestHelper {
                 Logger.e("Could not set development SSL config: " + ex.getLocalizedMessage());
             }
         }
+    }
+
+    static void checkPins(HttpURLConnection connection, @Nullable CertificateChecker certificateChecker) throws SSLPeerUnverifiedException {
+        if (certificateChecker == null || !(connection instanceof HttpsURLConnection)) {
+            return;
+        }
+
+        HttpsURLConnection httpsConnection = (HttpsURLConnection) connection;
+        certificateChecker.checkPins(httpsConnection);
     }
 
     private static void addHeaders(HttpURLConnection request, Map<String, String> headers) {
