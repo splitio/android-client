@@ -1,11 +1,15 @@
 package io.split.android.client.network;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.Arrays;
 import java.util.Objects;
 
 public class CertificatePin {
 
+    @SerializedName("pin")
     private final byte[] mPin;
+    @SerializedName("algo")
     private final String mAlgorithm;
 
     CertificatePin(byte[] pin, String algorithm) {

@@ -472,7 +472,7 @@ public class SplitClientConfig {
         return mObserverCacheExpirationPeriod;
     }
 
-    CertificatePinningConfiguration certificatePinningConfiguration() {
+    public CertificatePinningConfiguration certificatePinningConfiguration() {
         return mCertificatePinningConfiguration;
     }
 
