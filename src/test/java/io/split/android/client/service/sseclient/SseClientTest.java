@@ -267,6 +267,42 @@ public class SseClientTest {
         verify(mSseHandler, never()).handleError(anyBoolean());
     }
 
+    @Test
+    public void nonRetryableErrorWhenRequestFailsWithHttpExceptionWith9009Code() throws HttpException {
+        CountDownLatch onOpenLatch = new CountDownLatch(1);
+
+        BufferedReader reader = Mockito.mock(BufferedReader.class);
+
+        TestConnListener connListener = spy(new TestConnListener(onOpenLatch));
+        HttpStreamRequest request = Mockito.mock(HttpStreamRequest.class);
+        when(request.execute()).thenThrow(new HttpException("error", 9009));
+        when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
+
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        client.connect(mJwt, connListener);
+
+        verify(mSseHandler, times(1)).handleError(false);
+        verify(mSseHandler, never()).handleIncomingMessage(any());
+    }
+
+    @Test
+    public void retryableErrorWhenRequestFailsWithHttpExceptionWithNullCode() throws HttpException {
+        CountDownLatch onOpenLatch = new CountDownLatch(1);
+
+        BufferedReader reader = Mockito.mock(BufferedReader.class);
+
+        TestConnListener connListener = spy(new TestConnListener(onOpenLatch));
+        HttpStreamRequest request = Mockito.mock(HttpStreamRequest.class);
+        when(request.execute()).thenThrow(new HttpException("error"));
+        when(mHttpClient.streamRequest(any(URI.class))).thenReturn(request);
+
+        SseClient client = new SseClientImpl(mUri, mHttpClient, mParser, mSseHandler);
+        client.connect(mJwt, connListener);
+
+        verify(mSseHandler, times(1)).handleError(true);
+        verify(mSseHandler, never()).handleIncomingMessage(any());
+    }
+
     private void setupJwt(List<String> channels, long issuedAt, long expirationTime, String rawToken) {
         when(mJwt.getChannels()).thenReturn(channels);
         when(mJwt.getIssuedAtTime()).thenReturn(issuedAt);
@@ -330,6 +366,7 @@ public class SseClientTest {
 
     private static class TestConnListener implements SseClientImpl.ConnectionListener {
         CountDownLatch mConnLatch;
+
         public TestConnListener(CountDownLatch connLatch) {
             mConnLatch = connLatch;
         }
