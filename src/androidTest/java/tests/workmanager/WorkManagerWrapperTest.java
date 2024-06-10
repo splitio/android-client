@@ -1,9 +1,14 @@
-package io.split.android.client.service.synchronizer;
+package tests.workmanager;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 import androidx.work.Constraints;
 import androidx.work.Data;
 import androidx.work.ExistingPeriodicWorkPolicy;
@@ -15,7 +20,9 @@ import androidx.work.impl.model.WorkSpec;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.lang.reflect.Method;
@@ -26,7 +33,9 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
+import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
@@ -42,6 +51,8 @@ public class WorkManagerWrapperTest {
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
 
+        when(mWorkManager.getWorkInfosByTagLiveData(any())).thenReturn(mock(LiveData.class));
+
         SplitClientConfig splitClientConfig = new SplitClientConfig.Builder()
                 .serviceEndpoints(
                         ServiceEndpoints.builder()
@@ -56,6 +67,11 @@ public class WorkManagerWrapperTest {
                 .impressionsPerPush(256)
                 .backgroundSyncWhenWifiOnly(true)
                 .backgroundSyncWhenBatteryNotLow(false)
+                .certificatePinningConfiguration(CertificatePinningConfiguration.builder()
+                        .addPin("events.split.io", "sha256/sDKdggs")
+                        .addPin("sdk.split.io", "sha256/jIUe51")
+                        .addPin("events.split.io", "sha1/jLeisDf")
+                        .build())
                 .build();
 
         try {
@@ -96,6 +112,7 @@ public class WorkManagerWrapperTest {
                 .putStringArray("configuredFilterValues", new String[]{"set_1", "set_2"})
                 .putString("configuredFilterType", SplitFilter.Type.BY_SET.queryStringField())
                 .putString("flagsSpec", "1.1")
+                .putString("certificatePins", certificatePinsJson())
                 .build();
 
         PeriodicWorkRequest expectedRequest = new PeriodicWorkRequest
@@ -124,6 +141,7 @@ public class WorkManagerWrapperTest {
                 .putString("endpoint", "https://test.split.io/events")
                 .putInt("eventsPerPush", 526)
                 .putBoolean("shouldRecordTelemetry", true)
+                .putString("certificatePins", certificatePinsJson())
                 .build();
 
         PeriodicWorkRequest expectedRequest = new PeriodicWorkRequest
@@ -151,6 +169,7 @@ public class WorkManagerWrapperTest {
         Data inputData = new Data.Builder()
                 .putString("endpoint", "https://test.split.io/events")
                 .putInt("impressionsPerPush", 256)
+                .putString("certificatePins", certificatePinsJson())
                 .putBoolean("shouldRecordTelemetry", true).build();
 
         PeriodicWorkRequest expectedRequest = new PeriodicWorkRequest
@@ -184,6 +203,7 @@ public class WorkManagerWrapperTest {
         dataBuilder.putString("endpoint", "https://test.split.io/api");
         dataBuilder.putStringArray("key", keysArray);
         dataBuilder.putBoolean("shouldRecordTelemetry", true);
+        dataBuilder.putString("certificatePins", certificatePinsJson());
 
         PeriodicWorkRequest expectedRequest = new PeriodicWorkRequest
                 .Builder(MySegmentsSyncWorker.class, 5263, TimeUnit.MINUTES)
@@ -232,5 +252,10 @@ public class WorkManagerWrapperTest {
         constraintsBuilder.setRequiredNetworkType(NetworkType.UNMETERED);
         constraintsBuilder.setRequiresBatteryNotLow(false);
         return constraintsBuilder.build();
+    }
+
+    @NonNull
+    private static String certificatePinsJson() {
+        return "{\"events.split.io\":[{\"algo\":\"sha256\",\"pin\":[-80,50,-99,-126,11]},{\"algo\":\"sha1\",\"pin\":[-116,-73,-94,-80,55]}],\"sdk.split.io\":[{\"algo\":\"sha256\",\"pin\":[-116,-123,30,-25]}]}";
     }
 }
