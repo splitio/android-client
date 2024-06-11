@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
@@ -37,6 +38,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     private final RetryBackoffCounterTimer mSplitsUpdateRetryTimer;
     @Nullable
     private final SplitTaskExecutionListener mSplitsSyncListener;
+    private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
 
     public FeatureFlagsSynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                                         @NonNull SplitTaskExecutor taskExecutor,
@@ -53,17 +55,27 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
         mSplitsSyncRetryTimer = retryBackoffCounterTimerFactory.create(mSplitsTaskExecutor, 1);
         mSplitsUpdateRetryTimer = retryBackoffCounterTimerFactory.create(mSplitsTaskExecutor, 1);
 
+        // pushManagerEventBroadcaster could be null when in single sync mode
         if (pushManagerEventBroadcaster != null) {
             mSplitsSyncListener = new SplitTaskExecutionListener() {
                 @Override
                 public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
                     if (taskInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
                         pushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PushStatusEvent.EventType.SUCCESSFUL_SYNC));
+                    } else {
+                        avoidRetries(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
                     }
                 }
             };
         } else {
-            mSplitsSyncListener = null;
+            mSplitsSyncListener = new SplitTaskExecutionListener() {
+                @Override
+                public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                    if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                        avoidRetries(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+                    }
+                }
+            };
         }
 
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncListener);
@@ -96,7 +108,9 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
 
     @Override
     public void startPeriodicFetching() {
-        scheduleSplitsFetcherTask();
+        if (mIsSynchronizing.get()) {
+            scheduleSplitsFetcherTask();
+        }
     }
 
     @Override
@@ -117,10 +131,21 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     }
 
     private void scheduleSplitsFetcherTask() {
+        if (mSplitsFetcherTaskId != null) {
+            mSplitsTaskExecutor.stopTask(mSplitsFetcherTaskId);
+        }
+
         mSplitsFetcherTaskId = mSplitsTaskExecutor.schedule(
                 mSplitTaskFactory.createSplitsSyncTask(false),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitsSyncListener);
+    }
+
+    private void avoidRetries(Boolean doNotRetry) {
+        if (Boolean.TRUE.equals(doNotRetry)) {
+            mIsSynchronizing.compareAndSet(true, false);
+            stopPeriodicFetching();
+        }
     }
 }

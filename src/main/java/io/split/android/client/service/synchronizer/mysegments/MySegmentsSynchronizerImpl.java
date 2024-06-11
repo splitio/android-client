@@ -4,9 +4,13 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
@@ -19,6 +23,8 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     private final MySegmentsTaskFactory mSplitTaskFactory;
     private final int mSegmentsRefreshRate;
     private final LoadLocalDataListener mLoadLocalMySegmentsListener;
+    private final SplitTaskExecutionListener mMySegmentsSyncListener;
+    private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
     private String mMySegmentsFetcherTaskId;
 
     public MySegmentsSynchronizerImpl(@NonNull RetryBackoffCounterTimer retryBackoffCounterTimer,
@@ -32,6 +38,17 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
         mSegmentsRefreshRate = segmentsRefreshRate;
         mLoadLocalMySegmentsListener = new LoadLocalDataListener(
                 eventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+        mMySegmentsSyncListener = new SplitTaskExecutionListener() {
+            @Override
+            public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                    if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
+                        mIsSynchronizing.compareAndSet(true, false);
+                        stopPeriodicFetching();
+                    }
+                }
+            }
+        };
     }
 
     @Override
@@ -58,11 +75,17 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
 
     @Override
     public void scheduleSegmentsSyncTask() {
-        mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
-                mSplitTaskFactory.createMySegmentsSyncTask(false),
-                mSegmentsRefreshRate,
-                mSegmentsRefreshRate,
-                null);
+        if (mIsSynchronizing.get()) {
+            if (mMySegmentsFetcherTaskId != null) {
+                mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
+            }
+
+            mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
+                    mSplitTaskFactory.createMySegmentsSyncTask(false),
+                    mSegmentsRefreshRate,
+                    mSegmentsRefreshRate,
+                    mMySegmentsSyncListener);
+        }
     }
 
     @Override
