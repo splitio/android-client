@@ -13,6 +13,7 @@ import java.util.Set;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.X509TrustManager;
 
 import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.logger.Logger;
@@ -30,8 +31,8 @@ class CertificateCheckerImpl implements CertificateChecker {
     @NonNull
     private final PinEncoder mPinEncoder;
 
-    CertificateCheckerImpl(CertificatePinningConfiguration certificatePinningConfiguration) {
-        this(certificatePinningConfiguration.getPins(), certificatePinningConfiguration.getFailureListener(), new ChainCleanerImpl(), new DefaultBase64Encoder(), new PinEncoderImpl());
+    CertificateCheckerImpl(CertificatePinningConfiguration certificatePinningConfiguration, @Nullable X509TrustManager trustManager) {
+        this(certificatePinningConfiguration.getPins(), certificatePinningConfiguration.getFailureListener(), new ChainCleanerImpl(trustManager), new DefaultBase64Encoder(), new PinEncoderImpl());
     }
 
     @VisibleForTesting

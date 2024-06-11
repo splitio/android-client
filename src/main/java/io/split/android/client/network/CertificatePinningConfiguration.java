@@ -111,7 +111,7 @@ public class CertificatePinningConfiguration {
             mPins.put(host, pins);
         }
 
-        public Builder failureStrategy(@NonNull CertificatePinningFailureListener failureListener) {
+        public Builder failureListener(@NonNull CertificatePinningFailureListener failureListener) {
             if (failureListener == null) { // just in case
                 Logger.w("Failure listener cannot be null");
                 return this;

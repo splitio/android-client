@@ -43,7 +43,7 @@ public class CertificatePinningConfigurationTest {
         };
 
         CertificatePinningConfiguration config = CertificatePinningConfiguration.builder()
-                .failureStrategy(failureListener)
+                .failureListener(failureListener)
                 .build();
 
         assertSame(failureListener, config.getFailureListener());
@@ -53,7 +53,7 @@ public class CertificatePinningConfigurationTest {
     public void nullFailureListenerIsIgnored() {
         try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
             CertificatePinningConfiguration config = CertificatePinningConfiguration.builder()
-                    .failureStrategy(null)
+                    .failureListener(null)
                     .build();
 
             assertNull(config.getFailureListener());
