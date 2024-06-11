@@ -57,8 +57,8 @@ public class UniqueKeysRecorderTask implements SplitTask {
                     status = SplitTaskExecutionStatus.ERROR;
                     nonSentRecords += mConfig.getElementsPerPush();
                     nonSentBytes += sumImpressionsBytes(keys);
-                    Logger.e("MTKs recorder task: Some keys couldn't be sent." +
-                            "Saving to send them in a new iteration" +
+                    Logger.e("MTKs recorder task: Some keys couldn't be sent. " +
+                            "Saving to send them in a new iteration\n" +
                             e.getLocalizedMessage());
                     failingKeys.addAll(keys);
 

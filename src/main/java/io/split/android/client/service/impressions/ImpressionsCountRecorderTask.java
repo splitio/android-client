@@ -61,8 +61,8 @@ public class ImpressionsCountRecorderTask implements SplitTask {
                     Logger.d("%d split impressions count sent", countList.size());
                 } catch (HttpRecorderException e) {
                     status = SplitTaskExecutionStatus.ERROR;
-                    Logger.e("Impressions count recorder task: Some counts couldn't be sent." +
-                            "Saving to send them in a new iteration" +
+                    Logger.e("Impressions count recorder task: Some counts couldn't be sent. " +
+                            "Saving to send them in a new iteration\n" +
                             e.getLocalizedMessage());
                     failedSent.addAll(countList);
 

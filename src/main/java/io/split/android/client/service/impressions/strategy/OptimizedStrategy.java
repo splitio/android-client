@@ -9,6 +9,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.impressions.Impression;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionUtils;
 import io.split.android.client.service.impressions.ImpressionsCounter;
@@ -32,6 +35,20 @@ class OptimizedStrategy implements ProcessStrategy {
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final AtomicBoolean mTrackingIsEnabled;
     private final PeriodicTracker mOptimizedTracker;
+    private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
+    /** @noinspection FieldCanBeLocal*/
+    private final SplitTaskExecutionListener mTaskExecutionListener = new SplitTaskExecutionListener() {
+        @Override
+        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+            // this listener intercepts impressions recording task
+            if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
+                    mIsSynchronizing.compareAndSet(true, false);
+                    mOptimizedTracker.stopPeriodicRecording();
+                }
+            }
+        }
+    };
 
     OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
                       @NonNull ImpressionsCounter impressionsCounter,
@@ -73,7 +90,9 @@ class OptimizedStrategy implements ProcessStrategy {
                       @NonNull PeriodicTracker tracker) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsCounter = checkNotNull(impressionsCounter);
-        mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
+        RecorderSyncHelper<KeyImpression> syncHelper = checkNotNull(impressionsSyncHelper);
+        syncHelper.addListener(mTaskExecutionListener);
+        mImpressionsSyncHelper = syncHelper;
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
@@ -92,7 +111,7 @@ class OptimizedStrategy implements ProcessStrategy {
 
         KeyImpression keyImpression = KeyImpression.fromImpression(impression);
         if (shouldPushImpression(keyImpression)) {
-            if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression)) {
+            if (mImpressionsSyncHelper.pushAndCheckIfFlushNeeded(keyImpression) && mIsSynchronizing.get()) {
                 mTaskExecutor.submit(
                         mImpressionsTaskFactory.createImpressionsRecorderTask(),
                         mImpressionsSyncHelper);
@@ -120,7 +139,9 @@ class OptimizedStrategy implements ProcessStrategy {
 
     @Override
     public void startPeriodicRecording() {
-        mOptimizedTracker.startPeriodicRecording();
+        if (mIsSynchronizing.get()) {
+            mOptimizedTracker.startPeriodicRecording();
+        }
     }
 
     @Override
