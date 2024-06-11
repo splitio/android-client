@@ -7,14 +7,19 @@ import androidx.annotation.NonNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskSerialWrapper;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 
-public class NoneTracker implements PeriodicTracker {
+class NoneTracker implements PeriodicTracker {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mTaskFactory;
@@ -27,6 +32,10 @@ public class NoneTracker implements PeriodicTracker {
     private final int mImpressionsCounterRefreshRate;
     private final int mUniqueKeysRefreshRate;
     private final AtomicBoolean mTrackingIsEnabled;
+    private final AtomicBoolean mIsSynchronizingMtks = new AtomicBoolean(true);
+    private final AtomicBoolean mIsSynchronizingCounts = new AtomicBoolean(true);
+    private final SplitTaskExecutionListener mMtkTaskExecutionListener;
+    private final SplitTaskExecutionListener mCountTaskExecutionListener;
 
     NoneTracker(@NonNull SplitTaskExecutor taskExecutor,
                 @NonNull ImpressionsTaskFactory taskFactory,
@@ -48,6 +57,8 @@ public class NoneTracker implements PeriodicTracker {
         mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
         mUniqueKeysRefreshRate = uniqueKeysRefreshRate;
         mTrackingIsEnabled = new AtomicBoolean(trackingIsEnabled);
+        mMtkTaskExecutionListener = new DoNotRetryListener(mIsSynchronizingMtks);
+        mCountTaskExecutionListener = new DoNotRetryListener(mIsSynchronizingCounts);
     }
 
     @Override
@@ -58,15 +69,28 @@ public class NoneTracker implements PeriodicTracker {
 
     @Override
     public void startPeriodicRecording() {
-        scheduleImpressionsCountRecorderTask();
-        scheduleUniqueKeysRecorderTask();
+        if (mIsSynchronizingCounts.get()) {
+            scheduleImpressionsCountRecorderTask();
+        }
+
+        if (mIsSynchronizingMtks.get()) {
+            scheduleUniqueKeysRecorderTask();
+        }
     }
 
     @Override
     public void stopPeriodicRecording() {
         saveImpressionsCount();
         saveUniqueKeys();
+        stopCountRecording();
+        stopMtkRecording();
+    }
+
+    private void stopCountRecording() {
         mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
+    }
+
+    private void stopMtkRecording() {
         mTaskExecutor.stopTask(mUniqueKeysRecorderTaskId);
     }
 
@@ -90,19 +114,25 @@ public class NoneTracker implements PeriodicTracker {
     }
 
     private void scheduleImpressionsCountRecorderTask() {
+        if (mImpressionsRecorderCountTaskId != null) {
+            mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
+        }
         mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
                 mTaskFactory.createImpressionsCountRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
                 mImpressionsCounterRefreshRate,
-                null);
+                mCountTaskExecutionListener);
     }
 
     private void scheduleUniqueKeysRecorderTask() {
+        if (mUniqueKeysRecorderTaskId != null) {
+            mTaskExecutor.stopTask(mUniqueKeysRecorderTaskId);
+        }
         mUniqueKeysRecorderTaskId = mTaskExecutor.schedule(
                 mTaskFactory.createUniqueImpressionsRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,
                 mUniqueKeysRefreshRate,
-                null);
+                mMtkTaskExecutionListener);
     }
 
     private void saveImpressionsCount() {
@@ -116,6 +146,22 @@ public class NoneTracker implements PeriodicTracker {
         if (mTrackingIsEnabled.get()) {
             mTaskExecutor.submit(
                     mTaskFactory.createSaveUniqueImpressionsTask(mUniqueKeysTracker.popAll()), null);
+        }
+    }
+
+    private static class DoNotRetryListener implements SplitTaskExecutionListener {
+
+        private final AtomicBoolean mFlag;
+
+        DoNotRetryListener(AtomicBoolean flag) {
+            mFlag = flag;
+        }
+
+        @Override
+        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+            if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
+                mFlag.compareAndSet(true, false);
+            }
         }
     }
 }
