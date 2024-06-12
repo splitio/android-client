@@ -74,7 +74,7 @@ public class MySegmentsSynchronizerImplTest {
 
         mMySegmentsSynchronizer.synchronizeMySegments();
 
-        verify(mRetryBackoffCounterTimer).setTask(mockTask, null);
+        verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), any());
         verify(mRetryBackoffCounterTimer).start();
     }
 
@@ -85,7 +85,7 @@ public class MySegmentsSynchronizerImplTest {
 
         mMySegmentsSynchronizer.forceMySegmentsSync();
 
-        verify(mRetryBackoffCounterTimer).setTask(mockTask, null);
+        verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), any());
         verify(mRetryBackoffCounterTimer).start();
     }
 

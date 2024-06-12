@@ -97,13 +97,17 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
 
     @Override
     public void synchronize(long since) {
-        mSplitsUpdateRetryTimer.setTask(mSplitTaskFactory.createSplitsUpdateTask(since), mSplitsSyncListener);
-        mSplitsUpdateRetryTimer.start();
+        if (mIsSynchronizing.get()) {
+            mSplitsUpdateRetryTimer.setTask(mSplitTaskFactory.createSplitsUpdateTask(since), mSplitsSyncListener);
+            mSplitsUpdateRetryTimer.start();
+        }
     }
 
     @Override
     public void synchronize() {
-        mSplitsSyncRetryTimer.start();
+        if (mIsSynchronizing.get()) {
+            mSplitsSyncRetryTimer.start();
+        }
     }
 
     @Override
