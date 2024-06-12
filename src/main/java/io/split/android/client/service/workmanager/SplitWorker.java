@@ -8,23 +8,15 @@ import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
-import java.util.Map;
-import java.util.Set;
-
 import io.split.android.android_client.BuildConfig;
-import io.split.android.client.network.CertificatePin;
 import io.split.android.client.network.CertificatePinningConfiguration;
+import io.split.android.client.network.CertificatePinningConfigurationProvider;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Json;
-import io.split.android.client.utils.logger.Logger;
 
 public abstract class SplitWorker extends Worker {
 
@@ -46,7 +38,7 @@ public abstract class SplitWorker extends Worker {
         mDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         mCacheExpirationInSeconds = inputData.getLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION,
                 ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS);
-        mHttpClient = buildHttpClient(apiKey, buildCertPinningConfig(inputData));
+        mHttpClient = buildHttpClient(apiKey, buildCertPinningConfig(inputData.getString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS)));
     }
 
     @NonNull
@@ -96,26 +88,11 @@ public abstract class SplitWorker extends Worker {
     }
 
     @Nullable
-    private static CertificatePinningConfiguration buildCertPinningConfig(Data inputData) {
-        try {
-            Type type = new TypeToken<Map<String, Set<CertificatePin>>>() {
-            }.getType();
-            Map<String, Set<CertificatePin>> certificatePins = Json.fromJson(
-                    inputData.getString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS), type);
-
-            if (certificatePins != null && !certificatePins.isEmpty()) {
-                CertificatePinningConfiguration.Builder builder = CertificatePinningConfiguration.builder();
-                for (Map.Entry<String, Set<CertificatePin>> entry : certificatePins.entrySet()) {
-                    builder.addPins(entry.getKey(), entry.getValue());
-                }
-
-                return builder
-                        .build();
-            }
-        } catch (Exception e) {
-            Logger.e("Error parsing certificate pinning configuration for background sync worker", e.getLocalizedMessage());
+    private static CertificatePinningConfiguration buildCertPinningConfig(@Nullable String pinsJson) {
+        if (pinsJson == null || pinsJson.trim().isEmpty()) {
+            return null;
         }
 
-        return null;
+        return CertificatePinningConfigurationProvider.getCertificatePinningConfiguration(pinsJson);
     }
 }
