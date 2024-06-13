@@ -157,6 +157,7 @@ dependencies {
     androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
     androidTestImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
     androidTestImplementation "com.google.guava:guava:$guavaVersion"
+    androidTestImplementation "org.mockito:mockito-android:$mockitoVersion"
 }
 
 def splitPOM = {

@@ -96,6 +96,21 @@ public class CertificatePinningConfiguration {
             return this;
         }
 
+        // Meant to be used only when setting up bg sync jobs
+        public void addPins(String host, Set<CertificatePin> pins) {
+            if (host == null || host.trim().isEmpty()) {
+                Logger.e("Host cannot be null or empty. Ignoring entry");
+                return;
+            }
+
+            if (pins == null || pins.isEmpty()) {
+                Logger.e("Pins cannot be null or empty. Ignoring entry for host " + host);
+                return;
+            }
+
+            mPins.put(host, pins);
+        }
+
         public Builder failureStrategy(@NonNull CertificatePinningFailureListener failureListener) {
             if (failureListener == null) { // just in case
                 Logger.w("Failure listener cannot be null");
