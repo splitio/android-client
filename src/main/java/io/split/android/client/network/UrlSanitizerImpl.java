@@ -10,14 +10,10 @@ import io.split.android.client.utils.logger.Logger;
 
 public class UrlSanitizerImpl implements UrlSanitizer {
 
-    private final Uri.Builder mUrlBuilder;
-
-    public UrlSanitizerImpl() {
-        mUrlBuilder = new Uri.Builder();
-    }
-
     @Override
     public URL getUrl(URI uri) {
+
+        Uri.Builder mUrlBuilder = new Uri.Builder();
 
         mUrlBuilder
                 .encodedAuthority(uri.getAuthority())

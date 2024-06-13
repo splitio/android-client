@@ -1,11 +1,16 @@
 package tests.service;
 
+import static org.junit.Assert.fail;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.split.android.client.network.UrlSanitizerImpl;
 
@@ -60,5 +65,33 @@ public class UrlSanitizerTest {
     @Test
     public void buildUrlAbsoluteOpaque() {
         Assert.assertEquals(originUri.isAbsolute(), httpUrlUri.isAbsolute());
+    }
+
+    @Test
+    public void concurrencyTest() throws InterruptedException {
+        UrlSanitizerImpl urlSanitizer = new UrlSanitizerImpl();
+        List<Thread> threads = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+            threads.add(new Thread(() -> {
+                try {
+                    URI uri = new URI("http://example.com/path?id=" + Thread.currentThread().getId());
+                    URL url = urlSanitizer.getUrl(uri);
+                    String s = url.getQuery().split("=")[1];
+                    if (!s.equals(String.valueOf(Thread.currentThread().getId()))) {
+                        fail("Expected " + Thread.currentThread().getId() + " but got " + s + " instead.");
+                    }
+                } catch (URISyntaxException e) {
+                    e.printStackTrace();
+                }
+            }));
+        }
+
+        for (Thread thread : threads) {
+            thread.start();
+        }
+
+        for (Thread thread : threads) {
+            thread.join();
+        }
     }
 }
