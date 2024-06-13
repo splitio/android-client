@@ -6,12 +6,14 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static io.split.android.client.service.executor.SplitTaskExecutionInfo.DO_NOT_RETRY;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -26,9 +28,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
@@ -38,7 +44,6 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
-import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.executor.SplitTask;
@@ -141,17 +146,21 @@ public class SynchronizerTest {
     private final String mUserKey = "user_key";
 
     public void setup(SplitClientConfig splitClientConfig) {
-        setup(splitClientConfig, ImpressionManagerConfig.Mode.fromImpressionMode(splitClientConfig.impressionsMode()));
+        setup(splitClientConfig, ImpressionManagerConfig.Mode.fromImpressionMode(splitClientConfig.impressionsMode()), spy(new SplitTaskExecutorStub()));
     }
 
-    public void setup(SplitClientConfig splitClientConfig, ImpressionManagerConfig.Mode impressionsMode) {
-        setup(splitClientConfig, impressionsMode, false);
+    public void setup(SplitClientConfig splitClientConfig, SplitTaskExecutor taskExecutor) {
+        setup(splitClientConfig, ImpressionManagerConfig.Mode.fromImpressionMode(splitClientConfig.impressionsMode()), taskExecutor);
     }
 
-    public void setup(SplitClientConfig splitClientConfig, ImpressionManagerConfig.Mode impressionsMode, boolean useImpManagerMock) {
+    public void setup(SplitClientConfig splitClientConfig, ImpressionManagerConfig.Mode impressionsMode, SplitTaskExecutor taskExecutor) {
+        setup(splitClientConfig, impressionsMode, false, taskExecutor);
+    }
+
+    public void setup(SplitClientConfig splitClientConfig, ImpressionManagerConfig.Mode impressionsMode, boolean useImpManagerMock, SplitTaskExecutor taskExecutor) {
         MockitoAnnotations.openMocks(this);
 
-        mTaskExecutor = spy(new SplitTaskExecutorStub());
+        mTaskExecutor = taskExecutor;
         mSingleThreadedTaskExecutor = spy(new SplitTaskExecutorStub());
         HttpFetcher<SplitChange> splitsFetcher = Mockito.mock(HttpFetcher.class);
         HttpFetcher<List<MySegment>> mySegmentsFetcher = Mockito.mock(HttpFetcher.class);
@@ -258,7 +267,7 @@ public class SynchronizerTest {
                 .synchronizeInBackground(false)
                 .impressionsQueueSize(3)
                 .build();
-        setup(config, ImpressionManagerConfig.Mode.OPTIMIZED);
+        setup(config, ImpressionManagerConfig.Mode.OPTIMIZED, spy(new SplitTaskExecutorStub()));
         mSynchronizer.startPeriodicFetching();
         mSynchronizer.startPeriodicRecording();
         mSynchronizer.pause();
@@ -294,7 +303,7 @@ public class SynchronizerTest {
                 .userConsent(UserConsent.GRANTED)
                 .impressionsMode("DEBUG")
                 .build();
-        setup(config, ImpressionManagerConfig.Mode.DEBUG, true);
+        setup(config, ImpressionManagerConfig.Mode.DEBUG, true, spy(new SplitTaskExecutorStub()));
         mSynchronizer.pause();
         mSynchronizer.resume();
         verify(mImpressionManager, times(1)).startPeriodicRecording();
@@ -320,7 +329,7 @@ public class SynchronizerTest {
                 .userConsent(userConsent)
                 .impressionsMode("DEBUG")
                 .build();
-        setup(config, ImpressionManagerConfig.Mode.DEBUG, true);
+        setup(config, ImpressionManagerConfig.Mode.DEBUG, true, spy(new SplitTaskExecutorStub()));
         mSynchronizer.pause();
         mSynchronizer.resume();
         verify(mImpressionManager, never()).startPeriodicRecording();
@@ -695,6 +704,68 @@ public class SynchronizerTest {
         verify(mFeatureFlagsSynchronizer).synchronize(1000);
     }
 
+    @Test
+    public void eventsSyncIsNotRescheduledWhenReceivedDoNotRetry() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .userConsent(UserConsent.GRANTED)
+                .impressionsQueueSize(3)
+                .build();
+        mTaskExecutor = mock(SplitTaskExecutor.class);
+        setup(config, mTaskExecutor);
+
+        EventsRecorderTask eventsTask = mock(EventsRecorderTask.class);
+        when(mTaskFactory.createEventsRecorderTask()).thenReturn(eventsTask);
+
+        Map<String, Object> taskData = new HashMap<>();
+        taskData.put(DO_NOT_RETRY, true);
+        taskData.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, 1);
+        taskData.put(SplitTaskExecutionInfo.NON_SENT_BYTES, 1);
+        when(mTaskExecutor.schedule(
+                eq(eventsTask), eq(0L), eq(1800L), notNull())).thenAnswer((Answer<String>) invocation -> {
+            ((SplitTaskExecutionListener) invocation.getArgument(3)).taskExecuted(
+                    SplitTaskExecutionInfo.error(SplitTaskType.EVENTS_RECORDER, taskData));
+            return "task-id";
+        });
+        when(eventsTask.execute())
+                .thenReturn(SplitTaskExecutionInfo
+                        .error(SplitTaskType.EVENTS_RECORDER,
+                                Collections.singletonMap(DO_NOT_RETRY, true)));
+
+        mSynchronizer.startPeriodicRecording();
+        mSynchronizer.stopPeriodicRecording();
+        mSynchronizer.startPeriodicRecording();
+
+        verify(mTaskExecutor, times(1)).schedule(
+                eq(eventsTask), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+        verify(mTaskExecutor, times(1)).stopTask("task-id");
+    }
+
+    @Test
+    public void reschedulingEventsTaskCancelsPreviousWhenCallingSequentially() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .userConsent(UserConsent.GRANTED)
+                .impressionsQueueSize(3)
+                .build();
+        mTaskExecutor = mock(SplitTaskExecutor.class);
+        setup(config, mTaskExecutor);
+
+        EventsRecorderTask eventsTask = mock(EventsRecorderTask.class);
+        when(mTaskFactory.createEventsRecorderTask()).thenReturn(eventsTask);
+
+        when(mTaskExecutor.schedule(
+                eq(eventsTask), eq(0L), eq(1800L), notNull())).thenReturn("task-id");
+
+        mSynchronizer.startPeriodicRecording();
+        mSynchronizer.startPeriodicRecording();
+
+        verify(mTaskExecutor, times(2)).schedule(
+                eq(eventsTask), anyLong(), anyLong(),
+                any(SplitTaskExecutionListener.class));
+        verify(mTaskExecutor, times(1)).stopTask("task-id");
+    }
 
     @After
     public void tearDown() {
