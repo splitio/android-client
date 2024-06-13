@@ -260,7 +260,8 @@ public class HttpClientImpl implements HttpClient {
                 if (mCertificatePinningConfiguration == null) {
                     certificateChecker = null;
                 } else {
-                    certificateChecker = new CertificateCheckerImpl(mCertificatePinningConfiguration);
+                    certificateChecker = new CertificateCheckerImpl(mCertificatePinningConfiguration,
+                            (mDevelopmentSslConfig != null) ? mDevelopmentSslConfig.getTrustManager() : null);
                 }
             } else {
                 // this is only for tests

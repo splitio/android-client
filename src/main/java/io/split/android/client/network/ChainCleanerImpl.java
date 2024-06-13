@@ -3,6 +3,7 @@ package io.split.android.client.network;
 import android.net.http.X509TrustManagerExtensions;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.security.cert.Certificate;
@@ -20,13 +21,8 @@ class ChainCleanerImpl implements ChainCleaner {
 
     private final X509TrustManagerExtensions mTrustManagerExtensions;
 
-    ChainCleanerImpl() {
-        this(new X509TrustManagerExtensions(TrustManagerProvider.getDefaultX509TrustManager()));
-    }
-
-    @VisibleForTesting
-    ChainCleanerImpl(X509TrustManager trustManager) {
-        this(new X509TrustManagerExtensions(trustManager));
+    ChainCleanerImpl(@Nullable X509TrustManager trustManager) {
+        this(new X509TrustManagerExtensions(trustManager != null ? trustManager : TrustManagerProvider.getDefaultX509TrustManager()));
     }
 
     @VisibleForTesting

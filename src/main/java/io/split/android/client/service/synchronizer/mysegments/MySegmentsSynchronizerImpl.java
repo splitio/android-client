@@ -58,14 +58,18 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
 
     @Override
     public void synchronizeMySegments() {
-        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), null);
-        mMySegmentsSyncRetryTimer.start();
+        if (mIsSynchronizing.get()) {
+            mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), mMySegmentsSyncListener);
+            mMySegmentsSyncRetryTimer.start();
+        }
     }
 
     @Override
     public void forceMySegmentsSync() {
-        mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), null);
-        mMySegmentsSyncRetryTimer.start();
+        if (mIsSynchronizing.get()) {
+            mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), mMySegmentsSyncListener);
+            mMySegmentsSyncRetryTimer.start();
+        }
     }
 
     @Override
