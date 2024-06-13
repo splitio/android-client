@@ -62,7 +62,7 @@ public class UniqueKeysRecorderTask implements SplitTask {
                             e.getLocalizedMessage());
                     failingKeys.addAll(keys);
 
-                    if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.INTERNAL_NON_RETRYABLE) {
+                    if (HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getHttpStatus()))) {
                         doNotRetry = true;
                         break;
                     }

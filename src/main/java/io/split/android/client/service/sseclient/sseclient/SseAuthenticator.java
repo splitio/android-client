@@ -50,7 +50,7 @@ public class SseAuthenticator {
         } catch (HttpFetcherException httpFetcherException) {
             logError("Unexpected " + httpFetcherException.getLocalizedMessage());
             if (httpFetcherException.getHttpStatus() != null) {
-                if (HttpStatus.fromCode(httpFetcherException.getHttpStatus()) == HttpStatus.INTERNAL_NON_RETRYABLE) {
+                if (HttpStatus.isNotRetryable(HttpStatus.fromCode(httpFetcherException.getHttpStatus()))) {
                     return unsuccessfulAuthenticationUnrecoverableError();
                 }
 

@@ -69,7 +69,7 @@ public class MySegmentsSyncTask implements SplitTask {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(OperationType.MY_SEGMENT, e.getHttpStatus());
 
-            if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.INTERNAL_NON_RETRYABLE) {
+            if (HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getHttpStatus()))) {
                 return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC,
                         Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true));
             }

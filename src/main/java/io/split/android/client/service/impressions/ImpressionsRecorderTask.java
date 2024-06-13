@@ -74,7 +74,7 @@ public class ImpressionsRecorderTask implements SplitTask {
 
                     mTelemetryRuntimeProducer.recordSyncError(OperationType.IMPRESSIONS, e.getHttpStatus());
 
-                    if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.INTERNAL_NON_RETRYABLE) {
+                    if (HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getHttpStatus()))) {
                         doNotRetry = true;
                         break;
                     }
