@@ -97,7 +97,7 @@ public class CertificatePinningConfiguration {
         }
 
         // Meant to be used only when setting up bg sync jobs
-        public void addPins(String host, Set<CertificatePin> pins) {
+        void addPins(String host, Set<CertificatePin> pins) {
             if (host == null || host.trim().isEmpty()) {
                 Logger.e("Host cannot be null or empty. Ignoring entry");
                 return;
@@ -108,7 +108,24 @@ public class CertificatePinningConfiguration {
                 return;
             }
 
-            mPins.put(host, pins);
+            Set<CertificatePin> validPins = new HashSet<>();
+            for (CertificatePin pin : pins) {
+                if (pin == null) {
+                    Logger.e("Pin cannot be null. Ignoring entry for host " + host);
+                    continue;
+                }
+
+                if (!pin.getAlgorithm().equalsIgnoreCase("sha256") && !pin.getAlgorithm().equalsIgnoreCase("sha1")) {
+                    Logger.e("Invalid algorithm. Must be sha256 or sha1. Ignoring entry for host " + host);
+                    continue;
+                }
+
+                validPins.add(pin);
+            }
+
+            if (!validPins.isEmpty()) {
+                mPins.put(host, validPins);
+            }
         }
 
         public Builder failureListener(@NonNull CertificatePinningFailureListener failureListener) {
