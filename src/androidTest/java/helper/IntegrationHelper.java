@@ -1,6 +1,7 @@
 package helper;
 
 import android.content.Context;
+import android.util.Base64;
 
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
@@ -15,6 +16,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -334,6 +337,11 @@ public class IntegrationHelper {
                 }
             }
         };
+    }
+
+    public static String sha256(byte[] encoded) throws NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        return Base64.encodeToString(digest.digest(encoded), Base64.NO_WRAP);
     }
 
     /**

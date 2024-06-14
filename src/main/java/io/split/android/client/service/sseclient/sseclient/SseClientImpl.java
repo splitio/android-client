@@ -1,5 +1,7 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import java.io.BufferedReader;
@@ -12,15 +14,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpStreamRequest;
 import io.split.android.client.network.HttpStreamResponse;
 import io.split.android.client.network.URIBuilder;
+import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.SseJwtToken;
-import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.StringHelper;
-
-import static io.split.android.client.utils.Utils.checkNotNull;
+import io.split.android.client.utils.logger.Logger;
 
 public class SseClientImpl implements SseClient {
 
@@ -130,6 +132,9 @@ public class SseClientImpl implements SseClient {
         } catch (URISyntaxException e) {
             logError("An error has occurred while creating stream Url ", e);
             isErrorRetryable = false;
+        } catch (HttpException e) {
+            logError("An error has occurred while creating stream Url ", e);
+            isErrorRetryable = !HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getStatusCode()));
         } catch (IOException e) {
             Logger.d("An error has occurred while parsing stream: " + e.getLocalizedMessage());
             isErrorRetryable = true;

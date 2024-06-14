@@ -13,6 +13,7 @@ import javax.net.ssl.X509TrustManager;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.network.SplitAuthenticator;
@@ -125,7 +126,8 @@ public class SplitClientConfig {
 
     // To be set during startup
     public static String splitSdkVersion;
-    private long mObserverCacheExpirationPeriod;
+    private final long mObserverCacheExpirationPeriod;
+    private final CertificatePinningConfiguration mCertificatePinningConfiguration;
 
     public static Builder builder() {
         return new Builder();
@@ -178,7 +180,8 @@ public class SplitClientConfig {
                               long defaultSSEConnectionDelayInSecs,
                               long sseDisconnectionDelayInSecs,
                               String prefix,
-                              long observerCacheExpirationPeriod) {
+                              long observerCacheExpirationPeriod,
+                              CertificatePinningConfiguration certificatePinningConfiguration) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -234,6 +237,7 @@ public class SplitClientConfig {
         mSSEDisconnectionDelayInSecs = sseDisconnectionDelayInSecs;
         mPrefix = prefix;
         mObserverCacheExpirationPeriod = observerCacheExpirationPeriod;
+        mCertificatePinningConfiguration = certificatePinningConfiguration;
     }
 
     public String trafficType() {
@@ -468,6 +472,10 @@ public class SplitClientConfig {
         return mObserverCacheExpirationPeriod;
     }
 
+    public CertificatePinningConfiguration certificatePinningConfiguration() {
+        return mCertificatePinningConfiguration;
+    }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;
@@ -539,6 +547,8 @@ public class SplitClientConfig {
         private final long mObserverCacheExpirationPeriod = OBSERVER_CACHE_EXPIRATION_PERIOD;
 
         private String mPrefix = null;
+
+        private CertificatePinningConfiguration mCertificatePinningConfiguration = null;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -1051,6 +1061,16 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Configuration for certificate pinning.
+         * @param certificatePinningConfiguration Configuration object
+         * @return This builder
+         */
+        public Builder certificatePinningConfiguration(CertificatePinningConfiguration certificatePinningConfiguration) {
+            mCertificatePinningConfiguration = certificatePinningConfiguration;
+            return this;
+        }
+
         public SplitClientConfig build() {
             Logger.instance().setLevel(mLogLevel);
 
@@ -1118,6 +1138,12 @@ public class SplitClientConfig {
                 }
             }
 
+            if (mCertificatePinningConfiguration != null && (mCertificatePinningConfiguration.getPins() == null ||
+                mCertificatePinningConfiguration.getPins().isEmpty())) {
+                Logger.w("Certificate pinning configuration is empty. Disabling certificate pinning.");
+                mCertificatePinningConfiguration = null;
+            }
+
             HttpProxy proxy = parseProxyHost(mProxyHost);
 
             return new SplitClientConfig(
@@ -1168,7 +1194,8 @@ public class SplitClientConfig {
                     mDefaultSSEConnectionDelayInSecs,
                     mSSEDisconnectionDelayInSecs,
                     mPrefix,
-                    mObserverCacheExpirationPeriod);
+                    mObserverCacheExpirationPeriod,
+                    mCertificatePinningConfiguration);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {

@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -36,6 +37,8 @@ public class HttpClientImpl implements HttpClient {
     private final SSLSocketFactory mSslSocketFactory;
     @NonNull
     private final UrlSanitizer mUrlSanitizer;
+    @Nullable
+    private final CertificateChecker mCertificateChecker;
 
     HttpClientImpl(@Nullable HttpProxy proxy,
                    @Nullable SplitAuthenticator proxyAuthenticator,
@@ -43,7 +46,8 @@ public class HttpClientImpl implements HttpClient {
                    long connectionTimeout,
                    @Nullable DevelopmentSslConfig developmentSslConfig,
                    @Nullable SSLSocketFactory sslSocketFactory,
-                   @NonNull UrlSanitizer urlSanitizer) {
+                   @NonNull UrlSanitizer urlSanitizer,
+                   @Nullable CertificateChecker certificateChecker) {
         mProxy = initializeProxy(proxy);
         mProxyAuthenticator = initializeProxyAuthenticator(proxy, proxyAuthenticator);
         mReadTimeout = readTimeout;
@@ -53,6 +57,7 @@ public class HttpClientImpl implements HttpClient {
         mStreamingHeaders = new HashMap<>();
         mSslSocketFactory = sslSocketFactory;
         mUrlSanitizer = urlSanitizer;
+        mCertificateChecker = certificateChecker;
     }
 
     @Override
@@ -73,7 +78,8 @@ public class HttpClientImpl implements HttpClient {
                 mConnectionTimeout,
                 mDevelopmentSslConfig,
                 mSslSocketFactory,
-                mUrlSanitizer);
+                mUrlSanitizer,
+                mCertificateChecker);
     }
 
     public HttpRequest request(URI uri, HttpMethod requestMethod) {
@@ -94,7 +100,8 @@ public class HttpClientImpl implements HttpClient {
                 mConnectionTimeout,
                 mDevelopmentSslConfig,
                 mSslSocketFactory,
-                mUrlSanitizer);
+                mUrlSanitizer,
+                mCertificateChecker);
     }
 
     @Override
@@ -155,10 +162,16 @@ public class HttpClientImpl implements HttpClient {
     }
 
     private static SplitUrlConnectionAuthenticator createBasicAuthenticator(String username, String password) {
-        return new SplitUrlConnectionAuthenticator(new SplitBasicAuthenticator(username, password, new SplitBasicAuthenticator.Base64Encoder() {
+        return new SplitUrlConnectionAuthenticator(new SplitBasicAuthenticator(username, password, new Base64Encoder() {
+
             @Override
             public String encode(String value) {
                 return Base64Util.encode(value);
+            }
+
+            @Override
+            public String encode(byte[] bytes) {
+                return Base64Util.encode(bytes);
             }
         }));
     }
@@ -172,6 +185,8 @@ public class HttpClientImpl implements HttpClient {
         private SSLSocketFactory mSslSocketFactory = null;
         private Context mHostAppContext;
         private UrlSanitizer mUrlSanitizer;
+        private CertificatePinningConfiguration mCertificatePinningConfiguration;
+        private CertificateChecker mCertificateChecker;
 
         public Builder setContext(Context context) {
             mHostAppContext = context;
@@ -215,6 +230,17 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
+        public Builder setCertificatePinningConfiguration(CertificatePinningConfiguration certificatePinningConfiguration) {
+            mCertificatePinningConfiguration = certificatePinningConfiguration;
+            return this;
+        }
+
+        @VisibleForTesting
+        Builder setCertificateChecker(CertificateChecker certificateChecker) {
+            mCertificateChecker = certificateChecker;
+            return this;
+        }
+
         public HttpClient build() {
             if (mDevelopmentSslConfig == null) {
                 if (LegacyTlsUpdater.couldBeOld()) {
@@ -229,6 +255,19 @@ public class HttpClientImpl implements HttpClient {
                 }
             }
 
+            CertificateChecker certificateChecker;
+            if (mCertificateChecker == null) {
+                if (mCertificatePinningConfiguration == null) {
+                    certificateChecker = null;
+                } else {
+                    certificateChecker = new CertificateCheckerImpl(mCertificatePinningConfiguration,
+                            (mDevelopmentSslConfig != null) ? mDevelopmentSslConfig.getTrustManager() : null);
+                }
+            } else {
+                // this is only for tests
+                certificateChecker = mCertificateChecker;
+            }
+
             return new HttpClientImpl(
                     mProxy,
                     mProxyAuthenticator,
@@ -236,7 +275,8 @@ public class HttpClientImpl implements HttpClient {
                     mConnectionTimeout,
                     mDevelopmentSslConfig,
                     mSslSocketFactory,
-                    (mUrlSanitizer == null) ? new UrlSanitizerImpl() : mUrlSanitizer);
+                    (mUrlSanitizer == null) ? new UrlSanitizerImpl() : mUrlSanitizer,
+                    certificateChecker);
         }
     }
 }

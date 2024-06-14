@@ -11,7 +11,7 @@ import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 
-public class DebugTracker implements PeriodicTracker {
+class DebugTracker implements PeriodicTracker {
 
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
     private final SplitTaskExecutor mTaskExecutor;
@@ -50,6 +50,9 @@ public class DebugTracker implements PeriodicTracker {
     }
 
     private void scheduleImpressionsRecorderTask() {
+        if (mImpressionsRecorderTaskId != null) {
+            mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
+        }
         mImpressionsRecorderTaskId = mTaskExecutor.schedule(
                 mImpressionsTaskFactory.createImpressionsRecorderTask(),
                 ServiceConstants.NO_INITIAL_DELAY,

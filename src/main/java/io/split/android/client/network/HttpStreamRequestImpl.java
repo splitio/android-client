@@ -1,5 +1,6 @@
 package io.split.android.client.network;
 
+import static io.split.android.client.network.HttpRequestHelper.checkPins;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
@@ -23,8 +24,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
+import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.utils.logger.Logger;
 
 public class HttpStreamRequestImpl implements HttpStreamRequest {
@@ -46,6 +49,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private final DevelopmentSslConfig mDevelopmentSslConfig;
     @Nullable
     private final SSLSocketFactory mSslSocketFactory;
+    @Nullable
+    private final CertificateChecker mCertificateChecker;
     private final AtomicBoolean mWasRetried = new AtomicBoolean(false);
 
     HttpStreamRequestImpl(@NonNull URI uri,
@@ -55,7 +60,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                           long connectionTimeout,
                           @Nullable DevelopmentSslConfig developmentSslConfig,
                           @Nullable SSLSocketFactory sslSocketFactory,
-                          @NonNull UrlSanitizer urlSanitizer) {
+                          @NonNull UrlSanitizer urlSanitizer,
+                          @Nullable CertificateChecker certificateChecker) {
         mUri = checkNotNull(uri);
         mHttpMethod = HttpMethod.GET;
         mProxy = proxy;
@@ -65,6 +71,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
         mSslSocketFactory = sslSocketFactory;
+        mCertificateChecker = certificateChecker;
     }
 
     @Override
@@ -81,7 +88,9 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     public void close() {
         try {
             Logger.d("Closing streaming connection");
-            mConnection.disconnect();
+            if (mConnection != null) {
+                mConnection.disconnect();
+            }
         } catch (Exception e) {
             Logger.d("Unknown error closing connection: " + e.getLocalizedMessage());
         } finally {
@@ -119,6 +128,11 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                 mConnection.disconnect();
             }
             throw new HttpException("Http method not allowed: " + e.getLocalizedMessage());
+        } catch (SSLPeerUnverifiedException e) {
+            if (mConnection != null) {
+                mConnection.disconnect();
+            }
+            throw new HttpException("SSL peer not verified: " + e.getLocalizedMessage(), HttpStatus.INTERNAL_NON_RETRYABLE.getCode());
         } catch (IOException e) {
             if (mConnection != null) {
                 mConnection.disconnect();
@@ -137,7 +151,9 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
         HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, useProxyAuthenticator);
         applyTimeouts(HttpStreamRequestImpl.STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout, connection);
-        applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, mConnection);
+        applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
+        connection.connect();
+        checkPins(connection, mCertificateChecker);
 
         return connection;
     }

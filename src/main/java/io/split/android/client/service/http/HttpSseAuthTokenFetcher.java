@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.util.Map;
 
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.URIBuilder;
@@ -55,6 +56,8 @@ public class HttpSseAuthTokenFetcher implements HttpFetcher<SseAuthenticationRes
             if (responseData == null) {
                 throw new IllegalStateException("Wrong data received from authentication server");
             }
+        } catch (HttpException e) {
+            throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage(), e.getStatusCode());
         } catch (Exception e) {
             throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage());
         }

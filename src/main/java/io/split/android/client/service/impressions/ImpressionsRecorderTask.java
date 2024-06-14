@@ -16,6 +16,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
+import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -46,6 +47,7 @@ public class ImpressionsRecorderTask implements SplitTask {
         long nonSentBytes = 0;
         List<KeyImpression> impressions;
         List<KeyImpression> failingImpressions = new ArrayList<>();
+        boolean doNotRetry = false;
         do {
             impressions = mPersistenImpressionsStorage.pop(mConfig.getImpressionsPerPush());
             if (impressions.size() > 0) {
@@ -65,12 +67,17 @@ public class ImpressionsRecorderTask implements SplitTask {
                     status = SplitTaskExecutionStatus.ERROR;
                     nonSentRecords += mConfig.getImpressionsPerPush();
                     nonSentBytes += sumImpressionsBytes(impressions);
-                    Logger.e("Impressions recorder task: Some impressions couldn't be sent." +
-                            "Saving to send them in a new iteration" +
+                    Logger.e("Impressions recorder task: Some impressions couldn't be sent. " +
+                            "Saving to send them in a new iteration\n" +
                             e.getLocalizedMessage());
                     failingImpressions.addAll(impressions);
 
                     mTelemetryRuntimeProducer.recordSyncError(OperationType.IMPRESSIONS, e.getHttpStatus());
+
+                    if (HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getHttpStatus()))) {
+                        doNotRetry = true;
+                        break;
+                    }
                 } finally {
                     mTelemetryRuntimeProducer.recordSyncLatency(OperationType.IMPRESSIONS, latency);
                 }
@@ -85,6 +92,9 @@ public class ImpressionsRecorderTask implements SplitTask {
             Map<String, Object> data = new HashMap<>();
             data.put(SplitTaskExecutionInfo.NON_SENT_RECORDS, nonSentRecords);
             data.put(SplitTaskExecutionInfo.NON_SENT_BYTES, nonSentBytes);
+            if (doNotRetry) {
+                data.put(SplitTaskExecutionInfo.DO_NOT_RETRY, true);
+            }
 
             return SplitTaskExecutionInfo.error(
                     SplitTaskType.IMPRESSIONS_RECORDER, data);

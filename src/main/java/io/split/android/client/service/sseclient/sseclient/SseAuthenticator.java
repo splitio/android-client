@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.service.sseclient.SseJwtParser;
@@ -49,6 +50,10 @@ public class SseAuthenticator {
         } catch (HttpFetcherException httpFetcherException) {
             logError("Unexpected " + httpFetcherException.getLocalizedMessage());
             if (httpFetcherException.getHttpStatus() != null) {
+                if (HttpStatus.isNotRetryable(HttpStatus.fromCode(httpFetcherException.getHttpStatus()))) {
+                    return unsuccessfulAuthenticationUnrecoverableError();
+                }
+
                 return unexpectedHttpError(httpFetcherException.getHttpStatus());
             } else {
                 return unexpectedError();
@@ -61,7 +66,7 @@ public class SseAuthenticator {
 
         if (authResponse.isClientError()) {
             Logger.d("Error while authenticating to streaming. Check your SDK key is correct.");
-            return new SseAuthenticationResult(false, false, false, 0, null);
+            return unsuccessfulAuthenticationUnrecoverableError();
         }
 
         if (!authResponse.isStreamingEnabled()) {
@@ -78,6 +83,11 @@ public class SseAuthenticator {
             Logger.e("Error while parsing Jwt");
         }
         return unexpectedError();
+    }
+
+    @NonNull
+    private static SseAuthenticationResult unsuccessfulAuthenticationUnrecoverableError() {
+        return new SseAuthenticationResult(false, false, false, 0, null);
     }
 
     public void registerKey(String userKey) {

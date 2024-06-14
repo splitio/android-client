@@ -1,8 +1,12 @@
 package io.split.android.client.service.impressions.strategy
 
+import io.split.android.client.service.executor.SplitTask
+import io.split.android.client.service.executor.SplitTaskExecutionInfo
+import io.split.android.client.service.executor.SplitTaskExecutionInfo.DO_NOT_RETRY
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.service.executor.SplitTaskSerialWrapper
+import io.split.android.client.service.executor.SplitTaskType
 import io.split.android.client.service.impressions.*
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask
@@ -17,14 +21,19 @@ class NoneTrackerTest {
 
     @Mock
     private lateinit var taskExecutor: SplitTaskExecutor
+
     @Mock
     private lateinit var taskFactory: ImpressionsTaskFactory
+
     @Mock
     private lateinit var impressionTimer: RetryBackoffCounterTimer
+
     @Mock
     private lateinit var uniqueKeysTimer: RetryBackoffCounterTimer
+
     @Mock
     private lateinit var impressionCounter: ImpressionsCounter
+
     @Mock
     private lateinit var uniqueKeysTracker: UniqueKeysTracker
     private lateinit var tracker: NoneTracker
@@ -84,7 +93,7 @@ class NoneTrackerTest {
 
         tracker.startPeriodicRecording()
 
-        verify(taskExecutor).schedule(task, 0L, 30L, null)
+        verify(taskExecutor).schedule(eq(task), eq(0L), eq(30L), any())
     }
 
     @Test
@@ -94,7 +103,7 @@ class NoneTrackerTest {
 
         tracker.startPeriodicRecording()
 
-        verify(taskExecutor).schedule(task, 0L, 40L, null)
+        verify(taskExecutor).schedule(eq(task), eq(0L), eq(40L), any())
     }
 
     @Test
@@ -108,7 +117,7 @@ class NoneTrackerTest {
                 any(ImpressionsCountRecorderTask::class.java),
                 eq(0L),
                 eq(30L),
-                eq<SplitTaskExecutionListener?>(null)
+                any()
             )
         ).thenReturn("id_1")
         `when`(
@@ -116,7 +125,7 @@ class NoneTrackerTest {
                 any(UniqueKeysRecorderTask::class.java),
                 eq(0L),
                 eq(40L),
-                eq<SplitTaskExecutionListener?>(null)
+                any()
             )
         ).thenReturn("id_2")
 
@@ -129,7 +138,11 @@ class NoneTrackerTest {
 
     @Test
     fun `stop periodic recording saves impression count`() {
-        `when`(taskFactory.createSaveImpressionsCountTask(any())).thenReturn(mock(SaveImpressionsCountTask::class.java))
+        `when`(taskFactory.createSaveImpressionsCountTask(any())).thenReturn(
+            mock(
+                SaveImpressionsCountTask::class.java
+            )
+        )
 
         tracker.stopPeriodicRecording()
 
@@ -141,7 +154,11 @@ class NoneTrackerTest {
 
     @Test
     fun `stop periodic recording saves unique keys`() {
-        `when`(taskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(mock(SaveUniqueImpressionsTask::class.java))
+        `when`(taskFactory.createSaveUniqueImpressionsTask(any())).thenReturn(
+            mock(
+                SaveUniqueImpressionsTask::class.java
+            )
+        )
 
         tracker.stopPeriodicRecording()
 
@@ -187,5 +204,83 @@ class NoneTrackerTest {
         tracker.stopPeriodicRecording()
 
         verify(taskExecutor, never()).submit(eq(countTask), any())
+    }
+
+    @Test
+    fun `do not reschedule mtk tracking when unique keys task returns do not retry`() {
+
+        val mtkTask = mock(UniqueKeysRecorderTask::class.java)
+        `when`(mtkTask.execute()).thenReturn(SplitTaskExecutionInfo.error(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK, mapOf(DO_NOT_RETRY to true)))
+        `when`(taskFactory.createUniqueImpressionsRecorderTask()).thenReturn(mtkTask)
+        `when`(
+            taskExecutor.schedule(eq(mtkTask), eq(0L), eq(40L), any())
+        ).thenAnswer {
+            (it.arguments[3] as SplitTaskExecutionListener).taskExecuted((it.arguments[0] as SplitTask).execute())
+            "id_1"
+        }
+
+        tracker.startPeriodicRecording()
+        tracker.stopPeriodicRecording()
+
+        // start periodic recording again to verify it is not working anymore
+        tracker.startPeriodicRecording()
+
+        verify(taskExecutor, times(1)).schedule(eq(mtkTask), eq(0L), eq(40L), any())
+        verify(taskExecutor).stopTask(eq("id_1"))
+    }
+
+    @Test
+    fun `do not reschedule count tracking when count task returns do not retry`() {
+
+        val countTask = mock(ImpressionsCountRecorderTask::class.java)
+        `when`(countTask.execute()).thenReturn(SplitTaskExecutionInfo.error(SplitTaskType.IMPRESSIONS_COUNT_RECORDER, mapOf(DO_NOT_RETRY to true)))
+        `when`(taskFactory.createImpressionsCountRecorderTask()).thenReturn(countTask)
+        `when`(
+            taskExecutor.schedule(eq(countTask), eq(0L), eq(30L), any())
+        ).thenAnswer {
+            (it.arguments[3] as SplitTaskExecutionListener).taskExecuted((it.arguments[0] as SplitTask).execute())
+            "id_1"
+        }
+
+        tracker.startPeriodicRecording()
+        tracker.stopPeriodicRecording()
+
+        // start periodic recording again to verify it is not working anymore
+        tracker.startPeriodicRecording()
+
+        verify(taskExecutor, times(1)).schedule(eq(countTask), eq(0L), eq(30L), any())
+        verify(taskExecutor).stopTask(eq("id_1"))
+    }
+
+    @Test
+    fun `cancel previous mkt task when scheduling sequentially`() {
+        val mtkTask = mock(UniqueKeysRecorderTask::class.java)
+        val mtkTask2 = mock(UniqueKeysRecorderTask::class.java)
+        `when`(taskFactory.createUniqueImpressionsRecorderTask()).thenReturn(mtkTask).thenReturn(mtkTask2)
+        `when`(taskExecutor.schedule(eq(mtkTask), eq(0L), eq(40L), any())).thenReturn("id_1")
+        `when`(taskExecutor.schedule(eq(mtkTask2), eq(0L), eq(40L), any())).thenReturn("id_2")
+
+        tracker.startPeriodicRecording()
+        tracker.startPeriodicRecording()
+
+        verify(taskExecutor).schedule(eq(mtkTask), eq(0L), eq(40L), any())
+        verify(taskExecutor).stopTask(eq("id_1"))
+        verify(taskExecutor).schedule(eq(mtkTask2), eq(0L), eq(40L), any())
+    }
+
+    @Test
+    fun `cancel previous count task when scheduling sequentially`() {
+        val countTask = mock(ImpressionsCountRecorderTask::class.java)
+        val countTask2 = mock(ImpressionsCountRecorderTask::class.java)
+        `when`(taskFactory.createImpressionsCountRecorderTask()).thenReturn(countTask).thenReturn(countTask2)
+        `when`(taskExecutor.schedule(eq(countTask), eq(0L), eq(30L), any())).thenReturn("id_1")
+        `when`(taskExecutor.schedule(eq(countTask2), eq(0L), eq(30L), any())).thenReturn("id_2")
+
+        tracker.startPeriodicRecording()
+        tracker.startPeriodicRecording()
+
+        verify(taskExecutor).schedule(eq(countTask), eq(0L), eq(30L), any())
+        verify(taskExecutor).stopTask(eq("id_1"))
+        verify(taskExecutor).schedule(eq(countTask2), eq(0L), eq(30L), any())
     }
 }

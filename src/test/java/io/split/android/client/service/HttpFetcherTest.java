@@ -254,7 +254,6 @@ public class HttpFetcherTest {
             exceptionWasThrown = true;
         }
 
-
         Assert.assertTrue(exceptionWasThrown);
     }
 
@@ -317,6 +316,26 @@ public class HttpFetcherTest {
         }
 
         verifyQuery("s=1.1&since=-1&till=100");
+    }
+
+    @Test
+    public void httpExceptionWithStatusCodeAddsStatusCodeToHttpFetcherException() throws HttpException {
+        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+
+        HttpRequest request = mock(HttpRequest.class);
+        when(request.execute()).thenThrow(new HttpException("Not found", 404));
+        when(mClientMock.request(any(), any(), any(), any())).thenReturn(request);
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("since", "-1");
+        params.put("till", "100");
+        params.put("sets", "flag_set1,flagset2");
+
+        try {
+            fetcher.execute(params, null);
+        } catch (HttpFetcherException e) {
+            Assert.assertEquals(404, e.getHttpStatus().intValue());
+        }
     }
 
     @NonNull

@@ -157,6 +157,61 @@ public class UniqueKeysRecorderTaskTest {
         Assert.assertNull(result.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES));
     }
 
+    @Test
+    public void statusCode9009InHttpExceptionReturnsDoNotRetry() throws HttpRecorderException {
+        when(mStorage.pop(10))
+                .thenReturn(createKeys(0))
+                .thenReturn(createKeys(0))
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 9009)).when(mRecorder).execute(any());
+
+        SplitTaskExecutionInfo executionInfo = mRecorderTask.execute();
+
+        Assert.assertEquals(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK, executionInfo.getTaskType());
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, executionInfo.getStatus());
+        Assert.assertEquals(10, executionInfo.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS).intValue());
+        Assert.assertEquals(1280000, executionInfo.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES).longValue());
+        Assert.assertEquals(true, executionInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
+    public void nullStatusCodeInExceptionReturnsNullDoNotRetry() throws HttpRecorderException {
+        when(mStorage.pop(10))
+                .thenReturn(createKeys(0))
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "")).when(mRecorder).execute(any());
+
+        SplitTaskExecutionInfo executionInfo = mRecorderTask.execute();
+
+        Assert.assertEquals(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK, executionInfo.getTaskType());
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, executionInfo.getStatus());
+        Assert.assertEquals(10, executionInfo.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS).intValue());
+        Assert.assertEquals(1280000, executionInfo.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES).longValue());
+        Assert.assertNull(executionInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
+    public void statusCode9009InHttpExceptionBreaksLoop() throws HttpRecorderException {
+        when(mStorage.pop(10))
+                .thenReturn(createKeys(0))
+                .thenReturn(createKeys(0))
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 9009)).when(mRecorder).execute(any());
+
+        SplitTaskExecutionInfo executionInfo = mRecorderTask.execute();
+
+        verify(mRecorder, times(1)).execute(any());
+        verify(mStorage, times(1)).pop(10);
+        verify(mStorage, never()).delete(any());
+        verify(mStorage, times(1)).setActive(any());
+
+        Assert.assertEquals(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK, executionInfo.getTaskType());
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, executionInfo.getStatus());
+        Assert.assertEquals(10, executionInfo.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS).intValue());
+        Assert.assertEquals(1280000, executionInfo.getLongValue(SplitTaskExecutionInfo.NON_SENT_BYTES).longValue());
+        Assert.assertEquals(true, executionInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
     private List<UniqueKey> createKeys(int initialIndex) {
         List<UniqueKey> keys = new ArrayList<>();
         for (int i = initialIndex; i < initialIndex + 10; i++) {

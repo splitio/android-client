@@ -188,6 +188,68 @@ public class EventsRecorderTaskTest {
         verify(mTelemetryRuntimeProducer, atLeastOnce()).recordSuccessfulSync(eq(OperationType.EVENTS), longThat(arg -> arg > 0));
     }
 
+    @Test
+    public void statusCode9009InHttpExceptionReturnsDoNotRetry() throws HttpRecorderException {
+        when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "", 9009)).when(mEventsRecorder).execute(mDefaultParams);
+
+        EventsRecorderTask task = new EventsRecorderTask(
+                mEventsRecorder,
+                mPersistentEventsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        SplitTaskExecutionInfo result = task.execute();
+
+        Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertEquals(100, result.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS).intValue());
+        Assert.assertEquals(true, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
+    public void nullStatusCodeInExceptionReturnsNullDoNotRetry() throws HttpRecorderException {
+        when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(new ArrayList<>());
+        doThrow(new HttpRecorderException("", "")).when(mEventsRecorder).execute(mDefaultParams);
+
+        EventsRecorderTask task = new EventsRecorderTask(
+                mEventsRecorder,
+                mPersistentEventsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        SplitTaskExecutionInfo result = task.execute();
+
+        Assert.assertEquals(SplitTaskType.EVENTS_RECORDER, result.getTaskType());
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertEquals(100, result.getIntegerValue(SplitTaskExecutionInfo.NON_SENT_RECORDS).intValue());
+        Assert.assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+    }
+
+    @Test
+    public void statusCode9009InHttpExceptionBreaksLoop() throws HttpRecorderException {
+        when(mPersistentEventsStorage.pop(DEFAULT_POP_CONFIG))
+                .thenReturn(mDefaultParams)
+                .thenReturn(mDefaultParams);
+        doThrow(new HttpRecorderException("", "", 9009)).when(mEventsRecorder).execute(mDefaultParams);
+
+        EventsRecorderTask task = new EventsRecorderTask(
+                mEventsRecorder,
+                mPersistentEventsStorage,
+                mDefaultConfig,
+                mTelemetryRuntimeProducer);
+
+        task.execute();
+
+        verify(mPersistentEventsStorage, times(1)).pop(DEFAULT_POP_CONFIG);
+        verify(mPersistentEventsStorage, times(0)).delete(any());
+        verify(mPersistentEventsStorage, times(DEFAULT_POP_CONFIG / EventsRecorderTask.FAILING_CHUNK_SIZE)).setActive(any());
+    }
+
     private List<Event> createEvents() {
         List<Event> events = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
