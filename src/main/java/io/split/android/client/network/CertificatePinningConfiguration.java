@@ -3,6 +3,7 @@ package io.split.android.client.network;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -43,22 +44,24 @@ public class CertificatePinningConfiguration {
     }
 
     @VisibleForTesting
-    static Builder builder(Base64Decoder base64Decoder) {
-        return new Builder(base64Decoder);
+    static Builder builder(Base64Decoder base64Decoder, PinEncoder pinEncoder) {
+        return new Builder(base64Decoder, pinEncoder);
     }
 
     public static class Builder {
         private final Map<String, Set<CertificatePin>> mPins = new LinkedHashMap<>();
         private CertificatePinningFailureListener mFailureListener;
         private final Base64Decoder mBase64Decoder;
+        private final PinEncoder mPinEncoder;
 
         private Builder() {
-            this(new DefaultBase64Decoder());
+            this(new DefaultBase64Decoder(), new PinEncoderImpl());
         }
 
         @VisibleForTesting
-        Builder(Base64Decoder base64Decoder) {
+        Builder(Base64Decoder base64Decoder, PinEncoder pinEncoder) {
             mBase64Decoder = base64Decoder;
+            mPinEncoder = pinEncoder;
         }
 
         public Builder addPin(String host, String pin) {
@@ -81,7 +84,7 @@ public class CertificatePinningConfiguration {
             String hash = parts[1];
             String algorithm = parts[0];
 
-            if (!algorithm.equalsIgnoreCase("sha256") && !algorithm.equalsIgnoreCase("sha1")) {
+            if (!algorithm.equalsIgnoreCase(Algorithm.SHA256) && !algorithm.equalsIgnoreCase(Algorithm.SHA1)) {
                 Logger.e("Invalid algorithm. Must be sha256 or sha1. Ignoring entry for host " + host);
                 return this;
             }
@@ -93,6 +96,42 @@ public class CertificatePinningConfiguration {
             }
             pins.add(new CertificatePin(mBase64Decoder.decode(hash), algorithm));
 
+            return this;
+        }
+
+        public Builder addPin(String host, InputStream inputStream) {
+            if (host == null || host.trim().isEmpty()) {
+                Logger.e("Host cannot be null or empty. Ignoring entry");
+                return this;
+            }
+
+            if (inputStream == null) {
+                Logger.e("InputStream cannot be null. Ignoring entry for host " + host);
+            }
+
+            Set<CertificatePin> pins = mPins.get(host);
+            if (pins == null) {
+                pins = new HashSet<>();
+                mPins.put(host, pins);
+            }
+
+            Set<CertificatePin> newPins = CertificateCheckerHelper.getPinsFromInputStream(inputStream, mPinEncoder);
+            if (newPins.isEmpty()) {
+                Logger.e("No pins found in input stream. Ignoring entry for host " + host);
+                return this;
+            }
+
+            pins.addAll(newPins);
+
+            return this;
+        }
+
+        public Builder failureListener(@NonNull CertificatePinningFailureListener failureListener) {
+            if (failureListener == null) { // just in case
+                Logger.w("Failure listener cannot be null");
+                return this;
+            }
+            mFailureListener = failureListener;
             return this;
         }
 
@@ -115,7 +154,7 @@ public class CertificatePinningConfiguration {
                     continue;
                 }
 
-                if (!pin.getAlgorithm().equalsIgnoreCase("sha256") && !pin.getAlgorithm().equalsIgnoreCase("sha1")) {
+                if (!pin.getAlgorithm().equalsIgnoreCase(Algorithm.SHA256) && !pin.getAlgorithm().equalsIgnoreCase(Algorithm.SHA1)) {
                     Logger.e("Invalid algorithm. Must be sha256 or sha1. Ignoring entry for host " + host);
                     continue;
                 }
@@ -126,15 +165,6 @@ public class CertificatePinningConfiguration {
             if (!validPins.isEmpty()) {
                 mPins.put(host, validPins);
             }
-        }
-
-        public Builder failureListener(@NonNull CertificatePinningFailureListener failureListener) {
-            if (failureListener == null) { // just in case
-                Logger.w("Failure listener cannot be null");
-                return this;
-            }
-            mFailureListener = failureListener;
-            return this;
         }
 
         public CertificatePinningConfiguration build() {
