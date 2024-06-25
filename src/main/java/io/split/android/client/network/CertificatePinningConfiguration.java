@@ -89,11 +89,7 @@ public class CertificatePinningConfiguration {
                 return this;
             }
 
-            Set<CertificatePin> pins = mPins.get(host);
-            if (pins == null) {
-                pins = new HashSet<>();
-                mPins.put(host, pins);
-            }
+            Set<CertificatePin> pins = getInitializedPins(host);
             pins.add(new CertificatePin(mBase64Decoder.decode(hash), algorithm));
 
             return this;
@@ -109,11 +105,7 @@ public class CertificatePinningConfiguration {
                 Logger.e("InputStream cannot be null. Ignoring entry for host " + host);
             }
 
-            Set<CertificatePin> pins = mPins.get(host);
-            if (pins == null) {
-                pins = new HashSet<>();
-                mPins.put(host, pins);
-            }
+            Set<CertificatePin> pins = getInitializedPins(host);
 
             Set<CertificatePin> newPins = CertificateCheckerHelper.getPinsFromInputStream(inputStream, mPinEncoder);
             if (newPins.isEmpty()) {
@@ -169,6 +161,16 @@ public class CertificatePinningConfiguration {
 
         public CertificatePinningConfiguration build() {
             return new CertificatePinningConfiguration(this);
+        }
+
+        @NonNull
+        private Set<CertificatePin> getInitializedPins(String host) {
+            Set<CertificatePin> pins = mPins.get(host);
+            if (pins == null) {
+                pins = new HashSet<>();
+                mPins.put(host, pins);
+            }
+            return pins;
         }
 
         private static class DefaultBase64Decoder implements Base64Decoder {
