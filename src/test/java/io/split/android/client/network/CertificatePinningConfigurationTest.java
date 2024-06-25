@@ -23,9 +23,11 @@ import io.split.android.client.utils.logger.Logger;
 public class CertificatePinningConfigurationTest {
 
     private Base64Decoder mBase64Decoder;
+    private PinEncoder mPinEncoder;
 
     @Before
     public void setUp() {
+        mPinEncoder = mock(PinEncoder.class);
         mBase64Decoder = mock(Base64Decoder.class);
         doAnswer(invocation -> {
             String base64 = invocation.getArgument(0);
@@ -63,7 +65,7 @@ public class CertificatePinningConfigurationTest {
 
     @Test
     public void addValidSha256Pin() {
-        CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder)
+        CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
                 .addPin("host", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
                 .build();
 
@@ -76,7 +78,7 @@ public class CertificatePinningConfigurationTest {
 
     @Test
     public void addValidSha1Pin() {
-        CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder)
+        CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
                 .addPin("host", "sha1/AAAAAAAAAAAAAAAAAAAAAAAAAAA=")
                 .build();
 
@@ -90,7 +92,7 @@ public class CertificatePinningConfigurationTest {
     @Test
     public void addInvalidAlgorithmPin() {
         try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
-            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder)
+            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
                     .addPin("host", "md5/AAAAAAAAAAAAAAAAAAAAAAAAAAA=")
                     .build();
 
@@ -103,7 +105,7 @@ public class CertificatePinningConfigurationTest {
     @Test
     public void addInvalidFormatPin() {
         try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
-            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder)
+            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
                     .addPin("my-host", "/AAAAAAAAAAAAAAAAAAAAAAAAAAA/")
                     .addPin("my-host", "AAAAAAAAAAAAAAAAAAAAAAAAAAA")
                     .build();
@@ -118,7 +120,7 @@ public class CertificatePinningConfigurationTest {
     @Test
     public void addNullHost() {
         try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
-            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder)
+            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
                     .addPin(null, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
                     .build();
 
@@ -131,7 +133,7 @@ public class CertificatePinningConfigurationTest {
     @Test
     public void addEmptyHost() {
         try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
-            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder)
+            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
                     .addPin("", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
                     .addPin(" ", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
                     .build();
@@ -145,10 +147,10 @@ public class CertificatePinningConfigurationTest {
     @Test
     public void addNullAndEmptyPin() {
         try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
-            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder)
+            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
                     .addPin("host", "")
                     .addPin("host", " ")
-                    .addPin("host", null)
+                    .addPin("host", (String) null)
                     .build();
 
             Set<CertificatePin> pins = config.getPins().get("host");
@@ -159,7 +161,7 @@ public class CertificatePinningConfigurationTest {
 
     @Test
     public void defaultPinsMapIsEmpty() {
-        CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder)
+        CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
                 .build();
 
         assertEquals(0, config.getPins().size());
