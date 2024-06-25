@@ -64,6 +64,19 @@ public class CertificatePinningConfiguration {
             mPinEncoder = pinEncoder;
         }
 
+        /**
+         * Adds a pin to the configuration.
+         *
+         * @param host The host to which the pin will be associated. It can be a full host or a wildcard host.
+         *             Patterns like "*.example.com" or "**.example.com" are supported.
+         *             A `**` pattern will match any number of subdomains.
+         *             A `*` pattern will match one subdomain.
+         * @param pin  The pin to be added. It must be in the form "[algorithm]/[hash]".
+         *             The hash is a base64 encoded string.
+         *             Supported algorithms are sha256 and sha1.
+         *             For example: "sha256/AAAAAAA="
+         * @return This builder.
+         */
         public Builder addPin(String host, String pin) {
             if (host == null || host.trim().isEmpty()) {
                 Logger.e("Host cannot be null or empty. Ignoring entry");
@@ -95,6 +108,19 @@ public class CertificatePinningConfiguration {
             return this;
         }
 
+        /**
+         * Adds a pin to the configuration.
+         *
+         * @param host        The host to which the pin will be associated. It can be a full host or a wildcard host.
+         *                    Patterns like "*.example.com" or "**.example.com" are supported.
+         *                    A `**` pattern will match any number of subdomains.
+         *                    A `*` pattern will match one subdomain.
+         * @param inputStream The {@link InputStream} containing certificate data to be used to calculate the pin hashes.
+         *                    This is useful for specifying a certificate file.
+         *                    If the data contains the certificate chain, a pin for each certificate in the chain will be added.
+         *                    The stream will be closed after reading the data.
+         * @return This builder.
+         */
         public Builder addPin(String host, InputStream inputStream) {
             if (host == null || host.trim().isEmpty()) {
                 Logger.e("Host cannot be null or empty. Ignoring entry");
@@ -118,6 +144,12 @@ public class CertificatePinningConfiguration {
             return this;
         }
 
+        /**
+         * Sets the listener to be called when a certificate pinning failure occurs.
+         *
+         * @param failureListener The listener to be called.
+         * @return This builder.
+         */
         public Builder failureListener(@NonNull CertificatePinningFailureListener failureListener) {
             if (failureListener == null) { // just in case
                 Logger.w("Failure listener cannot be null");
@@ -159,6 +191,11 @@ public class CertificatePinningConfiguration {
             }
         }
 
+        /**
+         * Builds the configuration.
+         *
+         * @return The configuration.
+         */
         public CertificatePinningConfiguration build() {
             return new CertificatePinningConfiguration(this);
         }
