@@ -1,5 +1,7 @@
 package io.split.android.client.network;
 
+import static io.split.android.client.network.CertificateCheckerHelper.getPinsForHost;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -51,7 +53,7 @@ class CertificateCheckerImpl implements CertificateChecker {
     @Override
     public void checkPins(HttpsURLConnection httpsConnection) throws SSLPeerUnverifiedException {
         String host = httpsConnection.getURL().getHost();
-        Set<CertificatePin> pinsForHost = mConfiguredPins.get(host);
+        Set<CertificatePin> pinsForHost = getPinsForHost(host, mConfiguredPins);
         if (pinsForHost == null || pinsForHost.isEmpty()) {
             Logger.d("No certificate pins configured for " + host + ". Skipping pinning verification.");
             return;
@@ -70,7 +72,7 @@ class CertificateCheckerImpl implements CertificateChecker {
                         pinnedCertificate.getAlgorithm(),
                         certificate.getPublicKey().getEncoded());
                 if (Arrays.equals(pin, pinnedCertificate.getPin())) {
-                    Logger.d("Certificate pinning verification successful for " + host);
+                    Logger.v("Certificate pinning verification successful for " + host);
                     return;
                 }
             }
