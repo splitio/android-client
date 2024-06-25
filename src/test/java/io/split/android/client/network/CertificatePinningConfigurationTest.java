@@ -14,11 +14,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Set;
 
 import io.split.android.client.utils.logger.Logger;
+import okhttp3.tls.HeldCertificate;
 
 public class CertificatePinningConfigurationTest {
 
@@ -165,5 +172,50 @@ public class CertificatePinningConfigurationTest {
                 .build();
 
         assertEquals(0, config.getPins().size());
+    }
+
+    @Test
+    public void addPinFromInputStream() throws CertificateEncodingException {
+        HeldCertificate rootCertificate = new HeldCertificate.Builder()
+                .certificateAuthority(1)
+                .commonName("Root CA")
+                .build();
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(rootCertificate.certificate().getEncoded());
+
+        CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
+                .addPin("host", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+                .addPin("host", "sha1/AAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+                .addPin("host", inputStream)
+                .build();
+        Set<CertificatePin> pins = config.getPins().get("host");
+
+        assertEquals(1, config.getPins().size());
+        assertEquals(3, pins.size());
+    }
+
+    @Test
+    public void addPinWithNullHostAndInputStream() {
+        try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
+            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
+                    .addPin(null, (InputStream) null)
+                    .build();
+
+            Set<CertificatePin> pins = config.getPins().get("host");
+            assertNull(pins);
+            logger.verify(() -> Logger.e("Host cannot be null or empty. Ignoring entry"));
+        }
+    }
+
+    @Test
+    public void addPinWithNullInputStream() {
+        try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
+            CertificatePinningConfiguration config = CertificatePinningConfiguration.builder(mBase64Decoder, mPinEncoder)
+                    .addPin("my-host", (InputStream) null)
+                    .build();
+
+            Set<CertificatePin> pins = config.getPins().get("host");
+            assertNull(pins);
+            logger.verify(() -> Logger.e("InputStream cannot be null. Ignoring entry for host my-host"));
+        }
     }
 }
