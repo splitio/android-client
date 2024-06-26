@@ -19,33 +19,18 @@ public class ImpressionStrategyProvider {
     private final SplitStorageContainer mStorageContainer;
     private final ImpressionsTaskFactory mSplitTaskFactory;
     private final TelemetryRuntimeProducer mTelemetryStorage;
-    private final int mImpressionsQueueSize;
-    private final long mImpressionsChunkSize;
-    private final int mImpressionsRefreshRate;
-    private final int mImpressionsCounterRefreshRate;
-    private final int mUniqueKeysRefreshRate;
-    private final boolean mUserConsentIsGranted;
+    private final ImpressionStrategyConfig mImpressionStrategyConfig;
 
     public ImpressionStrategyProvider(SplitTaskExecutor splitTaskExecutor,
                                       SplitStorageContainer storageContainer,
                                       ImpressionsTaskFactory splitTaskFactory,
                                       TelemetryRuntimeProducer telemetryStorage,
-                                      int impressionsQueueSize,
-                                      long impressionsChunkSize,
-                                      int impressionsRefreshRate,
-                                      int impressionsCounterRefreshRate,
-                                      int uniqueKeysRefreshRate,
-                                      boolean userConsentIsGranted) {
+                                      ImpressionStrategyConfig config) {
         mSplitTaskExecutor = splitTaskExecutor;
         mStorageContainer = storageContainer;
         mSplitTaskFactory = splitTaskFactory;
         mTelemetryStorage = telemetryStorage;
-        mImpressionsQueueSize = impressionsQueueSize;
-        mImpressionsChunkSize = impressionsChunkSize;
-        mImpressionsRefreshRate = impressionsRefreshRate;
-        mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
-        mUniqueKeysRefreshRate = uniqueKeysRefreshRate;
-        mUserConsentIsGranted = userConsentIsGranted;
+        mImpressionStrategyConfig = config;
     }
 
     public ProcessStrategy getStrategy(ImpressionsMode mode) {
@@ -57,45 +42,46 @@ public class ImpressionStrategyProvider {
                         new RecorderSyncHelperImpl<>(
                                 SplitTaskType.IMPRESSIONS_RECORDER,
                                 mStorageContainer.getImpressionsStorage(),
-                                mImpressionsQueueSize,
-                                mImpressionsChunkSize,
+                                mImpressionStrategyConfig.getImpressionsQueueSize(),
+                                mImpressionStrategyConfig.getImpressionsChunkSize(),
                                 mSplitTaskExecutor),
                         mSplitTaskExecutor,
                         mSplitTaskFactory,
                         mTelemetryStorage,
                         impressionManagerRetryTimerProvider.getImpressionsTimer(),
-                        mImpressionsRefreshRate
+                        mImpressionStrategyConfig.getImpressionsRefreshRate()
                 );
             case NONE:
                 return new NoneStrategy(
                         mSplitTaskExecutor,
                         mSplitTaskFactory,
-                        new ImpressionsCounter(),
+                        new ImpressionsCounter(mImpressionStrategyConfig.getDedupeTimeIntervalInMs()),
                         new UniqueKeysTrackerImpl(),
                         impressionManagerRetryTimerProvider.getImpressionsCountTimer(),
                         impressionManagerRetryTimerProvider.getUniqueKeysTimer(),
-                        mImpressionsCounterRefreshRate,
-                        mUniqueKeysRefreshRate,
-                        mUserConsentIsGranted
+                        mImpressionStrategyConfig.getImpressionsCounterRefreshRate(),
+                        mImpressionStrategyConfig.getUniqueKeysRefreshRate(),
+                        mImpressionStrategyConfig.isUserConsentGranted()
                 );
             default:
                 return new OptimizedStrategy(
                         new ImpressionsObserverImpl(mStorageContainer.getImpressionsObserverCachePersistentStorage(), ServiceConstants.LAST_SEEN_IMPRESSION_CACHE_SIZE),
-                        new ImpressionsCounter(),
+                        new ImpressionsCounter(mImpressionStrategyConfig.getDedupeTimeIntervalInMs()),
                         new RecorderSyncHelperImpl<>(
                                 SplitTaskType.IMPRESSIONS_RECORDER,
                                 mStorageContainer.getImpressionsStorage(),
-                                mImpressionsQueueSize,
-                                mImpressionsChunkSize,
+                                mImpressionStrategyConfig.getImpressionsQueueSize(),
+                                mImpressionStrategyConfig.getImpressionsChunkSize(),
                                 mSplitTaskExecutor),
                         mSplitTaskExecutor,
                         mSplitTaskFactory,
                         mTelemetryStorage,
                         impressionManagerRetryTimerProvider.getImpressionsTimer(),
                         impressionManagerRetryTimerProvider.getImpressionsCountTimer(),
-                        mImpressionsRefreshRate,
-                        mImpressionsCounterRefreshRate,
-                        mUserConsentIsGranted
+                        mImpressionStrategyConfig.getImpressionsRefreshRate(),
+                        mImpressionStrategyConfig.getImpressionsCounterRefreshRate(),
+                        mImpressionStrategyConfig.isUserConsentGranted(),
+                        mImpressionStrategyConfig.getDedupeTimeIntervalInMs()
                 );
         }
     }

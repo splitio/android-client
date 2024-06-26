@@ -15,8 +15,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionUtils;
 import io.split.android.client.service.impressions.ImpressionsCounter;
-import io.split.android.client.service.impressions.observer.ImpressionsObserver;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
+import io.split.android.client.service.impressions.observer.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
@@ -36,6 +36,7 @@ class OptimizedStrategy implements ProcessStrategy {
     private final AtomicBoolean mTrackingIsEnabled;
     private final PeriodicTracker mOptimizedTracker;
     private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
+    private final long mImpressionsDedupeTimeInterval;
     /** @noinspection FieldCanBeLocal*/
     private final SplitTaskExecutionListener mTaskExecutionListener = new SplitTaskExecutionListener() {
         @Override
@@ -60,7 +61,8 @@ class OptimizedStrategy implements ProcessStrategy {
                       @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
                       int impressionsRefreshRate,
                       int impressionsCounterRefreshRate,
-                      boolean isTrackingEnabled) {
+                      boolean isTrackingEnabled,
+                      long impressionsDedupeTimeInterval) {
         this(impressionsObserver,
                 impressionsCounter,
                 impressionsSyncHelper,
@@ -76,7 +78,8 @@ class OptimizedStrategy implements ProcessStrategy {
                         impressionsCountRetryTimer,
                         impressionsRefreshRate,
                         impressionsCounterRefreshRate,
-                        isTrackingEnabled));
+                        isTrackingEnabled),
+                impressionsDedupeTimeInterval);
     }
 
     @VisibleForTesting
@@ -87,7 +90,8 @@ class OptimizedStrategy implements ProcessStrategy {
                       @NonNull ImpressionsTaskFactory taskFactory,
                       @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                       boolean isTrackingEnabled,
-                      @NonNull PeriodicTracker tracker) {
+                      @NonNull PeriodicTracker tracker,
+                      long impressionsDedupeTimeInterval) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsCounter = checkNotNull(impressionsCounter);
         RecorderSyncHelper<KeyImpression> syncHelper = checkNotNull(impressionsSyncHelper);
@@ -98,6 +102,7 @@ class OptimizedStrategy implements ProcessStrategy {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mTrackingIsEnabled = new AtomicBoolean(isTrackingEnabled);
         mOptimizedTracker = checkNotNull(tracker);
+        mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
     }
 
     @Override
@@ -123,9 +128,9 @@ class OptimizedStrategy implements ProcessStrategy {
         }
     }
 
-    private static boolean shouldPushImpression(KeyImpression impression) {
+    private boolean shouldPushImpression(KeyImpression impression) {
         return impression.previousTime == null ||
-                ImpressionUtils.truncateTimeframe(impression.previousTime, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS) != ImpressionUtils.truncateTimeframe(impression.time, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS);
+                ImpressionUtils.truncateTimeframe(impression.previousTime, mImpressionsDedupeTimeInterval) != ImpressionUtils.truncateTimeframe(impression.time, mImpressionsDedupeTimeInterval);
     }
 
     private static boolean previousTimeIsValid(Long previousTime) {

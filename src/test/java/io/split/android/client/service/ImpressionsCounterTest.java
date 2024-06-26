@@ -18,27 +18,29 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 public class ImpressionsCounterTest {
 
+    private final long mDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
+
     private long makeTimestamp(int year, int month, int day, int hour, int minute, int second) {
         return ZonedDateTime.of(year, month, day, hour, minute, second, 0, ZoneId.of("UTC")).toInstant().toEpochMilli();
     }
 
     @Test
     public void testTruncateTimeFrame() {
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 53, 12), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 53, 12), ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL),
                 is(equalTo(makeTimestamp(2020, 9, 2, 10, 0, 0))));
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 0, 0), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 0, 0), ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL),
                 is(equalTo(makeTimestamp(2020, 9, 2, 10, 0, 0))));
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 53, 0 ), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 53, 0 ), ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL),
                 is(equalTo(makeTimestamp(2020, 9, 2, 10, 0, 0))));
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 0, 12), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 0, 12), ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL),
                 is(equalTo(makeTimestamp(2020, 9, 2, 10, 0, 0))));
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(1970, 1, 1, 0, 0, 0), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(1970, 1, 1, 0, 0, 0), ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL),
                 is(equalTo(makeTimestamp(1970, 1, 1, 0, 0, 0))));
     }
 
     @Test
     public void testBasicUsage() {
-        final ImpressionsCounter counter = new ImpressionsCounter();
+        final ImpressionsCounter counter = new ImpressionsCounter(mDedupeTimeInterval);
         final long timestamp = makeTimestamp(2020, 9, 2, 10, 10, 12);
         counter.inc("feature1", timestamp, 1);
         counter.inc("feature1", timestamp + 1, 1);
@@ -49,8 +51,8 @@ public class ImpressionsCounterTest {
         Map<ImpressionsCounter.Key, Integer> counted = countedMap(counter.popAll());
 
         assertThat(counted.size(), is(equalTo(2)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(4)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(4)));
         assertThat(counter.popAll().size(), is(equalTo(0)));
 
         final long nextHourTimestamp = makeTimestamp(2020, 9, 2, 11, 10, 12);
@@ -67,10 +69,10 @@ public class ImpressionsCounterTest {
 
         counted = countedMap(counter.popAll());
         assertThat(counted.size(), is(equalTo(4)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(4)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(4)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(4)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(4)));
         assertThat(counter.popAll().size(), is(equalTo(0)));
     }
 
@@ -79,7 +81,7 @@ public class ImpressionsCounterTest {
         final int iterations = 10000000;
         final long timestamp =  makeTimestamp(2020, 9, 2, 10, 10, 12);
         final long nextHourTimestamp = makeTimestamp(2020, 9, 2, 11, 10, 12);
-        ImpressionsCounter counter = new ImpressionsCounter();
+        ImpressionsCounter counter = new ImpressionsCounter(mDedupeTimeInterval);
         Thread t1 = new Thread(() -> {
             int times = iterations;
             while (times-- > 0) {
@@ -105,10 +107,10 @@ public class ImpressionsCounterTest {
 
         Map<ImpressionsCounter.Key, Integer> counted = countedMap(counter.popAll());
         assertThat(counted.size(), is(equalTo(4)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(iterations * 3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(iterations * 3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(iterations * 3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(iterations * 3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(iterations * 3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(iterations * 3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(iterations * 3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL))), is(equalTo(iterations * 3)));
     }
 
     private Map<ImpressionsCounter.Key, Integer> countedMap(List<ImpressionsCountPerFeature> counts) {
