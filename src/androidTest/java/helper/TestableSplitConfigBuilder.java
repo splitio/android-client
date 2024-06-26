@@ -63,6 +63,7 @@ public class TestableSplitConfigBuilder {
     private long mObserverCacheExpirationPeriod = ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS;
     private String mPrefix = "";
     private CertificatePinningConfiguration mCertificatePinningConfiguration;
+    private long mImpressionsDedupeTimeInterval;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -268,6 +269,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder impressionsDedupeTimeInterval(long impressionsDedupeTimeInterval) {
+        this.mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -322,7 +328,8 @@ public class TestableSplitConfigBuilder {
                     mSSEDisconnectionDelayInSecs,
                     mPrefix,
                     mObserverCacheExpirationPeriod,
-                    mCertificatePinningConfiguration);
+                    mCertificatePinningConfiguration,
+                    mImpressionsDedupeTimeInterval);
 
             Logger.instance().setLevel(mLogLevel);
             return config;
