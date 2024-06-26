@@ -1089,6 +1089,13 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * This configuration is used to control the size of the impressions deduplication window.
+         *
+         * @Experimental This method is experimental and may change or be removed in future versions.
+         * To be used upon Split team recommendation.
+         */
+        @Deprecated
         public Builder impressionsDedupeTimeInterval(long impressionsDedupeTimeInterval) {
             mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
             return this;
