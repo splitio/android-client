@@ -44,7 +44,7 @@ public class ImpressionsCounter {
     }
 
     public void inc(String featureName, long timeFrame, int amount) {
-        Key key = new Key(featureName, ImpressionUtils.truncateTimeframe(timeFrame));
+        Key key = new Key(featureName, ImpressionUtils.truncateTimeframe(timeFrame, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS));
         AtomicInteger count = mCounts.get(key);
         if (count == null) {
             count = new AtomicInteger();

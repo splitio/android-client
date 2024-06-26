@@ -24,15 +24,15 @@ public class ImpressionsCounterTest {
 
     @Test
     public void testTruncateTimeFrame() {
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 53, 12)),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 53, 12), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
                 is(equalTo(makeTimestamp(2020, 9, 2, 10, 0, 0))));
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 0, 0)),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 0, 0), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
                 is(equalTo(makeTimestamp(2020, 9, 2, 10, 0, 0))));
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 53, 0 )),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 53, 0 ), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
                 is(equalTo(makeTimestamp(2020, 9, 2, 10, 0, 0))));
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 0, 12)),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(2020, 9, 2, 10, 0, 12), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
                 is(equalTo(makeTimestamp(2020, 9, 2, 10, 0, 0))));
-        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(1970, 1, 1, 0, 0, 0)),
+        assertThat(ImpressionUtils.truncateTimeframe(makeTimestamp(1970, 1, 1, 0, 0, 0), ImpressionUtils.DEFAULT_TIME_INTERVAL_MS),
                 is(equalTo(makeTimestamp(1970, 1, 1, 0, 0, 0))));
     }
 
@@ -49,8 +49,8 @@ public class ImpressionsCounterTest {
         Map<ImpressionsCounter.Key, Integer> counted = countedMap(counter.popAll());
 
         assertThat(counted.size(), is(equalTo(2)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(4)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(4)));
         assertThat(counter.popAll().size(), is(equalTo(0)));
 
         final long nextHourTimestamp = makeTimestamp(2020, 9, 2, 11, 10, 12);
@@ -67,10 +67,10 @@ public class ImpressionsCounterTest {
 
         counted = countedMap(counter.popAll());
         assertThat(counted.size(), is(equalTo(4)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(4)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(nextHourTimestamp))), is(equalTo(3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(nextHourTimestamp))), is(equalTo(4)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(4)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(4)));
         assertThat(counter.popAll().size(), is(equalTo(0)));
     }
 
@@ -105,10 +105,10 @@ public class ImpressionsCounterTest {
 
         Map<ImpressionsCounter.Key, Integer> counted = countedMap(counter.popAll());
         assertThat(counted.size(), is(equalTo(4)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(iterations * 3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp))), is(equalTo(iterations * 3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(nextHourTimestamp))), is(equalTo(iterations * 3)));
-        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(nextHourTimestamp))), is(equalTo(iterations * 3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(iterations * 3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(timestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(iterations * 3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature1", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(iterations * 3)));
+        assertThat(counted.get(new ImpressionsCounter.Key("feature2", ImpressionUtils.truncateTimeframe(nextHourTimestamp, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS))), is(equalTo(iterations * 3)));
     }
 
     private Map<ImpressionsCounter.Key, Integer> countedMap(List<ImpressionsCountPerFeature> counts) {

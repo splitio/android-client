@@ -125,7 +125,7 @@ class OptimizedStrategy implements ProcessStrategy {
 
     private static boolean shouldPushImpression(KeyImpression impression) {
         return impression.previousTime == null ||
-                ImpressionUtils.truncateTimeframe(impression.previousTime) != ImpressionUtils.truncateTimeframe(impression.time);
+                ImpressionUtils.truncateTimeframe(impression.previousTime, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS) != ImpressionUtils.truncateTimeframe(impression.time, ImpressionUtils.DEFAULT_TIME_INTERVAL_MS);
     }
 
     private static boolean previousTimeIsValid(Long previousTime) {
