@@ -38,13 +38,15 @@ public class ImpressionsCounter {
     }
 
     private final ConcurrentHashMap<Key, AtomicInteger> mCounts;
+    private final long mDedupeTimeIntervalInMs;
 
-    public ImpressionsCounter() {
+    public ImpressionsCounter(long dedupeTimeIntervalInMs) {
         mCounts = new ConcurrentHashMap<>();
+        mDedupeTimeIntervalInMs = dedupeTimeIntervalInMs;
     }
 
     public void inc(String featureName, long timeFrame, int amount) {
-        Key key = new Key(featureName, ImpressionUtils.truncateTimeframe(timeFrame));
+        Key key = new Key(featureName, ImpressionUtils.truncateTimeframe(timeFrame, mDedupeTimeIntervalInMs));
         AtomicInteger count = mCounts.get(key);
         if (count == null) {
             count = new AtomicInteger();

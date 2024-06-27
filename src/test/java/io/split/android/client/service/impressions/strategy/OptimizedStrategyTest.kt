@@ -1,6 +1,7 @@
 package io.split.android.client.service.impressions.strategy
 
 import io.split.android.client.dtos.KeyImpression
+import io.split.android.client.service.ServiceConstants
 import io.split.android.client.service.executor.SplitTaskExecutionInfo
 import io.split.android.client.service.executor.SplitTaskExecutionInfo.DO_NOT_RETRY
 import io.split.android.client.service.executor.SplitTaskExecutionListener
@@ -56,6 +57,8 @@ class OptimizedStrategyTest {
 
     private lateinit var strategy: OptimizedStrategy
 
+    private val dedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL
+
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
@@ -67,7 +70,8 @@ class OptimizedStrategyTest {
             taskFactory,
             telemetryRuntimeProducer,
             true,
-            tracker
+            tracker,
+            dedupeTimeInterval
         )
     }
 
@@ -204,7 +208,8 @@ class OptimizedStrategyTest {
             taskFactory,
             telemetryRuntimeProducer,
             true,
-            tracker
+            tracker,
+            dedupeTimeInterval
         )
 
         strategy.startPeriodicRecording()
@@ -264,7 +269,8 @@ class OptimizedStrategyTest {
             taskFactory,
             telemetryRuntimeProducer,
             true,
-            tracker
+            tracker,
+            dedupeTimeInterval
         )
 
         // call apply two times; first one will trigger the recording task and second one should not
