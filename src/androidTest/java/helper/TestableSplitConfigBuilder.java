@@ -63,7 +63,7 @@ public class TestableSplitConfigBuilder {
     private long mObserverCacheExpirationPeriod = ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS;
     private String mPrefix = "";
     private CertificatePinningConfiguration mCertificatePinningConfiguration;
-    private long mImpressionsDedupeTimeInterval;
+    private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
