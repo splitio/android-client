@@ -1020,7 +1020,7 @@ public class SplitClientConfig {
          * Rate in seconds for telemetry to be sent. Minimum value is 60 seconds.
          * <p>
          * This is an ADVANCED parameter
-         *
+         * </p>
          * @param telemetryRefreshRate Rate in seconds for telemetry refresh.
          * @return This builder
          * @default 3600 seconds
