@@ -17,7 +17,7 @@ apply plugin: 'kotlin-android'
 apply from: 'spec.gradle'
 
 ext {
-    splitVersion = '4.2.0-alpha.3'
+    splitVersion = '4.2.0-rc2'
 }
 
 android {
