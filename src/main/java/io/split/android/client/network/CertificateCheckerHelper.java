@@ -1,10 +1,19 @@
 package io.split.android.client.network;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.InputStream;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+
+import io.split.android.client.utils.logger.Logger;
 
 class CertificateCheckerHelper {
 
@@ -41,5 +50,27 @@ class CertificateCheckerHelper {
         }
 
         return wildcardPins;
+    }
+
+    @NonNull
+    static Set<CertificatePin> getPinsFromInputStream(InputStream inputStream, PinEncoder pinEncoder) {
+        try (InputStream stream = inputStream) {
+            CertificateFactory factory = CertificateFactory.getInstance("X.509");
+
+            Collection<? extends Certificate> certificates = factory.generateCertificates(stream);
+            Set<CertificatePin> pins = new LinkedHashSet<>();
+            for (Certificate certificate : certificates) {
+                if (certificate instanceof X509Certificate) {
+                    pins.add(new CertificatePin(pinEncoder.encodeCertPin(
+                            Algorithm.SHA256,
+                            certificate.getPublicKey().getEncoded()), Algorithm.SHA256));
+                }
+            }
+
+            return pins;
+        } catch (Exception e) {
+            Logger.e("Error parsing certificate pins from input stream: " + e.getLocalizedMessage());
+            return new HashSet<>();
+        }
     }
 }

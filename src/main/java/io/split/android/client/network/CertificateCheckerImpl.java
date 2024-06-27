@@ -89,8 +89,8 @@ class CertificateCheckerImpl implements CertificateChecker {
         StringBuilder builder = new StringBuilder();
         for (X509Certificate certificate : cleanCertificates) {
             builder.append(certificate.getSubjectDN().getName()).append(" - ")
-                    .append("sha256/")
-                    .append(mBase64Encoder.encode(mPinEncoder.encodeCertPin("sha256",
+                    .append(Algorithm.SHA256 + "/")
+                    .append(mBase64Encoder.encode(mPinEncoder.encodeCertPin(Algorithm.SHA256,
                             certificate.getPublicKey().getEncoded())));
         }
 

@@ -736,6 +736,7 @@ public class SplitClientConfig {
          */
         public Builder logLevel(int level) {
             mLogLevel = level;
+            Logger.instance().setLevel(mLogLevel);
             return this;
         }
 
