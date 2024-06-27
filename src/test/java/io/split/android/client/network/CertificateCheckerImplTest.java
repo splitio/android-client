@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
@@ -236,6 +237,34 @@ public class CertificateCheckerImplTest {
         }
 
         verify(mFailureListener).onCertificatePinningFailure(any(), any());
+    }
+
+    @Test
+    public void sslPeerUnverifiedExceptionIsThrownWhenThereAreHostsButNoMatchingCertsAndFailureListenerThrows() {
+        PublicKey mockedPublicKey = mock(PublicKey.class);
+        byte[] bytes1 = {0, 1, 2, 3};
+        when(mockedPublicKey.getEncoded()).thenReturn(bytes1);
+
+        Principal mockedPrincipal = mock(Principal.class);
+        when(mockedPrincipal.getName()).thenReturn("CN=cert1");
+
+        X509Certificate mockedX509Cert = mock(X509Certificate.class);
+        when(mockedX509Cert.getPublicKey()).thenReturn(mockedPublicKey);
+        when(mockedX509Cert.getSubjectDN()).thenReturn(mockedPrincipal);
+
+        CertificatePin pin = new CertificatePin(new byte[]{1, 2, 2, 3}, "sha256");
+        when(mChainCleaner.clean(any(), any())).thenReturn(Collections.singletonList(mockedX509Cert));
+        when(mPinEncoder.encodeCertPin(any(), any())).thenReturn(new byte[]{3, 2, 2, 3});
+        doThrow(new RuntimeException("Error in failure listener")).when(mFailureListener).onCertificatePinningFailure(any(), any());
+
+        mChecker = getChecker(Collections.singletonMap("www.subdomain.my-url.com", Collections.singleton(pin)));
+
+        try {
+            mChecker.checkPins(mMockConnection);
+        } catch (SSLPeerUnverifiedException e) {
+            return;
+        }
+        fail();
     }
 
     @Test
