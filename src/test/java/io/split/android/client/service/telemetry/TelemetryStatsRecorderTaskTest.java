@@ -105,4 +105,26 @@ public class TelemetryStatsRecorderTaskTest {
 
         verify(telemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.TELEMETRY), longThat(arg -> arg > 0));
     }
+
+    @Test
+    public void status9009InHttpExceptionReturnsDoNotRetry() throws HttpRecorderException {
+        doThrow(new HttpRecorderException("", "", 9009)).when(recorder).execute(any());
+
+        SplitTaskExecutionInfo result = telemetryStatsRecorderTask.execute();
+
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertEquals(true, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+        Assert.assertEquals(SplitTaskType.TELEMETRY_STATS_TASK, result.getTaskType());
+    }
+
+    @Test
+    public void nullStatusInHttpExceptionReturnsNullDoNotRetry() throws HttpRecorderException {
+        doThrow(new HttpRecorderException("", "", null)).when(recorder).execute(any());
+
+        SplitTaskExecutionInfo result = telemetryStatsRecorderTask.execute();
+
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+        Assert.assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+        Assert.assertEquals(SplitTaskType.TELEMETRY_STATS_TASK, result.getTaskType());
+    }
 }

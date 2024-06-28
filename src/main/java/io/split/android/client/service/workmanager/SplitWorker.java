@@ -3,11 +3,14 @@ package io.split.android.client.service.workmanager;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import io.split.android.android_client.BuildConfig;
+import io.split.android.client.network.CertificatePinningConfiguration;
+import io.split.android.client.network.CertificatePinningConfigurationProvider;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
@@ -35,12 +38,7 @@ public abstract class SplitWorker extends Worker {
         mDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         mCacheExpirationInSeconds = inputData.getLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION,
                 ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS);
-        SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
-        headersBuilder.setClientVersion(BuildConfig.SPLIT_VERSION_NAME);
-        headersBuilder.setApiToken(apiKey);
-        headersBuilder.addJsonTypeHeaders();
-        mHttpClient = new HttpClientImpl.Builder().build();
-        mHttpClient.addHeaders(headersBuilder.build());
+        mHttpClient = buildHttpClient(apiKey, buildCertPinningConfig(inputData.getString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS)));
     }
 
     @NonNull
@@ -68,5 +66,33 @@ public abstract class SplitWorker extends Worker {
 
     public long getCacheExpirationInSeconds() {
         return mCacheExpirationInSeconds;
+    }
+
+    private static HttpClient buildHttpClient(String apiKey, @Nullable CertificatePinningConfiguration certificatePinningConfiguration) {
+        HttpClientImpl.Builder builder = new HttpClientImpl.Builder();
+
+        if (certificatePinningConfiguration != null) {
+            builder.setCertificatePinningConfiguration(certificatePinningConfiguration);
+        }
+
+        HttpClient httpClient = builder
+                .build();
+
+        SplitHttpHeadersBuilder headersBuilder = new SplitHttpHeadersBuilder();
+        headersBuilder.setClientVersion(BuildConfig.SPLIT_VERSION_NAME);
+        headersBuilder.setApiToken(apiKey);
+        headersBuilder.addJsonTypeHeaders();
+        httpClient.addHeaders(headersBuilder.build());
+
+        return httpClient;
+    }
+
+    @Nullable
+    private static CertificatePinningConfiguration buildCertPinningConfig(@Nullable String pinsJson) {
+        if (pinsJson == null || pinsJson.trim().isEmpty()) {
+            return null;
+        }
+
+        return CertificatePinningConfigurationProvider.getCertificatePinningConfiguration(pinsJson);
     }
 }

@@ -200,4 +200,18 @@ public class SseAuthenticatorTest {
             return keys.get(0).equals("users");
         }), eq(null));
     }
+
+    @Test
+    public void returnUnrecoverableErrorWhenHttpStatusIsInternalNonRetryable() throws HttpFetcherException {
+
+        when(mFetcher.execute(any(), any())).thenThrow(new HttpFetcherException("path", "error", 9009));
+
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+        SseAuthenticationResult result = authenticator.authenticate(60L);
+
+        Assert.assertFalse(result.isPushEnabled());
+        Assert.assertFalse(result.isSuccess());
+        Assert.assertFalse(result.isErrorRecoverable());
+        Assert.assertNull(result.getJwtToken());
+    }
 }

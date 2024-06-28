@@ -29,6 +29,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
+import io.split.android.client.service.impressions.strategy.ImpressionStrategyConfig;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
 import io.split.android.client.service.sseclient.EventStreamParser;
@@ -383,12 +384,15 @@ class SplitFactoryHelper {
                 splitStorageContainer,
                 splitTaskFactory,
                 splitStorageContainer.getTelemetryStorage(),
-                config.impressionsQueueSize(),
-                config.impressionsChunkSize(),
-                config.impressionsRefreshRate(),
-                config.impressionsCounterRefreshRate(),
-                config.mtkRefreshRate(),
-                config.userConsent() == UserConsent.GRANTED).getStrategy(config.impressionsMode());
+                new ImpressionStrategyConfig(
+                        config.impressionsQueueSize(),
+                        config.impressionsChunkSize(),
+                        config.impressionsRefreshRate(),
+                        config.impressionsCounterRefreshRate(),
+                        config.mtkRefreshRate(),
+                        config.userConsent() == UserConsent.GRANTED,
+                        config.impressionsDedupeTimeInterval()))
+                .getStrategy(config.impressionsMode());
     }
 
     SplitCipher migrateEncryption(String apiKey,

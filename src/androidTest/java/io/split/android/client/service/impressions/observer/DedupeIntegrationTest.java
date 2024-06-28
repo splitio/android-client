@@ -216,6 +216,7 @@ public class DedupeIntegrationTest {
         SplitClient client = initSplitFactory(new TestableSplitConfigBuilder()
                 .impressionsMode(ImpressionsMode.DEBUG)
                 .enableDebug()
+                .impressionsDedupeTimeInterval(1)
                 .observerCacheExpirationPeriod(100), mHttpClient).client();
 
         client.getTreatment("FACUNDO_TEST");
@@ -252,6 +253,37 @@ public class DedupeIntegrationTest {
         client.getTreatment("FACUNDO_TEST");
 
         assertEquals(threadId, listenerThreadId.get());
+    }
+
+    @Test
+    public void impressionsAreDedupedDuringDedupeInterval() throws InterruptedException {
+        SplitClient client = initSplitFactory(new TestableSplitConfigBuilder()
+                .impressionsMode(ImpressionsMode.OPTIMIZED)
+                .impressionsDedupeTimeInterval(500)
+                .enableDebug()
+                .impressionListener(new ImpressionListener() {
+                    @Override
+                    public void log(Impression impression) {
+                        mImpressionsListenerCount.incrementAndGet();
+                    }
+
+                    @Override
+                    public void close() {
+
+                    }
+                }), mHttpClient).client();
+
+        for (int i = 0; i < 5; i++) {
+            client.getTreatment("FACUNDO_TEST");
+        }
+        Thread.sleep(600); // delay for dedupe interval
+        for (int i = 0; i < 5; i++) {
+            client.getTreatment("FACUNDO_TEST");
+        }
+        Thread.sleep(200); // delay for persistence
+
+        assertEquals(2, mDatabase.impressionDao().getAll().size()); // impressions after the interval passes are not deduped
+        assertEquals(10, mImpressionsListenerCount.get()); // all impressions are received by listener
     }
 
     private HttpResponseMockDispatcher getDispatcher() {

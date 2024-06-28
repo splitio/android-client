@@ -34,6 +34,7 @@ import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.splits.SplitsSyncWorker;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.service.workmanager.UniqueKeysRecorderWorker;
 
@@ -144,6 +145,13 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_DATABASE_NAME, mDatabaseName);
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_API_KEY, mApiKey);
         dataBuilder.putBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, mSplitClientConfig.encryptionEnabled());
+        try {
+            String pinsJson = Json.toJson(mSplitClientConfig.certificatePinningConfiguration().getPins());
+            dataBuilder.putString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS, pinsJson);
+        } catch (Exception e) {
+            Logger.e("Error converting pins to JSON for BG sync", e.getLocalizedMessage());
+        }
+
         if (customData != null) {
             dataBuilder.putAll(customData);
         }

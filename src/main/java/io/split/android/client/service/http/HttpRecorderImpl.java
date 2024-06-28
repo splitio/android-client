@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import java.net.URI;
 
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.network.HttpResponse;
 
@@ -37,6 +38,8 @@ public class HttpRecorderImpl<T> implements HttpRecorder<T> {
                 int httpStatus = response.getHttpStatus();
                 throw new HttpRecorderException(mTarget.toString(), "http return code " + httpStatus, httpStatus);
             }
+        } catch (HttpException httpException) {
+            throw new HttpRecorderException(mTarget.toString(), httpException.getLocalizedMessage(), httpException.getStatusCode());
         } catch (HttpRecorderException httpRecorderException) {
             throw httpRecorderException;
         } catch (Exception e) {

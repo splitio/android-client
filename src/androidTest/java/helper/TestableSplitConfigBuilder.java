@@ -6,6 +6,7 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SyncConfig;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.service.ServiceConstants;
@@ -60,8 +61,9 @@ public class TestableSplitConfigBuilder {
     private long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
     private long mSSEDisconnectionDelayInSecs = 60L;
     private long mObserverCacheExpirationPeriod = ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS;
-
     private String mPrefix = "";
+    private CertificatePinningConfiguration mCertificatePinningConfiguration;
+    private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -262,6 +264,16 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder certificatePinningConfiguration(CertificatePinningConfiguration certificatePinningConfiguration) {
+        this.mCertificatePinningConfiguration = certificatePinningConfiguration;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder impressionsDedupeTimeInterval(long impressionsDedupeTimeInterval) {
+        this.mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -315,7 +327,9 @@ public class TestableSplitConfigBuilder {
                     mDefaultSSEConnectionDelayInSecs,
                     mSSEDisconnectionDelayInSecs,
                     mPrefix,
-                    mObserverCacheExpirationPeriod);
+                    mObserverCacheExpirationPeriod,
+                    mCertificatePinningConfiguration,
+                    mImpressionsDedupeTimeInterval);
 
             Logger.instance().setLevel(mLogLevel);
             return config;

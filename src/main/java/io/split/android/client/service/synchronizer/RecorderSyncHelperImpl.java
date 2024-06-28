@@ -4,11 +4,13 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.lang.ref.WeakReference;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -24,6 +26,7 @@ public class RecorderSyncHelperImpl<T extends InBytesSizable> implements Recorde
     private final int mMaxQueueSize;
     private final long mMaxQueueSizeInBytes;
     private final SplitTaskType mTaskType;
+    private WeakReference<SplitTaskExecutionListener> mTaskExecutionListener;
 
     public RecorderSyncHelperImpl(SplitTaskType taskType,
                                   StoragePusher<T> storage,
@@ -37,6 +40,7 @@ public class RecorderSyncHelperImpl<T extends InBytesSizable> implements Recorde
         mTotalPushedSizeInBytes = new AtomicLong(0);
         mMaxQueueSize = maxQueueSize;
         mMaxQueueSizeInBytes = maxQueueSizeInBytes;
+        mTaskExecutionListener = new WeakReference<>(null);
     }
 
     @Override
@@ -62,6 +66,20 @@ public class RecorderSyncHelperImpl<T extends InBytesSizable> implements Recorde
             mTotalPushedSizeInBytes.addAndGet(taskInfo.getLongValue(
                     SplitTaskExecutionInfo.NON_SENT_BYTES));
         }
+
+        if (mTaskExecutionListener.get() != null) {
+            mTaskExecutionListener.get().taskExecuted(taskInfo);
+        }
+    }
+
+    @Override
+    public void addListener(SplitTaskExecutionListener listener) {
+        mTaskExecutionListener = new WeakReference<>(listener);
+    }
+
+    @Override
+    public void removeListener(SplitTaskExecutionListener listener) {
+        mTaskExecutionListener = new WeakReference<>(null);
     }
 
     private void pushAsync(T entity) {

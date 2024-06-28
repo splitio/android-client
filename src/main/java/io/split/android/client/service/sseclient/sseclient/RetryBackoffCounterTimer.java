@@ -1,5 +1,7 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -10,8 +12,6 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.utils.logger.Logger;
-
-import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

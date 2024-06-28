@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,7 @@ import io.split.android.client.dtos.MySegment;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
@@ -39,7 +41,7 @@ public class MySegmentsSyncTaskTest {
     Map<String, Object> noParams = Collections.emptyMap();
 
     @Mock
-    HttpFetcher mMySegmentsFetcher;
+    HttpFetcher<List<MySegment>> mMySegmentsFetcher;
     @Mock
     MySegmentsStorage mySegmentsStorage;
     @Mock
@@ -50,12 +52,22 @@ public class MySegmentsSyncTaskTest {
     List<MySegment> mMySegments = null;
 
     MySegmentsSyncTask mTask;
+    private AutoCloseable mAutoCloseable;
 
     @Before
     public void setup() {
-        MockitoAnnotations.openMocks(this);
+        mAutoCloseable = MockitoAnnotations.openMocks(this);
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer);
         loadMySegments();
+    }
+
+    @After
+    public void tearDown() {
+        try {
+            mAutoCloseable.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -146,13 +158,43 @@ public class MySegmentsSyncTaskTest {
         verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.MY_SEGMENT), longThat(arg -> arg > 0));
     }
 
+    @Test
+    public void statusCode9009InFetcherReturnsDoNotRetry() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(new HttpFetcherException("", "", 9009));
+
+        SplitTaskExecutionInfo result = mTask.execute();
+
+        Assert.assertEquals(Boolean.TRUE, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+    }
+
+    @Test
+    public void nullStatusCodeReturnsNullDoNotRetry() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(new HttpFetcherException("", "", null));
+
+        SplitTaskExecutionInfo result = mTask.execute();
+
+        Assert.assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
+    }
+
+    @Test
+    public void successfulCallToExecuteReturnsNullDoNotRetry() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(any(), any())).thenReturn(mMySegments);
+
+        SplitTaskExecutionInfo result = mTask.execute();
+
+        Assert.assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
+        Assert.assertEquals(result.getStatus(), SplitTaskExecutionStatus.SUCCESS);
+    }
+
     private void loadMySegments() {
         if (mMySegments == null) {
             mMySegments = new ArrayList<>();
             for (int i = 0; i < 5; i++) {
                 MySegment s = new MySegment();
                 s.id = "id_" + i;
-                s.id = "segment_" + i;
+                s.name = "segment_" + i;
                 mMySegments.add(s);
             }
         }

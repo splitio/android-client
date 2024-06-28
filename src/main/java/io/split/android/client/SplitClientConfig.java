@@ -6,6 +6,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -13,6 +14,7 @@ import javax.net.ssl.X509TrustManager;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
+import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.network.SplitAuthenticator;
@@ -52,6 +54,8 @@ public class SplitClientConfig {
     private static final int DEFAULT_EVENTS_FLUSH_INTERVAL = 1800;
     private static final int DEFAULT_EVENTS_PER_PUSH = 2000;
     private static final int DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES = 15;
+    private static final long MIN_IMPRESSIONS_DEDUPE_TIME_INTERVAL = TimeUnit.HOURS.toMillis(1);
+    private static final long MAX_IMPRESSIONS_DEDUPE_TIME_INTERVAL = TimeUnit.HOURS.toMillis(24);
 
     private final static int DEFAULT_MTK_PER_PUSH = 30000;
 
@@ -125,7 +129,9 @@ public class SplitClientConfig {
 
     // To be set during startup
     public static String splitSdkVersion;
-    private long mObserverCacheExpirationPeriod;
+    private final long mObserverCacheExpirationPeriod;
+    private final CertificatePinningConfiguration mCertificatePinningConfiguration;
+    private final long mImpressionsDedupeTimeInterval;
 
     public static Builder builder() {
         return new Builder();
@@ -178,7 +184,9 @@ public class SplitClientConfig {
                               long defaultSSEConnectionDelayInSecs,
                               long sseDisconnectionDelayInSecs,
                               String prefix,
-                              long observerCacheExpirationPeriod) {
+                              long observerCacheExpirationPeriod,
+                              CertificatePinningConfiguration certificatePinningConfiguration,
+                              long impressionsDedupeTimeInterval) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -234,6 +242,8 @@ public class SplitClientConfig {
         mSSEDisconnectionDelayInSecs = sseDisconnectionDelayInSecs;
         mPrefix = prefix;
         mObserverCacheExpirationPeriod = observerCacheExpirationPeriod;
+        mCertificatePinningConfiguration = certificatePinningConfiguration;
+        mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
     }
 
     public String trafficType() {
@@ -351,6 +361,7 @@ public class SplitClientConfig {
      * Default data folder to use when some
      * problem arises while creating it
      * based on SDK key
+     *
      * @return Default data folder
      */
     String defaultDataFolder() {
@@ -465,7 +476,15 @@ public class SplitClientConfig {
     private void enableTelemetry() { mShouldRecordTelemetry = true; }
 
     public long observerCacheExpirationPeriod() {
-        return mObserverCacheExpirationPeriod;
+        return Math.max(mImpressionsDedupeTimeInterval, mObserverCacheExpirationPeriod);
+    }
+
+    public CertificatePinningConfiguration certificatePinningConfiguration() {
+        return mCertificatePinningConfiguration;
+    }
+
+    public long impressionsDedupeTimeInterval() {
+        return mImpressionsDedupeTimeInterval;
     }
 
     public static final class Builder {
@@ -539,6 +558,10 @@ public class SplitClientConfig {
         private final long mObserverCacheExpirationPeriod = OBSERVER_CACHE_EXPIRATION_PERIOD;
 
         private String mPrefix = null;
+
+        private CertificatePinningConfiguration mCertificatePinningConfiguration = null;
+
+        private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -722,10 +745,12 @@ public class SplitClientConfig {
          * The values are the same than standard Android logging plus NONE, to
          * disable logging. Any not supported value will be considered NONE.
          * {@link SplitLogLevel} or {@link android.util.Log} values can be used
+         *
          * @return this builder
          */
         public Builder logLevel(int level) {
             mLogLevel = level;
+            Logger.instance().setLevel(mLogLevel);
             return this;
         }
 
@@ -937,11 +962,11 @@ public class SplitClientConfig {
 
         /**
          * Setup the impressions mode.
+         *
          * @param mode Values:<br>
          *             DEBUG: All impressions are sent
          *             OPTIMIZED: Impressions are sent using an optimization algorithm
          *             NONE: Only unique keys evaluated for a particular feature flag are sent
-         *
          * @return: This builder
          * @default: OPTIMIZED
          */
@@ -952,15 +977,15 @@ public class SplitClientConfig {
 
         /**
          * Setup the impressions mode using a string.
+         *
          * @param mode Values:<br>
          *             DEBUG: All impressions are sent and
          *             OPTIMIZED: Impressions are sent using an optimization algorithm
          *             NONE: Only unique keys evaluated for a particular feature flag are sent
          *
-         * <p>
-         *  NOTE: If the string is invalid (Neither DEBUG, OPTIMIZED nor NONE) default value will be used
-         *  </p>
-         *
+         *             <p>
+         *             NOTE: If the string is invalid (Neither DEBUG, OPTIMIZED nor NONE) default value will be used
+         *             </p>
          * @return: This builder
          * @default: OPTIMIZED
          */
@@ -993,9 +1018,9 @@ public class SplitClientConfig {
 
         /**
          * Rate in seconds for telemetry to be sent. Minimum value is 60 seconds.
-         *
+         * <p>
          * This is an ADVANCED parameter
-         *
+         * </p>
          * @param telemetryRefreshRate Rate in seconds for telemetry refresh.
          * @return This builder
          * @default 3600 seconds
@@ -1017,11 +1042,11 @@ public class SplitClientConfig {
 
         /**
          * User Consent
-         * @param value Values:<br>
-         *             GRANTED: Impressions and events are tracked and sent to the backend
-         *             DECLINED: Impressions and events aren't tracked nor sent to the backend
-         *             UNKNOWN: Impressions and events are tracked in memory and aren't sent to the backend
          *
+         * @param value Values:<br>
+         *              GRANTED: Impressions and events are tracked and sent to the backend
+         *              DECLINED: Impressions and events aren't tracked nor sent to the backend
+         *              UNKNOWN: Impressions and events are tracked in memory and aren't sent to the backend
          * @default GRANTED
          */
         public Builder userConsent(UserConsent value) {
@@ -1032,6 +1057,7 @@ public class SplitClientConfig {
 
         /**
          * Enable/disable encryption of stored data.
+         *
          * @param enabled: Whether encryption is enabled or not.
          * @default: false
          * @return: This builder
@@ -1043,11 +1069,37 @@ public class SplitClientConfig {
 
         /**
          * Optional prefix for the database name.
+         *
          * @param prefix Prefix for the database name.
          * @return This builder
          */
         public Builder prefix(String prefix) {
             mPrefix = (prefix == null) ? "" : prefix;
+            return this;
+        }
+
+        /**
+         * Configuration for certificate pinning.
+         *
+         * @param certificatePinningConfiguration Configuration object
+         * @return This builder
+         */
+        public Builder certificatePinningConfiguration(CertificatePinningConfiguration certificatePinningConfiguration) {
+            mCertificatePinningConfiguration = certificatePinningConfiguration;
+            return this;
+        }
+
+        /**
+         * This configuration is used to control the size of the impressions deduplication window.
+         *
+         * @Experimental This method is experimental and may change or be removed in future versions.
+         * To be used upon Split team recommendation.
+         *
+         * @param impressionsDedupeTimeInterval The time interval in milliseconds.
+         */
+        @Deprecated
+        public Builder impressionsDedupeTimeInterval(long impressionsDedupeTimeInterval) {
+            mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
             return this;
         }
 
@@ -1118,6 +1170,18 @@ public class SplitClientConfig {
                 }
             }
 
+            if (mCertificatePinningConfiguration != null && (mCertificatePinningConfiguration.getPins() == null ||
+                    mCertificatePinningConfiguration.getPins().isEmpty())) {
+                Logger.w("Certificate pinning configuration is empty. Disabling certificate pinning.");
+                mCertificatePinningConfiguration = null;
+            }
+
+            if (mImpressionsDedupeTimeInterval < MIN_IMPRESSIONS_DEDUPE_TIME_INTERVAL ||
+                    mImpressionsDedupeTimeInterval > MAX_IMPRESSIONS_DEDUPE_TIME_INTERVAL) {
+                Logger.w("Time interval for impressions dedupe is out of bounds. Setting to default value.");
+                mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
+            }
+
             HttpProxy proxy = parseProxyHost(mProxyHost);
 
             return new SplitClientConfig(
@@ -1168,7 +1232,9 @@ public class SplitClientConfig {
                     mDefaultSSEConnectionDelayInSecs,
                     mSSEDisconnectionDelayInSecs,
                     mPrefix,
-                    mObserverCacheExpirationPeriod);
+                    mObserverCacheExpirationPeriod,
+                    mCertificatePinningConfiguration,
+                    mImpressionsDedupeTimeInterval);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {

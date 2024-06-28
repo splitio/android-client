@@ -3,15 +3,24 @@ package io.split.android.client.telemetry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+
+import static io.split.android.client.service.executor.SplitTaskExecutionInfo.DO_NOT_RETRY;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import java.util.Collections;
+
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
@@ -109,5 +118,40 @@ public class TelemetrySynchronizerImplTest {
         telemetrySynchronizer.flush();
 
         verify(taskExecutor).submit(eq(telemetryStatsRecorderTask), any());
+    }
+
+    @Test
+    public void flushDoesNotSubmitStatsTaskWhenDoNotRetryHasBeenReceived() {
+        when(taskFactory.getTelemetryStatsRecorderTask()).thenReturn(telemetryStatsRecorderTask);
+        when(taskFactory.getTelemetryConfigRecorderTask()).thenReturn(telemetryConfigTask);
+        when(telemetryStatsRecorderTask.execute()).thenReturn(
+                SplitTaskExecutionInfo.error(
+                        SplitTaskType.TELEMETRY_STATS_TASK,
+                        Collections.singletonMap(DO_NOT_RETRY, true)));
+
+        when(taskExecutor.schedule(
+                any(),
+                eq(5L),
+                eq(15L),
+                any()
+        )).thenAnswer(new Answer<String>() {
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                ((SplitTaskExecutionListener) invocation.getArgument(3)).taskExecuted(
+                        ((TelemetryStatsRecorderTask) invocation.getArgument(0)).execute());
+                return "taskId";
+            }
+        });
+
+        telemetrySynchronizer = new TelemetrySynchronizerImpl(taskExecutor,
+                taskFactory,
+                configTimer,
+                15L);
+
+        telemetrySynchronizer.synchronizeStats();
+        telemetrySynchronizer.flush();
+
+        verify(telemetryStatsRecorderTask).execute();
+        verify(telemetryStatsRecorderTask, times(1)).execute();
     }
 }

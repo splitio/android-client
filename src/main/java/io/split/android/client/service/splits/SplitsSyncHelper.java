@@ -88,8 +88,12 @@ public class SplitsSyncHelper {
             logError("Network error while fetching feature flags" + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
 
-            if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.URI_TOO_LONG) {
+            HttpStatus httpStatus = HttpStatus.fromCode(e.getHttpStatus());
+            if (httpStatus == HttpStatus.URI_TOO_LONG) {
                 Logger.e("SDK initialization: the amount of flag sets provided is big, causing URI length error");
+            }
+
+            if (HttpStatus.isNotRetryable(httpStatus)) {
                 return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC,
                         Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true));
             }
