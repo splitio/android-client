@@ -51,7 +51,7 @@ class CertificateCheckerImpl implements CertificateChecker {
     }
 
     @Override
-    public void checkPins(HttpsURLConnection httpsConnection) throws SSLPeerUnverifiedException {
+    public synchronized void checkPins(HttpsURLConnection httpsConnection) throws SSLPeerUnverifiedException {
         String host = httpsConnection.getURL().getHost();
         Set<CertificatePin> pinsForHost = getPinsForHost(host, mConfiguredPins);
         if (pinsForHost == null || pinsForHost.isEmpty()) {
@@ -78,8 +78,12 @@ class CertificateCheckerImpl implements CertificateChecker {
             }
         }
 
-        if (mFailureListener != null) {
-            mFailureListener.onCertificatePinningFailure(host, cleanCertificates);
+        try {
+            if (mFailureListener != null) {
+                mFailureListener.onCertificatePinningFailure(host, cleanCertificates);
+            }
+        } catch (Exception e) {
+            Logger.w("Exception occurred executing certificate pinning failure listener: " + e.getLocalizedMessage());
         }
 
         throw new SSLPeerUnverifiedException("Certificate pinning verification failed for host: " + host + ". Chain:\n" + certificateChainInfo(cleanCertificates));

@@ -476,7 +476,7 @@ public class SplitClientConfig {
     private void enableTelemetry() { mShouldRecordTelemetry = true; }
 
     public long observerCacheExpirationPeriod() {
-        return mObserverCacheExpirationPeriod;
+        return Math.max(mImpressionsDedupeTimeInterval, mObserverCacheExpirationPeriod);
     }
 
     public CertificatePinningConfiguration certificatePinningConfiguration() {
@@ -1094,6 +1094,8 @@ public class SplitClientConfig {
          *
          * @Experimental This method is experimental and may change or be removed in future versions.
          * To be used upon Split team recommendation.
+         *
+         * @param impressionsDedupeTimeInterval The time interval in milliseconds.
          */
         @Deprecated
         public Builder impressionsDedupeTimeInterval(long impressionsDedupeTimeInterval) {

@@ -10,8 +10,11 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -138,6 +141,39 @@ public class CertPinningTest {
 
         assertTrue(await);
         assertFalse(failureAwait);
+    }
+
+    @Test
+    public void certPinningSuccessfulWithFileTest() throws InterruptedException, IOException, CertificateEncodingException {
+        // Generate file with certificate
+        try (FileOutputStream outputStream = mContext.openFileOutput("generated_cert.der", Context.MODE_PRIVATE)) {
+            outputStream.write(mHeldCertificate.certificate().getEncoded());
+        }
+
+        try (InputStream certInputStream = mContext.openFileInput("generated_cert.der")) {
+            // Setup factory with pin from file
+            CountDownLatch failureLatch = new CountDownLatch(2); // 2 counts, one for splitChanges and one for mySegments
+            SplitClientConfig config = getConfig(CertificatePinningConfiguration.builder()
+                    .addPin("localhost", certInputStream)
+                    .failureListener((host, certificateChain) -> failureLatch.countDown())
+                    .build());
+
+            SplitFactory factory = getFactory(config);
+
+            CountDownLatch latch = new CountDownLatch(1);
+            factory.client().on(SplitEvent.SDK_READY, new SplitEventTask() {
+                @Override
+                public void onPostExecution(SplitClient client) {
+                    latch.countDown();
+                }
+            });
+            boolean await = latch.await(5, TimeUnit.SECONDS);
+            boolean failureAwait = failureLatch.await(5, TimeUnit.SECONDS);
+
+            // verify client is ready and no pinning failures were registered in listener
+            assertTrue(await);
+            assertFalse(failureAwait);
+        }
     }
 
     private String sha256(byte[] encoded) {

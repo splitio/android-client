@@ -191,6 +191,39 @@ public class SplitClientConfigTest {
         assertEquals(TimeUnit.HOURS.toMillis(1), config.impressionsDedupeTimeInterval());
     }
 
+    @Test
+    public void defaultObserverCacheExpirationPeriodIs4Hours() {
+        SplitClientConfig config = SplitClientConfig.builder().build();
+
+        assertEquals(TimeUnit.HOURS.toMillis(4), config.observerCacheExpirationPeriod());
+    }
+
+    @Test
+    public void observerCacheExpirationPeriodIs4HoursWhenDedupeTimeIntervalIsLessThan4Hours() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .impressionsDedupeTimeInterval(TimeUnit.HOURS.toMillis(3))
+                .build();
+
+        assertEquals(TimeUnit.HOURS.toMillis(4), config.observerCacheExpirationPeriod());
+    }
+
+    @Test
+    public void observerCacheExpirationPeriodMatchesDedupeTimeIntervalWhenDedupeTimeIntervalIsGreaterThan4Hours() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .impressionsDedupeTimeInterval(TimeUnit.HOURS.toMillis(5))
+                .build();
+        SplitClientConfig config2 = SplitClientConfig.builder()
+                .impressionsDedupeTimeInterval(TimeUnit.HOURS.toMillis(24))
+                .build();
+        SplitClientConfig config3 = SplitClientConfig.builder()
+                .impressionsDedupeTimeInterval(TimeUnit.HOURS.toMillis(25))
+                .build();
+
+        assertEquals(TimeUnit.HOURS.toMillis(5), config.observerCacheExpirationPeriod());
+        assertEquals(TimeUnit.HOURS.toMillis(24), config2.observerCacheExpirationPeriod());
+        assertEquals(TimeUnit.HOURS.toMillis(4), config3.observerCacheExpirationPeriod());
+    }
+
     @NonNull
     private static Queue<String> getLogMessagesQueue() {
         Queue<String> logMessages = new LinkedList<>();
