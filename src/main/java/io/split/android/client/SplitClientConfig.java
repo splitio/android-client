@@ -476,7 +476,7 @@ public class SplitClientConfig {
     private void enableTelemetry() { mShouldRecordTelemetry = true; }
 
     public long observerCacheExpirationPeriod() {
-        return mObserverCacheExpirationPeriod;
+        return Math.max(mImpressionsDedupeTimeInterval, mObserverCacheExpirationPeriod);
     }
 
     public CertificatePinningConfiguration certificatePinningConfiguration() {

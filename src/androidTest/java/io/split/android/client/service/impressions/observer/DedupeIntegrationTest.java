@@ -216,6 +216,7 @@ public class DedupeIntegrationTest {
         SplitClient client = initSplitFactory(new TestableSplitConfigBuilder()
                 .impressionsMode(ImpressionsMode.DEBUG)
                 .enableDebug()
+                .impressionsDedupeTimeInterval(1)
                 .observerCacheExpirationPeriod(100), mHttpClient).client();
 
         client.getTreatment("FACUNDO_TEST");
