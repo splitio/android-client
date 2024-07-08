@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -48,8 +47,8 @@ public class PersistentMySegmentStorageTest {
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb,
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false));
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
     }
 
     @Test
@@ -78,8 +77,8 @@ public class PersistentMySegmentStorageTest {
 
     @Test
     public void updateSegmentsEncrypted() {
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb,
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true));
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
 
         mPersistentMySegmentsStorage.set(mUserKey, Collections.singletonList("a1,a2,a3,a4"));
 

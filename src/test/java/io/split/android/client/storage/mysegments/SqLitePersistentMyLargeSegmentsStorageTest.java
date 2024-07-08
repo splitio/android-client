@@ -20,7 +20,7 @@ import io.split.android.client.storage.db.MySegmentDao;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 
-public class SqLitePersistentMySegmentsStorageTest {
+public class SqLitePersistentMyLargeSegmentsStorageTest {
 
     @Mock
     private SplitRoomDatabase mDatabase;

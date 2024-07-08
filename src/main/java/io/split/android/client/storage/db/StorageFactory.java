@@ -124,7 +124,11 @@ public class StorageFactory {
     }
 
     private static MySegmentsStorageContainer getMySegmentsStorageContainer(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
-        return new MySegmentsStorageContainerImpl(new SqLitePersistentMySegmentsStorage(splitRoomDatabase, splitCipher));
+        return new MySegmentsStorageContainerImpl(new SqLitePersistentMySegmentsStorage(splitCipher, splitRoomDatabase.mySegmentDao(), MySegmentEntity.creator()));
+    }
+
+    private static MySegmentsStorageContainer getMyLargeSegmentsStorageContainer(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
+        return new MySegmentsStorageContainerImpl(new SqLitePersistentMySegmentsStorage(splitCipher, splitRoomDatabase.myLargeSegmentDao(), MyLargeSegmentEntity.creator()));
     }
 
     private static AttributesStorageContainer getAttributesStorageContainerInstance() {
