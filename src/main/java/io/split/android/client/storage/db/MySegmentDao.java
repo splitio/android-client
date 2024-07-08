@@ -10,19 +10,21 @@ import java.util.List;
 @Dao
 public interface MySegmentDao extends SegmentDao<MySegmentEntity> {
 
+    String TABLE_NAME = "my_segments";
+
     @Override
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void update(MySegmentEntity mySegment);
 
     @Override
-    @Query("UPDATE my_segments SET user_key = :userKey, segment_list = :segmentList WHERE user_key = :formerUserKey")
+    @Query("UPDATE " + TABLE_NAME + " SET user_key = :userKey, segment_list = :segmentList WHERE user_key = :formerUserKey")
     void update(String formerUserKey, String userKey, String segmentList);
 
     @Override
-    @Query("SELECT user_key, segment_list, updated_at FROM my_segments WHERE user_key = :userKey")
+    @Query("SELECT user_key, segment_list, updated_at FROM " + TABLE_NAME + " WHERE user_key = :userKey")
     MySegmentEntity getByUserKey(String userKey);
 
     @Override
-    @Query("SELECT user_key, segment_list, updated_at FROM my_segments")
+    @Query("SELECT user_key, segment_list, updated_at FROM " + TABLE_NAME)
     List<MySegmentEntity> getAll();
 }
