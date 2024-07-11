@@ -15,7 +15,7 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.mysegments.MySegmentsBulkSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
-import io.split.android.client.service.mysegments.MySegmentsTaskConfig;
+import io.split.android.client.service.mysegments.MySegmentsSyncTaskConfig;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.utils.logger.Logger;
@@ -68,7 +68,7 @@ public class MySegmentsSyncWorker extends SplitWorker {
                             false,
                             null,
                             StorageFactory.getTelemetryStorage(shouldRecordTelemetry),
-                            MySegmentsTaskConfig.getForMySegments())
+                            MySegmentsSyncTaskConfig.getForMySegments())
             );
         }
 

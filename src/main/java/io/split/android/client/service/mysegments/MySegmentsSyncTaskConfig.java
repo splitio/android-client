@@ -6,22 +6,27 @@ import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.telemetry.model.OperationType;
 
-public class MySegmentsTaskConfig {
+public class MySegmentsSyncTaskConfig {
 
-    private static final MySegmentsTaskConfig MY_SEGMENTS_TASK_CONFIG = new MySegmentsTaskConfig(
+    private static final MySegmentsSyncTaskConfig MY_SEGMENTS_TASK_CONFIG = new MySegmentsSyncTaskConfig(
             SplitTaskType.MY_SEGMENTS_SYNC,
             SplitInternalEvent.MY_SEGMENTS_UPDATED,
             SplitInternalEvent.MY_SEGMENTS_FETCHED,
             OperationType.MY_SEGMENT);
+    private static final MySegmentsSyncTaskConfig MY_LARGE_SEGMENTS_TASK_CONFIG = new MySegmentsSyncTaskConfig(
+            SplitTaskType.MY_LARGE_SEGMENT_SYNC,
+            SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED,
+            SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED,
+            OperationType.MY_LARGE_SEGMENT);
     private final SplitTaskType mTaskType;
     private final SplitInternalEvent mUpdateEvent;
     private final SplitInternalEvent mFetchedEvent;
     private final OperationType mTelemetryOperationType;
 
-    private MySegmentsTaskConfig(@NonNull SplitTaskType taskType,
-                                 @NonNull SplitInternalEvent updateEvent,
-                                 @NonNull SplitInternalEvent fetchedEvent,
-                                 @NonNull OperationType telemetryOperationType) {
+    private MySegmentsSyncTaskConfig(@NonNull SplitTaskType taskType,
+                                     @NonNull SplitInternalEvent updateEvent,
+                                     @NonNull SplitInternalEvent fetchedEvent,
+                                     @NonNull OperationType telemetryOperationType) {
         mTaskType = taskType;
         mUpdateEvent = updateEvent;
         mFetchedEvent = fetchedEvent;
@@ -45,13 +50,12 @@ public class MySegmentsTaskConfig {
     }
 
     @NonNull
-    public static MySegmentsTaskConfig getForMySegments() {
+    static MySegmentsSyncTaskConfig getForMySegments() {
         return MY_SEGMENTS_TASK_CONFIG;
     }
 
     @NonNull
-    static MySegmentsTaskConfig getForMyLargeSegments() {
-        //TODO
-        return null;
+    static MySegmentsSyncTaskConfig getForMyLargeSegments() {
+        return MY_LARGE_SEGMENTS_TASK_CONFIG;
     }
 }

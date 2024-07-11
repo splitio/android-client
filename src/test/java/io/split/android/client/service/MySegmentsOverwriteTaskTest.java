@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -42,7 +43,7 @@ public class MySegmentsOverwriteTaskTest {
     @Test
     public void correctExecution() throws HttpFetcherException {
         List<String> segments = dummySegments();
-        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, mEventsManager);
+        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, mEventsManager, SplitTaskType.MY_SEGMENTS_OVERWRITE, SplitInternalEvent.MY_SEGMENTS_UPDATED);
         SplitTaskExecutionInfo result = mTask.execute();
 
         verify(mySegmentsStorage, times(1)).set(any());
@@ -54,7 +55,7 @@ public class MySegmentsOverwriteTaskTest {
     @Test
     public void storageException() {
         List<String> segments = dummySegments();
-        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, mEventsManager);
+        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, mEventsManager, SplitTaskType.MY_SEGMENTS_OVERWRITE, SplitInternalEvent.MY_SEGMENTS_UPDATED);
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(segments);
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -65,7 +66,7 @@ public class MySegmentsOverwriteTaskTest {
     @Test
     public void nullParameter() {
 
-        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, null, mEventsManager);
+        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, null, mEventsManager, SplitTaskType.MY_SEGMENTS_OVERWRITE, SplitInternalEvent.MY_SEGMENTS_UPDATED);
 
         SplitTaskExecutionInfo result = mTask.execute();
 

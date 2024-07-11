@@ -23,14 +23,19 @@ public class MySegmentsOverwriteTask implements SplitTask {
     private final MySegmentsStorage mMySegmentsStorage;
     private final SplitEventsManager mEventsManager;
     private MySegmentsChangeChecker mMySegmentsChangeChecker;
+    private final SplitTaskType mTaskType;
+    private final SplitInternalEvent mUpdateEvent;
 
     public MySegmentsOverwriteTask(@NonNull MySegmentsStorage mySegmentsStorage,
                                    List<String> mySegments,
-                                   SplitEventsManager eventsManager) {
+                                   SplitEventsManager eventsManager,
+                                   MySegmentsOverwriteTaskConfig config) {
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mMySegments = mySegments;
         mEventsManager = eventsManager;
         mMySegmentsChangeChecker = new MySegmentsChangeChecker();
+        mTaskType = config.getTaskType();
+        mUpdateEvent = config.getInternalEvent();
     }
 
     @Override
@@ -39,19 +44,19 @@ public class MySegmentsOverwriteTask implements SplitTask {
         try {
             if (mMySegments == null) {
                 logError("My segment list could not be null.");
-                return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_OVERWRITE);
+                return SplitTaskExecutionInfo.error(mTaskType);
             }
-            List<String> oldSegments = new ArrayList(mMySegmentsStorage.getAll());
-            if(mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, mMySegments)) {
+            List<String> oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
+            if (mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, mMySegments)) {
                 mMySegmentsStorage.set(mMySegments);
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+                mEventsManager.notifyInternalEvent(mUpdateEvent);
             }
         } catch (Exception e) {
             logError("Unknown error while overwriting my segments: " + e.getLocalizedMessage());
-            return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_OVERWRITE);
+            return SplitTaskExecutionInfo.error(mTaskType);
         }
         Logger.d("My Segments have been overwritten");
-        return SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_OVERWRITE);
+        return SplitTaskExecutionInfo.success(mTaskType);
     }
 
     private void logError(String message) {

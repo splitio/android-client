@@ -45,7 +45,7 @@ public class MySegmentsSyncTask implements SplitTask {
                               boolean avoidCache,
                               SplitEventsManager eventsManager,
                               @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                              @NonNull MySegmentsTaskConfig config) {
+                              @NonNull MySegmentsSyncTaskConfig config) {
         mMySegmentsFetcher = checkNotNull(mySegmentsFetcher);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mAvoidCache = avoidCache;

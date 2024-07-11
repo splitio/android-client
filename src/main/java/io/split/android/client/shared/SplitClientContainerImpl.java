@@ -161,12 +161,18 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
 
     private MySegmentsTaskFactory getMySegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
         return mMySegmentsTaskFactoryProvider.getFactory(
-                new MySegmentsTaskFactoryConfiguration(
+                MySegmentsTaskFactoryConfiguration.getForMySegments(
                         mSplitApiFacade.getMySegmentsFetcher(key.matchingKey()),
                         mStorageContainer.getMySegmentsStorage(key.matchingKey()),
-                        eventsManager
-                )
-        );
+                        eventsManager));
+    }
+
+    private MySegmentsTaskFactory getMyLargeSegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
+        return mMySegmentsTaskFactoryProvider.getFactory(
+                MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
+                        mSplitApiFacade.getMySegmentsFetcher(key.matchingKey()),
+                        mStorageContainer.getMySegmentsStorage(key.matchingKey()),
+                        eventsManager));
     }
 
     private void connectToStreaming() {
