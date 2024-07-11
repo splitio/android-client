@@ -35,18 +35,27 @@ public class MySegmentsSyncTask implements SplitTask {
     private final SplitEventsManager mEventsManager;
     private final MySegmentsChangeChecker mMySegmentsChangeChecker;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private final SplitTaskType mTaskType;
+    private final SplitInternalEvent mUpdateEvent;
+    private final SplitInternalEvent mFetchedEvent;
+    private final OperationType mTelemetryOperationType;
 
     public MySegmentsSyncTask(@NonNull HttpFetcher<List<MySegment>> mySegmentsFetcher,
                               @NonNull MySegmentsStorage mySegmentsStorage,
                               boolean avoidCache,
                               SplitEventsManager eventsManager,
-                              @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                              @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                              @NonNull MySegmentsTaskConfig config) {
         mMySegmentsFetcher = checkNotNull(mySegmentsFetcher);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mAvoidCache = avoidCache;
         mEventsManager = eventsManager;
         mMySegmentsChangeChecker = new MySegmentsChangeChecker();
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+        mTaskType = config.getTaskType();
+        mUpdateEvent = config.getUpdateEvent();
+        mFetchedEvent = config.getFetchedEvent();
+        mTelemetryOperationType = config.getTelemetryOperationType();
     }
 
     @Override
@@ -63,26 +72,26 @@ public class MySegmentsSyncTask implements SplitTask {
             List<String> mySegments = getNameList(segments);
             mMySegmentsStorage.set(mySegments);
 
-            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.MY_SEGMENT, now);
+            mTelemetryRuntimeProducer.recordSuccessfulSync(mTelemetryOperationType, now);
             fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
-            mTelemetryRuntimeProducer.recordSyncError(OperationType.MY_SEGMENT, e.getHttpStatus());
+            mTelemetryRuntimeProducer.recordSyncError(mTelemetryOperationType, e.getHttpStatus());
 
             if (HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getHttpStatus()))) {
-                return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC,
+                return SplitTaskExecutionInfo.error(mTaskType,
                         Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true));
             }
 
-            return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
+            return SplitTaskExecutionInfo.error(mTaskType);
         } catch (Exception e) {
             logError("Unknown error while retrieving my segments: " + e.getLocalizedMessage());
-            return SplitTaskExecutionInfo.error(SplitTaskType.MY_SEGMENTS_SYNC);
+            return SplitTaskExecutionInfo.error(mTaskType);
         } finally {
-            mTelemetryRuntimeProducer.recordSyncLatency(OperationType.MY_SEGMENT, latency);
+            mTelemetryRuntimeProducer.recordSyncLatency(mTelemetryOperationType, latency);
         }
         Logger.d("My Segments have been updated");
-        return SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC);
+        return SplitTaskExecutionInfo.success(mTaskType);
     }
 
     private void logError(String message) {
@@ -114,8 +123,8 @@ public class MySegmentsSyncTask implements SplitTask {
     private SplitInternalEvent getInternalEvent(List<String> oldSegments, List<String> newSegments) {
         boolean haveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments);
         if (haveChanged) {
-            return SplitInternalEvent.MY_SEGMENTS_UPDATED;
+            return mUpdateEvent;
         }
-        return SplitInternalEvent.MY_SEGMENTS_FETCHED;
+        return mFetchedEvent;
     }
 }
