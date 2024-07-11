@@ -50,7 +50,7 @@ public class MySegmentsSyncTaskConfig {
     }
 
     @NonNull
-    static MySegmentsSyncTaskConfig getForMySegments() {
+    public static MySegmentsSyncTaskConfig getForMySegments() {
         return MY_SEGMENTS_TASK_CONFIG;
     }
 

@@ -16,6 +16,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
+import io.split.android.client.service.mysegments.LoadMySegmentsTaskConfig;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -59,7 +60,7 @@ public class LoadMySegmentsTaskTest {
     @Test
     public void execute() {
 
-        SplitTask task = new LoadMySegmentsTask(mMySegmentsStorage);
+        SplitTask task = new LoadMySegmentsTask(mMySegmentsStorage, LoadMySegmentsTaskConfig.getForMySegments());
         SplitTaskExecutionInfo result = task.execute();
         Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
 
