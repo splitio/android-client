@@ -16,13 +16,12 @@ import java.util.Set;
 
 import helper.DatabaseHelper;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
-import io.split.android.client.storage.db.MySegmentEntity;
+import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
 
-public class PersistentMySegmentStorageTest {
-
+public class PersistentMyLargeSegmentStorageTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
     PersistentMySegmentsStorage mPersistentMySegmentsStorage;
@@ -34,21 +33,21 @@ public class PersistentMySegmentStorageTest {
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
 
-        MySegmentEntity entity = new MySegmentEntity();
+        MyLargeSegmentEntity entity = new MyLargeSegmentEntity();
         entity.setUserKey(mUserKey);
         entity.setSegmentList("s1,s2,s3");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
-        mRoomDb.mySegmentDao().update(entity);
+        mRoomDb.myLargeSegmentDao().update(entity);
 
-        entity = new MySegmentEntity();
+        entity = new MyLargeSegmentEntity();
         String mUserKey2 = "userkey-2";
         entity.setUserKey(mUserKey2);
         entity.setSegmentList("s10,s20");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
-        mRoomDb.mySegmentDao().update(entity);
+        mRoomDb.myLargeSegmentDao().update(entity);
 
         mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false), mRoomDb.myLargeSegmentDao(), MyLargeSegmentEntity.creator());
     }
 
     @Test
@@ -78,7 +77,7 @@ public class PersistentMySegmentStorageTest {
     @Test
     public void updateSegmentsEncrypted() {
         mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true), mRoomDb.myLargeSegmentDao(), MyLargeSegmentEntity.creator());
 
         mPersistentMySegmentsStorage.set(mUserKey, Collections.singletonList("a1,a2,a3,a4"));
 

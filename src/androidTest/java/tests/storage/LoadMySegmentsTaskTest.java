@@ -51,7 +51,7 @@ public class LoadMySegmentsTaskTest {
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb, SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false));
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
         mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
         mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
     }

@@ -9,23 +9,24 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.split.android.client.storage.cipher.SplitCipher;
-import io.split.android.client.storage.db.MySegmentEntity;
-import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.SegmentDao;
+import io.split.android.client.storage.db.SegmentEntity;
 import io.split.android.client.utils.StringHelper;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 
-public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsStorage {
+public class SqLitePersistentMySegmentsStorage<T extends SegmentEntity> implements PersistentMySegmentsStorage {
 
-    private final SplitRoomDatabase mDatabase;
+    private final SegmentDao<T> mDao;
     private final StringHelper mStringHelper;
     private final SplitCipher mSplitCipher;
+    private final SegmentEntity.Creator<T> mCreator;
 
-    public SqLitePersistentMySegmentsStorage(@NonNull SplitRoomDatabase database,
-                                             @NonNull SplitCipher splitCipher) {
-        mDatabase = checkNotNull(database);
+    public SqLitePersistentMySegmentsStorage(@NonNull SplitCipher splitCipher, SegmentDao<T> mySegmentDao, SegmentEntity.Creator<T> creator) {
+        mDao = mySegmentDao;
         mStringHelper = new StringHelper();
         mSplitCipher = checkNotNull(splitCipher);
+        mCreator = checkNotNull(creator);
     }
 
     @Override
@@ -40,24 +41,21 @@ public class SqLitePersistentMySegmentsStorage implements PersistentMySegmentsSt
             Logger.e("Error encrypting my segments");
             return;
         }
-        MySegmentEntity entity = new MySegmentEntity();
-        entity.setUserKey(encryptedUserKey);
-        entity.setSegmentList(encryptedSegmentList);
-        entity.setUpdatedAt(System.currentTimeMillis() / 1000);
-        mDatabase.mySegmentDao().update(entity);
+        T entity = mCreator.createEntity(encryptedUserKey, encryptedSegmentList, System.currentTimeMillis() / 1000);
+        mDao.update(entity);
     }
 
     @Override
     public List<String> getSnapshot(String userKey) {
         String encryptedUserKey = mSplitCipher.encrypt(userKey);
-        return getMySegmentsFromEntity(mDatabase.mySegmentDao().getByUserKey(encryptedUserKey));
+        return getMySegmentsFromEntity(mDao.getByUserKey(encryptedUserKey));
     }
 
     @Override
     public void close() {
     }
 
-    private List<String> getMySegmentsFromEntity(MySegmentEntity entity) {
+    private List<String> getMySegmentsFromEntity(SegmentEntity entity) {
         if (entity == null || Utils.isNullOrEmpty(entity.getSegmentList())) {
             return new ArrayList<>();
         }
