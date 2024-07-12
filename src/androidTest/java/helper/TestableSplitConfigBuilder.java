@@ -64,6 +64,9 @@ public class TestableSplitConfigBuilder {
     private String mPrefix = "";
     private CertificatePinningConfiguration mCertificatePinningConfiguration;
     private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
+    private boolean mLargeSegmentsEnabled = false;
+    private int mLargeSegmentsRefreshRate = 60;
+    private boolean mWaitForLargeSegments = true;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -274,6 +277,21 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder largeSegmentsEnabled(boolean largeSegmentsEnabled) {
+        this.mLargeSegmentsEnabled = largeSegmentsEnabled;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder largeSegmentsRefreshRate(int largeSegmentsRefreshRate) {
+        this.mLargeSegmentsRefreshRate = largeSegmentsRefreshRate;
+        return this;
+    }
+
+    public TestableSplitConfigBuilder waitForLargeSegments(boolean waitForLargeSegments) {
+        this.mWaitForLargeSegments = waitForLargeSegments;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -329,7 +347,10 @@ public class TestableSplitConfigBuilder {
                     mPrefix,
                     mObserverCacheExpirationPeriod,
                     mCertificatePinningConfiguration,
-                    mImpressionsDedupeTimeInterval);
+                    mImpressionsDedupeTimeInterval,
+                    mLargeSegmentsEnabled,
+                    mLargeSegmentsRefreshRate,
+                    mWaitForLargeSegments);
 
             Logger.instance().setLevel(mLogLevel);
             return config;
