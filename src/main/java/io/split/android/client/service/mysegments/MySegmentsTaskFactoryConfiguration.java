@@ -22,12 +22,12 @@ public class MySegmentsTaskFactoryConfiguration {
     private final LoadMySegmentsTaskConfig mLoadMySegmentsTaskConfig;
 
     private MySegmentsTaskFactoryConfiguration(@NonNull HttpFetcher<List<MySegment>> httpFetcher,
-                                              @NonNull MySegmentsStorage storage,
-                                              @NonNull SplitEventsManager eventsManager,
-                                              @NonNull MySegmentsSyncTaskConfig mySegmentsSyncTaskConfig,
-                                              @NonNull MySegmentsUpdateTaskConfig mySegmentsUpdateTaskConfig,
-                                              @NonNull MySegmentsOverwriteTaskConfig mySegmentsOverwriteTaskConfig,
-                                              @NonNull LoadMySegmentsTaskConfig loadMySegmentsTaskConfig) {
+                                               @NonNull MySegmentsStorage storage,
+                                               @NonNull SplitEventsManager eventsManager,
+                                               @NonNull MySegmentsSyncTaskConfig mySegmentsSyncTaskConfig,
+                                               @NonNull MySegmentsUpdateTaskConfig mySegmentsUpdateTaskConfig,
+                                               @NonNull MySegmentsOverwriteTaskConfig mySegmentsOverwriteTaskConfig,
+                                               @NonNull LoadMySegmentsTaskConfig loadMySegmentsTaskConfig) {
         mHttpFetcher = checkNotNull(httpFetcher);
         mStorage = checkNotNull(storage);
         mEventsManager = checkNotNull(eventsManager);
@@ -73,8 +73,8 @@ public class MySegmentsTaskFactoryConfiguration {
     }
 
     public static MySegmentsTaskFactoryConfiguration getForMySegments(@NonNull HttpFetcher<List<MySegment>> httpFetcher,
-                                                            @NonNull MySegmentsStorage storage,
-                                                            @NonNull SplitEventsManager eventsManager) {
+                                                                      @NonNull MySegmentsStorage storage,
+                                                                      @NonNull SplitEventsManager eventsManager) {
         return new MySegmentsTaskFactoryConfiguration(httpFetcher,
                 storage,
                 eventsManager,
@@ -85,8 +85,8 @@ public class MySegmentsTaskFactoryConfiguration {
     }
 
     public static MySegmentsTaskFactoryConfiguration getForMyLargeSegments(@NonNull HttpFetcher<List<MySegment>> httpFetcher,
-                                                            @NonNull MySegmentsStorage storage,
-                                                            @NonNull SplitEventsManager eventsManager) {
+                                                                           @NonNull MySegmentsStorage storage,
+                                                                           @NonNull SplitEventsManager eventsManager) {
         return new MySegmentsTaskFactoryConfiguration(httpFetcher,
                 storage,
                 eventsManager,
