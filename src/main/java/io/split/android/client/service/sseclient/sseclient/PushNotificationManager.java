@@ -211,11 +211,11 @@ public class PushNotificationManager {
             recordSuccessfulSyncAndTokenRefreshes(token);
 
             long delay = authResult.getSseConnectionDelay();
-            mBroadcasterChannel.pushMessage(new DelayStatusEvent(delay));
             // Delay returns false if some error occurs
             if (delay > 0 && !delay(delay)) {
                 return;
             }
+            mBroadcasterChannel.pushMessage(new DelayStatusEvent(delay));
 
             // If host app is in bg or push manager stopped, abort the process
             if (mIsPaused.get() || mIsStopped.get()) {
