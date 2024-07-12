@@ -25,21 +25,22 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
                 mConfiguration.getStorage(),
                 avoidCache,
                 mConfiguration.getEventsManager(),
-                mTelemetryRuntimeProducer);
+                mTelemetryRuntimeProducer,
+                mConfiguration.getMySegmentsSyncTaskConfig());
     }
 
     @Override
     public LoadMySegmentsTask createLoadMySegmentsTask() {
-        return new LoadMySegmentsTask(mConfiguration.getStorage());
+        return new LoadMySegmentsTask(mConfiguration.getStorage(), mConfiguration.getLoadMySegmentsTaskConfig());
     }
 
     @Override
     public MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments) {
-        return new MySegmentsOverwriteTask(mConfiguration.getStorage(), segments, mConfiguration.getEventsManager());
+        return new MySegmentsOverwriteTask(mConfiguration.getStorage(), segments, mConfiguration.getEventsManager(), mConfiguration.getMySegmentsOverwriteTaskConfig());
     }
 
     @Override
     public MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, String segmentName) {
-        return new MySegmentsUpdateTask(mConfiguration.getStorage(), add, segmentName, mConfiguration.getEventsManager(), mTelemetryRuntimeProducer);
+        return new MySegmentsUpdateTask(mConfiguration.getStorage(), add, segmentName, mConfiguration.getEventsManager(), mTelemetryRuntimeProducer, mConfiguration.getMySegmentsUpdateTaskConfig());
     }
 }

@@ -32,6 +32,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
+import io.split.android.client.service.mysegments.MySegmentsSyncTaskConfig;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -57,7 +58,7 @@ public class MySegmentsSyncTaskTest {
     @Before
     public void setup() {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.getForMySegments());
         loadMySegments();
     }
 
@@ -88,7 +89,7 @@ public class MySegmentsSyncTaskTest {
     public void correctExecutionNoCache() throws HttpFetcherException {
         Map<String, String> headers = new HashMap<>();
         headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, null, mTelemetryRuntimeProducer);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, null, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.getForMySegments());
         when(mMySegmentsFetcher.execute(noParams, headers)).thenReturn(mMySegments);
 
         mTask.execute();
@@ -111,7 +112,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.getForMySegments());
         when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(IllegalStateException.class);
 
         mTask.execute();

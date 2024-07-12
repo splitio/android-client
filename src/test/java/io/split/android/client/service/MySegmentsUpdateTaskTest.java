@@ -1,29 +1,5 @@
 package io.split.android.client.service;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import io.split.android.client.events.SplitEventsManager;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionStatus;
-import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.http.HttpFetcherException;
-import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
-import io.split.android.client.storage.mysegments.MySegmentsStorage;
-import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -32,6 +8,30 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
+import io.split.android.client.service.mysegments.MySegmentsUpdateTaskConfig;
+import io.split.android.client.storage.mysegments.MySegmentsStorage;
+import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class MySegmentsUpdateTaskTest {
 
@@ -61,7 +61,7 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void correctExecution() throws HttpFetcherException {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
@@ -77,7 +77,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void correctExecutionToEraseNotInSegments() throws HttpFetcherException {
         String otherSegment = "OtherSegment";
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, otherSegment, mEventsManager, mTelemetryRuntimeProducer);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, otherSegment, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -90,7 +90,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void storageException() {
 
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(any());
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -101,7 +101,7 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void successfulAddOperationIsRecordedInTelemetry() {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         mTask.execute();
 
@@ -110,7 +110,7 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void successfulRemoveOperationIsRecordedInTelemetry() {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer);
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         mTask.execute();
 

@@ -12,16 +12,17 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 public class LoadMySegmentsTask implements SplitTask {
 
     private final MySegmentsStorage mMySegmentsStorage;
+    private final SplitTaskType mSplitTaskType;
 
-    public LoadMySegmentsTask(@NonNull MySegmentsStorage mySegmentsStorage) {
-
+    public LoadMySegmentsTask(@NonNull MySegmentsStorage mySegmentsStorage, @NonNull LoadMySegmentsTaskConfig config) {
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
+        mSplitTaskType = config.getTaskType();
     }
 
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
         mMySegmentsStorage.loadLocal();
-        return SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS);
+        return SplitTaskExecutionInfo.success(mSplitTaskType);
     }
 }
