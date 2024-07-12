@@ -234,10 +234,10 @@ public class SplitClientConfigTest {
     }
 
     @Test
-    public void defaultLargeSegmentsRefreshRateIs1800() {
+    public void defaultLargeSegmentsRefreshRateIs60() {
         SplitClientConfig config = SplitClientConfig.builder().build();
 
-        assertEquals(1800, config.largeSegmentsRefreshRate());
+        assertEquals(60, config.largeSegmentsRefreshRate());
     }
 
     @Test
@@ -283,7 +283,7 @@ public class SplitClientConfigTest {
                 .logLevel(SplitLogLevel.WARNING)
                 .build();
 
-        assertEquals(1800, config.largeSegmentsRefreshRate());
+        assertEquals(60, config.largeSegmentsRefreshRate());
         assertEquals(1, logMessages.size());
         assertEquals("Large segments refresh rate is lower than allowed. Setting to default value.", logMessages.poll());
     }

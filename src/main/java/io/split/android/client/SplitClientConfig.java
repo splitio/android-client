@@ -43,7 +43,7 @@ public class SplitClientConfig {
     private static final int MIN_READ_TIMEOUT = 0;
     private static final int DEFAULT_FEATURES_REFRESH_RATE_SECS = 3600;
     private static final int DEFAULT_SEGMENTS_REFRESH_RATE_SECS = 1800;
-    private static final int DEFAULT_LARGE_SEGMENTS_REFRESH_RATE_SECS = 1800; // TODO
+    private static final int DEFAULT_LARGE_SEGMENTS_REFRESH_RATE_SECS = 60;
     private static final int DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_IMPRESSIONS_QUEUE_SIZE = 30000;
     private static final int DEFAULT_IMPRESSIONS_PER_PUSH = 2000;
