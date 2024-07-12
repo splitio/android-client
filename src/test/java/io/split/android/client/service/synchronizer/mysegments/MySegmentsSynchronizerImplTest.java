@@ -23,6 +23,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -31,7 +32,6 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
-import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 
 public class MySegmentsSynchronizerImplTest {
@@ -54,7 +54,7 @@ public class MySegmentsSynchronizerImplTest {
                 mSplitTaskExecutor,
                 mSplitEventsManager,
                 mMySegmentsTaskFactory,
-                SEGMENTS_REFRESH_RATE);
+                SEGMENTS_REFRESH_RATE, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
     }
 
     @Test

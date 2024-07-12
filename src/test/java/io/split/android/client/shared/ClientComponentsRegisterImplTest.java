@@ -14,6 +14,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerRegistry;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactory;
@@ -67,7 +68,7 @@ public class ClientComponentsRegisterImplTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager))
+        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE))
                 .thenReturn(mMySegmentsSynchronizer);
 
         register = new ClientComponentsRegisterImpl(

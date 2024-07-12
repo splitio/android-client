@@ -148,10 +148,11 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     public void createNewClient(Key key) {
         SplitEventsManager eventsManager = new SplitEventsManager(mConfig, mSplitClientEventTaskExecutor);
         MySegmentsTaskFactory mySegmentsTaskFactory = getMySegmentsTaskFactory(key, eventsManager);
+        MySegmentsTaskFactory myLargeSegmentsTaskFactory = getMyLargeSegmentsTaskFactory(key, eventsManager);
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));
         trackNewClient(key, client);
-        mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager);
+        mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager, myLargeSegmentsTaskFactory);
 
         if (mConfig.syncEnabled() && mStreamingEnabled) {
             connectToStreaming();
@@ -163,6 +164,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         }
     }
 
+    @NonNull
     private MySegmentsTaskFactory getMySegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
         return mMySegmentsTaskFactoryProvider.getFactory(
                 MySegmentsTaskFactoryConfiguration.getForMySegments(
@@ -171,12 +173,16 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                         eventsManager));
     }
 
+    @Nullable
     private MySegmentsTaskFactory getMyLargeSegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
-        return mMySegmentsTaskFactoryProvider.getFactory(
-                MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
-                        getMyLargeSegmentsFetcher(key.matchingKey()),
-                        getMyLargeSegmentsStorage(key.matchingKey()),
-                        eventsManager));
+        if (mConfig.largeSegmentsEnabled()) {
+            return mMySegmentsTaskFactoryProvider.getFactory(MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
+                    getMyLargeSegmentsFetcher(key.matchingKey()),
+                    getMyLargeSegmentsStorage(key.matchingKey()),
+                    eventsManager));
+        } else {
+            return null;
+        }
     }
 
     private HttpFetcher<List<MySegment>> getMyLargeSegmentsFetcher(String matchingKey) {

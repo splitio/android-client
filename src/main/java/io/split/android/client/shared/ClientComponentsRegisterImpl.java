@@ -11,6 +11,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerRegistry;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
@@ -75,11 +76,19 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     }
 
     @Override
-    public void registerComponents(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, SplitEventsManager eventsManager) {
+    public void registerComponents(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, SplitEventsManager eventsManager, MySegmentsTaskFactory myLargeSegmentsTaskFactory) {
         registerEventsManager(key, eventsManager);
-        MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager);
+
+        MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
         registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
+
+        if (mSplitConfig.largeSegmentsEnabled()) {
+            MySegmentsSynchronizer myLargeSegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(myLargeSegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
+            // registerMyLargeSegmentsSynchronizer(key, myLargeSegmentsSynchronizer); // TODO
+        }
+
         registerAttributesSynchronizer(key, eventsManager);
+
         if (isSyncEnabled()) {
             registerKeyInSeeAuthenticator(key);
             LinkedBlockingDeque<MySegmentChangeNotification> mySegmentsNotificationQueue = new LinkedBlockingDeque<>();

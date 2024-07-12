@@ -31,13 +31,14 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
                                       @NonNull SplitTaskExecutor taskExecutor,
                                       @NonNull SplitEventsManager eventsManager,
                                       @NonNull MySegmentsTaskFactory mySegmentsTaskFactory,
-                                      int segmentsRefreshRate) {
+                                      int segmentsRefreshRate,
+                                      @NonNull SplitInternalEvent loadedFromStorageInternalEvent) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mMySegmentsSyncRetryTimer = checkNotNull(retryBackoffCounterTimer);
         mSplitTaskFactory = checkNotNull(mySegmentsTaskFactory);
         mSegmentsRefreshRate = segmentsRefreshRate;
         mLoadLocalMySegmentsListener = new LoadLocalDataListener(
-                eventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+                eventsManager, loadedFromStorageInternalEvent);
         mMySegmentsSyncListener = new SplitTaskExecutionListener() {
             @Override
             public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
