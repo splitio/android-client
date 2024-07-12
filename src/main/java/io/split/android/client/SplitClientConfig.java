@@ -35,6 +35,7 @@ public class SplitClientConfig {
 
     private static final int MIN_FEATURES_REFRESH_RATE = 30;
     private static final int MIN_MY_SEGMENTS_REFRESH_RATE = 30;
+    private static final int MIN_MY_LARGE_SEGMENTS_REFRESH_RATE = 60;
     private static final int MIN_IMPRESSIONS_REFRESH_RATE = 30;
     private static final int MIN_IMPRESSIONS_QUEUE_SIZE = 0;
     private static final int MIN_IMPRESSIONS_CHUNK_SIZE = 0;
@@ -42,6 +43,7 @@ public class SplitClientConfig {
     private static final int MIN_READ_TIMEOUT = 0;
     private static final int DEFAULT_FEATURES_REFRESH_RATE_SECS = 3600;
     private static final int DEFAULT_SEGMENTS_REFRESH_RATE_SECS = 1800;
+    private static final int DEFAULT_LARGE_SEGMENTS_REFRESH_RATE_SECS = 1800; // TODO
     private static final int DEFAULT_IMPRESSIONS_REFRESH_RATE_SECS = 1800;
     private static final int DEFAULT_IMPRESSIONS_QUEUE_SIZE = 30000;
     private static final int DEFAULT_IMPRESSIONS_PER_PUSH = 2000;
@@ -56,8 +58,9 @@ public class SplitClientConfig {
     private static final int DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES = 15;
     private static final long MIN_IMPRESSIONS_DEDUPE_TIME_INTERVAL = TimeUnit.HOURS.toMillis(1);
     private static final long MAX_IMPRESSIONS_DEDUPE_TIME_INTERVAL = TimeUnit.HOURS.toMillis(24);
-
-    private final static int DEFAULT_MTK_PER_PUSH = 30000;
+    private static final int DEFAULT_MTK_PER_PUSH = 30000;
+    private static final boolean DEFAULT_LARGE_SEGMENTS_ENABLED = false;
+    private static final boolean DEFAULT_WAIT_FOR_LARGE_SEGMENTS = true;
 
     // Validation settings
     private static final int MAXIMUM_KEY_LENGTH = 250;
@@ -132,6 +135,9 @@ public class SplitClientConfig {
     private final long mObserverCacheExpirationPeriod;
     private final CertificatePinningConfiguration mCertificatePinningConfiguration;
     private final long mImpressionsDedupeTimeInterval;
+    private final boolean mLargeSegmentsEnabled;
+    private final int mLargeSegmentsRefreshRate;
+    private final boolean mWaitForLargeSegments;
 
     public static Builder builder() {
         return new Builder();
@@ -186,7 +192,10 @@ public class SplitClientConfig {
                               String prefix,
                               long observerCacheExpirationPeriod,
                               CertificatePinningConfiguration certificatePinningConfiguration,
-                              long impressionsDedupeTimeInterval) {
+                              long impressionsDedupeTimeInterval,
+                              boolean largeSegmentsEnabled,
+                              int largeSegmentsRefreshRate,
+                              boolean waitForLargeSegments) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -244,6 +253,9 @@ public class SplitClientConfig {
         mObserverCacheExpirationPeriod = observerCacheExpirationPeriod;
         mCertificatePinningConfiguration = certificatePinningConfiguration;
         mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
+        mLargeSegmentsEnabled = largeSegmentsEnabled;
+        mLargeSegmentsRefreshRate = largeSegmentsRefreshRate;
+        mWaitForLargeSegments = waitForLargeSegments;
     }
 
     public String trafficType() {
@@ -487,6 +499,18 @@ public class SplitClientConfig {
         return mImpressionsDedupeTimeInterval;
     }
 
+    public boolean largeSegmentsEnabled() {
+        return mLargeSegmentsEnabled;
+    }
+
+    public int largeSegmentsRefreshRate() {
+        return mLargeSegmentsRefreshRate;
+    }
+
+    public boolean waitForLargeSegments() {
+        return mLargeSegmentsEnabled && mWaitForLargeSegments;
+    }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;
@@ -562,6 +586,12 @@ public class SplitClientConfig {
         private CertificatePinningConfiguration mCertificatePinningConfiguration = null;
 
         private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
+
+        private boolean mLargeSegmentsEnabled = DEFAULT_LARGE_SEGMENTS_ENABLED;
+
+        private int mLargeSegmentsRefreshRate = DEFAULT_LARGE_SEGMENTS_REFRESH_RATE_SECS;
+
+        private boolean mWaitForLargeSegments = DEFAULT_WAIT_FOR_LARGE_SEGMENTS;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -1103,6 +1133,38 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Enables synchronization of large segments.
+         *
+         * @param enabled Whether large segments are enabled or not. Defaults to false.
+         */
+        public Builder largeSegmentsEnabled(boolean enabled) {
+            mLargeSegmentsEnabled = enabled;
+            return this;
+        }
+
+        /**
+         * The SDK polls Split servers for changes to large segment definitions. This parameter controls this polling period in seconds.
+         * This only applies when `largeSegmentsEnabled` is set to true and streaming is disabled.
+         *
+         * @param seconds Default value is 60
+         */
+        public Builder largeSegmentsRefreshRate(int seconds) {
+            mLargeSegmentsRefreshRate = seconds;
+            return this;
+        }
+
+        /**
+         * Whether the SDK should wait for large segments to be ready before emitting SDK_READY event.
+         * This only applies when `largeSegmentsEnabled` is set to true.
+         *
+         * @param enabled Default value is true
+         */
+        public Builder waitForLargeSegments(boolean enabled) {
+            mWaitForLargeSegments = enabled;
+            return this;
+        }
+
         public SplitClientConfig build() {
             Logger.instance().setLevel(mLogLevel);
 
@@ -1182,6 +1244,12 @@ public class SplitClientConfig {
                 mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
             }
 
+            if (mLargeSegmentsRefreshRate < MIN_MY_LARGE_SEGMENTS_REFRESH_RATE) {
+                Logger.w("Large segments refresh rate is lower than allowed. " +
+                        "Setting to default value.");
+                mLargeSegmentsRefreshRate = DEFAULT_LARGE_SEGMENTS_REFRESH_RATE_SECS;
+            }
+
             HttpProxy proxy = parseProxyHost(mProxyHost);
 
             return new SplitClientConfig(
@@ -1234,7 +1302,10 @@ public class SplitClientConfig {
                     mPrefix,
                     mObserverCacheExpirationPeriod,
                     mCertificatePinningConfiguration,
-                    mImpressionsDedupeTimeInterval);
+                    mImpressionsDedupeTimeInterval,
+                    mLargeSegmentsEnabled,
+                    mLargeSegmentsRefreshRate,
+                    mWaitForLargeSegments);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {
