@@ -7,6 +7,8 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.EventsTracker;
@@ -27,6 +29,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.http.HttpFetcher;
+import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryConfiguration;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
@@ -148,10 +151,11 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     public void createNewClient(Key key) {
         SplitEventsManager eventsManager = new SplitEventsManager(mConfig, mSplitClientEventTaskExecutor);
         MySegmentsTaskFactory mySegmentsTaskFactory = getMySegmentsTaskFactory(key, eventsManager);
+        MySegmentsTaskFactory myLargeSegmentsTaskFactory = getMyLargeSegmentsTaskFactory(key, eventsManager);
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));
         trackNewClient(key, client);
-        mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager);
+        mClientComponentsRegister.registerComponents(key, eventsManager, mySegmentsTaskFactory, myLargeSegmentsTaskFactory);
 
         if (mConfig.syncEnabled() && mStreamingEnabled) {
             connectToStreaming();
@@ -163,6 +167,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         }
     }
 
+    @NonNull
     private MySegmentsTaskFactory getMySegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
         return mMySegmentsTaskFactoryProvider.getFactory(
                 MySegmentsTaskFactoryConfiguration.getForMySegments(
@@ -171,20 +176,35 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                         eventsManager));
     }
 
+    @Nullable
     private MySegmentsTaskFactory getMyLargeSegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
-        return mMySegmentsTaskFactoryProvider.getFactory(
-                MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
-                        getMyLargeSegmentsFetcher(key.matchingKey()),
-                        getMyLargeSegmentsStorage(key.matchingKey()),
-                        eventsManager));
+        if (mConfig.largeSegmentsEnabled()) {
+            return mMySegmentsTaskFactoryProvider.getFactory(MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
+                    getMyLargeSegmentsFetcher(key.matchingKey()),
+                    getMyLargeSegmentsStorage(key.matchingKey()),
+                    eventsManager));
+        } else {
+            return null;
+        }
     }
 
     private HttpFetcher<List<MySegment>> getMyLargeSegmentsFetcher(String matchingKey) {
-        return null; // TODO
+        // TODO: this is just a placeholder
+        return (params, headers) -> null; // TODO
     }
 
     private static MySegmentsStorage getMyLargeSegmentsStorage(String matchingKey) {
-        return null; // TODO
+        // TODO: this is just a placeholder
+        return new MySegmentsStorage() {
+            @Override
+            public void loadLocal() { }
+            @Override
+            public Set<String> getAll() { return null; }
+            @Override
+            public void set(@NonNull List<String> mySegments) { }
+            @Override
+            public void clear() { }
+        }; // TODO
     }
 
     private void connectToStreaming() {

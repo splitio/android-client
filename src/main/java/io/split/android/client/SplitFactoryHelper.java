@@ -298,10 +298,7 @@ class SplitFactoryHelper {
         if (config.persistentAttributesEnabled()) {
             attributesStorage = storageContainer.getPersistentAttributesStorage();
         }
-        MySegmentsSynchronizerFactory mySegmentsSynchronizerFactory = new MySegmentsSynchronizerFactoryImpl(
-                new RetryBackoffCounterTimerFactory(),
-                taskExecutor,
-                config.segmentsRefreshRate());
+        MySegmentsSynchronizerFactory mySegmentsSynchronizerFactory = new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(), taskExecutor);
 
         MySegmentsNotificationProcessorFactory mySegmentsNotificationProcessorFactory = null;
         if (config.syncEnabled()) {
