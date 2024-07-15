@@ -76,19 +76,13 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     }
 
     @Override
-    public void registerComponents(Key key, SplitEventsManager eventsManager, MySegmentsTaskFactory mySegmentsTaskFactory, MySegmentsTaskFactory myLargeSegmentsTaskFactory) {
+    public void registerComponents(Key key, SplitEventsManager eventsManager, MySegmentsTaskFactory mySegmentsTaskFactory, @Nullable MySegmentsTaskFactory myLargeSegmentsTaskFactory) {
         registerEventsManager(key, eventsManager);
 
         MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
         registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
 
-        if (mSplitConfig.largeSegmentsEnabled()) {
-            MySegmentsSynchronizer myLargeSegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(myLargeSegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
-            // registerMyLargeSegmentsSynchronizer(key, myLargeSegmentsSynchronizer); // TODO
-        }
-
         registerAttributesSynchronizer(key, eventsManager);
-
         if (isSyncEnabled()) {
             registerKeyInSeeAuthenticator(key);
             LinkedBlockingDeque<MySegmentChangeNotification> mySegmentsNotificationQueue = new LinkedBlockingDeque<>();
