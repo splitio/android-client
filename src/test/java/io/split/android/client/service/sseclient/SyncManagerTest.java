@@ -269,6 +269,50 @@ public class SyncManagerTest {
         verify(mSyncGuardian).updateLastSyncTimestamp();
     }
 
+    @Test
+    public void startCallsLoadMySegmentsFromCache() {
+        mSyncManager.start();
+
+        verify(mSynchronizer).loadMySegmentsFromCache();
+    }
+
+    @Test
+    public void startCallsSynchronizeMySegments() {
+        mSyncManager.start();
+
+        verify(mSynchronizer).synchronizeMySegments();
+    }
+
+    @Test
+    public void startDoesNotCallSynchronizeMyLargeSegmentsByDefault() {
+        mSyncManager.start();
+
+        verify(mSynchronizer, never()).synchronizeMyLargeSegments();
+    }
+
+    @Test
+    public void startDoesNotLoadLargeSegmentsFromCacheByDefault() {
+        mSyncManager.start();
+
+        verify(mSynchronizer, never()).loadMyLargeSegmentsFromCache();
+    }
+
+    @Test
+    public void startWithLargeSegmentsEnabledLoadsLargeSegmentsFromCache() {
+        when(mConfig.largeSegmentsEnabled()).thenReturn(true);
+        mSyncManager.start();
+
+        verify(mSynchronizer).loadMyLargeSegmentsFromCache();
+    }
+
+    @Test
+    public void startWithLargeSegmentsEnabledSynchronizesLargeSegments() {
+        when(mConfig.largeSegmentsEnabled()).thenReturn(true);
+        mSyncManager.start();
+
+        verify(mSynchronizer).synchronizeMyLargeSegments();
+    }
+
     private void testStartUserConsentNotGranted(UserConsent userConsent) {
         when(mConfig.userConsent()).thenReturn(userConsent);
         mSyncManager.start();
