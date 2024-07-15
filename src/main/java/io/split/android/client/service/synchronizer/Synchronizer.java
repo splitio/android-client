@@ -10,6 +10,8 @@ public interface Synchronizer extends SplitLifecycleAware {
 
     void loadMySegmentsFromCache();
 
+    void loadMyLargeSegmentsFromCache();
+
     void loadAttributesFromCache();
 
     void synchronizeSplits(long since);
@@ -18,7 +20,11 @@ public interface Synchronizer extends SplitLifecycleAware {
 
     void synchronizeMySegments();
 
+    void synchronizeMyLargeSegments();
+
     void forceMySegmentsSync();
+
+    void forMyLargeSegmentsSync();
 
     void startPeriodicFetching();
 

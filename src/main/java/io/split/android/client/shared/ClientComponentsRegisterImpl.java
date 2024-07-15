@@ -80,9 +80,17 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         registerEventsManager(key, eventsManager);
 
         MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
-        registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
+        mMySegmentsSynchronizerRegistry.registerMySegmentsSynchronizer(key.matchingKey(),
+                mySegmentsSynchronizer);
+
+        if (mSplitConfig.largeSegmentsEnabled() && myLargeSegmentsTaskFactory != null) {
+            MySegmentsSynchronizer myLargeSegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(myLargeSegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
+            mMySegmentsSynchronizerRegistry.registerMyLargeSegmentsSynchronizer(key.matchingKey(),
+                    mySegmentsSynchronizer);
+        }
 
         registerAttributesSynchronizer(key, eventsManager);
+
         if (isSyncEnabled()) {
             registerKeyInSeeAuthenticator(key);
             LinkedBlockingDeque<MySegmentChangeNotification> mySegmentsNotificationQueue = new LinkedBlockingDeque<>();
@@ -115,8 +123,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     }
 
     private void registerMySegmentsSynchronizer(Key key, MySegmentsSynchronizer mySegmentsSynchronizer) {
-        mMySegmentsSynchronizerRegistry.registerMySegmentsSynchronizer(key.matchingKey(),
-                mySegmentsSynchronizer);
+
     }
 
     private void registerMySegmentsUpdateWorker(Key key, MySegmentsSynchronizer mySegmentsSynchronizer, LinkedBlockingDeque<MySegmentChangeNotification> notificationsQueue) {
