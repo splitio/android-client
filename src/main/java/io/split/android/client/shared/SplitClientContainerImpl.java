@@ -152,7 +152,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));
         trackNewClient(key, client);
-        mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager, myLargeSegmentsTaskFactory);
+        mClientComponentsRegister.registerComponents(key, eventsManager, mySegmentsTaskFactory, myLargeSegmentsTaskFactory);
 
         if (mConfig.syncEnabled() && mStreamingEnabled) {
             connectToStreaming();

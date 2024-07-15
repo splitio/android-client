@@ -200,7 +200,7 @@ public class SplitClientContainerImplTest {
         when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
         mClientContainer.getClient(key);
 
-        verify(mClientComponentsRegister).registerComponents(eq(key), any(), any());
+        verify(mClientComponentsRegister).registerComponents(eq(key), any(), any(), any());
     }
 
     @Test

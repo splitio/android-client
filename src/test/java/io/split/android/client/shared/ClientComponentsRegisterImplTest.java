@@ -56,9 +56,13 @@ public class ClientComponentsRegisterImplTest {
     @Mock
     private MySegmentsTaskFactory mMySegmentsTaskFactory;
     @Mock
+    private MySegmentsTaskFactory mMyLargeSegmentsTaskFactory;
+    @Mock
     private SplitEventsManager mSplitEventsManager;
     @Mock
     private MySegmentsSynchronizer mMySegmentsSynchronizer;
+    @Mock
+    private MySegmentsSynchronizer mMyLargeSegmentsSynchronizer;
 
     private final Key mMatchingKey = new Key("matching_key", "bucketing_key");
 
@@ -68,8 +72,10 @@ public class ClientComponentsRegisterImplTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE))
+        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, 1800))
                 .thenReturn(mMySegmentsSynchronizer);
+        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMyLargeSegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, 60))
+                .thenReturn(mMyLargeSegmentsSynchronizer);
 
         register = new ClientComponentsRegisterImpl(
                 new SplitClientConfig.Builder().build(),
@@ -89,35 +95,35 @@ public class ClientComponentsRegisterImplTest {
 
     @Test
     public void attributesSynchronizerIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager,mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
 
         verify(mAttributesSynchronizerRegistry).registerAttributesSynchronizer(eq("matching_key"), any());
     }
 
     @Test
     public void mySegmentsSynchronizerIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager,mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
 
         verify(mMySegmentsSynchronizerRegistry).registerMySegmentsSynchronizer("matching_key", mMySegmentsSynchronizer);
     }
 
     @Test
     public void mySegmentsUpdateWorkerIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager,mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
 
         verify(mMySegmentsUpdateWorkerRegistry).registerMySegmentsUpdateWorker(eq("matching_key"), any());
     }
 
     @Test
     public void mySegmentsNotificationProcessorIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager,mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
 
         verify(mMySegmentsNotificationProcessorRegistry).registerMySegmentsProcessor(eq("matching_key"), any());
     }
 
     @Test
     public void eventsManagerIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager,mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
 
         verify(mEventsManagerRegistry).registerEventsManager(mMatchingKey, mSplitEventsManager);
     }

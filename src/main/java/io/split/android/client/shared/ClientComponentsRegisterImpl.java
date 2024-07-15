@@ -76,7 +76,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     }
 
     @Override
-    public void registerComponents(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, SplitEventsManager eventsManager, MySegmentsTaskFactory myLargeSegmentsTaskFactory) {
+    public void registerComponents(Key key, SplitEventsManager eventsManager, MySegmentsTaskFactory mySegmentsTaskFactory, MySegmentsTaskFactory myLargeSegmentsTaskFactory) {
         registerEventsManager(key, eventsManager);
 
         MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
