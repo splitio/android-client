@@ -7,7 +7,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronizerRegistry,
-    MySegmentsSynchronizerRegistry.Tasks{
+    MySegmentsSynchronizerRegistry.Tasks {
 
     private final AtomicBoolean mLoadedFromCache = new AtomicBoolean(false);
     private final AtomicBoolean mSynchronizedSegments = new AtomicBoolean(false);

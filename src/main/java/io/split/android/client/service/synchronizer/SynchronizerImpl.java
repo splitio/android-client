@@ -185,7 +185,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
-    public void forMyLargeSegmentsSync() {
+    public void forceMyLargeSegmentsSync() {
         mMySegmentsSynchronizerRegistry.forceMySegmentsSync(LARGE_SEGMENT);
     }
 

@@ -6,6 +6,8 @@ import static org.mockito.Mockito.verify;
 import org.junit.Before;
 import org.junit.Test;
 
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry.Tasks.SegmentType;
+
 public class MySegmentsSynchronizerRegistryImplTest {
 
     private MySegmentsSynchronizerRegistryImpl mRegistry;
@@ -20,7 +22,7 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.loadMySegmentsFromCache();
+        mRegistry.loadMySegmentsFromCache(SegmentType.SEGMENT);
 
         verify(syncMock).loadMySegmentsFromCache();
     }
@@ -30,7 +32,7 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.synchronizeMySegments();
+        mRegistry.synchronizeMySegments(SegmentType.SEGMENT);
 
         verify(syncMock).synchronizeMySegments();
     }
@@ -40,7 +42,7 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.forceMySegmentsSync();
+        mRegistry.forceMySegmentsSync(SegmentType.SEGMENT);
 
         verify(syncMock).forceMySegmentsSync();
     }
@@ -60,7 +62,7 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.scheduleSegmentsSyncTask();
+        mRegistry.scheduleSegmentsSyncTask(SegmentType.SEGMENT);
 
         verify(syncMock).scheduleSegmentsSyncTask();
     }
@@ -70,7 +72,7 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.submitMySegmentsLoadingTask();
+        mRegistry.submitMySegmentsLoadingTask(SegmentType.SEGMENT);
 
         verify(syncMock).submitMySegmentsLoadingTask();
     }
@@ -102,7 +104,7 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock2 = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.loadMySegmentsFromCache();
+        mRegistry.loadMySegmentsFromCache(SegmentType.SEGMENT);
         mRegistry.registerMySegmentsSynchronizer("new_key", syncMock2);
 
         verify(syncMock2).loadMySegmentsFromCache();
@@ -114,7 +116,7 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock2 = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.synchronizeMySegments();
+        mRegistry.synchronizeMySegments(SegmentType.SEGMENT);
         mRegistry.registerMySegmentsSynchronizer("new_key", syncMock2);
 
         verify(syncMock2).synchronizeMySegments();
@@ -126,7 +128,7 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock2 = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.scheduleSegmentsSyncTask();
+        mRegistry.scheduleSegmentsSyncTask(SegmentType.SEGMENT);
         mRegistry.registerMySegmentsSynchronizer("new_key", syncMock2);
 
         verify(syncMock2).scheduleSegmentsSyncTask();

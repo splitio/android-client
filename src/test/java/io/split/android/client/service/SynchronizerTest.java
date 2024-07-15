@@ -77,6 +77,7 @@ import io.split.android.client.service.synchronizer.attributes.AttributesSynchro
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
+import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry.Tasks.SegmentType;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.common.SplitStorageContainer;
@@ -215,7 +216,7 @@ public class SynchronizerTest {
         mSynchronizer.startPeriodicRecording();
 
         verify(mFeatureFlagsSynchronizer).startPeriodicFetching();
-        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask();
+        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask(SegmentType.SEGMENT);
         verify(mTaskExecutor).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
@@ -537,7 +538,7 @@ public class SynchronizerTest {
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
         verify(mFeatureFlagsSynchronizer).loadAndSynchronize();
-        verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache();
+        verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache(SegmentType.SEGMENT);
         verify(mAttributesSynchronizerRegistry).loadAttributesFromCache();
     }
 
@@ -596,7 +597,7 @@ public class SynchronizerTest {
 
         mSynchronizer.loadMySegmentsFromCache();
 
-        verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache();
+        verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache(SegmentType.SEGMENT);
     }
 
     @Test
@@ -605,7 +606,7 @@ public class SynchronizerTest {
 
         mSynchronizer.synchronizeMySegments();
 
-        verify(mMySegmentsSynchronizerRegistry).synchronizeMySegments();
+        verify(mMySegmentsSynchronizerRegistry).synchronizeMySegments(SegmentType.SEGMENT);
     }
 
     @Test
@@ -614,7 +615,7 @@ public class SynchronizerTest {
 
         mSynchronizer.forceMySegmentsSync();
 
-        verify(mMySegmentsSynchronizerRegistry).forceMySegmentsSync();
+        verify(mMySegmentsSynchronizerRegistry).forceMySegmentsSync(SegmentType.SEGMENT);
     }
 
     @Test
@@ -632,7 +633,7 @@ public class SynchronizerTest {
 
         mSynchronizer.startPeriodicFetching();
 
-        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask();
+        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask(SegmentType.SEGMENT);
     }
 
     @Test
@@ -690,7 +691,7 @@ public class SynchronizerTest {
 
         mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC));
 
-        verify(mMySegmentsSynchronizerRegistry).submitMySegmentsLoadingTask();
+        verify(mMySegmentsSynchronizerRegistry).submitMySegmentsLoadingTask(SegmentType.SEGMENT);
     }
 
     @Test

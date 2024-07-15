@@ -24,7 +24,7 @@ public interface Synchronizer extends SplitLifecycleAware {
 
     void forceMySegmentsSync();
 
-    void forMyLargeSegmentsSync();
+    void forceMyLargeSegmentsSync();
 
     void startPeriodicFetching();
 
