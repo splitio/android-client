@@ -1,5 +1,7 @@
 package io.split.android.client.service.synchronizer;
 
+import static io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry.Tasks.SegmentType.LARGE_SEGMENT;
+import static io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry.Tasks.SegmentType.SEGMENT;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
@@ -35,7 +37,8 @@ import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreaming
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
 
-public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegistry, AttributesSynchronizerRegistry {
+public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener,
+        MySegmentsSynchronizerRegistry, AttributesSynchronizerRegistry {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitTaskExecutor mSingleThreadTaskExecutor;
@@ -138,7 +141,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadMySegmentsFromCache() {
-        mMySegmentsSynchronizerRegistry.loadMySegmentsFromCache();
+        mMySegmentsSynchronizerRegistry.loadMySegmentsFromCache(SEGMENT);
+    }
+
+    @Override
+    public void loadMyLargeSegmentsFromCache() {
+        mMySegmentsSynchronizerRegistry.loadMySegmentsFromCache(LARGE_SEGMENT);
     }
 
     @Override
@@ -163,12 +171,22 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeMySegments() {
-        mMySegmentsSynchronizerRegistry.synchronizeMySegments();
+        mMySegmentsSynchronizerRegistry.synchronizeMySegments(SEGMENT);
+    }
+
+    @Override
+    public void synchronizeMyLargeSegments() {
+        mMySegmentsSynchronizerRegistry.synchronizeMySegments(LARGE_SEGMENT);
     }
 
     @Override
     public void forceMySegmentsSync() {
-        mMySegmentsSynchronizerRegistry.forceMySegmentsSync();
+        mMySegmentsSynchronizerRegistry.forceMySegmentsSync(SEGMENT);
+    }
+
+    @Override
+    public void forceMyLargeSegmentsSync() {
+        mMySegmentsSynchronizerRegistry.forceMySegmentsSync(LARGE_SEGMENT);
     }
 
     @Override
@@ -268,6 +286,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
+    public void registerMyLargeSegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
+        mMySegmentsSynchronizerRegistry.registerMyLargeSegmentsSynchronizer(userKey, mySegmentsSynchronizer);
+    }
+
+    @Override
     public void unregisterMySegmentsSynchronizer(String userKey) {
         mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(userKey);
     }
@@ -283,7 +306,10 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void scheduleMySegmentsFetcherTask() {
-        mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask();
+        mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask(SEGMENT);
+        if (mSplitClientConfig.largeSegmentsEnabled()) {
+            mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask(LARGE_SEGMENT);
+        }
     }
 
     private void scheduleEventsRecorderTask() {
@@ -306,7 +332,11 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 break;
             case MY_SEGMENTS_SYNC:
                 Logger.d("Loading my segments updated in background");
-                mMySegmentsSynchronizerRegistry.submitMySegmentsLoadingTask();
+                mMySegmentsSynchronizerRegistry.submitMySegmentsLoadingTask(SEGMENT);
+                break;
+            case MY_LARGE_SEGMENT_SYNC:
+                Logger.d("Loading my large segments updated in background");
+                mMySegmentsSynchronizerRegistry.submitMySegmentsLoadingTask(LARGE_SEGMENT);
                 break;
         }
     }
