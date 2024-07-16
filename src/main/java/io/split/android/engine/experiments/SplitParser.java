@@ -61,7 +61,8 @@ public class SplitParser {
     }
 
     @VisibleForTesting
-    SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, @NonNull DefaultConditionsProvider defaultConditionsProvider) {
+    SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
+                @NonNull DefaultConditionsProvider defaultConditionsProvider) {
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
         mDefaultConditionsProvider = checkNotNull(defaultConditionsProvider);
     }
@@ -153,6 +154,10 @@ public class SplitParser {
             case IN_SEGMENT:
                 checkNotNull(matcher.userDefinedSegmentMatcherData);
                 delegate = new MySegmentsMatcher((matchingKey != null) ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedSegmentMatcherData.segmentName);
+                break;
+            case IN_LARGE_SEGMENT:
+                checkNotNull(matcher.userDefinedSegmentMatcherData);
+                delegate = new MySegmentsMatcher((matchingKey != null) ? mMySegmentsStorageContainer.getLargeSegmentsStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedSegmentMatcherData.segmentName);
                 break;
             case WHITELIST:
                 checkNotNull(matcher.whitelistMatcherData);
