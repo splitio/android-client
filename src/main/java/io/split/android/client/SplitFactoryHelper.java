@@ -476,7 +476,7 @@ class SplitFactoryHelper {
         return StorageFactory.getTelemetryStorage(shouldRecordTelemetry);
     }
 
-    private static class MySegmentsUriBuilder implements MySegmentsFetcherFactory.UriBuilder {
+    static class MySegmentsUriBuilder implements MySegmentsFetcherFactory.UriBuilder {
         private final String mEndpoint;
 
         public MySegmentsUriBuilder(String endpoint) {
@@ -489,7 +489,7 @@ class SplitFactoryHelper {
         }
     }
 
-    private static class MyLargeSegmentsUriBuilder implements MySegmentsFetcherFactory.UriBuilder {
+    static class MyLargeSegmentsUriBuilder implements MySegmentsFetcherFactory.UriBuilder {
         private final String mEndpoint;
 
         public MyLargeSegmentsUriBuilder(String endpoint) {
