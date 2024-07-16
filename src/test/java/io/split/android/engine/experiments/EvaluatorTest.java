@@ -32,14 +32,16 @@ public class EvaluatorTest {
     private Evaluator evaluator;
 
     @Before
-    public void loadSplitsFromFile(){
-        if(evaluator == null) {
+    public void loadSplitsFromFile() {
+        if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
+            MySegmentsStorage myLargeSegmentsStorage = mock(MySegmentsStorage.class);
             MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet<>(Arrays.asList("s1", "s2", "test_copy"));
+            Set<String> myLargeSegments = new HashSet<>(Arrays.asList("segment2"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
             SplitParser splitParser = new SplitParser(mySegmentsStorageContainer);
 
@@ -50,7 +52,9 @@ public class EvaluatorTest {
             when(splitsStorage.get("Test")).thenReturn(splitsMap.get("Test"));
 
             when(mySegmentsStorageContainer.getStorageForKey(any())).thenReturn(mySegmentsStorage);
+            when(mySegmentsStorageContainer.getLargeSegmentsStorageForKey("anyKey")).thenReturn(myLargeSegmentsStorage);
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
+            when(myLargeSegmentsStorage.getAll()).thenReturn(myLargeSegments);
 
             evaluator = new EvaluatorImpl(splitsStorage, splitParser);
         }
@@ -96,6 +100,16 @@ public class EvaluatorTest {
         Assert.assertNotNull(result);
         Assert.assertEquals("off", result.getTreatment());
         Assert.assertNull(result.getConfigurations());
+        Assert.assertEquals("whitelisted segment", result.getLabel());
+    }
+
+    @Test
+    public void testInLargeSegmentKey() {
+        String matchingKey = "anyKey";
+        String splitName = "a_new_split_2";
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
+        Assert.assertNotNull(result);
+        Assert.assertEquals("on", result.getTreatment());
         Assert.assertEquals("whitelisted segment", result.getLabel());
     }
 
@@ -174,7 +188,7 @@ public class EvaluatorTest {
 
     private Map<String, Split> splitsMap(List<Split> splits) {
         Map<String, Split> splitsMap = new HashMap<>();
-        for(Split split : splits) {
+        for (Split split : splits) {
             splitsMap.put(split.name, split);
         }
         return splitsMap;

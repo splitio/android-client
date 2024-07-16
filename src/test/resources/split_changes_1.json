@@ -298,6 +298,35 @@
             "matchers":[
               {
                 "keySelector":null,
+                "matcherType":"IN_LARGE_SEGMENT",
+                "negate":false,
+                "userDefinedSegmentMatcherData":{
+                  "segmentName":"segment2"
+                },
+                "whitelistMatcherData":null,
+                "unaryNumericMatcherData":null,
+                "betweenMatcherData":null,
+                "booleanMatcherData":null,
+                "dependencyMatcherData":null,
+                "stringMatcherData":null
+              }
+            ]
+          },
+          "partitions":[
+            {
+              "treatment":"on",
+              "size":100
+            }
+          ],
+          "label":"whitelisted segment"
+        },
+        {
+          "conditionType":"WHITELIST",
+          "matcherGroup":{
+            "combiner":"AND",
+            "matchers":[
+              {
+                "keySelector":null,
                 "matcherType":"WHITELIST",
                 "negate":false,
                 "userDefinedSegmentMatcherData":null,
