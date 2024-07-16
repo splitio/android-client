@@ -149,7 +149,7 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
 
     @Override
     public void registerMyLargeSegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
-
+        ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMyLargeSegmentsSynchronizer(userKey, mySegmentsSynchronizer);
     }
 
     @Override

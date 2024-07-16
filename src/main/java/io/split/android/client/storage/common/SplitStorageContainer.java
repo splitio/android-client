@@ -24,6 +24,7 @@ public class SplitStorageContainer {
 
     private final SplitsStorage mSplitStorage;
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
+    private final MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
     private final PersistentSplitsStorage mPersistentSplitsStorage;
     private final PersistentEventsStorage mPersistentEventsStorage;
     private final EventsStorage mEventsStorage;
@@ -38,6 +39,7 @@ public class SplitStorageContainer {
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
+                                 @NonNull MySegmentsStorageContainer myLargeSegmentsStorageContainer,
                                  @NonNull PersistentSplitsStorage persistentSplitsStorage,
                                  @NonNull EventsStorage eventsStorage,
                                  @NonNull PersistentEventsStorage persistentEventsStorage,
@@ -52,6 +54,7 @@ public class SplitStorageContainer {
 
         mSplitStorage = checkNotNull(splitStorage);
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
+        mMyLargeSegmentsStorageContainer = checkNotNull(myLargeSegmentsStorageContainer);
         mPersistentSplitsStorage = checkNotNull(persistentSplitsStorage);
         mEventsStorage = checkNotNull(eventsStorage);
         mPersistentEventsStorage = checkNotNull(persistentEventsStorage);
@@ -75,6 +78,10 @@ public class SplitStorageContainer {
 
     public MySegmentsStorage getMySegmentsStorage(String matchingKey) {
         return mMySegmentsStorageContainer.getStorageForKey(matchingKey);
+    }
+
+    public MySegmentsStorage getMyLargeSegmentsStorage(String matchingKey) {
+        return mMyLargeSegmentsStorageContainer.getStorageForKey(matchingKey);
     }
 
     public PersistentSplitsStorage getPersistentSplitsStorage() {

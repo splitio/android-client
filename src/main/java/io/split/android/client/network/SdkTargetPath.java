@@ -1,5 +1,7 @@
 package io.split.android.client.network;
 
+import androidx.annotation.Nullable;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -8,6 +10,7 @@ import io.split.android.client.utils.Utils;
 public class SdkTargetPath {
     public static final String SPLIT_CHANGES = "/splitChanges";
     public static final String MY_SEGMENTS = "/mySegments";
+    public static final String MY_LARGE_SEGMENTS = "/myLargeSegments";
     public static final String EVENTS = "/events/bulk";
     public static final String IMPRESSIONS = "/testImpressions/bulk";
     public static final String IMPRESSIONS_COUNT = "/testImpressions/count";
@@ -21,8 +24,11 @@ public class SdkTargetPath {
     }
 
     public static URI mySegments(String baseUrl, String key) throws URISyntaxException {
-        String encodedKey = key != null ? UrlEscapers.urlPathSegmentEscaper().escape(key) : null;
-        return buildUrl(baseUrl, MY_SEGMENTS + "/" + encodedKey);
+        return buildUrl(baseUrl, MY_SEGMENTS + "/" + getUrlEncodedKey(key));
+    }
+
+    public static URI myLargeSegments(String baseUrl, String key) throws URISyntaxException {
+        return buildUrl(baseUrl, MY_LARGE_SEGMENTS + "/" + getUrlEncodedKey(key));
     }
 
     public static URI events(String baseUrl) throws URISyntaxException {
@@ -72,5 +78,10 @@ public class SdkTargetPath {
         return sourceString == null || sourceString.length() == 0
                 ? sourceString
                 : (sourceString.substring(0, sourceString.length() - 1));
+    }
+
+    @Nullable
+    private static String getUrlEncodedKey(String key) {
+        return key != null ? UrlEscapers.urlPathSegmentEscaper().escape(key) : null;
     }
 }
