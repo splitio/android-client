@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,15 +43,24 @@ public class EvaluatorTest {
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet<>(Arrays.asList("s1", "s2", "test_copy"));
-            Set<String> myLargeSegments = new HashSet<>(Arrays.asList("segment2"));
+            Set<String> myLargeSegments = new HashSet<>(Arrays.asList("segment1"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
             SplitParser splitParser = new SplitParser(mySegmentsStorageContainer);
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);
+            when(splitsStorage.get(any())).thenAnswer(new Answer<Split>() {
+                @Override
+                public Split answer(InvocationOnMock invocation) throws Throwable {
+                    return splitsMap.get(invocation.getArgument(0));
+                }
+            });
+
+
             when(splitsStorage.get("FACUNDO_TEST")).thenReturn(splitsMap.get("FACUNDO_TEST"));
             when(splitsStorage.get("a_new_split_2")).thenReturn(splitsMap.get("a_new_split_2"));
             when(splitsStorage.get("Test")).thenReturn(splitsMap.get("Test"));
+            when(splitsStorage.get("ls_split")).thenReturn(splitsMap.get("ls_split"));
 
             when(mySegmentsStorageContainer.getStorageForKey(any())).thenReturn(mySegmentsStorage);
             when(mySegmentsStorageContainer.getLargeSegmentsStorageForKey("anyKey")).thenReturn(myLargeSegmentsStorage);
@@ -106,7 +117,7 @@ public class EvaluatorTest {
     @Test
     public void testInLargeSegmentKey() {
         String matchingKey = "anyKey";
-        String splitName = "a_new_split_2";
+        String splitName = "ls_split";
         EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
         Assert.assertNotNull(result);
         Assert.assertEquals("on", result.getTreatment());
