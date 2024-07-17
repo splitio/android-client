@@ -157,7 +157,7 @@ public class HttpClientTest {
         assertTrue(splitChangeResp.isSuccess());
         Assert.assertEquals(-1, splitChange.since);
         Assert.assertEquals(1506703262916L, splitChange.till);
-        Assert.assertEquals(30, splitChange.splits.size());
+        Assert.assertEquals(31, splitChange.splits.size());
 
         // Assert empty response
         Assert.assertEquals(200, emptyResp.getHttpStatus());

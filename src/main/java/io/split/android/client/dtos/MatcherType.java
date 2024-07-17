@@ -7,6 +7,8 @@ public enum MatcherType {
     ALL_KEYS,
     @SerializedName("IN_SEGMENT")
     IN_SEGMENT,
+    @SerializedName("IN_LARGE_SEGMENT")
+    IN_LARGE_SEGMENT,
     @SerializedName("WHITELIST")
     WHITELIST,
 

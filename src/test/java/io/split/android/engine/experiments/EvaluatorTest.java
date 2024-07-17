@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,25 +34,38 @@ public class EvaluatorTest {
     private Evaluator evaluator;
 
     @Before
-    public void loadSplitsFromFile(){
-        if(evaluator == null) {
+    public void loadSplitsFromFile() {
+        if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
+            MySegmentsStorage myLargeSegmentsStorage = mock(MySegmentsStorage.class);
             MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet<>(Arrays.asList("s1", "s2", "test_copy"));
+            Set<String> myLargeSegments = new HashSet<>(Arrays.asList("segment1"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
             SplitParser splitParser = new SplitParser(mySegmentsStorageContainer);
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);
+            when(splitsStorage.get(any())).thenAnswer(new Answer<Split>() {
+                @Override
+                public Split answer(InvocationOnMock invocation) throws Throwable {
+                    return splitsMap.get(invocation.getArgument(0));
+                }
+            });
+
+
             when(splitsStorage.get("FACUNDO_TEST")).thenReturn(splitsMap.get("FACUNDO_TEST"));
             when(splitsStorage.get("a_new_split_2")).thenReturn(splitsMap.get("a_new_split_2"));
             when(splitsStorage.get("Test")).thenReturn(splitsMap.get("Test"));
+            when(splitsStorage.get("ls_split")).thenReturn(splitsMap.get("ls_split"));
 
             when(mySegmentsStorageContainer.getStorageForKey(any())).thenReturn(mySegmentsStorage);
+            when(mySegmentsStorageContainer.getLargeSegmentsStorageForKey("anyKey")).thenReturn(myLargeSegmentsStorage);
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
+            when(myLargeSegmentsStorage.getAll()).thenReturn(myLargeSegments);
 
             evaluator = new EvaluatorImpl(splitsStorage, splitParser);
         }
@@ -96,6 +111,16 @@ public class EvaluatorTest {
         Assert.assertNotNull(result);
         Assert.assertEquals("off", result.getTreatment());
         Assert.assertNull(result.getConfigurations());
+        Assert.assertEquals("whitelisted segment", result.getLabel());
+    }
+
+    @Test
+    public void testInLargeSegmentKey() {
+        String matchingKey = "anyKey";
+        String splitName = "ls_split";
+        EvaluationResult result = evaluator.getTreatment(matchingKey, matchingKey, splitName, null);
+        Assert.assertNotNull(result);
+        Assert.assertEquals("on", result.getTreatment());
         Assert.assertEquals("whitelisted segment", result.getLabel());
     }
 
@@ -174,7 +199,7 @@ public class EvaluatorTest {
 
     private Map<String, Split> splitsMap(List<Split> splits) {
         Map<String, Split> splitsMap = new HashMap<>();
-        for(Split split : splits) {
+        for (Split split : splits) {
             splitsMap.put(split.name, split);
         }
         return splitsMap;
