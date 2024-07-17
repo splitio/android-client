@@ -254,27 +254,33 @@ public class EventsManagerTest {
 
     @Test
     public void sdkUpdateWithFeatureFlags() throws InterruptedException {
-        sdkUpdateTest(SplitInternalEvent.SPLITS_UPDATED, false, false);
+        sdkUpdateTest(SplitInternalEvent.SPLITS_UPDATED, false, true, false);
     }
 
     @Test
     public void sdkUpdateWithMySegments() throws InterruptedException {
-        sdkUpdateTest(SplitInternalEvent.MY_SEGMENTS_UPDATED, false, false);
+        sdkUpdateTest(SplitInternalEvent.MY_SEGMENTS_UPDATED, false, true, false);
     }
 
     @Test
     public void sdkUpdateWithLargeSegmentsAndConfigDisabledDoesNotEmitEvent() throws InterruptedException {
-        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, false, true);
+        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, false, true, true);
     }
 
     @Test
     public void sdkUpdateWithLargeSegmentsAndConfigEnabledEmitsEvent() throws InterruptedException {
-        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, true, false);
+        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, true, true, false);
     }
 
-    private static void sdkUpdateTest(SplitInternalEvent mySegmentsUpdated, boolean largeSegmentsEnabled, boolean negate) throws InterruptedException {
+    @Test
+    public void sdkUpdateWithLargeSegmentsAndConfigEnabledAndWaitForLargeSegmentsFalseEmitsEvent() throws InterruptedException {
+        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, true, false, false);
+    }
+
+    private static void sdkUpdateTest(SplitInternalEvent eventToCheck, boolean largeSegmentsEnabled, boolean waitForLargeSegments, boolean negate) throws InterruptedException {
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder()
                 .largeSegmentsEnabled(largeSegmentsEnabled)
+                .waitForLargeSegments(waitForLargeSegments)
                 .build(), new SplitTaskExecutorStub());
 
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -294,12 +300,12 @@ public class EventsManagerTest {
 
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
-        if (largeSegmentsEnabled) {
+        if (largeSegmentsEnabled && waitForLargeSegments) {
             eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED);
         }
         boolean readyAwait = readyLatch.await(3, TimeUnit.SECONDS);
 
-        eventManager.notifyInternalEvent(mySegmentsUpdated);
+        eventManager.notifyInternalEvent(eventToCheck);
         boolean updateAwait = updateLatch.await(3, TimeUnit.SECONDS);
 
         assertTrue(readyAwait);
