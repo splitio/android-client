@@ -180,31 +180,12 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     private MySegmentsTaskFactory getMyLargeSegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
         if (mConfig.largeSegmentsEnabled()) {
             return mMySegmentsTaskFactoryProvider.getFactory(MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
-                    getMyLargeSegmentsFetcher(key.matchingKey()),
-                    getMyLargeSegmentsStorage(key.matchingKey()),
+                    mSplitApiFacade.getMyLargeSegmentsFetcher(key.matchingKey()),
+                    mStorageContainer.getMyLargeSegmentsStorage(key.matchingKey()),
                     eventsManager));
         } else {
             return null;
         }
-    }
-
-    private HttpFetcher<List<MySegment>> getMyLargeSegmentsFetcher(String matchingKey) {
-        // TODO: this is just a placeholder
-        return (params, headers) -> null; // TODO
-    }
-
-    private static MySegmentsStorage getMyLargeSegmentsStorage(String matchingKey) {
-        // TODO: this is just a placeholder
-        return new MySegmentsStorage() {
-            @Override
-            public void loadLocal() { }
-            @Override
-            public Set<String> getAll() { return null; }
-            @Override
-            public void set(@NonNull List<String> mySegments) { }
-            @Override
-            public void clear() { }
-        }; // TODO
     }
 
     private void connectToStreaming() {

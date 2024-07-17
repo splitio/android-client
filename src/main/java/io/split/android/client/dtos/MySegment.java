@@ -1,8 +1,18 @@
 package io.split.android.client.dtos;
 
+import com.google.gson.annotations.SerializedName;
+
 public class MySegment {
+    @SerializedName("id")
     public String id;
+    @SerializedName("name")
     public String name;
+
+    public static MySegment create(String name) {
+        MySegment mySegment = new MySegment();
+        mySegment.name = name;
+        return mySegment;
+    }
 
     @Override
     public boolean equals(Object o) {

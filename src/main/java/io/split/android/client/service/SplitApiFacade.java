@@ -22,6 +22,7 @@ import io.split.android.client.telemetry.model.Stats;
 public class SplitApiFacade {
     private final HttpFetcher<SplitChange> mSplitFetcher;
     private final MySegmentsFetcherFactory mMySegmentsFetcherFactory;
+    private final MySegmentsFetcherFactory mMyLargeSegmentsFetcherFactory;
     private final HttpFetcher<SseAuthenticationResponse> mSseAuthenticationFetcher;
     private final HttpRecorder<List<Event>> mEventsRecorder;
     private final HttpRecorder<List<KeyImpression>> mImpressionsRecorder;
@@ -32,6 +33,7 @@ public class SplitApiFacade {
 
     public SplitApiFacade(@NonNull HttpFetcher<SplitChange> splitFetcher,
                           @NonNull MySegmentsFetcherFactory mySegmentsFetcherFactory,
+                          @NonNull MySegmentsFetcherFactory myLargeSegmentsFetcherFactory,
                           @NonNull HttpFetcher<SseAuthenticationResponse> sseAuthenticationFetcher,
                           @NonNull HttpRecorder<List<Event>> eventsRecorder,
                           @NonNull HttpRecorder<List<KeyImpression>> impressionsRecorder,
@@ -41,6 +43,7 @@ public class SplitApiFacade {
                           @NonNull HttpRecorder<Stats> telemetryStatsRecorder) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mMySegmentsFetcherFactory = checkNotNull(mySegmentsFetcherFactory);
+        mMyLargeSegmentsFetcherFactory = checkNotNull(myLargeSegmentsFetcherFactory);
         mSseAuthenticationFetcher = checkNotNull(sseAuthenticationFetcher);
         mEventsRecorder = checkNotNull(eventsRecorder);
         mImpressionsRecorder = checkNotNull(impressionsRecorder);
@@ -56,6 +59,10 @@ public class SplitApiFacade {
 
     public HttpFetcher<List<MySegment>> getMySegmentsFetcher(String matchingKey) {
         return mMySegmentsFetcherFactory.getFetcher(matchingKey);
+    }
+
+    public HttpFetcher<List<MySegment>> getMyLargeSegmentsFetcher(String matchingKey) {
+        return mMyLargeSegmentsFetcherFactory.getFetcher(matchingKey);
     }
 
     public HttpFetcher<SseAuthenticationResponse> getSseAuthenticationFetcher() {

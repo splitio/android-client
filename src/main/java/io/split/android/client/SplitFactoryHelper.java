@@ -22,16 +22,20 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyConfig;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
+import io.split.android.client.service.mysegments.MyLargeSegmentsResponseParser;
+import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
@@ -161,6 +165,7 @@ class SplitFactoryHelper {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, splitCipher),
+                StorageFactory.getMyLargeSegmentsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getEventsStorage(persistentEventsStorage, isPersistenceEnabled),
                 persistentEventsStorage,
@@ -182,7 +187,11 @@ class SplitFactoryHelper {
                 ServiceFactory.getSplitsFetcher(httpClient,
                         splitClientConfig.endpoint(), splitsFilterQueryString),
                 new MySegmentsFetcherFactoryImpl(httpClient,
-                        splitClientConfig.endpoint()),
+                        splitClientConfig.endpoint(), new MySegmentsResponseParser(),
+                        new MySegmentsUriBuilder(splitClientConfig.endpoint())),
+                new MySegmentsFetcherFactoryImpl(httpClient,
+                        splitClientConfig.endpoint(), new MyLargeSegmentsResponseParser(),
+                        new MyLargeSegmentsUriBuilder(splitClientConfig.endpoint())),
                 ServiceFactory.getSseAuthenticationFetcher(httpClient,
                         splitClientConfig.authServiceUrl()),
                 ServiceFactory.getEventsRecorder(httpClient,
@@ -465,5 +474,31 @@ class SplitFactoryHelper {
             return telemetryStorage;
         }
         return StorageFactory.getTelemetryStorage(shouldRecordTelemetry);
+    }
+
+    static class MySegmentsUriBuilder implements MySegmentsFetcherFactory.UriBuilder {
+        private final String mEndpoint;
+
+        public MySegmentsUriBuilder(String endpoint) {
+            mEndpoint = endpoint;
+        }
+
+        @Override
+        public URI build(String matchingKey) throws URISyntaxException {
+            return SdkTargetPath.mySegments(mEndpoint, matchingKey);
+        }
+    }
+
+    static class MyLargeSegmentsUriBuilder implements MySegmentsFetcherFactory.UriBuilder {
+        private final String mEndpoint;
+
+        public MyLargeSegmentsUriBuilder(String endpoint) {
+            mEndpoint = endpoint;
+        }
+
+        @Override
+        public URI build(String matchingKey) throws URISyntaxException {
+            return SdkTargetPath.myLargeSegments(mEndpoint, matchingKey);
+        }
     }
 }
