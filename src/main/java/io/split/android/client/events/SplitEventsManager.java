@@ -26,6 +26,8 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     private final Map<SplitEvent, Integer> mExecutionTimes;
 
     private final SplitTaskExecutor mSplitTaskExecutor;
+    private final boolean mLargeSegmentsEnabled;
+    private final boolean mWaitForLargeSegments;
 
     public SplitEventsManager(SplitClientConfig config, SplitTaskExecutor splitTaskExecutor) {
         super();
@@ -33,6 +35,8 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
         mSubscriptions = new ConcurrentHashMap<>();
         mExecutionTimes = new ConcurrentHashMap<>();
         mResources = new SplitEventExecutorResourcesImpl();
+        mLargeSegmentsEnabled = config.largeSegmentsEnabled();
+        mWaitForLargeSegments = config.waitForLargeSegments();
         registerMaxAllowedExecutionTimesPerEvent();
 
         Runnable SDKReadyTimeout = new Runnable() {
@@ -135,9 +139,17 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
                     }
                     triggerSdkReadyIfNeeded();
                     break;
+                case MY_LARGE_SEGMENTS_UPDATED:
+                    if (mLargeSegmentsEnabled && isTriggered(SplitEvent.SDK_READY)) {
+                        trigger(SplitEvent.SDK_UPDATE);
+                        return;
+                    }
+                    triggerSdkReadyIfNeeded();
+                    break;
 
                 case SPLITS_FETCHED:
                 case MY_SEGMENTS_FETCHED:
+                case MY_LARGE_SEGMENTS_FETCHED:
                     if (isTriggered(SplitEvent.SDK_READY)) {
                         return;
                     }
@@ -146,12 +158,14 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
                 case SPLITS_LOADED_FROM_STORAGE:
                 case MY_SEGMENTS_LOADED_FROM_STORAGE:
+                case MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE:
                 case ATTRIBUTES_LOADED_FROM_STORAGE:
                 case ENCRYPTION_MIGRATION_DONE:
                     if (wasTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE) &&
-                            wasTriggered(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE)) {
+                            wasTriggered(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE) &&
+                            (!mLargeSegmentsEnabled || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE))) {
                         trigger(SplitEvent.SDK_READY_FROM_CACHE);
                     }
                     break;
@@ -184,6 +198,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     private void triggerSdkReadyIfNeeded() {
         if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED)) &&
                 (wasTriggered(SplitInternalEvent.SPLITS_UPDATED) || wasTriggered(SplitInternalEvent.SPLITS_FETCHED)) &&
+                (!mWaitForLargeSegments || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED)) &&
                 !isTriggered(SplitEvent.SDK_READY)) {
             trigger(SplitEvent.SDK_READY);
         }
@@ -202,8 +217,10 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
         } //If executionTimes is lower than zero, execute it without limitation
         if (mSubscriptions.containsKey(event)) {
             List<SplitEventTask> toExecute = mSubscriptions.get(event);
-            for (SplitEventTask task : toExecute) {
-                executeTask(event, task);
+            if (toExecute != null) {
+                for (SplitEventTask task : toExecute) {
+                    executeTask(event, task);
+                }
             }
         }
     }
