@@ -94,4 +94,8 @@ public class NotificationParser {
 
         return null;
     }
+
+    public MyLargeSegmentChangeNotification parseMyLargeSegmentUpdate(String jsonData) {
+        return Json.fromJson(jsonData, MyLargeSegmentChangeNotification.class);
+    }
 }
