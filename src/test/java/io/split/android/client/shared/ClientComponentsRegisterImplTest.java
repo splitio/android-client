@@ -13,6 +13,8 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigInteger;
+
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerRegistry;
@@ -74,6 +76,8 @@ public class ClientComponentsRegisterImplTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        when(mMySegmentsV2PayloadDecoder.hashKey("matching_key")).thenReturn(BigInteger.valueOf(123));
 
         when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, 1800))
                 .thenReturn(mMySegmentsSynchronizer);
