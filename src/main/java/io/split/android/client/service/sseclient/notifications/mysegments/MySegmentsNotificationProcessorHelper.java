@@ -6,15 +6,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.common.CompressionType;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
-import io.split.android.client.service.sseclient.notifications.HashingAlgorithm;
 import io.split.android.client.service.sseclient.notifications.KeyList;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
@@ -40,7 +37,7 @@ public class MySegmentsNotificationProcessorHelper {
         mConfiguration = checkNotNull(configuration);
     }
 
-    void processAccordingToUpdateStrategy(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, @Nullable DeferredSyncConfig deferredSyncConfig) {
+    void processAccordingToUpdateStrategy(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, @Nullable MySegmentsDeferredSyncConfig deferredSyncConfig) {
         try {
             switch (updateStrategy) {
                 case UNBOUNDED_FETCH_REQUEST:
@@ -72,8 +69,8 @@ public class MySegmentsNotificationProcessorHelper {
         }
     }
 
-    private void notifyMySegmentRefreshNeeded(DeferredSyncConfig deferredSyncConfig) {
-        mConfiguration.getMySegmentUpdateNotificationsQueue().offer(new MySegmentChangeNotification());
+    private void notifyMySegmentRefreshNeeded(MySegmentsDeferredSyncConfig deferredSyncConfig) {
+        mConfiguration.getMySegmentUpdateNotificationsQueue().offer(deferredSyncConfig);
     }
 
     private void removeSegment(Set<String> segmentNames) {
@@ -85,7 +82,7 @@ public class MySegmentsNotificationProcessorHelper {
         mSplitTaskExecutor.submit(task, null);
     }
 
-    private void executeBoundedFetch(byte[] keyMap, DeferredSyncConfig deferredSyncConfig) {
+    private void executeBoundedFetch(byte[] keyMap, MySegmentsDeferredSyncConfig deferredSyncConfig) {
         int index = mMySegmentsPayloadDecoder.computeKeyIndex(mConfiguration.getHashedUserKey(), keyMap.length);
         if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap, index)) {
             Logger.d("Executing Unbounded my segment fetch request");
@@ -108,30 +105,5 @@ public class MySegmentsNotificationProcessorHelper {
         Logger.d("Executing KeyList my segment fetch request: Adding = " + actionIsAdd);
         MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(actionIsAdd, segmentNames);
         mSplitTaskExecutor.submit(task, null);
-    }
-
-    static class DeferredSyncConfig {
-
-        private final int mAlgorithmSeed;
-        private final HashingAlgorithm mHashingAlgorithm;
-        private final long mUpdateIntervalMs;
-
-        private DeferredSyncConfig(int algorithmSeed, HashingAlgorithm hashingAlgorithm, long updateIntervalMs) {
-            mAlgorithmSeed = algorithmSeed;
-            mHashingAlgorithm = hashingAlgorithm;
-            mUpdateIntervalMs = updateIntervalMs;
-        }
-
-        static DeferredSyncConfig createDefault() {
-            return new DeferredSyncConfig(0, HashingAlgorithm.MURMUR3_32, TimeUnit.SECONDS.toMillis(60));
-        }
-
-        static DeferredSyncConfig create(Integer algorithmSeed, HashingAlgorithm hashingAlgorithm, Long updateIntervalMs) {
-            if (algorithmSeed == null || hashingAlgorithm == null || updateIntervalMs == null) {
-                return createDefault();
-            }
-
-            return new DeferredSyncConfig(algorithmSeed, hashingAlgorithm, updateIntervalMs);
-        }
     }
 }

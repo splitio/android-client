@@ -22,10 +22,10 @@ public class MyLargeSegmentsNotificationProcessorImpl implements MyLargeSegments
 
     @Override
     public void process(MyLargeSegmentChangeNotification notification) {
-        MySegmentsNotificationProcessorHelper.DeferredSyncConfig deferredSyncConfig = MySegmentsNotificationProcessorHelper.DeferredSyncConfig
+        MySegmentsDeferredSyncConfig deferredSyncConfig = MySegmentsDeferredSyncConfig
                 .create(notification.getAlgorithmSeed(),
                         notification.getHashingAlgorithm(),
-                        notification.getUpdateIntervalMs());
+                        notification.getUpdateIntervalMs(), false);
         mHelper.processAccordingToUpdateStrategy(notification.getUpdateStrategy(), notification.getData(), notification.getCompression(), notification.getLargeSegments(), deferredSyncConfig);
     }
 }

@@ -35,7 +35,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
     @Override
     public void processMySegmentsUpdate(MySegmentChangeNotification notification) {
         if (!notification.isIncludesPayload()) {
-            mConfiguration.getMySegmentUpdateNotificationsQueue().offer(notification);
+            mConfiguration.getMySegmentUpdateNotificationsQueue().offer(MySegmentsDeferredSyncConfig.createDefault(true));
         } else {
             List<String> segmentList = notification.getSegmentList() != null ? notification.getSegmentList() : new ArrayList<>();
             MySegmentsOverwriteTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsOverwriteTask(segmentList);
