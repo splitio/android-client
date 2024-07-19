@@ -20,6 +20,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
+import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactory;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorRegistry;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
@@ -108,7 +109,7 @@ public class ClientComponentsRegisterImplTest {
     public void mySegmentsNotificationProcessorIsRegistered() {
         register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
 
-        verify(mMySegmentsNotificationProcessorRegistry).registerMySegmentsProcessor(eq("matching_key"), any());
+        verify(mMySegmentsNotificationProcessorRegistry).registerMySegmentsProcessor(eq("matching_key"), (MySegmentsNotificationProcessor) any());
     }
 
     @Test

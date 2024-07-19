@@ -10,10 +10,19 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
 
     private final AtomicBoolean mStarted = new AtomicBoolean(false);
     private final ConcurrentMap<String, MySegmentsUpdateWorker> mMySegmentUpdateWorkers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, MySegmentsUpdateWorker> mMyLargeSegmentsUpdateWorkers = new ConcurrentHashMap<>();
 
     @Override
     public synchronized void registerMySegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker) {
         mMySegmentUpdateWorkers.put(matchingKey, mySegmentsUpdateWorker);
+        if (mStarted.get()) {
+            mySegmentsUpdateWorker.start();
+        }
+    }
+
+    @Override
+    public void registerMyLargeSegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker) {
+        mMyLargeSegmentsUpdateWorkers.put(matchingKey, mySegmentsUpdateWorker);
         if (mStarted.get()) {
             mySegmentsUpdateWorker.start();
         }
@@ -26,6 +35,12 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
             mySegmentsUpdateWorker.stop();
         }
         mMySegmentUpdateWorkers.remove(matchingKey);
+
+        MySegmentsUpdateWorker myLargeSegmentsUpdateWorker = mMyLargeSegmentsUpdateWorkers.get(matchingKey);
+        if (myLargeSegmentsUpdateWorker != null) {
+            myLargeSegmentsUpdateWorker.stop();
+        }
+        mMyLargeSegmentsUpdateWorkers.remove(matchingKey);
     }
 
     @Override
@@ -38,6 +53,10 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
             for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
                 mySegmentsUpdateWorker.start();
             }
+
+            for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMyLargeSegmentsUpdateWorkers.values()) {
+                mySegmentsUpdateWorker.start();
+            }
         }
     }
 
@@ -45,6 +64,10 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
     public void stop() {
         if (mStarted.getAndSet(false)) {
             for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
+                mySegmentsUpdateWorker.stop();
+            }
+
+            for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMyLargeSegmentsUpdateWorkers.values()) {
                 mySegmentsUpdateWorker.stop();
             }
         }

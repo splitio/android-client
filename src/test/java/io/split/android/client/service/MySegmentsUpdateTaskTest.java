@@ -17,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -61,7 +62,7 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void correctExecution() throws HttpFetcherException {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
@@ -77,7 +78,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void correctExecutionToEraseNotInSegments() throws HttpFetcherException {
         String otherSegment = "OtherSegment";
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, otherSegment, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(otherSegment), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -90,7 +91,7 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void storageException() {
 
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(any());
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -101,7 +102,7 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void successfulAddOperationIsRecordedInTelemetry() {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, Collections.singleton(mSegmentToRemove), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         mTask.execute();
 
@@ -110,7 +111,7 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void successfulRemoveOperationIsRecordedInTelemetry() {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, mSegmentToRemove, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         mTask.execute();
 

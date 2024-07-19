@@ -3,6 +3,7 @@ package io.split.android.client.service.sseclient.notifications.mysegments;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
@@ -23,7 +24,9 @@ import org.mockito.MockitoAnnotations;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.common.CompressionUtilProvider;
@@ -76,7 +79,7 @@ public class MySegmentsNotificationProcessorImplTest {
         when(mMySegmentsPayloadDecoder.hashKey(anyString())).thenReturn(mHashedUserKey);
         when(mIncomingNotification.getJsonData()).thenReturn("{}");
         when(mIncomingNotificationV2.getJsonData()).thenReturn("{}");
-        when(mSplitTaskFactory.createMySegmentsUpdateTask(anyBoolean(), anyString()))
+        when(mSplitTaskFactory.createMySegmentsUpdateTask(anyBoolean(), anySet()))
                 .thenReturn(Mockito.mock(MySegmentsUpdateTask.class));
         when(mSplitTaskFactory.createMySegmentsOverwriteTask(any()))
                 .thenReturn(Mockito.mock(MySegmentsOverwriteTask.class));
@@ -169,11 +172,11 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdateV2(mIncomingNotificationV2);
 
-        ArgumentCaptor<String> messageCaptor =
-                ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Set> messageCaptor =
+                ArgumentCaptor.forClass(Set.class);
         verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(anyBoolean(), messageCaptor.capture());
 
-        Assert.assertEquals(segmentName, messageCaptor.getValue());
+        Assert.assertEquals(Collections.singleton(segmentName), messageCaptor.getValue());
     }
 
     @Test
@@ -212,20 +215,20 @@ public class MySegmentsNotificationProcessorImplTest {
     public void mySegmentsUpdateV2KeyListNotificationAdd() {
         String segment = "TheSegment";
         mySegmentsUpdateV2KeyListNotification(segment, ADD);
-        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(true, segment);
+        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(true, Collections.singleton(segment));
     }
 
     @Test
     public void mySegmentsUpdateV2KeyListNotificationRemove() {
         String segment = "TheSegment";
         mySegmentsUpdateV2KeyListNotification(segment, REMOVE);
-        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(false, segment);
+        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(false, Collections.singleton(segment));
     }
 
     @Test
     public void mySegmentsUpdateV2KeyListNotificationNone() {
         mySegmentsUpdateV2KeyListNotification("", NONE);
-        verify(mSplitTaskFactory, never()).createMySegmentsUpdateTask(anyBoolean(), anyString());
+        verify(mSplitTaskFactory, never()).createMySegmentsUpdateTask(anyBoolean(), anySet());
     }
 
     @Test

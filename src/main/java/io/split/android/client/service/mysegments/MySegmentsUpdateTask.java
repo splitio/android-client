@@ -19,7 +19,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsUpdateTask implements SplitTask {
 
-    private final String mSegmentName;
+    private final Set<String> mSegmentNames;
     private final MySegmentsStorage mMySegmentsStorage;
     private final SplitEventsManager mEventsManager;
     private final boolean mIsAddOperation;
@@ -30,12 +30,12 @@ public class MySegmentsUpdateTask implements SplitTask {
 
     public MySegmentsUpdateTask(@NonNull MySegmentsStorage mySegmentsStorage,
                                 boolean add,
-                                @NonNull String segmentName,
+                                @NonNull Set<String> segmentNames,
                                 @NonNull SplitEventsManager eventsManager,
                                 @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                                 @NonNull MySegmentsUpdateTaskConfig config) {
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
-        mSegmentName = checkNotNull(segmentName);
+        mSegmentNames = checkNotNull(segmentNames);
         mIsAddOperation = add;
         mEventsManager = checkNotNull(eventsManager);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
@@ -56,31 +56,32 @@ public class MySegmentsUpdateTask implements SplitTask {
     private SplitTaskExecutionInfo add() {
         try {
             Set<String> segments = mMySegmentsStorage.getAll();
-            if (!segments.contains(mSegmentName)) {
-                segments.add(mSegmentName);
+            if (!segments.contains(mSegmentNames)) {
+                segments.addAll(mSegmentNames);
                 updateAndNotify(segments);
             }
             mTelemetryRuntimeProducer.recordUpdatesFromSSE(mTelemetrySSEKey);
         } catch (Exception e) {
-            logError("Unknown error while adding segment " + mSegmentName + ": " + e.getLocalizedMessage());
+            logError("Unknown error while adding segment " + mSegmentNames + ": " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(mTaskType);
         }
-        Logger.d("My Segments have been updated. Added " + mSegmentName);
+        Logger.d("My Segments have been updated. Added " + mSegmentNames);
         return SplitTaskExecutionInfo.success(mTaskType);
     }
 
     public SplitTaskExecutionInfo remove() {
         try {
             Set<String> segments = mMySegmentsStorage.getAll();
-            if(segments.remove(mSegmentName)) {
+
+            if (segments.removeAll(mSegmentNames)) {
                 updateAndNotify(segments);
             }
             mTelemetryRuntimeProducer.recordUpdatesFromSSE(mTelemetrySSEKey);
         } catch (Exception e) {
-            logError("Unknown error while removing segment " + mSegmentName + ": " + e.getLocalizedMessage());
+            logError("Unknown error while removing segment " + mSegmentNames + ": " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(mTaskType);
         }
-        Logger.d("My Segments have been updated. Removed " + mSegmentName);
+        Logger.d("My Segments have been updated. Removed " + mSegmentNames);
         return SplitTaskExecutionInfo.success(mTaskType);
     }
 

@@ -34,4 +34,13 @@ public class MySegmentsNotificationProcessorFactoryImpl implements MySegmentsNot
                 mCompressionProvider,
                 checkNotNull(configuration));
     }
+
+    @Override
+    public MyLargeSegmentsNotificationProcessor getForLargeSegments(@NonNull MySegmentsNotificationProcessorConfiguration configuration) {
+        return new MyLargeSegmentsNotificationProcessorImpl(mNotificationParser,
+                mSplitTaskExecutor,
+                mMySegmentsPayloadDecoder,
+                mCompressionProvider,
+                checkNotNull(configuration));
+    }
 }

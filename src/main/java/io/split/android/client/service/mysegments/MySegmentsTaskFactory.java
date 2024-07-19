@@ -1,6 +1,7 @@
 package io.split.android.client.service.mysegments;
 
 import java.util.List;
+import java.util.Set;
 
 public interface MySegmentsTaskFactory {
 
@@ -10,5 +11,5 @@ public interface MySegmentsTaskFactory {
 
     MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments);
 
-    MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, String segmentName);
+    MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, Set<String> segmentName);
 }

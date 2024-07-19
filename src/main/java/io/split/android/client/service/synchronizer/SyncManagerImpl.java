@@ -266,11 +266,25 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void registerMySegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker) {
+        if (mMySegmentsUpdateWorkerRegistry == null) {
+            return;
+        }
         mMySegmentsUpdateWorkerRegistry.registerMySegmentsUpdateWorker(matchingKey, mySegmentsUpdateWorker);
     }
 
     @Override
+    public void registerMyLargeSegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker) {
+        if (mMySegmentsUpdateWorkerRegistry == null) {
+            return;
+        }
+        mMySegmentsUpdateWorkerRegistry.registerMyLargeSegmentsUpdateWorker(matchingKey, mySegmentsUpdateWorker);
+    }
+
+    @Override
     public void unregisterMySegmentsUpdateWorker(String matchingKey) {
+        if (mMySegmentsUpdateWorkerRegistry == null) {
+            return;
+        }
         mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(matchingKey);
     }
 
