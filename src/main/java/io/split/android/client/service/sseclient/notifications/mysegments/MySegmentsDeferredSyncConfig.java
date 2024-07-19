@@ -18,7 +18,7 @@ public class MySegmentsDeferredSyncConfig {
         mIgnoreConfig = ignoreConfig;
     }
 
-    static MySegmentsDeferredSyncConfig createDefault(boolean ignoreConfig) {
+    public static MySegmentsDeferredSyncConfig createDefault(boolean ignoreConfig) {
         return new MySegmentsDeferredSyncConfig(0, HashingAlgorithm.MURMUR3_32, TimeUnit.SECONDS.toMillis(60), ignoreConfig);
     }
 

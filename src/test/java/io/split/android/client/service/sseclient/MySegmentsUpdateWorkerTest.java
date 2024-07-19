@@ -13,6 +13,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
+import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsDeferredSyncConfig;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 
@@ -23,7 +24,7 @@ public class MySegmentsUpdateWorkerTest {
     @Mock
     MySegmentsSynchronizer mSynchronizer;
 
-    BlockingQueue<MySegmentChangeNotification> mNotificationQueue;
+    BlockingQueue<MySegmentsDeferredSyncConfig> mNotificationQueue;
 
     @Before
     public void setup() {
@@ -36,10 +37,10 @@ public class MySegmentsUpdateWorkerTest {
     @Test
     public void mySegmentsUpdateReceived() throws InterruptedException {
 
-        mNotificationQueue.offer(new MySegmentChangeNotification());
-        mNotificationQueue.offer(new MySegmentChangeNotification());
-        mNotificationQueue.offer(new MySegmentChangeNotification());
-        mNotificationQueue.offer(new MySegmentChangeNotification());
+        mNotificationQueue.offer(MySegmentsDeferredSyncConfig.createDefault(false));
+        mNotificationQueue.offer(MySegmentsDeferredSyncConfig.createDefault(false));
+        mNotificationQueue.offer(MySegmentsDeferredSyncConfig.createDefault(false));
+        mNotificationQueue.offer(MySegmentsDeferredSyncConfig.createDefault(false));
 
         Thread.sleep(1000);
 
@@ -49,7 +50,7 @@ public class MySegmentsUpdateWorkerTest {
     @Test
     public void stopped() throws InterruptedException {
         mWorker.stop();
-        mNotificationQueue.offer(new MySegmentChangeNotification());
+        mNotificationQueue.offer(MySegmentsDeferredSyncConfig.createDefault(false));
 
         Thread.sleep(1000);
 
