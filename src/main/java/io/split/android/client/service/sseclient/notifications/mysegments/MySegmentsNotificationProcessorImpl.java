@@ -57,6 +57,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
                 notification.getData(),
                 notification.getCompression(),
                 Collections.singleton(notification.getSegmentName()),
-                mConfiguration.getMySegmentUpdateNotificationsQueue());
+                mConfiguration.getMySegmentUpdateNotificationsQueue(),
+                0);
     }
 }

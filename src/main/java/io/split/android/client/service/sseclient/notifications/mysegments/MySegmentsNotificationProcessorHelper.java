@@ -34,18 +34,18 @@ class MySegmentsNotificationProcessorHelper {
         mConfiguration = configuration;
     }
 
-    void processUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, BlockingQueue<MySegmentChangeNotification> notificationsQueue) {
+    void processUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, BlockingQueue<MySegmentChangeNotification> notificationsQueue, long syncDelay) {
         try {
             switch (updateStrategy) {
                 case UNBOUNDED_FETCH_REQUEST:
                     Logger.d("Received Unbounded my segment fetch request");
-                    notifyMySegmentRefreshNeeded(notificationsQueue);
+                    notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay);
                     break;
                 case BOUNDED_FETCH_REQUEST:
                     Logger.d("Received Bounded my segment fetch request");
                     byte[] keyMap = mMySegmentsPayloadDecoder.decodeAsBytes(data,
                             mCompressionProvider.get(compression));
-                    executeBoundedFetch(keyMap);
+                    executeBoundedFetch(keyMap, syncDelay);
                     break;
                 case KEY_LIST:
                     Logger.d("Received KeyList my segment fetch request");
@@ -62,11 +62,11 @@ class MySegmentsNotificationProcessorHelper {
             }
         } catch (Exception e) {
             Logger.e("Executing unbounded fetch because an error has occurred processing my segmentV2 notification: " + e.getLocalizedMessage());
-            notifyMySegmentRefreshNeeded(notificationsQueue);
+            notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay);
         }
     }
 
-    private void notifyMySegmentRefreshNeeded(BlockingQueue<MySegmentChangeNotification> notificationsQueue) {
+    private void notifyMySegmentRefreshNeeded(BlockingQueue<MySegmentChangeNotification> notificationsQueue, long syncDelay) {
         notificationsQueue.offer(new MySegmentChangeNotification());
     }
 
@@ -79,11 +79,11 @@ class MySegmentsNotificationProcessorHelper {
         mSplitTaskExecutor.submit(task, null);
     }
 
-    private void executeBoundedFetch(byte[] keyMap) {
+    private void executeBoundedFetch(byte[] keyMap, long syncDelay) {
         int index = mMySegmentsPayloadDecoder.computeKeyIndex(mConfiguration.getHashedUserKey(), keyMap.length);
         if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap, index)) {
             Logger.d("Executing Unbounded my segment fetch request");
-            notifyMySegmentRefreshNeeded(mConfiguration.getMySegmentUpdateNotificationsQueue());
+            notifyMySegmentRefreshNeeded(mConfiguration.getMySegmentUpdateNotificationsQueue(), syncDelay);
         }
     }
 
