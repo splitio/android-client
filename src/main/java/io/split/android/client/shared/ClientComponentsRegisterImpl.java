@@ -16,6 +16,7 @@ import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
+import io.split.android.client.service.sseclient.notifications.mysegments.MyLargeSegmentsNotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorConfiguration;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactory;
@@ -99,7 +100,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
 
             if (mSplitConfig.largeSegmentsEnabled() && myLargeSegmentsTaskFactory != null) {
                 LinkedBlockingDeque<MySegmentChangeNotification> myLargeSegmentsNotificationQueue = new LinkedBlockingDeque<>();
-                registerMySegmentsNotificationProcessor(key, myLargeSegmentsTaskFactory, myLargeSegmentsNotificationQueue);
+                registerMyLargeSegmentsNotificationProcessor(key, myLargeSegmentsTaskFactory, myLargeSegmentsNotificationQueue);
                 registerMyLargeSegmentsUpdateWorker(key, myLargeSegmentsSynchronizer, myLargeSegmentsNotificationQueue);
             }
         }
@@ -156,15 +157,27 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         mMySegmentsNotificationProcessorRegistry.registerMySegmentsProcessor(key.matchingKey(), processor);
     }
 
+    private void registerMyLargeSegmentsNotificationProcessor(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, LinkedBlockingDeque<MySegmentChangeNotification> notificationsQueue) {
+        MyLargeSegmentsNotificationProcessor processor = getMyLargeSegmentsNotificationProcessor(key, mySegmentsTaskFactory, notificationsQueue);
+        mMySegmentsNotificationProcessorRegistry.registerMyLargeSegmentsProcessor(key.matchingKey(), processor);
+    }
+
     private MySegmentsNotificationProcessor getMySegmentsNotificationProcessor(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, LinkedBlockingDeque<MySegmentChangeNotification> mySegmentUpdateNotificationsQueue) {
         return mMySegmentsNotificationProcessorFactory.getProcessor(
                 new MySegmentsNotificationProcessorConfiguration(
                         mySegmentsTaskFactory,
                         mySegmentUpdateNotificationsQueue,
                         key.matchingKey(),
-                        mMySegmentsV2PayloadDecoder.hashKey(key.matchingKey())
-                )
-        );
+                        mMySegmentsV2PayloadDecoder.hashKey(key.matchingKey())));
+    }
+
+    private MyLargeSegmentsNotificationProcessor getMyLargeSegmentsNotificationProcessor(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, LinkedBlockingDeque<MySegmentChangeNotification> notificationsQueue) {
+        return mMySegmentsNotificationProcessorFactory.getForLargeSegments(
+                new MySegmentsNotificationProcessorConfiguration(
+                        mySegmentsTaskFactory,
+                        notificationsQueue,
+                        key.matchingKey(),
+                        mMySegmentsV2PayloadDecoder.hashKey(key.matchingKey())));
     }
 
     private boolean isSyncEnabled() {
