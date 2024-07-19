@@ -37,6 +37,7 @@ import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.ImpressionsCountEntity;
+import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -70,6 +71,7 @@ public class EncryptionTest {
 
         verifySplits(testDatabase);
         verifySegments(testDatabase);
+        verifyLargeSegments(testDatabase);
         verifyEvents(testDatabase);
     }
 
@@ -148,12 +150,16 @@ public class EncryptionTest {
                 client.getTreatment("FACUNDO_TEST");
                 client.getTreatment("testing");
                 factory.destroy();
-                latch.countDown();
+                try {
+                    Thread.sleep(500);
+                    latch.countDown();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
-        assertTrue(latch.await(2, TimeUnit.SECONDS));
-        Thread.sleep(250);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
 
         verifyUniqueKeys(testDatabase);
     }
@@ -239,6 +245,23 @@ public class EncryptionTest {
         assertEquals(1, all.size());
     }
 
+    private static void verifyLargeSegments(SplitRoomDatabase testDatabase) {
+        List<MyLargeSegmentEntity> all = testDatabase.myLargeSegmentDao().getAll();
+        for (MyLargeSegmentEntity segmentEntity : all) {
+            boolean nameCondition = segmentEntity.getUserKey().trim().endsWith("=");
+            if (!nameCondition) {
+                fail("Large segment user key not encrypted, it was " + segmentEntity.getUserKey());
+            }
+
+            boolean bodyCondition = segmentEntity.getSegmentList().trim().endsWith("=");
+            if (!bodyCondition) {
+                fail("Large segment list not encrypted, it was " + segmentEntity.getSegmentList());
+            }
+        }
+
+        assertEquals(1, all.size());
+    }
+
     private static void verifyEvents(SplitRoomDatabase testDatabase) {
         List<EventEntity> all = testDatabase.eventDao().getAll();
         for (EventEntity entity : all) {
@@ -306,6 +329,7 @@ public class EncryptionTest {
                 .trafficType("client")
                 .impressionsMode(impressionsMode)
                 .impressionsRefreshRate(1000)
+                .largeSegmentsEnabled(true)
                 .impressionsCountersRefreshRate(1000)
                 .streamingEnabled(false)
                 .eventFlushInterval(1000)
@@ -330,6 +354,7 @@ public class EncryptionTest {
         responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.dummyMySegments()));
         responses.put("events/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
         responses.put("testImpressions/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
+        responses.put("myLargeSegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.dummyMyLargeSegments()));
         return responses;
     }
 

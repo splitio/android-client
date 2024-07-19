@@ -157,8 +157,16 @@ public class IntegrationHelper {
         return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}";
     }
 
+    public static String dummyMyLargeSegments() {
+        return "{\"myLargeSegments\":[\"large-segment1\", \"large-segment2\"], \"changeNumber\": 9999999999999}";
+    }
+
     public static String emptyMySegments() {
         return "{\"mySegments\":[]}";
+    }
+
+    public static String emptyMyLargeSegments() {
+        return "{\"mySegments\":[], \"changeNumber\": 9999999999999}";
     }
 
     public static String dummyApiKey() {
