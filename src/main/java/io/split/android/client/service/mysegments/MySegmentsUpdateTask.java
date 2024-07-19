@@ -19,6 +19,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsUpdateTask implements SplitTask {
 
+    @NonNull
     private final Set<String> mSegmentNames;
     private final MySegmentsStorage mMySegmentsStorage;
     private final SplitEventsManager mEventsManager;
@@ -56,11 +57,18 @@ public class MySegmentsUpdateTask implements SplitTask {
     private SplitTaskExecutionInfo add() {
         try {
             Set<String> segments = mMySegmentsStorage.getAll();
-            if (!segments.contains(mSegmentNames)) {
-                segments.addAll(mSegmentNames);
-                updateAndNotify(segments);
+            boolean updateAndNotify = false;
+            for (String segment : mSegmentNames) {
+                if (!segments.contains(segment)) {
+                    updateAndNotify = true;
+                    segments.add(segment);
+                }
             }
-            mTelemetryRuntimeProducer.recordUpdatesFromSSE(mTelemetrySSEKey);
+
+            if (updateAndNotify) {
+                updateAndNotify(segments);
+                mTelemetryRuntimeProducer.recordUpdatesFromSSE(mTelemetrySSEKey);
+            }
         } catch (Exception e) {
             logError("Unknown error while adding segment " + mSegmentNames + ": " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(mTaskType);

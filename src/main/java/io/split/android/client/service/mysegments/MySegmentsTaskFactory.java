@@ -11,5 +11,5 @@ public interface MySegmentsTaskFactory {
 
     MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments);
 
-    MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, Set<String> segmentName);
+    MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, Set<String> segmentNames);
 }
