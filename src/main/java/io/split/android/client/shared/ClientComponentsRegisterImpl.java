@@ -153,6 +153,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
                 new MySegmentsNotificationProcessorConfiguration(
                         mySegmentsTaskFactory,
                         mySegmentUpdateNotificationsQueue,
+                        key.matchingKey(),
                         mMySegmentsV2PayloadDecoder.hashKey(key.matchingKey())
                 )
         );
