@@ -1,15 +1,24 @@
 package io.split.android.client.service.sseclient;
 
+import static org.junit.Assert.assertEquals;
+
+import static io.split.android.client.service.sseclient.notifications.NotificationType.MY_LARGE_SEGMENT_UPDATE;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.common.CompressionType;
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
+import io.split.android.client.service.sseclient.notifications.HashingAlgorithm;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
+import io.split.android.client.service.sseclient.notifications.MyLargeSegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
+import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
@@ -37,6 +46,8 @@ public class NotificationParserTest {
 
     private final static String ERROR = "{\"id\":\"null\",\"name\":\"error\",\"comment\":\"[no comments]\",\"data\":\"{\\\"message\\\":\\\"Invalid token; capability must be a string\\\",\\\"code\\\":40144,\\\"statusCode\\\":400,\\\"href\\\":\\\"https://help.ably.io/error/40144\\\"}\"}";
 
+    private static final String MY_LARGE_SEGMENTS_UPDATE = "{\"id\": \"diSrQttrC9:0:0\",\"clientId\": \"pri:MjcyNDE2NDUxMA==\",\"timestamp\": 1702507131100,\"encoding\": \"json\",\"channel\": \"NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_mylargesegments\",\"data\": \"{\\\"type\\\":\\\"MY_LARGE_SEGMENT_UPDATE\\\",\\\"changeNumber\\\":1702507130121,\\\"largeSegments\\\":[\\\"android_test\\\"],\\\"c\\\":2,\\\"u\\\":2,\\\"d\\\":\\\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\\\",\\\"i\\\":100,\\\"h\\\":0,\\\"s\\\":325}\"}";
+
     @Before
     public void setup() {
         mParser = new NotificationParser();
@@ -47,8 +58,8 @@ public class NotificationParserTest {
         IncomingNotification incoming = mParser.parseIncoming(SPLIT_UPDATE_NOTIFICATION);
         SplitsChangeNotification splitUpdate = mParser.parseSplitUpdate(incoming.getJsonData());
 
-        Assert.assertEquals(NotificationType.SPLIT_UPDATE, incoming.getType());
-        Assert.assertEquals(1584554772108L, splitUpdate.getChangeNumber());
+        assertEquals(NotificationType.SPLIT_UPDATE, incoming.getType());
+        assertEquals(1584554772108L, splitUpdate.getChangeNumber());
     }
 
     @Test
@@ -56,9 +67,9 @@ public class NotificationParserTest {
         IncomingNotification incoming = mParser.parseIncoming(SPLIT_KILL_NOTIFICATION);
         SplitKillNotification splitKill = mParser.parseSplitKill(incoming.getJsonData());
 
-        Assert.assertEquals(NotificationType.SPLIT_KILL, incoming.getType());
-        Assert.assertEquals("dep_split", splitKill.getSplitName());
-        Assert.assertEquals("off", splitKill.getDefaultTreatment());
+        assertEquals(NotificationType.SPLIT_KILL, incoming.getType());
+        assertEquals("dep_split", splitKill.getSplitName());
+        assertEquals("off", splitKill.getDefaultTreatment());
     }
 
     @Test
@@ -66,8 +77,8 @@ public class NotificationParserTest {
         IncomingNotification incoming = mParser.parseIncoming(MY_SEGMENT_UDATE_NOTIFICATION);
         MySegmentChangeNotification mySegmentUpdate = mParser.parseMySegmentUpdate(incoming.getJsonData());
 
-        Assert.assertEquals(NotificationType.MY_SEGMENTS_UPDATE, incoming.getType());
-        Assert.assertEquals(1584647532812L, mySegmentUpdate.getChangeNumber());
+        assertEquals(NotificationType.MY_SEGMENTS_UPDATE, incoming.getType());
+        assertEquals(1584647532812L, mySegmentUpdate.getChangeNumber());
         Assert.assertFalse(mySegmentUpdate.isIncludesPayload());
     }
 
@@ -76,12 +87,12 @@ public class NotificationParserTest {
         IncomingNotification incoming = mParser.parseIncoming(MY_SEGMENT_UDATE_INLINE_NOTIFICATION);
         MySegmentChangeNotification mySegmentUpdate = mParser.parseMySegmentUpdate(incoming.getJsonData());
 
-        Assert.assertEquals(NotificationType.MY_SEGMENTS_UPDATE, incoming.getType());
-        Assert.assertEquals(1584647532812L, mySegmentUpdate.getChangeNumber());
+        assertEquals(NotificationType.MY_SEGMENTS_UPDATE, incoming.getType());
+        assertEquals(1584647532812L, mySegmentUpdate.getChangeNumber());
         Assert.assertTrue(mySegmentUpdate.isIncludesPayload());
-        Assert.assertEquals(2, mySegmentUpdate.getSegmentList().size());
-        Assert.assertEquals("segment1", mySegmentUpdate.getSegmentList().get(0));
-        Assert.assertEquals("segment2", mySegmentUpdate.getSegmentList().get(1));
+        assertEquals(2, mySegmentUpdate.getSegmentList().size());
+        assertEquals("segment1", mySegmentUpdate.getSegmentList().get(0));
+        assertEquals("segment2", mySegmentUpdate.getSegmentList().get(1));
     }
 
     @Test
@@ -90,8 +101,8 @@ public class NotificationParserTest {
 
         OccupancyNotification notification = mParser.parseOccupancy(incoming.getJsonData());
 
-        Assert.assertEquals(NotificationType.OCCUPANCY, notification.getType());
-        Assert.assertEquals(1, notification.getMetrics().getPublishers());
+        assertEquals(NotificationType.OCCUPANCY, notification.getType());
+        assertEquals(1, notification.getMetrics().getPublishers());
     }
 
     @Test
@@ -99,8 +110,8 @@ public class NotificationParserTest {
         IncomingNotification incoming = mParser.parseIncoming(CONTROL);
         ControlNotification notification = mParser.parseControl(incoming.getJsonData());
 
-        Assert.assertEquals(NotificationType.CONTROL, notification.getType());
-        Assert.assertEquals(ControlNotification.ControlType.STREAMING_RESUMED, notification.getControlType());
+        assertEquals(NotificationType.CONTROL, notification.getType());
+        assertEquals(ControlNotification.ControlType.STREAMING_RESUMED, notification.getControlType());
     }
 
     @Test
@@ -110,9 +121,9 @@ public class NotificationParserTest {
 
         StreamingError errorMsg = mParser.parseError(data);
 
-        Assert.assertEquals("Token expired", errorMsg.getMessage());
-        Assert.assertEquals(40142, errorMsg.getCode());
-        Assert.assertEquals(401, errorMsg.getStatusCode());
+        assertEquals("Token expired", errorMsg.getMessage());
+        assertEquals(40142, errorMsg.getCode());
+        assertEquals(401, errorMsg.getStatusCode());
     }
 
     @Test
@@ -152,5 +163,30 @@ public class NotificationParserTest {
         boolean isError = mParser.isError(null);
 
         Assert.assertFalse(isError);
+    }
+
+    @Test
+    public void parseMyLargeSegmentsIncomingNotification() {
+        IncomingNotification incoming = mParser.parseIncoming(MY_LARGE_SEGMENTS_UPDATE);
+
+        assertEquals(MY_LARGE_SEGMENT_UPDATE, incoming.getType());
+        assertEquals("{\"type\":\"MY_LARGE_SEGMENT_UPDATE\",\"changeNumber\":1702507130121,\"largeSegments\":[\"android_test\"],\"c\":2,\"u\":2,\"d\":\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\",\"i\":100,\"h\":0,\"s\":325}", incoming.getJsonData());
+        assertEquals("NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_mylargesegments", incoming.getChannel());
+        assertEquals(1702507131100L, incoming.getTimestamp());
+    }
+
+    @Test
+    public void parseMyLargeSegmentsNotificationData() {
+        IncomingNotification incomingNotification = mParser.parseIncoming(MY_LARGE_SEGMENTS_UPDATE);
+        MyLargeSegmentChangeNotification notification = mParser.parseMyLargeSegmentUpdate(incomingNotification.getJsonData());
+
+        assertEquals("eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==", notification.getData());
+        assertEquals((Long) 1702507130121L, notification.getChangeNumber());
+        assertEquals(Collections.singleton("android_test"), notification.getLargeSegments());
+        assertEquals(CompressionType.ZLIB, notification.getCompression());
+        assertEquals(MySegmentUpdateStrategy.KEY_LIST, notification.getUpdateStrategy());
+        assertEquals((Long) 100L, notification.getUpdateIntervalMs());
+        assertEquals((Integer) 325, notification.getAlgorithmSeed());
+        assertEquals(HashingAlgorithm.MURMUR3_32, notification.getHashingAlgorithm());
     }
 }
