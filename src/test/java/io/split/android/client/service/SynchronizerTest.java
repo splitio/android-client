@@ -649,24 +649,6 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void forceMySegmentsSyncDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
-
-        mSynchronizer.forceMySegmentsSync();
-
-        verify(mMySegmentsSynchronizerRegistry).forceMySegmentsSync(SegmentType.SEGMENT);
-    }
-
-    @Test
-    public void forceMyLargeSegmentsSyncDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
-
-        mSynchronizer.forceMyLargeSegmentsSync();
-
-        verify(mMySegmentsSynchronizerRegistry).forceMySegmentsSync(SegmentType.LARGE_SEGMENT);
-    }
-
-    @Test
     public void destroyDelegatesToRegisteredSyncs() {
         setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
 

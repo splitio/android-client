@@ -83,7 +83,7 @@ public class MySegmentsSynchronizerImplTest {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
         when(mMySegmentsTaskFactory.createMySegmentsSyncTask(true)).thenReturn(mockTask);
 
-        mMySegmentsSynchronizer.forceMySegmentsSync();
+        mMySegmentsSynchronizer.forceMySegmentsSync(0L);
 
         verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), any());
         verify(mRetryBackoffCounterTimer).start();

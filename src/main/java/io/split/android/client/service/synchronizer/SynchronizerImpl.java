@@ -180,16 +180,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
-    public void forceMySegmentsSync() {
-        mMySegmentsSynchronizerRegistry.forceMySegmentsSync(SEGMENT);
-    }
-
-    @Override
-    public void forceMyLargeSegmentsSync() {
-        mMySegmentsSynchronizerRegistry.forceMySegmentsSync(LARGE_SEGMENT);
-    }
-
-    @Override
     synchronized public void startPeriodicFetching() {
         mFeatureFlagsSynchronizer.startPeriodicFetching();
         scheduleMySegmentsFetcherTask();

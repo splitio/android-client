@@ -6,7 +6,7 @@ public interface MySegmentsSynchronizer {
 
     void synchronizeMySegments();
 
-    void forceMySegmentsSync();
+    void forceMySegmentsSync(Long syncDelay);
 
     void destroy();
 

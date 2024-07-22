@@ -62,9 +62,9 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.forceMySegmentsSync(SegmentType.SEGMENT);
+        mRegistry.forceMySegmentsSync(SegmentType.SEGMENT, 4L);
 
-        verify(syncMock).forceMySegmentsSync();
+        verify(syncMock).forceMySegmentsSync(4L);
     }
 
     @Test
@@ -72,9 +72,9 @@ public class MySegmentsSynchronizerRegistryImplTest {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMyLargeSegmentsSynchronizer("key", syncMock);
-        mRegistry.forceMySegmentsSync(SegmentType.LARGE_SEGMENT);
+        mRegistry.forceMySegmentsSync(SegmentType.LARGE_SEGMENT, 3L);
 
-        verify(syncMock).forceMySegmentsSync();
+        verify(syncMock).forceMySegmentsSync(3L);
     }
 
     @Test

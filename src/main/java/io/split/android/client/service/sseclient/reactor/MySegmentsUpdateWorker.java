@@ -29,7 +29,7 @@ public class MySegmentsUpdateWorker extends UpdateWorker {
     protected void onWaitForNotificationLoop() throws InterruptedException {
         try {
             Long syncDelay = mNotificationsQueue.take();
-            mSynchronizer.forceMySegmentsSync();// TODO syncDelay);
+            mSynchronizer.forceMySegmentsSync(syncDelay);
             Logger.d("A new notification to update segments has been received. " +
                     "Enqueuing polling task.");
         } catch (InterruptedException e) {

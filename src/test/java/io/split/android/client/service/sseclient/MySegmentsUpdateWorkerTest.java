@@ -12,7 +12,6 @@ import org.mockito.MockitoAnnotations;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 
@@ -43,7 +42,10 @@ public class MySegmentsUpdateWorkerTest {
 
         Thread.sleep(1000);
 
-        verify(mSynchronizer, times(4)).forceMySegmentsSync();
+        verify(mSynchronizer, times(1)).forceMySegmentsSync(0L);
+        verify(mSynchronizer, times(1)).forceMySegmentsSync(1L);
+        verify(mSynchronizer, times(1)).forceMySegmentsSync(2L);
+        verify(mSynchronizer, times(1)).forceMySegmentsSync(3L);
     }
 
     @Test
