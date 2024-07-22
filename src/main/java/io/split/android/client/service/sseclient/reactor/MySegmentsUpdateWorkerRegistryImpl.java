@@ -20,7 +20,7 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
 
     @Override
     public synchronized void registerMyLargeSegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker) {
-        mMySegmentUpdateWorkers.put(matchingKey, mySegmentsUpdateWorker);
+        mMyLargeSegmentUpdateWorkers.put(matchingKey, mySegmentsUpdateWorker);
         startIfNeeded(mySegmentsUpdateWorker);
     }
 
@@ -47,6 +47,10 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
             }
 
             for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
+                mySegmentsUpdateWorker.start();
+            }
+
+            for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMyLargeSegmentUpdateWorkers.values()) {
                 mySegmentsUpdateWorker.start();
             }
         }
