@@ -155,24 +155,30 @@ public class SyncManagerTest {
     @Test
     public void startCallsStartOnAllSegmentsWorkers() {
         MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
+        MySegmentsUpdateWorker myLargeSegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
         ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
+        ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMyLargeSegmentsUpdateWorker("any_key", myLargeSegmentsUpdateWorker);
 
         mSyncManager.start();
 
         verify(mMySegmentUpdateWorker).start();
         verify(anyKeyUpdateWorker).start();
+        verify(myLargeSegmentsUpdateWorker).start();
     }
 
     @Test
     public void stopCallsStopOnMyAllSegmentsWorkers() {
         MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
+        MySegmentsUpdateWorker myLargeSegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
         ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
+        ((MySegmentsUpdateWorkerRegistry) mSyncManager).registerMyLargeSegmentsUpdateWorker("any_key", myLargeSegmentsUpdateWorker);
 
         mSyncManager.start();
         mSyncManager.stop();
 
         verify(mMySegmentUpdateWorker).stop();
         verify(anyKeyUpdateWorker).stop();
+        verify(myLargeSegmentsUpdateWorker).stop();
     }
 
     @Test
